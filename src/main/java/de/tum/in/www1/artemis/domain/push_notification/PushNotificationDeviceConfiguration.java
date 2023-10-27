@@ -4,12 +4,11 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Objects;
 
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import de.tum.in.www1.artemis.domain.User;
+import jakarta.persistence.*;
 
 /**
  * Model for saving PushNotification DeviceTokens for native clients

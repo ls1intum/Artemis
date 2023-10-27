@@ -13,8 +13,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -34,6 +32,7 @@ import de.tum.in.www1.artemis.domain.FileType;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.util.GitUtilService;
+import jakarta.validation.constraints.NotNull;
 
 class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 

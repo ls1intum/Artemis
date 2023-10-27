@@ -3,11 +3,6 @@ package de.tum.in.www1.artemis.web.rest.errors;
 import java.io.IOException;
 import java.util.List;
 
-import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -30,6 +25,10 @@ import org.zalando.problem.spring.web.advice.security.SecurityAdviceTrait;
 import org.zalando.problem.violations.ConstraintViolationProblem;
 
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
+import jakarta.annotation.Nullable;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**

@@ -9,8 +9,6 @@ import java.io.FileInputStream;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +39,7 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUsersNotFoundDTO;
+import jakarta.validation.constraints.NotNull;
 
 class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

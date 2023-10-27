@@ -88,19 +88,19 @@ public class IrisConnectorService {
                 return CompletableFuture.completedFuture(parseResponse(response.getBody(), IrisMessageResponseDTO.class));
             }
             catch (HttpStatusCodeException e) {
-                switch (e.getStatusCode()) {
-                    case BAD_REQUEST -> {
+                switch (e.getStatusCode().value()) {
+                    case 400 -> {
                         var badRequestDTO = parseResponse(objectMapper.readTree(e.getResponseBodyAsString()).get("detail"), IrisErrorResponseDTO.class);
                         return CompletableFuture.failedFuture(new IrisInvalidTemplateException(badRequestDTO.errorMessage()));
                     }
-                    case UNAUTHORIZED, FORBIDDEN -> {
+                    case 401, 403 -> {
                         return CompletableFuture.failedFuture(new IrisForbiddenException());
                     }
-                    case NOT_FOUND -> {
+                    case 404 -> {
                         var notFoundDTO = parseResponse(objectMapper.readTree(e.getResponseBodyAsString()).get("detail"), IrisErrorResponseDTO.class);
-                        return CompletableFuture.failedFuture(new IrisModelNotAvailableException(request.preferredModel().toString(), notFoundDTO.errorMessage()));
+                        return CompletableFuture.failedFuture(new IrisModelNotAvailableException(request.preferredModel(), notFoundDTO.errorMessage()));
                     }
-                    case INTERNAL_SERVER_ERROR -> {
+                    case 500 -> {
                         var internalErrorDTO = parseResponse(objectMapper.readTree(e.getResponseBodyAsString()).get("detail"), IrisErrorResponseDTO.class);
                         return CompletableFuture.failedFuture(new IrisInternalPyrisErrorException(internalErrorDTO.errorMessage()));
                     }

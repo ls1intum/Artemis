@@ -10,9 +10,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -33,6 +30,8 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.listeners.ResultListener;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * A Result.

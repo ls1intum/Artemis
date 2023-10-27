@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
+import jakarta.persistence.*;
 
 /**
  * A QuizStatisticCounter.

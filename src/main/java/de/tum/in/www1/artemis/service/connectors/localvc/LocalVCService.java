@@ -10,9 +10,6 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -44,6 +41,8 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Implementation of VersionControlService for the local VC server.

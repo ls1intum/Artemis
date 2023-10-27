@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
 
 /**
  * Contains the information about an exam user

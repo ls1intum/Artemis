@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.scheduled;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -18,6 +16,7 @@ import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
+import jakarta.annotation.PostConstruct;
 
 @Service
 @Profile("scheduling")

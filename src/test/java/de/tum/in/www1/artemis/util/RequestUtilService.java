@@ -12,8 +12,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
-import javax.annotation.Nullable;
-
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -37,6 +35,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import jakarta.annotation.Nullable;
 
 @Service
 public class RequestUtilService {

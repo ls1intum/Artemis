@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -14,6 +12,7 @@ import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "lecture_unit")

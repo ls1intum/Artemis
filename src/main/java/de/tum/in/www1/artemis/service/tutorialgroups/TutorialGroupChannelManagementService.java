@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
-import static javax.persistence.Persistence.getPersistenceUtil;
+import static jakarta.persistence.Persistence.getPersistenceUtil;
 
 import java.util.Optional;
 import java.util.Set;

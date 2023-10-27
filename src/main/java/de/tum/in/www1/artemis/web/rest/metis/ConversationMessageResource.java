@@ -5,8 +5,6 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.List;
 
-import javax.validation.Valid;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -23,6 +21,7 @@ import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import io.swagger.annotations.ApiParam;
+import jakarta.validation.Valid;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**

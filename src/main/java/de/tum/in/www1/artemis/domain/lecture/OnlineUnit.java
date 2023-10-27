@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.domain.lecture;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 @Entity
 @DiscriminatorValue("O")

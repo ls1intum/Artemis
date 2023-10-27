@@ -9,8 +9,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.springframework.util.ResourceUtils;
 
@@ -22,6 +20,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exercise.ExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.service.FilePathService;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Factory for creating QuizExercises and related objects.

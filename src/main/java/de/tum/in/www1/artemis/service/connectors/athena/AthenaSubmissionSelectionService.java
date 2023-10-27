@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.connectors.athena;
 import java.util.List;
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Service for selecting the "best" submission to assess right now using Athena, e.g. by the highest information gain.

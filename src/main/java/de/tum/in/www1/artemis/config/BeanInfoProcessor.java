@@ -24,7 +24,7 @@ import com.google.auto.service.AutoService;
 
 // TODO this is not working yet
 @AutoService(Processor.class)
-@SupportedAnnotationTypes({ "javax.persistence.MappedSuperclass", "javax.persistence.Entity" })
+@SupportedAnnotationTypes({ "jakarta.persistence.MappedSuperclass", "jakarta.persistence.Entity" })
 @SupportedSourceVersion(SourceVersion.RELEASE_17)
 public class BeanInfoProcessor extends AbstractProcessor {
 

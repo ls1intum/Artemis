@@ -2,12 +2,6 @@ package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import java.io.IOException;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -16,6 +10,11 @@ import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Filters incoming fetch requests reaching the local git server implementation.

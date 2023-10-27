@@ -2,10 +2,9 @@ package de.tum.in.www1.artemis.validation.constraints;
 
 import java.lang.annotation.*;
 
-import javax.validation.Constraint;
-import javax.validation.Payload;
-
 import de.tum.in.www1.artemis.validation.TeamAssignmentConfigValidator;
+import jakarta.validation.Constraint;
+import jakarta.validation.Payload;
 
 /**
  * Custom constraint annotation for team assignment configurations

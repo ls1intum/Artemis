@@ -1,57 +1,54 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+
 import java.util.*;
 import java.util.stream.Collectors;
-
-import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
-import org.springframework.web.filter.CorsFilter;
-import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
+import jakarta.annotation.PostConstruct;
 
+@Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
-@Import(SecurityProblemSupport.class)
-// ToDo: currently this cannot be replaced as recommended by
-// https://spring.io/blog/2022/02/21/spring-security-without-the-websecurityconfigureradapter
-// as that would break the SAML2 login functionality. For more information, see
-// https://github.com/ls1intum/Artemis/pull/5721.
-public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+@EnableMethodSecurity(securedEnabled = true)
+public class SecurityConfiguration {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
     private final UserDetailsService userDetailsService;
 
     private final TokenProvider tokenProvider;
-
-    private final CorsFilter corsFilter;
-
-    private final SecurityProblemSupport problemSupport;
 
     private final PasswordService passwordService;
 
@@ -63,13 +60,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private final Environment env;
 
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
-            CorsFilter corsFilter, SecurityProblemSupport problemSupport, PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider,
-            Environment env) {
+            PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider, Environment env) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
-        this.corsFilter = corsFilter;
-        this.problemSupport = problemSupport;
         this.passwordService = passwordService;
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
         this.env = env;
@@ -100,29 +94,17 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    RoleHierarchy roleHierarchy() {
-        var roleHierarchy = new RoleHierarchyImpl();
-        roleHierarchy.setHierarchy("""
-                    ROLE_ADMIN > ROLE_INSTRUCTOR
-                    ROLE_INSTRUCTOR > ROLE_EDITOR
-                    ROLE_EDITOR > ROLE_TA
-                    ROLE_TA > ROLE_USER
-                """);
-        return roleHierarchy;
+    public DefaultMethodSecurityExpressionHandler methodExpressionHandler() {
+        DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
+        expressionHandler.setRoleHierarchy(roleHierarchy());
+        return expressionHandler;
     }
 
-    @Override
-    public void configure(WebSecurity web) {
-        // @formatter:off
-        web.ignoring()
-            .antMatchers(HttpMethod.OPTIONS, "/**")
-            .antMatchers("/app/**/*.{js,html}")
-            .antMatchers("/i18n/**")
-            .antMatchers("/content/**")
-            .antMatchers("/api-docs/**")
-            .antMatchers("/api.html")
-            .antMatchers("/test/**");
-        // @formatter:on
+    @Bean
+    RoleHierarchy roleHierarchy() {
+        var roleHierarchy = new RoleHierarchyImpl();
+        roleHierarchy.setHierarchy("ROLE_ADMIN > ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS");
+        return roleHierarchy;
     }
 
     /**
@@ -135,56 +117,66 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return monitoringIpAddresses.stream().map(ip -> String.format("hasIpAddress(\"%s\")", ip)).collect(Collectors.joining(" or "));
     }
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    @Bean
+    protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // @formatter:off
         http
-            .csrf()
-            .disable()
-            .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling().authenticationEntryPoint(problemSupport)
-                .accessDeniedHandler(problemSupport)
-        .and()
-            .headers()
-            .contentSecurityPolicy("script-src 'self' 'unsafe-inline' 'unsafe-eval'")
-            // TODO: investigate exactly whether the following works in our setup or not
-            // .contentSecurityPolicy("default-src 'self'; connect-src: 'self' 'https://sentry.io' 'ws:' 'wss:'; frame-src * data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src * data:; font-src 'self' data:")
-        .and()
-            .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
-        .and()
-            .permissionsPolicy().policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")
-        .and()
-            .frameOptions()
-            .deny()
-        .and()
-            .headers()
-            .httpStrictTransportSecurity()
-            .disable() // this is already configured using nginx
-        .and()
-            .sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        .and()
-            // api
-            .authorizeRequests()
-            .antMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
-            .antMatchers("/api/public/**").permitAll()
-            // TODO: Remove the following three lines in June 2024 together with LegacyResource
-            .antMatchers(HttpMethod.POST, "/api/programming-exercises/new-result").permitAll()
-            .antMatchers(HttpMethod.POST, "/api/programming-submissions/*").permitAll()
-            .antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*").permitAll()
-            .antMatchers("/websocket/**").permitAll()
-            .antMatchers("/.well-known/jwks.json").permitAll()
-            .antMatchers("/management/prometheus/**").access(getMonitoringAccessDefinition())
-            .antMatchers("/api/**").authenticated()
-        .and()
+            .csrf(AbstractHttpConfigurer::disable)
+            .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
+            .headers(headers -> headers
+                .contentSecurityPolicy(csp -> csp.policyDirectives("script-src 'self' 'unsafe-inline' 'unsafe-eval'"))
+                .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+                .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                .httpStrictTransportSecurity().disable() // this is already configured using nginx
+                .permissionsPolicy(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")))
+            .authorizeHttpRequests(auth -> auth
+                // options: TODO: do we really need this?
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // api
+                .requestMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
+                .requestMatchers("/api/public/**").permitAll()
+                // TODO: Remove the following three lines in June 2024 together with LegacyResource
+                .requestMatchers(HttpMethod.POST, "/api/programming-exercises/new-result").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/programming-submissions/*").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*").permitAll()
+                .requestMatchers("/api/**").authenticated()
+                .requestMatchers("/api/public/**").permitAll()
+                // websockets
+                .requestMatchers("/websocket/**").permitAll()
+                // management
+                .requestMatchers("/management/health").permitAll()
+                .requestMatchers("/management/info").permitAll()
+                // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
+                .requestMatchers("/management/prometheus/**").access((authentication, context) ->
+                    new AuthorizationDecision(context.getRequest().getRemoteAddr().equals(getMonitoringAccessDefinition())))
+                .requestMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
+                .requestMatchers("/admin/**").hasAuthority(Role.ADMIN.getAuthority())
+                // others
+                .requestMatchers("/time").permitAll()
+                .requestMatchers("/", "/index.html", "/*.js", "/*.map", "/*.css").permitAll()
+                .requestMatchers("/*.ico", "/*.png", "/*.svg", "/*.webapp").permitAll()
+                .requestMatchers("/public/**").permitAll()
+                .requestMatchers("/logo/*.svg", "/logo/*.png", "/logo/*.ico", "/logo/browserconfig.xml").permitAll()    // for favicons and logos
+                .requestMatchers("/ngsw.json").permitAll()    // for the service worker
+                .requestMatchers("/app/**").permitAll() //TODO: this might not work for us, because we don't use the app prefix
+                .requestMatchers("/i18n/**").permitAll()
+                .requestMatchers("/content/**").permitAll()
+                .requestMatchers("/api.html").permitAll()
+                .requestMatchers("/api-docs/**").permitAll()
+                .requestMatchers(CustomLti13Configurer.LTI13_LOGIN_PATH).permitAll())
+            //        .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)    //TODO: we use JWTFilter, etc. at the moment, but we should switch to this solution
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
+                .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
+            )
             .apply(securityConfigurerAdapter());
 
-        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        if (activeProfiles.contains("lti")) {
-            http.apply(new CustomLti13Configurer());
-        }
-
+        // TODO: currently disabled because it is not fully working yet
+        //        http.apply(new CustomLti13Configurer());
         // @formatter:on
+
+        return http.build();
     }
 
     private JWTConfigurer securityConfigurerAdapter() {

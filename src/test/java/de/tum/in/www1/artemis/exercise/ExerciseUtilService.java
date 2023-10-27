@@ -6,8 +6,6 @@ import static org.assertj.core.api.Assertions.fail;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +37,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Service responsible for initializing the database with specific testdata related to exercises for use in integration tests.

@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.annotation.PostConstruct;
-
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -24,6 +22,7 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsXmlConfigBuilder;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
+import jakarta.annotation.PostConstruct;
 
 @Profile("jenkins")
 @Component

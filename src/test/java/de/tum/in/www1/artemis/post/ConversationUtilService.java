@@ -8,8 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +35,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ConversationReposito
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Service responsible for initializing the database with specific testdata related to conversations for use in integration tests.

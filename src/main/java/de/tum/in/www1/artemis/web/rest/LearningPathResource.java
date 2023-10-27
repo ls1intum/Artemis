@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import javax.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +25,7 @@ import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import jakarta.ws.rs.BadRequestException;
 
 @RestController
 @RequestMapping("api/")

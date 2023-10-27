@@ -6,8 +6,6 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
-import javax.validation.constraints.NotNull;
-
 import org.jgrapht.alg.util.UnionFind;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +17,7 @@ import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.CompetencyRelationRepository;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Service Implementation for the generation of ngx representations of learning paths.

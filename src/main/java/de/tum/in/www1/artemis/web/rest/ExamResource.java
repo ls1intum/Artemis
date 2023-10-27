@@ -14,9 +14,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
-import javax.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,6 +48,8 @@ import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDT
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiParam;
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**

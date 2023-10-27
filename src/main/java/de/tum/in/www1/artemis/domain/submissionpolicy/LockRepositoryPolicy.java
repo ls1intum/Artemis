@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.domain.submissionpolicy;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import jakarta.persistence.DiscriminatorValue;
+import jakarta.persistence.Entity;
 
 /**
  * Configures a Lock Repository Policy.<br>

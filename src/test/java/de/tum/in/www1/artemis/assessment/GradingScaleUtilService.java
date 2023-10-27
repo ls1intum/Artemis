@@ -6,8 +6,6 @@ import java.io.FileReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
@@ -17,6 +15,7 @@ import com.opencsv.CSVReader;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Service responsible for initializing the database with specific testdata related to grading for use in integration tests.

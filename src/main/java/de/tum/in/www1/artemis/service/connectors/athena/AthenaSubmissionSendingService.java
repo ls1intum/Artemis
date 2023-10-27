@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -25,6 +23,7 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Service for sending submissions to the Athena service for further processing

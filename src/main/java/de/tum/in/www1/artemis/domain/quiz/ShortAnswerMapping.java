@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -11,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import jakarta.persistence.*;
 
 /**
  * A ShortAnswerMapping.

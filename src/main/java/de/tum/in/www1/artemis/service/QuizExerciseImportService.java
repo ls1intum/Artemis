@@ -4,8 +4,6 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -15,6 +13,7 @@ import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class QuizExerciseImportService extends ExerciseImportService {

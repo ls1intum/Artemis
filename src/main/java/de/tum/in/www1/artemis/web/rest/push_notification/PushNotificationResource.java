@@ -6,7 +6,6 @@ import java.util.Base64;
 import java.util.Date;
 
 import javax.crypto.KeyGenerator;
-import javax.validation.Valid;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +21,7 @@ import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepo
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import io.jsonwebtoken.*;
+import jakarta.validation.Valid;
 
 /**
  * Rest Controller for managing push notification device tokens for native clients.
@@ -30,7 +30,7 @@ import io.jsonwebtoken.*;
 @RequestMapping("/api/push_notification")
 public class PushNotificationResource {
 
-    private static KeyGenerator aesKeyGenerator;
+    private static final KeyGenerator aesKeyGenerator;
 
     static {
         try {
@@ -42,9 +42,9 @@ public class PushNotificationResource {
         }
     }
 
-    private PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
+    private final PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     public PushNotificationResource(PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository, UserRepository userRepository) {
         this.pushNotificationDeviceConfigurationRepository = pushNotificationDeviceConfigurationRepository;
@@ -70,13 +70,13 @@ public class PushNotificationResource {
 
         // This cannot throw an error as it must have been valid to even call this method
         try {
-            headerClaimsJwt = Jwts.parserBuilder().build().parseClaimsJwt(jwtWithoutSignature);
+            headerClaimsJwt = Jwts.parser().build().parseUnsecuredClaims(jwtWithoutSignature);
         }
         catch (ExpiredJwtException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        Date expirationDate = headerClaimsJwt.getBody().getExpiration();
+        Date expirationDate = headerClaimsJwt.getPayload().getExpiration();
 
         User user = userRepository.getUser();
 

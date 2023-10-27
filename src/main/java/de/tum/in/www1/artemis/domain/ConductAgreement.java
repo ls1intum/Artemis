@@ -2,9 +2,9 @@ package de.tum.in.www1.artemis.domain;
 
 import java.util.Objects;
 
-import javax.persistence.*;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import jakarta.persistence.*;
 
 /**
  * A user's agreement of a course's code of conduct.

@@ -5,20 +5,11 @@ import java.security.GeneralSecurityException;
 import java.util.Locale;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.imsglobal.lti.launch.LtiOauthVerifier;
-import org.imsglobal.lti.launch.LtiVerificationException;
-import org.imsglobal.lti.launch.LtiVerificationResult;
-import org.imsglobal.lti.launch.LtiVerifier;
-import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -34,6 +25,9 @@ import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotNull;
 import oauth.signpost.exception.OAuthException;
 
 @Service
@@ -78,7 +72,7 @@ public class Lti10Service {
             return message;
         }
 
-        LtiVerifier ltiVerifier = new LtiOauthVerifier();
+        LtiOauthVerifier ltiVerifier = new LtiOauthVerifier();
         try {
             LtiVerificationResult ltiResult = ltiVerifier.verify(request, onlineCourseConfiguration.getLtiSecret());
             if (!ltiResult.getSuccess()) {
@@ -239,7 +233,7 @@ public class Lti10Service {
                 String responseString = new BasicResponseHandler().handleResponse(response);
                 log.info("Response from LTI consumer: {}", responseString);
             }
-            catch (HttpClientErrorException | IOException | OAuthException | GeneralSecurityException ex) {
+            catch (HttpClientErrorException | IOException | GeneralSecurityException | OAuthException ex) {
                 log.error("Reporting to LTI consumer failed", ex);
             }
         }));

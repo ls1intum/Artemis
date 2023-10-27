@@ -14,8 +14,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.eclipse.jgit.lib.ObjectId;
 import org.json.JSONException;
 import org.junit.jupiter.api.*;
@@ -75,6 +73,7 @@ import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.WorkingTimeUpdateEventDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

@@ -8,8 +8,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 
-import javax.persistence.*;
-
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -35,6 +33,7 @@ import de.tum.in.www1.artemis.service.EntityFileService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import jakarta.persistence.*;
 
 /**
  * A Course.

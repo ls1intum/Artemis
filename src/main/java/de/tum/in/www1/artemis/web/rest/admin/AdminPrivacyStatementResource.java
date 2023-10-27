@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
-import javax.ws.rs.BadRequestException;
-
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.LegalDocumentService;
+import jakarta.ws.rs.BadRequestException;
 
 /**
  * REST controller for editing the Privacy Statement as an admin.

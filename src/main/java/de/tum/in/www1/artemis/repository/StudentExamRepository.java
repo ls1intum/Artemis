@@ -6,9 +6,6 @@ import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
-
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -22,6 +19,8 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data JPA repository for the StudentExam entity.

@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.domain.iris.session;
 
-import javax.persistence.*;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import jakarta.persistence.*;
 
 /**
  * An IrisChatSession represents a conversation between a user and an Artemis bot.

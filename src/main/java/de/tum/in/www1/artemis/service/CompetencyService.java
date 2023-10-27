@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +11,7 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class CompetencyService {

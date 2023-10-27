@@ -3,9 +3,6 @@ package de.tum.in.www1.artemis.web.rest.open;
 import java.io.IOException;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.glassfish.jersey.uri.UriComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +28,8 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * REST controller for receiving LTI requests.
@@ -173,7 +172,7 @@ public class PublicLtiResource {
     private boolean isValidJwtIgnoreSignature(String token) {
         String strippedToken = token.substring(0, token.lastIndexOf(".") + 1);
         try {
-            Jwts.parserBuilder().build().parse(strippedToken);
+            Jwts.parser().build().parse(strippedToken);
             return true;
         }
         catch (SignatureException e) {

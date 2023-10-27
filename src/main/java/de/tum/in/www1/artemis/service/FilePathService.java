@@ -3,14 +3,13 @@ package de.tum.in.www1.artemis.service;
 import java.net.URI;
 import java.nio.file.Path;
 
-import javax.annotation.Nullable;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
+import jakarta.annotation.Nullable;
 
 @Service
 public class FilePathService {

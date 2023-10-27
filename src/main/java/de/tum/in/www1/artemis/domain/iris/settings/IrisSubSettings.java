@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -10,6 +7,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
 
 /**
  * An IrisSubSettings object represents the settings for a specific feature of Iris.

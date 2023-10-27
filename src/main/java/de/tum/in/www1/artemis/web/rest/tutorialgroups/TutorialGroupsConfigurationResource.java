@@ -7,9 +7,6 @@ import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.util.Optional;
 
-import javax.validation.Valid;
-import javax.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +23,8 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.BadRequestException;
 
 @RestController
 @RequestMapping("/api")

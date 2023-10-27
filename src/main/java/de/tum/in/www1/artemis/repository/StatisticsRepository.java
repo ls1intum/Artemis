@@ -7,8 +7,6 @@ import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.*;
 
-import javax.annotation.Nullable;
-
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,6 +19,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
+import jakarta.annotation.Nullable;
 
 /**
  * Spring Data JPA repository for the statistics pages

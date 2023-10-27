@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.domain;
 
-import javax.persistence.*;
-import javax.validation.constraints.Size;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import de.tum.in.www1.artemis.config.Constants;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "long_feedback_text")

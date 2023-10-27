@@ -19,7 +19,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Imprint;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import net.minidev.json.JSONObject;
 
 class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

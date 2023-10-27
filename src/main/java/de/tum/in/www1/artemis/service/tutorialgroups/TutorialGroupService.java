@@ -1,16 +1,13 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
 import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS;
-import static javax.persistence.Persistence.getPersistenceUtil;
+import static jakarta.persistence.Persistence.getPersistenceUtil;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -35,6 +32,8 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupImportErrors;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class TutorialGroupService {

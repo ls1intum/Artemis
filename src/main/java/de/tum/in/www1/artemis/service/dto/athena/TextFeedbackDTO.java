@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.service.dto.athena;
 
-import javax.validation.constraints.NotNull;
-
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextBlockRef;
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * A DTO representing a Feedback, for transferring data to Athena

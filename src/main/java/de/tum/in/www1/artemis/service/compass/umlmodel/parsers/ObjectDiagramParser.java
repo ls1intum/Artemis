@@ -5,8 +5,6 @@ import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 import java.io.IOException;
 import java.util.*;
 
-import javax.validation.constraints.NotNull;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -14,6 +12,7 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.object.*;
+import jakarta.validation.constraints.NotNull;
 
 public class ObjectDiagramParser {
 

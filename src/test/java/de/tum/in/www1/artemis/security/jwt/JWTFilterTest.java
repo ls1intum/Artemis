@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collections;
 
-import javax.servlet.http.Cookie;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -22,6 +20,7 @@ import de.tum.in.www1.artemis.security.Role;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import jakarta.servlet.http.Cookie;
 import tech.jhipster.config.JHipsterProperties;
 
 class JWTFilterTest {

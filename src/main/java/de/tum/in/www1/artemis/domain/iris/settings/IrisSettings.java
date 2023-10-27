@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.iris.settings;
 
-import javax.persistence.*;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.ColumnDefault;
@@ -9,6 +7,7 @@ import org.hibernate.annotations.ColumnDefault;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
+import jakarta.persistence.*;
 
 /**
  * An IrisSettings object represents the settings for Iris for a part of Artemis.

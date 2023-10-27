@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.open;
 
-import javax.ws.rs.BadRequestException;
-
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -11,6 +9,7 @@ import de.tum.in.www1.artemis.domain.PrivacyStatement;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.LegalDocumentService;
+import jakarta.ws.rs.BadRequestException;
 
 /**
  * REST controller for retrieving the Privacy Statement.

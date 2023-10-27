@@ -2,15 +2,6 @@ package de.tum.in.www1.artemis.domain.exam.event;
 
 import java.time.Instant;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.Table;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.CreatedDate;
@@ -19,6 +10,14 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.DiscriminatorType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Table;
 
 /**
  * Base class for all exam live events. An exam live event indicates that an event or change has occurred during an exam.

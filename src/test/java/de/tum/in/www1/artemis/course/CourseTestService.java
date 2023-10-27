@@ -23,7 +23,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
-import javax.validation.constraints.NotNull;
 
 import org.assertj.core.data.Offset;
 import org.mockito.MockedStatic;
@@ -98,6 +97,7 @@ import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class CourseTestService {

@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import javax.persistence.*;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import jakarta.persistence.*;
 
 /**
  * A QuizSubmission.

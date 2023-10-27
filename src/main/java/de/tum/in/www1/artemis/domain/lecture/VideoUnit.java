@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.domain.lecture;
 
-import javax.persistence.*;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import jakarta.persistence.*;
 
 @Entity
 @DiscriminatorValue("V")

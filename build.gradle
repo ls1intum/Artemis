@@ -243,10 +243,11 @@ dependencies {
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
-    implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
+//    implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:1.2023.10"
-    implementation "org.imsglobal:basiclti-util:1.2.0"
+    implementation "oauth.signpost:signpost-core:2.1.1"
+    implementation "oauth.signpost:signpost-commonshttp4:2.1.1"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation "com.atlassian.bamboo:bamboo-specs:9.3.3"
@@ -305,6 +306,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:3.1.1"
     implementation "org.springframework.data:spring-data-ldap:3.1.4"
@@ -355,7 +357,7 @@ dependencies {
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
-        exclude group: "javax.ws.rs", module: "jsr311-api"
+        exclude group: "jakarta.ws.rs", module: "jsr311-api"
     }
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: "com.vaadin.external.google", module: "android-json"

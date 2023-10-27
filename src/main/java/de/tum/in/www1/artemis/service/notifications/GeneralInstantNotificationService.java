@@ -5,8 +5,6 @@ import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsC
 
 import java.util.Set;
 
-import javax.validation.constraints.NotNull;
-
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +15,7 @@ import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * A Handler for InstantNotifications such as MailService and PushNotifications.

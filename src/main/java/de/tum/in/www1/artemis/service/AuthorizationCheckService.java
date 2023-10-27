@@ -6,8 +6,6 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import javax.annotation.CheckReturnValue;
-import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +23,8 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Service used to check whether user is authorized to perform actions on the entity.

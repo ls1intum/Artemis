@@ -17,8 +17,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.validation.constraints.NotNull;
-
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand;
@@ -72,6 +70,7 @@ import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
+import jakarta.validation.constraints.NotNull;
 
 class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.service.connectors.athena;
 
 import java.util.List;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -22,6 +20,7 @@ import de.tum.in.www1.artemis.repository.GradingInstructionRepository;
 import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Service for receiving feedback suggestions from the Athena service.

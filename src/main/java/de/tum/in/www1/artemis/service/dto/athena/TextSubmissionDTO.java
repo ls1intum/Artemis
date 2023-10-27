@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.service.dto.athena;
 
-import javax.validation.constraints.NotNull;
-
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * A DTO representing a TextSubmission, for transferring data to Athena

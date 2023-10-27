@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.io.Serializable;
 import java.util.Objects;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "user_groups")
