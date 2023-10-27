@@ -1,0 +1,21 @@
+api: v0.0.1
+metadata:
+    name: swift xcode regular runs
+    id: swift-windfile
+    description: This is a windfile for swift exercises with xcode
+    author: Andreas Resch
+    environment:
+        LC_ALL: en_US.UTF-8
+        LANG: en_US.UTF-8
+actions:
+    build:
+        script: |
+            # Build the project
+            fastlane build
+    test:
+        script: |
+            # Test the code and write test results into junit file
+            fastlane test
+            exit 0
+
+
