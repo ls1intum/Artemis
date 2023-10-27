@@ -43,6 +43,7 @@ import com.atlassian.bamboo.specs.builders.task.*;
 import com.atlassian.bamboo.specs.model.task.ScriptTaskProperties;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
+import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.*;
@@ -52,6 +53,10 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusRepository;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 
@@ -81,16 +86,20 @@ public class BambooBuildPlanService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final Optional<AeolusBuildPlanService> aeolusBuildPlanService;
+
     private final UrlService urlService;
 
     public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Optional<VersionControlService> versionControlService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration, UrlService urlService, BambooInternalUrlService bambooInternalUrlService) {
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration, UrlService urlService, BambooInternalUrlService bambooInternalUrlService,
+            Optional<AeolusBuildPlanService> aeolusBuildPlanService) {
         this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
         this.versionControlService = versionControlService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.urlService = urlService;
         this.bambooInternalUrlService = bambooInternalUrlService;
+        this.aeolusBuildPlanService = aeolusBuildPlanService;
     }
 
     /**
@@ -112,14 +121,36 @@ public class BambooBuildPlanService {
         final String projectName = programmingExercise.getProjectName();
         final boolean recordTestwiseCoverage = Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && "SOLUTION".equals(planKey);
 
-        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryUrl, testRepositoryUrl, programmingExercise.getCheckoutSolutionRepository(),
-                solutionRepositoryUrl, auxiliaryRepositories)
-                .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
-                        programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository(),
-                        recordTestwiseCoverage, programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
+        String assignedKey;
+        if (aeolusBuildPlanService.isPresent() && programmingExercise.getBuildPlanConfiguration() != null) {
+            Windfile windfile = programmingExercise.getWindfile();
+            Map<String, AeolusRepository> repositoryMap = new HashMap<>();
+            repositoryMap.put(ASSIGNMENT_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(repositoryUrl).toString(), programmingExercise.getBranch(),
+                    RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
+            if (programmingExercise.getCheckoutSolutionRepository()) {
+                repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(solutionRepositoryUrl).toString(),
+                        programmingExercise.getBranch(), RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
+            }
+            repositoryMap.put(TEST_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(testRepositoryUrl).toString(), programmingExercise.getBranch(),
+                    ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
+            windfile.setRepositories(repositoryMap);
+            windfile.setGitCredentials(this.gitUser);
+            windfile.setId(projectKey + "-" + planKey);
+            Gson gson = new Gson();
+            assignedKey = aeolusBuildPlanService.get().publishBuildPlan(gson.toJson(windfile), "bamboo");
+            assignedKey = planKey;
+        }
+        else {
+            Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryUrl, testRepositoryUrl,
+                    programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryUrl, auxiliaryRepositories)
+                            .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
+                                    programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(),
+                                    programmingExercise.getCheckoutSolutionRepository(), recordTestwiseCoverage, programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
+            bambooServer.publish(plan);
+            assignedKey = plan.getKey().toString();
+        }
 
-        bambooServer.publish(plan);
-        setBuildPlanPermissionsForExercise(programmingExercise, plan.getKey().toString());
+        setBuildPlanPermissionsForExercise(programmingExercise, assignedKey);
     }
 
     /**
