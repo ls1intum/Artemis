@@ -29,6 +29,10 @@ public class ProfileService {
         return isProfileActive("bamboo");
     }
 
+    public boolean isSharing() {
+        return isProfileActive("sharing");
+    }
+
     private boolean isProfileActive(String profile) {
         return Set.of(this.environment.getActiveProfiles()).contains(profile);
     }

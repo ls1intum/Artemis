@@ -114,8 +114,8 @@ export class ProgrammingExerciseSharingService {
     }
 
     /**
-     * Check if Sharing has been enabled
-     * (if getConfig call has arrived from Sharing)
+     * Check if the Sharing platform integration has been enabled.
+     * If enabled the request will return a 200, and a 503 if not.
      */
     isSharingEnabled() {
         return this.http.get<boolean>(this.baseSharingConfigUrl + '/is-enabled', {

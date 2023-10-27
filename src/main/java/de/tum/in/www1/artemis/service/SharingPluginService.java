@@ -25,14 +25,18 @@ public class SharingPluginService {
     /**
      * Base url for callbacks
      */
+    @Value("${artemis.sharing.api-url:#{null}}")
     private URL sharingApiBaseUrl;
 
-    @Value("${artemis.sharing.api-key}")
+    @Value("${artemis.sharing.api-key:#{null}}")
     private String sharingApiKey;
 
     private String installationName;
 
-    public SharingPluginService() {
+    private ProfileService profileService;
+
+    public SharingPluginService(ProfileService profileService) {
+        this.profileService = profileService;
     }
 
     /**
@@ -75,7 +79,7 @@ public class SharingPluginService {
      * Method used to check if a Sharing ApiBaseUrl is present
      */
     public boolean isSharingApiBaseUrlPresent() {
-        return !(sharingApiBaseUrl == null);
+        return this.profileService.isSharing() && sharingApiBaseUrl != null;
     }
 
     /**

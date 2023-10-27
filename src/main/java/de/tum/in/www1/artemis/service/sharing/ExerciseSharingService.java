@@ -16,7 +16,6 @@ import java.util.zip.ZipInputStream;
 import javax.ws.rs.client.*;
 import javax.ws.rs.core.MediaType;
 
-import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import org.apache.http.client.utils.URIBuilder;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.glassfish.jersey.client.ClientConfig;
@@ -36,6 +35,7 @@ import de.tum.in.www1.artemis.domain.sharing.SharingMultipartZipFile;
 import de.tum.in.www1.artemis.exception.SharingException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.SharingPluginService;
+import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.SharingInfoDTO;
 
 @Service
@@ -83,7 +83,8 @@ public class ExerciseSharingService {
             ShoppingBasket shoppingBasket = target.request().accept(MediaType.APPLICATION_JSON).get(ShoppingBasket.class);
 
             return Optional.ofNullable(shoppingBasket);
-        } catch (ResponseProcessingException rpe) {
+        }
+        catch (ResponseProcessingException rpe) {
             log.warn("Unrecognized property when importing exercise from Sharing", rpe);
             return Optional.empty();
         }
@@ -128,6 +129,7 @@ public class ExerciseSharingService {
 
     /**
      * Retrieves the Problem-Statement file from a Sharing basket
+     *
      * @param sharingInfo of the basket to extract the problem statement from
      * @return The content of the Problem-Statement file
      * @throws IOException if a reading error occurs
@@ -141,6 +143,7 @@ public class ExerciseSharingService {
 
     /**
      * Retrieves the Exercise-Details file from a Sharing basket
+     *
      * @param sharingInfo of the basket to extract the problem statement from
      * @return The content of the Exercise-Details file
      * @throws IOException if a reading error occurs
@@ -155,8 +158,9 @@ public class ExerciseSharingService {
     /**
      * Retrieves an entry from a given Sharing basket, basing on the given RegEx.
      * If nothing is found, null is returned.
+     *
      * @param matchingPattern RegEx matching the entry to return.
-     * @param sharingInfo of the basket to retrieve the entry from
+     * @param sharingInfo     of the basket to retrieve the entry from
      * @return The content of the entry, or null if not found.
      * @throws IOException if a readingf error occurs
      */
@@ -172,7 +176,7 @@ public class ExerciseSharingService {
         ZipInputStream zippedRepositoryStream = new ZipInputStream(repositoryStream);
 
         ZipEntry entry;
-        while((entry = zippedRepositoryStream.getNextEntry()) != null) {
+        while ((entry = zippedRepositoryStream.getNextEntry()) != null) {
             Matcher matcher = matchingPattern.matcher(entry.getName());
             if (matcher.find()) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -205,17 +209,20 @@ public class ExerciseSharingService {
         try {
             ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
             List<String> exportErrors = new ArrayList<>();
-            File zipFile = programmingExerciseExportService.exportProgrammingExerciseForDownload(exercise, exportErrors).toFile();
+            Path zipFilePath = programmingExerciseExportService.exportProgrammingExerciseForDownload(exercise, exportErrors);
 
             if (!exportErrors.isEmpty()) {
                 throw new SharingException("Could not generate Zip file to export");
             }
-            String token = zipFile.getName().replace(".zip", "");
+
+            // remove the 'repoDownloadClonePath' part and 'zip' extension
+            String token = zipFilePath.subpath(1, zipFilePath.getNameCount()).toString().replace(".zip", "");
+            String tokenInB64 = Base64.getEncoder().encodeToString(token.getBytes()).replaceAll("=+$", "");
 
             URIBuilder builder = new URIBuilder();
             URL apiBaseUrl = sharingPluginService.getSharingApiBaseUrlOrNull();
             String importEndpoint = "/exercise/import";
-            String exerciseCallback = artemisServerUrl + "/api/sharing/export/" + token;
+            String exerciseCallback = artemisServerUrl + "/api/sharing/export/" + tokenInB64;
             builder.setScheme(apiBaseUrl.getProtocol()).setHost(apiBaseUrl.getHost()).setPath(apiBaseUrl.getPath().concat(importEndpoint)).setPort(apiBaseUrl.getPort())
                     .addParameter("exerciseUrl", exerciseCallback);
             if (sharingPluginService.getSharingApiKeyOrNull() != null) {
@@ -233,8 +240,9 @@ public class ExerciseSharingService {
         }
     }
 
-    public File getExportedExerciseByToken(String token) {
-        Path parent = Paths.get(repoDownloadClonePath, "programming-exercise-material", token + ".zip");
+    public File getExportedExerciseByToken(String b64Token) {
+        String decodedToken = new String(Base64.getDecoder().decode(b64Token));
+        Path parent = Paths.get(repoDownloadClonePath, decodedToken + ".zip");
         File exportedExercise = parent.toFile();
         if (exportedExercise.exists()) {
             return exportedExercise;

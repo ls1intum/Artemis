@@ -9,8 +9,7 @@
                 "linkLabel": "Link new Programming Exercise",
                 "switchToGuidedModeLabel": "Switch to guided mode",
                 "switchToTraditionalModeLabel": "Switch to normal mode",
-                "nextStepLabel": "Next",
-                "importFromSharing": "Import Programming Exercise from Sharing Platform"
+                "nextStepLabel": "Next"
             },
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",
@@ -561,6 +560,10 @@
                 "totalJobDuration": "Total Job",
                 "dependenciesDownloadedCount": "Number of downloaded dependencies",
                 "tooltip": "The average build duration is calculated based on all builds (template, solution and student submissions). The number of downloaded dependencies can be reduced by caching dependencies in the Docker image."
+            },
+            "sharing": {
+                "import": "Import Programming Exercise from Sharing Platform",
+                "export": "Export to Sharing"
             },
             "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing."
         },

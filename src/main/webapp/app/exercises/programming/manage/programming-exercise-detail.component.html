@@ -121,6 +121,16 @@
                     >
                         <fa-icon [icon]="faChartBar"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
                     </a>
+                    <button
+                        type="submit"
+                        *ngIf="programmingExercise.isAtLeastInstructor && isExportToSharingEnabled"
+                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                        (click)="exportExerciseToSharing(programmingExercise.id!)"
+                        class="btn btn-success btn-sm me-1"
+                    >
+                        <fa-icon [icon]="'file-export'"></fa-icon>
+                        <span jhiTranslate="artemisApp.programmingExercise.sharing.export" class="me-1">Export to Sharing</span>
+                    </button>
                 </div>
                 <div>
                     <span

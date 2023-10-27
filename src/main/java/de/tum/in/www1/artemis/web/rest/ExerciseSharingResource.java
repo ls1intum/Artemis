@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.SHARINGEXPORT_RESOURCE_PATH;
+
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -126,7 +128,7 @@ public class ExerciseSharingResource {
      * @param exerciseId the id of the exercise to export
      * @return the URL to Sharing
      */
-    @PostMapping("/sharing/export/{exerciseId}")
+    @PostMapping(SHARINGEXPORT_RESOURCE_PATH + "/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public Response exportExerciseToSharing(@RequestBody String callBackUrl, @PathVariable("exerciseId") Long exerciseId) throws URISyntaxException, SharingException {
         Client client = ClientBuilder.newClient();
@@ -137,7 +139,15 @@ public class ExerciseSharingResource {
         return Response.temporaryRedirect(uriRedirect).build();
     }
 
-    @GetMapping("/sharing/export/{token}")
+    /**
+     * GET /sharing/export/{exerciseToken}: Endpoint exposing an exported exercise to Sharing
+     *
+     * @param sharingApiKey used to validate the export
+     * @param token         in base64 format and used to retrieve the exercise
+     * @return
+     * @throws FileNotFoundException
+     */
+    @GetMapping(SHARINGEXPORT_RESOURCE_PATH + "/{token}")
     // Custom Key validation is applied
     public ResponseEntity<Resource> exportExerciseToSharing(@RequestHeader("Authorization") Optional<String> sharingApiKey, @PathVariable("token") String token)
             throws FileNotFoundException {

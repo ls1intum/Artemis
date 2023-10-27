@@ -15,6 +15,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ProgrammingExerciseSharingService } from 'app/exercises/programming/manage/services/programming-exercise-sharing.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
@@ -89,6 +90,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     // Also used to hide the buttons to lock and unlock all repositories as that does not do anything in the local VCS.
     localVCEnabled = false;
     irisEnabled = false;
+    isExportToSharingEnabled = false;
 
     isAdmin = false;
     addedLineCount: number;
@@ -139,6 +141,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private router: Router,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private consistencyCheckService: ConsistencyCheckService,
+        private sharingService: ProgrammingExerciseSharingService,
     ) {}
 
     ngOnInit() {
@@ -221,6 +224,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.doughnutStats = statistics;
             });
         });
+        this.sharingService.isSharingEnabled().subscribe((res) => {
+            this.isExportToSharingEnabled = res.status === 200;
+        });
     }
 
     ngOnDestroy(): void {
@@ -263,6 +269,24 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     message: errorMessage,
                     disableTranslation: true,
                 });
+            },
+        });
+    }
+
+    /**
+     * Initiates the export of an exercise to Sharing.
+     * Results in a redirect containing a callback to the exposed exercise
+     * @param programmingExerciseId the id of the exercise to export
+     */
+    exportExerciseToSharing(programmingExerciseId: number) {
+        this.sharingService.exportProgrammingExerciseToSharing(programmingExerciseId, window.location.href).subscribe({
+            next: (response) => {
+                if (response.body) {
+                    window.location.href = response.body['location'];
+                }
+            },
+            error: (errorResponse) => {
+                this.alertService.error('Unable to export exercise. Error: ' + errorResponse.message);
             },
         });
     }

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,9 +35,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.user.PasswordService;
-
-import static de.tum.in.www1.artemis.config.Constants.SHARINGCONFIG_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.config.Constants.SHARINGIMPORT_RESOURCE_API_PATH;
 
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
@@ -177,8 +176,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*").permitAll()
             .antMatchers("/websocket/**").permitAll()
             .antMatchers("/.well-known/jwks.json").permitAll()
-            .antMatchers(HttpMethod.GET, SHARINGCONFIG_RESOURCE_API_PATH).permitAll()
-            .antMatchers(HttpMethod.GET, SHARINGIMPORT_RESOURCE_API_PATH).permitAll()
+            .antMatchers(HttpMethod.GET, "/api" + SHARINGCONFIG_RESOURCE_PATH).permitAll()
+            .antMatchers(HttpMethod.GET, "/api" + SHARINGIMPORT_RESOURCE_PATH).permitAll()
+            .antMatchers(HttpMethod.GET, "/api" + SHARINGEXPORT_RESOURCE_PATH + "/**").permitAll()
             .antMatchers("/management/prometheus/**").access(getMonitoringAccessDefinition())
             .antMatchers("/api/**").authenticated()
         .and()

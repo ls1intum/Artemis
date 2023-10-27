@@ -6,7 +6,6 @@
                 "createLabel": "Programmieraufgabe erstellen",
                 "editLabel": "Programmieraufgabe bearbeiten",
                 "importLabel": "Programmieraufgabe importieren",
-                "importFromSharing": "Programmieraufgabe aus Austauschplattform importieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
                 "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
                 "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
@@ -562,6 +561,10 @@
                 "totalJobDuration": "kompletter Job",
                 "dependenciesDownloadedCount": "Anzahl heruntergeladener Abhängigkeiten",
                 "tooltip": "The durchschnittlichen Statistiken werden von allen Builds (Template-, Lösung- und Studierendenabgaben) berechnet. Die Anzahl der heruntergeladenen Abhängigkeiten kann durch Caching im Docker-Image verringert werden."
+            },
+            "sharing": {
+                "import": "Programmieraufgabe aus Sharing importieren",
+                "export": "Exportieren nach Sharing"
             },
             "studentDownloadTestsTooltip": "Hier kannst du die Tests runterladen. Die Beispiellösung wird automatisch an der Stelle eingefügt an der du deine Lösung platzieren musst, um diese zu testen."
         },

@@ -11,7 +11,6 @@ import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -61,7 +60,10 @@ public class SharingSupportResource {
      * @return true if a Sharing ApiBaseUrl is present, false otherwise
      */
     @GetMapping(SHARINGCONFIG_RESOURCE_IS_ENABLED)
-    public ResponseEntity<Boolean> isSharingEnabled() {
-        return new ResponseEntity<>(sharingPluginService.isSharingApiBaseUrlPresent(), HttpStatus.OK);
+    public ResponseEntity<Void> isSharingEnabled() {
+        if (sharingPluginService.isSharingApiBaseUrlPresent()) {
+            return ResponseEntity.status(200).body(null);
+        }
+        return ResponseEntity.status(503).body(null);
     }
 }

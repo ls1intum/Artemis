@@ -314,13 +314,11 @@ public final class Constants {
 
     public static final String SHARINGCONFIG_RESOURCE_PATH = "/sharing/config";
 
-    public static final String SHARINGCONFIG_RESOURCE_API_PATH = "/api" + SHARINGCONFIG_RESOURCE_PATH;
-
     public static final String SHARINGCONFIG_RESOURCE_IS_ENABLED = SHARINGCONFIG_RESOURCE_PATH + "/is-enabled";
 
     public static final String SHARINGIMPORT_RESOURCE_PATH = "/sharing/import";
 
-    public static final String SHARINGIMPORT_RESOURCE_API_PATH = "/api" + SHARINGIMPORT_RESOURCE_PATH;
+    public static final String SHARINGEXPORT_RESOURCE_PATH = "/sharing/export";
 
     private Constants() {
     }
