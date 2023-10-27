@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -301,6 +302,16 @@ public class ProgrammingExerciseImportBasicService {
 
         if (newExercise.isTeamMode()) {
             newExercise.getTeamAssignmentConfig().setId(null);
+        }
+
+        if (newExercise.isCourseExercise() && newExercise.getPlagiarismDetectionConfig() != null) {
+            newExercise.getPlagiarismDetectionConfig().setId(null);
+        }
+        else if (newExercise.isCourseExercise() && newExercise.getPlagiarismDetectionConfig() == null) {
+            newExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        }
+        else {
+            newExercise.setPlagiarismDetectionConfig(null);
         }
     }
 
