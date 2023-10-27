@@ -409,9 +409,7 @@ describe('AccountService', () => {
         accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
 
         expect(exercise.isAtLeastEditor).toBeTrue();
-        expect(exercise.isAtLeastEditor).toBeTrue();
         expect(exercise.isAtLeastInstructor).toBeTrue();
-        expect(exercise.course!.isAtLeastEditor).toBeTrue();
         expect(exercise.course!.isAtLeastEditor).toBeTrue();
         expect(exercise.course!.isAtLeastInstructor).toBeTrue();
     });
@@ -422,9 +420,7 @@ describe('AccountService', () => {
         accountService.setAccessRightsForExerciseAndReferencedCourse(examExercise);
 
         expect(examExercise.isAtLeastEditor).toBeTrue();
-        expect(examExercise.isAtLeastEditor).toBeTrue();
         expect(examExercise.isAtLeastInstructor).toBeTrue();
-        expect(examExercise.exerciseGroup!.exam!.course!.isAtLeastEditor).toBeTrue();
         expect(examExercise.exerciseGroup!.exam!.course!.isAtLeastEditor).toBeTrue();
         expect(examExercise.exerciseGroup!.exam!.course!.isAtLeastInstructor).toBeTrue();
     });
@@ -436,9 +432,7 @@ describe('AccountService', () => {
         accountService.setAccessRightsForCourseAndReferencedExercises(course);
 
         expect(exercise.isAtLeastEditor).toBeTrue();
-        expect(exercise.isAtLeastEditor).toBeTrue();
         expect(exercise.isAtLeastInstructor).toBeTrue();
-        expect(exercise.course!.isAtLeastEditor).toBeTrue();
         expect(exercise.course!.isAtLeastEditor).toBeTrue();
         expect(exercise.course!.isAtLeastInstructor).toBeTrue();
     });
