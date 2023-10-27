@@ -59,20 +59,4 @@ export class FileUploaderService {
         formData.append('file', file, fileName);
         return lastValueFrom(this.http.post<FileUploadResponse>(endpoint + `?keepFileName=${keepFileName}`, formData));
     }
-
-    /**
-     * Duplicates file in the server.
-     * @param filePath Path of the file which needs to be duplicated
-     */
-    async duplicateFile(filePath: string): Promise<FileUploadResponse> {
-        // Get file from the server using filePath,
-        const file = await lastValueFrom(this.http.get(filePath, { responseType: 'blob' }));
-        // Generate a temp file name with extension. File extension is necessary as server stores only specific kind of files,
-        const tempFilename = 'temp' + filePath.split('/').pop()!.split('#')[0].split('?')[0];
-        const formData = new FormData();
-        formData.append('file', file, tempFilename);
-        // Upload the file to server. This will make a new file in the server in the temp folder
-        // and will return path of the file,
-        return await lastValueFrom(this.http.post<FileUploadResponse>(`/api/fileUpload?keepFileName=${false}`, formData));
-    }
 }
