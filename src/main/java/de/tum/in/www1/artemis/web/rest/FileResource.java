@@ -8,7 +8,6 @@ import java.net.URLConnection;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -86,10 +85,13 @@ public class FileResource {
 
     private final CourseRepository courseRepository;
 
+    private final FilePathService filePathService;
+
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
             AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository) {
+            ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
+            FilePathService filePathService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -105,6 +107,7 @@ public class FileResource {
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
+        this.filePathService = filePathService;
     }
 
     /**
@@ -195,7 +198,7 @@ public class FileResource {
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        return responseEntityForFilePath(FilePathService.actualPathForPublicPath(URI.create(question.getBackgroundFilePath())));
+        return responseEntityForFilePath(filePathService.actualPathForPublicPathOrThrow(URI.create(question.getBackgroundFilePath())));
     }
 
     /**
@@ -214,7 +217,7 @@ public class FileResource {
         if (dragItem.getPictureFilePath() == null) {
             throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");
         }
-        return responseEntityForFilePath(FilePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath())));
+        return responseEntityForFilePath(filePathService.actualPathForPublicPathOrThrow(URI.create(dragItem.getPictureFilePath())));
     }
 
     /**
@@ -252,7 +255,7 @@ public class FileResource {
             throw new EntityNotFoundException("Submission " + submissionId + " has no file");
         }
 
-        return buildFileResponse(Objects.requireNonNull(FilePathService.actualPathForPublicPath(URI.create(submission.getFilePath()))), false);
+        return buildFileResponse(filePathService.actualPathForPublicPathOrThrow(URI.create(submission.getFilePath())), false);
     }
 
     /**
@@ -267,7 +270,7 @@ public class FileResource {
         log.debug("REST request to get icon for course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        return responseEntityForFilePath(FilePathService.actualPathForPublicPath(URI.create(course.getCourseIcon())));
+        return responseEntityForFilePath(filePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())));
     }
 
     /**
@@ -301,7 +304,7 @@ public class FileResource {
             throw new EntityNotFoundException("Exam user " + examUserId + " has no signature file");
         }
 
-        return buildFileResponse(Objects.requireNonNull(FilePathService.actualPathForPublicPath(URI.create(examUser.getSigningImagePath()))), false);
+        return buildFileResponse(filePathService.actualPathForPublicPathOrThrow(URI.create(examUser.getSigningImagePath())), false);
     }
 
     /**
@@ -321,7 +324,7 @@ public class FileResource {
             throw new EntityNotFoundException("Exam user " + examUserId + " has no image file");
         }
 
-        return buildFileResponse(Objects.requireNonNull(FilePathService.actualPathForPublicPath(URI.create(examUser.getStudentImagePath()))), true);
+        return buildFileResponse(filePathService.actualPathForPublicPathOrThrow(URI.create(examUser.getStudentImagePath())), true);
     }
 
     /**
@@ -352,7 +355,7 @@ public class FileResource {
             throw new EntityNotFoundException("Attachment " + filename + " has no file");
         }
 
-        return buildFileResponse(Objects.requireNonNull(FilePathService.actualPathForPublicPath(URI.create(attachment.getLink()))), false);
+        return buildFileResponse(filePathService.actualPathForPublicPathOrThrow(URI.create(attachment.getLink())), false);
     }
 
     /**
@@ -413,7 +416,7 @@ public class FileResource {
             throw new EntityNotFoundException("Attachment " + attachmentUnitId + " has no file");
         }
 
-        return buildFileResponse(Objects.requireNonNull(FilePathService.actualPathForPublicPath(URI.create(attachment.getLink()))), false);
+        return buildFileResponse(filePathService.actualPathForPublicPathOrThrow(URI.create(attachment.getLink())), false);
     }
 
     /**
