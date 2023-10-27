@@ -1,0 +1,46 @@
+api: v0.0.1
+metadata:
+    name: assembler regular runs
+    id: assembler-windfile
+    description: This is a windfile for assembler exercises
+    author: Andreas Resch
+actions:
+    provide-environment-information:
+        script: |
+            #!/bin/bash
+            echo "--------------------Python versions--------------------"
+            python3 --version
+            pip3 --version
+
+            echo "--------------------Contents of tests repository--------------------"
+            ls -la tests
+            echo "---------------------------------------------"
+            echo "--------------------Contents of assignment repository--------------------"
+            ls -la assignment
+            echo "---------------------------------------------"
+
+            #Fallback in case Docker does not work as intended
+            REQ_FILE=tests/requirements.txt
+            if [ -f "$REQ_FILE" ]; then
+                pip3 install --user -r tests/requirements.txt
+            else
+                echo "$REQ_FILE does not exist"
+            fi
+
+            exit 0
+    prepare-makefile:
+        script: |
+            #!/usr/bin/env bash
+            rm -f assignment/{GNUmakefile, Makefile, makefile}
+            rm -f assignment/io.inc
+
+            cp -f tests/Makefile assignment/Makefile || exit 2
+            cp -f tests/io.inc assignment/io.inc || exit 2
+    run_and_compile:
+        script: |
+            cd tests
+            python3 compileTest.py ../assignment/
+            rm compileTest.py
+            cp result.xml ../assignment/result.xml
+
+            exit 0

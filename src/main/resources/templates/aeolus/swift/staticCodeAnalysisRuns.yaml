@@ -1,0 +1,16 @@
+api: v0.0.1
+metadata:
+    name: swift static code analysis runs
+    id: swift-windfile
+    description: This is a windfile for swift exercises with static code analysis
+    author: Andreas Resch
+actions:
+    run-static-code-analysis:
+        script: |
+            # Copy SwiftLint rules
+            cp .swiftlint.yml assignment || true
+            # create target directory for SCA Parser
+            mkdir target
+            cd assignment
+            # Execute static code analysis
+            swiftlint > ../target/swiftlint-result.xml
