@@ -448,6 +448,10 @@
         {
             "fullName": "Lennart Keller",
             "photoDirectory": "public/images/about/Lennart_Keller.jpg"
+        },
+        {
+            "fullName": "Andreas Resch",
+            "photoDirectory": "public/images/about/Andreas_Resch.png"
         }
     ]
 }
