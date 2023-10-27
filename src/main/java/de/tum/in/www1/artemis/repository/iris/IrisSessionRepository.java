@@ -41,4 +41,9 @@ public interface IrisSessionRepository extends JpaRepository<IrisSession, Long> 
     default IrisSession findByIdWithMessagesElseThrow(long sessionId) throws EntityNotFoundException {
         return findByIdWithMessages(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris Session", sessionId));
     }
+
+    @NotNull
+    default IrisSession findByIdWithMessagesAndContentsElseThrow(long sessionId) throws EntityNotFoundException {
+        return Optional.ofNullable(findByIdWithMessagesAndContents(sessionId)).orElseThrow(() -> new EntityNotFoundException("Iris Session", sessionId));
+    }
 }

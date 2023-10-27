@@ -20,8 +20,6 @@ import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisCodeEditorWebsocketService;
-import de.tum.in.www1.artemis.web.rest.dto.iris.IrisMessageAndUnsavedChangesDTO;
-import de.tum.in.www1.artemis.web.rest.dto.iris.UnsavedCodeEditorChangesDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
@@ -49,30 +47,6 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
     }
 
     /**
-     * POST code-editor-sessions/{sessionId}/messages: Send a new message from the user to the LLM
-     *
-     * @param sessionId of the session
-     * @param dto       message from the user and exercise state as currently seen by the user
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
-     */
-    @PostMapping("code-editor-sessions/{sessionId}/messages")
-    @EnforceAtLeastEditor
-    public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessageAndUnsavedChangesDTO dto) throws URISyntaxException {
-        var session = irisSessionRepository.findByIdElseThrow(sessionId);
-        irisCodeEditorSessionService.checkIsIrisActivated(session);
-        var user = userRepository.getUser();
-        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, user);
-        rateLimitService.checkRateLimitElseThrow(user);
-
-        var savedMessage = irisMessageService.saveMessage(dto.message(), session, IrisMessageSender.USER);
-        irisCodeEditorSessionService.converseWithModel(session, dto.unsavedChanges());
-        savedMessage.setMessageDifferentiator(dto.message().getMessageDifferentiator());
-        irisCodeEditorWebsocketService.sendMessage(savedMessage);
-        String uriString = "/api/iris/code-editor-sessions/" + session.getId() + "/messages/" + savedMessage.getId();
-        return ResponseEntity.created(new URI(uriString)).body(savedMessage);
-    }
-
-    /**
      * GET code-editor-session/{sessionId}/message: Retrieve the messages for the iris session.
      *
      * @param sessionId of the session
@@ -85,6 +59,28 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
     }
 
     /**
+     * POST code-editor-sessions/{sessionId}/messages: Send a new message from the user to the LLM
+     *
+     * @param sessionId of the session
+     * @param message   message from the user
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
+     */
+    @PostMapping("code-editor-sessions/{sessionId}/messages")
+    @EnforceAtLeastEditor
+    public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
+        var fromDB = irisSessionRepository.findByIdWithMessagesAndContentsElseThrow(sessionId);
+        if (!(fromDB instanceof IrisCodeEditorSession session)) {
+            throw new BadRequestException("Session is not a code editor session");
+        }
+        var savedMessage = super.postMessage(session, message);
+
+        irisCodeEditorSessionService.converseWithModel(session);
+        irisCodeEditorWebsocketService.sendMessage(savedMessage);
+        String uriString = "/api/iris/code-editor-sessions/" + sessionId + "/messages/" + savedMessage.getId();
+        return ResponseEntity.created(new URI(uriString)).body(savedMessage);
+    }
+
+    /**
      * POST code-editor-sessions/{sessionId}/messages/{messageId}/resend: Resend a message if there was previously an error when sending it to the LLM
      *
      * @param sessionId of the session
@@ -94,26 +90,13 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
      */
     @PostMapping("code-editor-sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastEditor
-    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody UnsavedCodeEditorChangesDTO unsavedChanges) {
-        var fromDB = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
+        var fromDB = irisSessionRepository.findByIdWithMessagesAndContentsElseThrow(sessionId);
         if (!(fromDB instanceof IrisCodeEditorSession session)) {
             throw new BadRequestException("Session is not a code editor session");
         }
-        irisCodeEditorSessionService.checkIsIrisActivated(session);
-        var user = userRepository.getUser();
-        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, user);
-        rateLimitService.checkRateLimitElseThrow(user);
-
-        var message = irisMessageRepository.findByIdElseThrow(messageId);
-        if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {
-            throw new BadRequestException("Only the last message can be resent");
-        }
-        if (message.getSender() != IrisMessageSender.USER) {
-            throw new BadRequestException("Only user messages can be resent");
-        }
-        irisCodeEditorSessionService.converseWithModel(session, unsavedChanges);
-        message.setMessageDifferentiator(message.getMessageDifferentiator());
-
+        var message = super.getMessageToResend(session, messageId);
+        irisCodeEditorSessionService.converseWithModel(session);
         return ResponseEntity.ok(message);
     }
 
@@ -128,14 +111,13 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
      */
     @PostMapping("code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}/execute")
     @EnforceAtLeastEditor
-    public ResponseEntity<Void> executeExercisePlanStep(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long planId, @PathVariable Long stepId,
-            @RequestBody UnsavedCodeEditorChangesDTO exerciseState) {
+    public ResponseEntity<Void> executeExercisePlanStep(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long planId, @PathVariable Long stepId) {
         var step = irisExercisePlanStepRepository.findByIdElseThrow(stepId);
         var session = checkIdsAndGetSession(sessionId, messageId, planId, step);
 
         irisCodeEditorSessionService.checkIsIrisActivated(session);
         irisCodeEditorSessionService.checkHasAccessToIrisSession(session, null);
-        irisCodeEditorSessionService.requestChangesToExerciseComponent(session, step, exerciseState);
+        irisCodeEditorSessionService.requestChangesToExerciseComponent(session, step);
         // Return with empty body now, the changes will be sent over the websocket when they are ready
         return ResponseEntity.ok(null);
     }

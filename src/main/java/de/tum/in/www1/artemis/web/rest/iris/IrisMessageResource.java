@@ -62,6 +62,47 @@ public abstract class IrisMessageResource {
     }
 
     /**
+     * Create a new message from the user to the LLM
+     *
+     * @param session the session
+     * @param message to message to send
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
+     */
+    protected IrisMessage postMessage(IrisSession session, IrisMessage message) {
+        irisSessionService.checkIsIrisActivated(session);
+        var user = userRepository.getUser();
+        irisSessionService.checkHasAccessToIrisSession(session, user);
+        rateLimitService.checkRateLimitElseThrow(user);
+
+        var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
+        savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
+        return savedMessage;
+    }
+
+    /**
+     * Resend a message if there was previously an error when sending it to the LLM
+     *
+     * @param session   the session
+     * @param messageId of the message
+     * @return the {@link IrisMessage} that was resent
+     */
+    protected IrisMessage getMessageToResend(IrisSession session, Long messageId) {
+        irisSessionService.checkIsIrisActivated(session);
+        var user = userRepository.getUser();
+        irisSessionService.checkHasAccessToIrisSession(session, user);
+        rateLimitService.checkRateLimitElseThrow(user);
+
+        var message = irisMessageRepository.findByIdElseThrow(messageId);
+        if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {
+            throw new BadRequestException("Only the last message can be resent");
+        }
+        if (message.getSender() != IrisMessageSender.USER) {
+            throw new BadRequestException("Only user messages can be resent");
+        }
+        return message;
+    }
+
+    /**
      * @param sessionId of the session
      * @param messageId of the message
      * @param helpful   true if the message was helpful, false otherwise, null as default

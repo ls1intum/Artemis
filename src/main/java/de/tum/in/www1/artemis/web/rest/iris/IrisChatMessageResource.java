@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
@@ -42,33 +41,6 @@ public class IrisChatMessageResource extends IrisMessageResource {
     }
 
     /**
-     * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM
-     *
-     * @param sessionId of the session
-     * @param message   to send
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
-     */
-    @PostMapping("sessions/{sessionId}/messages")
-    @EnforceAtLeastStudent
-    public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
-        var fromDB = irisSessionRepository.findByIdElseThrow(sessionId);
-        if (!(fromDB instanceof IrisChatSession session)) {
-            throw new BadRequestException("Session is not a chat session");
-        }
-        irisSessionService.checkIsIrisActivated(session);
-        var user = userRepository.getUser();
-        irisSessionService.checkHasAccessToIrisSession(session, user);
-        rateLimitService.checkRateLimitElseThrow(user);
-
-        var savedMessage = irisMessageService.saveMessage(message, fromDB, IrisMessageSender.USER);
-        irisChatSessionService.requestAndHandleResponse(session);
-        savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
-        irisChatWebsocketService.sendMessage(savedMessage);
-        String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
-        return ResponseEntity.created(new URI(uriString)).body(savedMessage);
-    }
-
-    /**
      * GET session/{sessionId}/message: Retrieve the messages for the iris session.
      *
      * @param sessionId of the session
@@ -78,6 +50,27 @@ public class IrisChatMessageResource extends IrisMessageResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<IrisMessage>> getMessages(@PathVariable Long sessionId) {
         return super.getMessages(sessionId);
+    }
+
+    /**
+     * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM
+     *
+     * @param sessionId of the session
+     * @param message   to send
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
+     */
+    @PostMapping("sessions/{sessionId}/messages")
+    @EnforceAtLeastStudent
+    public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
+        var fromDB = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
+        if (!(fromDB instanceof IrisChatSession session)) {
+            throw new BadRequestException("Session is not a chat session");
+        }
+        var savedMessage = super.postMessage(session, message);
+
+        irisChatWebsocketService.sendMessage(savedMessage);
+        String uriString = "/api/iris/sessions/" + sessionId + "/messages/" + savedMessage.getId();
+        return ResponseEntity.created(new URI(uriString)).body(savedMessage);
     }
 
     /**
@@ -95,21 +88,8 @@ public class IrisChatMessageResource extends IrisMessageResource {
         if (!(fromDB instanceof IrisChatSession session)) {
             throw new BadRequestException("Session is not a chat session");
         }
-        irisSessionService.checkIsIrisActivated(session);
-        var user = userRepository.getUser();
-        irisSessionService.checkHasAccessToIrisSession(session, user);
-        rateLimitService.checkRateLimitElseThrow(user);
-
-        var message = irisMessageRepository.findByIdElseThrow(messageId);
-        if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {
-            throw new BadRequestException("Only the last message can be resent");
-        }
-        if (message.getSender() != IrisMessageSender.USER) {
-            throw new BadRequestException("Only user messages can be resent");
-        }
+        var message = super.getMessageToResend(session, messageId);
         irisChatSessionService.requestAndHandleResponse(session);
-        message.setMessageDifferentiator(message.getMessageDifferentiator());
-
         return ResponseEntity.ok(message);
     }
 
