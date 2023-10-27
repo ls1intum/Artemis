@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
-import javax.annotation.Nullable;
-
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -29,7 +35,6 @@ import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisCodeEditorWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
  * Service to handle the code editor subsystem of Iris.
@@ -56,9 +61,15 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private final RepositoryService repositoryService;
 
+    private final TemplateProgrammingExerciseParticipationRepository templateParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
+
     public IrisCodeEditorSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, AuthorizationCheckService authCheckService,
-            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, GitService gitService, RepositoryService repositoryService) {
+            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, GitService gitService, RepositoryService repositoryService,
+            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -67,6 +78,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         this.irisCodeEditorSessionRepository = irisCodeEditorSessionRepository;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
+        this.templateParticipationRepository = templateParticipationRepository;
+        this.solutionParticipationRepository = solutionParticipationRepository;
     }
 
     public IrisCodeEditorSession createSession(ProgrammingExercise exercise, User user) {
@@ -252,7 +265,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                         log.error("No changes for exercise " + component + " in response from Iris model");
                     }
                     else {
-                        // TODO: Inject changes into the exercise repository
+                        switch (component) {
+                            case PROBLEM_STATEMENT -> {
+                                // TODO: Problem statement is not part of the repository. How should we handle it?
+                            }
+                            case SOLUTION_REPOSITORY -> injectChangesIntoRepository(solutionRepository(session.getExercise()), changes);
+                            case TEMPLATE_REPOSITORY -> injectChangesIntoRepository(templateRepository(session.getExercise()), changes);
+                            case TEST_REPOSITORY -> injectChangesIntoRepository(testRepository(session.getExercise()), changes);
+                        }
                         irisCodeEditorWebsocketService.promptReload(session);
                     }
                 }
@@ -263,6 +283,67 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             }
             return null;
         });
+    }
+
+    /**
+     * Initializes the parameters for the request to Iris. This method merges the unsaved changes from the code editor
+     * with the database version of the exercise, and saves the result in a map to send to Iris.
+     *
+     * @param exercise The programming exercise
+     * @return A modifiable map with the parameters for the request to Iris
+     */
+    private Map<String, Object> initializeParams(ProgrammingExercise exercise) {
+        var params = new HashMap<String, Object>();
+        params.put("problemStatement", exercise.getProblemStatement());
+        params.put("solutionRepository", filterFiles(read(solutionRepository(exercise))));
+        params.put("templateRepository", filterFiles(read(templateRepository(exercise))));
+        params.put("testRepository", filterFiles(read(testRepository(exercise))));
+        return params;
+    }
+
+    private Repository solutionRepository(ProgrammingExercise exercise) {
+        return solutionParticipationRepository.findByProgrammingExerciseId(exercise.getId()).map(SolutionProgrammingExerciseParticipation::getVcsRepositoryUrl)
+                .map(this::repositoryAt).orElseThrow();
+    }
+
+    private Repository templateRepository(ProgrammingExercise exercise) {
+        return templateParticipationRepository.findByProgrammingExerciseId(exercise.getId()).map(TemplateProgrammingExerciseParticipation::getVcsRepositoryUrl)
+                .map(this::repositoryAt).orElseThrow();
+    }
+
+    private Repository testRepository(ProgrammingExercise exercise) {
+        return Optional.ofNullable(exercise.getVcsTestRepositoryUrl()).map(this::repositoryAt).orElseThrow();
+    }
+
+    private Repository repositoryAt(VcsRepositoryUrl url) {
+        try {
+            return gitService.getOrCheckoutRepository(url, true);
+        }
+        catch (GitAPIException e) {
+            log.error("Could not get or checkout exercise repository", e);
+            return null;
+        }
+    }
+
+    private Map<String, String> read(Repository repository) {
+        return new HashMap<>(repositoryService.getFilesWithContent(repository));
+    }
+
+    /**
+     * There are a few files that we do not want to send to Iris because they are bulky, not representable in plain
+     * text, or generally unrelated to the exercise content. This method filters out those files.
+     *
+     * @param repository The repository to filter
+     * @return The filtered repository
+     */
+    private Map<String, String> filterFiles(Map<String, String> repository) {
+        repository.remove("readme.md");
+        repository.remove(".gitignore");
+        repository.remove(".gitattributes");
+        repository.remove("gradlew");
+        repository.remove("gradlew.bat");
+        repository.entrySet().removeIf(entry -> entry.getKey().startsWith("gradle/wrapper"));
+        return repository;
     }
 
     private enum FileChangeType {
@@ -327,72 +408,32 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         return changes;
     }
 
-    /**
-     * Initializes the parameters for the request to Iris.
-     * This method merges the unsaved changes from the code editor with the database version of the exercise,
-     * and saves the result in a map to send to Iris.
-     *
-     * @param exercise The programming exercise
-     * @return A modifiable map with the parameters for the request to Iris
-     */
-    private Map<String, Object> initializeParams(ProgrammingExercise exercise) {
-        var problemStatement = exercise.getProblemStatement();
-        var solutionRepository = prepareRepository(exercise.getVcsSolutionRepositoryUrl());
-        var templateRepository = prepareRepository(exercise.getVcsTemplateRepositoryUrl());
-        var testRepository = prepareRepository(exercise.getVcsTestRepositoryUrl());
-        var params = new HashMap<String, Object>();
-        params.put("problemStatement", problemStatement);
-        params.put("solutionRepository", solutionRepository);
-        params.put("templateRepository", templateRepository);
-        params.put("testRepository", testRepository);
-        return params;
-    }
-
-    /**
-     * Prepares a repository for sending to the Iris model. This method loads the repository from the database if
-     * possible, and merges it with any unsaved changes. It then filters out any unwanted files.
-     *
-     * @param vcsRepositoryUrl The URL of the repository to prepare
-     * @return The prepared repository
-     */
-    private Map<String, String> prepareRepository(@Nullable VcsRepositoryUrl vcsRepositoryUrl) {
-        return Optional.ofNullable(vcsRepositoryUrl).map(this::loadRepositoryFromDatabase) // Load from database if possible
-                .map(HashMap::new) // Make modifiable
-                .map(this::filterOutUnwantedFiles) // Filter out unwanted files
-                .orElseGet(HashMap::new); // Return empty map if no repository URL is present
-    }
-
-    /**
-     * Loads the repository under the given URL as a map of file paths to file contents.
-     *
-     * @param vcsRepositoryUrl The URL of the repository to load
-     * @return The loaded repository
-     */
-    private Map<String, String> loadRepositoryFromDatabase(VcsRepositoryUrl vcsRepositoryUrl) {
-        try {
-            Repository repository = gitService.getOrCheckoutRepository(vcsRepositoryUrl, true);
-            return repositoryService.getFilesWithContent(repository);
-        }
-        catch (GitAPIException e) {
-            throw new InternalServerErrorException("Could not get or checkout exercise repository");
+    private void injectChangesIntoRepository(Repository repository, List<FileChange> changes) {
+        Map<String, Optional<File>> targetedFiles = changes.stream().collect(Collectors.toMap(FileChange::file, change -> gitService.getFileByName(repository, change.file())));
+        for (FileChange change : changes) {
+            Optional<File> requestedFile = targetedFiles.get(change.file());
+            switch (change.type()) {
+                case MODIFY -> {
+                    if (requestedFile.isPresent()) {
+                        try {
+                            replaceInFile(requestedFile.get(), change.original(), change.updated());
+                        }
+                        catch (IOException e) {
+                            log.error("Could not modify file " + change.file() + " in repository " + repository, e);
+                        }
+                    }
+                    else {
+                        log.info("Iris requested that file " + change.file() + " be modified, but it does not exist in the repository");
+                    }
+                }
+            }
         }
     }
 
-    /**
-     * There are a few files that we do not want to send to Iris because they are bulky, not representable in plain
-     * text, or generally unrelated to the exercise content. This method filters out those files.
-     *
-     * @param repository The repository to filter
-     * @return The filtered repository
-     */
-    private Map<String, String> filterOutUnwantedFiles(Map<String, String> repository) {
-        repository.remove("readme.md");
-        repository.remove(".gitignore");
-        repository.remove(".gitattributes");
-        repository.remove("gradlew");
-        repository.remove("gradlew.bat");
-        repository.entrySet().removeIf(entry -> entry.getKey().startsWith("gradle/wrapper"));
-        return repository;
+    private void replaceInFile(File file, String original, String updated) throws IOException {
+        String currentContents = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+        String newContents = currentContents.replaceFirst(original, updated);
+        FileUtils.writeStringToFile(file, newContents, StandardCharsets.UTF_8);
     }
 
 }
