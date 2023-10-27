@@ -4,6 +4,7 @@ import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisRateLimitInformation, IrisWebsocketService } from 'app/iris/websocket.service';
 import { IrisMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+import { Observable, Subject } from 'rxjs';
 
 /**
  * The IrisCodeEditorWebsocketMessageType defines the type of message sent over the code editor websocket.
@@ -31,6 +32,8 @@ export class IrisCodeEditorWebsocketDTO {
  */
 @Injectable()
 export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
+    private reloadSubject: Subject<void> = new Subject<void>();
+
     /**
      * Creates an instance of IrisCodeEditorWebsocketService.
      * @param jhiWebsocketService The JhiWebsocketService for websocket communication.
@@ -49,11 +52,19 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
                 super.handleMessage(response.message);
                 break;
             case IrisCodeEditorWebsocketMessageType.RELOAD:
-                // TODO: Implement reload
+                this.reloadSubject.next(); // notify subscribers to reload
                 break;
             case IrisCodeEditorWebsocketMessageType.ERROR:
                 super.handleError(response.errorTranslationKey, response.translationParams);
                 break;
         }
+    }
+
+    /**
+     * Returns a subject that notifies subscribers when the code editor should be reloaded.
+     * @returns {Subject<void>}
+     */
+    public onPromptReload(): Observable<void> {
+        return this.reloadSubject.asObservable();
     }
 }

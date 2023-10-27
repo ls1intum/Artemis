@@ -304,7 +304,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         for (JsonNode node : content.get("changes")) {
             // We will support different file change types in the future. For now, every file change has type MODIFY
             var type = FileChangeType.MODIFY;
-            var file = node.get("file").asText();
+            var file = node.get("file").asText("");
             if (component != ExerciseComponent.PROBLEM_STATEMENT && file.trim().equals("!done!")) {
                 // This is a special case when the LLM decided to stop generating changes for a component.
                 // Ideally, this should not need to be handled here. The only reason it needs to be is because of
