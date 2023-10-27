@@ -334,7 +334,7 @@ public class ResultService {
      * @param withSubmissions true, if each result should also contain the submissions.
      * @return a list of results as described above for the given exercise.
      */
-    public List<Result> resultsForExercise(Exercise exercise, List<StudentParticipation> participations, boolean withSubmissions) {
+    public List<Result> resultsForExercise(Exercise exercise, Set<StudentParticipation> participations, boolean withSubmissions) {
         final List<Result> results = new ArrayList<>();
 
         for (StudentParticipation participation : participations) {
