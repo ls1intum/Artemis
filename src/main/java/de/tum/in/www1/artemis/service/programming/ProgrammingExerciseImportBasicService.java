@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 
 @Service
@@ -50,6 +51,8 @@ public class ProgrammingExerciseImportBasicService {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
     private final ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
     private final ChannelService channelService;
@@ -59,8 +62,8 @@ public class ProgrammingExerciseImportBasicService {
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService, StaticCodeAnalysisService staticCodeAnalysisService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyRepository submissionPolicyRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository solutionEntryRepository,
-            ChannelService channelService) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, ChannelService channelService) {
         this.exerciseHintService = exerciseHintService;
         this.exerciseHintRepository = exerciseHintRepository;
         this.versionControlService = versionControlService;
@@ -73,6 +76,7 @@ public class ProgrammingExerciseImportBasicService {
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.solutionEntryRepository = solutionEntryRepository;
         this.channelService = channelService;
     }
@@ -121,6 +125,11 @@ public class ProgrammingExerciseImportBasicService {
         importSubmissionPolicy(importedExercise);
         // Having the submission policy in place prevents errors
         importSolutionEntries(templateExercise, importedExercise, newTestCaseIdByOldId, newHintIdByOldId);
+
+        // Use the template problem statement (with ids) as a new basis (You cannot edit the problem statement while importing)
+        // Then replace the old test ids by the newly created ones.
+        importedExercise.setProblemStatement(templateExercise.getProblemStatement());
+        programmingExerciseTaskService.updateTestIds(importedExercise, newTestCaseIdByOldId);
 
         // Copy or create SCA categories
         if (Boolean.TRUE.equals(importedExercise.isStaticCodeAnalysisEnabled() && Boolean.TRUE.equals(templateExercise.isStaticCodeAnalysisEnabled()))) {

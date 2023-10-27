@@ -199,9 +199,7 @@
             "participate": {
                 "viewProgress": "View current progress details",
                 "noTaskSelected": "Currently you have no lecture unit or exercise selected.",
-                "prev": "Back",
-                "prevHint": "Return to your previous lecture unit or exercise",
-                "next": "Continue",
+                "prevHint": "Go to previous recommendation",
                 "nextHint": "Go to next recommendation"
             }
         }

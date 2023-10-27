@@ -1,5 +1,7 @@
 import { EmbeddedViewRef, Injectable, Injector, ViewContainerRef } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
@@ -9,13 +11,27 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { Observable, Subject } from 'rxjs';
 import { ShowdownExtension } from 'showdown';
 
+/**
+ * Regular expression for finding tasks.
+ * A Task starts with the identifier `[task]` and the task name in square brackets.
+ * This gets followed by a list of test cases in parentheses.
+ * @example [task][Implement BubbleSort](testBubbleSort)
+ *
+ * The regular expression is used to find all tasks inside a problem statement and therefore uses the global flag.
+ *
+ * This is coupled to the value used in `ProgrammingExerciseTaskService` in the server.
+ * If you change the regex, make sure to change it in all places!
+ */
+const taskRegex = /\[task]\[([^[\]]+)]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/g;
+
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownExtensionWrapper {
     // We don't have a provider for ViewContainerRef, so we pass it from ProgrammingExerciseInstructionComponent
     viewContainerRef: ViewContainerRef;
 
     private latestResult?: Result;
-    private exercise: Exercise;
+    private exercise: ProgrammingExercise;
+    private testCases?: ProgrammingExerciseTestCase[];
 
     private testsForTaskSubject = new Subject<TaskArrayWithExercise>();
     private injectableElementsFoundSubject = new Subject<() => void>();
@@ -45,6 +61,10 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
         this.exercise = exercise;
     }
 
+    public setTestCases(testCases?: ProgrammingExerciseTestCase[]) {
+        this.testCases = testCases;
+    }
+
     /**
      * Subscribes to testsForTaskSubject.
      */
@@ -64,7 +84,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
      * @param tasks to inject into the html.
      */
     private injectTasks = (tasks: TaskArray) => {
-        tasks.forEach(({ id, taskName, tests }) => {
+        tasks.forEach(({ id, taskName, testIds }) => {
             const taskHtmlContainers = document.getElementsByClassName(`pe-task-${id}`);
 
             // The same task could appear multiple times in the instructions (edge case).
@@ -75,7 +95,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 componentRef.instance.exercise = this.exercise;
                 componentRef.instance.taskName = taskName;
                 componentRef.instance.latestResult = this.latestResult;
-                componentRef.instance.tests = tests;
+                componentRef.instance.testIds = testIds;
 
                 const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
                 const taskHtmlContainer = taskHtmlContainers[i];
@@ -93,47 +113,47 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
     getExtension() {
         const extension: ShowdownExtension = {
             type: 'lang',
-            filter: (text: string) => {
-                // E.g. [task][Implement BubbleSort](testBubbleSort)
-                const taskRegex = /\[task\]\[.*\]\(.*\)({.*})?/g;
-                // E.g. Implement BubbleSort, testBubbleSort
-                const innerTaskRegex = /\[task\]\[(.*)\]\((.*)\)({(.*)})?/;
-                const tasks = text.match(taskRegex) || [];
-                const testsForTask: TaskArray = tasks
-                    .map((task) => {
-                        return task.match(innerTaskRegex);
-                    })
-                    .filter((testMatch) => !!testMatch && (testMatch.length === 3 || testMatch.length === 5))
-                    .map((testMatch: RegExpMatchArray) => {
-                        const nextIndex = this.taskIndex;
-                        this.taskIndex++;
-                        return {
-                            id: nextIndex,
-                            completeString: testMatch[0],
-                            taskName: testMatch[1],
-                            // split the names by "," only when there is not a closing bracket without a previous opening bracket
-                            tests: testMatch[2] ? testMatch[2].split(/,(?![^(]*?\))/).map((s) => s.trim()) : [],
-                        };
-                    });
-                const tasksWithParticipationId: TaskArrayWithExercise = {
-                    exerciseId: this.exercise.id!,
-                    tasks: testsForTask,
-                };
-                this.testsForTaskSubject.next(tasksWithParticipationId);
-                // Emit new found elements that need to be injected into html after it is rendered.
-                this.injectableElementsFoundSubject.next(() => {
-                    this.injectTasks(testsForTask);
-                });
-                return testsForTask.reduce(
-                    (acc: string, { completeString: task, id }): string =>
-                        // Insert anchor divs into the text so that injectable elements can be inserted into them.
-                        // Without class="d-flex" the injected components height would be 0.
-                        // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
-                        acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-task-${id.toString()} d-flex">&#8203;</div>`),
-                    text,
-                );
+            filter: (problemStatement: string) => {
+                const tasks = Array.from(problemStatement.matchAll(taskRegex));
+                if (tasks) {
+                    return this.createTasks(problemStatement, tasks);
+                }
+                return problemStatement;
             },
         };
         return extension;
+    }
+
+    private createTasks(problemStatement: string, tasks: RegExpMatchArray[]): string {
+        const testsForTask: TaskArray = tasks
+            // check that all groups (full match, name, tests) are present
+            .filter((testMatch) => testMatch?.length === 3)
+            .map((testMatch: RegExpMatchArray | null) => {
+                const nextIndex = this.taskIndex;
+                this.taskIndex++;
+                return {
+                    id: nextIndex,
+                    completeString: testMatch![0],
+                    taskName: testMatch![1],
+                    testIds: testMatch![2] ? this.programmingExerciseInstructionService.convertTestListToIds(testMatch![2], this.testCases) : [],
+                };
+            });
+        const tasksWithParticipationId: TaskArrayWithExercise = {
+            exerciseId: this.exercise.id!,
+            tasks: testsForTask,
+        };
+        this.testsForTaskSubject.next(tasksWithParticipationId);
+        // Emit new found elements that need to be injected into html after it is rendered.
+        this.injectableElementsFoundSubject.next(() => {
+            this.injectTasks(testsForTask);
+        });
+        return testsForTask.reduce(
+            (acc: string, { completeString: task, id }): string =>
+                // Insert anchor divs into the text so that injectable elements can be inserted into them.
+                // Without class="d-flex" the injected components height would be 0.
+                // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
+                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-task-${id.toString()} d-flex">&#8203;</div>`),
+            problemStatement,
+        );
     }
 }
