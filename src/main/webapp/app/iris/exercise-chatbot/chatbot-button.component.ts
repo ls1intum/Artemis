@@ -11,8 +11,8 @@ import { SharedService } from 'app/iris/shared.service';
 import { IrisSessionService } from 'app/iris/session.service';
 
 @Component({ template: '' })
-export abstract class IrisChatbotButtonComponent<Widget extends IrisChatbotWidgetComponent> implements OnInit, OnDestroy {
-    dialogRef: MatDialogRef<Widget> | null = null;
+export abstract class IrisChatbotButtonComponent implements OnInit, OnDestroy {
+    dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | null = null;
     chatOpen = false;
     hasNewMessages = false;
     protected courseId: number;
@@ -85,8 +85,17 @@ export abstract class IrisChatbotButtonComponent<Widget extends IrisChatbotWidge
      */
     openChat() {
         this.chatOpen = true;
-        this.dialogRef = this.openDialog();
+        this.dialogRef = this.dialog.open(IrisChatbotWidgetComponent, {
+            hasBackdrop: false,
+            scrollStrategy: this.overlay.scrollStrategies.noop(),
+            position: { bottom: '0px', right: '0px' },
+            disableClose: true,
+            data: {
+                stateStore: this.stateStore,
+                courseId: this.courseId,
+                exerciseId: this.exerciseId,
+                sessionService: this.sessionService,
+            },
+        });
     }
-
-    protected abstract openDialog(): MatDialogRef<Widget>;
 }

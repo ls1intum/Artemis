@@ -5,6 +5,7 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.iris.message.IrisExercisePlanStep;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
@@ -38,8 +39,11 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
         super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.message(message));
     }
 
-    public void promptReload(IrisCodeEditorSession session) {
-        super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.reload());
+    public void notifySuccess(IrisCodeEditorSession session, IrisExercisePlanStep step, String updatedProblemStatement) {
+        var messageId = step.getPlan().getMessage().getId();
+        var planId = step.getPlan().getId();
+        var stepId = step.getId();
+        super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.notify(messageId, planId, stepId, updatedProblemStatement));
     }
 
     /**
@@ -53,21 +57,26 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     }
 
     public enum IrisWebsocketMessageType {
-        MESSAGE, RELOAD, EXCEPTION
+        MESSAGE, CHANGE_NOTIFICATION, EXCEPTION
     }
 
-    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, String errorMessage, String errorTranslationKey, Map<String, Object> translationParams) {
+    private record ChangeNotification(long messageId, long planId, long stepId, String updatedProblemStatement) {
+    }
+
+    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, ChangeNotification changeNotification, String errorMessage, String errorTranslationKey,
+            Map<String, Object> translationParams) {
 
         private static IrisWebsocketDTO message(IrisMessage message) {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.MESSAGE, message, null, null, null);
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.MESSAGE, message, null, null, null, null);
         }
 
-        private static IrisWebsocketDTO reload() {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.RELOAD, null, null, null, null);
+        private static IrisWebsocketDTO notify(long messageId, long planId, long stepId, String updatedProblemStatement) {
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.CHANGE_NOTIFICATION, null, new ChangeNotification(messageId, planId, stepId, updatedProblemStatement), null, null,
+                    null);
         }
 
         private static IrisWebsocketDTO error(Throwable throwable) {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.EXCEPTION, null, throwable.getMessage(), throwable instanceof IrisException i ? i.getTranslationKey() : null,
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.EXCEPTION, null, null, throwable.getMessage(), throwable instanceof IrisException i ? i.getTranslationKey() : null,
                     throwable instanceof IrisException i ? i.getTranslationParams() : null);
         }
 

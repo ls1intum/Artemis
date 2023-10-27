@@ -265,15 +265,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                         log.error("No changes for exercise " + component + " in response from Iris model");
                     }
                     else {
+                        String updatedProblemStatement = null;
                         switch (component) {
-                            case PROBLEM_STATEMENT -> {
-                                // TODO: Problem statement is not part of the repository. How should we handle it?
-                            }
+                            case PROBLEM_STATEMENT -> updatedProblemStatement = injectChangesIntoProblemStatement(session.getExercise(), changes);
                             case SOLUTION_REPOSITORY -> injectChangesIntoRepository(solutionRepository(session.getExercise()), changes);
                             case TEMPLATE_REPOSITORY -> injectChangesIntoRepository(templateRepository(session.getExercise()), changes);
                             case TEST_REPOSITORY -> injectChangesIntoRepository(testRepository(session.getExercise()), changes);
                         }
-                        irisCodeEditorWebsocketService.promptReload(session);
+                        irisCodeEditorWebsocketService.notifySuccess(session, exerciseStep, updatedProblemStatement);
                     }
                 }
                 catch (IrisParseResponseException e) {
@@ -406,6 +405,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             changes.add(new FileChange(type, file, original, updated));
         }
         return changes;
+    }
+
+    private String injectChangesIntoProblemStatement(ProgrammingExercise exercise, List<FileChange> changes) {
+        var problemStatement = exercise.getProblemStatement();
+        for (FileChange change : changes) {
+            problemStatement = problemStatement.replaceFirst(change.original(), change.updated());
+        }
+        return problemStatement;
     }
 
     private void injectChangesIntoRepository(Repository repository, List<FileChange> changes) {

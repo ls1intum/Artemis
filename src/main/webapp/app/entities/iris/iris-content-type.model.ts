@@ -13,7 +13,7 @@ export abstract class IrisMessageContent {
     }
 }
 
-export class IrisMessageTextContent extends IrisMessageContent {
+export class IrisTextMessageContent extends IrisMessageContent {
     textContent: string;
     constructor(textContent: string) {
         super(IrisMessageContentType.TEXT);
@@ -21,13 +21,13 @@ export class IrisMessageTextContent extends IrisMessageContent {
     }
 }
 
-export class IrisMessagePlanContent extends IrisMessageContent {
-    components: IrisExercisePlanStep[];
-    currentComponentIndex: number;
+export class IrisExercisePlan extends IrisMessageContent {
+    steps: IrisExercisePlanStep[];
+    currentStepIndex: number;
     constructor(components: IrisExercisePlanStep[], currentComponentIndex: number) {
         super(IrisMessageContentType.PLAN);
-        this.components = components;
-        this.currentComponentIndex = currentComponentIndex;
+        this.steps = components;
+        this.currentStepIndex = currentComponentIndex;
     }
 }
 
@@ -37,7 +37,7 @@ export function isTextContent(content: IrisMessageContent) {
 
 export function getTextContent(content: IrisMessageContent) {
     if (isTextContent(content)) {
-        const irisMessageTextContent = content as IrisMessageTextContent;
+        const irisMessageTextContent = content as IrisTextMessageContent;
         return irisMessageTextContent.textContent;
     }
 }
@@ -48,8 +48,8 @@ export function isPlanContent(content: IrisMessageContent) {
 
 export function getPlanComponent(content: IrisMessageContent) {
     if (isPlanContent(content)) {
-        const irisMessagePlanContent = content as IrisMessagePlanContent;
-        return irisMessagePlanContent.components;
+        const irisMessagePlanContent = content as IrisExercisePlan;
+        return irisMessagePlanContent.steps;
     }
 }
 

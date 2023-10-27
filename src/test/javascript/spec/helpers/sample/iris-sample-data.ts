@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { IrisArtemisClientMessage, IrisSender, IrisServerMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
-import { IrisMessagePlanContent, IrisMessageTextContent } from 'app/entities/iris/iris-content-type.model';
+import { IrisExercisePlan, IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisChatWebsocketDTO, IrisChatWebsocketMessageType } from 'app/iris/chat-websocket.service';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
@@ -13,7 +13,7 @@ map.set('model', 'gpt-4');
 
 export const mockMessageContent = {
     textContent: 'Hello, world!',
-} as IrisMessageTextContent;
+} as IrisTextMessageContent;
 
 export const mockExercisePlanComponent = {
     id: 2,
@@ -22,9 +22,9 @@ export const mockExercisePlanComponent = {
 } as IrisExercisePlanStep;
 export const mockMessagePlanContent = {
     id: 2,
-    components: [mockExercisePlanComponent],
-    currentComponentIndex: 0,
-} as IrisMessagePlanContent;
+    steps: [mockExercisePlanComponent],
+    currentStepIndex: 0,
+} as IrisExercisePlan;
 export const irisExercise = { id: 1, title: 'Metis  Exercise', type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
 
 export const mockServerPlanMessage = {

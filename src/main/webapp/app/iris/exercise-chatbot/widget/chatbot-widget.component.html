@@ -105,7 +105,7 @@
                                 <!--TODO: Make it editable-->
                                 <span [innerHTML]="step.instructions! | htmlForMarkdown"></span>
                                 <!--TODO: Add cancel, confirm button-->
-                                <button (click)="executePlan(message.id!, content.id!, step.id!)" class="btn btn-primary">confirm</button>
+                                <button (click)="executePlanStep(message.id!, content.id!, step.id!)" class="btn btn-primary">confirm</button>
                             </div>
                         </div>
                     </div>

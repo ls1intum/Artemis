@@ -11,8 +11,15 @@ import { Observable, Subject } from 'rxjs';
  */
 enum IrisCodeEditorWebsocketMessageType {
     MESSAGE = 'MESSAGE',
-    RELOAD = 'RELOAD',
+    CHANGE_NOTIFICATION = 'CHANGE_NOTIFICATION',
     ERROR = 'ERROR',
+}
+
+export class ChangeNotification {
+    messageId: number;
+    planId: number;
+    stepId: number;
+    updatedProblemStatement?: string;
 }
 
 /**
@@ -22,6 +29,7 @@ enum IrisCodeEditorWebsocketMessageType {
 export class IrisCodeEditorWebsocketDTO {
     type: IrisCodeEditorWebsocketMessageType;
     message?: IrisMessage;
+    changeNotification?: ChangeNotification;
     errorTranslationKey?: IrisErrorMessageKey;
     translationParams?: Map<string, any>;
     rateLimitInfo?: IrisRateLimitInformation;
@@ -32,7 +40,7 @@ export class IrisCodeEditorWebsocketDTO {
  */
 @Injectable()
 export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
-    private reloadSubject: Subject<void> = new Subject<void>();
+    private subject: Subject<ChangeNotification> = new Subject<ChangeNotification>();
 
     /**
      * Creates an instance of IrisCodeEditorWebsocketService.
@@ -51,8 +59,8 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
             case IrisCodeEditorWebsocketMessageType.MESSAGE:
                 super.handleMessage(response.message);
                 break;
-            case IrisCodeEditorWebsocketMessageType.RELOAD:
-                this.reloadSubject.next(); // notify subscribers to reload
+            case IrisCodeEditorWebsocketMessageType.CHANGE_NOTIFICATION:
+                this.subject.next(response.changeNotification!); // notify subscribers to reload
                 break;
             case IrisCodeEditorWebsocketMessageType.ERROR:
                 super.handleError(response.errorTranslationKey, response.translationParams);
@@ -64,7 +72,7 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
      * Returns a subject that notifies subscribers when the code editor should be reloaded.
      * @returns {Subject<void>}
      */
-    public onPromptReload(): Observable<void> {
-        return this.reloadSubject.asObservable();
+    public onPromptReload(): Observable<ChangeNotification> {
+        return this.subject.asObservable();
     }
 }

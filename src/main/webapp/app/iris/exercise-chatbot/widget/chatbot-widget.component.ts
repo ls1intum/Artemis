@@ -39,7 +39,7 @@ import {
 import {
     IrisMessageContent,
     IrisMessageContentType,
-    IrisMessageTextContent,
+    IrisTextMessageContent,
     getPlanComponent,
     getTextContent,
     isPlanContent,
@@ -329,7 +329,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
         const firstMessageContent = {
             type: IrisMessageContentType.TEXT,
             textContent: this.getFirstMessageContent(),
-        } as IrisMessageTextContent;
+        } as IrisTextMessageContent;
 
         const firstMessage = {
             sender: IrisSender.ARTEMIS_CLIENT,
@@ -592,10 +592,10 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
      * @param planId - The ID of the content to execute.
      * @param stepId - The ID of the step to execute.
      */
-    executePlan(messageId: number, planId: number, stepId: number) {
+    executePlanStep(messageId: number, planId: number, stepId: number) {
         if (this.sessionService instanceof IrisCodeEditorSessionService) {
             this.sessionService
-                .executePlanStep(<number>this.sessionId, messageId, planId, stepId)
+                .executePlanStep(this.sessionId, messageId, planId, stepId)
                 // .then(() => this.stateStore.dispatch(new ExecutePlanSuccessAction(planId)))
                 .catch(() => {
                     //this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.EXECUTE_PLAN_FAILED));
@@ -637,7 +637,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
      * @returns A new IrisClientMessage object representing the user message.
      */
     newUserMessage(message: string): IrisUserMessage {
-        const content = new IrisMessageTextContent(message);
+        const content = new IrisTextMessageContent(message);
         return {
             sender: IrisSender.USER,
             content: [content],

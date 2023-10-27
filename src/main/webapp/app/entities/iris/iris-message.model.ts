@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { IrisMessageContent, IrisMessageTextContent } from 'app/entities/iris/iris-content-type.model';
+import { IrisMessageContent, IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
 import dayjs from 'dayjs/esm';
 
 export enum IrisSender {
@@ -11,7 +11,7 @@ export enum IrisSender {
 
 export class IrisArtemisClientMessage implements BaseEntity {
     id?: number;
-    content: IrisMessageTextContent[];
+    content: IrisTextMessageContent[];
     sentAt: dayjs.Dayjs;
     sender: IrisSender.ARTEMIS_CLIENT;
 }
@@ -26,7 +26,7 @@ export class IrisServerMessage implements BaseEntity {
 
 export class IrisUserMessage implements BaseEntity {
     id?: number;
-    content: IrisMessageTextContent[];
+    content: IrisTextMessageContent[];
     sentAt?: dayjs.Dayjs;
     sender: IrisSender.USER;
     messageDifferentiator?: number;

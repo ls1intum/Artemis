@@ -32,7 +32,7 @@ import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { IrisSessionService } from 'app/iris/session.service';
 import { UserService } from 'app/core/user/user.service';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { IrisMessageTextContent } from 'app/entities/iris/iris-content-type.model';
+import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
 import { IrisTutorChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/tutor-chatbot-widget.component';
 import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
 
@@ -148,7 +148,7 @@ describe('TutorChatbotWidgetComponent', () => {
             new StudentMessageSentAction(
                 {
                     sender: IrisSender.USER,
-                    content: [new IrisMessageTextContent('Hello')],
+                    content: [new IrisTextMessageContent('Hello')],
                 },
                 null,
             ),
@@ -168,7 +168,7 @@ describe('TutorChatbotWidgetComponent', () => {
         const error = 'Something went wrong. Please try again later!';
         const mockMessage = {
             sender: IrisSender.USER,
-            content: [new IrisMessageTextContent('Hello')],
+            content: [new IrisTextMessageContent('Hello')],
         };
         jest.spyOn(mockHttpMessageService, 'createMessage').mockReturnValueOnce(
             throwError({
@@ -385,7 +385,7 @@ describe('TutorChatbotWidgetComponent', () => {
         const testMessage = 'Test message';
         const expectedResult: IrisUserMessage = {
             sender: IrisSender.USER,
-            content: [new IrisMessageTextContent(testMessage)],
+            content: [new IrisTextMessageContent(testMessage)],
         };
 
         const result = component.newUserMessage(testMessage);
