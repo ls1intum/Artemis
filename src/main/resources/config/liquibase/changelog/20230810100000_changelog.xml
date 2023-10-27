@@ -52,7 +52,7 @@
     <changeSet author="welscher" id="20230810100000-22">
         <!-- Postgres -->
         <preConditions onFail="CONTINUE">
-            <dbms type="postgres"/>
+            <dbms type="postgresql"/>
         </preConditions>
 
         <comment>
