@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryService;
@@ -53,23 +52,19 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private final IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
 
-    private final IrisSessionRepository irisSessionRepository;
-
     private final GitService gitService;
 
     private final RepositoryService repositoryService;
 
     public IrisCodeEditorSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, AuthorizationCheckService authCheckService,
-            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, IrisSessionRepository irisSessionRepository, GitService gitService,
-            RepositoryService repositoryService) {
+            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, GitService gitService, RepositoryService repositoryService) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
         this.irisCodeEditorWebsocketService = irisCodeEditorWebsocketService;
         this.authCheckService = authCheckService;
         this.irisCodeEditorSessionRepository = irisCodeEditorSessionRepository;
-        this.irisSessionRepository = irisSessionRepository;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
     }
@@ -253,12 +248,12 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 log.info("Received response containing changes to exercise " + component + " from Iris model");
                 try {
                     var changes = extractChangesForComponent(response.content(), component);
-                    if (!changes.isEmpty()) {
-                        // In this case we do not save anything, as these changes must first be approved by the user
-                        irisCodeEditorWebsocketService.sendChanges(session, component, changes);
+                    if (changes.isEmpty()) {
+                        log.error("No changes for exercise " + component + " in response from Iris model");
                     }
                     else {
-                        log.error("No changes for exercise " + component + " in response from Iris model");
+                        // TODO: Inject changes into the exercise repository
+                        irisCodeEditorWebsocketService.promptReload(session);
                     }
                 }
                 catch (IrisParseResponseException e) {
@@ -268,6 +263,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             }
             return null;
         });
+    }
+
+    private enum FileChangeType {
+        MODIFY,
+        // Add more types here in the future
+    }
+
+    private record FileChange(FileChangeType type, String file, String original, String updated) {
     }
 
     /**
@@ -293,14 +296,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @return The extracted changes
      * @throws IrisParseResponseException If the JsonNode does not have the correct structure
      */
-    private static List<IrisCodeEditorWebsocketService.FileChange> extractChangesForComponent(JsonNode content, ExerciseComponent component) throws IrisParseResponseException {
+    private static List<FileChange> extractChangesForComponent(JsonNode content, ExerciseComponent component) throws IrisParseResponseException {
         if (!content.get("changes").isArray()) {
             throw new IrisParseResponseException(new Throwable("Array of exercise changes was not present in response"));
         }
-        List<IrisCodeEditorWebsocketService.FileChange> changes = new ArrayList<>();
+        List<FileChange> changes = new ArrayList<>();
         for (JsonNode node : content.get("changes")) {
             // We will support different file change types in the future. For now, every file change has type MODIFY
-            var type = IrisCodeEditorWebsocketService.FileChangeType.MODIFY;
+            var type = FileChangeType.MODIFY;
             var file = node.get("file").asText();
             if (component != ExerciseComponent.PROBLEM_STATEMENT && file.trim().equals("!done!")) {
                 // This is a special case when the LLM decided to stop generating changes for a component.
@@ -319,7 +322,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 break;
             }
             var updated = node.get("updated").asText();
-            changes.add(new IrisCodeEditorWebsocketService.FileChange(type, file, original, updated));
+            changes.add(new FileChange(type, file, original, updated));
         }
         return changes;
     }

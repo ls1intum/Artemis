@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { RateLimitUpdatedAction } from 'app/iris/state-store.model';
-import { IrisWebsocketService } from 'app/iris/websocket.service';
+import { IrisRateLimitInformation, IrisWebsocketService } from 'app/iris/websocket.service';
 import { IrisMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 
@@ -12,14 +11,6 @@ import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 export enum IrisChatWebsocketMessageType {
     MESSAGE = 'MESSAGE',
     ERROR = 'ERROR',
-}
-
-export class IrisRateLimitInformation {
-    constructor(
-        public currentMessageCount: number,
-        public rateLimit: number,
-        public rateLimitTimeframeHours: number,
-    ) {}
 }
 
 /**
@@ -50,7 +41,7 @@ export class IrisChatWebsocketService extends IrisWebsocketService {
 
     protected handleWebsocketResponse(response: IrisChatWebsocketDTO) {
         if (response.rateLimitInfo) {
-            this.handleRateLimitInfo(response.rateLimitInfo);
+            super.handleRateLimitInfo(response.rateLimitInfo);
         }
         switch (response.type) {
             case IrisChatWebsocketMessageType.MESSAGE:
@@ -60,9 +51,5 @@ export class IrisChatWebsocketService extends IrisWebsocketService {
                 super.handleError(response.errorTranslationKey, response.translationParams);
                 break;
         }
-    }
-
-    private handleRateLimitInfo(rateLimitInfo: IrisRateLimitInformation) {
-        this.stateStore.dispatch(new RateLimitUpdatedAction(rateLimitInfo));
     }
 }

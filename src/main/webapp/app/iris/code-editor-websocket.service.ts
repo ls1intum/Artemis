@@ -1,44 +1,17 @@
 import { Injectable } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { IrisWebsocketService } from 'app/iris/websocket.service';
+import { IrisRateLimitInformation, IrisWebsocketService } from 'app/iris/websocket.service';
 import { IrisMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
-import { BehaviorSubject, Observable } from 'rxjs';
 
 /**
  * The IrisCodeEditorWebsocketMessageType defines the type of message sent over the code editor websocket.
  */
 enum IrisCodeEditorWebsocketMessageType {
     MESSAGE = 'MESSAGE',
-    CHANGE_SET = 'CHANGE_SET',
+    RELOAD = 'RELOAD',
     ERROR = 'ERROR',
-}
-
-export enum FileChangeType {
-    CREATE = 'CREATE',
-    DELETE = 'DELETE',
-    RENAME = 'RENAME',
-    MODIFY = 'MODIFY',
-}
-
-export class FileChange {
-    type: FileChangeType;
-    file?: string;
-    original?: string;
-    updated?: string;
-}
-
-export enum IrisExerciseComponent {
-    PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
-    SOLUTION_REPOSITORY = 'SOLUTION_REPOSITORY',
-    TEMPLATE_REPOSITORY = 'TEMPLATE_REPOSITORY',
-    TEST_REPOSITORY = 'TEST_REPOSITORY',
-}
-
-export class IrisExerciseComponentChangeSet {
-    component: IrisExerciseComponent;
-    changes: FileChange[];
 }
 
 /**
@@ -48,9 +21,9 @@ export class IrisExerciseComponentChangeSet {
 export class IrisCodeEditorWebsocketDTO {
     type: IrisCodeEditorWebsocketMessageType;
     message?: IrisMessage;
-    changes?: IrisExerciseComponentChangeSet;
     errorTranslationKey?: IrisErrorMessageKey;
     translationParams?: Map<string, any>;
+    rateLimitInfo?: IrisRateLimitInformation;
 }
 
 /**
@@ -58,8 +31,6 @@ export class IrisCodeEditorWebsocketDTO {
  */
 @Injectable()
 export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
-    private subject = new BehaviorSubject<IrisExerciseComponentChangeSet>(new IrisExerciseComponentChangeSet());
-
     /**
      * Creates an instance of IrisCodeEditorWebsocketService.
      * @param jhiWebsocketService The JhiWebsocketService for websocket communication.
@@ -70,24 +41,19 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     }
 
     protected handleWebsocketResponse(response: IrisCodeEditorWebsocketDTO): void {
+        if (response.rateLimitInfo) {
+            super.handleRateLimitInfo(response.rateLimitInfo);
+        }
         switch (response.type) {
             case IrisCodeEditorWebsocketMessageType.MESSAGE:
                 super.handleMessage(response.message);
                 break;
-            case IrisCodeEditorWebsocketMessageType.CHANGE_SET:
-                this.handleChanges(response.changes);
+            case IrisCodeEditorWebsocketMessageType.RELOAD:
+                // TODO: Implement reload
                 break;
             case IrisCodeEditorWebsocketMessageType.ERROR:
                 super.handleError(response.errorTranslationKey, response.translationParams);
                 break;
         }
-    }
-
-    protected handleChanges(changes?: IrisExerciseComponentChangeSet) {
-        if (changes) this.subject.next(changes);
-    }
-
-    public onCodeChanges(): Observable<IrisExerciseComponentChangeSet> {
-        return this.subject.asObservable();
     }
 }

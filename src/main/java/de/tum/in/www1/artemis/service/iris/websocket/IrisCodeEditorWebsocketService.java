@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.service.iris.websocket;
 
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.iris.message.ExerciseComponent;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
@@ -40,8 +38,8 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
         super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.message(message));
     }
 
-    public void sendChanges(IrisCodeEditorSession session, ExerciseComponent component, List<FileChange> changes) {
-        super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.changes(component, changes));
+    public void promptReload(IrisCodeEditorSession session) {
+        super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.reload());
     }
 
     /**
@@ -55,32 +53,21 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     }
 
     public enum IrisWebsocketMessageType {
-        MESSAGE, CHANGE_SET, EXCEPTION
+        MESSAGE, RELOAD, EXCEPTION
     }
 
-    public enum FileChangeType {
-        CREATE, DELETE, RENAME, MODIFY
-    }
-
-    public record FileChange(FileChangeType type, String file, String original, String updated) {
-    }
-
-    public record IrisCodeEditorChangeSet(ExerciseComponent component, List<FileChange> changes) {
-    }
-
-    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisCodeEditorChangeSet changes, String errorMessage, String errorTranslationKey,
-            Map<String, Object> translationParams) {
+    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, String errorMessage, String errorTranslationKey, Map<String, Object> translationParams) {
 
         private static IrisWebsocketDTO message(IrisMessage message) {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.MESSAGE, message, null, null, null, null);
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.MESSAGE, message, null, null, null);
         }
 
-        private static IrisWebsocketDTO changes(ExerciseComponent component, List<FileChange> changes) {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.CHANGE_SET, null, new IrisCodeEditorChangeSet(component, changes), null, null, null);
+        private static IrisWebsocketDTO reload() {
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.RELOAD, null, null, null, null);
         }
 
         private static IrisWebsocketDTO error(Throwable throwable) {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.EXCEPTION, null, null, throwable.getMessage(), throwable instanceof IrisException i ? i.getTranslationKey() : null,
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.EXCEPTION, null, throwable.getMessage(), throwable instanceof IrisException i ? i.getTranslationKey() : null,
                     throwable instanceof IrisException i ? i.getTranslationParams() : null);
         }
 

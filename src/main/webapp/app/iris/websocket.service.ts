@@ -6,11 +6,20 @@ import {
     ActiveConversationMessageLoadedAction,
     ConversationErrorOccurredAction,
     MessageStoreAction,
+    RateLimitUpdatedAction,
     StudentMessageSentAction,
     isSessionReceivedAction,
 } from 'app/iris/state-store.model';
 import { IrisMessage, isServerSentMessage, isStudentSentMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+
+export class IrisRateLimitInformation {
+    constructor(
+        public currentMessageCount: number,
+        public rateLimit: number,
+        public rateLimitTimeframeHours: number,
+    ) {}
+}
 
 /**
  * The IrisWebsocketService handles the websocket communication for receiving messages in dedicated channels.
@@ -97,5 +106,9 @@ export abstract class IrisWebsocketService implements OnDestroy {
         } else {
             this.stateStore.dispatch(new ConversationErrorOccurredAction(errorTranslationKey, translationParams));
         }
+    }
+
+    protected handleRateLimitInfo(rateLimitInfo: IrisRateLimitInformation) {
+        this.stateStore.dispatch(new RateLimitUpdatedAction(rateLimitInfo));
     }
 }
