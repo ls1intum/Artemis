@@ -7,6 +7,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import java.util.List;
 import java.util.Optional;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -110,6 +111,46 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.feedbacks[0].title").value(textFeedback.getText()), jsonPath("$.feedbacks[0].description").value(textFeedback.getDetailText()),
                 jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()), jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()),
                 jsonPath("$.feedbacks[0].indexStart").value(textBlock.getStartIndex()), jsonPath("$.feedbacks[0].indexEnd").value(textBlock.getEndIndex()));
+
+        athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
+    }
+
+    @NotNull
+    private GradingCriterion createExampleGradingCriterion() {
+        var gradingInstruction = new GradingInstruction();
+        gradingInstruction.setId(101L);
+        gradingInstruction.setCredits(1.0);
+        gradingInstruction.setGradingScale("good");
+        gradingInstruction.setInstructionDescription("Give this feedback if xyz");
+        gradingInstruction.setFeedback("Well done!");
+        gradingInstruction.setUsageCount(1);
+        var gradingCriterion = new GradingCriterion();
+        gradingCriterion.setId(1L);
+        gradingCriterion.setTitle("Test");
+        gradingCriterion.setExercise(textExercise);
+        gradingCriterion.setStructuredGradingInstructions(List.of(gradingInstruction));
+        return gradingCriterion;
+    }
+
+    @Test
+    void testFeedbackSendingTextWithGradingInstruction() {
+        textExercise.setGradingCriteria(List.of(createExampleGradingCriterion()));
+        textExerciseRepository.save(textExercise);
+
+        textFeedback.setGradingInstruction(textExercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0));
+
+        athenaRequestMockProvider.mockSendFeedbackAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.exercise.gradingCriteria[0].id").value(1),
+                jsonPath("$.exercise.gradingCriteria[0].title").value("Test"), jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].id").value(101),
+                jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].credits").value(1.0),
+                jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].gradingScale").value("good"),
+                jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].instructionDescription").value("Give this feedback if xyz"),
+                jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].feedback").value("Well done!"),
+                jsonPath("$.exercise.gradingCriteria[0].structuredGradingInstructions[0].usageCount").value(1), jsonPath("$.submission.id").value(textSubmission.getId()),
+                jsonPath("$.submission.exerciseId").value(textExercise.getId()), jsonPath("$.feedbacks[0].id").value(textFeedback.getId()),
+                jsonPath("$.feedbacks[0].exerciseId").value(textExercise.getId()), jsonPath("$.feedbacks[0].title").value(textFeedback.getText()),
+                jsonPath("$.feedbacks[0].description").value(textFeedback.getDetailText()), jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()),
+                jsonPath("$.feedbacks[0].credits").value(textFeedback.getCredits()), jsonPath("$.feedbacks[0].indexStart").value(textBlock.getStartIndex()),
+                jsonPath("$.feedbacks[0].indexEnd").value(textBlock.getEndIndex()), jsonPath("$.feedbacks[0].structuredGradingInstructionId").value(101));
 
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
     }
