@@ -31,9 +31,9 @@ import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWe
 
 @Service
 @Profile("localci")
-public class LocalCISharedBuildJobQueue {
+public class LocalCISharedBuildJobQueueService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalCISharedBuildJobQueue.class);
+    private final Logger log = LoggerFactory.getLogger(LocalCISharedBuildJobQueueService.class);
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -59,7 +59,7 @@ public class LocalCISharedBuildJobQueue {
     int threadPoolSize;
 
     @Autowired
-    public LocalCISharedBuildJobQueue(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
+    public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
             ProgrammingExerciseRepository programmingExerciseRepository) {
@@ -113,7 +113,7 @@ public class LocalCISharedBuildJobQueue {
             return;
         }
 
-        log.info("Hazelcast, processing build job: " + buildJob);
+        log.info("Processing build job: " + buildJob);
 
         String commitHash = buildJob.getCommitHash();
         // participation might not be persisted in the database yet
@@ -188,6 +188,7 @@ public class LocalCISharedBuildJobQueue {
             }
             catch (Exception e) {
                 log.debug("Error while retrieving participation with id " + participationId + " from database: " + e.getMessage());
+                log.info("Retrying to retrieve participation with id " + participationId + " from database");
                 retries++;
                 try {
                     Thread.sleep(1000);
@@ -210,19 +211,18 @@ public class LocalCISharedBuildJobQueue {
 
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> item) {
-
-            log.info("Hazelcast, item added: " + item.getItem());
+            log.info("Item added to queue: " + item.getItem());
             if (nodeIsAvailable()) {
                 processBuild();
             }
             else {
-                log.info("Hazelcast, node is not available");
+                log.info("Node has no available threads currently");
             }
         }
 
         @Override
         public void itemRemoved(ItemEvent<LocalCIBuildJobQueueItem> item) {
-            log.info("Hazelcast, item removed: " + item.getItem());
+            log.info("Item removed from queue: " + item.getItem());
         }
     }
 }

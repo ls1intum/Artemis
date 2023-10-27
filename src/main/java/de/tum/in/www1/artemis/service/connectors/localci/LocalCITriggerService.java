@@ -19,12 +19,13 @@ import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTrigger
 @Profile("localci")
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
 
-    private final LocalCISharedBuildJobQueue localCISharedBuildJobQueue;
+    private final LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService;
 
     private final LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService;
 
-    public LocalCITriggerService(LocalCISharedBuildJobQueue localCISharedBuildJobQueue, LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService) {
-        this.localCISharedBuildJobQueue = localCISharedBuildJobQueue;
+    public LocalCITriggerService(LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService,
+            LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService) {
+        this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
         this.localCIProgrammingLanguageFeatureService = localCIProgrammingLanguageFeatureService;
     }
 
@@ -58,6 +59,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             throw new LocalCIException("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
         }
 
-        localCISharedBuildJobQueue.addBuildJobInformation(participation.getId(), commitHash);
+        localCISharedBuildJobQueueService.addBuildJobInformation(participation.getId(), commitHash);
     }
 }

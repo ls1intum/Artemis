@@ -15,8 +15,6 @@ import javax.naming.ldap.LdapName;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -32,8 +30,6 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -47,15 +43,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     private ExamUtilService examUtilService;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
-
-    @Autowired
     private ResultRepository resultRepository;
-
-    @Autowired
-    private SubmissionPolicyService submissionPolicyService;
-
-    private final Logger log = LoggerFactory.getLogger(LocalVCLocalCIIntegrationTest.class);
 
     // ---- Repository handles ----
     private String templateRepositorySlug;
@@ -301,8 +289,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), assignmentRepository.localGit);
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, "/repositories/test-repository/build/test-results/test");
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug);
+
         await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).isPresent());
-        log.info("Laurenz second push now");
+
         // Second push should fail.
         localVCLocalCITestService.testPushReturnsError(assignmentRepository.localGit, student1Login, projectKey1, assignmentRepositorySlug, FORBIDDEN);
 

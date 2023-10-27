@@ -195,28 +195,6 @@ public class LocalCIConnectorService {
             // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
             log.error("Something went wrong while triggering the template build for exercise " + exercise.getId() + " after the solution build was finished.", e);
         }
-
-        /*
-         * // Trigger a build of the solution repository.
-         * CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIBuildJobManagementService.addBuildJobToQueue(solutionParticipation, commitHash);
-         * futureSolutionBuildResult.thenAccept(buildResult -> {
-         * // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-         * // Therefore, a mock auth object has to be created.
-         * SecurityUtils.setAuthorizationObject();
-         * Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(solutionParticipation, buildResult);
-         * programmingMessagingService.notifyUserAboutNewResult(result, solutionParticipation);
-         * // The solution participation received a new result, also trigger a build of the template repository.
-         * try {
-         * programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
-         * }
-         * catch (EntityNotFoundException e) {
-         * // Something went wrong while retrieving the template participation.
-         * // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
-         * // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
-         * log.error("Something went wrong while triggering the template build for exercise " + exercise.getId() + " after the solution build was finished.", e);
-         * }
-         * });
-         */
     }
 
     /**
@@ -239,8 +217,6 @@ public class LocalCIConnectorService {
             throw new LocalCIException("Could not process submission for participation: " + e.getMessage(), e);
         }
 
-        log.info("Laurenz Submission processed");
-
         // Remove unnecessary information from the new submission.
         submission.getParticipation().setSubmissions(null);
         programmingMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
@@ -248,7 +224,6 @@ public class LocalCIConnectorService {
         // Trigger the build for the new submission on the local CI system.
         // TODO: this is already invoked in the service method processNewProgrammingSubmission above, however without the commit hash, we should probably unify the methods
         localCITriggerService.triggerBuild(participation, commit.getCommitHash());
-        log.info("Laurenz second trigger");
     }
 
     private Commit extractCommitInfo(String commitHash, Repository repository) throws IOException, GitAPIException {
