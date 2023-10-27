@@ -1,8 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
@@ -16,8 +21,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCISharedBuildJobQueue localCISharedBuildJobQueue;
 
-    public LocalCITriggerService(LocalCISharedBuildJobQueue localCISharedBuildJobQueue) {
+    private final LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService;
+
+    public LocalCITriggerService(LocalCISharedBuildJobQueue localCISharedBuildJobQueue, LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService) {
         this.localCISharedBuildJobQueue = localCISharedBuildJobQueue;
+        this.localCIProgrammingLanguageFeatureService = localCIProgrammingLanguageFeatureService;
     }
 
     /**
@@ -40,23 +48,16 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) {
 
-        localCISharedBuildJobQueue.addBuildJobInformation(participation.getId(), commitHash);
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
+        ProjectType projectType = programmingExercise.getProjectType();
 
-        /*
-         * CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash);
-         * futureResult.thenAccept(buildResult -> {
-         * // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-         * // Therefore, a mock auth object has to be created.
-         * SecurityUtils.setAuthorizationObject();
-         * Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
-         * if (result != null) {
-         * programmingMessagingService.notifyUserAboutNewResult(result, participation);
-         * }
-         * else {
-         * programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-         * new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
-         * }
-         * });
-         */
+        List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
+
+        if (projectType != null && !supportedProjectTypes.contains(programmingExercise.getProjectType())) {
+            throw new LocalCIException("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
+        }
+
+        localCISharedBuildJobQueue.addBuildJobInformation(participation.getId(), commitHash);
     }
 }

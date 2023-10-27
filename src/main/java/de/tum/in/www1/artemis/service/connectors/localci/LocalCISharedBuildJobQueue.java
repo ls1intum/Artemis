@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
@@ -48,6 +49,8 @@ public class LocalCISharedBuildJobQueue {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
 
     private final FencedLock lock;
@@ -58,13 +61,15 @@ public class LocalCISharedBuildJobQueue {
     @Autowired
     public LocalCISharedBuildJobQueue(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService) {
+            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.localCIBuildJobManagementService = localCIBuildJobManagementService;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.lock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
@@ -114,6 +119,11 @@ public class LocalCISharedBuildJobQueue {
         // participation might not be persisted in the database yet
         ProgrammingExerciseParticipation participation = retrieveParticipationWithRetry(buildJob.getParticipationId());
 
+        // For some reason, it is possible that the participation object does not have the programming exercise
+        if (participation.getProgrammingExercise() == null) {
+            participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
+        }
+
         CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash);
         futureResult.thenAccept(buildResult -> {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
@@ -130,6 +140,7 @@ public class LocalCISharedBuildJobQueue {
 
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.getParticipationId());
+
             // process next build job
             processBuild();
         });
