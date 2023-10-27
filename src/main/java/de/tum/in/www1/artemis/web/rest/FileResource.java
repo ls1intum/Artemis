@@ -14,6 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.activation.MimetypesFileTypeMap;
+import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -198,7 +199,7 @@ public class FileResource {
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        return responseEntityForFilePath(filePathService.actualPathForPublicPathOrThrow(URI.create(question.getBackgroundFilePath())));
+        return responseEntityForFilePath(getActualPathFromPublicPathString(question.getBackgroundFilePath()));
     }
 
     /**
@@ -217,7 +218,7 @@ public class FileResource {
         if (dragItem.getPictureFilePath() == null) {
             throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");
         }
-        return responseEntityForFilePath(filePathService.actualPathForPublicPathOrThrow(URI.create(dragItem.getPictureFilePath())));
+        return responseEntityForFilePath(getActualPathFromPublicPathString(dragItem.getPictureFilePath()));
     }
 
     /**
@@ -255,7 +256,7 @@ public class FileResource {
             throw new EntityNotFoundException("Submission " + submissionId + " has no file");
         }
 
-        return buildFileResponse(filePathService.actualPathForPublicPathOrThrow(URI.create(submission.getFilePath())), false);
+        return buildFileResponse(getActualPathFromPublicPathString(submission.getFilePath()), false);
     }
 
     /**
@@ -270,7 +271,7 @@ public class FileResource {
         log.debug("REST request to get icon for course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        return responseEntityForFilePath(filePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())));
+        return responseEntityForFilePath(getActualPathFromPublicPathString(course.getCourseIcon()));
     }
 
     /**
@@ -304,7 +305,7 @@ public class FileResource {
             throw new EntityNotFoundException("Exam user " + examUserId + " has no signature file");
         }
 
-        return buildFileResponse(filePathService.actualPathForPublicPathOrThrow(URI.create(examUser.getSigningImagePath())), false);
+        return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath()), false);
     }
 
     /**
@@ -324,7 +325,7 @@ public class FileResource {
             throw new EntityNotFoundException("Exam user " + examUserId + " has no image file");
         }
 
-        return buildFileResponse(filePathService.actualPathForPublicPathOrThrow(URI.create(examUser.getStudentImagePath())), true);
+        return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath()), true);
     }
 
     /**
@@ -355,7 +356,7 @@ public class FileResource {
             throw new EntityNotFoundException("Attachment " + filename + " has no file");
         }
 
-        return buildFileResponse(filePathService.actualPathForPublicPathOrThrow(URI.create(attachment.getLink())), false);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
 
     /**
@@ -416,7 +417,7 @@ public class FileResource {
             throw new EntityNotFoundException("Attachment " + attachmentUnitId + " has no file");
         }
 
-        return buildFileResponse(filePathService.actualPathForPublicPathOrThrow(URI.create(attachment.getLink())), false);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
 
     /**
@@ -513,6 +514,13 @@ public class FileResource {
             log.error("Failed to download file: {} on path: {}", filename, path, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    private Path getActualPathFromPublicPathString(@Nullable String publicPath) {
+        if (publicPath == null) {
+            throw new EntityNotFoundException("No file linked");
+        }
+        return filePathService.actualPathForPublicPathOrThrow(URI.create(publicPath));
     }
 
     private MediaType getMediaTypeFromFilename(String filename) {
