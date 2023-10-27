@@ -16,16 +16,13 @@ import { IrisProgrammingExerciseSettingsUpdateComponent } from 'app/iris/setting
 import { IrisLogoComponent } from './iris-logo/iris-logo.component';
 import { IrisCodeEditorChatbotButtonComponent } from 'app/iris/exercise-chatbot/code-editor-chatbot-button.component';
 import { IrisTutorChatbotButtonComponent } from 'app/iris/exercise-chatbot/tutor-chatbot-button.component';
-import { IrisCodeEditorChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/code-editor-chatbot-widget.component';
-import { IrisTutorChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/tutor-chatbot-widget.component';
 import { IrisCodeEditorWebsocketService } from 'app/iris/code-editor-websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
+import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 
 @NgModule({
     declarations: [
-        IrisTutorChatbotWidgetComponent,
-        IrisCodeEditorChatbotWidgetComponent,
-        IrisTutorChatbotWidgetComponent,
+        IrisChatbotWidgetComponent,
         IrisCodeEditorChatbotButtonComponent,
         IrisTutorChatbotButtonComponent,
         AboutIrisComponent,

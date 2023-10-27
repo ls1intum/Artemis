@@ -36,21 +36,53 @@ import {
     isServerSentMessage,
     isStudentSentMessage,
 } from 'app/entities/iris/iris-message.model';
-import { IrisMessageContent, IrisMessageContentType, IrisMessageTextContent, getTextContent, isTextContent } from 'app/entities/iris/iris-content-type.model';
+import {
+    IrisMessageContent,
+    IrisMessageContentType,
+    IrisMessageTextContent,
+    getPlanComponent,
+    getTextContent,
+    isPlanContent,
+    isTextContent,
+} from 'app/entities/iris/iris-content-type.model';
 import { Subscription } from 'rxjs';
 import { SharedService } from 'app/iris/shared.service';
 import { IrisSessionService } from 'app/iris/session.service';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
 import dayjs from 'dayjs/esm';
-import { AnimationEvent } from '@angular/animations';
+import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
 import { UserService } from 'app/core/user/user.service';
 import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
+import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
+import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { TranslateService } from '@ngx-translate/core';
+import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
 
-@Component({ template: '' })
-export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
+@Component({
+    selector: 'jhi-chatbot-widget',
+    templateUrl: './chatbot-widget.component.html',
+    styleUrls: ['./chatbot-widget.component.scss'],
+    animations: [
+        trigger('fadeAnimation', [
+            state(
+                'start',
+                style({
+                    opacity: 1,
+                }),
+            ),
+            state(
+                'end',
+                style({
+                    opacity: 0,
+                }),
+            ),
+            transition('start => end', [animate('2s ease')]),
+        ]),
+    ],
+})
+export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly IrisSender = IrisSender;
     // Icons
     faTrash = faTrash;
@@ -111,7 +143,7 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
     private navigationSubscription: Subscription;
     private readonly MAX_INT_JAVA = 2147483647;
 
-    protected constructor(
+    constructor(
         private dialog: MatDialog,
         @Inject(MAT_DIALOG_DATA) public data: any,
         private userService: UserService,
@@ -119,7 +151,7 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
         private sharedService: SharedService,
         private modalService: NgbModal,
         @Inject(DOCUMENT) private document: Document,
-        protected translateService: TranslateService,
+        private translateService: TranslateService,
     ) {
         this.stateStore = data.stateStore;
         this.courseId = data.courseId;
@@ -278,6 +310,19 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
     }
 
     /**
+     * Inserts the correct link to import the current programming exercise for a new variant generation.
+     */
+    getFirstMessageContent(): string {
+        if (this.isChatSession()) {
+            return this.translateService.instant('artemisApp.exerciseChatbot.tutorFirstMessage');
+        }
+        this.importExerciseUrl = `/course-management/${this.courseId}/programming-exercises/import/${this.exerciseId}`;
+        return this.translateService
+            .instant('artemisApp.exerciseChatbot.codeEditorFirstMessage')
+            .replace(/{link:(.*)}/, '<a href="' + this.importExerciseUrl + '" target="_blank">$1</a>');
+    }
+
+    /**
      * Loads the first message in the conversation if it's not already loaded.
      */
     loadFirstMessage(): void {
@@ -296,11 +341,6 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
             this.stateStore.dispatch(new ActiveConversationMessageLoadedAction(firstMessage));
         }
     }
-
-    /**
-     * Gets Iris' introductory message for the type of chat widget.
-     */
-    protected abstract getFirstMessageContent(): string;
 
     /**
      * Handles the send button click event and sends the user's message.
@@ -322,7 +362,10 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
             }, 20000);
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-                .then(() => this.sessionService.sendMessage(this.sessionId, message))
+                // .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
+                .then(() => {
+                    this.sessionService.httpMessageService.createMessage(<number>this.sessionId, message).toPromise();
+                })
                 .then(() => this.scrollToBottom('smooth'))
                 .catch((error) => this.handleIrisError(error));
             this.newMessageTextContent = '';
@@ -331,47 +374,34 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
         this.resetChatBodyHeight();
     }
 
-    resendMessage(message: IrisUserMessage) {
-        this.resendAnimationActive = true;
-        message.messageDifferentiator = message.id ?? Math.floor(Math.random() * this.MAX_INT_JAVA);
-
-        const timeoutId = setTimeout(() => {
-            // will be cleared by the store automatically
-            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
-            this.scrollToBottom('smooth');
-        }, 20000);
-        this.stateStore
-            .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-            .then(() => {
-                if (message.id) {
-                    return this.sessionService.resendMessage(this.sessionId, message);
-                }
-                return this.sessionService.sendMessage(this.sessionId, message);
-            })
-            .then(() => {
-                this.scrollToBottom('smooth');
-            })
-            .catch((error) => this.handleIrisError(error))
-            .finally(() => {
-                this.resendAnimationActive = false;
-                this.scrollToBottom('smooth');
-            });
+    /**
+     * Closes the chat widget.
+     */
+    closeChat() {
+        this.stateStore.dispatch(new NumNewMessagesResetAction());
+        this.sharedService.changeChatOpenStatus(false);
+        this.dialog.closeAll();
     }
 
     /**
-     * Rates a message as helpful or unhelpful.
-     * @param message_id - The ID of the message to rate.
-     * @param index - The index of the message in the messages array.
-     * @param helpful - A boolean indicating if the message is helpful or not.
+     * Animates the dots while loading each Iris message in the chat widget.
      */
-    rateMessage(message_id: number, index: number, helpful: boolean) {
-        this.sessionService
-            .rateMessage(this.sessionId, message_id, helpful)
-            .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
-            .catch(() => {
-                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED));
-                this.scrollToBottom('smooth');
-            });
+    animateDots() {
+        setInterval(() => {
+            this.dots = this.dots < 3 ? (this.dots += 1) : (this.dots = 1);
+        }, 500);
+    }
+
+    /**
+     * Scrolls to the unread message.
+     */
+    scrollToUnread() {
+        setTimeout(() => {
+            const unreadMessageElement: HTMLElement = this.unreadMessage?.nativeElement;
+            if (unreadMessageElement) {
+                unreadMessageElement.scrollIntoView({ behavior: 'auto' });
+            }
+        });
     }
 
     /**
@@ -389,10 +419,14 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
     }
 
     /**
-     * Returns whether to display the clear chat button.
+     * Checks if the chat body is scrolled to the bottom.
      */
-    isClearChatButtonEnabled(): boolean {
-        return this.messages.length > 1 || (this.messages.length === 1 && !isArtemisClientSentMessage(this.messages[0]));
+    checkChatScroll() {
+        const chatBody = this.chatBody.nativeElement;
+        const scrollHeight = chatBody.scrollHeight;
+        const scrollTop = chatBody.scrollTop;
+        const clientHeight = chatBody.clientHeight;
+        this.isScrolledToBottom = scrollHeight - scrollTop - clientHeight < 50;
     }
 
     /**
@@ -407,36 +441,6 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
     }
 
     /**
-     * Scrolls to the unread message.
-     */
-    scrollToUnread() {
-        setTimeout(() => {
-            const unreadMessageElement: HTMLElement = this.unreadMessage?.nativeElement;
-            if (unreadMessageElement) {
-                unreadMessageElement.scrollIntoView({ behavior: 'auto' });
-            }
-        });
-    }
-
-    /**
-     * Animates the dots while loading each Iris message in the chat widget.
-     */
-    animateDots() {
-        setInterval(() => {
-            this.dots = this.dots < 3 ? (this.dots += 1) : (this.dots = 1);
-        }, 500);
-    }
-
-    /**
-     * Closes the chat widget.
-     */
-    closeChat() {
-        this.stateStore.dispatch(new NumNewMessagesResetAction());
-        this.sharedService.changeChatOpenStatus(false);
-        this.dialog.closeAll();
-    }
-
-    /**
      * Accepts the permission to use the chat widget.
      */
     acceptPermission() {
@@ -444,17 +448,6 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
             this.userAccepted = true;
         });
         this.loadFirstMessage();
-    }
-
-    /**
-     * Checks if the chat body is scrolled to the bottom.
-     */
-    checkChatScroll() {
-        const chatBody = this.chatBody.nativeElement;
-        const scrollHeight = chatBody.scrollHeight;
-        const scrollTop = chatBody.scrollTop;
-        const clientHeight = chatBody.clientHeight;
-        this.isScrolledToBottom = scrollHeight - scrollTop - clientHeight < 50;
     }
 
     /**
@@ -575,6 +568,43 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
     }
 
     /**
+     * Rates a message as helpful or unhelpful.
+     * @param message_id - The ID of the message to rate.
+     * @param index - The index of the message in the messages array.
+     * @param helpful - A boolean indicating if the message is helpful or not.
+     */
+    rateMessage(message_id: number, index: number, helpful: boolean) {
+        if (this.sessionService.httpMessageService instanceof IrisHttpChatMessageService) {
+            this.sessionService.httpMessageService
+                .rateMessage(<number>this.sessionId, message_id, helpful)
+                .toPromise()
+                .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
+                .catch(() => {
+                    this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED));
+                    this.scrollToBottom('smooth');
+                });
+        }
+    }
+
+    /**
+     * execute component plans
+     * @param messageId - The ID of the message.
+     * @param planId - The ID of the content to execute.
+     * @param stepId - The ID of the step to execute.
+     */
+    executePlan(messageId: number, planId: number, stepId: number) {
+        if (this.sessionService instanceof IrisCodeEditorSessionService) {
+            this.sessionService
+                .executePlanStep(<number>this.sessionId, messageId, planId, stepId)
+                // .then(() => this.stateStore.dispatch(new ExecutePlanSuccessAction(planId)))
+                .catch(() => {
+                    //this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.EXECUTE_PLAN_FAILED));
+                    this.scrollToBottom('smooth');
+                });
+        }
+    }
+
+    /**
      * Checks if a message is a student-sent message.
      * @param message - The message to check.
      * @returns A boolean indicating if the message is a student-sent message.
@@ -607,10 +637,39 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
      * @returns A new IrisClientMessage object representing the user message.
      */
     newUserMessage(message: string): IrisUserMessage {
+        const content = new IrisMessageTextContent(message);
         return {
             sender: IrisSender.USER,
-            content: [new IrisMessageTextContent(message)],
+            content: [content],
         };
+    }
+
+    resendMessage(message: IrisUserMessage) {
+        this.resendAnimationActive = true;
+        message.messageDifferentiator = message.id ?? Math.floor(Math.random() * this.MAX_INT_JAVA);
+
+        const timeoutId = setTimeout(() => {
+            // will be cleared by the store automatically
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
+            this.scrollToBottom('smooth');
+        }, 20000);
+        this.stateStore
+            .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
+            .then(() => {
+                if (message.id) {
+                    return this.sessionService.httpMessageService.resendMessage(<number>this.sessionId, message).toPromise();
+                } else {
+                    return this.sessionService.httpMessageService.createMessage(<number>this.sessionId, message).toPromise();
+                }
+            })
+            .then(() => {
+                this.scrollToBottom('smooth');
+            })
+            .catch((error) => this.handleIrisError(error))
+            .finally(() => {
+                this.resendAnimationActive = false;
+                this.scrollToBottom('smooth');
+            });
     }
 
     private handleIrisError(error: HttpErrorResponse) {
@@ -661,6 +720,10 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
         return null;
     }
 
+    isClearChatButtonEnabled(): boolean {
+        return this.messages.length > 1 || (this.messages.length === 1 && !isArtemisClientSentMessage(this.messages[0]));
+    }
+
     createNewSession() {
         this.sessionService.createNewSession(this.exerciseId);
     }
@@ -671,5 +734,17 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
 
     getTextContent(content: IrisMessageContent) {
         return getTextContent(content);
+    }
+
+    isExercisePlan(content: IrisMessageContent) {
+        return isPlanContent(content);
+    }
+
+    getPlanSteps(content: IrisMessageContent) {
+        return getPlanComponent(content);
+    }
+
+    isChatSession() {
+        return this.sessionService instanceof IrisChatSessionService;
     }
 }

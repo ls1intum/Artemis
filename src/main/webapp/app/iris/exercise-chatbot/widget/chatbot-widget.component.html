@@ -55,7 +55,7 @@
 
         <!-- main chat section -->
         <div class="chat-body" #chatBody (scroll)="checkChatScroll()">
-            <div messages *ngFor="let message of messages; let i = index">
+            <div *ngFor="let message of messages; let i = index">
                 <span *ngIf="i === unreadMessageIndex" class="unread-message" #unreadMessage>{{ 'artemisApp.exerciseChatbot.unreadMessages' | artemisTranslate }}</span>
                 <div *ngFor="let content of message.content">
                     <div *ngIf="isStudentSentMessage(message)" style="display: flex">
@@ -71,7 +71,8 @@
                             </button>
                         </div>
                         <div *ngIf="isTextContent(content)" style="display: flex">
-                            <pre><span [innerHTML]="getTextContent(content)! | htmlForMarkdown" class="bubble-right"></span></pre>
+                            <pre><span [innerHTML]="getTextContent(content)! | htmlForMarkdown"
+                                       class="bubble-right"></span></pre>
                         </div>
                     </div>
                     <div *ngIf="isServerSentMessage(message)" style="width: fit-content">
@@ -85,8 +86,7 @@
                                     style="margin-right: 15px"
                                     [icon]="faThumbsUp"
                                     size="sm"
-                                >
-                                </fa-icon>
+                                ></fa-icon>
                             </button>
                             <button style="all: unset" (click)="rateMessage(message.id, i, false)" [disabled]="message.helpful === false">
                                 <fa-icon
@@ -97,7 +97,7 @@
                             </button>
                         </div>
                         <div class="bubble-left" *ngIf="isExercisePlan(content)">
-                            <div *ngFor="let step of getExercisePlanSteps(content); let i = index">
+                            <div *ngFor="let step of getPlanSteps(content); let i = index">
                                 <div>
                                     <span [innerHTML]="step.component | htmlForMarkdown"></span>
                                     <!--TODO: Add show/hide button-->
@@ -105,7 +105,7 @@
                                 <!--TODO: Make it editable-->
                                 <span [innerHTML]="step.instructions! | htmlForMarkdown"></span>
                                 <!--TODO: Add cancel, confirm button-->
-                                <button (click)="executeExercisePlanStep(message.id!, content.id!, step.id!)" class="btn btn-primary">Confirm</button>
+                                <button (click)="executePlan(message.id!, content.id!, step.id!)" class="btn btn-primary">confirm</button>
                             </div>
                         </div>
                     </div>
@@ -152,7 +152,6 @@
                 [(ngModel)]="newMessageTextContent"
                 rows="1"
                 class="form-control"
-                maxRows="3"
                 (ngModelChange)="onRowChange()"
                 (input)="onInput()"
                 (paste)="onPaste()"
