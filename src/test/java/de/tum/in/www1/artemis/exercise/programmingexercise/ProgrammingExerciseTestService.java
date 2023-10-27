@@ -32,7 +32,6 @@ import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -295,7 +294,6 @@ public class ProgrammingExerciseTestService {
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
         solutionRepo.resetLocalRepo();
-        auxRepo.resetLocalRepo();
         sourceExerciseRepo.resetLocalRepo();
         sourceTestRepo.resetLocalRepo();
         sourceSolutionRepo.resetLocalRepo();
@@ -1337,7 +1335,7 @@ public class ProgrammingExerciseTestService {
 
     private void setupAuxRepoMock(AuxiliaryRepository auxiliaryRepository) throws GitAPIException {
         Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepo.localRepoFile.toPath(), null);
-        disableAutoGC(repository);
+
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUrl()), anyString(), anyBoolean());
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUrl()), (Path) any(), anyBoolean());
     }
@@ -1405,11 +1403,10 @@ public class ProgrammingExerciseTestService {
             Files.delete(embeddedFilePath2);
         }
         // Recursively unzip the exported file, to make sure there is no erroneous content
-        zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
-        String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
+        Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
 
         // Check that the contents we created exist in the unzipped exported folder
-        try (var files = Files.walk(Path.of(extractedZipDir))) {
+        try (var files = Files.walk(extractedZipDir)) {
             List<Path> listOfIncludedFiles = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
             assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
                     .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
@@ -1420,23 +1417,28 @@ public class ProgrammingExerciseTestService {
                         .anyMatch((filename) -> filename.toString().equals(embeddedFileName2));
             }
         }
+
+        FileUtils.deleteDirectory(extractedZipDir.toFile());
+        FileUtils.delete(zipFile);
     }
 
     void exportProgrammingExerciseInstructorMaterial_problemStatementNull_success() throws Exception {
         var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true, true, false);
         await().until(zipFile::exists);
         assertThat(zipFile).isNotNull();
-        zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
-        String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
+        Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
 
         // Check that the contents we created exist in the unzipped exported folder
-        try (var files = Files.walk(Path.of(extractedZipDir))) {
+        try (var files = Files.walk(extractedZipDir)) {
             List<Path> listOfIncludedFiles = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
             assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
                     .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
                     .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"));
 
         }
+
+        FileUtils.deleteDirectory(extractedZipDir.toFile());
+        FileUtils.delete(zipFile);
     }
 
     // Test
@@ -1518,7 +1520,7 @@ public class ProgrammingExerciseTestService {
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
         VcsRepositoryUrl vcsUrl = exercise.getRepositoryURL(repoType);
         Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null);
-        disableAutoGC(repository);
+
         createAndCommitDummyFileInLocalRepository(localRepo, fileName);
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), (Path) any(), anyBoolean());
@@ -1544,25 +1546,21 @@ public class ProgrammingExerciseTestService {
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
-        disableAutoGC(studentRepository);
         createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
 
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
-        disableAutoGC(templateRepository);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
 
         // Mock solution repo
         Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
-        disableAutoGC(solutionRepository);
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean());
 
         // Mock tests repo
         Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
-        disableAutoGC(testsRepository);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean());
 
@@ -1573,9 +1571,8 @@ public class ProgrammingExerciseTestService {
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
         // extract archive content and check that all expected files exist.
         Path courseArchivePath = courseArchivesDirPath.resolve(updatedCourse.getCourseArchivePath());
-        zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
-        String extractedArchiveDir = updatedCourse.getCourseArchivePath().substring(0, updatedCourse.getCourseArchivePath().length() - 4);
-        try (var files = Files.walk(courseArchivesDirPath.resolve(extractedArchiveDir))) {
+        Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
+        try (var files = Files.walk(extractedArchiveDir)) {
             assertThat(files).map(Path::getFileName).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
                     .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
                     .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))
@@ -1615,14 +1612,16 @@ public class ProgrammingExerciseTestService {
 
         // Extract the archive
         Path archivePath = optionalExportedCourse.get();
-        zipFileTestUtilService.extractZipFileRecursively(archivePath.toString());
-        String extractedArchiveDir = archivePath.toString().substring(0, archivePath.toString().length() - 4);
+        Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(archivePath.toString());
 
         // Check that the dummy files we created exist in the archive
-        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+        try (var files = Files.walk(extractedArchiveDir)) {
             var filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
             assertThat(filenames).contains(Path.of("Template.java"), Path.of("Solution.java"), Path.of("Tests.java"), Path.of("HelloWorld.java"));
         }
+
+        FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+        FileUtils.delete(archivePath.toFile());
     }
 
     private void createCourseWithProgrammingExerciseAndParticipationWithFiles() throws GitAPIException, IOException {
@@ -1643,25 +1642,21 @@ public class ProgrammingExerciseTestService {
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
-        disableAutoGC(studentRepository);
         createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
 
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
-        disableAutoGC(templateRepository);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
 
         // Mock solution repo
         Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
-        disableAutoGC(solutionRepository);
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean());
 
         // Mock tests repo
         Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
-        disableAutoGC(testsRepository);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean());
     }
@@ -1730,18 +1725,6 @@ public class ProgrammingExerciseTestService {
     }
 
     /**
-     * Disables auto garbage collection for the given repository.
-     *
-     * @param repository the repository
-     */
-    private void disableAutoGC(org.eclipse.jgit.lib.Repository repository) {
-        // See https://www.eclipse.org/lists/jgit-dev/msg03734.html
-        repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
-        repository.getConfig().setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
-        repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
-    }
-
-    /**
      * Creates a dummy file in the repository and commits it locally
      * without pushing it.
      *
@@ -1770,14 +1753,16 @@ public class ProgrammingExerciseTestService {
         assertThat(archive).exists();
 
         // Extract the archive
-        zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
-        String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
+        Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
 
         // Check that the dummy files we created exist in the archive
-        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
-            var filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
-            assertThat(filenames).contains(Path.of("HelloWorld.java"), Path.of("Template.java"), Path.of("Solution.java"), Path.of("Tests.java"));
+        try (var files = Files.walk(extractedArchiveDir)) {
+            var filenames = files.filter(Files::isRegularFile).map(Path::getFileName).map(Path::toString).toList();
+            assertThat(filenames).contains("HelloWorld.java", "Template.java", "Solution.java", "Tests.java");
         }
+
+        FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+        FileUtils.delete(archive);
     }
 
     private ProgrammingExerciseStudentParticipation createStudentParticipationWithSubmission(ExerciseMode exerciseMode) {

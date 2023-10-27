@@ -70,7 +70,7 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
             return new VcsRepositoryUrl(repoUrl);
         }
         catch (URISyntaxException e) {
-            e.printStackTrace();
+            log.warn("Cannot create URI for repositoryUrl: {} due to the following error: {}", repoUrl, e.getMessage());
         }
         return null;
     }

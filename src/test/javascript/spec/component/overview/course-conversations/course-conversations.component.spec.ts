@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angul
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
 import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-selection-sidebar.component';
@@ -18,6 +18,10 @@ import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/rout
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { CourseConversationsCodeOfConductComponent } from 'app/overview/course-conversations/code-of-conduct/course-conversations-code-of-conduct.component';
+
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {
@@ -43,6 +47,9 @@ examples.forEach((activeConversation) => {
                     MockComponent(ConversationHeaderComponent),
                     MockComponent(ConversationMessagesComponent),
                     MockComponent(ConversationThreadSidebarComponent),
+                    MockComponent(CourseConversationsCodeOfConductComponent),
+                    MockPipe(ArtemisTranslatePipe),
+                    MockPipe(HtmlForMarkdownPipe),
                 ],
                 providers: [
                     MockProvider(AlertService),
@@ -96,6 +103,22 @@ examples.forEach((activeConversation) => {
             Object.defineProperty(metisConversationService, 'isLoading$', {
                 get: () => new BehaviorSubject(false).asObservable(),
             });
+            Object.defineProperty(metisConversationService, 'isCodeOfConductAccepted$', {
+                get: () => new BehaviorSubject(true).asObservable(),
+            });
+            Object.defineProperty(metisConversationService, 'isCodeOfConductPresented$', {
+                get: () => new BehaviorSubject(false).asObservable(),
+            });
+            Object.defineProperty(metisConversationService, 'checkIsCodeOfConductAccepted', {
+                get: () => {
+                    return () => {};
+                },
+            });
+            Object.defineProperty(metisConversationService, 'acceptCodeOfConduct', {
+                get: () => {
+                    return () => {};
+                },
+            });
             Object.defineProperty(metisService, 'posts', {
                 get: () => postsSubject.asObservable(),
             });
@@ -146,6 +169,13 @@ examples.forEach((activeConversation) => {
                 queryParamsHandling: 'merge',
                 replaceUrl: true,
             });
+        });
+
+        it('should accept code of conduct', () => {
+            const metisSpy = jest.spyOn(metisConversationService, 'acceptCodeOfConduct');
+            fixture.detectChanges();
+            component.acceptCodeOfConduct();
+            expect(metisSpy).toHaveBeenCalledOnce();
         });
     });
 });
