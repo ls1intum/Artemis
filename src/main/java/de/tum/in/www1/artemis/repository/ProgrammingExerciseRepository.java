@@ -119,11 +119,13 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             LEFT JOIN FETCH pe.solutionParticipation sp
             LEFT JOIN FETCH tp.results AS tpr
             LEFT JOIN FETCH sp.results AS spr
-            LEFT JOIN FETCH tpr.feedbacks
-            LEFT JOIN FETCH spr.feedbacks
+            LEFT JOIN FETCH tpr.feedbacks tf
+            LEFT JOIN FETCH spr.feedbacks sf
+            LEFT JOIN FETCH tf.testCase
+            LEFT JOIN FETCH sf.testCase
             LEFT JOIN FETCH tpr.submission
             LEFT JOIN FETCH spr.submission
-            WHERE pe.id = :#{#exerciseId}
+            WHERE pe.id = :exerciseId
                 AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
                 AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
             """)

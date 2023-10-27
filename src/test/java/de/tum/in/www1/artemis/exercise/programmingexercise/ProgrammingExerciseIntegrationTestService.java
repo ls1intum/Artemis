@@ -65,6 +65,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -190,10 +191,15 @@ class ProgrammingExerciseIntegrationTestService {
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private VersionControlService versionControlService;
 
-    void setup(String userPrefix, MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
+    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    private ContinuousIntegrationService continuousIntegrationService;
+
+    void setup(String userPrefix, MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
+            throws Exception {
         this.userPrefix = userPrefix;
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService; // this can be used like a SpyBean
+        this.continuousIntegrationService = continuousIntegrationService; // this can be used like a SpyBean
 
         userUtilService.addUsers(userPrefix, 3, 2, 2, 2);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
@@ -790,11 +796,29 @@ class ProgrammingExerciseIntegrationTestService {
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
+    void updateProgrammingExercise_correctlySavesTestIds() throws Exception {
+        var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        var test1 = tests.get(0);
+
+        String problemStatement = "[task][taskname](test1)";
+        String problemStatementWithId = "[task][taskname](<testid>%s</testid>)".formatted(test1.getId());
+        programmingExercise.setProblemStatement(problemStatement);
+
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        var response = request.putWithResponseBody(ROOT + PROGRAMMING_EXERCISES, programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        assertThat(response.getProblemStatement()).as("the REST endpoint should return a problem statement with test names").isEqualTo(problemStatement);
+
+        programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(programmingExercise.getProblemStatement()).as("test saved exercise contains test ids").isEqualTo(problemStatementWithId);
+    }
+
     private void mockBuildPlanAndRepositoryCheck(ProgrammingExercise programmingExercise) throws Exception {
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(), programmingExercise.getProjectKey(), true);
+        mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTestRepositoryUrl(), programmingExercise.getProjectKey(), true);
     }
 
     private void mockConfigureRepository(ProgrammingExercise programmingExercise) throws Exception {
@@ -1297,23 +1321,27 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void importProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
+        String sourceId = programmingExercise.getId().toString();
         programmingExercise.setId(null);
         programmingExercise.setTitle(programmingExercise.getTitle() + "change");
+        String sourceIdExam = programmingExerciseInExam.getId().toString();
         programmingExerciseInExam.setId(null);
         programmingExerciseInExam.setTitle(programmingExerciseInExam.getTitle() + "change");
         // short name will still be the same
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", sourceId), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", sourceIdExam), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_sameTitleInCourse_badRequest() throws Exception {
+        String sourceId = programmingExercise.getId().toString();
         programmingExercise.setId(null);
         programmingExercise.setShortName(programmingExercise.getShortName() + "change");
+        String sourceIdExam = programmingExerciseInExam.getId().toString();
         programmingExerciseInExam.setId(null);
         programmingExerciseInExam.setShortName(programmingExerciseInExam.getShortName() + "change");
         // title will still be the same
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", sourceId), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", sourceIdExam), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
@@ -1387,6 +1415,39 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
         mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, false);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExercise_updatesTestCaseIds() throws Exception {
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(programmingExercise.getId());
+        var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        var test1 = tests.get(0);
+
+        String problemStatementWithId = "[task][Taskname](<testid>" + test1.getId() + "</testid>)";
+        String problemStatement = "[task][Taskname](test1)";
+        programmingExercise.setProblemStatement(problemStatementWithId);
+        programmingExerciseRepository.save(programmingExercise);
+
+        String sourceId = programmingExercise.getId().toString();
+
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise, course);
+        exerciseToBeImported.setProblemStatement(problemStatement);
+
+        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
+        mockDelegate.mockConnectorRequestsForImport(programmingExercise, exerciseToBeImported, false, false);
+        mockDelegate.mockConnectorRequestsForSetup(exerciseToBeImported, false);
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+        doNothing().when(versionControlService).addWebHooksForExercise(any());
+        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
+
+        var response = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceId), exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);
+
+        assertThat(response.getProblemStatement()).isEqualTo("[task][Taskname](test1)");
+
+        var newTestCase = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(response.getId(), test1.getTestName()).orElseThrow();
+        String newProblemStatement = "[task][Taskname](<testid>" + newTestCase.getId() + "</testid>)";
+        var savedProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(response.getId());
+
+        assertThat(savedProgrammingExercise.getProblemStatement()).isEqualTo(newProblemStatement);
     }
 
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
