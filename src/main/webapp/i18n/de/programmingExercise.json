@@ -301,7 +301,7 @@
                     "bonusPoints": "Bonuspunkte: Zusätzliche Punkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100% führen.",
                     "visibility": "Feedback und Punkte für Testfälle, die mit „Nach Einreichungsfrist“ markiert sind, werden erst danach für Studierende angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
                     "points": "Die Menge an Punkten, die die Studierenden für das Bestehen dieses Tests bekommen. Dieser Wert wird wie in den Kurseinstellungen festgelegt gerundet.",
-                    "type": "Der Typ des Tests gibt an, ob dieser aus der test.json-Datei generiert wurde (STRUCTURAL), oder manuell geschrieben wurde (BEHAVIORAL)."
+                    "type": "Der Typ des Tests gibt an, ob dieser aus der test.json-Datei generiert wurde (STRUCTURAL), oder manuell geschrieben wurde (BEHAVIORAL). Derzeit nur für Java Aufgaben verfügbar."
                 },
                 "updatedGradingConfigShort": "Veränderte Bewertung",
                 "updatedGradingConfig": "Achtung: Du hast die Bewertung der Aufgabe verändert, aber nicht alle Einreichungen der Studierenden mit den aktualisierten Testfall Einstellungen erneut ausgeführt. Neu erstellte Ergebnisse werden mit den aktualisierten Bewertungseinstellungen bewertet, während existierende Ergebnisse nicht verändert werden. Hierdurch kann es unter den Studierenden zu inkonsistenten Ergebnissen kommen. Du kannst die erneute Ausführung der Einreichungen auch zu einem späteren Zeitpunkt veranlassen. Willst du wirklich den Bereich verlassen?",

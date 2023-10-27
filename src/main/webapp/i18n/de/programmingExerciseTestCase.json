@@ -24,10 +24,9 @@
                 "Never": "Nie"
             },
             "type": {
-                "null": "",
                 "STRUCTURAL": "Struktur",
                 "BEHAVIORAL": "Verhalten",
-                "MIXED": "Verschieden"
+                "DEFAULT": "Standard"
             }
         }
     }
