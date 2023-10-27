@@ -7,7 +7,6 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import java.util.List;
 import java.util.Optional;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -115,7 +114,6 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
     }
 
-    @NotNull
     private GradingCriterion createExampleGradingCriterion() {
         var gradingInstruction = new GradingInstruction();
         gradingInstruction.setId(101L);
