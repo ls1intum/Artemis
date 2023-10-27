@@ -115,8 +115,12 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule jsonArray = noClasses().should()
                 .dependOnClassesThat(have(simpleName("JsonArray")).or(have(simpleName("JSONArray"))).and(not(resideInAPackage("com.google.gson"))));
 
+        ArchRule jsonParser = noClasses().should()
+                .dependOnClassesThat(have(simpleName("JsonParser")).or(have(simpleName("JSONParser"))).and(not(resideInAPackage("com.google.gson"))));
+
         jsonObject.check(allClasses);
         jsonArray.check(allClasses);
+        jsonParser.check(allClasses);
     }
 
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
