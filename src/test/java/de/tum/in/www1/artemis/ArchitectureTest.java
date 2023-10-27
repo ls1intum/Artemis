@@ -107,6 +107,18 @@ class ArchitectureTest extends AbstractArchitectureTest {
         GeneralCodingRules.NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS.check(classes);
     }
 
+    @Test
+    void testJSONImplementations() {
+        ArchRule jsonObject = noClasses().should()
+                .dependOnClassesThat(have(simpleName("JsonObject")).or(have(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson"))));
+
+        ArchRule jsonArray = noClasses().should()
+                .dependOnClassesThat(have(simpleName("JsonArray")).or(have(simpleName("JSONArray"))).and(not(resideInAPackage("com.google.gson"))));
+
+        jsonObject.check(allClasses);
+        jsonArray.check(allClasses);
+    }
+
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
 
     private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {

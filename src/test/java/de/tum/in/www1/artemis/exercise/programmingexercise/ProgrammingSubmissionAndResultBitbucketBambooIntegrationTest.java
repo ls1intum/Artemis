@@ -17,8 +17,6 @@ import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +33,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -648,12 +647,12 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
         testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(TEST_PREFIX);
-        var pushJSON = (JSONObject) new JSONParser().parse(BITBUCKET_PUSH_EVENT_REQUEST);
-        var changes = (JSONArray) pushJSON.get("changes");
-        var firstChange = (JSONObject) changes.get(0);
-        var firstCommitHash = (String) firstChange.get("fromHash");
-        var secondCommitHash = (String) firstChange.get("toHash");
-        var secondCommitDate = ZonedDateTime.parse(pushJSON.get("date").toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
+        var pushJSON = JsonParser.parseString(BITBUCKET_PUSH_EVENT_REQUEST).getAsJsonObject();
+        var changes = pushJSON.get("changes").getAsJsonArray();
+        var firstChange = changes.get(0).getAsJsonObject();
+        var firstCommitHash = firstChange.get("fromHash").getAsString();
+        var secondCommitHash = firstChange.get("toHash").getAsString();
+        var secondCommitDate = ZonedDateTime.parse(pushJSON.get("date").getAsString(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
         var firstCommitDate = secondCommitDate.minusSeconds(30);
 
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(testService.programmingExercise);

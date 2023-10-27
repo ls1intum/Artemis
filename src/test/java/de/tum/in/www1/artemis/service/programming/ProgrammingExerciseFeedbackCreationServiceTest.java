@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.config.Constants;
@@ -224,8 +226,8 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
                 .createFeedbackFromStaticCodeAnalysisReports(resultNotification1.getBuild().jobs().get(0).staticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback1) {
-            JSONObject issueJSON = new JSONObject(feedback.getDetailText());
-            assertThat(pathWithoutWorkingDir).isEqualTo(issueJSON.get("filePath"));
+            JsonObject issueJSON = JsonParser.parseString(feedback.getDetailText()).getAsJsonObject();
+            assertThat(pathWithoutWorkingDir).isEqualTo(issueJSON.get("filePath").getAsString());
         }
 
         // 2. Test that null or empty paths default to FeedbackRepository.DEFAULT_FILEPATH
@@ -250,8 +252,8 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
                 .createFeedbackFromStaticCodeAnalysisReports(resultNotification2.getBuild().jobs().get(0).staticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback2) {
-            JSONObject issueJSON = new JSONObject(feedback.getDetailText());
-            assertThat(issueJSON.get("filePath")).isEqualTo("notAvailable");
+            JsonObject issueJSON = JsonParser.parseString(feedback.getDetailText()).getAsJsonObject();
+            assertThat(issueJSON.get("filePath").getAsString()).isEqualTo("notAvailable");
         }
     }
 }
