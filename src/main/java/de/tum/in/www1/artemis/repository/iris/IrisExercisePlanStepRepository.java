@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import de.tum.in.www1.artemis.domain.iris.message.IrisExercisePlanStep;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-public interface IrisExercisePlanComponentRepository extends JpaRepository<IrisExercisePlanStep, Long> {
+public interface IrisExercisePlanStepRepository extends JpaRepository<IrisExercisePlanStep, Long> {
 
     default IrisExercisePlanStep findByIdElseThrow(long exercisePlanComponentId) {
         return findById(exercisePlanComponentId).orElseThrow(() -> new EntityNotFoundException("Exercise Plan Component"));

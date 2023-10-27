@@ -44,7 +44,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     private IrisMessageRepository irisMessageRepository;
 
     @Autowired
-    private IrisExercisePlanComponentRepository irisExercisePlanComponentRepository;
+    private IrisExercisePlanStepRepository irisExercisePlanStepRepository;
 
     @Autowired
     private IrisUtilTestService irisUtilTestService;
@@ -163,7 +163,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         request.putWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/contents/" + exercisePlanContent.getId()
                 + "/components/" + component.getId(), updateProblemStatement(component), IrisExercisePlanStep.class, HttpStatus.OK);
         var irisMessageFromDB = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
-        var componentFromDB = irisExercisePlanComponentRepository.findByIdElseThrow(component.getId());
+        var componentFromDB = irisExercisePlanStepRepository.findByIdElseThrow(component.getId());
         assertThat(irisMessageFromDB.getContent()).hasSize(1);
         assertThat(componentFromDB.getInstructions()).isEqualTo("test PS");
     }

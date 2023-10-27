@@ -34,12 +34,12 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
 
     private final IrisCodeEditorSessionService irisCodeEditorSessionService;
 
-    private final IrisExercisePlanComponentRepository irisExercisePlanStepRepository;
+    private final IrisExercisePlanStepRepository irisExercisePlanStepRepository;
 
     public IrisCodeEditorMessageResource(IrisSessionRepository irisSessionRepository, IrisCodeEditorSessionService irisSessionService, IrisMessageService irisMessageService,
             IrisMessageRepository irisMessageRepository, IrisRateLimitService rateLimitService, UserRepository userRepository,
             IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, IrisCodeEditorSessionService irisCodeEditorSessionService,
-            IrisExercisePlanComponentRepository irisExercisePlanStepRepository) {
+            IrisExercisePlanStepRepository irisExercisePlanStepRepository) {
         super(irisSessionRepository, irisSessionService, irisMessageService, irisMessageRepository, rateLimitService, userRepository);
         this.irisCodeEditorWebsocketService = irisCodeEditorWebsocketService;
         this.irisCodeEditorSessionService = irisCodeEditorSessionService;
