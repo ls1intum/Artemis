@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IrisMessage } from 'app/entities/iris/iris-message.model';
-import { convertDateFromServer } from 'app/utils/date.utils';
-import { map } from 'rxjs/operators';
+import { IrisMessage, IrisServerMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { map, tap } from 'rxjs/operators';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -44,6 +44,47 @@ export abstract class IrisHttpMessageService {
                 return Object.assign({}, response, {
                     body: modifiedMessages,
                 });
+            }),
+        );
+    }
+
+    /**
+     * creates a new message in a session
+     * @param sessionId of the session
+     * @param message  to be created
+     */
+    createMessage(sessionId: number, message: IrisUserMessage): Response<IrisMessage> {
+        message.messageDifferentiator = this.randomInt();
+        return this.httpClient
+            .post<IrisServerMessage>(
+                `${this.apiPrefix}/${this.sessionType}/${sessionId}/messages`,
+                Object.assign({}, message, {
+                    sentAt: convertDateFromClient(message.sentAt),
+                }),
+                { observe: 'response' },
+            )
+            .pipe(
+                tap((response) => {
+                    if (response.body && response.body.id) {
+                        message.id = response.body.id;
+                    }
+                }),
+            );
+    }
+
+    /**
+     * resends a message in a session
+     * @param {number} sessionId
+     * @param {IrisUserMessage} message
+     * @return {Response<IrisMessage>}
+     */
+    resendMessage(sessionId: number, message: IrisUserMessage): Response<IrisMessage> {
+        message.messageDifferentiator = message.messageDifferentiator ?? this.randomInt();
+        return this.httpClient.post<IrisServerMessage>(`${this.apiPrefix}/${this.sessionType}/${sessionId}/messages/${message.id}/resend`, null, { observe: 'response' }).pipe(
+            tap((response) => {
+                if (response.body && response.body.id) {
+                    message.id = response.body.id;
+                }
             }),
         );
     }

@@ -5,7 +5,7 @@ import { ConversationErrorOccurredAction, SessionReceivedAction } from 'app/iris
 import { IrisHttpSessionService } from 'app/iris/http-session.service';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
-import { IrisMessage } from 'app/entities/iris/iris-message.model';
+import { IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { firstValueFrom } from 'rxjs';
 
@@ -31,28 +31,23 @@ export abstract class IrisSessionService {
      * @param exerciseId The exercise ID to which the session will be attached.
      */
     getCurrentSessionOrCreate(exerciseId: number): void {
-        this.httpSessionService
-            .getCurrentSession(exerciseId)
-            .toPromise()
-            .then((irisSessionResponse: HttpResponse<IrisSession>) => {
+        firstValueFrom(this.httpSessionService.getCurrentSession(exerciseId))
+            .then(async (irisSessionResponse: HttpResponse<IrisSession>) => {
                 const sessionId = irisSessionResponse.body!.id;
-                return this.httpMessageService
-                    .getMessages(sessionId)
-                    .toPromise()
-                    .then((messagesResponse: HttpResponse<IrisMessage[]>) => {
-                        const messages = messagesResponse.body!;
-                        messages.sort((a, b) => {
-                            if (a.sentAt && b.sentAt) {
-                                if (a.sentAt === b.sentAt) return 0;
-                                return a.sentAt.isBefore(b.sentAt) ? -1 : 1;
-                            }
-                            return 0;
-                        });
-                        this.dispatchSuccess(sessionId, messages);
-                    })
-                    .catch(() => {
-                        this.dispatchError(IrisErrorMessageKey.HISTORY_LOAD_FAILED);
+                try {
+                    const messagesResponse = await firstValueFrom(this.httpMessageService.getMessages(sessionId));
+                    const messages = messagesResponse.body!;
+                    messages.sort((a, b) => {
+                        if (a.sentAt && b.sentAt) {
+                            if (a.sentAt === b.sentAt) return 0;
+                            return a.sentAt.isBefore(b.sentAt) ? -1 : 1;
+                        }
+                        return 0;
                     });
+                    this.dispatchSuccess(sessionId, messages);
+                } catch {
+                    this.dispatchError(IrisErrorMessageKey.HISTORY_LOAD_FAILED);
+                }
             })
             .catch((error: HttpErrorResponse) => {
                 if (error.status == 404) {
@@ -74,6 +69,26 @@ export abstract class IrisSessionService {
             },
             () => this.dispatchError(IrisErrorMessageKey.SESSION_CREATION_FAILED),
         );
+    }
+
+    /**
+     * Sends a message to the server and returns the created message.
+     * @param sessionId of the session in which the message should be created
+     * @param message to be created
+     */
+    async sendMessage(sessionId: number, message: IrisUserMessage): Promise<IrisMessage> {
+        const response = await firstValueFrom(this.httpMessageService.createMessage(sessionId, message));
+        return response.body!;
+    }
+
+    /**
+     * Resends a message to the server and returns the created message.
+     * @param sessionId of the session in which the message should be created
+     * @param message to be created
+     */
+    async resendMessage(sessionId: number, message: IrisUserMessage): Promise<IrisMessage> {
+        const response = await firstValueFrom(this.httpMessageService.resendMessage(sessionId, message));
+        return response.body!;
     }
 
     async rateMessage(sessionId: number, messageId: number, helpful: boolean): Promise<IrisMessage> {

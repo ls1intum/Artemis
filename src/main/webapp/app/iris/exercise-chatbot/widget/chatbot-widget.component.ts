@@ -322,7 +322,7 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
             }, 20000);
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-                .then(() => this.sendCreateRequest(message))
+                .then(() => this.sessionService.sendMessage(this.sessionId, message))
                 .then(() => this.scrollToBottom('smooth'))
                 .catch((error) => this.handleIrisError(error));
             this.newMessageTextContent = '';
@@ -330,8 +330,6 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
         this.scrollToBottom('smooth');
         this.resetChatBodyHeight();
     }
-
-    protected abstract sendCreateRequest(message: IrisUserMessage): Promise<IrisMessage>;
 
     resendMessage(message: IrisUserMessage) {
         this.resendAnimationActive = true;
@@ -346,9 +344,9 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
             .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
             .then(() => {
                 if (message.id) {
-                    return this.sendResendRequest(message);
+                    return this.sessionService.resendMessage(this.sessionId, message);
                 }
-                return this.sendCreateRequest(message);
+                return this.sessionService.sendMessage(this.sessionId, message);
             })
             .then(() => {
                 this.scrollToBottom('smooth');
@@ -359,8 +357,6 @@ export abstract class IrisChatbotWidgetComponent implements OnInit, OnDestroy, A
                 this.scrollToBottom('smooth');
             });
     }
-
-    protected abstract sendResendRequest(message: IrisUserMessage): Promise<IrisMessage>;
 
     /**
      * Rates a message as helpful or unhelpful.

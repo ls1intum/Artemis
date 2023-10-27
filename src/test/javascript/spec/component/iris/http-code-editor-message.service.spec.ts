@@ -10,7 +10,7 @@ import {
     mockServerMessage,
     mockServerPlanMessage,
 } from '../../helpers/sample/iris-sample-data';
-import { IrisHttpCodeEditorMessageService, UnsavedChangesDTO } from 'app/iris/http-code-editor-message.service';
+import { IrisHttpCodeEditorMessageService } from 'app/iris/http-code-editor-message.service';
 import { IrisUserMessage } from 'app/entities/iris/iris-message.model';
 
 describe('Iris Http Code Editor Message Service', () => {
@@ -31,7 +31,7 @@ describe('Iris Http Code Editor Message Service', () => {
             const returnedFromService = { ...mockClientMessage, id: 0 };
             const expected = { ...returnedFromService, id: 0 };
             service
-                .sendMessage(2, new IrisUserMessage(), new UnsavedChangesDTO())
+                .createMessage(2, new IrisUserMessage())
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'POST' });
@@ -73,7 +73,7 @@ describe('Iris Http Code Editor Message Service', () => {
             const returnedFromService = { ...mockExercisePlanComponent };
             //const expected = { ...returnedFromService, id: 0 };
             service
-                .executePlanStep(mockPlanConversation.id, mockServerPlanMessage.id, mockMessagePlanContent.id!, mockExercisePlanComponent.id!, new UnsavedChangesDTO())
+                .executePlanStep(mockPlanConversation.id, mockServerPlanMessage.id, mockMessagePlanContent.id!, mockExercisePlanComponent.id!)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.ok).toBeTrue());
             const req = httpMock.expectOne({ method: 'POST' });

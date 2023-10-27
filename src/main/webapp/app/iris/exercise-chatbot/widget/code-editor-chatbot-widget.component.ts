@@ -1,5 +1,5 @@
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
-import { IrisMessage, IrisSender, IrisUserMessage } from 'app/entities/iris/iris-message.model';
+import { IrisSender } from 'app/entities/iris/iris-message.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { IrisMessageContent, getPlanComponent, isPlanContent } from 'app/entities/iris/iris-content-type.model';
 import { Component, Inject } from '@angular/core';
@@ -11,7 +11,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
-import { UnsavedChangesDTO } from 'app/iris/http-code-editor-message.service';
 import { ConversationErrorOccurredAction } from 'app/iris/state-store.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { IrisExercisePlanStep } from 'app/entities/iris/iris-exercise-plan-component.model';
@@ -64,16 +63,6 @@ export class IrisCodeEditorChatbotWidgetComponent extends IrisChatbotWidgetCompo
             .replace(/{link:(.*)}/, '<a href="' + this.importExerciseUrl + '" target="_blank">$1</a>');
     }
 
-    protected sendCreateRequest(message: IrisUserMessage): Promise<IrisMessage> {
-        const unsavedChanges = new UnsavedChangesDTO(); // TODO: get unsaved changes from editor
-        return this.codeEditorSessionService.sendMessage(this.sessionId, message, unsavedChanges);
-    }
-
-    protected sendResendRequest(message: IrisUserMessage): Promise<IrisMessage> {
-        const unsavedChanges = new UnsavedChangesDTO(); // TODO: get unsaved changes from editor
-        return this.codeEditorSessionService.resendMessage(this.sessionId, message, unsavedChanges);
-    }
-
     /**
      * execute a step of an exercise plan
      * @param messageId of the message
@@ -81,11 +70,10 @@ export class IrisCodeEditorChatbotWidgetComponent extends IrisChatbotWidgetCompo
      * @param stepId of the plan step
      */
     executeExercisePlanStep(messageId: number, planId: number, stepId: number) {
-        const unsavedChanges = new UnsavedChangesDTO(); // TODO: get unsaved changes from editor
         // TODO: The then() and catch() methods should alert the user if the plan step was executed successfully or not
         // TODO: Implement messages for the user
         this.codeEditorSessionService
-            .executePlanStep(this.sessionId, messageId, planId, stepId, unsavedChanges)
+            .executePlanStep(this.sessionId, messageId, planId, stepId)
             .then(() => {}) // TODO: Notify the user that the step was executed successfully
             .catch(() => {
                 this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
