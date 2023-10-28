@@ -11,14 +11,23 @@ import { Observable, Subject } from 'rxjs';
  */
 enum IrisCodeEditorWebsocketMessageType {
     MESSAGE = 'MESSAGE',
-    CHANGE_NOTIFICATION = 'CHANGE_NOTIFICATION',
+    FILES_CHANGED = 'FILES_CHANGED',
     ERROR = 'ERROR',
 }
 
-export class ChangeNotification {
+export enum ExerciseComponent {
+    PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
+    TEMPLATE_REPOSITORY = 'TEMPLATE_REPOSITORY',
+    SOLUTION_REPOSITORY = 'SOLUTION_REPOSITORY',
+    TEST_REPOSITORY = 'TEST_REPOSITORY',
+}
+
+export class FilesChanged {
     messageId: number;
     planId: number;
     stepId: number;
+    component: ExerciseComponent;
+    paths?: string[];
     updatedProblemStatement?: string;
 }
 
@@ -29,7 +38,7 @@ export class ChangeNotification {
 export class IrisCodeEditorWebsocketDTO {
     type: IrisCodeEditorWebsocketMessageType;
     message?: IrisMessage;
-    changeNotification?: ChangeNotification;
+    filesChanged?: FilesChanged;
     errorTranslationKey?: IrisErrorMessageKey;
     translationParams?: Map<string, any>;
     rateLimitInfo?: IrisRateLimitInformation;
@@ -40,7 +49,7 @@ export class IrisCodeEditorWebsocketDTO {
  */
 @Injectable()
 export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
-    private subject: Subject<ChangeNotification> = new Subject<ChangeNotification>();
+    private subject: Subject<FilesChanged> = new Subject<FilesChanged>();
 
     /**
      * Creates an instance of IrisCodeEditorWebsocketService.
@@ -59,8 +68,8 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
             case IrisCodeEditorWebsocketMessageType.MESSAGE:
                 super.handleMessage(response.message);
                 break;
-            case IrisCodeEditorWebsocketMessageType.CHANGE_NOTIFICATION:
-                this.subject.next(response.changeNotification!); // notify subscribers to reload
+            case IrisCodeEditorWebsocketMessageType.FILES_CHANGED:
+                this.subject.next(response.filesChanged!); // notify subscribers to reload
                 break;
             case IrisCodeEditorWebsocketMessageType.ERROR:
                 super.handleError(response.errorTranslationKey, response.translationParams);
@@ -72,7 +81,7 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
      * Returns a subject that notifies subscribers when the code editor should be reloaded.
      * @returns {Subject<void>}
      */
-    public onPromptReload(): Observable<ChangeNotification> {
+    public onPromptReload(): Observable<FilesChanged> {
         return this.subject.asObservable();
     }
 }

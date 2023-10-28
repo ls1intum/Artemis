@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.service.iris.websocket;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.iris.message.ExerciseComponent;
 import de.tum.in.www1.artemis.domain.iris.message.IrisExercisePlanStep;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
@@ -39,11 +41,12 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
         super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.message(message));
     }
 
-    public void notifySuccess(IrisCodeEditorSession session, IrisExercisePlanStep step, String updatedProblemStatement) {
+    public void sendFilesChanged(IrisCodeEditorSession session, IrisExercisePlanStep step, Set<String> paths, String updatedProblemStatement) {
         var messageId = step.getPlan().getMessage().getId();
         var planId = step.getPlan().getId();
         var stepId = step.getId();
-        super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.notify(messageId, planId, stepId, updatedProblemStatement));
+        var filesChanged = new FilesChanged(messageId, planId, stepId, step.getComponent(), paths, updatedProblemStatement);
+        super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.changes(filesChanged));
     }
 
     /**
@@ -57,22 +60,21 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     }
 
     public enum IrisWebsocketMessageType {
-        MESSAGE, CHANGE_NOTIFICATION, EXCEPTION
+        MESSAGE, FILE_CHANGES, EXCEPTION
     }
 
-    private record ChangeNotification(long messageId, long planId, long stepId, String updatedProblemStatement) {
+    private record FilesChanged(long messageId, long planId, long stepId, ExerciseComponent component, Set<String> paths, String updatedProblemStatement) {
     }
 
-    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, ChangeNotification changeNotification, String errorMessage, String errorTranslationKey,
+    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, FilesChanged filesChanged, String errorMessage, String errorTranslationKey,
             Map<String, Object> translationParams) {
 
         private static IrisWebsocketDTO message(IrisMessage message) {
             return new IrisWebsocketDTO(IrisWebsocketMessageType.MESSAGE, message, null, null, null, null);
         }
 
-        private static IrisWebsocketDTO notify(long messageId, long planId, long stepId, String updatedProblemStatement) {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.CHANGE_NOTIFICATION, null, new ChangeNotification(messageId, planId, stepId, updatedProblemStatement), null, null,
-                    null);
+        private static IrisWebsocketDTO changes(FilesChanged filesChanged) {
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.FILE_CHANGES, null, filesChanged, null, null, null);
         }
 
         private static IrisWebsocketDTO error(Throwable throwable) {
