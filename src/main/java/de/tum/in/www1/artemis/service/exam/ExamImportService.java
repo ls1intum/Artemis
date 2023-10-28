@@ -266,7 +266,7 @@ public class ExamImportService {
             Optional<Exercise> exerciseCopied = switch (exerciseToCopy.getExerciseType()) {
                 case MODELING -> {
                     final Optional<ModelingExercise> optionalOriginalModellingExercise = modelingExerciseRepository
-                            .findByIdWithExampleSubmissionsAndResults(exerciseToCopy.getId());
+                            .findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(exerciseToCopy.getId());
                     // We do not want to abort the whole exam import process, we only skip the relevant exercise
                     if (optionalOriginalModellingExercise.isEmpty()) {
                         yield Optional.empty();
