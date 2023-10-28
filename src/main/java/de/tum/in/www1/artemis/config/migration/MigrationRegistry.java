@@ -11,6 +11,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.config.migration.entries.MigrationEntry20230808_203400;
+import de.tum.in.www1.artemis.config.migration.entries.MigrationEntry20230810_150000;
 import de.tum.in.www1.artemis.config.migration.entries.MigrationEntry20230920_181600;
 
 /**
@@ -26,11 +27,11 @@ public class MigrationRegistry {
     private final MigrationService migrationService;
 
     public MigrationRegistry(MigrationService migrationService) {
-        // Here we define the order of the ChangeEntries
         this.migrationService = migrationService;
-
+        // Here we define the order of the ChangeEntries
         this.migrationEntryMap.put(1, MigrationEntry20230808_203400.class);
-        this.migrationEntryMap.put(2, MigrationEntry20230920_181600.class);
+        this.migrationEntryMap.put(2, MigrationEntry20230810_150000.class);
+        this.migrationEntryMap.put(3, MigrationEntry20230920_181600.class);
     }
 
     /**

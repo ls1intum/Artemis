@@ -13,6 +13,7 @@ export class DragItemComponent implements OnInit {
     @Input() dragItem: DragItem;
     @Input() clickDisabled: boolean;
     @Input() invalid: boolean;
+    @Input() filePreviewPaths: Map<string, string> = new Map<string, string>();
     isMobile = false;
 
     constructor() {}

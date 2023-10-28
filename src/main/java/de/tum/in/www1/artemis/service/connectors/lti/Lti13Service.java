@@ -182,7 +182,7 @@ public class Lti13Service {
                 return;
             }
 
-            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
             if (result.isEmpty()) {
                 log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
