@@ -109,14 +109,11 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testJSONImplementations() {
-        ArchRule jsonObject = noClasses().should()
-                .dependOnClassesThat(have(simpleName("JsonObject")).or(have(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson"))));
+        ArchRule jsonObject = noClasses().should().dependOnClassesThat(have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson"))));
 
-        ArchRule jsonArray = noClasses().should()
-                .dependOnClassesThat(have(simpleName("JsonArray")).or(have(simpleName("JSONArray"))).and(not(resideInAPackage("com.google.gson"))));
+        ArchRule jsonArray = noClasses().should().dependOnClassesThat(have(simpleName("JsonArray").or(simpleName("JSONArray"))).and(not(resideInAPackage("com.google.gson"))));
 
-        ArchRule jsonParser = noClasses().should()
-                .dependOnClassesThat(have(simpleName("JsonParser")).or(have(simpleName("JSONParser"))).and(not(resideInAPackage("com.google.gson"))));
+        ArchRule jsonParser = noClasses().should().dependOnClassesThat(have(simpleName("JsonParser").or(simpleName("JSONParser"))).and(not(resideInAPackage("com.google.gson"))));
 
         jsonObject.check(allClasses);
         jsonArray.check(allClasses);
