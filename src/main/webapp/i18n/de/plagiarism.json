@@ -37,7 +37,7 @@
             "minimumSizeTooltipTextExercise": "Es werden nur diejenigen Abgaben berücksichtigt, die mindestens so viele Wörter beinhalten wie der angegebene Wert.",
             "minimumSizeTooltipProgrammingExercise": "Es werden nur diejenigen Abgaben berücksichtigt, die mindestens so viele unterschiedliche Zeilen (im Vergleich zur Vorlage) beinhalten wie der angegebene Wert.",
             "minimumSizeTooltipModelingExercise": "Es werden nur diejenigen Abgaben berücksichtigt, die mindestens so viele Modellelemente beinhalten wie der angegebene Wert.",
-            "plagiarismCaseResponsePeriod": "Plagiarism case response period in days",
+            "plagiarismCaseResponsePeriod": "Antwortfrist auf Plagiatsfälle in Tagen",
             "plagiarismCaseResponsePeriodTooltip": "The number of days during which a student can respond to the plagiarism case created by cpc if the case persist after the exercise due date",
             "noInfoAvailable": "Keine Information verfügbar",
             "caution": "Die Plagiatskontrolle kann für große Kurse sehr lange dauern.",
