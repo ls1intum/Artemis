@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.exercise.quizexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
@@ -149,6 +151,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testCreateQuizExercise(QuizMode quizMode) throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, quizMode);
         createdQuizAssert(quizExercise);
+        checkCreatedFiles(quizExercise);
     }
 
     @Test
@@ -156,6 +159,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testCreateQuizExerciseForExam() throws Exception {
         QuizExercise quizExercise = createQuizOnServerForExam();
         createdQuizAssert(quizExercise);
+        checkCreatedFiles(quizExercise);
     }
 
     @Test
@@ -251,6 +255,28 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
             return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
         }
         return null;
+    }
+
+    private void checkCreatedFiles(QuizExercise quizExercise) throws Exception {
+        List<DragAndDropQuestion> questions = quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).map(q -> (DragAndDropQuestion) q).toList();
+        for (DragAndDropQuestion question : questions) {
+            if (question.getBackgroundFilePath() == null) {
+                continue;
+            }
+            checkCreatedFile(question.getBackgroundFilePath());
+            for (DragItem dragItem : question.getDragItems()) {
+                if (dragItem.getPictureFilePath() == null) {
+                    continue;
+                }
+                checkCreatedFile(dragItem.getPictureFilePath());
+            }
+        }
+    }
+
+    private void checkCreatedFile(String path) throws Exception {
+        MvcResult result = request.getMvc().perform(get(path)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM)).andReturn();
+        byte[] image = result.getResponse().getContentAsByteArray();
+        assertThat(image).isNotEmpty();
     }
 
     @Test
@@ -1152,7 +1178,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void importQuizExerciseToSameCourse() throws Exception {
         ZonedDateTime now = ZonedDateTime.now();
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(now.plusHours(2), null, QuizMode.SYNCHRONIZED);
-        courseUtilService.enableMessagingForCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
                 List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
                         new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
@@ -1162,7 +1187,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(changedQuiz).isNotNull();
         changedQuiz.setTitle("New title");
         changedQuiz.setReleaseDate(now);
-        changedQuiz.setChannelName("testchannel-quiz");
 
         QuizExercise importedExercise = importQuizExerciseWithFiles(changedQuiz, changedQuiz.getId(), List.of(), HttpStatus.CREATED);
 
@@ -1173,10 +1197,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 .isEqualTo(quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(quizExercise.getCourseViaExerciseGroupOrCourseMember());
         assertThat(importedExercise.getQuizQuestions()).as("Imported exercise has same number of questions").hasSameSizeAs(quizExercise.getQuizQuestions());
-
-        Channel channelDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
-        assertThat(channelDB).isNotNull();
-        assertThat(channelDB.getName()).isEqualTo("testchannel-quiz");
     }
 
     /**
@@ -1192,14 +1212,11 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                         new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
 
-        courseUtilService.enableMessagingForCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
-        quizExercise.setChannelName("testchannel-quiz" + UUID.randomUUID().toString().substring(0, 8));
+        Course course = courseUtilService.addEmptyCourse();
+        quizExercise.setCourse(course);
 
         QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.CREATED);
-        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).as("Quiz was imported for different course")
-                .isEqualTo(quizExercise.getCourseViaExerciseGroupOrCourseMember());
-        Channel channelDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
-        assertThat(channelDB).isNotNull();
+        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).as("Quiz was imported for different course").isEqualTo(course);
     }
 
     /**
@@ -1219,8 +1236,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.CREATED);
         assertThat(importedExercise.getExerciseGroup()).as("Quiz was imported for different exercise group").isEqualTo(exerciseGroup);
-        Channel channelDB = channelRepository.findChannelByExerciseId(importedExercise.getId());
-        assertThat(channelDB).isNull();
     }
 
     /**
@@ -1253,7 +1268,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                         new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes())));
         quizExerciseService.save(quizExercise);
         quizExercise.setCourse(course);
-        quizExercise.setChannelName("testchannel-quiz");
 
         QuizExercise importedExercise = importQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.CREATED);
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
@@ -1320,7 +1334,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         Course course = courseUtilService.addEmptyCourse();
         changedQuiz.setCourse(course);
-        changedQuiz.setChannelName("testchannel-quiz");
         quizExerciseUtilService.setupTeamQuizExercise(changedQuiz, 1, 10);
 
         changedQuiz = importQuizExerciseWithFiles(changedQuiz, quizExercise.getId(), List.of(), HttpStatus.CREATED);
@@ -1367,7 +1380,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         changedQuiz.setMode(ExerciseMode.INDIVIDUAL);
         Course course = courseUtilService.addEmptyCourse();
         changedQuiz.setCourse(course);
-        changedQuiz.setChannelName("testchannel-quiz");
 
         changedQuiz = importQuizExerciseWithFiles(changedQuiz, quizExercise.getId(), List.of(), HttpStatus.CREATED);
 
@@ -1396,7 +1408,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise changedQuiz = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(changedQuiz).isNotNull();
         changedQuiz.setQuizMode(QuizMode.INDIVIDUAL);
-        changedQuiz.setChannelName("testchannel-quiz");
 
         QuizExercise importedExercise = importQuizExerciseWithFiles(changedQuiz, quizExercise.getId(), List.of(), HttpStatus.CREATED);
 
@@ -1439,7 +1450,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         question.setExplanation("0".repeat(validityThreshold));
-        quizExercise.setChannelName("testchannel-quiz");
 
         createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
     }
@@ -1470,7 +1480,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold));
-        quizExercise.setChannelName("testchannel-quiz");
 
         createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
     }
@@ -1581,21 +1590,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {
-        return createQuizOnServer(releaseDate, dueDate, quizMode, "exercise-new-quiz");
-    }
-
-    private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode, String channelName) throws Exception {
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(releaseDate, dueDate, quizMode);
         quizExercise.setDuration(3600);
-        quizExercise.setChannelName(channelName);
-        courseUtilService.enableMessagingForCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
 
         QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
         assertThat(quizExerciseServer).isNotNull();
         assertThat(quizExerciseDatabase).isNotNull();
-        Channel channelDB = channelRepository.findChannelByExerciseId(quizExerciseDatabase.getId());
-        assertThat(channelDB).isNotNull();
 
         checkQuizExercises(quizExercise, quizExerciseServer);
         checkQuizExercises(quizExercise, quizExerciseDatabase);
@@ -1629,9 +1630,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
         assertThat(quizExerciseServer).isNotNull();
         assertThat(quizExerciseDatabase).isNotNull();
-
-        Channel channelDB = channelRepository.findChannelByExerciseId(quizExercise.getId());
-        assertThat(channelDB).isNull();
 
         checkQuizExercises(quizExercise, quizExerciseServer);
         checkQuizExercises(quizExercise, quizExerciseDatabase);
