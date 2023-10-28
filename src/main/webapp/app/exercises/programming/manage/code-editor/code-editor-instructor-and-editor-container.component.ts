@@ -62,9 +62,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
         // Find the corresponding plan and step and execute the next step, if there is one.
         // Also, the plan's currentStepIndex must be updated so that the chatbot widget can display the correct step as in progress.
-        const widget = this.chatbotButton?.dialogRef?.componentInstance;
+        const widget = this.chatbotButton?.dialogRef?.componentRef?.instance;
         const message = widget?.messages.find((m) => m.id === changeNotification.messageId);
-        const plan = message?.content.find((c) => c.id === changeNotification.planId);
+        const plan = message?.content.find((c) => c.id === changeNotification.planId) as IrisExercisePlan;
         if (!widget) {
             console.error('Received change notification but could not access chatbot widget to forward it.');
             return;
@@ -73,7 +73,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             console.error('Received change notification but could not find corresponding message.');
             return;
         }
-        if (!plan || !(plan instanceof IrisExercisePlan)) {
+        if (!plan) {
             console.error('Received change notification but could not find corresponding plan.');
             return;
         }

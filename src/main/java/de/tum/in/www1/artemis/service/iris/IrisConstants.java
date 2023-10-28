@@ -352,7 +352,7 @@ public final class IrisConstants {
                     {{#system~}}
                         You are now editing the template repository. What file would you like to change?
                         State the full path of the file, without justification or any other text.
-                        If this file does not exist in the repository, it will be created.
+                        For example, for the hypothetical file "path/to/file/File.txt", respond with path/to/file/File.txt.
                         {{#if (not @first)}}
                             Alternatively, if you have no other files you would like to edit, respond with the special response "!done!".
                         {{/if}}
@@ -428,7 +428,7 @@ public final class IrisConstants {
                     {{#system~}}
                         You are now editing the solution repository. What file would you like to change?
                         State the full path of the file, without justification or any other text.
-                        If this file does not exist in the repository, it will be created.
+                        For example, for the hypothetical file "path/to/file/File.txt", respond with path/to/file/File.txt.
                         {{#if (not @first)}}
                             Alternatively, if you have no other files you would like to edit, respond with the special response "!done!".
                         {{/if}}
@@ -506,7 +506,7 @@ public final class IrisConstants {
                     {{#system~}}
                         You are now editing the test repository. What file would you like to change?
                         State the full path of the file, without justification or any other text.
-                        If this file does not exist in the repository, it will be created.
+                        For example, for the hypothetical file "path/to/file/File.txt", respond with path/to/file/File.txt.
                         {{#if (not @first)}}
                             Alternatively, if you have no other files you would like to edit, respond with the special response "!done!".
                         {{/if}}
