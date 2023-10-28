@@ -1,7 +1,7 @@
 Imprint German template
-"""""""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: none
+.. code:: markdown
 
    # Impressum
 
@@ -63,8 +63,9 @@ Imprint German template
 
 
 Imprint English template
-""""""""""""""""""""""""""""""""""
-.. code-block:: none
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code:: markdown
 
    # Imprint
 

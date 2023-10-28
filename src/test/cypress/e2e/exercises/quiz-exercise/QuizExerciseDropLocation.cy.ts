@@ -6,7 +6,7 @@ import { convertModelAfterMultiPart } from '../../../support/utils';
 
 let course: Course;
 
-describe.skip('Quiz Exercise Drop Location Spec', () => {
+describe('Quiz Exercise Drop Location Spec', () => {
     before('Create course', () => {
         cy.login(admin);
         courseManagementAPIRequest.createCourse().then((response) => {
