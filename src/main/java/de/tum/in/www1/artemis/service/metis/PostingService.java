@@ -190,6 +190,20 @@ public abstract class PostingService {
         return course;
     }
 
+    protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Long courseId) {
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        return preCheckUserAndCourseForCommunicationOrMessaging(user, course);
+    }
+
+    protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
+            throw new BadRequestAlertException("Communication and messaging is disabled for this course", getEntityName(), "400", true);
+        }
+        return course;
+    }
+
     /**
      * helper method that fetches groups and authorities of all posting authors in a list of Posts
      *
