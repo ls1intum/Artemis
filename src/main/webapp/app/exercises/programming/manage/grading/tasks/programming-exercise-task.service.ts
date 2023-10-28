@@ -135,7 +135,7 @@ export class ProgrammingExerciseTaskService {
     /**
      * Reset all test cases.
      */
-    public resetTestCases(): Observable<ProgrammingExerciseTestCase[]> {
+    public resetTestCases(): Observable<ProgrammingExerciseTestCase | ProgrammingExerciseTask[]> {
         return this.gradingService.resetTestCases(this.exercise.id!).pipe(
             tap((testCases: ProgrammingExerciseTestCase[]) => {
                 this.alertService.success(`artemisApp.programmingExercise.configureGrading.testCases.resetSuccessful`);

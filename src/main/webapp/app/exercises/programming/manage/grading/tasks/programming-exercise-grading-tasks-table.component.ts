@@ -6,13 +6,14 @@ import { faAngleDown, faAngleRight, faAsterisk, faMedal, faQuestionCircle, faSca
 import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTask } from './programming-exercise-task';
 import { Observable, Subject } from 'rxjs';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 
 type Sort = {
     by: 'name' | 'weight' | 'multiplier' | 'bonusPoints' | 'visibility' | 'resulting' | 'type';
     descending: boolean;
 };
 
-type TaskComparator = (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => number;
+type TaskComparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase, b: ProgrammingExerciseTask | ProgrammingExerciseTestCase) => number;
 
 @Component({
     selector: 'jhi-programming-exercise-grading-tasks-table',
@@ -114,7 +115,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
             type: this.compareStringForAttribute('type'),
         };
 
-        let comparator = (a: ProgrammingExerciseTask, b: ProgrammingExerciseTask) => {
+        let comparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase, b: ProgrammingExerciseTask | ProgrammingExerciseTestCase) => {
             const order = comparators[this.currentSort!['by']](a, b);
             return this.currentSort?.descending ? order : -order;
         };
