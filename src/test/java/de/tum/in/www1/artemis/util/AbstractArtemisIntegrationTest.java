@@ -6,8 +6,6 @@ import static org.mockito.Mockito.doReturn;
 
 import java.util.List;
 
-import javax.mail.internet.MimeMessage;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.provider.Arguments;
@@ -36,6 +34,7 @@ import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleServi
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserFactory;
+import jakarta.mail.internet.MimeMessage;
 
 /**
  * this test should be completely independent of any profiles or configurations (e.g. VCS, CIS)
