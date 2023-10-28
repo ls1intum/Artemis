@@ -25,8 +25,8 @@ public class Lti13LaunchRequest {
         this.sub = ltiIdToken.getClaim("sub");
         this.deploymentId = ltiIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID);
 
-        JsonObject resourceLinkClaim = ltiIdToken.getClaimAsString(Claims.RESOURCE_LINK) != null
-                ? JsonParser.parseString(ltiIdToken.getClaimAsString(Claims.RESOURCE_LINK)).getAsJsonObject()
+        JsonObject resourceLinkClaim = ltiIdToken.getClaim(Claims.RESOURCE_LINK) != null
+                ? JsonParser.parseString(ltiIdToken.getClaim(Claims.RESOURCE_LINK).toString()).getAsJsonObject()
                 : null;
         this.resourceLinkId = resourceLinkClaim != null ? resourceLinkClaim.get("id").getAsString() : null;
         this.targetLinkUri = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
