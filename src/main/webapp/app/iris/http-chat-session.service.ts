@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisHttpSessionService } from 'app/iris/http-session.service';
-import { IrisRateLimitInformation } from 'app/iris/chat-websocket.service';
+import { IrisRateLimitInformation } from 'app/iris/websocket.service';
 
 export class HeartbeatDTO {
     active: boolean;

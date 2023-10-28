@@ -16,7 +16,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { mockClientMessage, mockServerMessage, mockState } from '../../helpers/sample/iris-sample-data';
 import { IrisErrorMessageKey, errorMessages } from 'app/entities/iris/iris-errors.model';
-import { IrisRateLimitInformation } from 'app/iris/chat-websocket.service';
+import { IrisRateLimitInformation } from 'app/iris/websocket.service';
 
 describe('IrisStateStore', () => {
     let stateStore: IrisStateStore;
