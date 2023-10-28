@@ -28,8 +28,12 @@ public record ProgrammingFeedbackDTO(long id, long exerciseId, long submissionId
             filePath = referenceParts[0].substring(referenceStart.length());
             lineStart = Integer.parseInt(referenceParts[1]);
         }
+        Long gradingInstructionId = null;
+        if (feedback.getGradingInstruction() != null) {
+            gradingInstructionId = feedback.getGradingInstruction().getId();
+        }
         // There is only one line and Athena supports multiple lines, so we just take the line for both start and end
-        return new ProgrammingFeedbackDTO(feedback.getId(), exerciseId, submissionId, feedback.getText(), feedback.getDetailText(), feedback.getCredits(),
-                feedback.getGradingInstruction() == null ? null : feedback.getGradingInstruction().getId(), filePath, lineStart, lineStart);
+        return new ProgrammingFeedbackDTO(feedback.getId(), exerciseId, submissionId, feedback.getText(), feedback.getDetailText(), feedback.getCredits(), gradingInstructionId,
+                filePath, lineStart, lineStart);
     }
 }
