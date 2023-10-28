@@ -26,6 +26,7 @@ import { ExampleSubmissionsModule } from 'app/exercises/shared/example-submissio
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
+import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
 
 const ENTITY_STATES = [...textExerciseRoute];
 
@@ -52,6 +53,7 @@ const ENTITY_STATES = [...textExerciseRoute];
         ExerciseCategoriesModule,
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,
+        ExerciseUpdatePlagiarismModule,
     ],
     declarations: [TextExerciseComponent, TextExerciseDetailComponent, TextExerciseUpdateComponent, TextExerciseRowButtonsComponent],
     exports: [TextExerciseComponent],

@@ -314,9 +314,9 @@ export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingC
         if (!result.result.feedbacks) {
             return [];
         }
-        result.result.feedbacks.map((f) => {
-            if (Feedback.isTestCaseFeedback(f)) {
-                testCasesNames.add(f.text ?? 'Test ' + result.result.feedbacks?.indexOf(f) + 1);
+        result.result.feedbacks.forEach((feedback) => {
+            if (Feedback.isTestCaseFeedback(feedback)) {
+                testCasesNames.add(feedback.testCase?.testName ?? 'Test ' + (result.result.feedbacks!.indexOf(feedback) + 1));
             }
         });
     });
@@ -358,7 +358,7 @@ export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]):
     if (!feedbacks) {
         return null;
     }
-    const i = feedbacks.findIndex((feedback) => feedback.text?.localeCompare(testCase) === 0);
+    const i = feedbacks.findIndex((feedback) => feedback.testCase?.testName?.localeCompare(testCase) === 0);
     return i !== -1 ? feedbacks[i] : null;
 }
 
