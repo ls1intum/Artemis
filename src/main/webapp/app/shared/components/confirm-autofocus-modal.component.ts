@@ -7,6 +7,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 })
 export class ConfirmAutofocusModalComponent {
     @Input() title: string;
+    @Input() titleTranslationParams?: Record<string, string>;
     @Input() text: string;
     @Input() translateText: boolean;
     @Input() textIsMarkdown: boolean;
