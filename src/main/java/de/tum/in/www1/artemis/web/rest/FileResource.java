@@ -252,10 +252,6 @@ public class FileResource {
             throw new AccessForbiddenException();
         }
 
-        if (submission.getFilePath() == null) {
-            throw new EntityNotFoundException("Submission " + submissionId + " has no file");
-        }
-
         return buildFileResponse(getActualPathFromPublicPathString(submission.getFilePath()), false);
     }
 
@@ -301,10 +297,6 @@ public class FileResource {
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
-        if (examUser.getSigningImagePath() == null) {
-            throw new EntityNotFoundException("Exam user " + examUserId + " has no signature file");
-        }
-
         return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath()), false);
     }
 
@@ -320,10 +312,6 @@ public class FileResource {
         log.debug("REST request to get image for exam user : {}", examUserId);
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
-
-        if (examUser.getStudentImagePath() == null) {
-            throw new EntityNotFoundException("Exam user " + examUserId + " has no image file");
-        }
 
         return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath()), true);
     }
@@ -351,10 +339,6 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-
-        if (attachment.getLink() == null) {
-            throw new EntityNotFoundException("Attachment " + filename + " has no file");
-        }
 
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
@@ -412,10 +396,6 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
-
-        if (attachment.getLink() == null) {
-            throw new EntityNotFoundException("Attachment " + attachmentUnitId + " has no file");
-        }
 
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
