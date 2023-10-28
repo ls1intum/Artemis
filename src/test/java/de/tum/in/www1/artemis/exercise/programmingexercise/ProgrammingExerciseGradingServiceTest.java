@@ -12,8 +12,6 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.mail.internet.MimeMessage;
-
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,6 +42,7 @@ import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
+import jakarta.mail.internet.MimeMessage;
 
 /**
  * Tests the {@link ProgrammingExerciseGradingService}.

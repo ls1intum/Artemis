@@ -17,9 +17,6 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -59,6 +56,8 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 
 class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {
 

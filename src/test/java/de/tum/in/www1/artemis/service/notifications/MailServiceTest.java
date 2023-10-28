@@ -3,18 +3,17 @@ package de.tum.in.www1.artemis.service.notifications;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.*;
 
-import javax.mail.internet.MimeMessage;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.context.MessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.thymeleaf.spring5.SpringTemplateEngine;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisMailException;
 import de.tum.in.www1.artemis.service.TimeService;
+import jakarta.mail.internet.MimeMessage;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
