@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.exercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
@@ -13,14 +14,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AthenaResourceIntegrationTest extends AbstractAthenaTest {
@@ -48,6 +47,15 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Autowired
     private UserUtilService userUtilService;
 
+    @Autowired
+    private ResultRepository resultRepository;
+
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private FeedbackRepository feedbackRepository;
+
     private TextExercise textExercise;
 
     private TextSubmission textSubmission;
@@ -73,6 +81,11 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
         var programmingCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = exerciseUtilService.findProgrammingExerciseWithTitle(programmingCourse.getExercises(), "Programming");
+        // Allow manual results
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+
         programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
         var programmingParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, programmingExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
@@ -117,5 +130,41 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     void testGetFeedbackSuggestionsAccessForbidden() throws Exception {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
         request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    // Test for Athena in ProgrammingAssessmentResource
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void createManualProgrammingExerciseResultWithAthenaEnabled_submit() throws Exception {
+        // Create example participation with submission
+        var participation = new StudentParticipation();
+        participation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participation.setExercise(programmingExercise);
+        participation = studentParticipationRepository.save(participation);
+        programmingSubmission.setParticipation(participation);
+        programmingSubmissionRepository.save(programmingSubmission);
+        // Create example result
+        var result = new Result();
+        result.setScore(1.0);
+        result.setSubmission(programmingSubmission);
+        result.setParticipation(participation);
+        result.setAssessmentType(AssessmentType.MANUAL);
+        // Create example feedback so that Athena can process it
+        var feedback = new Feedback();
+        feedback.setCredits(1.0);
+        feedback.setResult(result);
+        result.setFeedbacks(List.of(feedback));
+
+        result = resultRepository.save(result);
+        feedbackRepository.save(feedback);
+
+        // Enable Athena for the exercise
+        programmingExercise.setFeedbackSuggestionsEnabled(true);
+        programmingExerciseRepository.save(programmingExercise);
+
+        Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results?submit=true", result, Result.class, HttpStatus.OK);
+
+        // Check that nothing went wrong, even with Athena enabled
+        assertThat(response).as("response is not null").isNotNull();
     }
 }
