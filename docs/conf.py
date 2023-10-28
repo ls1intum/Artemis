@@ -39,8 +39,7 @@ extensions = [
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-# dev/setup/*.rst files are included in the parent page so they are excluded here to clear the build warningszs
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'dev/setup/*.rst']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # -- Publications ------------------------------------------------------------
 bibtex_bibfiles = ['research/publications.bib']
