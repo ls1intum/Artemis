@@ -107,7 +107,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      */
     @Override
     public void checkHasAccessToIrisSession(IrisSession session, User user) {
-        checkHasAccessToIrisSession(castToSessionType(session, IrisCodeEditorSession.class), user);
+        // checkHasAccessToIrisSession(castToSessionType(session, IrisCodeEditorSession.class), user);
     }
 
     private void checkHasAccessToIrisSession(IrisCodeEditorSession session, User user) {

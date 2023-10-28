@@ -16,7 +16,7 @@ public class IrisExercisePlanStep extends DomainObject {
     @ManyToOne
     @JoinColumn(name = "exercise_plan_id")
     @JsonIgnore
-    private IrisExercisePlanMessageContent exercisePlan;
+    private IrisExercisePlanMessageContent plan;
 
     @NotNull
     @Enumerated(value = EnumType.STRING)
@@ -30,18 +30,18 @@ public class IrisExercisePlanStep extends DomainObject {
     public IrisExercisePlanStep() {
     }
 
-    public IrisExercisePlanStep(IrisExercisePlanMessageContent exercisePlan, ExerciseComponent component, String instructions) {
-        this.exercisePlan = exercisePlan;
+    public IrisExercisePlanStep(IrisExercisePlanMessageContent plan, ExerciseComponent component, String instructions) {
+        this.plan = plan;
         this.component = component;
         this.instructions = instructions;
     }
 
     public IrisExercisePlanMessageContent getPlan() {
-        return exercisePlan;
+        return plan;
     }
 
-    public void setExercisePlan(IrisExercisePlanMessageContent plan) {
-        this.exercisePlan = plan;
+    public void setPlan(IrisExercisePlanMessageContent plan) {
+        this.plan = plan;
     }
 
     public ExerciseComponent getComponent() {

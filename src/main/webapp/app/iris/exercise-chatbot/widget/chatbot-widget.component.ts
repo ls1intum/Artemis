@@ -55,7 +55,6 @@ import { UserService } from 'app/core/user/user.service';
 import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
 import interact from 'interactjs';
 import { DOCUMENT } from '@angular/common';
-import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
 import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
@@ -362,16 +361,69 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             }, 20000);
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-                // .then(() => this.httpMessageService.createMessage(<number>this.sessionId, message).toPromise())
-                .then(() => {
-                    this.sessionService.httpMessageService.createMessage(<number>this.sessionId, message).toPromise();
-                })
+                .then(() => this.sessionService.sendMessage(this.sessionId, message))
                 .then(() => this.scrollToBottom('smooth'))
                 .catch((error) => this.handleIrisError(error));
             this.newMessageTextContent = '';
         }
         this.scrollToBottom('smooth');
         this.resetChatBodyHeight();
+    }
+
+    resendMessage(message: IrisUserMessage) {
+        this.resendAnimationActive = true;
+        message.messageDifferentiator = message.id ?? Math.floor(Math.random() * this.MAX_INT_JAVA);
+
+        const timeoutId = setTimeout(() => {
+            // will be cleared by the store automatically
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
+            this.scrollToBottom('smooth');
+        }, 20000);
+        this.stateStore
+            .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
+            .then(() => {
+                if (message.id) {
+                    return this.sessionService.resendMessage(this.sessionId, message);
+                } else {
+                    return this.sessionService.sendMessage(this.sessionId, message);
+                }
+            })
+            .then(() => {
+                this.scrollToBottom('smooth');
+            })
+            .catch((error) => this.handleIrisError(error))
+            .finally(() => {
+                this.resendAnimationActive = false;
+                this.scrollToBottom('smooth');
+            });
+    }
+
+    private handleIrisError(error: HttpErrorResponse) {
+        if (error.status === 403) {
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_DISABLED));
+        } else if (error.status === 429) {
+            const map = new Map<string, any>();
+            map.set('hours', this.rateLimitTimeframeHours);
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED, map));
+        } else {
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
+        }
+    }
+
+    /**
+     * Rates a message as helpful or unhelpful.
+     * @param messageId - The ID of the message to rate.
+     * @param index - The index of the message in the messages array.
+     * @param helpful - A boolean indicating if the message is helpful or not.
+     */
+    rateMessage(messageId: number, index: number, helpful: boolean) {
+        this.sessionService
+            .rateMessage(this.sessionId, messageId, helpful)
+            .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
+            .catch(() => {
+                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED));
+                this.scrollToBottom('smooth');
+            });
     }
 
     /**
@@ -568,25 +620,6 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     }
 
     /**
-     * Rates a message as helpful or unhelpful.
-     * @param message_id - The ID of the message to rate.
-     * @param index - The index of the message in the messages array.
-     * @param helpful - A boolean indicating if the message is helpful or not.
-     */
-    rateMessage(message_id: number, index: number, helpful: boolean) {
-        if (this.sessionService.httpMessageService instanceof IrisHttpChatMessageService) {
-            this.sessionService.httpMessageService
-                .rateMessage(<number>this.sessionId, message_id, helpful)
-                .toPromise()
-                .then(() => this.stateStore.dispatch(new RateMessageSuccessAction(index, helpful)))
-                .catch(() => {
-                    this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_MESSAGE_FAILED));
-                    this.scrollToBottom('smooth');
-                });
-        }
-    }
-
-    /**
      * execute component plans
      * @param messageId - The ID of the message.
      * @param planId - The ID of the content to execute.
@@ -642,46 +675,6 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             sender: IrisSender.USER,
             content: [content],
         };
-    }
-
-    resendMessage(message: IrisUserMessage) {
-        this.resendAnimationActive = true;
-        message.messageDifferentiator = message.id ?? Math.floor(Math.random() * this.MAX_INT_JAVA);
-
-        const timeoutId = setTimeout(() => {
-            // will be cleared by the store automatically
-            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
-            this.scrollToBottom('smooth');
-        }, 20000);
-        this.stateStore
-            .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-            .then(() => {
-                if (message.id) {
-                    return this.sessionService.httpMessageService.resendMessage(<number>this.sessionId, message).toPromise();
-                } else {
-                    return this.sessionService.httpMessageService.createMessage(<number>this.sessionId, message).toPromise();
-                }
-            })
-            .then(() => {
-                this.scrollToBottom('smooth');
-            })
-            .catch((error) => this.handleIrisError(error))
-            .finally(() => {
-                this.resendAnimationActive = false;
-                this.scrollToBottom('smooth');
-            });
-    }
-
-    private handleIrisError(error: HttpErrorResponse) {
-        if (error.status === 403) {
-            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_DISABLED));
-        } else if (error.status === 429) {
-            const map = new Map<string, any>();
-            map.set('hours', this.rateLimitTimeframeHours);
-            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED, map));
-        } else {
-            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
-        }
     }
 
     isSendMessageFailedError(): boolean {
