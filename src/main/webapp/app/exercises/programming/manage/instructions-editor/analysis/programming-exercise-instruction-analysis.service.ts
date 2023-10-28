@@ -8,14 +8,14 @@ import {
     ProblemStatementIssue,
 } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 
+const TEST_CASE_REGEX = /\[[^[\]]+]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/;
+const INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
+
 /**
  * Analyzes the problem statement of a programming-exercise and provides information support concerning potential issues.
  */
 @Injectable()
 export class ProgrammingExerciseInstructionAnalysisService {
-    private readonly TEST_CASE_REGEX = /.*?\[.*]\((.*)\)/;
-    private readonly INVALID_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCase';
-
     constructor(private translateService: TranslateService) {}
 
     /**
@@ -48,8 +48,8 @@ export class ProgrammingExerciseInstructionAnalysisService {
      */
     private analyzeTestCases = (tasksFromProblemStatement: RegExpLineNumberMatchArray, exerciseTestCases: string[]) => {
         // Extract the testCase list from the task matches.
-        const testCasesInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, this.TEST_CASE_REGEX);
-        // Look for test cases that are not part of the test repository. Could e.g. be typos.
+        const testCasesInMarkdown = this.extractRegexFromTasks(tasksFromProblemStatement, TEST_CASE_REGEX);
+        // Look for test cases that are not part of the test repository. Could, e.g., be typos.
         const invalidTestCaseAnalysis = testCasesInMarkdown
             .map(
                 ([lineNumber, testCases]) =>
@@ -78,7 +78,7 @@ export class ProgrammingExerciseInstructionAnalysisService {
     private mergeAnalysis = (...analysis: Array<AnalysisItem[]>): ProblemStatementAnalysis => {
         const reducer = (acc: ProblemStatementAnalysis, [lineNumber, values, issueType]: AnalysisItem): ProblemStatementAnalysis => {
             const lineNumberValues = acc.get(lineNumber);
-            const issueValues = lineNumberValues ? lineNumberValues[issueType] || [] : [];
+            const issueValues = lineNumberValues?.[issueType] ?? [];
             acc.set(lineNumber, { lineNumber, ...lineNumberValues, [issueType]: [...issueValues, ...values] });
             return acc;
         };
@@ -98,13 +98,12 @@ export class ProgrammingExerciseInstructionAnalysisService {
      *
      * @param issueType for which to retrieve the fitting translation.
      */
-    private getTranslationByIssueType = (issueType: ProblemStatementIssue) => {
+    private getTranslationByIssueType = (issueType: ProblemStatementIssue): string => {
         switch (issueType) {
             case ProblemStatementIssue.INVALID_TEST_CASES:
-                return this.INVALID_TEST_CASE_TRANSLATION;
-            default:
-                return '';
+                return INVALID_TEST_CASE_TRANSLATION;
         }
+        // no default value, please add a new translation when adding new issue types
     };
 
     /**

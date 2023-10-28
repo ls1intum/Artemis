@@ -33,7 +33,7 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     faAsterisk = faAsterisk;
 
     isSaving = false;
-    tasks: ProgrammingExerciseTask[];
+    tasks: ProgrammingExerciseTask[] = [];
     allTasksExpandedSubject: Subject<boolean>;
 
     currentSort: Sort | undefined;
