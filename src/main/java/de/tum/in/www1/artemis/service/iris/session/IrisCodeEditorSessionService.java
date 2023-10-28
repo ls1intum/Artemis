@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -433,7 +434,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * In the future we would like to support more types of changes, such as CREATE, DELETE, and RENAME.
      */
     private enum FileChangeType {
-        MODIFY,
+        MODIFY, CREATE,
         // Add more types here in the future
     }
 
@@ -480,7 +481,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         List<FileChange> changes = new ArrayList<>();
         for (JsonNode node : content.get("changes")) {
             // We will support different file change types in the future. For now, every file change has type MODIFY
-            var type = FileChangeType.MODIFY;
+            var type = switch (node.get("type").asText("")) {
+                case "modify" -> FileChangeType.MODIFY;
+                case "create" -> FileChangeType.CREATE;
+                default -> null;
+            };
+            if (type == null) {
+                continue;
+            }
             var file = node.get("file").asText("");
             if (component != ExerciseComponent.PROBLEM_STATEMENT && file.trim().equals("!done!")) {
                 // This is a special case when the LLM decided to stop generating changes for a component.
@@ -535,6 +543,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 case MODIFY -> {
                     if (requestedFile.isPresent()) {
                         try {
+                            log.info("trying to replace " + change.original() + " with " + change.updated() + " in " + change.file());
                             replaceInFile(requestedFile.get(), change.original(), change.updated());
                         }
                         catch (IOException e) {
@@ -544,6 +553,17 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                     else {
                         log.info("Iris requested that file " + change.file() + " be modified, but it does not exist in the repository");
                     }
+                }
+                case CREATE -> {
+                    if (requestedFile.isEmpty()) {
+                        try {
+                            repositoryService.createFile(repository, change.file(), new ByteArrayInputStream(change.updated().getBytes()));
+                        }
+                        catch (IOException e) {
+                            log.error("File " + change.file() + " already exists");
+                        }
+                    }
+
                 }
             }
         }
