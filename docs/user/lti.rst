@@ -84,7 +84,7 @@ With the Online Course setting enabled, you can now proceed to integrate Artemis
 
 1.2. Copy Dynamic Registration URL from Artemis
 """""""""""""""""""""""""""""""""""""""""""""""
-Once the above setting is enabled, you can now request your Moodle Admin to set up a bridge between Artemis and Moodle. Moodle Admin needs course Dynamic Registration URL to successfully complete the configuration.
+Once the above setting is enabled, you can now request your Moodle Admin to set up a bridge between Artemis and Moodle. Moodle Admin needs the course Dynamic Registration URL to successfully complete the configuration.
 To retrieve Dynamic Registration URL from Artemis, follow the steps outlined below:
 
 #. Access Course Management: Begin by logging into your Artemis account. Click on the  |course-management| option.
