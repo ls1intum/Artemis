@@ -290,13 +290,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                     }
                     else {
                         String updatedProblemStatement = null;
+                        Set<String> paths = null;
                         switch (component) {
                             case PROBLEM_STATEMENT -> updatedProblemStatement = injectChangesIntoProblemStatement(exercise, changes);
-                            case SOLUTION_REPOSITORY -> injectChangesIntoRepository(solutionRepository(exercise), changes);
-                            case TEMPLATE_REPOSITORY -> injectChangesIntoRepository(templateRepository(exercise), changes);
-                            case TEST_REPOSITORY -> injectChangesIntoRepository(testRepository(exercise), changes);
+                            case SOLUTION_REPOSITORY -> paths = injectChangesIntoRepository(solutionRepository(exercise), changes);
+                            case TEMPLATE_REPOSITORY -> paths = injectChangesIntoRepository(templateRepository(exercise), changes);
+                            case TEST_REPOSITORY -> paths = injectChangesIntoRepository(testRepository(exercise), changes);
                         }
-                        irisCodeEditorWebsocketService.notifySuccess(session, exerciseStep, updatedProblemStatement);
+                        irisCodeEditorWebsocketService.sendFilesChanged(session, exerciseStep, paths, updatedProblemStatement);
                     }
                 }
                 catch (IrisParseResponseException e) {
@@ -531,12 +532,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     /**
      * Injects the changes into the repository. This method replaces the first occurrence of each original string with
      * the corresponding updated string in the file with the same name as the file in the change.
+     * Returned is a set of paths to the files that were actually modified.
      *
      * @param repository The repository to inject the changes into
      * @param changes    The changes to inject
      */
-    private void injectChangesIntoRepository(Repository repository, List<FileChange> changes) {
+    private Set<String> injectChangesIntoRepository(Repository repository, List<FileChange> changes) {
         Map<String, Optional<File>> targetedFiles = changes.stream().collect(Collectors.toMap(FileChange::file, change -> gitService.getFileByName(repository, change.file())));
+        Set<String> paths = new HashSet<>();
         for (FileChange change : changes) {
             Optional<File> requestedFile = targetedFiles.get(change.file());
             switch (change.type()) {
@@ -545,6 +548,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                         try {
                             log.info("trying to replace " + change.original() + " with " + change.updated() + " in " + change.file());
                             replaceInFile(requestedFile.get(), change.original(), change.updated());
+                            paths.add(change.file());
                         }
                         catch (IOException e) {
                             log.error("Could not modify file " + change.file() + " in repository " + repository, e);
@@ -567,6 +571,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 }
             }
         }
+        return paths;
     }
 
     /**
