@@ -46,6 +46,14 @@ export interface ValidationReason {
     translateValues: any;
 }
 
+export interface PlagiarismDetectionConfig {
+    continuousPlagiarismControlEnabled?: boolean;
+    continuousPlagiarismControlPostDueDateChecksEnabled?: boolean;
+    similarityThreshold?: number;
+    minimumScore?: number;
+    minimumSize?: number;
+}
+
 export const exerciseTypes: ExerciseType[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ];
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
@@ -88,6 +96,14 @@ export abstract class Exercise implements BaseEntity {
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
     public competencies?: Competency[];
+
+    public plagiarismDetectionConfig?: PlagiarismDetectionConfig = {
+        continuousPlagiarismControlEnabled: false,
+        continuousPlagiarismControlPostDueDateChecksEnabled: true,
+        similarityThreshold: 90,
+        minimumSize: 50,
+        minimumScore: 0,
+    }; // default value
 
     // transient objects which might not be set
     public numberOfSubmissions?: DueDateStat;

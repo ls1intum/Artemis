@@ -16,6 +16,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { onError } from 'app/shared/util/global.utils';
 import { checkForInvalidFlaggedQuestions } from 'app/exercises/quiz/shared/quiz-manage-util.service';
+import { FileService } from 'app/shared/http/file.service';
 
 export enum State {
     COURSE = 'Course',
@@ -33,8 +34,10 @@ export enum State {
 export class QuizQuestionListEditExistingComponent implements OnChanges {
     @Input() show: boolean;
     @Input() courseId: number;
+    @Input() filePool: Map<string, { path?: string; file: File }>;
 
     @Output() onQuestionsAdded = new EventEmitter<Array<QuizQuestion>>();
+    @Output() onFilesAdded = new EventEmitter<Map<string, { path: string; file: File }>>();
 
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
@@ -58,6 +61,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
 
     constructor(
         private modalService: NgbModal,
+        private fileService: FileService,
         private fileUploaderService: FileUploaderService,
         private courseManagementService: CourseManagementService,
         private examManagementService: ExamManagementService,
@@ -218,13 +222,12 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
      * Ids are removed from new questions so that new id is assigned upon saving the quiz exercise.
      * Caution: All "invalid" flags are also removed.
      * Images are duplicated for drag and drop questions.
-     * @param questions list of questions
+     * @param quizQuestions questions to be added to currently edited quiz exercise
      */
     async addQuestions(quizQuestions: Array<QuizQuestion>) {
         const invalidQuizQuestionMap = checkForInvalidFlaggedQuestions(quizQuestions);
         const validQuizQuestions = quizQuestions.filter((quizQuestion) => !invalidQuizQuestionMap[quizQuestion.id!]);
         const invalidQuizQuestions = quizQuestions.filter((quizQuestion) => invalidQuizQuestionMap[quizQuestion.id!]);
-        let newQuizQuestions = validQuizQuestions;
         if (invalidQuizQuestions.length > 0) {
             const modal = this.modalService.open(QuizConfirmImportInvalidQuestionsModalComponent, {
                 keyboard: true,
@@ -237,13 +240,11 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                 };
             });
             modal.componentInstance.shouldImport.subscribe(async () => {
-                newQuizQuestions = newQuizQuestions.concat(invalidQuizQuestions);
-                newQuizQuestions = await this.convertExistingQuestionToNewQuestion(newQuizQuestions);
-                this.onQuestionsAdded.emit(newQuizQuestions);
+                const newQuizQuestions = validQuizQuestions.concat(invalidQuizQuestions);
+                return this.handleConversionOfExistingQuestions(newQuizQuestions);
             });
         } else {
-            newQuizQuestions = await this.convertExistingQuestionToNewQuestion(newQuizQuestions);
-            this.onQuestionsAdded.emit(newQuizQuestions);
+            return this.handleConversionOfExistingQuestions(validQuizQuestions);
         }
     }
 
@@ -274,8 +275,9 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
      * @param existingQuizQuestions the list of existing QuizQuestions to be converted
      * @return the list of new QuizQuestions
      */
-    private async convertExistingQuestionToNewQuestion(existingQuizQuestions: Array<QuizQuestion>): Promise<Array<QuizQuestion>> {
+    private async handleConversionOfExistingQuestions(existingQuizQuestions: Array<QuizQuestion>) {
         const newQuizQuestions = new Array<QuizQuestion>();
+        const files: Map<string, { path: string; file: File }> = new Map<string, { path: string; file: File }>();
         // To make sure all questions are duplicated (new resources are created), we need to remove some fields from the input questions,
         // This contains removing all ids, duplicating images in case of dnd questions, the question statistic and the exercise
         for (const question of existingQuizQuestions) {
@@ -293,8 +295,9 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 // Get image from the old question and duplicate it on the server and then save new image to the question,
-                let fileUploadResponse = await this.fileUploaderService.duplicateFile(dndQuestion.backgroundFilePath!);
-                dndQuestion.backgroundFilePath = fileUploadResponse.path;
+                const backgroundFile = await this.fileService.getFile(dndQuestion.backgroundFilePath!, this.filePool);
+                files.set(backgroundFile.name, { path: dndQuestion.backgroundFilePath!, file: backgroundFile });
+                dndQuestion.backgroundFilePath = backgroundFile.name;
 
                 // For DropLocations, DragItems and CorrectMappings we need to provide tempID,
                 // This tempID is used for keep tracking of mappings by server. The server removes tempID and generated a new id,
@@ -306,8 +309,9 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                 for (const dragItem of dndQuestion.dragItems || []) {
                     // Duplicating image on server. This is only valid for image drag items. For text drag items, pictureFilePath is undefined,
                     if (dragItem.pictureFilePath) {
-                        fileUploadResponse = await this.fileUploaderService.duplicateFile(dragItem.pictureFilePath);
-                        dragItem.pictureFilePath = fileUploadResponse.path;
+                        const dragItemFile = await this.fileService.getFile(dragItem.pictureFilePath, this.filePool);
+                        files.set(dragItemFile.name, { path: dragItem.pictureFilePath, file: dragItemFile });
+                        dragItem.pictureFilePath = dragItemFile.name;
                     }
                     dragItem.tempID = dragItem.id;
                     dragItem.id = undefined;
@@ -323,8 +327,7 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
                     // Duplicating image on server. This is only valid for image drag items. For text drag items, pictureFilePath is undefined,
                     const correctMappingDragItem = correctMapping.dragItem!;
                     if (correctMappingDragItem.pictureFilePath) {
-                        fileUploadResponse = await this.fileUploaderService.duplicateFile(correctMappingDragItem.pictureFilePath);
-                        correctMappingDragItem.pictureFilePath = fileUploadResponse.path;
+                        correctMappingDragItem.pictureFilePath = dndQuestion.dragItems?.filter((dragItem) => dragItem.tempID === correctMappingDragItem.id)?.[0].pictureFilePath;
                     }
                     correctMappingDragItem.tempID = correctMappingDragItem?.id;
                     correctMapping.dragItem!.id = undefined;
@@ -361,6 +364,9 @@ export class QuizQuestionListEditExistingComponent implements OnChanges {
             }
             newQuizQuestions.push(question);
         }
-        return newQuizQuestions;
+        if (files.size > 0) {
+            this.onFilesAdded.emit(files);
+        }
+        this.onQuestionsAdded.emit(newQuizQuestions);
     }
 }

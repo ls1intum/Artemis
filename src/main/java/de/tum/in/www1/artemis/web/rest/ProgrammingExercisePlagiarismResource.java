@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
@@ -25,6 +24,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionConfigHelper;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.plagiarism.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -92,16 +92,16 @@ public class ProgrammingExercisePlagiarismResource {
     @GetMapping(CHECK_PLAGIARISM)
     @EnforceAtLeastEditor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.PlagiarismChecks })
-    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws ExitException, IOException {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks for programming exercise: exerciseId={}.", exerciseId);
-        var config = new PlagiarismDetectionConfig(similarityThreshold, minimumScore, minimumSize);
+        PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(programmingExercise, similarityThreshold, minimumScore, minimumSize);
         try {
-            var plagiarismResult = plagiarismDetectionService.checkProgrammingExercise(programmingExercise, config);
+            var plagiarismResult = plagiarismDetectionService.checkProgrammingExercise(programmingExercise);
             return ResponseEntity.ok(plagiarismResult);
         }
         catch (ProgrammingLanguageNotSupportedForPlagiarismDetectionException e) {
@@ -125,7 +125,7 @@ public class ProgrammingExercisePlagiarismResource {
     @GetMapping(value = CHECK_PLAGIARISM_JPLAG_REPORT)
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
+    public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam int similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws IOException {
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -133,9 +133,9 @@ public class ProgrammingExercisePlagiarismResource {
 
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks with Jplag report for programming exercise: exerciseId={}.", exerciseId);
-        var config = new PlagiarismDetectionConfig(similarityThreshold, minimumScore, minimumSize);
+        PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(programmingExercise, similarityThreshold, minimumScore, minimumSize);
         try {
-            var zipFile = plagiarismDetectionService.checkProgrammingExerciseWithJplagReport(programmingExercise, config);
+            var zipFile = plagiarismDetectionService.checkProgrammingExerciseWithJplagReport(programmingExercise);
             if (zipFile == null) {
                 throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison.", "Plagiarism Check",
                         "notEnoughSubmissions");
