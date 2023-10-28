@@ -12,7 +12,9 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -1445,6 +1447,32 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
+    void exportProgrammingExerciseInstructorMaterial_problemStatementShouldContainTestNames() throws Exception {
+        programmingExerciseRepository.save(exercise);
+        var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
+        var test = tests.get(0);
+        exercise.setProblemStatement("[task][name](<testid>%s</testid>)".formatted(test.getId()));
+        programmingExerciseRepository.save(exercise);
+
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true);
+        // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
+        assertThat(zipFile).isNotNull();
+        await().until(zipFile::exists);
+        // Recursively unzip the exported file, to make sure there is no erroneous content
+        zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
+        String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
+
+        String problemStatement;
+        try (var files = Files.walk(Path.of(extractedZipDir))) {
+            var problemStatementFile = files.filter(Files::isRegularFile)
+                    .filter(file -> file.getFileName().toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*\\.md")).findFirst().orElseThrow();
+            problemStatement = Files.readString(problemStatementFile, StandardCharsets.UTF_8);
+        }
+
+        assertThat(problemStatement).isEqualTo("[task][name](%s)".formatted(test.getTestName()));
+    }
+
+    // Test
     void exportProgrammingExerciseInstructorMaterial_forbidden() throws Exception {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
         course.setInstructorGroupName("test");
@@ -1462,14 +1490,17 @@ public class ProgrammingExerciseTestService {
      * @return the zip file
      * @throws Exception if the export fails
      */
-    java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean problemStatementNull, boolean mockRepos, boolean saveEmbeddedFiles)
-            throws Exception {
+    File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean problemStatementNull, boolean mockRepos, boolean saveEmbeddedFiles) throws Exception {
         if (problemStatementNull) {
             generateProgrammingExerciseWithProblemStatementNullForExport();
         }
         else {
             generateProgrammingExerciseForExport(saveEmbeddedFiles);
         }
+        return exportProgrammingExerciseInstructorMaterial(expectedStatus, mockRepos);
+    }
+
+    private File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean mockRepos) throws Exception {
         if (mockRepos) {
             // Mock template repo
             Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);

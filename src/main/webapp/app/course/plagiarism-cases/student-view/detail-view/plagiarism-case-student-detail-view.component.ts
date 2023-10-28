@@ -42,6 +42,8 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
 
     isAfterDueDate: boolean;
 
+    readonly dayjs = dayjs;
+
     constructor(
         protected metisService: MetisService,
         private plagiarismCasesService: PlagiarismCasesService,
