@@ -491,20 +491,12 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 continue;
             }
             var file = node.get("file").asText("");
-            if (component != ExerciseComponent.PROBLEM_STATEMENT && file.trim().equals("!done!")) {
+            var original = node.get("original").asText();
+            if (component == ExerciseComponent.PROBLEM_STATEMENT && original.trim().equals("!done!")) {
                 // This is a special case when the LLM decided to stop generating changes for a component.
                 // Ideally, this should not need to be handled here. The only reason it needs to be is because of
                 // a bug with Guidance geneach that compels us to use a workaround to break from the loop manually
                 // in the guidance program (see https://github.com/guidance-ai/guidance/issues/385).
-                // Anyway, if the file is "!done!", we can just break from the loop.
-                break;
-            }
-            var original = node.get("original").asText();
-            if (component == ExerciseComponent.PROBLEM_STATEMENT && original.trim().equals("!done!")) {
-                // Same issue as above.
-                // In the case of the problem statement there is no file generated, so we ask it to
-                // respond with "!done!" as the value of the variable "original" if it has no more edits.
-                // Both of these workarounds should be removed once the bug in Guidance is fixed!
                 break;
             }
             var updated = node.get("updated").asText();
@@ -583,12 +575,17 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @throws IOException If the file could not be read or written to
      */
     private void replaceInFile(File file, String original, String updated) throws IOException {
-        String currentContents = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-        // We only want to replace the first occurrence of the original string (for now)
-        // String.replaceFirst() uses regex, so we need to escape the original string with Pattern.quote()
-        // Matcher.quoteReplacement() escapes the updated string so that it can be used as a replacement
-        String newContents = currentContents.replaceFirst(Pattern.quote(original), Matcher.quoteReplacement(updated));
-        FileUtils.writeStringToFile(file, newContents, StandardCharsets.UTF_8);
+        if (original.equals("!all!")) {
+            FileUtils.writeStringToFile(file, updated, StandardCharsets.UTF_8);
+        }
+        else {
+            String currentContents = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+            // We only want to replace the first occurrence of the original string (for now)
+            // String.replaceFirst() uses regex, so we need to escape the original string with Pattern.quote()
+            // Matcher.quoteReplacement() escapes the updated string so that it can be used as a replacement
+            String newContents = currentContents.replaceFirst(Pattern.quote(original), Matcher.quoteReplacement(updated));
+            FileUtils.writeStringToFile(file, newContents, StandardCharsets.UTF_8);
+        }
     }
 
 }
