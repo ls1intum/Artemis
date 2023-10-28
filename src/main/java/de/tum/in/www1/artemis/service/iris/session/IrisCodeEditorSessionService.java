@@ -20,8 +20,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
@@ -30,6 +29,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.iris.IrisConstants;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
@@ -59,6 +59,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private final IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
 
+    private final VersionControlService versionControlService;
+
     private final GitService gitService;
 
     private final RepositoryService repositoryService;
@@ -69,8 +71,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     public IrisCodeEditorSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, AuthorizationCheckService authCheckService,
-            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, GitService gitService, RepositoryService repositoryService,
-            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
+            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, VersionControlService versionControlService, GitService gitService,
+            RepositoryService repositoryService, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
@@ -78,12 +80,20 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         this.irisCodeEditorWebsocketService = irisCodeEditorWebsocketService;
         this.authCheckService = authCheckService;
         this.irisCodeEditorSessionRepository = irisCodeEditorSessionRepository;
+        this.versionControlService = versionControlService;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.templateParticipationRepository = templateParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
     }
 
+    /**
+     * Creates a new Code Editor session for the given exercise and user, and saves it in the database.
+     *
+     * @param exercise The programming exercise
+     * @param user     The user
+     * @return The created session
+     */
     public IrisCodeEditorSession createSession(ProgrammingExercise exercise, User user) {
         return irisCodeEditorSessionRepository.save(new IrisCodeEditorSession(exercise, user));
     }
@@ -153,6 +163,16 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         });
     }
 
+    /**
+     * Converts a JsonNode into an IrisMessage.
+     * To do this, it checks the JsonNode for a field "response". If it is present, it creates an IrisTextMessageContent
+     * with the value of the field as the message content. If the JsonNode also has a field "components", it creates an
+     * IrisExercisePlanMessageContent with the parsed value of the field as the message content.
+     *
+     * @param content The JsonNode to convert
+     * @return The converted IrisMessage
+     * @throws IrisParseResponseException If the JsonNode does not have the correct structure
+     */
     private static IrisMessage toIrisMessage(JsonNode content) throws IrisParseResponseException {
         var message = new IrisMessage();
         if (!content.hasNonNull("response")) {
@@ -246,7 +266,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             case TEST_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_TEST_REPOSITORY;
         };
 
-        var params = initializeParams(session.getExercise());
+        var exercise = session.getExercise();
+        var params = initializeParams(exercise);
         // Add the instructions previously generated by Iris for this step of the plan
         params.put("instructions", exerciseStep.getInstructions());
 
@@ -269,10 +290,10 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                     else {
                         String updatedProblemStatement = null;
                         switch (component) {
-                            case PROBLEM_STATEMENT -> updatedProblemStatement = injectChangesIntoProblemStatement(session.getExercise(), changes);
-                            case SOLUTION_REPOSITORY -> injectChangesIntoRepository(solutionRepository(session.getExercise()), changes);
-                            case TEMPLATE_REPOSITORY -> injectChangesIntoRepository(templateRepository(session.getExercise()), changes);
-                            case TEST_REPOSITORY -> injectChangesIntoRepository(testRepository(session.getExercise()), changes);
+                            case PROBLEM_STATEMENT -> updatedProblemStatement = injectChangesIntoProblemStatement(exercise, changes);
+                            case SOLUTION_REPOSITORY -> injectChangesIntoRepository(solutionRepository(exercise), changes);
+                            case TEMPLATE_REPOSITORY -> injectChangesIntoRepository(templateRepository(exercise), changes);
+                            case TEST_REPOSITORY -> injectChangesIntoRepository(testRepository(exercise), changes);
                         }
                         irisCodeEditorWebsocketService.notifySuccess(session, exerciseStep, updatedProblemStatement);
                     }
@@ -302,20 +323,73 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         return params;
     }
 
+    /**
+     * Gets the solution repository for a given exercise. This method uses the
+     * SolutionProgrammingExerciseParticipationRepository to find the solution participation for the exercise.
+     * If the participation is not found, it will throw an exception.
+     *
+     * @param exercise The exercise to get the solution repository for
+     * @return The solution repository
+     */
     private Repository solutionRepository(ProgrammingExercise exercise) {
-        return solutionParticipationRepository.findByProgrammingExerciseId(exercise.getId()).map(SolutionProgrammingExerciseParticipation::getVcsRepositoryUrl)
-                .map(this::repositoryAt).orElseThrow();
+        return solutionParticipationRepository.findByProgrammingExerciseId(exercise.getId()).map(this::repositoryAt).orElseThrow();
     }
 
+    /**
+     * Fetches the template repository for a given exercise. This method uses the
+     * TemplateProgrammingExerciseParticipationRepository to find the template participation for the exercise.
+     * If the participation is not found, it will throw an exception.
+     *
+     * @param exercise The exercise to get the template repository for
+     * @return The template repository
+     */
     private Repository templateRepository(ProgrammingExercise exercise) {
-        return templateParticipationRepository.findByProgrammingExerciseId(exercise.getId()).map(TemplateProgrammingExerciseParticipation::getVcsRepositoryUrl)
-                .map(this::repositoryAt).orElseThrow();
+        return templateParticipationRepository.findByProgrammingExerciseId(exercise.getId()).map(this::repositoryAt).orElseThrow();
     }
 
+    /**
+     * Gets the test repository for a given exercise. This method uses the URL of the test repository that is stored in
+     * the exercise. If the URL is null, it will throw an exception.
+     *
+     * @param exercise The exercise to get the test repository for
+     * @return The test repository
+     */
     private Repository testRepository(ProgrammingExercise exercise) {
         return Optional.ofNullable(exercise.getVcsTestRepositoryUrl()).map(this::repositoryAt).orElseThrow();
     }
 
+    /**
+     * Fetches the repository for a given participation.
+     * If the repository is already cached, it will be retrieved from the cache.
+     *
+     * @param participation The participation to fetch the repository for
+     * @return The repository
+     */
+    private Repository repositoryAt(ProgrammingExerciseParticipation participation) {
+        var url = participation.getVcsRepositoryUrl();
+        try {
+            // This check reduces the amount of REST-calls that retrieve the default branch of a repository.
+            // Retrieving the default branch is not necessary if the repository is already cached.
+            if (gitService.isRepositoryCached(url)) {
+                return gitService.getOrCheckoutRepository(url, true);
+            }
+            else {
+                String branch = versionControlService.getOrRetrieveBranchOfParticipation(participation);
+                return gitService.getOrCheckoutRepository(url, true, branch);
+            }
+        }
+        catch (GitAPIException e) {
+            log.error("Could not get or checkout exercise repository", e);
+            return null;
+        }
+    }
+
+    /**
+     * Fetches the repository for a given URL.
+     *
+     * @param url The URL to fetch the repository for
+     * @return The repository
+     */
     private Repository repositoryAt(VcsRepositoryUrl url) {
         try {
             return gitService.getOrCheckoutRepository(url, true);
@@ -326,6 +400,12 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         }
     }
 
+    /**
+     * Reads the files in a repository and returns them as a map from file name to file contents.
+     *
+     * @param repository The repository to read
+     * @return The map of file names to file contents
+     */
     private Map<String, String> read(Repository repository) {
         return new HashMap<>(repositoryService.getFilesWithContent(repository));
     }
@@ -347,11 +427,26 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         return repository;
     }
 
+    /**
+     * Iris can generate different types of changes to files in the exercise repositories. This enum represents the
+     * different types of changes that Iris can generate. Currently, only MODIFY is supported.
+     * In the future we would like to support more types of changes, such as CREATE, DELETE, and RENAME.
+     */
     private enum FileChangeType {
         MODIFY,
         // Add more types here in the future
     }
 
+    /**
+     * A file change represents a change to a file in an exercise repository. It contains the type of change, the name
+     * of the file, and the original and updated contents of the file.
+     * How the original and updated contents are used depends on the type of change.
+     *
+     * @param type     the type of change
+     * @param file     the name of the file
+     * @param original the original contents of the file
+     * @param updated  the updated contents of the file
+     */
     private record FileChange(FileChangeType type, String file, String original, String updated) {
     }
 
@@ -409,14 +504,29 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         return changes;
     }
 
+    /**
+     * Injects the changes into the problem statement of the exercise. This method replaces the first occurrence of each
+     * original string with the corresponding updated string in the problem statement.
+     *
+     * @param exercise The programming exercise
+     * @param changes  The changes to inject
+     * @return The updated problem statement
+     */
     private String injectChangesIntoProblemStatement(ProgrammingExercise exercise, List<FileChange> changes) {
         var problemStatement = exercise.getProblemStatement();
         for (FileChange change : changes) {
-            problemStatement = problemStatement.replaceFirst(change.original(), change.updated());
+            problemStatement = problemStatement.replaceFirst(Pattern.quote(change.original()), Matcher.quoteReplacement(change.updated()));
         }
         return problemStatement;
     }
 
+    /**
+     * Injects the changes into the repository. This method replaces the first occurrence of each original string with
+     * the corresponding updated string in the file with the same name as the file in the change.
+     *
+     * @param repository The repository to inject the changes into
+     * @param changes    The changes to inject
+     */
     private void injectChangesIntoRepository(Repository repository, List<FileChange> changes) {
         Map<String, Optional<File>> targetedFiles = changes.stream().collect(Collectors.toMap(FileChange::file, change -> gitService.getFileByName(repository, change.file())));
         for (FileChange change : changes) {
@@ -439,6 +549,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         }
     }
 
+    /**
+     * Replaces the first occurrence of the original string with the updated string in the given file.
+     *
+     * @param file     The file to modify
+     * @param original The original string to replace
+     * @param updated  The updated string to replace the original string with
+     * @throws IOException If the file could not be read or written to
+     */
     private void replaceInFile(File file, String original, String updated) throws IOException {
         String currentContents = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
         // We only want to replace the first occurrence of the original string (for now)
