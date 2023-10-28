@@ -54,23 +54,25 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     private handleChangeNotification(changeNotification: ChangeNotification) {
-        this.codeEditorContainer.aceEditor.initEditor();
         if (changeNotification.updatedProblemStatement) {
             this.editableInstructions.updateProblemStatement(changeNotification.updatedProblemStatement);
+        } else {
+            // Reload the code editor to display new code changes
+            this.codeEditorContainer.aceEditor.initEditor();
         }
         // Find the corresponding plan and step and execute the next step, if there is one.
         // Also, the plan's currentStepIndex must be updated so that the chatbot widget can display the correct step as in progress.
         const widget = this.chatbotButton?.dialogRef?.componentInstance;
+        const message = widget?.messages.find((m) => m.id === changeNotification.messageId);
+        const plan = message?.content.find((c) => c.id === changeNotification.planId);
         if (!widget) {
             console.error('Received change notification but could not access chatbot widget to forward it.');
             return;
         }
-        const message = widget.messages.find((m) => m.id === changeNotification.messageId);
         if (!message) {
             console.error('Received change notification but could not find corresponding message.');
             return;
         }
-        const plan = message.content.find((c) => c.id === changeNotification.planId);
         if (!plan || !(plan instanceof IrisExercisePlan)) {
             console.error('Received change notification but could not find corresponding plan.');
             return;
@@ -78,8 +80,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         for (let i = 0; i < plan.steps.length; i++) {
             const step = plan.steps[i];
             if (step.id === changeNotification.stepId) {
-                plan.currentStepIndex = i;
+                // Success! Found the corresponding step.
+                plan.currentStepIndex = i; // Update the current step index
                 if (i < plan.steps.length - 1) {
+                    // Execute the next step
                     const nextStep = plan.steps[i + 1];
                     widget.executePlanStep(changeNotification.messageId, changeNotification.planId, nextStep.id!);
                 }

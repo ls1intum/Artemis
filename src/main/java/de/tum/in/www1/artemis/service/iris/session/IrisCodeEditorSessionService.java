@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service.iris.session;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -439,7 +441,10 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private void replaceInFile(File file, String original, String updated) throws IOException {
         String currentContents = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-        String newContents = currentContents.replaceFirst(original, updated);
+        // We only want to replace the first occurrence of the original string (for now)
+        // String.replaceFirst() uses regex, so we need to escape the original string with Pattern.quote()
+        // Matcher.quoteReplacement() escapes the updated string so that it can be used as a replacement
+        String newContents = currentContents.replaceFirst(Pattern.quote(original), Matcher.quoteReplacement(updated));
         FileUtils.writeStringToFile(file, newContents, StandardCharsets.UTF_8);
     }
 
