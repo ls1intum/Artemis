@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { CourseWideContext, PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { Subject, Subscription, combineLatest, takeUntil } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -37,6 +37,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     pagingEnabled = true;
     itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
+    isCommunicationEnabled: boolean;
 
     documentationType = DocumentationType.Communications;
 
@@ -98,6 +99,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
 
     onCourseLoad(course: Course) {
         this.course = course;
+        this.isCommunicationEnabled = isCommunicationEnabled(course);
         if (this.course?.lectures) {
             this.lectures = this.course.lectures.sort(this.overviewContextSortFn);
         }
