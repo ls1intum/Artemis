@@ -22,11 +22,11 @@ public class Lti13AgsClaim {
      * @return an Ags-Claim if one was present in idToken.
      */
     public static Optional<Lti13AgsClaim> from(OidcIdToken idToken) {
-        JsonObject agsClaimJson = idToken.getClaim(Claims.AGS_CLAIM) != null ? JsonParser.parseString(idToken.getClaim(Claims.AGS_CLAIM).toString()).getAsJsonObject() : null;
-
-        if (agsClaimJson == null) {
+        if (idToken.getClaim(Claims.AGS_CLAIM) == null) {
             return Optional.empty();
         }
+
+        JsonObject agsClaimJson = JsonParser.parseString(idToken.getClaim(Claims.AGS_CLAIM).toString()).getAsJsonObject();
 
         Lti13AgsClaim agsClaim = new Lti13AgsClaim();
         JsonArray scopes = agsClaimJson.get("scope").getAsJsonArray();
