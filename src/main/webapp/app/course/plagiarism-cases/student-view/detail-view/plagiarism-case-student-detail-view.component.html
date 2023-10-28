@@ -60,7 +60,10 @@
                                         | artemisTranslate
                                             : {
                                                   dueDate: (plagiarismCase.createdByContinuousPlagiarismControl
-                                                      ? dayjs(plagiarismCase.exercise!.dueDate!).add(7, 'day')
+                                                      ? dayjs(plagiarismCase.exercise!.dueDate!).add(
+                                                            plagiarismCase.exercise!.plagiarismDetectionConfig!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod!,
+                                                            'day'
+                                                        )
                                                       : posts[0].creationDate.add(7, 'day')
                                                   ).format('DD.MM.YYYY')
                                               }

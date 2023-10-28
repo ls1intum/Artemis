@@ -49,6 +49,7 @@ export interface ValidationReason {
 export interface PlagiarismDetectionConfig {
     continuousPlagiarismControlEnabled?: boolean;
     continuousPlagiarismControlPostDueDateChecksEnabled?: boolean;
+    continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod?: number;
     similarityThreshold?: number;
     minimumScore?: number;
     minimumSize?: number;
@@ -100,6 +101,7 @@ export abstract class Exercise implements BaseEntity {
     public plagiarismDetectionConfig?: PlagiarismDetectionConfig = {
         continuousPlagiarismControlEnabled: false,
         continuousPlagiarismControlPostDueDateChecksEnabled: true,
+        continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
         similarityThreshold: 90,
         minimumSize: 50,
         minimumScore: 0,

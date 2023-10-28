@@ -93,6 +93,30 @@
                     />
                 </div>
             </div>
+            <div class="col">
+                <div class="form-group">
+                    <div>
+                        <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.plagiarismCaseResponsePeriod">Plagiarism case response period in days</label>
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            placement="bottom auto"
+                            [ngbTooltip]="'artemisApp.plagiarism.plagiarismCaseResponsePeriodTooltip' | artemisTranslate"
+                        ></fa-icon>
+                    </div>
+                    <input
+                        type="number"
+                        required
+                        class="form-control"
+                        min="7"
+                        max="31"
+                        step="1"
+                        id="plagiarism-case-response-period"
+                        name="continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod"
+                        #exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod="ngModel"
+                        [(ngModel)]="exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod"
+                    />
+                </div>
+            </div>
         </div>
     </div>
 </div>
