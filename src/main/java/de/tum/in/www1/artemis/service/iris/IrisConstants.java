@@ -177,7 +177,7 @@ public final class IrisConstants {
 
             {{#system~}}Here are the last 5 or fewer messages between you and the instructor:{{~/system}}
             {{#each (truncate chatHistory 5)}}
-                {{#if (equal 'this.sender' "user")}}
+                {{#if (equal this.sender "user")}}
                     {{#user~}}{{this.content[0].textContent}}{{~/user}}
                 {{else}}
                     {{#assistant~}}{{this.content[0].textContent}}{{~/assistant}}
@@ -209,7 +209,7 @@ public final class IrisConstants {
                         {{/if}}
                     {{~/system}}
                     {{#assistant~}}{{gen 'this.component' temperature=0.0 max_tokens=7 stop=","}}{{~/assistant}}
-                    {{#if (equal 'this.component' "!done!")}}
+                    {{#if (equal this.component "!done!")}}
                         {{break}}
                     {{/if}}
                     {{#system~}}
@@ -299,12 +299,12 @@ public final class IrisConstants {
                         {{/if}}
                     {{~/system}}
                     {{#assistant~}}{{gen 'this.original' temperature=0.0 max_tokens=1000}}{{~/assistant}}
-                    {{#if (equal 'this.original' '!done!')}}
+                    {{#if (equal this.original '!done!')}}
                         {{break}}
                     {{/if}}
                     {{#system~}}What would you like to change this to?{{~/system}}
                     {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=1000}}{{~/assistant}}
-                    {{#if (equal 'this.original' '!all!')}}
+                    {{#if (equal this.original '!all!')}}
                         {{break}}
                     {{/if}}
                 {{/geneach}}
@@ -349,19 +349,20 @@ public final class IrisConstants {
                 {{#system~}}You have told the instructor that you will do the following:{{~/system}}
                 {{#assistant~}}{{instructions}}{{/assistant}}
 
+                {{set 'changes' []}}
                 {{#geneach 'changes' num_iterations=20 hidden=True}}
                     {{#system~}}
                         You are now in the process of editing the template repository.
-                        So far, you have made the following changes:
                         {{#each changes}}
-                            {{#if (equal 'this.type' 'modify')}}
-                                {{#if (equal 'this.original' '!all!')}}
+                            {{#if @first}}So far, you have made the following changes:{{/if}}
+                            {{#if (equal this.type 'modify')}}
+                                {{#if (equal this.original '!all!')}}
                                     {{this.file}}: {{this.updated}}
                                 {{else}}
                                     {{this.file}}: {{this.original}} -> {{this.updated}}
                                 {{/if}}
                             {{/if}}
-                            {{#if (equal 'this.type' 'create')}}
+                            {{#if (equal this.type 'create')}}
                                 {{this.file}}: {{this.updated}}
                             {{/if}}
                         {{/each}}
@@ -372,10 +373,10 @@ public final class IrisConstants {
                         {{/if}}
                     {{~/system}}
                     {{#assistant~}}{{gen 'this.type' temperature=0.0 max_tokens=10}}{{~/assistant}}
-                    {{#if (equal 'this.type' "!done!")}}
+                    {{#if (equal this.type "!done!")}}
                         {{break}}
                     {{/if}}
-                    {{#if (equal 'this.type' 'modify')}}
+                    {{#if (equal this.type 'modify')}}
                         {{#system~}}
                             What file would you like to modify?
                             State the full path of the file, without quotation marks, justification, or any other text.
@@ -417,7 +418,7 @@ public final class IrisConstants {
                         {{#system~}}What should this content be replaced with?{{~/system}}
                         {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=1000}}{{~/assistant}}
                     {{/if}}
-                    {{#if (equal 'this.type' 'create')}}
+                    {{#if (equal this.type 'create')}}
                         {{#system~}}
                             You are now creating a new file in the template repository.
                             What is the full path of the file you would like to create?
@@ -470,19 +471,20 @@ public final class IrisConstants {
                 {{#system~}}You have told the instructor that you will do the following:{{~/system}}
                 {{#assistant~}}{{instructions}}{{/assistant}}
 
-                {{#geneach 'changes' num_iterations=20}}
+                {{set 'changes' []}}
+                {{#geneach 'changes' num_iterations=20 hidden=True}}
                     {{#system~}}
                         You are now editing the solution repository.
-                        So far, you have made the following changes:
                         {{#each changes}}
-                            {{#if (equal 'this.type' 'modify')}}
-                                {{#if (equal 'this.original' '!all!')}}
+                            {{#if @first}}So far, you have made the following changes:{{/if}}
+                            {{#if (equal this.type 'modify')}}
+                                {{#if (equal this.original '!all!')}}
                                     {{this.file}}: {{this.updated}}
                                 {{else}}
                                     {{this.file}}: {{this.original}} -> {{this.updated}}
                                 {{/if}}
                             {{/if}}
-                            {{#if (equal 'this.type' 'create')}}
+                            {{#if (equal this.type 'create')}}
                                 {{this.file}}: {{this.updated}}
                             {{/if}}
                         {{/each}}
@@ -493,10 +495,10 @@ public final class IrisConstants {
                         {{/if}}
                     {{~/system}}
                     {{#assistant~}}{{gen 'this.type' temperature=0.0 max_tokens=10}}{{~/assistant}}
-                    {{#if (equal 'this.type' "!done!")}}
+                    {{#if (equal this.type "!done!")}}
                         {{break}}
                     {{/if}}
-                    {{#if (equal 'this.type' 'modify')}}
+                    {{#if (equal this.type 'modify')}}
                         {{#system~}}
                             What file would you like to modify?
                             State the full path of the file, without quotation marks, justification, or any other text.
@@ -538,7 +540,7 @@ public final class IrisConstants {
                         {{#system~}}What should this content be replaced with?{{~/system}}
                         {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=1000}}{{~/assistant}}
                     {{/if}}
-                    {{#if (equal 'this.type' 'create')}}
+                    {{#if (equal this.type 'create')}}
                         {{#system~}}
                             You are now creating a new file in the solution repository.
                             What is the full path of the file you would like to create?
@@ -593,19 +595,20 @@ public final class IrisConstants {
                 {{#system~}}You have told the instructor that you will do the following:{{~/system}}
                 {{#assistant~}}{{instructions}}{{/assistant}}
 
-                {{#geneach 'changes' num_iterations=20}}
+                {{set 'changes' []}}
+                {{#geneach 'changes' num_iterations=20 hidden=True}}
                     {{#system~}}
                         You are now editing the test repository.
-                        So far, you have made the following changes:
                         {{#each changes}}
-                            {{#if (equal 'this.type' 'modify')}}
-                                {{#if (equal 'this.original' '!all!')}}
+                            {{#if @first}}So far, you have made the following changes:{{/if}}
+                            {{#if (equal this.type 'modify')}}
+                                {{#if (equal this.original '!all!')}}
                                     {{this.file}}: {{this.updated}}
                                 {{else}}
                                     {{this.file}}: {{this.original}} -> {{this.updated}}
                                 {{/if}}
                             {{/if}}
-                            {{#if (equal 'this.type' 'create')}}
+                            {{#if (equal this.type 'create')}}
                                 {{this.file}}: {{this.updated}}
                             {{/if}}
                         {{/each}}
@@ -616,10 +619,10 @@ public final class IrisConstants {
                         {{/if}}
                     {{~/system}}
                     {{#assistant~}}{{gen 'this.type' temperature=0.0 max_tokens=10}}{{~/assistant}}
-                    {{#if (equal 'this.type' "!done!")}}
+                    {{#if (equal this.type "!done!")}}
                         {{break}}
                     {{/if}}
-                    {{#if (equal 'this.type' 'modify')}}
+                    {{#if (equal this.type 'modify')}}
                         {{#system~}}
                             What file would you like to modify?
                             State the full path of the file, without quotation marks, justification, or any other text.
@@ -661,7 +664,7 @@ public final class IrisConstants {
                         {{#system~}}What should this content be replaced with?{{~/system}}
                         {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=1000}}{{~/assistant}}
                     {{/if}}
-                    {{#if (equal 'this.type' 'create')}}
+                    {{#if (equal this.type 'create')}}
                         {{#system~}}
                             You are now creating a new file in the test repository.
                             What is the full path of the file you would like to create?
