@@ -182,6 +182,7 @@
                 <label class="form-check-label custom-control-label" for="automatic_assessment_enabled" jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled"></label>
             </div>
         </div>
+        <jhi-exercise-update-plagiarism *ngIf="!isExamMode" [exercise]="modelingExercise"> </jhi-exercise-update-plagiarism>
         <jhi-presentation-score-checkbox [exercise]="modelingExercise"></jhi-presentation-score-checkbox>
         <div class="form-group" name="problemStatement" id="field_problemStatement">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>

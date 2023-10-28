@@ -1,5 +1,6 @@
 Privacy Statement and Imprint
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
+
 The privacy statement and the imprint are stored in the ``./legal``  directory by default. You can override this value by setting the ``artemis.legal-path`` value in the ``application-artemis.yml``.
 The privacy statement and the imprint are stored as markdown files. Currently, English and German as languages are supported.
 The documents have to follow the naming convention ``<privacy_statement|imprint>_<de|en>.md``.
@@ -16,8 +17,8 @@ In the following, the documentation provides a template in English and German fo
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/privacy-statement-templates.rst
+.. include:: legal/privacy-statement-templates.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/imprint-templates.rst
+.. include:: legal/imprint-templates.rst
