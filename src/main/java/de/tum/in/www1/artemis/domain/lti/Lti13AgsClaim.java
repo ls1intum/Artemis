@@ -22,7 +22,8 @@ public class Lti13AgsClaim {
      * @return an Ags-Claim if one was present in idToken.
      */
     public static Optional<Lti13AgsClaim> from(OidcIdToken idToken) {
-        JsonObject agsClaimJson = JsonParser.parseString(idToken.getClaim(Claims.AGS_CLAIM).toString()).getAsJsonObject();
+        JsonObject agsClaimJson = idToken.getClaimAsString(Claims.AGS_CLAIM) != null ? JsonParser.parseString(idToken.getClaimAsString(Claims.AGS_CLAIM)).getAsJsonObject() : null;
+
         if (agsClaimJson == null) {
             return Optional.empty();
         }
