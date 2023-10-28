@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.lti.Scopes;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
@@ -72,6 +73,9 @@ class Lti13ServiceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private ArtemisAuthenticationProvider artemisAuthenticationProvider;
+
     private OidcIdToken oidcIdToken;
 
     private String clientRegistrationId;
@@ -84,7 +88,7 @@ class Lti13ServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
-                onlineCourseConfigurationService, restTemplate);
+                onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider);
         clientRegistrationId = "clientId";
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix("prefix");
@@ -113,19 +117,13 @@ class Lti13ServiceTest {
         doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
 
-        when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
         when(oidcIdToken.getClaim("iss")).thenReturn("http://otherDomain.com");
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("id", "resourceLinkUrl");
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
-
-        User user = new User();
-        doReturn(user).when(userRepository).getUserWithGroupsAndAuthorities();
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
-        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
+        prepareForPerformLaunch(courseId, exerciseId);
 
         lti13Service.performLaunch(oidcIdToken, clientRegistrationId);
 
@@ -146,14 +144,7 @@ class Lti13ServiceTest {
         exercise.setCourse(course);
         doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
-
-        when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
-
-        User user = new User();
-        doReturn(user).when(userRepository).getUserWithGroupsAndAuthorities();
-        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
-        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
+        prepareForPerformLaunch(courseId, exerciseId);
 
         assertThatIllegalArgumentException().isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
 
@@ -510,5 +501,15 @@ class Lti13ServiceTest {
      */
     private record State(LtiResourceLaunch ltiResourceLaunch, Exercise exercise, User user, StudentParticipation participation, Result result,
             ClientRegistration clientRegistration) {
+    }
+
+    private void prepareForPerformLaunch(long courseId, long exerciseId) {
+        when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId);
+
+        Optional<User> user = Optional.of(new User());
+        doReturn(user).when(userRepository).findOneWithGroupsAndAuthoritiesByLogin(any());
+        doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
+        doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
     }
 }
