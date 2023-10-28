@@ -4,6 +4,7 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.util.Assert;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class Lti13LaunchRequest {
 
@@ -24,7 +25,7 @@ public class Lti13LaunchRequest {
         this.sub = ltiIdToken.getClaim("sub");
         this.deploymentId = ltiIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID);
 
-        JsonObject resourceLinkClaim = ltiIdToken.getClaim(Claims.RESOURCE_LINK);
+        JsonObject resourceLinkClaim = JsonParser.parseString(ltiIdToken.getClaim(Claims.RESOURCE_LINK).toString()).getAsJsonObject();
         this.resourceLinkId = resourceLinkClaim != null ? resourceLinkClaim.get("id").getAsString() : null;
         this.targetLinkUri = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
 
