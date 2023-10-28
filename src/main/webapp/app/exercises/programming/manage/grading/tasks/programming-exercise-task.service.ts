@@ -222,7 +222,7 @@ export class ProgrammingExerciseTaskService {
         task.bonusMultiplier = getSingleValue(task.testCases.map((testCase) => testCase.bonusMultiplier));
         task.bonusPoints = sum(task.testCases.map((testCase) => testCase.bonusPoints ?? 0));
         task.visibility = getSingleValue(task.testCases.map((testCase) => testCase.visibility));
-        task.type = getSingleValue(task.testCases.map((testCase) => testCase.type));
+        task.type = getSingleValue(task.testCases.map((testCase) => testCase.type)) ?? 'MIXED';
 
         return task;
     };

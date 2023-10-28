@@ -26,7 +26,8 @@
             "type": {
                 "STRUCTURAL": "Struktur",
                 "BEHAVIORAL": "Verhalten",
-                "DEFAULT": "Standard"
+                "DEFAULT": "Standard",
+                "MIXED": "Verschieden"
             }
         }
     }
