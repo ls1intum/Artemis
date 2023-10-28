@@ -85,11 +85,8 @@ We first define the ArchRule prohibiting the JUnit assertion package and then en
 
 3. Counting database query calls within tests
 ==============================================
-
-It's possible to write tests checking how many database accesses a REST call performs. These tests ensure that code changes don't lead to more database calls or remind developers if they do, which is especially important for commonly used endpoints.
-However, we should carefully consider before adding such assertions as it makes the test more tedious to maintain.
-
 It's possible to write tests checking how many database accesses an operation performs. These tests ensure that code changes don't inadvertently decrease performance and remind developers if they do, which is especially important for commonly used functionality.
+However, we should carefully consider before adding such assertions as the test becomes more tedious to maintain.
 
 The test below tracks how many database accesses a REST call performs. The custom assert ``assertThatDb`` uses the ``HibernateQueryInterceptor`` to count the number of queries. The assertion checks the number of database accesses and returns the original result of the REST call, which you can continue to use throughout the test.
 
