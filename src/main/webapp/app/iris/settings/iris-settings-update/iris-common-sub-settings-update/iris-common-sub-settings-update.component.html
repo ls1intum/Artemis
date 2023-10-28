@@ -1,29 +1,43 @@
 <div class="form-check form-switch">
-    <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault" [disabled]="!isAdmin" [(ngModel)]="enabled" (change)="onEnabledChange()" />
-    <label class="form-check-label" for="flexSwitchCheckDefault" jhiTranslate="artemisApp.iris.settings.subSettings.enabled-disabled"> Enabled/Disabled </label>
+    <input class="form-check-input" type="checkbox" id="enabledDisabledSwitch" [disabled]="!isAdmin" [(ngModel)]="enabled" (change)="onEnabledChange()" />
+    <label class="form-check-label" for="enabledDisabledSwitch" jhiTranslate="artemisApp.iris.settings.subSettings.enabled-disabled"> Enabled/Disabled </label>
 </div>
 
-<span><span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.allowedModels.title">Allowed Models</span>: </span>
-<div *ngIf="allowedIrisModelsInherited" class="alert alert-primary" role="alert">
-    {{ 'artemisApp.iris.settings.subSettings.allowedModels.inheritedInfo' | artemisTranslate }}
+<h4 class="form-label mt-3" jhiTranslate="artemisApp.iris.settings.subSettings.models.title">Models</h4>
+<span><span class="fw-bold fs-5" jhiTranslate="artemisApp.iris.settings.subSettings.allowedModels.title">Allowed Models</span>: </span>
+<div class="form-check form-switch">
+    <input
+        class="form-check-input"
+        type="checkbox"
+        id="inheritAllowedModelsSwitch"
+        [disabled]="!isAdmin"
+        [(ngModel)]="inheritAllowedModels"
+        (change)="onInheritAllowedModelsChange()"
+    />
+    <label class="form-check-label" for="inheritAllowedModelsSwitch" jhiTranslate="artemisApp.iris.settings.subSettings.allowedModels.inheritSwitch"> Inherit </label>
 </div>
-<div>
-    <select id="irisModels" [disabled]="!isAdmin" [(ngModel)]="allowedIrisModels" multiple (change)="onAllowedIrisModelsSelectionChange()">
-        <option *ngFor="let model of allIrisModels" [ngValue]="model">{{ model.name }}</option>
-    </select>
+<div class="disabled" disabled="true">
+    <div class="form-group">
+        <div class="form-group">
+            <div class="form-check" *ngFor="let model of allIrisModels">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="{{ model.id }}"
+                    [disabled]="!isAdmin || inheritAllowedModels"
+                    [ngModel]="allowedIrisModels.includes(model)"
+                    (ngModelChange)="onAllowedIrisModelsSelectionChange(model)"
+                />
+                <label class="form-check-label" for="{{ model.id }}">
+                    {{ model.name }}
+                </label>
+            </div>
+        </div>
+    </div>
 </div>
-<jhi-button
-    *ngIf="parentSubSettings"
-    id="inheritAllowedModels"
-    [btnType]="WARNING"
-    [icon]="faTrash"
-    [title]="'artemisApp.iris.settings.subSettings.allowedModels.inheritButton'"
-    (onClick)="inheritAllowedModels()"
-></jhi-button>
-<br />
 
-<span><span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.preferredModel">Preferred Model</span>: </span>
-<div ngbDropdown class="d-inline-block me-2">
+<h5 class="mt-3"><span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.preferredModel">Preferred Model</span>:</h5>
+<div ngbDropdown class="d-inline-block">
     <button class="btn btn-outline-primary w-100" id="dropdownBasic1" [disabled]="!isAdmin" ngbDropdownToggle>
         {{ getSelectedModelName() }}
     </button>

@@ -54,7 +54,6 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { IrisExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -191,7 +190,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.supportsAuxiliaryRepositories =
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                        this.irisEnabled = profileInfo.activeProfiles.includes('iris') && !this.programmingExercise.exerciseGroup;
+                        this.irisEnabled = profileInfo.activeProfiles.includes('iris');
                     }
                 });
 
@@ -417,15 +416,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     showGitDiff(): void {
         const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
         modalRef.componentInstance.report = this.programmingExercise.gitDiffReport;
-    }
-
-    /**
-     * Shows the iris settings in a modal.
-     */
-    showIrisSettings(): void {
-        const modalRef = this.modalService.open(IrisExerciseSettingsUpdateComponent, { size: 'xl' });
-        modalRef.componentInstance.courseId = this.courseId;
-        modalRef.componentInstance.exerciseId = this.programmingExercise.id;
     }
 
     createStructuralSolutionEntries() {

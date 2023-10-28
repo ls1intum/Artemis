@@ -8,12 +8,13 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
 import { IrisHestiaSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisModel } from 'app/entities/iris/settings/iris-model';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 
 @Component({
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
 })
-export class IrisSettingsUpdateComponent implements OnInit {
+export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
     @Input()
     public settingType: IrisSettingsType;
     @Input()
@@ -25,9 +26,10 @@ export class IrisSettingsUpdateComponent implements OnInit {
     public parentIrisSettings?: IrisSettings;
     public allIrisModels?: IrisModel[];
 
-    // Loading bools
+    // Status bools
     isLoading = false;
     isSaving = false;
+    isDirty = false;
     // Button types
     PRIMARY = ButtonType.PRIMARY;
     SUCCESS = ButtonType.SUCCESS;
@@ -48,6 +50,12 @@ export class IrisSettingsUpdateComponent implements OnInit {
         this.loadIrisSettings();
     }
 
+    canDeactivateWarning?: string;
+
+    canDeactivate(): boolean {
+        return !this.isDirty;
+    }
+
     loadIrisModels(): void {
         this.irisSettingsService.getIrisModels().subscribe((models) => {
             this.allIrisModels = models;
@@ -63,7 +71,7 @@ export class IrisSettingsUpdateComponent implements OnInit {
                 this.alertService.error('artemisApp.iris.settings.error.noSettings');
             }
             this.irisSettings = settings;
-            console.log(this.irisSettings);
+            this.isDirty = false;
         });
         this.loadParentIrisSettingsObservable().subscribe((settings) => {
             if (!settings) {
@@ -78,6 +86,7 @@ export class IrisSettingsUpdateComponent implements OnInit {
         this.saveIrisSettingsObservable().subscribe(
             (response) => {
                 this.isSaving = false;
+                this.isDirty = false;
                 this.irisSettings = response.body ?? undefined;
                 this.alertService.success('artemisApp.iris.settings.success');
             },

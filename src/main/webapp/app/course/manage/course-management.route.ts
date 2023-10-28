@@ -69,6 +69,11 @@ export const courseManagementState: Routes = [
                 loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
             },
             {
+                path: ':courseId/iris-settings',
+                loadChildren: () =>
+                    import('app/iris/settings/iris-course-settings-update/iris-course-settings-update-routing.module').then((m) => m.IrisCourseSettingsUpdateRoutingModule),
+            },
+            {
                 path: ':courseId/tutorial-groups',
                 resolve: {
                     course: TutorialGroupManagementResolve,

@@ -24,7 +24,7 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     isAdmin: boolean;
 
-    allowedIrisModelsInherited: boolean;
+    inheritAllowedModels: boolean;
 
     allowedIrisModels: IrisModel[];
 
@@ -42,7 +42,7 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     ngOnInit() {
         this.enabled = this.subSettings?.enabled ?? false;
         this.allowedIrisModels = this.getAvailableModels();
-        this.allowedIrisModelsInherited = !this.subSettings?.allowedModels && this.parentSubSettings !== undefined;
+        this.inheritAllowedModels = !this.subSettings?.allowedModels && this.parentSubSettings !== undefined;
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -62,8 +62,13 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         return this.allIrisModels.find((model) => model.id === this.subSettings?.preferredModel)?.name ?? this.subSettings?.preferredModel ?? 'Inherit';
     }
 
-    onAllowedIrisModelsSelectionChange() {
-        this.allowedIrisModelsInherited = false;
+    onAllowedIrisModelsSelectionChange(model: IrisModel) {
+        this.inheritAllowedModels = false;
+        if (this.allowedIrisModels.includes(model)) {
+            this.allowedIrisModels = this.allowedIrisModels.filter((m) => m !== model);
+        } else {
+            this.allowedIrisModels.push(model);
+        }
         this.subSettings!.allowedModels = this.allowedIrisModels.map((model) => model.id);
     }
 
@@ -71,12 +76,18 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         this.subSettings!.preferredModel = model?.id;
     }
 
-    inheritAllowedModels() {
-        this.allowedIrisModelsInherited = true;
-        this.subSettings!.allowedModels = undefined;
-    }
-
     onEnabledChange() {
         this.subSettings!.enabled = this.enabled;
+    }
+
+    onInheritAllowedModelsChange() {
+        if (this.inheritAllowedModels) {
+            this.inheritAllowedModels = true;
+            this.subSettings!.allowedModels = undefined;
+            this.allowedIrisModels = this.getAvailableModels();
+        } else {
+            this.inheritAllowedModels = false;
+            this.subSettings!.allowedModels = this.allowedIrisModels.map((model) => model.id);
+        }
     }
 }
