@@ -4,7 +4,9 @@ import java.util.List;
 
 import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 /**
  * An IrisExercisePlanMessageContent represents an Iris-generated plan to make changes to an exercise.
@@ -14,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "iris_exercise_plan_message_content")
 @DiscriminatorValue(value = "EXERCISE_PLAN")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class IrisExercisePlanMessageContent extends IrisMessageContent {
 
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)

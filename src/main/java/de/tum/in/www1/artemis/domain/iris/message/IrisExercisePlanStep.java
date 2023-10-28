@@ -3,14 +3,17 @@ package de.tum.in.www1.artemis.domain.iris.message;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 
 @Entity
 @Table(name = "iris_exercise_plan_component")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class IrisExercisePlanStep extends DomainObject {
 
     @ManyToOne
