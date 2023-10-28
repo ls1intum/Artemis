@@ -78,6 +78,10 @@ You can override the following configuration options in this file.
        athena:
            url: http://localhost:5000
            secret: abcdef12345
+           modules:
+               # See https://github.com/ls1intum/Athena for a list of available modules
+               text: module_text_cofee
+               programming: module_programming_themisml
 
 Change all entries with ``<...>`` with proper values, e.g. your TUM
 Online account credentials to connect to the given instances of JIRA,

@@ -21,10 +21,14 @@ HTTP. We need to extend the configuration in the file
 .. code:: yaml
 
    artemis:
-     # ...
-     athena:
+      # ...
+      athena:
          url: http://localhost:5000
          secret: abcdef12345
+         modules:
+            # See https://github.com/ls1intum/Athena for a list of available modules
+            text: module_text_cofee
+            programming: module_programming_themisml
 
 The secret can be any string. For more detailed instructions on how to set it up in Athena, refer to the Athena documentation_.
 
