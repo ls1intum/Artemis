@@ -202,6 +202,12 @@ editor, see image below. Here, lecture attachment units can be found when users 
 Reference Lecture Unit Slides
 """""""""""""""""""""""""""""
 
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/39409?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Users can refer to lecture unit slides of the current course, via the dropdown menu ``Lecture``. Here, slides can be found when users
 hover over a specific unit, see image below.
 

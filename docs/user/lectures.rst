@@ -46,6 +46,13 @@ Instructors have three options for creating a lecture.
     If instructors decide to process units automatically by clicking on the |process-units-checkbox| checkbox, additional information will be displayed
     and they can click on |process-units-btn| to process the lecture PDF into multiple units.
 
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/39407?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
        |create-lecture-automatic-unit-processing|
 
     Once the units are processed, instructors can view how the units are split, beginning from a start page to an end page. A name is automatically generated for each lecture unit.
