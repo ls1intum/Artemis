@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.saml2.core.Saml2X509Credential;
 import org.springframework.security.saml2.provider.service.registration.InMemoryRelyingPartyRegistrationRepository;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
@@ -155,9 +156,8 @@ public class SAML2Configuration {
             // This filter chain is only applied if the URL matches
             // Else the request is filtered by {@link SecurityConfiguration}.
             .securityMatcher("/api/saml2", "/saml2/**", "/login/**")
-            .csrf()
             // Needed for SAML to work properly
-            .disable()
+            .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                 // The request to the api is permitted and checked directly
                 // This allows returning a 401 if the user is not logged in via SAML2
@@ -168,9 +168,8 @@ public class SAML2Configuration {
                 .anyRequest().authenticated()
             )
             // Processes the RelyingPartyRegistrationRepository Bean and installs the filters for SAML2
-            .saml2Login()
             // Redirect back to the root
-            .defaultSuccessUrl("/", true);
+            .saml2Login((config) -> config.defaultSuccessUrl("/", true));
         // @formatter:on
 
         return http.build();
