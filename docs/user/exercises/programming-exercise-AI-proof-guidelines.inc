@@ -29,6 +29,7 @@ beautiful as with real text.
    .. figure:: programming/AI-proof-exercises/JackOLantern.png
       :alt: UML diagram for an exercise
       :align: center
+      :width: 50%
 
       UML diagram for an exercise showcasing the relationship between the classes as well as the content of the individual classes.
 
@@ -83,6 +84,8 @@ beautiful as with real text.
    .. figure:: programming/AI-proof-exercises/List-generics.png
       :align: center
       :alt: This figure showcases the functionality of a linked-list
+      :width: 50%
+
 
       Depiction shows the functionality of a linked list with 3 integer values
       as a basic concept for understanding linked lists. The task of this exercise
@@ -97,6 +100,8 @@ beautiful as with real text.
 
    .. figure:: programming/AI-proof-exercises/add.png
       :align: center
+      :width: 50%
+
 
       Figure shows what a list should look like after the add functionality was called. Picture from the Problem statement
 
@@ -128,6 +133,8 @@ beautiful as with real text.
 
       .. figure:: programming/AI-proof-exercises/GUI-upgrade-for-game.png
          :align: center
+         :width: 50%
+
 
          Example GUI from homework exercise
 
@@ -434,6 +441,7 @@ Problem statement and exercise instructions
 
    .. figure:: programming/AI-proof-exercises/Streams-exercise.png
       :align: center
+      :width: 50%
 
       Part of a static stream exercise where a method's functionality needed to
       be created using only streams.
@@ -474,7 +482,7 @@ Problem statement and exercise instructions
 
    .. figure:: programming/AI-proof-exercises/Greedy.png
       :align: center
-      :width: 15cm
+      :width: 50%
 
       In this exercise additional resources were provided as you can see
       from the blues clickable links in the text. These are about the

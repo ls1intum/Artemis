@@ -154,4 +154,4 @@ Each one represents a single test case feedback and should have the format:
 * ``successful``: Indicates if the test case execution for this submission should be marked as successful or failed.
   Defaults to ``false`` if not present.
 * ``message``: The message shown as additional information to the student.
-  **Required for non-successful tests/feedback**, o
+  **Required for non-successful tests/feedback**, optional otherwise.
