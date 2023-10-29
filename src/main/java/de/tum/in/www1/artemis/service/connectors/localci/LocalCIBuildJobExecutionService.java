@@ -197,14 +197,14 @@ public class LocalCIBuildJobExecutionService {
 
         localCIContainerService.startContainer(containerId);
 
-        log.info("Started container for build job " + containerName);
+        log.info("Started container for build job {}", containerName);
 
         localCIContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, auxiliaryRepositoriesPaths, auxiliaryRepositoryNames,
                 buildScriptPath);
 
         localCIContainerService.runScriptInContainer(containerId);
 
-        log.info("Finished running the build script in container " + containerName);
+        log.info("Finished running the build script in container {}", containerName);
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 
