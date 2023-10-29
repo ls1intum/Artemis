@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.zip.ZipFile;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -101,11 +100,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         studentParticipationRepository.save(programmingParticipation);
         programmingSubmission.setParticipation(programmingParticipation);
         programmingSubmissionRepository.save(programmingSubmission);
-    }
-
-    @AfterEach
-    void tearDown() throws Exception {
-        athenaRequestMockProvider.reset();
     }
 
     @Test
