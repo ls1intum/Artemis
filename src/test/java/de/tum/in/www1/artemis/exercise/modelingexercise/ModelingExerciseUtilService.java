@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.exercise.modelingexercise;
 import static com.google.gson.JsonParser.parseString;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -317,6 +318,7 @@ public class ModelingExerciseUtilService {
         return participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
     }
 
+
     /**
      * Creates and saves a ModelingSubmission from a file.
      *
@@ -326,7 +328,7 @@ public class ModelingExerciseUtilService {
      * @return The created ModelingSubmission
      * @throws Exception If the file can't be read
      */
-    public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
+    public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws IOException {
         String model = FileUtils.loadFileFromResources(path);
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(model, true);
         submission = addModelingSubmission(exercise, submission, login);

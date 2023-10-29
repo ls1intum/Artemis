@@ -85,7 +85,7 @@ public class LdapAuthenticationProvider extends ArtemisAuthenticationProviderImp
         // We create our own authorization and use the credentials of the user.
         byte[] passwordBytes = Utf8.encode(password);
         boolean passwordCorrect = ldapTemplate.compare(ldapUserDto.getUid().toString(), "userPassword", passwordBytes);
-        log.debug("Compare password with LDAP entry for user " + username + " to validate login");
+        log.debug("Compare password with LDAP entry for user {} to validate login", username);
         // this is the normal case, where the password is validated
         if (!passwordCorrect) {
             throw new BadCredentialsException("Wrong credentials");
