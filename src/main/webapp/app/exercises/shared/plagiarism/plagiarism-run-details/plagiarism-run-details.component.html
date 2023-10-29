@@ -5,7 +5,7 @@
                 {{ 'artemisApp.plagiarism.numberOfDetectedSubmissions' | artemisTranslate }}
             </div>
             <div class="plagiarism-run-details-info">
-                {{ this.plagiarismResultStats?.numberOfDetectedSubmissions }}
+                {{ plagiarismResultStats?.numberOfDetectedSubmissions }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">
@@ -13,7 +13,7 @@
                 {{ 'artemisApp.plagiarism.averageSimilarity' | artemisTranslate }}
             </div>
             <div class="plagiarism-run-details-info">
-                {{ this.plagiarismResultStats?.averageSimilarity?.toFixed(2) + ' %' }}
+                {{ plagiarismResultStats?.averageSimilarity?.toFixed(2) + ' %' }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">
@@ -21,7 +21,7 @@
                 {{ 'artemisApp.plagiarism.maximalSimilarity' | artemisTranslate }}
             </div>
             <div class="plagiarism-run-details-info">
-                {{ this.plagiarismResultStats?.maximalSimilarity?.toFixed(2) + ' %' }}
+                {{ plagiarismResultStats?.maximalSimilarity?.toFixed(2) + ' %' }}
             </div>
         </div>
         <div class="plagiarism-run-details-stats-item">
@@ -45,7 +45,7 @@
                 {{ 'artemisApp.plagiarism.startedBy' | artemisTranslate }}
             </div>
             <div class="plagiarism-run-details-info">
-                {{ 'CPC' }}
+                {{ plagiarismResultStats?.createdBy ?? 'unknown' }}
             </div>
         </div>
     </div>

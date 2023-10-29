@@ -13,4 +13,5 @@ export class PlagiarismResultStats {
     numberOfDetectedSubmissions: number;
     averageSimilarity: number;
     maximalSimilarity: number;
+    createdBy: string;
 }

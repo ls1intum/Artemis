@@ -475,13 +475,6 @@ public class TextExerciseResource {
         return ResponseUtil.ok(zipFile);
     }
 
-    public enum PlagiarismChecksTrigger {
-        USER, CPC
-    }
-
-    public record PlagiarismResultStats(int numberOfDetectedSubmissions, double averageSimilarity, double maximalSimilarity) {
-    };
-
     /**
      * GET /text-exercises/{exerciseId}/plagiarism-result
      * <p>
