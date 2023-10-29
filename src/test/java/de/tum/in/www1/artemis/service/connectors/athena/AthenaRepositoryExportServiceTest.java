@@ -2,17 +2,14 @@ package de.tum.in.www1.artemis.service.connectors.athena;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.*;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +58,7 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1")
-    void shouldExportRepository() throws IOException, GitAPIException {
+    void shouldExportRepository() throws Exception {
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository.findByCourseIdWithLatestResultForTemplateSolutionParticipations(course.getId()).stream().iterator().next();
         programmingExercise.setFeedbackSuggestionsEnabled(true);
@@ -76,19 +73,12 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationBambooB
         submission.setParticipation(participation);
         var programmingSubmissionWithId = programmingExerciseUtilService.addProgrammingSubmission(programmingExerciseWithId, submission, TEST_PREFIX + "student1");
 
-        Path zipPath = Paths.get("/export/dir/zipfile.zip");
-
-        Repository mockRepository = mock(Repository.class);
-        doReturn(true).when(mockRepository).isValidFile(any());
-        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString());
-        doReturn(testRepo.localRepoFile.toPath()).when(mockRepository).getLocalPath();
-        doNothing().when(gitService).resetToOriginHead(any());
-        doReturn(zipPath).when(gitService).zipRepositoryWithParticipation(any(), anyString(), anyBoolean());
+        programmingExerciseUtilService.createGitRepository();
 
         File resultStudentRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), null);
         File resultSolutionRepo = athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), programmingSubmissionWithId.getId(), RepositoryType.SOLUTION);
 
-        assertThat(resultStudentRepo.toPath()).isEqualTo(zipPath); // The student repository ZIP is returned
+        assertThat(resultStudentRepo.toPath()).isEqualTo(Paths.get("repo.zip")); // The student repository ZIP is returned
         assertThat(resultSolutionRepo).exists(); // The solution repository ZIP can actually be created in the test
     }
 

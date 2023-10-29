@@ -4,13 +4,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.zip.ZipFile;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -25,6 +31,9 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     private static final String TEST_PREFIX = "athenaintegration";
+
+    @Value("${artemis.athena.secret}")
+    private String athenaSecret;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -132,10 +141,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN, List.class);
     }
 
-    // Test for Athena in ProgrammingAssessmentResource
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void createManualProgrammingExerciseResultWithAthenaEnabled_submit() throws Exception {
+    void testGetFeedbackSuggestionsAthenaEnabled() throws Exception {
         // Create example participation with submission
         var participation = new StudentParticipation();
         participation.setParticipant(userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
@@ -166,5 +174,39 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
         // Check that nothing went wrong, even with Athena enabled
         assertThat(response).as("response is not null").isNotNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "template", "solution", "tests" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testRepositoryExportEndpoint(String repoType) throws Exception {
+        // Enable Athena for the exercise
+        programmingExercise.setFeedbackSuggestionsEnabled(true);
+        programmingExerciseRepository.save(programmingExercise);
+
+        // Add Git repo for export
+        programmingExerciseUtilService.createGitRepository();
+
+        // Get exports from endpoint
+        var authHeaders = new HttpHeaders();
+        authHeaders.add("Authorization", athenaSecret);
+        var repoZip = request.getFile("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/repository/" + repoType, HttpStatus.OK,
+                new LinkedMultiValueMap<>(), authHeaders, null);
+
+        // Check that ZIP contains file
+        try (var zipFile = new ZipFile(repoZip)) {
+            assertThat(zipFile.size()).as("zip file contains files").isGreaterThan(0);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "template", "solution", "tests" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testRepositoryExportEndpointsFailWhenAthenaNotEnabled(String repoType) throws Exception {
+        var authHeaders = new HttpHeaders();
+        authHeaders.add("Authorization", athenaSecret);
+
+        // Expect status 403 because Athena is not enabled for the exercise
+        request.get("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/repository/" + repoType, HttpStatus.FORBIDDEN, Result.class, authHeaders);
     }
 }
