@@ -48,8 +48,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         codeEditorWebsocketService: IrisCodeEditorWebsocketService,
     ) {
         super(router, exerciseService, courseExerciseService, domainService, programmingExerciseParticipationService, location, participationService, route, alertService);
-        codeEditorWebsocketService.onPromptReload().subscribe((changeNotification: FilesChanged) => {
-            this.handleChangeNotification(changeNotification);
+        codeEditorWebsocketService.onPromptReload().subscribe((filesChanged: FilesChanged) => {
+            this.handleChangeNotification(filesChanged);
         });
     }
 
@@ -71,16 +71,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.editableInstructions.updateProblemStatement(filesChanged.updatedProblemStatement!);
         } else {
             const repository = this.toRepository(filesChanged.component);
-            if (this.selectedRepository && this.selectedRepository !== repository) {
-                // The user is not looking at the repository that the changes were for.
-                // We don't have to reload anything because the user will see the changes when they switch to the correct repository.
-                return;
-            }
-            for (const path of filesChanged.paths!) {
-                // Force a reload of each file that was changed.
-                // This will cause any changes since the request to Iris to be lost.
-                // Maybe we can find a way to merge the changes, but for now this is the simplest solution.
-                delete this.codeEditorContainer?.aceEditor?.fileSession[path];
+            if (!this.selectedRepository || this.selectedRepository === repository) {
+                this.codeEditorContainer.aceEditor.forceReloadAll(filesChanged.paths!);
             }
         }
         // Find the corresponding plan and step and execute the next step, if there is one.

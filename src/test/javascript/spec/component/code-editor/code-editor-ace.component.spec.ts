@@ -167,7 +167,7 @@ describe('CodeEditorAceComponent', () => {
         const selectedFile = 'dummy';
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false } };
         const initEditorSpy = jest.spyOn(comp, 'initEditor');
-        const loadFileSpy = jest.spyOn(comp, 'loadFile');
+        const loadFileSpy = jest.spyOn(comp, 'fetchFileContent');
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
 
@@ -182,7 +182,7 @@ describe('CodeEditorAceComponent', () => {
         const selectedFile = 'dummy';
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: true } };
         const initEditorSpy = jest.spyOn(comp, 'initEditor');
-        const loadFileSpy = jest.spyOn(comp, 'loadFile');
+        const loadFileSpy = jest.spyOn(comp, 'fetchFileContent');
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
 

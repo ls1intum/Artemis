@@ -193,10 +193,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             (changes.selectedFile && this.selectedFile) ||
             (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN)
         ) {
-            // Current file has changed
-            // Only load the file from server if there is nothing stored in the editorFileSessions
-            if ((this.selectedFile && !this.fileSession[this.selectedFile]) || this.fileSession[this.selectedFile].loadingError) {
-                this.loadFile(this.selectedFile);
+            // Current selected file has changed
+            if (this.selectedFile) {
+                await this.ensureLoadedThenInitEditorIfSelected(this.selectedFile);
             } else {
                 await this.initEditor();
             }
@@ -263,52 +262,84 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     /**
+     * Fetches the content of the file with the specified filename from the server.
+     * Errors must be handled by the caller with a catch block.
+     * @param fileName Name of the file to be fetched
+     */
+    async fetchFileContent(fileName: string): Promise<string> {
+        return firstValueFrom(this.repositoryFileService.getFile(fileName)).then((fileObj) => fileObj.fileContent);
+    }
+
+    /**
+     * Reloads the file with the specified filename from the server and overwrites the file session.
+     * If there is an error loading the file, the file session is still updated, but the loadingError flag is set to true.
+     * Loading errors must also be handled by the caller with a catch block.
+     * @param fileName Name of the file to be reloaded
+     */
+    async forceReloadFileContents(fileName: string) {
+        return this.fetchFileContent(fileName)
+            .then((code) => {
+                this.fileSession[fileName] = { code, cursor: { column: 0, row: 0 }, loadingError: false };
+            })
+            .catch((error) => {
+                this.fileSession[fileName] = { code: '', cursor: { column: 0, row: 0 }, loadingError: true };
+                throw error; // rethrow error so that the caller can handle it (e.g. show error message to the user)
+            });
+    }
+
+    /**
      * Ensures that the file with the specified filename exists in the file session.
      * If it doesn't, it is fetched from the server and added to the file session.
      * If there is an error loading the file, the file session is still updated, but the loadingError flag is set to true.
      * @param fileName Name of the file to be loaded
      */
-    async ensureFileIsLoaded(fileName: string): Promise<void> {
-        if (!this.fileSession[fileName]) {
-            await firstValueFrom(this.repositoryFileService.getFile(fileName))
-                .then((fileObj) => {
-                    this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 }, loadingError: false };
-                })
-                .catch((error) => {
-                    this.fileSession[fileName] = { code: '', cursor: { column: 0, row: 0 }, loadingError: true };
-                    throw error; // rethrow error so that the caller can handle it (e.g. show error message to the user)
-                });
-        }
-    }
-
-    /**
-     * Fetches the requested file by filename and opens a new editor session for it (if not yet done)
-     * @param fileName Name of the file to be opened in the editor
-     */
-    async loadFile(fileName: string) {
+    async ensureLoadedThenInitEditorIfSelected(fileName: string): Promise<void> {
         this.isLoading = true;
-        return this.ensureFileIsLoaded(fileName)
-            .then(() => {
-                this.initEditorIfFileSelected(fileName);
-            })
-            .catch((error) => {
-                this.fileSession[fileName] = { code: '', cursor: { column: 0, row: 0 }, loadingError: true };
+        // If the file is not yet loaded or loading failed, fetch it from the server
+        // If the file is already loaded, we don't need to load it again
+        if (!this.fileSession[fileName] || this.fileSession[fileName].loadingError) {
+            await this.forceReloadFileContents(fileName).catch((error) => {
                 if (error.message === ConnectionError.message) {
                     this.onError.emit('loadingFailed' + error.message);
                 } else {
                     this.onError.emit('loadingFailed');
                 }
-                this.initEditorIfFileSelected(fileName);
             });
-    }
+        }
 
-    async initEditorIfFileSelected(fileName: string) {
-        this.isLoading = false;
         // Only initialize the editor if the selected file has not changed in between
         // - prevents console errors (see https://github.com/ls1intum/Artemis/pull/603)
         if (this.selectedFile === fileName) {
             await this.initEditor();
         }
+        this.isLoading = false;
+    }
+
+    async forceReloadAll(fileNames: string[]) {
+        this.isLoading = true;
+        let errorThrown = false;
+        await Promise.all(
+            fileNames.map(async (fileName) => {
+                try {
+                    await this.forceReloadFileContents(fileName);
+                } catch (error) {
+                    // We do not want to spam the user with errors if multiple files fail to load
+                    // Therefore we only emit the first error (or first few, accounting for async)
+                    if (!errorThrown) {
+                        if (error.message === ConnectionError.message) {
+                            this.onError.emit('loadingFailed' + error.message);
+                        } else {
+                            this.onError.emit('loadingFailed');
+                        }
+                        errorThrown = true;
+                    }
+                }
+                if (this.selectedFile === fileName) {
+                    await this.initEditor();
+                }
+            }),
+        );
+        this.isLoading = false;
     }
 
     /**
@@ -333,20 +364,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
                 this.onFileContentChange.emit({ file: this.selectedFile, fileContent: code });
             }
         }
-    }
-
-    public updateFileText(file: string, code: string) {
-        if (file && this.fileSession[file]) {
-            if (this.fileSession[file].code !== code) {
-                this.fileSession[file].code = code;
-                this.onFileContentChange.emit({ file: file, fileContent: code });
-            }
-        }
-    }
-
-    public async getFileContent(file: string): Promise<string> {
-        await this.ensureFileIsLoaded(file);
-        return this.fileSession[file].code;
     }
 
     ngOnDestroy() {
