@@ -13,6 +13,9 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 
+/**
+ * A class containing a shared logic for creating an HTTP response about plagiarism checks results
+ */
 public class PlagiarismResultResponseBuilder {
 
     private static final String CONTINUOUS_PLAGIARISM_CONTROL_CREATED_BY_VALUE = "CPC";
@@ -20,6 +23,14 @@ public class PlagiarismResultResponseBuilder {
     private PlagiarismResultResponseBuilder() {
     }
 
+    /**
+     * Build an HTTP response about the given plagiarism checks results.
+     * This method calculates statistics about the result and returns a response containing both - the result and its statistics.
+     *
+     * @param plagiarismResult the plagiarism checks result to build the response for
+     * @return an HTTP response about the given plagiarism checks results
+     * @param <E> type of the plagiarism checks result
+     */
     public static <E extends PlagiarismResult<? extends PlagiarismSubmissionElement>> ResponseEntity<PlagiarismResultDTO<E>> buildPlagiarismResultResponse(E plagiarismResult) {
         if (plagiarismResult == null) {
             return ResponseEntity.ok(null);
