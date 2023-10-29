@@ -6,21 +6,20 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { LearningPathContainerComponent } from 'app/course/learning-paths/participate/learning-path-container.component';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { NgxLearningPathDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
+import { NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { LearningPathGraphSidebarComponent } from 'app/course/learning-paths/participate/learning-path-graph-sidebar.component';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { LearningPathLectureUnitViewComponent } from 'app/course/learning-paths/participate/lecture-unit/learning-path-lecture-unit-view.component';
 import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
-import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
+import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry, StorageEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
+import { LearningPathComponent } from 'app/course/learning-paths/learning-path-graph/learning-path.component';
 
 describe('LearningPathContainerComponent', () => {
     let fixture: ComponentFixture<LearningPathContainerComponent>;
@@ -30,26 +29,23 @@ describe('LearningPathContainerComponent', () => {
     const learningPathId = 1337;
     let lectureService: LectureService;
     let lecture: Lecture;
+    const lectureId = 2;
     let lectureUnit: LectureUnit;
+    const lectureUnitId = 3;
     let findWithDetailsStub: jest.SpyInstance;
     let exerciseService: ExerciseService;
     let exercise: Exercise;
+    const exerciseId = 4;
     let getExerciseDetailsStub: jest.SpyInstance;
     let historyService: LearningPathStorageService;
+    let hasNextRecommendationStub: jest.SpyInstance;
     let getNextRecommendationStub: jest.SpyInstance;
     let hasPrevRecommendationStub: jest.SpyInstance;
     let getPrevRecommendationStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                MockModule(RouterModule),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
-                LearningPathGraphSidebarComponent,
-                LearningPathGraphComponent,
-            ],
+            imports: [ArtemisTestModule, MockModule(RouterModule), MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip), LearningPathComponent],
             declarations: [LearningPathContainerComponent],
             providers: [
                 {
@@ -74,19 +70,20 @@ describe('LearningPathContainerComponent', () => {
                 getLearningPathIdStub = jest.spyOn(learningPathService, 'getLearningPathId').mockReturnValue(of(new HttpResponse({ body: learningPathId })));
 
                 lectureUnit = new AttachmentUnit();
-                lectureUnit.id = 3;
+                lectureUnit.id = lectureUnitId;
                 lecture = new Lecture();
-                lecture.id = 2;
+                lecture.id = lectureId;
                 lecture.lectureUnits = [lectureUnit];
                 lectureService = TestBed.inject(LectureService);
                 findWithDetailsStub = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(of(new HttpResponse({ body: lecture })));
 
                 exercise = new TextExercise(undefined, undefined);
-                exercise.id = 4;
+                exercise.id = exerciseId;
                 exerciseService = TestBed.inject(ExerciseService);
                 getExerciseDetailsStub = jest.spyOn(exerciseService, 'getExerciseDetails').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
                 historyService = TestBed.inject(LearningPathStorageService);
+                hasNextRecommendationStub = jest.spyOn(historyService, 'hasNextRecommendation');
                 getNextRecommendationStub = jest.spyOn(historyService, 'getNextRecommendation');
                 hasPrevRecommendationStub = jest.spyOn(historyService, 'hasPrevRecommendation');
                 getPrevRecommendationStub = jest.spyOn(historyService, 'getPrevRecommendation');
@@ -105,16 +102,6 @@ describe('LearningPathContainerComponent', () => {
         expect(getLearningPathIdStub).toHaveBeenCalledWith(1);
     });
 
-    it('should retrieve next recommended entry', () => {
-        comp.learningObjectId = lectureUnit.id!;
-        comp.lectureUnit = lectureUnit;
-        comp.lectureId = lecture.id;
-        comp.lecture = lecture;
-        fixture.detectChanges();
-        comp.onNextTask();
-        expect(getNextRecommendationStub).toHaveBeenCalledExactlyOnceWith(comp.learningPathId, new LectureUnitEntry(lecture.id!, lectureUnit.id!));
-    });
-
     it('should not load previous task if no task selected', () => {
         comp.onPrevTask();
         expect(getPrevRecommendationStub).not.toHaveBeenCalled();
@@ -122,24 +109,33 @@ describe('LearningPathContainerComponent', () => {
         expect(getExerciseDetailsStub).not.toHaveBeenCalled();
     });
 
-    it('should load previous lecture unit', () => {
-        hasPrevRecommendationStub.mockReturnValue(true);
-        getPrevRecommendationStub.mockReturnValue(new LectureUnitEntry(lecture.id!, lectureUnit.id!));
-        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
+    it.each([
+        [new LectureUnitEntry(lectureId, lectureUnitId), false],
+        [new LectureUnitEntry(lectureId, lectureUnitId), true],
+        [new ExerciseEntry(exerciseId), false],
+        [new ExerciseEntry(exerciseId), true],
+    ])('should load entry', (entry: StorageEntry, next: boolean) => {
+        if (next) {
+            hasNextRecommendationStub.mockReturnValue(true);
+            getNextRecommendationStub.mockReturnValue(entry);
+        } else {
+            hasPrevRecommendationStub.mockReturnValue(true);
+            getPrevRecommendationStub.mockReturnValue(entry);
+        }
         fixture.detectChanges();
-        comp.onPrevTask();
-        expect(findWithDetailsStub).toHaveBeenCalledExactlyOnceWith(lecture.id);
-        expect(getExerciseDetailsStub).not.toHaveBeenCalled();
-    });
+        if (next) {
+            comp.onNextTask();
+        } else {
+            comp.onPrevTask();
+        }
 
-    it('should load previous exercise', () => {
-        hasPrevRecommendationStub.mockReturnValue(true);
-        getPrevRecommendationStub.mockReturnValue(new ExerciseEntry(exercise.id!));
-        fixture.detectChanges();
-        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
-        comp.onPrevTask();
-        expect(findWithDetailsStub).not.toHaveBeenCalled();
-        expect(getExerciseDetailsStub).toHaveBeenCalledExactlyOnceWith(exercise.id);
+        if (entry instanceof LectureUnitEntry) {
+            expect(findWithDetailsStub).toHaveBeenCalledExactlyOnceWith(lecture.id);
+            expect(getExerciseDetailsStub).not.toHaveBeenCalled();
+        } else {
+            expect(findWithDetailsStub).not.toHaveBeenCalled();
+            expect(getExerciseDetailsStub).toHaveBeenCalledExactlyOnceWith(exercise.id);
+        }
     });
 
     it('should set properties of lecture unit view on activate', () => {
@@ -166,7 +162,6 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should handle lecture unit node click', () => {
-        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
         const node = { id: 'some-id', type: NodeType.LECTURE_UNIT, linkedResource: 2, linkedResourceParent: 3 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
         expect(comp.learningObjectId).toBe(node.linkedResource);
@@ -175,7 +170,6 @@ describe('LearningPathContainerComponent', () => {
     });
 
     it('should handle exercise node click', () => {
-        comp.graphSidebar.learningPathGraphComponent.ngxPath = { nodes: [], edges: [] } as NgxLearningPathDTO;
         const node = { id: 'some-id', type: NodeType.EXERCISE, linkedResource: 2 } as NgxLearningPathNode;
         comp.onNodeClicked(node);
         expect(comp.learningObjectId).toBe(node.linkedResource);
