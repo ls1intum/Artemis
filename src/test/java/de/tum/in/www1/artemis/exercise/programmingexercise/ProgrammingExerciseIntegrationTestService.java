@@ -75,6 +75,7 @@ import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
 /**
@@ -1763,7 +1764,7 @@ class ProgrammingExerciseIntegrationTestService {
         prepareTwoRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = ROOT + CHECK_PLAGIARISM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
-        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, plagiarismUtilService.getDefaultPlagiarismOptions());
+        var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
         assertPlagiarismResult(programmingExercise, result, 100.0);
     }
 
@@ -1790,14 +1791,21 @@ class ProgrammingExerciseIntegrationTestService {
         }
     }
 
-    private void assertPlagiarismResult(ProgrammingExercise programmingExercise, TextPlagiarismResult result, double expectedSimilarity) {
-        assertThat(result.getComparisons()).hasSize(1);
-        assertThat(result.getExercise().getId()).isEqualTo(programmingExercise.getId());
+    private void assertPlagiarismResult(ProgrammingExercise programmingExercise, PlagiarismResultDTO<TextPlagiarismResult> result, double expectedSimilarity) {
+        // verify plagiarism result
+        assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
+        assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(programmingExercise.getId());
 
-        PlagiarismComparison<TextSubmissionElement> comparison = result.getComparisons().iterator().next();
+        PlagiarismComparison<TextSubmissionElement> comparison = result.plagiarismResult().getComparisons().iterator().next();
         assertThat(comparison.getSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
         assertThat(comparison.getMatches()).hasSize(1);
+
+        // verify plagiarism result stats
+        var stats = result.plagiarismResultStats();
+        assertThat(stats.numberOfDetectedSubmissions()).isEqualTo(2);
+        assertThat(stats.averageSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
+        assertThat(stats.maximalSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
     }
 
     private void prepareTwoRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
@@ -1866,8 +1874,8 @@ class ProgrammingExerciseIntegrationTestService {
 
         TextPlagiarismResult expectedResult = textExerciseUtilService.createTextPlagiarismResultForExercise(programmingExercise);
 
-        TextPlagiarismResult result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, TextPlagiarismResult.class);
-        assertThat(result.getId()).isEqualTo(expectedResult.getId());
+        var result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, PlagiarismResultDTO.class);
+        assertThat(result.plagiarismResult().getId()).isEqualTo(expectedResult.getId());
     }
 
     void testGetPlagiarismResultWithoutResult() throws Exception {

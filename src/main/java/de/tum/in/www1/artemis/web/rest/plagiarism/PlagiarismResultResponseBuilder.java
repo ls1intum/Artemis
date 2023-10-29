@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.plagiarism;
 
+import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
 import org.springframework.http.ResponseEntity;
@@ -22,10 +23,14 @@ public class PlagiarismResultResponseBuilder {
 
         int numberOfDetectedSubmissions = (int) plagiarismResult.getComparisons().stream()
                 .flatMap(comparison -> Stream.of(comparison.getSubmissionA().getId(), comparison.getSubmissionB().getId())).distinct().count();
-        double averageSimilarity = plagiarismResult.getComparisons().stream().mapToDouble(PlagiarismComparison::getSimilarity).average().orElse(0.0);
-        double maximalSimilarity = plagiarismResult.getComparisons().stream().mapToDouble(PlagiarismComparison::getSimilarity).max().orElse(0.0);
+        double averageSimilarity = getSimilarities(plagiarismResult).average().orElse(0.0);
+        double maximalSimilarity = getSimilarities(plagiarismResult).max().orElse(0.0);
         var stats = new TextExerciseResource.PlagiarismResultStats(numberOfDetectedSubmissions, averageSimilarity, maximalSimilarity);
 
         return ResponseEntity.ok(new PlagiarismResultDTO<>(plagiarismResult, stats));
+    }
+
+    private static DoubleStream getSimilarities(PlagiarismResult<?> plagiarismResult) {
+        return plagiarismResult.getComparisons().stream().mapToDouble(PlagiarismComparison::getSimilarity);
     }
 }
