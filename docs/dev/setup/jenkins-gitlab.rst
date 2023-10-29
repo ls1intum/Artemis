@@ -128,12 +128,12 @@ both are set up correctly and follow these steps:
 4. Create a user in Gitlab (``http://your-gitlab-domain/admin/users/new``) and make sure that the username and
 email are the same as the user from the database:
 
-.. figure:: setup/jenkins-gitlab/gitlab_admin_user.png
+.. figure:: jenkins-gitlab/gitlab_admin_user.png
 
 5. Edit the new admin user (``http://your-gitlab-domain/admin/users/artemis_admin/edit``) to set the password to the
 same value as in the database:
 
-.. figure:: setup/jenkins-gitlab/gitlab_admin_user_password.png
+.. figure:: jenkins-gitlab/gitlab_admin_user_password.png
 
 Starting the Artemis server should now succeed.
 
@@ -153,7 +153,7 @@ tokens instead of the predefined ones.
 
 1. Start the GitLab container defined in `docker/gitlab-jenkins-mysql.yml` by running
 
-   ::
+   .. code:: bash
 
         GITLAB_ROOT_PASSWORD=QLzq3QvpD1Zbq7A1VWvw docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d gitlab
 
@@ -191,7 +191,7 @@ tokens instead of the predefined ones.
 4. You now need to create an admin access token. You can do that using the following command (which takes a while
    to execute):
 
-   ::
+   .. code:: bash
 
         docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api', 'read_api', 'read_user', 'read_repository', 'write_repository', 'sudo'], name: 'Artemis Admin Token', expires_at: 365.days.from_now); token.set_token('artemis-gitlab-token'); token.save!"
 
@@ -203,7 +203,7 @@ tokens instead of the predefined ones.
 
 5. Adjust the GitLab setup by running, this will configure GitLab's network setting to allow local requests:
 
-   ::
+   .. code:: bash
 
         docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab /bin/sh -c "sh /gitlab-local-setup.sh"
 
@@ -235,7 +235,7 @@ If you want to use this custom image, you have to build the image and replace al
 
 1. Pull the latest GitLab Docker image (only if you don't use your custom gitlab image)
 
-   ::
+   .. code:: bash
 
        docker pull gitlab/gitlab-ce:latest
 
@@ -250,7 +250,7 @@ Start GitLab
 
    Make sure to remove the comments from the command before running it.
 
-   ::
+   .. code:: bash
 
        docker run -itd --name gitlab \
            --hostname your.gitlab.domain.com \   # Specify the hostname
@@ -287,14 +287,14 @@ Start GitLab
 6. Configure GitLab to automatically generate certificates using
    LetsEncrypt. Edit the GitLab configuration
 
-   ::
+   .. code:: bash
 
        docker exec -it gitlab /bin/bash
        nano /etc/gitlab/gitlab.rb
 
    And add the following part
 
-   ::
+   .. code:: ruby
 
        letsencrypt['enable'] = true                          # GitLab 10.5 and 10.6 require this option
        external_url "https://your.gitlab.domain.com"         # Must use https protocol
@@ -305,21 +305,21 @@ Start GitLab
 
 7. Reconfigure GitLab to generate the certificate.
 
-   ::
+   .. code:: bash
 
        # Save your changes and finally run
        gitlab-ctl reconfigure
 
    If this command fails, try using
 
-   ::
+   .. code:: bash
 
        gitlab-ctl renew-le-certs
 
 8. Login to GitLab using the Artemis admin account and go to the profile
    settings (upper right corner → *Preferences*)
 
-   .. figure:: setup/jenkins-gitlab/gitlab_preferences_button.png
+   .. figure:: jenkins-gitlab/gitlab_preferences_button.png
       :align: center
 
 GitLab Access Token
@@ -327,12 +327,12 @@ GitLab Access Token
 
 9.  Go to *Access Tokens*
 
-   .. figure:: setup/jenkins-gitlab/gitlab_access_tokens_button.png
+   .. figure:: jenkins-gitlab/gitlab_access_tokens_button.png
       :align: center
 
 10. Create a new token named “Artemis” and give it rights ``api``, ``read_api``, ``read_user``, ``read_repository``, ``write_repository``, and ``sudo``.
 
-   .. figure:: setup/jenkins-gitlab/artemis_gitlab_access_token.png
+   .. figure:: jenkins-gitlab/artemis_gitlab_access_token.png
       :align: center
 
 11. Copy the generated token and insert it into the Artemis
@@ -356,19 +356,19 @@ GitLab Access Token
 
 13. Adjust the monitoring-endpoint whitelist. Run the following command
 
-    ::
+    .. code:: bash
 
            docker exec -it gitlab /bin/bash
 
     Then edit the GitLab configuration
 
-    ::
+    .. code:: bash
 
            nano /etc/gitlab/gitlab.rb
 
     Add the following lines
 
-    ::
+    .. code:: ruby
 
        gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
        gitlab_rails['gitlab_shell_ssh_port'] = 2222
@@ -385,13 +385,13 @@ GitLab Access Token
     we decided to disable Prometheus within GitLab.
     If you also want to disable prometheus, edit the configuration again using
 
-    ::
+    .. code:: bash
 
         nano /etc/gitlab/gitlab.rb
 
     and add the following line
 
-    ::
+    .. code:: ruby
 
         prometheus_monitoring['enable'] = false
 
@@ -429,7 +429,7 @@ GitLab Access Token
 
 16. Reconfigure GitLab
 
-    ::
+    .. code:: bash
 
         gitlab-ctl reconfigure
 
@@ -439,7 +439,7 @@ Upgrade GitLab
 You can upgrade GitLab by downloading the latest Docker image and
 starting a new container with the old volumes:
 
-    ::
+    .. code:: bash
 
         docker stop gitlab
         docker rename gitlab gitlab_old
@@ -472,7 +472,7 @@ generate random access tokens and push tokens.
 1. Create a new access token in GitLab named ``Jenkins`` and give it **api** and **read_repository** rights. You can
 do either do it manually or using the following command:
 
-    ::
+    .. code:: bash
 
         docker compose -f docker/<Jenkins setup to be launched>.yml exec gitlab gitlab-rails runner "token = User.find_by_username('root').personal_access_tokens.create(scopes: ['api', 'read_repository'], name: 'Jenkins', expires_at: 365.days.from_now); token.set_token('jenkins-gitlab-token'); token.save!"
 
@@ -480,7 +480,7 @@ do either do it manually or using the following command:
 
 2. You can now first build and deploy Jenkins, then you can also start the other services which weren't started yet:
 
-    ::
+    .. code:: bash
 
        JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d jenkins
        docker compose -f docker/<Jenkins setup to be launched>.yml up -d
@@ -542,7 +542,7 @@ Manual Jenkins Server Setup
 
    Run the following command to get the latest jenkins LTS docker image.
 
-   ::
+   .. code:: bash
 
        docker pull jenkins/jenkins:lts
 
@@ -573,7 +573,7 @@ Manual Jenkins Server Setup
    plugin that will be uploaded later. **Skip this step if you have your
    own NGINX instance.**
 
-   ::
+   .. code:: bash
 
        echo "client_max_body_size 16m;" > client_max_body_size.conf
 
@@ -625,7 +625,7 @@ Manual Jenkins Server Setup
    the VIRTUAL_HOST and VIRTUAL_PORT environment variables). **Skip this
    step if you have your own NGINX instance.**
 
-   ::
+   .. code:: bash
 
        docker run -itd --name nginx_proxy \
            -p 80:80 -p 443:443 \
@@ -643,7 +643,7 @@ Manual Jenkins Server Setup
    sure to change the email-address). **Skip this step if you have your
    own NGINX instance.**
 
-   ::
+   .. code:: bash
 
        docker run --detach \
            --name nginx_proxy-letsencrypt \
@@ -658,7 +658,7 @@ Start Jenkins
 8.  Run Jenkins by executing the following command (change the hostname
     and choose which port alternative you need)
 
-    ::
+    .. code:: bash
 
         docker run -itd --name jenkins \
             --restart always \
@@ -681,7 +681,7 @@ Start Jenkins
     admin user account (install all suggested plugins). You can get the
     initial admin password using the following command.
 
-    ::
+    .. code:: bash
 
        # Jenkins highlights the password in the logs, you can't miss it
        docker logs -f jenkins
@@ -758,7 +758,7 @@ Timestamper configuration, use the following value for both formats:
 
        '<b>'yyyy-MM-dd'T'HH:mm:ssX'</b> '
 
-.. figure:: setup/jenkins-gitlab/timestamper_config.png
+.. figure:: jenkins-gitlab/timestamper_config.png
    :align: center
 
 Server Notification Plugin
@@ -775,7 +775,7 @@ You can download the current release of the plugin
 Jenkins → System Configuration → Plugins*) and install the downloaded file under the
 *Advanced settings* tab under *Deploy Plugin*
 
-.. figure:: setup/jenkins-gitlab/jenkins_custom_plugin.png
+.. figure:: jenkins-gitlab/jenkins_custom_plugin.png
    :align: center
 
 Jenkins Credentials
@@ -792,7 +792,7 @@ GitLab API Token
    instructions on how to create such a token follow `Gitlab Access
    Token <#gitlab-access-token>`__.
 
-   .. figure:: setup/jenkins-gitlab/gitlab_jenkins_token_rights.png
+   .. figure:: jenkins-gitlab/gitlab_jenkins_token_rights.png
       :align: center
 
 2. Copy the generated token and create new Jenkins credentials:
@@ -811,7 +811,7 @@ GitLab API Token
    you can try `http://host.docker.internal:8081` for Windows or `http://docker.for.mac.host.internal:8081` for Mac
    if GitLab is reachable over port 8081.
 
-   .. figure:: setup/jenkins-gitlab/jenkins_gitlab_configuration.png
+   .. figure:: jenkins-gitlab/jenkins_gitlab_configuration.png
       :align: center
 
 Server Notification Token
@@ -894,7 +894,7 @@ the following steps:
 
 7.  Apply these change to the plan (i.e. click on *Apply*)
 
-   .. figure:: setup/jenkins-gitlab/jenkins_test_project.png
+   .. figure:: jenkins-gitlab/jenkins_test_project.png
       :align: center
 
 8.  Perform a *GET* request to the following URL (e.g. with Postman)
@@ -908,7 +908,7 @@ the following steps:
     If you have xmllint installed, you can use this command, which will output the ``secret-push-token`` from
     steps 9 and 10 (you may have to adjust the username and password):
 
-    ::
+    .. code:: bash
 
         curl -u artemis_admin:artemis_admin http://localhost:8082/job/TestProject/config.xml | xmllint --nowarning --xpath "//project/triggers/com.dabsquared.gitlabjenkins.GitLabPushTrigger/secretToken/text()" - | sed 's/^.\(.*\).$/\1/'
 
@@ -919,7 +919,7 @@ the following steps:
 
         <secretToken>{$some-long-encrypted-value}</secretToken>
 
-   .. figure:: setup/jenkins-gitlab/jenkins_project_config_xml.png
+   .. figure:: jenkins-gitlab/jenkins_project_config_xml.png
       :align: center
 
       Job configuration XML
@@ -966,13 +966,13 @@ and the corresponding Docker image can be found on
 
 2. If you're using ``docker compose``, you can simply use the following command and skip the next steps.
 
-   ::
+   .. code:: bash
 
         docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d
 
 3. Build the new Docker image:
 
-   ::
+   .. code:: bash
 
         docker build --no-cache -t jenkins-artemis .
 
@@ -980,19 +980,19 @@ and the corresponding Docker image can be found on
 
 4. Stop the current Jenkins container (change jenkins to the name of your container):
 
-   ::
+   .. code:: bash
 
         docker stop jenkins
 
 5. Rename the container to ``jenkins_old`` so that it can be used as a backup:
 
-   ::
+   .. code:: bash
 
         docker rename jenkins jenkins_old
 
 6. Run the new Jenkins instance:
 
-   ::
+   .. code:: bash
 
         docker run -itd --name jenkins --restart always \
          -v jenkins_data:/var/jenkins_home \
@@ -1001,7 +1001,7 @@ and the corresponding Docker image can be found on
 
 7. You can remove the backup container if it's no longer needed:
 
-   ::
+   .. code:: bash
 
         docker rm jenkins_old
 
@@ -1022,7 +1022,7 @@ Go to `Manage Jenkins` → `Nodes` → `Built-In Node` → `Configure`
 
 Configure your master node like this  (adjust the number of executors, if needed). Make sure to add the docker label.
 
-   .. figure:: setup/jenkins-gitlab/jenkins_local_node.png
+   .. figure:: jenkins-gitlab/jenkins_local_node.png
       :align: center
 
       Jenkins local node
@@ -1043,10 +1043,12 @@ Agent setup:
 
 2. Copy the public key content (e.g. in ~/.ssh/id_rsa.pub)
 
-3. Run::
+3. Run:
 
-    docker run -d --name jenkins_agent -v /var/run/docker.sock:/var/run/docker.sock \
-    jenkins/ssh-agent:latest "<copied_public_key>"
+    .. code:: bash
+
+        docker run -d --name jenkins_agent -v /var/run/docker.sock:/var/run/docker.sock \
+        jenkins/ssh-agent:latest "<copied_public_key>"
 
 4. Get the GID of the 'docker' group with ``cat /etc/groups`` and remember it for later
 
@@ -1093,7 +1095,7 @@ Add agent in Jenkins:
 
     - Passphrase: <the previously entered passphrase> (you can leave it blank if none has been specified)
 
-   .. figure:: setup/jenkins-gitlab/alternative_jenkins_node_credentials.png
+   .. figure:: jenkins-gitlab/alternative_jenkins_node_credentials.png
       :align: center
 
 3. Go to Manage Jenkins → Nodes → New Node
@@ -1102,7 +1104,7 @@ Add agent in Jenkins:
 
     - Check 'Permanent Agent'
 
-   .. figure:: setup/jenkins-gitlab/alternative_jenkins_node_setup.png
+   .. figure:: jenkins-gitlab/alternative_jenkins_node_setup.png
       :align: center
 
 4. Node settings:
@@ -1125,7 +1127,7 @@ Add agent in Jenkins:
 
     - Availability: Keep this agent online as much as possible
 
-   .. figure:: setup/jenkins-gitlab/alternative_jenkins_node.png
+   .. figure:: jenkins-gitlab/alternative_jenkins_node.png
       :align: center
 
 5. Save the new node
@@ -1159,7 +1161,7 @@ Prerequisites:
 
 7. Add a new secret in Jenkins, enter private key you just generated and add the passphrase, if set:
 
-   .. figure:: setup/jenkins-gitlab/jenkins_ssh_credentials.png
+   .. figure:: jenkins-gitlab/jenkins_ssh_credentials.png
       :align: center
 
       Jenkins SSH Credentials
@@ -1182,7 +1184,7 @@ Prerequisites:
    Save it.
 
 
-   .. figure:: setup/jenkins-gitlab/jenkins_node.png
+   .. figure:: jenkins-gitlab/jenkins_node.png
       :align: center
 
       Add a Jenkins node
@@ -1194,7 +1196,7 @@ Prerequisites:
     This ensures that the docker tasks are not executed on the master agent but on the remote agent.
 
 
-   .. figure:: setup/jenkins-gitlab/jenkins_master_node.png
+   .. figure:: jenkins-gitlab/jenkins_master_node.png
       :align: center
 
       Adjust Jenkins master node settings
@@ -1246,7 +1248,7 @@ This section explains the changes required in Jenkins in order to set up build p
 6. You are finished. If you want to fine-tune permissions assigned to teaching assistants and/or instructors,
    you can change them within the ``JenkinsJobPermission.java`` file.
 
-.. figure:: setup/jenkins-gitlab/jenkins_authorization_permissions.png
+.. figure:: jenkins-gitlab/jenkins_authorization_permissions.png
     :align: center
 
 
@@ -1254,105 +1256,4 @@ Caching
 ^^^^^^^
 
 You can configure caching for e.g. Maven repositories.
-See :ref:`programming-exercises` for more details.
-
-
-Separate NGINX Configurations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-There are some placeholders in the following configurations. Replace
-them with your setup specific values ### GitLab
-
-::
-
-   server {
-       listen 443 ssl http2;
-       server_name your.gitlab.domain;
-       ssl_session_cache shared:GitLabSSL:10m;
-       include /etc/nginx/common/common_ssl.conf;
-       add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
-       add_header X-Frame-Options DENY;
-       add_header Referrer-Policy same-origin;
-       client_max_body_size 10m;
-       client_body_buffer_size 1m;
-
-       location / {
-           proxy_pass              http://localhost:<your exposed GitLab HTTP port (default 80)>;
-           proxy_read_timeout      300;
-           proxy_connect_timeout   300;
-           proxy_http_version      1.1;
-           proxy_redirect          http://         https://;
-
-           proxy_set_header    Host                $http_host;
-           proxy_set_header    X-Real-IP           $remote_addr;
-           proxy_set_header    X-Forwarded-For     $proxy_add_x_forwarded_for;
-           proxy_set_header    X-Forwarded-Proto   $scheme;
-
-           gzip off;
-       }
-   }
-
-.. _jenkins-1:
-
-Jenkins
-"""""""
-
-::
-
-   server {
-       listen 443 ssl http2;
-       server_name your.jenkins.domain;
-       ssl_session_cache shared:JenkinsSSL:10m;
-       include /etc/nginx/common/common_ssl.conf;
-       add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
-       add_header X-Frame-Options DENY;
-       add_header Referrer-Policy same-origin;
-       client_max_body_size 10m;
-       client_body_buffer_size 1m;
-
-       location / {
-           proxy_pass              http://localhost:<your exposed Jenkins HTTP port (default 8081)>;
-           proxy_set_header        Host                $host:$server_port;
-           proxy_set_header        X-Real-IP           $remote_addr;
-           proxy_set_header        X-Forwarded-For     $proxy_add_x_forwarded_for;
-           proxy_set_header        X-Forwarded-Proto   $scheme;
-           proxy_redirect          http://             https://;
-
-           # Required for new HTTP-based CLI
-           proxy_http_version 1.1;
-           proxy_request_buffering off;
-           proxy_buffering off; # Required for HTTP-based CLI to work over SSL
-
-           # workaround for https://issues.jenkins-ci.org/browse/JENKINS-45651
-           add_header 'X-SSH-Endpoint' 'your.jenkins.domain.com:50022' always;
-       }
-
-       error_page 502 /502.html;
-       location /502.html {
-           root /usr/share/nginx/html;
-           internal;
-       }
-   }
-
-/etc/nginx/common/common_ssl.conf
-"""""""""""""""""""""""""""""""""
-
-If you haven’t done so, generate the DH param file:
-``sudo openssl dhparam -out /etc/nginx/dhparam.pem 4096``
-
-::
-
-   ssl_certificate     <path to your fullchain certificate>;
-   ssl_certificate_key <path to the private key of your certificate>;
-   ssl_protocols       TLSv1.2 TLSv1.3;
-   ssl_dhparam /etc/nginx/dhparam.pem;
-   ssl_prefer_server_ciphers   on;
-   ssl_ciphers ECDH+CHACHA20:EECDH+AESGCM:EDH+AESGCM:!AES128;
-   ssl_ecdh_curve secp384r1;
-   ssl_session_timeout  10m;
-   ssl_session_cache shared:SSL:10m;
-   ssl_session_tickets off;
-   ssl_stapling on;
-   ssl_stapling_verify on;
-   resolver <if you have any, specify them here> valid=300s;
-   resolver_timeout 5s;
+See :ref:`this section in the administration documentation <programming_exercises>` for more details.
