@@ -28,10 +28,10 @@ import de.tum.in.www1.artemis.web.rest.push_notification.PushNotificationUnregis
 class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
+    private PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
 
     @Autowired
     private UserUtilService userUtilService;

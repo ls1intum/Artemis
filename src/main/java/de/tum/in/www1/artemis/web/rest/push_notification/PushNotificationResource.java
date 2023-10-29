@@ -66,11 +66,11 @@ public class PushNotificationResource {
 
         String jwtWithoutSignature = token.substring(0, token.lastIndexOf('.') + 1);
 
-        Jws<Claims> headerClaimsJwt;
+        Jwt<Header, Claims> headerClaimsJwt;
 
         // This cannot throw an error as it must have been valid to even call this method
         try {
-            headerClaimsJwt = Jwts.parser().build().parseSignedClaims(jwtWithoutSignature);
+            headerClaimsJwt = Jwts.parser().build().parseUnsecuredClaims(jwtWithoutSignature);
         }
         catch (ExpiredJwtException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
