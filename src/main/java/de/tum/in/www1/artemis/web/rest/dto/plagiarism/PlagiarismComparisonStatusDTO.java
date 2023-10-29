@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.dto;
+package de.tum.in.www1.artemis.web.rest.dto.plagiarism;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

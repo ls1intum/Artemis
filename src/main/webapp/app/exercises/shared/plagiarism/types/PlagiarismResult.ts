@@ -1,6 +1,7 @@
 import { PlagiarismComparison } from './PlagiarismComparison';
 import { PlagiarismSubmissionElement } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmissionElement';
 import { Exercise } from 'app/entities/exercise.model';
+import dayjs from 'dayjs/esm';
 
 /**
  * Base result of any automatic plagiarism detection.
@@ -33,4 +34,9 @@ export abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> {
      * 0: [0% - 10%), 1: [10% - 20%), 2: [20% - 30%), ..., 9: [90% - 100%]
      */
     similarityDistribution: [number, 10];
+
+    /**
+     * Time when the plagiarism checks started.
+     */
+    createdDate: dayjs.Dayjs;
 }

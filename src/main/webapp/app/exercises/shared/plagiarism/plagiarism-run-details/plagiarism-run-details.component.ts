@@ -7,6 +7,7 @@ import { Range, round } from 'app/shared/util/utils';
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
+import { PlagiarismResultStats } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
 
 interface SimilarityRangeComparisonStateDTO {
     confirmed: number;
@@ -23,7 +24,11 @@ export class PlagiarismRunDetailsComponent extends PlagiarismAndTutorEffortDirec
     /**
      * Result of the automated plagiarism detection
      */
-    @Input() plagiarismResult: TextPlagiarismResult | ModelingPlagiarismResult;
+    @Input() plagiarismResult?: TextPlagiarismResult | ModelingPlagiarismResult;
+    /**
+     * Statistics for the automated plagiarism detection result
+     */
+    @Input() plagiarismResultStats?: PlagiarismResultStats;
     @Output() similaritySelected: EventEmitter<Range> = new EventEmitter<Range>();
 
     yScaleMax = 5;

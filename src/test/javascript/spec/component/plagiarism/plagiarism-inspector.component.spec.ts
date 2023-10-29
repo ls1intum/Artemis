@@ -30,6 +30,7 @@ import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/tex
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { HttpResponse } from '@angular/common/http';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -85,11 +86,19 @@ describe('Plagiarism Inspector Component', () => {
     const modelingPlagiarismResult = {
         comparisons,
     } as ModelingPlagiarismResult;
+    const modelingPlagiarismResultDTO = {
+        plagiarismResult: modelingPlagiarismResult,
+        plagiarismResultStats: {},
+    } as PlagiarismResultDTO<ModelingPlagiarismResult>;
 
     const textPlagiarismResult = {
         id: 123,
         comparisons,
     } as TextPlagiarismResult;
+    const textPlagiarismResultDTO = {
+        plagiarismResult: textPlagiarismResult,
+        plagiarismResultStats: {},
+    } as PlagiarismResultDTO<TextPlagiarismResult>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -127,7 +136,7 @@ describe('Plagiarism Inspector Component', () => {
         const websocketService = TestBed.inject(JhiWebsocketService);
         const websocketServiceSpy = jest.spyOn(websocketService, 'subscribe');
         jest.spyOn(websocketService, 'receive').mockReturnValue(of({ state: 'COMPLETED', messages: 'a message' } as PlagiarismCheckState));
-        jest.spyOn(modelingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(modelingPlagiarismResult));
+        jest.spyOn(modelingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(modelingPlagiarismResultDTO));
 
         comp.ngOnInit();
         tick();
@@ -166,7 +175,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results for modeling exercises', () => {
         comp.exercise = modelingExercise;
-        jest.spyOn(modelingExerciseService, 'checkPlagiarism').mockReturnValue(of(modelingPlagiarismResult));
+        jest.spyOn(modelingExerciseService, 'checkPlagiarism').mockReturnValue(of(modelingPlagiarismResultDTO));
 
         comp.checkPlagiarism();
 
@@ -175,7 +184,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results for programming exercises', () => {
         comp.exercise = programmingExercise;
-        jest.spyOn(programmingExerciseService, 'checkPlagiarism').mockReturnValue(of(textPlagiarismResult));
+        jest.spyOn(programmingExerciseService, 'checkPlagiarism').mockReturnValue(of(textPlagiarismResultDTO));
 
         comp.checkPlagiarism();
 
@@ -184,7 +193,7 @@ describe('Plagiarism Inspector Component', () => {
 
     it('should fetch the plagiarism detection results for text exercises', () => {
         comp.exercise = textExercise;
-        jest.spyOn(textExerciseService, 'checkPlagiarism').mockReturnValue(of(textPlagiarismResult));
+        jest.spyOn(textExerciseService, 'checkPlagiarism').mockReturnValue(of(textPlagiarismResultDTO));
 
         comp.checkPlagiarism();
 
@@ -223,7 +232,7 @@ describe('Plagiarism Inspector Component', () => {
     it('should get the latest plagiarism result for modeling exercise', fakeAsync(() => {
         comp.exercise = modelingExercise;
 
-        jest.spyOn(modelingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(modelingPlagiarismResult));
+        jest.spyOn(modelingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(modelingPlagiarismResultDTO));
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
@@ -232,13 +241,13 @@ describe('Plagiarism Inspector Component', () => {
         tick();
 
         expect(modelingExerciseService.getLatestPlagiarismResult).toHaveBeenCalledWith(modelingExercise.id);
-        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(modelingPlagiarismResult);
+        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(modelingPlagiarismResultDTO);
     }));
 
     it('should get the latest plagiarism result for programming exercise', fakeAsync(() => {
         comp.exercise = programmingExercise;
 
-        jest.spyOn(programmingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(textPlagiarismResult));
+        jest.spyOn(programmingExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(textPlagiarismResultDTO));
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
@@ -247,13 +256,13 @@ describe('Plagiarism Inspector Component', () => {
         tick();
 
         expect(programmingExerciseService.getLatestPlagiarismResult).toHaveBeenCalledWith(programmingExercise.id);
-        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(textPlagiarismResult);
+        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(textPlagiarismResultDTO);
     }));
 
     it('should get the latest plagiarism result for text exercise', fakeAsync(() => {
         comp.exercise = textExercise;
 
-        jest.spyOn(textExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(textPlagiarismResult));
+        jest.spyOn(textExerciseService, 'getLatestPlagiarismResult').mockReturnValue(of(textPlagiarismResultDTO));
         jest.spyOn(comp, 'handlePlagiarismResult');
 
         comp.getLatestPlagiarismResult();
@@ -262,7 +271,7 @@ describe('Plagiarism Inspector Component', () => {
         tick();
 
         expect(textExerciseService.getLatestPlagiarismResult).toHaveBeenCalledWith(textExercise.id);
-        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(textPlagiarismResult);
+        expect(comp.handlePlagiarismResult).toHaveBeenCalledWith(textPlagiarismResultDTO);
     }));
 
     it('should be programming exercise', () => {
