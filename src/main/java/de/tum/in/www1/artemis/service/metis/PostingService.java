@@ -128,11 +128,14 @@ public abstract class PostingService {
      */
     protected Stream<ConversationWebSocketRecipientSummary> getWebSocketRecipients(Conversation conversation) {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            return userRepository.findAllWebSocketRecipientsInCourseForConversation(conversation.getCourse().getId(), conversation.getId()).stream();
+            Course course = conversation.getCourse();
+            return userRepository.findAllWebSocketRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
+                    course.getEditorGroupName(), course.getInstructorGroupName()).stream();
         }
 
         return conversationParticipantRepository.findConversationParticipantWithUserGroupsByConversationId(conversation.getId()).stream()
-                .map(participant -> new ConversationWebSocketRecipientSummary(participant.getUser(), participant.getIsHidden() != null && participant.getIsHidden(),
+                .map(participant -> new ConversationWebSocketRecipientSummary(participant.getUser().getId(), participant.getUser().getLogin(),
+                        participant.getIsHidden() != null && participant.getIsHidden(),
                         authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), participant.getUser())));
     }
 
@@ -197,7 +200,10 @@ public abstract class PostingService {
         // prepares a unique set of userIds that authored the current list of postings
         Set<Long> userIds = new HashSet<>();
         postsInCourse.forEach(post -> {
-            userIds.add(post.getAuthor().getId());
+            // needs to handle posts created by SingleUserNotificationService.notifyUserAboutNewPlagiarismCaseBySystem
+            if (post.getAuthor() != null) {
+                userIds.add(post.getAuthor().getId());
+            }
             post.getAnswers().forEach(answerPost -> userIds.add(answerPost.getAuthor().getId()));
         });
 
@@ -206,14 +212,16 @@ public abstract class PostingService {
         Map<Long, User> authors = userRepository.findAllWithGroupsAndAuthoritiesByIdIn(userIds).stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
 
         // sets respective author role to display user authority icon on posting headers
-        postsInCourse.forEach(post -> {
-            post.setAuthor(authors.get(post.getAuthor().getId()));
-            setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
-            post.getAnswers().forEach(answerPost -> {
-                answerPost.setAuthor(authors.get(answerPost.getAuthor().getId()));
-                setAuthorRoleForPosting(answerPost, answerPost.getCoursePostingBelongsTo());
-            });
-        });
+        postsInCourse.stream()
+                // needs to handle posts created by SingleUserNotificationService.notifyUserAboutNewPlagiarismCaseBySystem
+                .filter(post -> post.getAuthor() != null).forEach(post -> {
+                    post.setAuthor(authors.get(post.getAuthor().getId()));
+                    setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
+                    post.getAnswers().forEach(answerPost -> {
+                        answerPost.setAuthor(authors.get(answerPost.getAuthor().getId()));
+                        setAuthorRoleForPosting(answerPost, answerPost.getCoursePostingBelongsTo());
+                    });
+                });
     }
 
     /**

@@ -156,7 +156,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             updateVariable(repositoryPath, VARIABLE_TEST_RESULTS_DIR_NAME, "target/surefire-reports");
         }
         catch (GitLabApiException e) {
-            log.error("Error creating variable for " + repositoryURL.toString() + " The variables may already have been created.", e);
+            log.error("Error creating variable for {} The variables may already have been created.", repositoryURL, e);
         }
     }
 

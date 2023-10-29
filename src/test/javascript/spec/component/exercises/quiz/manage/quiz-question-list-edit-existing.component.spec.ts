@@ -29,7 +29,7 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ChangeDetectorRef, EventEmitter } from '@angular/core';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { FileService } from 'app/shared/http/file.service';
 
 const createValidMCQuestion = () => {
     const question = new MultipleChoiceQuestion();
@@ -99,7 +99,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
     let courseService: CourseManagementService;
     let examService: ExamManagementService;
     let quizExerciseService: QuizExerciseService;
-    let fileUploaderService: FileUploaderService;
+    let fileService: FileService;
     let changeDetector: ChangeDetectorRef;
     let modalService: NgbModal;
 
@@ -115,7 +115,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
                 examService = fixture.debugElement.injector.get(ExamManagementService);
                 courseService = fixture.debugElement.injector.get(CourseManagementService);
                 quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-                fileUploaderService = TestBed.inject(FileUploaderService);
+                fileService = TestBed.inject(FileService);
                 changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
                 modalService = fixture.debugElement.injector.get(NgbModal);
                 component = fixture.componentInstance;
@@ -418,17 +418,33 @@ describe('QuizQuestionListEditExistingComponent', () => {
             question1.solutions = [solution];
             question1.correctMappings = [new ShortAnswerMapping(spot, solution)];
             question1.invalid = false;
+
+            const dragItemFileName1 = 'item1.jpg';
+            const dragItemFileName2 = 'item2.jpg';
+            const backgroundFileName = 'background.png';
+            const dragItemFile1 = new File([''], dragItemFileName1);
+            const dragItemFile2 = new File([''], dragItemFileName2);
+            const backgroundFile = new File([''], backgroundFileName);
             const question2 = new DragAndDropQuestion();
-            const dropLocation = new DropLocation();
-            question2.dropLocations = [dropLocation];
-            const dragItem = new DragItem();
-            question2.dragItems = [dragItem];
-            question2.correctMappings = [new DragAndDropMapping(dragItem, dropLocation)];
+            question2.backgroundFilePath = backgroundFileName;
+            const dropLocation1 = new DropLocation();
+            const dropLocation2 = new DropLocation();
+            question2.dropLocations = [dropLocation1, dropLocation2];
+            const dragItem1 = { id: 14, pictureFilePath: dragItemFileName1, invalid: false } as DragItem;
+            const dragItem2 = { id: 15, pictureFilePath: dragItemFileName2, invalid: false } as DragItem;
+            question2.dragItems = [dragItem1, dragItem2];
+            question2.correctMappings = [
+                { dragItem: { id: 14, pictureFilePath: dragItemFileName1 } as DragItem, dropLocation: dropLocation1, invalid: false },
+                { dragItem: { id: 15, pictureFilePath: dragItemFileName2 } as DragItem, dropLocation: dropLocation2, invalid: false },
+            ];
             const onQuestionsAddedSpy = jest.spyOn(component.onQuestionsAdded, 'emit').mockImplementation();
+            const onFilesAddedSpy = jest.spyOn(component.onFilesAdded, 'emit').mockImplementation();
+            const getFileMock = jest.spyOn(fileService, 'getFile').mockResolvedValueOnce(backgroundFile).mockResolvedValueOnce(dragItemFile1).mockResolvedValueOnce(dragItemFile2);
             const questions = [question0, question1, question2];
-            jest.spyOn(fileUploaderService, 'duplicateFile').mockReturnValue(Promise.resolve({ path: 'test' }));
             await component.addQuestions(questions);
             expect(onQuestionsAddedSpy).toHaveBeenCalledOnce();
+            expect(onFilesAddedSpy).toHaveBeenCalledOnce();
+            expect(getFileMock).toHaveBeenCalledTimes(3);
         });
     });
 });
