@@ -8,6 +8,8 @@ import java.util.Date;
 import javax.crypto.KeyGenerator;
 import javax.validation.Valid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,6 +31,8 @@ import io.jsonwebtoken.*;
 @RestController
 @RequestMapping("/api/push_notification")
 public class PushNotificationResource {
+
+    private final Logger log = LoggerFactory.getLogger(PushNotificationResource.class);
 
     private static final KeyGenerator aesKeyGenerator;
 
@@ -73,6 +77,11 @@ public class PushNotificationResource {
             headerClaimsJwt = Jwts.parser().build().parseUnsecuredClaims(jwtWithoutSignature);
         }
         catch (ExpiredJwtException e) {
+            log.error("Expired token {}", token, e);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        catch (Exception ex) {
+            log.error("Cannot parse token {}", token, ex);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
