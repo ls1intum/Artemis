@@ -47,11 +47,11 @@ Instructors have three options for creating a lecture.
     and they can click on |process-units-btn| to process the lecture PDF into multiple units.
 
 
-.. raw:: html
+    .. raw:: html
 
-    <iframe src="https://live.rbg.tum.de/w/artemisintro/39407?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
-        Watch this video on TUM-Live.
-    </iframe>
+        <iframe src="https://live.rbg.tum.de/w/artemisintro/39407?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+            Watch this video on TUM-Live.
+        </iframe>
 
        |create-lecture-automatic-unit-processing|
 
