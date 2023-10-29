@@ -16,15 +16,31 @@ describe('AthenaService', () => {
     let athenaService: AthenaService;
     let profileService: ProfileService;
     let httpTestingController: HttpTestingController;
+    const gradingCriteria = [
+        {
+            id: 1,
+            title: 'Test Criteria',
+            structuredGradingInstructions: [
+                {
+                    id: 4321,
+                    credits: 1.0,
+                    instructionDescription: 'Test Instruction',
+                    usageCount: 0,
+                },
+            ],
+        },
+    ];
     const textExercise = {
         id: 1,
         type: 'text',
         feedbackSuggestionsEnabled: true,
+        gradingCriteria,
     } as Exercise;
     const programmingExercise = {
         id: 2,
         type: 'programming',
         feedbackSuggestionsEnabled: true,
+        gradingCriteria,
     } as Exercise;
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -40,9 +56,9 @@ describe('AthenaService', () => {
     });
 
     it('should get feedback suggestions when athena is enabled', fakeAsync(() => {
-        const textFeedbackSuggestions = [new TextFeedbackSuggestion(0, 1, 2, 'Test Text', 'Test Text Description', 0.0, undefined, 5, 10)];
+        const textFeedbackSuggestions = [new TextFeedbackSuggestion(0, 1, 2, 'Test Text', 'Test Text Description', 0.0, 4321, 5, 10)];
         const programmingFeedbackSuggestions: ProgrammingFeedbackSuggestion[] = [
-            new ProgrammingFeedbackSuggestion(0, 2, 2, 'Test Programming', 'Test Programming Description', -1.0, undefined, 'src/Test.java', 4, undefined),
+            new ProgrammingFeedbackSuggestion(0, 2, 2, 'Test Programming', 'Test Programming Description', -1.0, 4321, 'src/Test.java', 4, undefined),
         ];
         let textResponse: TextBlockRef[] | null = null;
         let programmingResponse: Feedback[] | null = null;
