@@ -20,7 +20,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.web.rest.LtiResource;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 
 /**
  * LTI 1.3 Exercise Launch
@@ -35,7 +34,7 @@ import io.jsonwebtoken.security.Keys;
  */
 class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final SecretKey SIGNING_KEY = Keys.hmacShaKeyFor("a".repeat(256).getBytes());
+    private static final SecretKey SIGNING_KEY = Jwts.SIG.HS256.key().build();
 
     private static final String VALID_ID_TOKEN = Jwts.builder().expiration(Date.from(Instant.now().plusSeconds(60))).issuer("https://example.com").audience().add("client-id").and()
             .id("1234").signWith(SIGNING_KEY).compact();

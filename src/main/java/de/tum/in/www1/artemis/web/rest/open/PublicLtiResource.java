@@ -27,9 +27,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.SignatureException;
 
 /**
@@ -171,16 +169,17 @@ public class PublicLtiResource {
      * @return Whether the token is valid or not
      */
     private boolean isValidJwtIgnoreSignature(String token) {
-        String strippedToken = token.substring(0, token.lastIndexOf(".") + 1);
         try {
-            Jwts.parser().build().parse(strippedToken);
+            Jwts.parser().build().parse(token);
             return true;
         }
         catch (SignatureException e) {
+            // TODO: double check if this is actually correct and we can ignore SignatureException
             // We ignore the signature
             return true;
         }
         catch (ExpiredJwtException | MalformedJwtException | IllegalArgumentException e) {
+            log.info("LTI request: JWT token is invalid: {}", token, e);
             return false;
         }
     }
