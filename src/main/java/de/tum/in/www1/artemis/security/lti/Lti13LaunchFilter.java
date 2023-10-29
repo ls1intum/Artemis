@@ -19,10 +19,11 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.google.gson.JsonObject;
+
 import de.tum.in.www1.artemis.domain.lti.Claims;
 import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
-import net.minidev.json.JSONObject;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
 
@@ -102,8 +103,8 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLinkUri);
         lti13Service.buildLtiResponse(uriBuilder, response);
 
-        JSONObject json = new JSONObject();
-        json.put("targetLinkUri", uriBuilder.build().toUriString());
+        JsonObject json = new JsonObject();
+        json.addProperty("targetLinkUri", uriBuilder.build().toUriString());
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
