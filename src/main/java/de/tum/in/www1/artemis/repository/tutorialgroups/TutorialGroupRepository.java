@@ -47,8 +47,8 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     @Query("""
             SELECT DISTINCT tutorialGroup.language
             FROM TutorialGroup tutorialGroup
-            WHERE tutorialGroup.course.id = :#{#courseId} AND tutorialGroup.language IS NOT NULL""")
-    Set<String> findAllUniqueLanguageValuesInCourse(@Param("courseId") Long courseId);
+            WHERE tutorialGroup.course.instructorGroupName IN (:#{#userGroups}) AND tutorialGroup.language IS NOT NULL""")
+    Set<String> findAllUniqueLanguageValuesInRegisteredCourse(@Param("userGroups") Set<String> userGroups);
 
     @Query("""
             SELECT tutorialGroup
