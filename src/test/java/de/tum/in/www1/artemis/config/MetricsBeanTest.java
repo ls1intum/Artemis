@@ -356,6 +356,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         // Should now have one active user
         assertMetricEquals(1, "artemis.scheduled.exercises.due.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
 
+        /* These tests are currently disabled because the available ranges have been adjusted and only one range (15 minutes) is available
         // Only one quiz is released within the next 30 minutes
         assertMetricEquals(1, "artemis.scheduled.exercises.release.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "30");
         assertMetricEquals(3 * 1, "artemis.scheduled.exercises.release.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "30");
@@ -391,13 +392,14 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         // One text exercise is released within the next 30 minutes
         assertMetricEquals(1, "artemis.scheduled.exercises.release.count", "exerciseType", ExerciseType.TEXT.toString(), "range", "30");
+        */
     }
 
     @Test
     void testPrometheusMetricsExams() {
         var users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         var course = courseUtilService.createCourse();
-        var exam1 = examUtilService.addExam(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(20), ZonedDateTime.now().plusMinutes(40));
+        var exam1 = examUtilService.addExam(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(10), ZonedDateTime.now().plusMinutes(40));
         var registeredExamUser1 = new ExamUser();
         registeredExamUser1.setUser(users.get(0));
         registeredExamUser1.setExam(exam1);
@@ -415,7 +417,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
         courseRepository.save(course);
 
-        var exam2 = examUtilService.addExam(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(65), ZonedDateTime.now().plusMinutes(85));
+        var exam2 = examUtilService.addExam(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(12), ZonedDateTime.now().plusMinutes(85));
         var registeredExamUser3 = new ExamUser();
         registeredExamUser3.setUser(users.get(0));
         registeredExamUser3.setExam(exam2);
@@ -429,6 +431,11 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         metricsBean.recalculateMetrics();
 
+        // Two exams start within the next 11520 minutes, but have the same users (-> Users are only counted once)
+        assertMetricEquals(2, "artemis.scheduled.exams.release.count", "range", "15");
+        assertMetricEquals(1 * 2, "artemis.scheduled.exams.release.student_multiplier", "range", "15");
+
+        /* These tests are currently disabled because the available ranges have been adjusted and only one range (15 minutes) is available
         // One exam ends within the next 60 minutes
         assertMetricEquals(1, "artemis.scheduled.exams.due.count", "range", "60");
         assertMetricEquals(1 * 2, "artemis.scheduled.exams.due.student_multiplier", "range", "60"); // 2 students are registered for the exam
@@ -437,7 +444,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         assertMetricEquals(2, "artemis.scheduled.exams.due.count", "range", "120");
         assertMetricEquals(1 * 2, "artemis.scheduled.exams.due.student_multiplier", "range", "120"); // 2 + 1 students are registered for the exam, but they are duplicate users
 
-        // No exam starts within the next 15 minutes
+        // No exams start within the next 15 minutes
         assertMetricEquals(0, "artemis.scheduled.exams.release.count", "range", "15");
         assertMetricEquals(0, "artemis.scheduled.exams.release.student_multiplier", "range", "15");
 
@@ -448,6 +455,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         // Two exams start within the next 120 minutes, but have the same users (-> Users are only counted once)
         assertMetricEquals(2, "artemis.scheduled.exams.release.count", "range", "120");
         assertMetricEquals(1 * 2, "artemis.scheduled.exams.release.student_multiplier", "range", "120");
+        */
 
         var registeredExamUser4 = new ExamUser();
         registeredExamUser4.setUser(users.get(2));
@@ -459,12 +467,12 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
         metricsBean.recalculateMetrics();
 
-        // Two exams start within the next 120 minutes, but have the same users (-> Users are only counted once)
-        assertMetricEquals(2, "artemis.scheduled.exams.release.count", "range", "120");
-        assertMetricEquals(1 * 2 + 1 * 1, "artemis.scheduled.exams.release.student_multiplier", "range", "120");
+        // Two exams start within the next 15 minutes, but have the same users (-> Users are only counted once)
+        assertMetricEquals(2, "artemis.scheduled.exams.release.count", "range", "15");
+        assertMetricEquals(1 * 2 + 1 * 1, "artemis.scheduled.exams.release.student_multiplier", "range", "15");
 
         // Exam exercises are not returned in the exercises metrics
-        assertMetricEquals(0, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "60");
+        assertMetricEquals(0, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
     }
 
     @Test

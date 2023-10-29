@@ -62,7 +62,7 @@ public class MetricsBean {
      * Some metrics (e.g. the number of upcoming exercises) are calculated for multiple lookahead periods.
      * Each period/range is exposed as metrics with a according tag "range"
      */
-    private static final int[] MINUTE_RANGES_LOOKAHEAD = { 15, 30, 45, 60, 120 };
+    private static final int[] MINUTE_RANGES_LOOKAHEAD = { 15 };
 
     private final MeterRegistry meterRegistry;
 
@@ -209,9 +209,6 @@ public class MetricsBean {
     private void registerWebsocketMetrics() {
         // Publish the number of currently (via WebSockets) connected sessions
         Gauge.builder("artemis.instance.websocket.sessions", webSocketHandler, MetricsBean::extractWebsocketSessionCount).strongReference(true)
-                .description("Number of sessions connected to this Artemis instance").register(meterRegistry);
-        // TODO: DEPRECATED metric with same value - Should be removed after October 2023
-        Gauge.builder("artemis.instance.websocket.users", webSocketHandler, MetricsBean::extractWebsocketSessionCount).strongReference(true)
                 .description("Number of sessions connected to this Artemis instance").register(meterRegistry);
 
         // Publish the number of currently (via WebSockets) connected users
