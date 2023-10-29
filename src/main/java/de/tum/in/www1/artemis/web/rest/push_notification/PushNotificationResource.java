@@ -30,7 +30,7 @@ import io.jsonwebtoken.*;
 @RequestMapping("/api/push_notification")
 public class PushNotificationResource {
 
-    private static KeyGenerator aesKeyGenerator;
+    private static final KeyGenerator aesKeyGenerator;
 
     static {
         try {
@@ -42,9 +42,9 @@ public class PushNotificationResource {
         }
     }
 
-    private PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
+    private final PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     public PushNotificationResource(PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository, UserRepository userRepository) {
         this.pushNotificationDeviceConfigurationRepository = pushNotificationDeviceConfigurationRepository;
@@ -66,17 +66,17 @@ public class PushNotificationResource {
 
         String jwtWithoutSignature = token.substring(0, token.lastIndexOf('.') + 1);
 
-        Jwt<Header, Claims> headerClaimsJwt;
+        Jws<Claims> headerClaimsJwt;
 
         // This cannot throw an error as it must have been valid to even call this method
         try {
-            headerClaimsJwt = Jwts.parserBuilder().build().parseClaimsJwt(jwtWithoutSignature);
+            headerClaimsJwt = Jwts.parser().build().parseSignedClaims(jwtWithoutSignature);
         }
         catch (ExpiredJwtException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        Date expirationDate = headerClaimsJwt.getBody().getExpiration();
+        Date expirationDate = headerClaimsJwt.getPayload().getExpiration();
 
         User user = userRepository.getUser();
 

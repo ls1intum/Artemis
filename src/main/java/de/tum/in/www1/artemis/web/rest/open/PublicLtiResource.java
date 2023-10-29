@@ -173,7 +173,7 @@ public class PublicLtiResource {
     private boolean isValidJwtIgnoreSignature(String token) {
         String strippedToken = token.substring(0, token.lastIndexOf(".") + 1);
         try {
-            Jwts.parserBuilder().build().parse(strippedToken);
+            Jwts.parser().build().parse(strippedToken);
             return true;
         }
         catch (SignatureException e) {
