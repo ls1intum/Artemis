@@ -4,6 +4,7 @@ import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,6 +38,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.metis.PostService;
 
 class ContinuousPlagiarismControlServiceTest {
@@ -53,23 +55,28 @@ class ContinuousPlagiarismControlServiceTest {
 
     private final PostService postService = mock();
 
+    private final PlagiarismResultRepository plagiarismResultRepository = mock();
+
     private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, plagiarismComparisonRepository,
-            plagiarismCaseService, plagiarismCaseRepository, postService);
+            plagiarismCaseService, plagiarismCaseRepository, postService, plagiarismResultRepository);
 
     @Test
     void shouldExecuteChecks() throws ExitException, IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
         // given: text exercise with cpc enabled
         var textExercise = new TextExercise();
+        textExercise.setId(101L);
         textExercise.setDueDate(null);
 
         // and: modeling exercise with cpc and post due date checks enabled
         var modelingExercise = new ModelingExercise();
+        modelingExercise.setId(102L);
         modelingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         modelingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
         modelingExercise.getPlagiarismDetectionConfig().setContinuousPlagiarismControlPostDueDateChecksEnabled(true);
 
         // and: programing exercise with cpc enabled
         var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setId(103L);
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
 
         // and: all exercises returned by query
@@ -85,6 +92,9 @@ class ContinuousPlagiarismControlServiceTest {
         var programmingPlagiarismResult = new TextPlagiarismResult();
         when(plagiarismChecksService.checkProgrammingExercise(programmingExercise)).thenReturn(programmingPlagiarismResult);
 
+        // and: mocked behaviour for plagiarism cases logic
+        when(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(any(), any(), anyBoolean())).thenReturn(new PlagiarismCase(), new PlagiarismCase());
+
         // when
         service.executeChecks();
 
@@ -92,6 +102,7 @@ class ContinuousPlagiarismControlServiceTest {
         verify(plagiarismChecksService).checkTextExercise(textExercise);
         verify(plagiarismChecksService).checkModelingExercise(modelingExercise);
         verify(plagiarismChecksService).checkProgrammingExercise(programmingExercise);
+        verifyNoInteractions(plagiarismResultRepository);
     }
 
     @Test
@@ -129,7 +140,7 @@ class ContinuousPlagiarismControlServiceTest {
         verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA(), true);
         verify(plagiarismCaseService).createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB(), true);
         verify(postService, times(2)).createContinuousPlagiarismControlPlagiarismCasePost(any());
-        verifyNoMoreInteractions(plagiarismComparisonRepository, plagiarismCaseService, postService);
+        verifyNoMoreInteractions(plagiarismComparisonRepository, plagiarismCaseService, postService, plagiarismResultRepository);
     }
 
     @Test
@@ -154,7 +165,7 @@ class ContinuousPlagiarismControlServiceTest {
 
         // then
         verify(plagiarismCaseRepository).delete(plagiarismCase);
-        verifyNoMoreInteractions(plagiarismComparisonRepository, plagiarismCaseService, postService);
+        verifyNoMoreInteractions(plagiarismComparisonRepository, plagiarismCaseService, postService, plagiarismResultRepository);
     }
 
     @Test
@@ -171,42 +182,50 @@ class ContinuousPlagiarismControlServiceTest {
         service.executeChecks();
 
         // then
-        verifyNoInteractions(plagiarismChecksService, plagiarismComparisonRepository, plagiarismCaseService);
+        verifyNoInteractions(plagiarismChecksService, plagiarismComparisonRepository, plagiarismCaseService, plagiarismResultRepository);
     }
 
     @Test
     void shouldDoNothingForFileUploadAndQuizExercises() {
         // given
-        var exercises = Set.of(new FileUploadExercise(), new QuizExercise());
+        var fileUploadExercise = new FileUploadExercise();
+        fileUploadExercise.setId(101L);
+        var quizExercise = new QuizExercise();
+        quizExercise.setId(102L);
+        var exercises = Set.of(fileUploadExercise, quizExercise);
         when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(exercises);
 
         // when
         service.executeChecks();
 
         // then
-        verifyNoInteractions(plagiarismChecksService, plagiarismComparisonRepository, plagiarismCaseService);
+        verifyNoInteractions(plagiarismChecksService, plagiarismComparisonRepository, plagiarismCaseService, plagiarismResultRepository);
     }
 
     @Test
     void shouldSilentAnyJPlagExceptionsThrown() throws Exception {
         // given
         var textExercise = new TextExercise();
+        textExercise.setId(123L);
         when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(textExercise));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new BasecodeException("msg"));
 
         // then
         assertThatNoException().isThrownBy(service::executeChecks);
+        verify(plagiarismResultRepository).deletePlagiarismResultsByExerciseId(123L);
     }
 
     @Test
     void shouldSilentAnyUnknownExceptionsThrown() throws Exception {
         // given
         var textExercise = new TextExercise();
+        textExercise.setId(101L);
         when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(singleton(textExercise));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new IllegalStateException());
 
         // then
         assertThatNoException().isThrownBy(service::executeChecks);
+        verify(plagiarismResultRepository).deletePlagiarismResultsByExerciseId(101L);
     }
 
     private static StudentParticipation createStudentParticipation(long submissionId) {
