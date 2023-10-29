@@ -318,7 +318,6 @@ public class ModelingExerciseUtilService {
         return participationUtilService.addSubmissionWithFinishedResultsWithAssessor(participation, submission, assessorLogin);
     }
 
-
     /**
      * Creates and saves a ModelingSubmission from a file.
      *

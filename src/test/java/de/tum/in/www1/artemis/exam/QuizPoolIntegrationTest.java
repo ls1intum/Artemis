@@ -17,14 +17,8 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
-import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
-import de.tum.in.www1.artemis.domain.quiz.QuizGroup;
-import de.tum.in.www1.artemis.domain.quiz.QuizPool;
-import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
-import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
@@ -41,9 +35,6 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -91,10 +82,10 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testUpdateQuizPoolSuccessful() throws Exception {
         QuizPool quizPool = createQuizPool();
 
-        QuizGroup quizGroup3 = quizExerciseUtilService.createQuizGroup("Exception Handling");
-        QuizQuestion saQuizQuestion1 = quizExerciseUtilService.createShortAnswerQuestionWithTitleAndGroup("SA 1", quizGroup2);
-        QuizQuestion saQuizQuestion2 = quizExerciseUtilService.createShortAnswerQuestionWithTitleAndGroup("SA 2", quizGroup3);
-        QuizQuestion saQuizQuestion3 = quizExerciseUtilService.createShortAnswerQuestionWithTitleAndGroup("SA 3", null);
+        QuizGroup quizGroup3 = QuizExerciseFactory.createQuizGroup("Exception Handling");
+        QuizQuestion saQuizQuestion1 = QuizExerciseFactory.createShortAnswerQuestionWithTitleAndGroup("SA 1", quizGroup2);
+        QuizQuestion saQuizQuestion2 = QuizExerciseFactory.createShortAnswerQuestionWithTitleAndGroup("SA 2", quizGroup3);
+        QuizQuestion saQuizQuestion3 = QuizExerciseFactory.createShortAnswerQuestionWithTitleAndGroup("SA 3", null);
         quizPool.setQuizGroups(List.of(quizPool.getQuizGroups().get(0), quizPool.getQuizGroups().get(2), quizGroup3));
         quizPool.setQuizQuestions(List.of(quizPool.getQuizQuestions().get(0), quizPool.getQuizQuestions().get(1), quizPool.getQuizQuestions().get(2), saQuizQuestion1,
                 saQuizQuestion2, saQuizQuestion3));
@@ -165,11 +156,11 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetQuizPoolSuccessful() throws Exception {
-        QuizGroup quizGroup0 = quizExerciseUtilService.createQuizGroup("Encapsulation");
-        QuizGroup quizGroup1 = quizExerciseUtilService.createQuizGroup("Inheritance");
-        QuizQuestion mcQuizQuestion = quizExerciseUtilService.createMultipleChoiceQuestionWithTitleAndGroup("MC", quizGroup0);
-        QuizQuestion dndQuizQuestion = quizExerciseUtilService.createDragAndDropQuestionWithTitleAndGroup("DND", quizGroup1);
-        QuizQuestion saQuizQuestion = quizExerciseUtilService.createShortAnswerQuestionWithTitleAndGroup("SA", null);
+        QuizGroup quizGroup0 = QuizExerciseFactory.createQuizGroup("Encapsulation");
+        QuizGroup quizGroup1 = QuizExerciseFactory.createQuizGroup("Inheritance");
+        QuizQuestion mcQuizQuestion = QuizExerciseFactory.createMultipleChoiceQuestionWithTitleAndGroup("MC", quizGroup0);
+        QuizQuestion dndQuizQuestion = QuizExerciseFactory.createDragAndDropQuestionWithTitleAndGroup("DND", quizGroup1);
+        QuizQuestion saQuizQuestion = QuizExerciseFactory.createShortAnswerQuestionWithTitleAndGroup("SA", null);
         quizPool.setQuizGroups(List.of(quizGroup0, quizGroup1));
         quizPool.setQuizQuestions(List.of(mcQuizQuestion, dndQuizQuestion, saQuizQuestion));
         QuizPool savedQuizPool = quizPoolService.update(exam.getId(), quizPool);
@@ -190,14 +181,14 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     private QuizPool createQuizPool() throws Exception {
-        quizGroup0 = quizExerciseUtilService.createQuizGroup("Encapsulation");
-        quizGroup1 = quizExerciseUtilService.createQuizGroup("Inheritance");
-        quizGroup2 = quizExerciseUtilService.createQuizGroup("Polymorphism");
-        QuizQuestion mcQuizQuestion0 = quizExerciseUtilService.createMultipleChoiceQuestionWithTitleAndGroup("MC 0", quizGroup0);
-        QuizQuestion mcQuizQuestion1 = quizExerciseUtilService.createMultipleChoiceQuestionWithTitleAndGroup("MC 1", quizGroup0);
-        QuizQuestion dndQuizQuestion0 = quizExerciseUtilService.createDragAndDropQuestionWithTitleAndGroup("DND 0", quizGroup1);
-        QuizQuestion dndQuizQuestion1 = quizExerciseUtilService.createDragAndDropQuestionWithTitleAndGroup("DND 1", quizGroup2);
-        QuizQuestion saQuizQuestion0 = quizExerciseUtilService.createShortAnswerQuestionWithTitleAndGroup("SA 0", null);
+        quizGroup0 = QuizExerciseFactory.createQuizGroup("Encapsulation");
+        quizGroup1 = QuizExerciseFactory.createQuizGroup("Inheritance");
+        quizGroup2 = QuizExerciseFactory.createQuizGroup("Polymorphism");
+        QuizQuestion mcQuizQuestion0 = QuizExerciseFactory.createMultipleChoiceQuestionWithTitleAndGroup("MC 0", quizGroup0);
+        QuizQuestion mcQuizQuestion1 = QuizExerciseFactory.createMultipleChoiceQuestionWithTitleAndGroup("MC 1", quizGroup0);
+        QuizQuestion dndQuizQuestion0 = QuizExerciseFactory.createDragAndDropQuestionWithTitleAndGroup("DND 0", quizGroup1);
+        QuizQuestion dndQuizQuestion1 = QuizExerciseFactory.createDragAndDropQuestionWithTitleAndGroup("DND 1", quizGroup2);
+        QuizQuestion saQuizQuestion0 = QuizExerciseFactory.createShortAnswerQuestionWithTitleAndGroup("SA 0", null);
         quizPool.setQuizGroups(List.of(quizGroup0, quizGroup1, quizGroup2));
         quizPool.setQuizQuestions(List.of(mcQuizQuestion0, mcQuizQuestion1, dndQuizQuestion0, dndQuizQuestion1, saQuizQuestion0));
 
