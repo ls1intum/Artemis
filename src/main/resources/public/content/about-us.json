@@ -452,6 +452,10 @@
         {
             "fullName": "Andreas Resch",
             "photoDirectory": "public/images/about/Andreas_Resch.png"
+        },
+        {
+            "fullName": "Xinyao Liu",
+            "photoDirectory": "public/images/about/Xinyao_Liu.jpg"
         }
     ]
 }
