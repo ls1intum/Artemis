@@ -52,7 +52,7 @@ Instructors have three options for creating a lecture.
     Instructors can also customize the table entries by removing or adding new units. Additionally, they can enter keywords if they want particular slides
     to be removed. Slides containing one of the comma-separated keywords will be removed.
 
-        |processed-lecture-units|
+       |processed-lecture-units|
 
     The following video shows how to split a lecture PDF into multiple units.
     .. raw:: html
