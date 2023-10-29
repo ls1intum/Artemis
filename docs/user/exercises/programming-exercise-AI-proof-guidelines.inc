@@ -133,7 +133,7 @@ beautiful as with real text.
 
       .. figure:: programming/AI-proof-exercises/GUI-upgrade-for-game.png
          :align: center
-         :width: 50%
+         :width: 30%
 
 
          Example GUI from homework exercise
