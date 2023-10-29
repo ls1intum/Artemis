@@ -61,6 +61,7 @@ public class MetricsBean {
     /**
      * Some metrics (e.g. the number of upcoming exercises) are calculated for multiple lookahead periods.
      * Each period/range is exposed as metrics with a according tag "range"
+     * NOTE: we reduced the intervals temporarily until more intervals are necessary
      */
     private static final int[] MINUTE_RANGES_LOOKAHEAD = { 15 };
 
