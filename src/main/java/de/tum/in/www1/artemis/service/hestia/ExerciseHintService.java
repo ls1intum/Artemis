@@ -7,9 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHintActivation;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
@@ -215,19 +213,33 @@ public class ExerciseHintService {
         }
         var testCasesInTask = task.getTestCases();
         var feedbacks = result.getFeedbacks();
-        // the feedback can either not exist (e.g. for skipped test cases), or the attribute positive may not be set
-        return feedbacks.stream().filter(feedback -> feedback != null && testCasesInTask.stream().anyMatch(testCase -> Objects.equals(testCase.getTestName(), feedback.getText())))
-                .allMatch(feedback -> Boolean.TRUE.equals(feedback.isPositive()));
+        // a task is successful if feedback for all in the task linked tests exist and if these tests all passed.
+        var feedbackForTask = testCasesInTask.stream().map(testCase -> findFeedbackForTestCase(testCase, feedbacks)).filter(Optional::isPresent).map(Optional::get).toList();
+        if (feedbackForTask.size() != testCasesInTask.size()) {
+            // some expected test cases were not executed in the student's result
+            return false;
+        }
+        return feedbackForTask.stream().allMatch(feedback -> Boolean.TRUE.equals(feedback.isPositive()));
+    }
+
+    /**
+     * Finds the first feedback in the provided list, that was created by the test case.
+     *
+     * @param testCase the test case to search the linked feedback for
+     * @return the feedback related by the test case, if present
+     */
+    private Optional<Feedback> findFeedbackForTestCase(ProgrammingExerciseTestCase testCase, List<Feedback> feedbacks) {
+        return feedbacks.stream().filter(feedback -> testCase.equals(feedback.getTestCase())).findAny();
     }
 
     private List<Submission> getSubmissionsForStudent(ProgrammingExercise exercise, User student) {
         List<Submission> submissions = new ArrayList<>();
 
-        var ratedStudentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacks(exercise.getId(), student.getId(),
-                false);
+        var ratedStudentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksTestCases(exercise.getId(),
+                student.getId(), false);
         ratedStudentParticipation.ifPresent(participation -> submissions.addAll(participation.getSubmissions()));
 
-        var practiceStudentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacks(exercise.getId(),
+        var practiceStudentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksTestCases(exercise.getId(),
                 student.getId(), true);
         practiceStudentParticipation.ifPresent(participation -> submissions.addAll(participation.getSubmissions()));
 

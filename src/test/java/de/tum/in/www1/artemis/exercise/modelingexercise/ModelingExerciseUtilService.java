@@ -327,7 +327,7 @@ public class ModelingExerciseUtilService {
      * @return The created ModelingSubmission
      * @throws Exception If the file can't be read
      */
-    public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
+    public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws IOException {
         String model = FileUtils.loadFileFromResources(path);
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(model, true);
         submission = addModelingSubmission(exercise, submission, login);

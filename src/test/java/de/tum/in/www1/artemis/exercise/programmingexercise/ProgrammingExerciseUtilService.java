@@ -326,7 +326,7 @@ public class ProgrammingExerciseUtilService {
         courseRepo.findById(course.getId()).orElseThrow();
     }
 
-    public void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+    public List<ProgrammingExerciseTestCase> addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         // Clean up existing test cases
         testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
@@ -341,6 +341,13 @@ public class ProgrammingExerciseUtilService {
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
         assertThat(tests).as("test case is initialized").hasSize(3);
+        return tests;
+    }
+
+    public ProgrammingExerciseTestCase addTestCaseToProgrammingExercise(ProgrammingExercise programmingExercise, String testName) {
+        var testCase = new ProgrammingExerciseTestCase().testName(testName).weight(1.).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1.)
+                .bonusPoints(0.);
+        return testCaseRepository.save(testCase);
     }
 
     public void addBuildPlanAndSecretToProgrammingExercise(ProgrammingExercise programmingExercise, String buildPlan) {
