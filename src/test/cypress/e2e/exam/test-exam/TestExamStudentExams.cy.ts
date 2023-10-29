@@ -37,6 +37,10 @@ describe('Test Exam - student exams', () => {
         courseManagementAPIRequest.createCourse().then((response) => {
             course = convertModelAfterMultiPart(response);
 
+            for (const student of students) {
+                courseManagementAPIRequest.addStudentToCourse(course, student);
+            }
+
             const examConfig: Exam = {
                 course,
                 title: examTitle,
@@ -48,9 +52,6 @@ describe('Test Exam - student exams', () => {
                 numberOfCorrectionRoundsInExam: 1,
             };
 
-            for (const student of students) {
-                courseManagementAPIRequest.addStudentToCourse(course, student);
-            }
             examAPIRequests.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;
                 examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }).then((response) => {
@@ -65,9 +66,9 @@ describe('Test Exam - student exams', () => {
 
     before('Get student names', () => {
         cy.login(admin);
-        for (const student of students) {
-            userManagement.getUserInfo(student.username, (userInfo) => {
-                studentNames.push(userInfo.name);
+        for (let index = 0; index < students.length; index++) {
+            userManagement.getUserInfo(students[index].username, (userInfo) => {
+                studentNames[index] = userInfo.name;
             });
         }
     });
