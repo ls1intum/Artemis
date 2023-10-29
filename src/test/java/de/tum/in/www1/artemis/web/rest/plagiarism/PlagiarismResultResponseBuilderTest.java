@@ -25,20 +25,9 @@ class PlagiarismResultResponseBuilderTest {
     }
 
     @Test
-    void shouldReturnCorrectResponse() {
+    void shouldReturnCorrectResponseForManualChecks() {
         // given
-        var submissionA = new PlagiarismSubmission<>();
-        submissionA.setId(1L);
-        var submissionB = new PlagiarismSubmission<>();
-        submissionB.setId(2L);
-
-        var comparison = new PlagiarismComparison<TextSubmissionElement>();
-        comparison.setSimilarity(0.78);
-        comparison.setSubmissionA(submissionA);
-        comparison.setSubmissionB(submissionB);
-
-        var plagiarismResult = new TextPlagiarismResult();
-        plagiarismResult.setComparisons(singleton(comparison));
+        var plagiarismResult = createPlagiarismResult("user abc");
 
         // when
         var response = PlagiarismResultResponseBuilder.buildPlagiarismResultResponse(plagiarismResult);
@@ -51,6 +40,43 @@ class PlagiarismResultResponseBuilderTest {
         assertThat(response.getBody().plagiarismResultStats().numberOfDetectedSubmissions()).isEqualTo(2);
         assertThat(response.getBody().plagiarismResultStats().averageSimilarity()).isEqualTo(0.78);
         assertThat(response.getBody().plagiarismResultStats().maximalSimilarity()).isEqualTo(0.78);
+        assertThat(response.getBody().plagiarismResultStats().createdBy()).isEqualTo("user abc");
+    }
+
+    @Test
+    void shouldReturnCorrectResponseForCpcChecks() {
+        // given
+        var plagiarismResult = createPlagiarismResult("system");
+
+        // when
+        var response = PlagiarismResultResponseBuilder.buildPlagiarismResultResponse(plagiarismResult);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().plagiarismResult()).isSameAs(plagiarismResult);
+        assertThat(response.getBody().plagiarismResultStats().numberOfDetectedSubmissions()).isEqualTo(2);
+        assertThat(response.getBody().plagiarismResultStats().averageSimilarity()).isEqualTo(0.78);
+        assertThat(response.getBody().plagiarismResultStats().maximalSimilarity()).isEqualTo(0.78);
+        assertThat(response.getBody().plagiarismResultStats().createdBy()).isEqualTo("CPC");
+    }
+
+    private static TextPlagiarismResult createPlagiarismResult(String system) {
+        var submissionA = new PlagiarismSubmission<>();
+        submissionA.setId(1L);
+        var submissionB = new PlagiarismSubmission<>();
+        submissionB.setId(2L);
+
+        var comparison = new PlagiarismComparison<TextSubmissionElement>();
+        comparison.setSimilarity(0.78);
+        comparison.setSubmissionA(submissionA);
+        comparison.setSubmissionB(submissionB);
+
+        var plagiarismResult = new TextPlagiarismResult();
+        plagiarismResult.setComparisons(singleton(comparison));
+        plagiarismResult.setCreatedBy(system);
+        return plagiarismResult;
     }
 
 }
