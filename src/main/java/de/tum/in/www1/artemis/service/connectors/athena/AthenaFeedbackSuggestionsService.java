@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * Service for receiving feedback suggestions from the Athena service.
@@ -61,6 +63,12 @@ public class AthenaFeedbackSuggestionsService {
      */
     public List<TextFeedbackDTO> getTextFeedbackSuggestions(Exercise exercise, Submission submission) throws NetworkingException {
         log.debug("Start Athena Feedback Suggestions Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+
+        if (!Objects.equals(submission.getParticipation().getExercise().getId(), exercise.getId())) {
+            log.error("Exercise id {} does not match submission's exercise id {}", exercise.getId(), submission.getParticipation().getExercise().getId());
+            throw new ConflictException("Exercise id " + exercise.getId() + " does not match submission's exercise id " + submission.getParticipation().getExercise().getId(),
+                    "Exercise", "exerciseIdDoesNotMatch");
+        }
 
         final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));
         ResponseDTOText response = textAthenaConnector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedback_suggestions", request, 0);

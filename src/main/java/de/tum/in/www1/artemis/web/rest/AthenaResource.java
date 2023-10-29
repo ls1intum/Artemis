@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.service.connectors.athena.AthenaRepositoryExportSe
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /**
@@ -94,10 +93,6 @@ public class AthenaResource {
 
         final var submission = submissionFetcher.apply(submissionId);
 
-        if (submission.getParticipation().getExercise().getId() != exerciseId) {
-            log.error("Exercise id {} does not match submission's exercise id {}", exerciseId, submission.getParticipation().getExercise().getId());
-            throw new ConflictException("Exercise id does not match submission's exercise id", "Exercise", "exerciseIdDoesNotMatch");
-        }
         try {
             return ResponseEntity.ok(feedbackProvider.apply(exercise, submission));
         }

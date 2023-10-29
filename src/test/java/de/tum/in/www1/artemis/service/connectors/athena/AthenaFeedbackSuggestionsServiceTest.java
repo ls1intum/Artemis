@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 
 import java.util.List;
@@ -12,11 +13,13 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
@@ -45,10 +48,12 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
         textSubmission = new TextSubmission(2L).text("This is a text submission");
+        textSubmission.setParticipation(new StudentParticipation().exercise(textExercise));
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
         programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setId(3L);
+        programmingSubmission.setParticipation(new StudentParticipation().exercise(programmingExercise));
     }
 
     @Test
@@ -72,5 +77,13 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission);
         assertThat(suggestions.get(0).title()).isEqualTo("Not so good");
         assertThat(suggestions.get(0).lineStart()).isEqualTo(3);
+    }
+
+    @Test
+    void testFeedbackSuggestionsIdConflict() {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+        var otherExercise = new TextExercise();
+        textSubmission.setParticipation(new StudentParticipation().exercise(otherExercise)); // Add submission to wrong exercise
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission));
     }
 }
