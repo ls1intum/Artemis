@@ -118,7 +118,7 @@ class Lti13LaunchFilterTest {
     void authenticatedLogin() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
         doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
-        doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
+        doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(HttpServletRequest.class), any(HttpServletResponse.class));
         doReturn(responseWriter).when(httpResponse).getWriter();
         initValidIdToken();
 
@@ -140,7 +140,8 @@ class Lti13LaunchFilterTest {
     void authenticatedLogin_oauth2AuthenticationException() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
         doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
-        doThrow(new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST))).when(defaultFilter).attemptAuthentication(any(), any());
+        doThrow(new OAuth2AuthenticationException(new OAuth2Error(OAuth2ErrorCodes.INVALID_REQUEST))).when(defaultFilter).attemptAuthentication(any(HttpServletRequest.class),
+                any(HttpServletResponse.class));
 
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
 
@@ -152,7 +153,7 @@ class Lti13LaunchFilterTest {
     void authenticatedLogin_noAuthenticationTokenReturned() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
         doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
-        doReturn(null).when(defaultFilter).attemptAuthentication(any(), any());
+        doReturn(null).when(defaultFilter).attemptAuthentication(any(HttpServletRequest.class), any(HttpServletResponse.class));
 
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
 
