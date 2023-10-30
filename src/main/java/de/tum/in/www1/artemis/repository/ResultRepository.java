@@ -62,6 +62,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 (SELECT max(rr.completionDate) FROM Result rr
                     WHERE rr.assessmentType = 'AUTOMATIC'
                         AND rr.participation.exercise.id = :exerciseId
+                        AND TYPE(rr.participation) = StudentParticipation
                         AND rr.participation.student.id = r.participation.student.id
                 )
                 AND r.participation.exercise.id = :exerciseId

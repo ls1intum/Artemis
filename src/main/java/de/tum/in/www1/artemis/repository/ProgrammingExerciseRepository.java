@@ -365,11 +365,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      *         the exercise due date, or no exercise due date at all (only exercises with manual or semi-automatic correction are considered)
      */
     @Query("""
-            SELECT COUNT (DISTINCT p) FROM ProgrammingExerciseStudentParticipation p
-            JOIN p.submissions s
+            SELECT COUNT (DISTINCT p)
+            FROM ProgrammingExerciseStudentParticipation p
+                LEFT JOIN p.submissions s
             WHERE p.exercise.assessmentType <> 'AUTOMATIC'
-                AND p.exercise.exerciseGroup.exam.id = :#{#examId}
-                AND s IS NOT EMPTY
+                AND p.exercise.exerciseGroup.exam.id = :examId
                 AND (s.type <> 'ILLEGAL' OR s.type is null)
             """)
     long countLegalSubmissionsByExamIdSubmitted(@Param("examId") Long examId);
