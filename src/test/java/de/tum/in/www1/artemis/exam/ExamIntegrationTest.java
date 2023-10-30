@@ -13,15 +13,20 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -119,6 +124,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
 
+    @Autowired
+    private ExamUserRepository examUserRepository;
+
     private Course course1;
 
     private Course course2;
@@ -129,7 +137,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private Exam exam2;
 
-    private static final int NUMBER_OF_STUDENTS = 2;
+    private static final int NUMBER_OF_STUDENTS = 4;
 
     private static final int NUMBER_OF_TUTORS = 1;
 
@@ -743,7 +751,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testGetStudentExamForStart() throws Exception {
         Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         exam.setVisibleDate(ZonedDateTime.now().minusHours(1).minusMinutes(5));
-        StudentExam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/start", HttpStatus.OK, StudentExam.class);
+        StudentExam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
         assertThat(response.getExam()).isEqualTo(exam);
         verify(examAccessService).getExamInCourseElseThrow(course1.getId(), exam.getId());
     }
@@ -1076,12 +1084,11 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(archive).isNotNull();
 
         // Extract the archive
-        zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
-        String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
+        Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
 
         // Check that the dummy files we created exist in the archive.
         List<Path> filenames;
-        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+        try (var files = Files.walk(extractedArchiveDir)) {
             filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
         }
 
@@ -1095,6 +1102,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         savedSubmission = submissions.stream().filter(submission -> submission instanceof ModelingSubmission).findFirst().orElseThrow();
         assertSubmissionFilename(filenames, savedSubmission, ".json");
+
+        FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+        FileUtils.delete(archive);
     }
 
     private void assertSubmissionFilename(List<Path> expectedFilenames, Submission submission, String filenameExtension) {
@@ -1142,6 +1152,46 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
     void testGetExamTitleForNonExistingExam() throws Exception {
         request.get("/api/exams/123124123123/title", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRetrieveOwnStudentExam_noInformationLeaked() throws Exception {
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        ExamUser examUser = new ExamUser();
+        examUser.setUser(student1);
+        exam.addExamUser(examUser);
+        examUserRepository.save(examUser);
+        StudentExam studentExam = examUtilService.addStudentExam(exam);
+        studentExam.setUser(student1);
+        studentExamRepository.save(studentExam);
+
+        StudentExam receivedStudentExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
+        assertThat(receivedStudentExam.getExercises()).isEmpty();
+        assertThat(receivedStudentExam.getExam().getStudentExams()).isEmpty();
+        assertThat(receivedStudentExam.getExam().getExamUsers()).isEmpty();
+        assertThat(receivedStudentExam.getExam().getExerciseGroups()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRetrieveOwnStudentExam_noStudentExam() throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var examUser1 = new ExamUser();
+        examUser1.setExam(exam);
+        examUser1.setUser(student1);
+        examUser1 = examUserRepository.save(examUser1);
+        exam.addExamUser(examUser1);
+        examRepository.save(exam);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/own-student-exam", HttpStatus.BAD_REQUEST, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testRetrieveOwnStudentExam_instructor() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/own-student-exam", HttpStatus.BAD_REQUEST, StudentExam.class);
     }
 
     @Test
@@ -1413,7 +1463,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetSuspiciousSessionsAsTutor_forbidden() throws Exception {
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.FORBIDDEN, Set.class);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("differentStudentExamsSameIPAddress", "true");
+        params.add("differentStudentExamsSameBrowserFingerprint", "true");
+        params.add("sameStudentExamDifferentIPAddresses", "false");
+        params.add("sameStudentExamDifferentBrowserFingerprints", "false");
+        params.add("ipOutsideOfRange", "false");
+        request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.FORBIDDEN, SuspiciousExamSessionsDTO.class, params);
     }
 
     @Test
@@ -1428,7 +1484,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSuspiciousSessionsAsInstructorNotInCourse_forbidden() throws Exception {
         courseUtilService.updateCourseGroups("abc", course1, "");
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.FORBIDDEN, Set.class);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("differentStudentExamsSameIPAddress", "true");
+        params.add("differentStudentExamsSameBrowserFingerprint", "true");
+        params.add("sameStudentExamDifferentIPAddresses", "false");
+        params.add("sameStudentExamDifferentBrowserFingerprints", "false");
+        params.add("ipOutsideOfRange", "false");
+        request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.FORBIDDEN, SuspiciousExamSessionsDTO.class, params);
         courseUtilService.updateCourseGroups(TEST_PREFIX, course1, "");
     }
 
@@ -1453,32 +1515,254 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(exercises).containsExactlyInAnyOrderElementsOf(expectedExercises);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("provideAnalysisOptions")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetSuspiciousSessionsAsInstructor() throws Exception {
-        final String userAgent1 = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15";
-        final String ipAddress1 = "192.0.2.235";
-        final String browserFingerprint1 = "5b2cc274f6eaf3a71647e1f85358ce32";
-        final String sessionToken1 = "abc";
-        final String userAgent2 = "Mozilla/5.0 (Linux; Android 10; SM-G960F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Mobile Safari/537.36";
-        final String ipAddress2 = "172.168.0.0";
-        final String browserFingerprint2 = "5b2cc274f6eaf3a71647e1f85358ce31";
-        final String sessionToken2 = "def";
-        Exam exam = examUtilService.addExam(course1);
-        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        StudentExam studentExam2 = examUtilService.addStudentExamWithUser(exam, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
-        ExamSession firstExamSessionStudent1 = examUtilService.addExamSessionToStudentExam(studentExam, sessionToken1, ipAddress1, browserFingerprint1, "instanceId", userAgent1);
-        examUtilService.addExamSessionToStudentExam(studentExam2, sessionToken2, ipAddress2, browserFingerprint2, "instance2Id", userAgent2);
-        ExamSession secondExamSessionStudent1 = examUtilService.addExamSessionToStudentExam(studentExam2, sessionToken1, ipAddress1, browserFingerprint1, "instanceId", userAgent1);
-        Set<SuspiciousSessionReason> suspiciousReasons = Set.of(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT, SuspiciousSessionReason.SAME_IP_ADDRESS);
-        firstExamSessionStudent1.setSuspiciousReasons(suspiciousReasons);
-        secondExamSessionStudent1.setSuspiciousReasons(suspiciousReasons);
-        Set<SuspiciousExamSessionsDTO> suspiciousSessionTuples = request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/suspicious-sessions",
-                HttpStatus.OK, SuspiciousExamSessionsDTO.class);
+    void testGetSuspiciousSessionsDifferentAsInstructor(boolean sameIpDifferentExams, boolean sameFingerprintDifferentExams, boolean differentIpSameExam,
+            boolean differentFingerprintSameExam) throws Exception {
+        prepareExamSessionsForTestCase(sameIpDifferentExams, sameFingerprintDifferentExams, differentIpSameExam, differentFingerprintSameExam);
+        Set<SuspiciousSessionReason> suspiciousReasons = getSuspiciousReasons(sameIpDifferentExams, sameFingerprintDifferentExams, differentIpSameExam,
+                differentFingerprintSameExam);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("differentStudentExamsSameIPAddress", sameIpDifferentExams ? "true" : "false");
+        params.add("differentStudentExamsSameBrowserFingerprint", sameFingerprintDifferentExams ? "true" : "false");
+        params.add("sameStudentExamDifferentIPAddresses", differentIpSameExam ? "true" : "false");
+        params.add("sameStudentExamDifferentBrowserFingerprints", differentFingerprintSameExam ? "true" : "false");
+        params.add("ipOutsideOfRange", "false");
+        Set<SuspiciousExamSessionsDTO> suspiciousSessionTuples = request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions",
+                HttpStatus.OK, SuspiciousExamSessionsDTO.class, params);
         assertThat(suspiciousSessionTuples).hasSize(1);
         var suspiciousSessions = suspiciousSessionTuples.stream().findFirst().get();
         assertThat(suspiciousSessions.examSessions()).hasSize(2);
-        assertThat(suspiciousSessions.examSessions()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("createdDate")
-                .containsExactlyInAnyOrderElementsOf(ExamFactory.createExpectedExamSessionDTOs(firstExamSessionStudent1, secondExamSessionStudent1));
+        var examSessions = suspiciousSessions.examSessions();
+        assertThat(examSessions.stream().findFirst().orElseThrow().suspiciousReasons()).containsExactlyInAnyOrderElementsOf(suspiciousReasons);
+    }
+
+    private static Stream<Arguments> provideAnalysisOptions() {
+        return Stream.of(Arguments.of(true, true, false, false), Arguments.of(false, true, false, false), Arguments.of(true, false, false, false),
+                Arguments.of(false, false, true, false), Arguments.of(false, false, false, true), Arguments.of(false, false, true, true));
+    }
+
+    private Set<SuspiciousSessionReason> getSuspiciousReasons(boolean sameIpDifferentExam, boolean sameFingerprintDifferentExams, boolean differentIpSameExam,
+            boolean differentFingerprintSameExam) {
+        Set<SuspiciousSessionReason> suspiciousReasons = new HashSet<>();
+        if (sameIpDifferentExam) {
+            suspiciousReasons.add(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS);
+        }
+        if (sameFingerprintDifferentExams) {
+            suspiciousReasons.add(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT);
+        }
+        if (differentIpSameExam) {
+            suspiciousReasons.add(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES);
+        }
+        if (differentFingerprintSameExam) {
+            suspiciousReasons.add(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS);
+        }
+        return suspiciousReasons;
+    }
+
+    private void prepareExamSessionsForTestCase(boolean sameIpDifferentExams, boolean sameFingerprintDifferentExams, boolean differentIpSameExam,
+            boolean differentFingerprintSameExam) {
+        final String ipAddress1 = "192.0.2.235";
+        final String browserFingerprint1 = "5b2cc274f6eaf3a71647e1f85358ce32";
+
+        final String ipAddress2 = "172.168.0.0";
+        final String browserFingerprint2 = "5b2cc274f6eaf3a71647e1f85358ce31";
+
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        StudentExam studentExam2 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        StudentExam studentExam3 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
+        StudentExam studentExam4 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student4"));
+        if (sameIpDifferentExams && sameFingerprintDifferentExams) {
+            examUtilService.addExamSessionToStudentExam(studentExam, "abc", ipAddress1, browserFingerprint1, "instanceId", "user-agent");
+            examUtilService.addExamSessionToStudentExam(studentExam, "def", ipAddress1, browserFingerprint1, "instanceId", "user-agent");
+            examUtilService.addExamSessionToStudentExam(studentExam2, "abc", ipAddress1, browserFingerprint1, "instanceId", "user-agent");
+        }
+        else {
+            if (sameFingerprintDifferentExams) {
+                examUtilService.addExamSessionToStudentExam(studentExam, "abc", ipAddress2, browserFingerprint1, "instanceId", "user-agent");
+                examUtilService.addExamSessionToStudentExam(studentExam2, "abc", ipAddress1, browserFingerprint1, "instanceId", "user-agent");
+            }
+            if (sameIpDifferentExams) {
+                examUtilService.addExamSessionToStudentExam(studentExam, "abc", ipAddress1, browserFingerprint1, "instanceId", "user-agent");
+                examUtilService.addExamSessionToStudentExam(studentExam2, "def", ipAddress1, browserFingerprint2, "instanceId", "user-agent");
+            }
+        }
+        if (differentIpSameExam && differentFingerprintSameExam) {
+            examUtilService.addExamSessionToStudentExam(studentExam, "abc", ipAddress1, browserFingerprint1, "instanceId", "user-agent");
+            examUtilService.addExamSessionToStudentExam(studentExam, "abc", ipAddress2, browserFingerprint2, "instanceId", "user-agent");
+        }
+        else {
+            if (differentIpSameExam) {
+                examUtilService.addExamSessionToStudentExam(studentExam, "abc", ipAddress1, browserFingerprint1, "instanceId", "user-agent");
+                examUtilService.addExamSessionToStudentExam(studentExam, "abc", ipAddress2, browserFingerprint1, "instanceId", "user-agent");
+            }
+            if (differentFingerprintSameExam) {
+                examUtilService.addExamSessionToStudentExam(studentExam, "abc", ipAddress1, browserFingerprint1, "instanceId", "user-agent");
+                examUtilService.addExamSessionToStudentExam(studentExam, "abc", ipAddress1, browserFingerprint2, "instanceId", "user-agent");
+            }
+        }
+
+        // add other unrelated exam sessions
+
+        examUtilService.addExamSessionToStudentExam(studentExam3, "abc", "192.168.1.1", "5b2cc274f6eaf3a71647e1f85358ce34", "instanceId", "user-agent");
+        examUtilService.addExamSessionToStudentExam(studentExam3, "abc", "192.168.1.1", "5b2cc274f6eaf3a71647e1f85358ce34", "instanceId", "user-agent");
+        examUtilService.addExamSessionToStudentExam(studentExam4, "abc", "203.0.113.0", "5b2cc274f6eaf3a71647e1f85358ce35", "instanceId", "user-agent");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetSuspiciousSessionsIpOutsideOfRangeNoSubnetGivenBadRequest() throws Exception {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("differentStudentExamsSameIPAddress", "false");
+        params.add("differentStudentExamsSameBrowserFingerprint", "false");
+        params.add("sameStudentExamDifferentIPAddresses", "false");
+        params.add("sameStudentExamDifferentBrowserFingerprints", "false");
+        params.add("ipOutsideOfRange", "true");
+        request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.BAD_REQUEST, SuspiciousExamSessionsDTO.class, params);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @MethodSource("provideIpAddressesAndSubnets")
+    void testGetSuspiciousSessionsIpOutsideOfRange(String ipAddress1, String ipAddress2, String subnetIncludingFirstAddress, String subnetIncludingNeitherAddress,
+            String subnetIncludingBothAddresses) throws Exception {
+        var studentExam1 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var studentExam2 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        examUtilService.addExamSessionToStudentExam(studentExam1, "abc", ipAddress1, "5b2cc274f6eaf3a71647e1f85358ce32", "instanceId", "user-agent");
+        examUtilService.addExamSessionToStudentExam(studentExam2, "abc", ipAddress2, "5b2cc274f6eaf3a71647e1f85358ce32", "instanceId", "user-agent");
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("differentStudentExamsSameIPAddress", "false");
+        params.add("differentStudentExamsSameBrowserFingerprint", "false");
+        params.add("sameStudentExamDifferentIPAddresses", "false");
+        params.add("sameStudentExamDifferentBrowserFingerprints", "false");
+        params.add("ipOutsideOfRange", "true");
+        params.add("ipSubnet", subnetIncludingFirstAddress);
+        // test with a subnet that includes the first but not the second ip
+        var suspiciousSessions = request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.OK,
+                SuspiciousExamSessionsDTO.class, params);
+        assertThat(suspiciousSessions).hasSize(1);
+        SuspiciousExamSessionsDTO suspiciousExamSessionsDTO = suspiciousSessions.stream().findFirst().orElseThrow();
+        assertThat(suspiciousExamSessionsDTO.examSessions()).hasSize(1);
+        var examSessions = suspiciousExamSessionsDTO.examSessions();
+        var suspiciousSession = examSessions.stream().findFirst().orElseThrow();
+        assertThat(suspiciousSession.ipAddress()).isEqualTo(ipAddress2);
+        assertThat(suspiciousSession.suspiciousReasons()).containsExactlyInAnyOrder(SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE);
+
+        // test with a subnet that includes neither ips
+        params.remove("ipSubnet");
+        params.add("ipSubnet", subnetIncludingNeitherAddress);
+        suspiciousSessions = request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.OK, SuspiciousExamSessionsDTO.class,
+                params);
+        assertThat(suspiciousSessions).hasSize(1);
+        var suspiciousSessionTuple = suspiciousSessions.stream().findFirst().orElseThrow();
+        assertThat(suspiciousSessionTuple.examSessions()).hasSize(2);
+        suspiciousSessionTuple.examSessions().forEach(
+                suspiciousSessionDTO -> assertThat(suspiciousSessionDTO.suspiciousReasons()).containsExactlyInAnyOrder(SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE));
+
+        // test with subnet that contains both ips
+        params.remove("ipSubnet");
+        params.add("ipSubnet", subnetIncludingBothAddresses);
+        suspiciousSessions = request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.OK, SuspiciousExamSessionsDTO.class,
+                params);
+        assertThat(suspiciousSessions).hasSize(0);
+    }
+
+    private static Stream<Arguments> provideIpAddressesAndSubnets() {
+        return Stream.of(Arguments.of("192.168.1.10", "192.168.1.20", "192.168.1.0/28", "192.168.1.128/25", "192.168.1.0/24"),
+                Arguments.of("2001:0db8:85a3:0000:0000:8a2e:0370:7330", "2001:0db8:85a3:0000:0000:8a2e:0370:7331", "2001:0db8:85a3:0000:0000:8a2e:0370:7330/128",
+                        "2001:0db8:85a3:0000:0000:8a2e:0370:7000/128", "2001:0db8:85a3:0000:0000:8a2e:0370:7330/64"));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @MethodSource("provideMixedIpAddressesAndSubnets")
+    void testIpOutsideOfRangeMixedIPv4AndIPv6(String ipAddress1, String ipAddress2, String subnet) throws Exception {
+        var studentExam1 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var studentExam2 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
+        examUtilService.addExamSessionToStudentExam(studentExam1, "abc", ipAddress1, "5b2cc274f6eaf3a71647e1f85358ce32", "instanceId", "user-agent");
+        examUtilService.addExamSessionToStudentExam(studentExam2, "abc", ipAddress2, "5b2cc274f6eaf3a71647e1f85358ce32", "instanceId", "user-agent");
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("differentStudentExamsSameIPAddress", "false");
+        params.add("differentStudentExamsSameBrowserFingerprint", "false");
+        params.add("sameStudentExamDifferentIPAddresses", "false");
+        params.add("sameStudentExamDifferentBrowserFingerprints", "false");
+        params.add("ipOutsideOfRange", "true");
+        params.add("ipSubnet", subnet);
+        // the IP address matching IP address type (IPv4 or IPv6) is included in the subnet and the IP address in the other format is ignored --> 0
+        assertThat(request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.OK, SuspiciousExamSessionsDTO.class, params))
+                .hasSize(0);
+
+    }
+
+    private static Stream<Arguments> provideMixedIpAddressesAndSubnets() {
+        return Stream.of(Arguments.of("192.168.1.10", "2001:0db8:85a3:0000:0000:8a2e:0370:7331", "192.168.1.0/28"),
+                Arguments.of("192.168.1.10", "2001:0db8:85a3:0000:0000:8a2e:0370:7330", "2001:0db8:85a3:0000:0000:8a2e:0370:7330/128"));
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @MethodSource("provideAnalysisOptions")
+    void testComparingForOtherCriterionThanGivenNoFalsePositives(boolean sameIpDifferentExams, boolean sameFingerprintDifferentExams, boolean differentIpSameExam,
+            boolean differentFingerprintSameExam) throws Exception {
+        prepareExamSessionsForTestCase(!sameIpDifferentExams, !sameFingerprintDifferentExams, !differentIpSameExam, !differentFingerprintSameExam);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("differentStudentExamsSameIPAddress", sameIpDifferentExams ? "true" : "false");
+        params.add("differentStudentExamsSameBrowserFingerprint", sameFingerprintDifferentExams ? "true" : "false");
+        params.add("sameStudentExamDifferentIPAddresses", differentIpSameExam ? "true" : "false");
+        params.add("sameStudentExamDifferentBrowserFingerprints", differentFingerprintSameExam ? "true" : "false");
+        params.add("ipOutsideOfRange", "false");
+        Set<SuspiciousExamSessionsDTO> suspiciousSessionTuples = request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions",
+                HttpStatus.OK, SuspiciousExamSessionsDTO.class, params);
+        if (!sameIpDifferentExams && sameFingerprintDifferentExams && !differentIpSameExam && !differentFingerprintSameExam) {
+            assertThat(suspiciousSessionTuples).hasSize(1);
+            var suspiciousSessions = suspiciousSessionTuples.stream().findFirst().get();
+            assertThat(suspiciousSessions.examSessions()).hasSize(2);
+            var examSessions = suspiciousSessions.examSessions();
+            assertThat(examSessions.stream().findFirst().orElseThrow().suspiciousReasons())
+                    .containsExactlyInAnyOrderElementsOf(Set.of(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT));
+        }
+        else if (sameIpDifferentExams && !sameFingerprintDifferentExams && !differentIpSameExam && !differentFingerprintSameExam) {
+            assertThat(suspiciousSessionTuples).hasSize(1);
+            var suspiciousSessions = suspiciousSessionTuples.stream().findFirst().get();
+            assertThat(suspiciousSessions.examSessions()).hasSize(2);
+            var examSessions = suspiciousSessions.examSessions();
+            assertThat(examSessions.stream().findFirst().orElseThrow().suspiciousReasons())
+                    .containsExactlyInAnyOrderElementsOf(Set.of(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS));
+        }
+        else {
+            assertThat(suspiciousSessionTuples).hasSize(0);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSuspiciousSessionsAllOptionsCombined() throws Exception {
+        prepareExamSessionsForTestCase(true, true, true, true);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("differentStudentExamsSameIPAddress", "true");
+        params.add("differentStudentExamsSameBrowserFingerprint", "true");
+        params.add("sameStudentExamDifferentIPAddresses", "true");
+        params.add("sameStudentExamDifferentBrowserFingerprints", "true");
+        params.add("ipOutsideOfRange", "true");
+        params.add("ipSubnet", "192.168.1.0/28");
+        var suspiciousSessions = request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.OK,
+                SuspiciousExamSessionsDTO.class, params);
+        assertThat(suspiciousSessions).hasSize(3);
+        List<ExamSessionDTO> outsideOfRangeSessions = suspiciousSessions.stream().flatMap(suspiciousExamSessionsDTO -> suspiciousExamSessionsDTO.examSessions().stream())
+                .filter(suspiciousSessionDTO -> suspiciousSessionDTO.suspiciousReasons().contains(SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE)).toList();
+        assertThat(outsideOfRangeSessions).hasSize(4);
+        List<ExamSessionDTO> sameIpAndFingerprintDifferentExams = suspiciousSessions.stream()
+                .flatMap(suspiciousExamSessionsDTO -> suspiciousExamSessionsDTO.examSessions().stream())
+                .filter(suspiciousSessionDTO -> suspiciousSessionDTO.suspiciousReasons().contains(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS)
+                        && suspiciousSessionDTO.suspiciousReasons().contains(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT))
+                .toList();
+        assertThat(sameIpAndFingerprintDifferentExams).hasSize(2);
+        List<ExamSessionDTO> sameStudentExamDifferentIpAndFingerprint = suspiciousSessions.stream()
+                .flatMap(suspiciousExamSessionsDTO -> suspiciousExamSessionsDTO.examSessions().stream())
+                .filter(suspiciousSessionDTO -> suspiciousSessionDTO.suspiciousReasons().contains(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES)
+                        && suspiciousSessionDTO.suspiciousReasons().contains(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS))
+                .toList();
+        assertThat(sameStudentExamDifferentIpAndFingerprint).hasSize(2);
     }
 }

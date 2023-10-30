@@ -73,8 +73,9 @@ public class TextBlockService {
                 final int startIndex = start + offset;
                 final int endIndex = startIndex + lineOrSentenceTrimed.length();
                 start = start + lineOrSentence.length() + LINE_SEPARATOR_LENGTH;
-                if (startIndex == endIndex || lineOrSentence.isBlank())
+                if (startIndex == endIndex || lineOrSentence.isBlank()) {
                     continue; // Do *not* define a text block for an empty line.
+                }
 
                 final TextBlock textBlock = new TextBlock().text(lineOrSentenceTrimed).startIndex(startIndex).endIndex(endIndex).submission(submission).automatic();
                 textBlock.computeId();

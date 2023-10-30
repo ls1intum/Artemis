@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
+import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -398,6 +398,12 @@ export class CourseManagementService {
         httpParams = httpParams.append('loginOrName', loginOrName);
         httpParams = httpParams.append('roles', roles.join(','));
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/users/search`, { observe: 'response', params: httpParams });
+    }
+
+    searchMembersForUserMentions(courseId: number, loginOrName: string): Observable<HttpResponse<UserNameAndLoginDTO[]>> {
+        let httpParams = new HttpParams();
+        httpParams = httpParams.append('loginOrName', loginOrName);
+        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/members/search`, { observe: 'response', params: httpParams });
     }
 
     /**

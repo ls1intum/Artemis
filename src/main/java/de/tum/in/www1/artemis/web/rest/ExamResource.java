@@ -6,6 +6,7 @@ import static java.time.ZonedDateTime.now;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -31,9 +32,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -191,6 +190,7 @@ public class ExamResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Exam> updateExam(@PathVariable Long courseId, @RequestBody Exam updatedExam) throws URISyntaxException {
         log.debug("REST request to update an exam : {}", updatedExam);
+
         if (updatedExam.getId() == null) {
             return createExam(courseId, updatedExam);
         }
@@ -201,6 +201,7 @@ public class ExamResource {
 
         // Make sure that the original references are preserved.
         Exam originalExam = examRepository.findByIdElseThrow(updatedExam.getId());
+        var originalExamDuration = originalExam.getDuration();
 
         // The Exam Mode cannot be changed after creation -> Compare request with version in the database
         if (updatedExam.isTestExam() != originalExam.isTestExam()) {
@@ -216,21 +217,22 @@ public class ExamResource {
 
         Exam savedExam = examRepository.save(updatedExam);
 
+        // NOTE: We have to get exercises and groups as we need them for re-scheduling
+        Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
+
         // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
         Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
         if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
                 || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
-            // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
         }
 
-        if (comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0) {
-            // get all exercises
-            Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId());
-            examService.scheduleModelingExercises(examWithExercises);
+        // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
+        if (!originalExam.getEndDate().equals(savedExam.getEndDate())) {
+            int workingTimeChange = savedExam.getDuration() - originalExamDuration;
+            updateStudentExamsAndRescheduleExercises(examWithExercises, originalExamDuration, workingTimeChange);
         }
 
         if (updatedChannel != null) {
@@ -259,9 +261,7 @@ public class ExamResource {
             throw new BadRequestException();
         }
 
-        var now = now();
-
-        // We have to get exercise groups as `scheduleModelingExercises` needs them
+        // NOTE: We have to get exercise groups as `scheduleModelingExercises` needs them
         Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
         var originalExamDuration = exam.getDuration();
 
@@ -270,10 +270,18 @@ public class ExamResource {
         exam.setWorkingTime(exam.getWorkingTime() + workingTimeChange);
         examRepository.save(exam);
 
+        // 2. Re-calculate the working times of all student exams
+        updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
+
+        return ResponseEntity.ok(exam);
+    }
+
+    private void updateStudentExamsAndRescheduleExercises(Exam exam, Integer originalExamDuration, Integer workingTimeChange) {
+        var now = now();
+
         User instructor = userRepository.getUser();
 
-        // 2. Re-calculate the working times of all student exams
-        var studentExams = studentExamRepository.findByExamId(examId);
+        var studentExams = studentExamRepository.findByExamId(exam.getId());
         for (var studentExam : studentExams) {
             Integer originalStudentWorkingTime = studentExam.getWorkingTime();
             int originalTimeExtension = originalStudentWorkingTime - originalExamDuration;
@@ -288,7 +296,9 @@ public class ExamResource {
                 int adjustedWorkingTime = Math.max(newNormalWorkingTime + timeAdjustment, 0);
                 studentExam.setWorkingTime(adjustedWorkingTime);
             }
+            // TODO: probably batch these updates?
             var savedStudentExam = studentExamRepository.save(studentExam);
+
             // NOTE: if the exam is already visible, notify the student about the working time change
             if (now.isAfter(exam.getVisibleDate())) {
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, savedStudentExam.getWorkingTime(), originalStudentWorkingTime, true, instructor);
@@ -300,12 +310,10 @@ public class ExamResource {
             instanceMessageSendService.sendRescheduleAllStudentExams(exam.getId());
         }
 
+        // NOTE: potentially re-schedule clustering of modeling submissions (in case Compass is active)
         if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
-            // potentially re-schedule clustering of modeling submissions (in case Compass is active)
             examService.scheduleModelingExercises(exam);
         }
-
-        return ResponseEntity.ok(exam);
     }
 
     /**
@@ -346,7 +354,7 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exam-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException {
+    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException, IOException {
         log.debug("REST request to import an exam : {}", examToBeImported);
 
         // Step 1: Check if Exam has an ID
@@ -1114,7 +1122,7 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/start : Get an exam for the exam start.
+     * GET /courses/{courseId}/exams/{examId}/own-student-exam: Get the own student exam for the exam
      * Real Exams: StudentExam needs to be generated by an instructor
      * Test Exam: StudentExam can be self-created by the user
      * Note: The Access control is performed in the {@link ExamAccessService#getExamInCourseElseThrow(Long, Long)} to limit the DB-calls
@@ -1123,9 +1131,9 @@ public class ExamResource {
      * @param examId   the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with the found student exam (without exercises) as body
      */
-    @GetMapping("courses/{courseId}/exams/{examId}/start")
+    @GetMapping("courses/{courseId}/exams/{examId}/own-student-exam")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentExam> getStudentExamForStart(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<StudentExam> getOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
         StudentExam exam = examAccessService.getExamInCourseElseThrow(courseId, examId);
         return ResponseEntity.ok(exam);
@@ -1307,19 +1315,43 @@ public class ExamResource {
 
     /**
      * GET /courses/{courseId}/exams/{examId}/suspicious-sessions : Get all exam sessions that are suspicious for exam.
-     * For an explanation when a session is suspicious, see {@link ExamSessionService#retrieveAllSuspiciousExamSessionsByExamId(long)}
+     * For an explanation when a session is suspicious, see {@link ExamSessionService#retrieveAllSuspiciousExamSessionsByExamId(long, SuspiciousSessionsAnalysisOptions, Optional)}
      *
-     * @param courseId the id of the course
-     * @param examId   the id of the exam
+     * @param courseId                                                             the id of the course
+     * @param examId                                                               the id of the exam
+     * @param analyzeSessionsWithTheSameIp                                         whether to analyze for sessions with the same IP address that belong to different student exams
+     * @param analyzeSessionsWithTheSameBrowserFingerprint                         whether to analyze sessions with the same browser fingerprint that belong to different student
+     *                                                                                 exams
+     * @param analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses         whether to analyze sessions with different IP addresses that belong to the same student exam
+     * @param analyzeSessionsForTheSameStudentExamWithDifferentBrowserFingerprints whether to analyze sessions with different browser fingerprints that belong to the same student
+     *                                                                                 exam
+     * @param analyzeSessionsIpOutsideOfRange                                      whether to analyze sessions with IP addresses outside a given subnet
+     *                                                                                 If this is true, the subnet needs to be provided as a request parameter
+     * @param ipSubnet                                                             the subnet to use for analyzing sessions with IP addresses outside the subnet (optional)
      * @return a set containing all tuples of exam sessions that are suspicious.
      */
     @GetMapping("courses/{courseId}/exams/{examId}/suspicious-sessions")
     @EnforceAtLeastInstructor
-    public Set<SuspiciousExamSessionsDTO> getAllSuspiciousExamSessions(@PathVariable long courseId, @PathVariable long examId) {
+    public Set<SuspiciousExamSessionsDTO> getAllSuspiciousExamSessions(@PathVariable long courseId, @PathVariable long examId,
+            @RequestParam("differentStudentExamsSameIPAddress") boolean analyzeSessionsWithTheSameIp,
+            @RequestParam("differentStudentExamsSameBrowserFingerprint") boolean analyzeSessionsWithTheSameBrowserFingerprint,
+            @RequestParam("sameStudentExamDifferentIPAddresses") boolean analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses,
+            @RequestParam("sameStudentExamDifferentBrowserFingerprints") boolean analyzeSessionsForTheSameStudentExamWithDifferentBrowserFingerprints,
+            @RequestParam("ipOutsideOfRange") boolean analyzeSessionsIpOutsideOfRange, @RequestParam(required = false) String ipSubnet) {
         log.debug("REST request to get all exam sessions that are suspicious for exam : {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId);
+        if (analyzeSessionsIpOutsideOfRange) {
+            if (ipSubnet == null) {
+                throw new BadRequestAlertException("If you want to analyze sessions with IP outside of range, you need to provide a subnet", ENTITY_NAME,
+                        "missingLowerOrUpperBoundIp");
+            }
+        }
+        SuspiciousSessionsAnalysisOptions options = new SuspiciousSessionsAnalysisOptions(analyzeSessionsWithTheSameIp, analyzeSessionsWithTheSameBrowserFingerprint,
+                analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses, analyzeSessionsForTheSameStudentExamWithDifferentBrowserFingerprints,
+                analyzeSessionsIpOutsideOfRange);
+        return examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId, options, Optional.ofNullable(ipSubnet));
+
     }
 
 }

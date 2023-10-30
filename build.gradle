@@ -29,7 +29,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "6.5.3"
+version = "6.6.4"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -347,6 +347,7 @@ dependencies {
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
     implementation "org.jgrapht:jgrapht-core:1.5.2"
+    implementation 'com.github.seancfoley:ipaddress:5.4.0'
 
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
@@ -418,7 +419,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.3"
+    gradleVersion = "8.4"
 }
 
 tasks.register("stage") {
@@ -429,6 +430,11 @@ node {
     download = true
     version = "${node_version}"
     npmVersion = "${npm_version}"
+}
+
+// Set the npm cache (used in the Dockerfile)
+task npmSetCacheDockerfile(type: NpmTask) {
+    args = ['set', 'cache', '/opt/artemis/.npm']
 }
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain

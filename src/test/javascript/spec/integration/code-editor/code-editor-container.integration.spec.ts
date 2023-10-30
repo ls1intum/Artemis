@@ -4,13 +4,22 @@ import dayjs from 'dayjs/esm';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgModel } from '@angular/forms';
-import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import * as ace from 'brace';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { CommitState, DeleteFileChange, DomainType, EditorState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import {
+    CommitState,
+    DeleteFileChange,
+    DomainType,
+    EditorState,
+    FileBadge,
+    FileBadgeType,
+    FileType,
+    GitConflictState,
+} from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { buildLogs, extractedBuildLogErrors, extractedErrorFiles } from '../../helpers/sample/build-logs';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
@@ -64,9 +73,9 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 describe('CodeEditorContainerIntegration', () => {
     // needed to make sure ace is defined
@@ -169,6 +178,8 @@ describe('CodeEditorContainerIntegration', () => {
                 commitStub = jest.spyOn(codeEditorRepositoryService, 'commit');
                 getStudentParticipationWithLatestResultStub = jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithLatestResult');
                 getLatestPendingSubmissionStub = jest.spyOn(submissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(getLatestPendingSubmissionSubject);
+                // Mock the ResizeObserver, which is not available in the test environment
+                global.ResizeObserver = jest.fn().mockImplementation((...args) => new MockResizeObserver(args));
             });
     });
 
@@ -561,5 +572,22 @@ describe('CodeEditorContainerIntegration', () => {
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         container.onError(error);
         expect(alertServiceSpy).toHaveBeenCalledWith(errorKey, translationParams);
+    });
+
+    it('should create file badges for feedback suggestions', () => {
+        container.feedbackSuggestions = [
+            { reference: 'file:src/Test1.java_line:2' },
+            { reference: 'file:src/Test2.java_line:2' },
+            { reference: 'file:src/Test2.java_line:4' },
+            { reference: 'file:src/Test3.java_line:4' },
+            { reference: 'file:src/Test3.java_line:10' },
+            { reference: 'file:src/Test3.java_line:11' },
+        ];
+        container.updateFileBadges();
+        expect(container.fileBadges).toEqual({
+            'src/Test1.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 1)],
+            'src/Test2.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 2)],
+            'src/Test3.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3)],
+        });
     });
 });

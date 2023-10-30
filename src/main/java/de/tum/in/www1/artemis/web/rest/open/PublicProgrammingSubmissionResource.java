@@ -80,9 +80,10 @@ public class PublicProgrammingSubmissionResource {
             // Therefore, a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
 
-            Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
+            Participation participation = participationRepository.findByIdWithSubmissionsElseThrow(participationId);
             if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
-                throw new EntityNotFoundException("Programming Exercise Participation", participationId);
+                throw new BadRequestAlertException("The referenced participation " + participationId + " is not of type ProgrammingExerciseParticipation", "ProgrammingSubmission",
+                        "participationWrongType");
             }
 
             ProgrammingSubmission newProgrammingSubmission = programmingSubmissionService.processNewProgrammingSubmission(programmingExerciseParticipation, requestBody);
@@ -106,12 +107,15 @@ public class PublicProgrammingSubmissionResource {
             return ResponseEntity.status(HttpStatus.OK).build();
         }
         catch (EntityNotFoundException ex) {
-            log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request body {}", participationId,
-                    participationId, requestBody, ex);
+            log.error("Participation with id {} not found: processing submission failed for request body {}", participationId, requestBody, ex);
+            throw ex;
+        }
+        catch (BadRequestAlertException ex) {
+            log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission failed for request body {}", participationId, requestBody, ex);
             throw ex;
         }
         catch (VersionControlException ex) {
-            log.warn("User committed to the wrong branch for participation + " + participationId);
+            log.warn("User committed to the wrong branch for participation {}", participationId);
             return ResponseEntity.status(HttpStatus.OK).build();
         }
 

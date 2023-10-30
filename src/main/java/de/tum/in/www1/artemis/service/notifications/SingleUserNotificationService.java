@@ -3,14 +3,12 @@ package de.tum.in.www1.artemis.service.notifications;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
-import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.*;
+import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.WEBAPP;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -18,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Posting;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
@@ -27,8 +26,12 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 
 @Service
 public class SingleUserNotificationService {
@@ -45,15 +48,25 @@ public class SingleUserNotificationService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final ConversationMessageRepository conversationMessageRepository;
+
+    private final ConversationService conversationService;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
             WebsocketMessagingService websocketMessagingService, GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService,
-            StudentParticipationRepository studentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository, ConversationMessageRepository conversationMessageRepository, ConversationService conversationService,
+            AuthorizationCheckService authorizationCheckService) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.userRepository = userRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.notificationService = notificationService;
         this.notificationSettingsService = notificationSettingsService;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.conversationMessageRepository = conversationMessageRepository;
+        this.conversationService = conversationService;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -71,8 +84,8 @@ public class SingleUserNotificationService {
             // Exercise related
             case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
             // Plagiarism related
-            case NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT -> createNotification((PlagiarismCase) notificationSubject, notificationType,
-                    (User) typeSpecificInformation, author);
+            case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT -> createNotification((PlagiarismCase) notificationSubject,
+                    notificationType, (User) typeSpecificInformation, author);
             // Tutorial Group related
             case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED -> createNotification(
                     ((TutorialGroupNotificationSubject) notificationSubject).tutorialGroup, notificationType, ((TutorialGroupNotificationSubject) notificationSubject).users,
@@ -234,6 +247,17 @@ public class SingleUserNotificationService {
     }
 
     /**
+     * Notify student about possible plagiarism case opened by the continuous plagiarism control.
+     * The notification is created without explicit notification author.
+     *
+     * @param plagiarismCase that hold the major information for the plagiarism case
+     * @param student        who should be notified
+     */
+    public void notifyUserAboutNewContinuousPlagiarismControlPlagiarismCase(PlagiarismCase plagiarismCase, User student) {
+        notifyRecipientWithNotificationType(plagiarismCase, NEW_CPC_PLAGIARISM_CASE_STUDENT, student, null);
+    }
+
+    /**
      * Notify student about plagiarism case verdict.
      *
      * @param plagiarismCase that hold the major information for the plagiarism case
@@ -360,6 +384,39 @@ public class SingleUserNotificationService {
      */
     public void notifyUserAboutNewMessageReply(AnswerPost answerPost, User user, User responsibleUser) {
         notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), CONVERSATION_NEW_REPLY_MESSAGE, null, responsibleUser);
+    }
+
+    /**
+     * Notifies involved users about the new answer message, i.e. the author of the original message, users that have also replied, and mentioned users
+     *
+     * @param post               the message the answer belongs to
+     * @param mentionedUsers     users mentioned in the answer message
+     * @param savedAnswerMessage the answer message
+     * @param author             the author of the answer message
+     */
+    @Async
+    public void notifyInvolvedUsersAboutNewMessageReply(Post post, Set<User> mentionedUsers, AnswerPost savedAnswerMessage, User author) {
+        SecurityUtils.setAuthorizationObject(); // required for async
+        Set<User> usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
+        // do not notify the author of the post if they are not part of the conversation (e.g. if they left or have been removed from the conversation)
+        if (conversationService.isMember(post.getConversation().getId(), post.getAuthor().getId())) {
+            usersInvolved.add(post.getAuthor());
+        }
+
+        mentionedUsers.forEach(user -> {
+            boolean isChannelAndCourseWide = post.getConversation() instanceof Channel channel && channel.getIsCourseWide();
+            boolean isChannelVisibleToStudents = !(post.getConversation() instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
+            boolean isChannelVisibleToMentionedUser = isChannelVisibleToStudents || authorizationCheckService.isAtLeastTeachingAssistantInCourse(post.getCourse(), user);
+
+            // Only send a notification to the mentioned user if...
+            // (for course-wide channels) ...the course-wide channel is visible
+            // (for all other cases) ...the user is a member of the conversation
+            if ((isChannelAndCourseWide && isChannelVisibleToMentionedUser) || conversationService.isMember(post.getConversation().getId(), user.getId())) {
+                usersInvolved.add(user);
+            }
+        });
+
+        usersInvolved.forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author));
     }
 
     /**

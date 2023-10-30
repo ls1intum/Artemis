@@ -84,8 +84,9 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         String m2Home = System.getenv("M2_HOME");
         String mavenHome = System.getProperty("maven.home");
 
-        if (m2Home != null || mavenHome != null)
+        if (m2Home != null || mavenHome != null) {
             return;
+        }
 
         try {
             String mvnExecutable = Os.isFamily(Os.FAMILY_WINDOWS) ? "mvn.cmd" : "mvn";
@@ -253,7 +254,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         }
         catch (Exception e) {
             // printing the cause because this contains the relevant error message (and not a generic one from the connector)
-            log.error("Error occurred while executing Gradle build: " + e.getCause());
+            log.error("Error occurred while executing Gradle build.", e.getCause());
             return -1;
         }
         return 0;

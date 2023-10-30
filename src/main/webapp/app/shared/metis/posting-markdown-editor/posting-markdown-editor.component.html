@@ -3,7 +3,6 @@
         class="markdown-editor background-editor-color w-100"
         [markdown]="content"
         (markdownChange)="updateField($event)"
-        [enableResize]="true"
         [resizableMinHeight]="editorHeight"
         (onEditSelect)="previewMode = false"
         (onPreviewSelect)="previewMode = true"

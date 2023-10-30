@@ -11,8 +11,6 @@ import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledOnOs;
-import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -40,7 +38,7 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     void initTestCase() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
-        programmingExerciseIntegrationTestService.setup(TEST_PREFIX, this, versionControlService);
+        programmingExerciseIntegrationTestService.setup(TEST_PREFIX, this, versionControlService, continuousIntegrationService);
     }
 
     @AfterEach
@@ -85,14 +83,12 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportSubmissionsByParticipationIds() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionsByParticipationIds();
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS) // file locking issues
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportSubmissionAnonymizationCombining() throws Exception {
         programmingExerciseIntegrationTestService.testExportSubmissionAnonymizationCombining();
@@ -212,7 +208,6 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     }
 
     @Test
-    @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = TEST_PREFIX + "instructoralt1", roles = "INSTRUCTOR")
     void testGetProgrammingExercise_instructorNotInCourse_forbidden() throws Exception {
         programmingExerciseIntegrationTestService.testGetProgrammingExercise_instructorNotInCourse_forbidden();
@@ -284,6 +279,12 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.updateProgrammingExercise_eitherCourseOrExerciseGroupSet_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateProgrammingExercise_correctlySavesTestIds() throws Exception {
+        programmingExerciseIntegrationTestService.updateProgrammingExercise_correctlySavesTestIds();
     }
 
     @Test
@@ -705,6 +706,12 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest() throws Exception {
         programmingExerciseIntegrationTestService.importProgrammingExercise_bambooProjectWithSameTitleAlreadyExists_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importProgrammingExercise_updatesTestCaseIds() throws Exception {
+        programmingExerciseIntegrationTestService.importProgrammingExercise_updatesTestCaseIds();
     }
 
     @Test

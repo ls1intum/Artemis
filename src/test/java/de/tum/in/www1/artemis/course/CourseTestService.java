@@ -6,8 +6,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockStatic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
@@ -55,7 +58,10 @@ import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exam.ExamFactory;
@@ -92,6 +98,7 @@ import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
@@ -2007,10 +2014,9 @@ public class CourseTestService {
     }
 
     private void extractAndAssertMissingContent(Path courseArchivePath, QuizSubmission quizSubmission, Predicate<Path> missingPathPredicate) throws IOException {
-        zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
+        Path courseArchiveDir = zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
         var exercise = quizSubmission.getParticipation().getExercise();
         StudentParticipation studentParticipation = (StudentParticipation) quizSubmission.getParticipation();
-        var courseArchiveDir = courseArchivePath.getParent().resolve(courseArchivePath.getFileName().toString().replace(".zip", ""));
         assertThat(courseArchiveDir).exists();
 
         try (var files = Files.walk(courseArchiveDir)) {
@@ -2022,13 +2028,15 @@ public class CourseTestService {
                             file -> ("participation-" + studentParticipation.getId() + "-" + studentParticipation.getParticipantIdentifier()).equals(file.getFileName().toString()))
                     .noneMatch(missingPathPredicate);
         }
+
+        org.apache.commons.io.FileUtils.deleteDirectory(courseArchiveDir.toFile());
+        org.apache.commons.io.FileUtils.delete(courseArchivePath.toFile());
     }
 
     private void extractAndAssertContent(Path courseArchivePath, QuizSubmission quizSubmission) throws IOException {
-        zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
+        Path courseArchiveDir = zipFileTestUtilService.extractZipFileRecursively(courseArchivePath.toString());
         var exercise = quizSubmission.getParticipation().getExercise();
         StudentParticipation studentParticipation = (StudentParticipation) quizSubmission.getParticipation();
-        var courseArchiveDir = courseArchivePath.getParent().resolve(courseArchivePath.getFileName().toString().replace(".zip", ""));
         assertThat(courseArchiveDir).exists();
         try (var files = Files.walk(courseArchiveDir)) {
             assertThat(files.filter(file -> Files.isDirectory(file) || Files.isRegularFile(file)))
@@ -2046,6 +2054,9 @@ public class CourseTestService {
                     // short answer submission txt file
                     .anyMatch(file -> file.getFileName().toString().contains("short_answer_questions_answers") && file.getFileName().toString().endsWith(".txt"));
         }
+
+        org.apache.commons.io.FileUtils.deleteDirectory(courseArchiveDir.toFile());
+        org.apache.commons.io.FileUtils.delete(courseArchivePath.toFile());
     }
 
     /**
@@ -2165,6 +2176,43 @@ public class CourseTestService {
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).isEmpty();
     }
 
+    /**
+     * Test
+     */
+    public void testSearchMembersForUserMentionsSearchTermFilteringCorrect() throws Exception {
+        var course = createCourseForUserSearchTest();
+        MultiValueMap<String, String> queryParameter = new LinkedMultiValueMap<>();
+
+        queryParameter.add("loginOrName", userPrefix + "tutor");
+        var result = request.getList("/api/courses/" + course.getId() + "/members/search", HttpStatus.OK, UserNameAndLoginDTO.class, queryParameter);
+
+        assertThat(result).hasSize(numberOfTutors);
+        result.forEach(dto -> assertThat(dto.name().contains(userPrefix + "tutor")).isTrue());
+    }
+
+    /**
+     * Test
+     */
+    public void testSearchMembersForUserMentionsSearchResultLimit() throws Exception {
+        var course = createCourseForUserSearchTest();
+        MultiValueMap<String, String> queryParameter = new LinkedMultiValueMap<>();
+
+        queryParameter.set("loginOrName", "");
+        var result = request.getList("/api/courses/" + course.getId() + "/members/search", HttpStatus.OK, UserNameAndLoginDTO.class, queryParameter);
+
+        assertThat(result).hasSize(10);
+        assertThat(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors).isGreaterThan(10);
+    }
+
+    /**
+     * Test
+     */
+    public void testSearchMembersForUserMentionsNoSearchTerm() throws Exception {
+        var course = createCourseForUserSearchTest();
+
+        request.getList("/api/courses/" + course.getId() + "/members/search", HttpStatus.BAD_REQUEST, UserNameAndLoginDTO.class);
+    }
+
     private Course createCourseForUserSearchTest() {
         String suffix = "searchUserTest";
         adjustUserGroupsToCustomGroups(suffix);
@@ -2231,11 +2279,14 @@ public class CourseTestService {
 
         // Extract the archive
         Path archivePath = exportedCourse.get();
-        zipFileTestUtilService.extractZipFileRecursively(archivePath.toString());
-        String extractedArchiveDir = archivePath.toString().substring(0, archivePath.toString().length() - 4);
+        Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(archivePath.toString());
 
-        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+        try (var files = Files.walk(extractedArchiveDir)) {
             return files.filter(Files::isRegularFile).map(Path::getFileName).filter(path -> !path.toString().endsWith(".zip")).toList();
+        }
+        finally {
+            org.apache.commons.io.FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+            org.apache.commons.io.FileUtils.delete(archivePath.toFile());
         }
     }
 
@@ -2327,13 +2378,12 @@ public class CourseTestService {
         assertThat(archive.getPath().length()).isGreaterThanOrEqualTo(4);
 
         // Extract the archive
-        zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
-        String extractedArchiveDir = archive.getPath().substring(0, archive.getPath().length() - 4);
+        Path extractedArchiveDir = zipFileTestUtilService.extractZipFileRecursively(archive.getAbsolutePath());
 
         // We test for the filenames of the submissions since it's the easiest way.
         // We don't test the directory structure
         List<Path> filenames;
-        try (var files = Files.walk(Path.of(extractedArchiveDir))) {
+        try (var files = Files.walk(extractedArchiveDir)) {
             filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
         }
 
@@ -2354,6 +2404,9 @@ public class CourseTestService {
                 }
             }
         }
+
+        org.apache.commons.io.FileUtils.deleteDirectory(extractedArchiveDir.toFile());
+        org.apache.commons.io.FileUtils.delete(archive);
     }
 
     // Test
@@ -3196,6 +3249,11 @@ public class CourseTestService {
 
         var result = request.getMvc().perform(buildCreateCourse(course, "testIcon")).andExpect(status().isCreated()).andReturn();
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+
+        assertThat(course.getCourseIcon()).as("Course icon got stored").isNotNull();
+        var imgResult = request.getMvc().perform(get(course.getCourseIcon())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
+                .andReturn();
+        assertThat(imgResult.getResponse().getContentAsByteArray()).isNotEmpty();
 
         var createdCourse = courseRepo.findByIdElseThrow(course.getId());
         assertThat(createdCourse.getCourseIcon()).as("Course icon got stored").isNotNull();

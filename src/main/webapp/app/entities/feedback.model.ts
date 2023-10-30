@@ -3,6 +3,7 @@ import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { convertToHtmlLinebreaks, escapeString } from 'app/utils/text.utils';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -19,8 +20,19 @@ export enum FeedbackType {
     AUTOMATIC_ADAPTED = 'AUTOMATIC_ADAPTED',
 }
 
+export enum FeedbackSuggestionType {
+    NO_SUGGESTION = 'NO_SUGGESTION', // No suggestion at all
+    SUGGESTED = 'SUGGESTED', // Suggestion is made, but not accepted yet
+    ACCEPTED = 'ACCEPTED', // Suggestion is accepted
+    ADAPTED = 'ADAPTED', // Suggestion is accepted and then modified by the TA
+}
+
+// Prefixes for the feedback text to identify the feedback type more specifically without having to change the database schema:
 export const STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER = 'SCAFeedbackIdentifier:';
 export const SUBMISSION_POLICY_FEEDBACK_IDENTIFIER = 'SubPolFeedbackIdentifier:';
+export const FEEDBACK_SUGGESTION_IDENTIFIER = 'FeedbackSuggestion:';
+export const FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER = 'FeedbackSuggestion:accepted:';
+export const FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER = 'FeedbackSuggestion:adapted:';
 
 export interface DropInfo {
     instruction: GradingInstruction;
@@ -61,9 +73,7 @@ export class Feedback implements BaseEntity {
     public type?: FeedbackType;
     public result?: Result;
     public positive?: boolean;
-    public suggestedFeedbackReference?: string;
-    public suggestedFeedbackOriginSubmissionReference?: number;
-    public suggestedFeedbackParticipationReference?: number;
+    public testCase?: ProgrammingExerciseTestCase;
 
     // Specifies whether the tutor feedback is correct relative to the instructor feedback (during tutor training) or if there is a validation error.
     // Client only property.
@@ -77,6 +87,9 @@ export class Feedback implements BaseEntity {
 
     public isSubsequent?: boolean; // helper attribute to find feedback which is not included in the total score on the client
 
+    private static readonly programmingReferencePrefix = 'file:';
+    private static readonly programmingReferenceLineSeparator = '_line:';
+
     constructor() {
         this.credits = 0;
     }
@@ -85,24 +98,46 @@ export class Feedback implements BaseEntity {
         if (feedback.type !== FeedbackType.AUTOMATIC) {
             return false;
         }
-        if (!feedback.text) {
-            return true;
-        }
-        return !feedback.text.includes(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, 0) && !feedback.text.includes(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, 0);
+        return !!feedback.testCase;
     }
 
     public static isStaticCodeAnalysisFeedback(that: Feedback): boolean {
         if (!that.text) {
             return false;
         }
-        return that.type === FeedbackType.AUTOMATIC && that.text.includes(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, 0);
+        return that.type === FeedbackType.AUTOMATIC && that.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER);
     }
 
     public static isSubmissionPolicyFeedback(that: Feedback): boolean {
         if (!that.text) {
             return false;
         }
-        return that.type === FeedbackType.AUTOMATIC && that.text.includes(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, 0);
+        return that.type === FeedbackType.AUTOMATIC && that.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER);
+    }
+
+    public static isFeedbackSuggestion(that: Feedback): boolean {
+        if (!that.text) {
+            return false;
+        }
+        return that.text.startsWith(FEEDBACK_SUGGESTION_IDENTIFIER);
+    }
+
+    /**
+     * Determine the type of the feedback suggestion. See FeedbackSuggestionType for more details on the meanings.
+     * @param that feedback to determine the type of
+     */
+    public static getFeedbackSuggestionType(that: Feedback): FeedbackSuggestionType {
+        if (!Feedback.isFeedbackSuggestion(that)) {
+            return FeedbackSuggestionType.NO_SUGGESTION;
+        }
+        // that.text is guaranteed to be defined here because the feedback is a suggestion, which must have a text
+        if (that.text!.startsWith(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER)) {
+            return FeedbackSuggestionType.ACCEPTED;
+        }
+        if (that.text!.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER)) {
+            return FeedbackSuggestionType.ADAPTED;
+        }
+        return FeedbackSuggestionType.SUGGESTED;
     }
 
     public static hasDetailText(that: Feedback): boolean {
@@ -111,7 +146,41 @@ export class Feedback implements BaseEntity {
 
     public static hasContent(that: Feedback): boolean {
         // if the feedback is associated with the grading instruction, the detail text is optional
-        return Feedback.hasDetailText(that) || !!(that.gradingInstruction && that.gradingInstruction.feedback);
+        return Feedback.hasDetailText(that) || !!that.gradingInstruction?.feedback;
+    }
+
+    /**
+     * Get the referenced file path for referenced programming feedbacks, or undefined.
+     * Typical reference format for programming feedback: `file:src/com/example/package/MyClass.java_line:13`.
+     * Example output in this case: `src/com/example/package/MyClass.java`
+     */
+    public static getReferenceFilePath(feedback: Feedback): string | undefined {
+        if (!feedback.reference?.startsWith(this.programmingReferencePrefix)) {
+            // Find "file:" prefix
+            // No programming feedback
+            return undefined;
+        }
+        const indexOfLine = feedback.reference?.lastIndexOf(this.programmingReferenceLineSeparator);
+        return feedback.reference.substring(this.programmingReferencePrefix.length, indexOfLine); // Split after "_line:"
+    }
+
+    /**
+     * Get the referenced line for referenced programming feedbacks, or undefined.
+     * Typical reference format for programming feedback: `file:src/com/example/package/MyClass.java_line:13`.
+     * Example output in this case: 13
+     */
+    public static getReferenceLine(feedback: Feedback): number | undefined {
+        if (!feedback.reference?.startsWith(this.programmingReferencePrefix)) {
+            // Find "file:" prefix
+            // No programming feedback
+            return undefined;
+        }
+        const indexOfLine = feedback.reference.lastIndexOf(this.programmingReferenceLineSeparator); // Split before "_line:"
+        const line = parseInt(feedback.reference.substring(indexOfLine + this.programmingReferenceLineSeparator.length));
+        if (isNaN(line)) {
+            return undefined;
+        }
+        return line;
     }
 
     /**
@@ -152,7 +221,7 @@ export class Feedback implements BaseEntity {
         that.referenceType = referenceType;
         that.credits = credits;
         that.text = text;
-        if (dropInfo && dropInfo.instruction?.id) {
+        if (dropInfo?.instruction?.id) {
             that.gradingInstruction = dropInfo.instruction;
         }
         if (referenceType && referenceId) {
@@ -199,7 +268,7 @@ export class Feedback implements BaseEntity {
  */
 export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText = true): string => {
     let feedbackText = '';
-    if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
+    if (feedback.gradingInstruction?.feedback) {
         feedbackText = feedback.gradingInstruction.feedback;
         if (feedback.detailText) {
             feedbackText = feedbackText + '\n' + feedback.detailText;
