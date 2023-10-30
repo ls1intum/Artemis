@@ -32,8 +32,8 @@ group = "de.tum.in.www1.artemis"
 version = "6.6.3"
 description = "Interactive Learning with Individual Feedback"
 
-sourceCompatibility=21
-targetCompatibility=21
+sourceCompatibility=17
+targetCompatibility=17
 
 //this enables us to invoke ./gradlew liquibaseDiffChangelog
 apply from: "gradle/liquibase.gradle"
