@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, Renderer2 } from '@angular/core';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 export interface Coordinates {
@@ -37,24 +37,30 @@ export class ColorSelectorComponent implements OnInit {
     @Input() tagColors: string[] = DEFAULT_COLORS;
     @Output() selectedColor = new EventEmitter<string>();
 
+    constructor(
+        private elementRef: ElementRef,
+        private renderer: Renderer2,
+    ) {}
+
     /**
      * set default position on init
      */
     ngOnInit(): void {
         this.colorSelectorPosition = { left: 0, top: 0 };
+
+        this.addEventListenerToCloseComponentOnClickOutside();
     }
 
-    /**
-     * close colorSelector if click happens outside
-     * @param event
-     */
-    @HostListener('document:click', ['$event'])
-    clickOutside(event: any) {
-        if (this.showColorSelector) {
-            if (!event.target?.className.includes('color-selector') && !event.target?.className.includes('color-preview')) {
-                this.showColorSelector = false;
+    private addEventListenerToCloseComponentOnClickOutside() {
+        this.renderer.listen('document', 'click', (event: Event) => {
+            if (this.showColorSelector) {
+                const target = event.target as HTMLElement;
+
+                if (!this.elementRef.nativeElement.contains(target)) {
+                    this.showColorSelector = false;
+                }
             }
-        }
+        });
     }
 
     /**
