@@ -229,7 +229,7 @@ public class AttachmentUnitResource {
      * @param filename  the name of the lecture file to be split, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body attachmentUnitsData
      */
-    @GetMapping("lectures/{lectureId}/attachment-units/{filename}")
+    @GetMapping("lectures/{lectureId}/attachment-units/data/{filename}")
     @EnforceAtLeastEditor
     public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to split lecture file : {}", filename);

@@ -43,7 +43,7 @@ export class AttachmentUnitService {
     }
 
     getSplitUnitsData(lectureId: number, filename: string) {
-        return this.httpClient.get<LectureUnitInformationDTO>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${filename}`, { observe: 'response' });
+        return this.httpClient.get<LectureUnitInformationDTO>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/data/${filename}`, { observe: 'response' });
     }
 
     createUnits(lectureId: number, filename: string, lectureUnitInformation: LectureUnitInformationDTO) {
