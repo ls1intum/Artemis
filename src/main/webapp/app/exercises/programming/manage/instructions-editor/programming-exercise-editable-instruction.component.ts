@@ -174,7 +174,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                         if (testCases) {
                             const sortedTestCaseNames = testCases
                                 .filter((testCase) => testCase.active)
-                                .map((testCase) => testCase.testName)
+                                .map((testCase) => testCase.testName!)
                                 .sort();
                             return of(sortedTestCaseNames);
                         } else if (this.exercise.templateParticipation) {
@@ -201,8 +201,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<Array<string | undefined>> => {
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
-            rxMap((result) => (!result || !result.feedbacks ? throwError(() => new Error('no result available')) : result)),
-            rxMap(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text).sort()),
+            rxMap((result) => (!result?.feedbacks ? throwError(() => new Error('no result available')) : result)),
+            // use the text (legacy case) or the name of the provided test case attribute
+            rxMap(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text ?? feedback.testCase?.testName).sort()),
             catchError(() => of([])),
         );
     };
