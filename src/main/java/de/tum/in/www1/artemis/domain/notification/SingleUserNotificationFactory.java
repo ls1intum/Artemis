@@ -125,6 +125,12 @@ public class SingleUserNotificationFactory {
                 placeholderValues = new String[] { affectedExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
                         affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle() };
             }
+            case NEW_CPC_PLAGIARISM_CASE_STUDENT -> {
+                title = NEW_CPC_PLAGIARISM_CASE_STUDENT_TITLE;
+                notificationText = NEW_CPC_PLAGIARISM_CASE_STUDENT_TEXT;
+                placeholderValues = new String[] { affectedExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
+                        affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle() };
+            }
             case PLAGIARISM_CASE_VERDICT_STUDENT -> {
                 title = PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
                 notificationText = PLAGIARISM_CASE_VERDICT_STUDENT_TEXT;
