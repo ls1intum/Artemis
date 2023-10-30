@@ -82,9 +82,8 @@ export class TextExerciseUpdateComponent implements OnInit {
      * Initializes all relevant data for creating or editing text exercise
      */
     ngOnInit() {
-        // This is used to scroll page to the top of the page, because the routing keeps the position for the
-        // new page from previous page.
-        window.scroll(0, 0);
+        // otherwise the router keeps the position for the new page from previous page
+        this.scrollToTopOfPage();
 
         // Get the textExercise
         this.activatedRoute.data.subscribe(({ textExercise }) => {
@@ -211,5 +210,9 @@ export class TextExerciseUpdateComponent implements OnInit {
             onError(this.alertService, errorRes);
         }
         this.isSaving = false;
+    }
+
+    private scrollToTopOfPage() {
+        window.scroll(0, 0);
     }
 }
