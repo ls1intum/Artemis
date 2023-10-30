@@ -33,7 +33,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
 
-import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -206,23 +205,45 @@ public class LocalCIContainerService {
      * @param buildScriptPath            the path to the build script
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths,
-            String[] auxiliaryRepositoriesNames, Path buildScriptPath) {
-        copyToContainer(assignmentRepositoryPath.toString(), buildJobContainerId);
-        renameDirectoryOrFile(buildJobContainerId, assignmentRepositoryPath.getFileName().toString(), "assignment-repository");
-        copyToContainer(testRepositoryPath.toString(), buildJobContainerId);
-        renameDirectoryOrFile(buildJobContainerId, testRepositoryPath.getFileName().toString(), "test-repository");
+            String[] auxiliaryRepositoriesNames, Path buildScriptPath) throws InterruptedException {
+
+        ExecCreateCmdResponse createDirectoryCmdReponse = dockerClient.execCreateCmd(buildJobContainerId).withCmd("mkdir", "/repositories").exec();
+        dockerClient.execStartCmd(createDirectoryCmdReponse.getId()).exec(new ResultCallback.Adapter<>());
+
+        addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, "repositories/test-repository", true);
+        addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, "repositories/assignment-repository", true);
+
+        // also need the assignment repository within test-repository
+        addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, "repositories/test-repository/assignment", true);
 
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
-            copyToContainer(auxiliaryRepositoriesPaths[i].toString(), buildJobContainerId);
-            renameDirectoryOrFile(buildJobContainerId, auxiliaryRepositoriesPaths[i].getFileName().toString(), auxiliaryRepositoriesNames[i] + "-repository");
+            addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], "repositories/test-repository/" + auxiliaryRepositoriesNames[i] + "/", true);
         }
-        copyToContainer(buildScriptPath.toString(), buildJobContainerId);
-        renameDirectoryOrFile(buildJobContainerId, buildScriptPath.getFileName().toString(), "script.sh");
+
+        addAndPrepareDirectory(buildJobContainerId, buildScriptPath, "script.sh", false);
     }
 
-    private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
+    private void addAndPrepareDirectory(String containerId, Path repositoryPath, String newDirectoryName, Boolean isDirectory) throws InterruptedException {
+        copyToContainer(repositoryPath.toString(), containerId);
+        renameDirectoryOrFile(containerId, repositoryPath.getFileName().toString(), newDirectoryName);
+        if (isDirectory) {
+            convertDosFilesToUnix(newDirectoryName + "/", containerId);
+        }
+        else {
+            convertDosFilesToUnix(newDirectoryName, containerId);
+        }
+    }
+
+    private void renameDirectoryOrFile(String containerId, String oldName, String newName) throws InterruptedException {
         ExecCreateCmdResponse renameDirectoryCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("mv", oldName, newName).exec();
-        dockerClient.execStartCmd(renameDirectoryCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
+        dockerClient.execStartCmd(renameDirectoryCmdResponse.getId()).exec(new ResultCallback.Adapter<>()).awaitCompletion();
+    }
+
+    private void convertDosFilesToUnix(String path, String containerId) throws InterruptedException {
+        // This is for the case the files where created on a Windows machine and contain DOS line endings.
+        ExecCreateCmdResponse convertDosToUnixCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("sh", "-c", "find " + path + " -type f -exec sed -i 's/\\r$//' {} \\;")
+                .exec();
+        dockerClient.execStartCmd(convertDosToUnixCmdResponse.getId()).exec(new ResultCallback.Adapter<>()).awaitCompletion();
     }
 
     private void copyToContainer(String sourcePath, String containerId) {
@@ -283,13 +304,11 @@ public class LocalCIContainerService {
      * The build script is stored in a file in the local-ci-scripts directory.
      * The build script is used to build the programming exercise in a Docker container.
      *
-     * @param programmingExercise   the programming exercise for which to create the build script
-     * @param auxiliaryRepositories the auxiliary repositories of the programming exercise
+     * @param programmingExercise the programming exercise for which to create the build script
      * @return the path to the build script file
      */
-    public Path createBuildScript(ProgrammingExercise programmingExercise, List<AuxiliaryRepository> auxiliaryRepositories) {
+    public Path createBuildScript(ProgrammingExercise programmingExercise) {
         Long programmingExerciseId = programmingExercise.getId();
-        boolean hasAuxiliaryRepositories = auxiliaryRepositories != null && !auxiliaryRepositories.isEmpty();
         boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
@@ -307,58 +326,6 @@ public class LocalCIContainerService {
 
         StringBuilder buildScript = new StringBuilder("""
                 #!/bin/bash
-                mkdir /repositories
-                """);
-
-        // If git is installed, clone the repositories. Otherwise, just copy them.
-        // For some reason, simply copying the repositories messes with gradle and causing it to fail when running tests
-        buildScript.append("""
-                if [ -x "$(command -v git)" ]; then
-                    echo "Git is installed"
-                """);
-
-        // Checkout tasks
-        buildScript.append("""
-                    cd /repositories
-                    git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///test-repository
-                    git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///assignment-repository
-                """);
-
-        if (hasAuxiliaryRepositories) {
-            buildScript.append(cloneAuxiliaryRepositories(auxiliaryRepositories));
-        }
-
-        buildScript.append("""
-                    cd assignment-repository
-                    if [ -n "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH" ]; then
-                        git fetch --depth 1 origin "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
-                        git checkout "$ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH"
-                    fi
-                    mkdir /repositories/test-repository/assignment
-                    cp -a /repositories/assignment-repository/. /repositories/test-repository/assignment/
-                """);
-
-        // Copy auxiliary repositories to checkout directories
-        if (hasAuxiliaryRepositories) {
-            buildScript.append(copyAuxiliaryRepositories(auxiliaryRepositories, "/repositories/"));
-        }
-
-        // If git is not installed, copy the repositories
-        buildScript.append("""
-                else
-                    echo "Git is not installed"
-                    mkdir /repositories/test-repository
-                    mkdir /repositories/assignment-repository
-                    cp -a /test-repository/. /repositories/test-repository/
-                    cp -a /assignment-repository/. /repositories/assignment-repository/
-                    cp -a /assignment-repository/. /repositories/test-repository/assignment/
-                """);
-        if (hasAuxiliaryRepositories) {
-            buildScript.append(copyAuxiliaryRepositories(auxiliaryRepositories, "/"));
-        }
-
-        buildScript.append("""
-                fi
                 cd /repositories/test-repository
                 """);
 
@@ -377,23 +344,6 @@ public class LocalCIContainerService {
         }
 
         return buildScriptPath;
-    }
-
-    private StringBuilder cloneAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories) {
-        StringBuilder buildScript = new StringBuilder();
-        for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
-            buildScript.append("    git clone --depth 1 --branch $ARTEMIS_DEFAULT_BRANCH file:///").append(auxiliaryRepository.getName()).append("-repository\n");
-        }
-        return buildScript;
-    }
-
-    private StringBuilder copyAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories, String source) {
-        StringBuilder buildScript = new StringBuilder();
-        for (AuxiliaryRepository auxiliaryRepository : auxiliaryRepositories) {
-            buildScript.append("    cp -a ").append(source).append(auxiliaryRepository.getName()).append("-repository/. /repositories/test-repository/")
-                    .append(auxiliaryRepository.getCheckoutDirectory()).append("/\n");
-        }
-        return buildScript;
     }
 
     private void scriptForJavaKotlin(ProgrammingExercise programmingExercise, StringBuilder buildScript, boolean hasSequentialTestRuns) {
@@ -425,12 +375,14 @@ public class LocalCIContainerService {
         else {
             if (isMaven) {
                 buildScript.append("""
-                        mvn clean test""");
+                        mvn clean test
+                        """);
             }
             else {
                 buildScript.append("""
                         chmod +x gradlew
-                        ./gradlew clean test""");
+                        ./gradlew clean test
+                        """);
             }
         }
     }
