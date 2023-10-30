@@ -105,7 +105,12 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         if (this.versionControlAccessTokenRequired && !this.user.vcsAccessToken) {
             this.accountService
                 .identity(true)
-                .then((user) => (this.user = user!))
+                .then((user) => {
+                    this.user = user!;
+                    if (!this.user.vcsAccessToken) {
+                        this.alertService.error('placeholder');
+                    }
+                })
                 .catch(() => this.alertService.error('placeholder'));
         }
     }
