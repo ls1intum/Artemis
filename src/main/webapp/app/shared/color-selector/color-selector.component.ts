@@ -65,11 +65,13 @@ export class ColorSelectorComponent implements OnInit {
      */
     openColorSelector(event: MouseEvent, marginTop?: number, height?: number) {
         const parentElement = (event.target as Element).closest('.ng-trigger') as HTMLElement;
+
         this.colorSelectorPosition.left = parentElement ? parentElement.offsetLeft : 0;
         this.colorSelectorPosition.top = marginTop ?? 65;
         if (height !== undefined) {
             this.height = height;
         }
+
         this.showColorSelector = !this.showColorSelector;
     }
 

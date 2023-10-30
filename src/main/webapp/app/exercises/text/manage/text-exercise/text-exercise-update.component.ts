@@ -55,6 +55,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
+
     constructor(
         private alertService: AlertService,
         private textExerciseService: TextExerciseService,
