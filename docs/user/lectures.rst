@@ -46,7 +46,7 @@ Instructors have three options for creating a lecture.
     If instructors decide to process units automatically by clicking on the |process-units-checkbox| checkbox, additional information will be displayed
     and they can click on |process-units-btn| to process the lecture PDF into multiple units.
 
-        |create-lecture-automatic-unit-processing|
+       |automatic-unit-processing|
 
     Once the units are processed, instructors can view how the units are split, beginning from a start page to an end page. A name is automatically generated for each lecture unit.
     Instructors can also customize the table entries by removing or adding new units. Additionally, they can enter keywords if they want particular slides
@@ -192,5 +192,5 @@ See :ref:`Adaptive Learning <adaptive-learning>` for more information.
    :width: 120
 .. |processed-lecture-units| image:: lectures/processed-lecture-units.png
    :width: 800
-.. |create-lecture-automatic-unit-processing| image:: lectures/create-lecture-automatic-unit-processing.png
+.. |automatic-unit-processing| image:: lectures/automatic-unit-processing.png
    :width: 800
