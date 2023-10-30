@@ -12,6 +12,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-clone-repo-button',
@@ -55,6 +56,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         private translateService: TranslateService,
         private sourceTreeService: SourceTreeService,
         private accountService: AccountService,
+        private alertService: AlertService,
         private profileService: ProfileService,
         private localStorage: LocalStorageService,
         private participationService: ParticipationService,
@@ -100,7 +102,13 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     onClick() {
-        console.log('click');
+        this.user.vcsAccessToken = undefined;
+        if (this.versionControlAccessTokenRequired && !this.user.vcsAccessToken) {
+            this.accountService
+                .identity(true)
+                .then((user) => console.log(user))
+                .catch(() => this.alertService.error('placeholder'));
+        }
     }
 
     private getRepositoryUrl() {
