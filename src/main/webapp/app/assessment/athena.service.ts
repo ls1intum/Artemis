@@ -116,10 +116,10 @@ export class AthenaService {
                     feedback.credits = suggestion.credits;
                     feedback.text = FEEDBACK_SUGGESTION_IDENTIFIER + suggestion.title;
                     feedback.detailText = suggestion.description;
-                    if (suggestion.filePath != undefined && suggestion.lineStart != undefined) {
+                    if (suggestion.filePath != undefined && (suggestion.lineEnd ?? suggestion.lineStart) != undefined) {
                         // Referenced feedback
                         feedback.type = FeedbackType.MANUAL;
-                        feedback.reference = `file:${suggestion.filePath}_line:${suggestion.lineStart}`; // Ignore lineEnd for now because Artemis does not support it
+                        feedback.reference = `file:${suggestion.filePath}_line:${suggestion.lineEnd ?? suggestion.lineStart}`; // Only use a single line for now because Artemis does not support line ranges
                     } else {
                         // Unreferenced feedback
                         feedback.type = FeedbackType.MANUAL_UNREFERENCED;

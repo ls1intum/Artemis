@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.service.dto.GradingCriterionDTO;
 /**
  * A DTO representing a TextExercise, for transferring data to Athena
  */
-public record TextExerciseDTO(long id, String title, Double maxPoints, double bonusPoints, String gradingInstructions, List<GradingCriterionDTO> gradingCriteria,
+public record TextExerciseDTO(long id, String title, double maxPoints, double bonusPoints, String gradingInstructions, List<GradingCriterionDTO> gradingCriteria,
         String problemStatement, String exampleSolution) {
 
     /**

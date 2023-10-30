@@ -108,6 +108,8 @@ public class TextExerciseUtilService {
         textExercise.setCourse(course);
         textExercise.setTitle("Title");
         textExercise.setShortName("Shortname");
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(0.0);
         textExercise = textExerciseRepository.save(textExercise);
         return textExercise;
     }

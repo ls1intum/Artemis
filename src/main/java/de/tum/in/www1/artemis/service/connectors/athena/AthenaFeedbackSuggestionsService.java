@@ -57,11 +57,11 @@ public class AthenaFeedbackSuggestionsService {
     /**
      * Calls the remote Athena service to get feedback suggestions for a given submission.
      *
-     * @param exercise   the exercise the suggestions are fetched for
-     * @param submission the submission the suggestions are fetched for
+     * @param exercise   the {@link TextExercise} the suggestions are fetched for
+     * @param submission the {@link TextSubmission} the suggestions are fetched for
      * @return a list of feedback suggestions
      */
-    public List<TextFeedbackDTO> getTextFeedbackSuggestions(Exercise exercise, Submission submission) throws NetworkingException {
+    public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission) throws NetworkingException {
         log.debug("Start Athena Feedback Suggestions Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         if (!Objects.equals(submission.getParticipation().getExercise().getId(), exercise.getId())) {
@@ -77,13 +77,13 @@ public class AthenaFeedbackSuggestionsService {
     }
 
     /**
-     * Calls the remote Athena service to get feedback suggestions for a given submission.
+     * Calls the remote Athena service to get feedback suggestions for a given programming submission.
      *
-     * @param exercise   the exercise the suggestions are fetched for
-     * @param submission the submission the suggestions are fetched for
+     * @param exercise   the {@link ProgrammingExercise} the suggestions are fetched for
+     * @param submission the {@link ProgrammingSubmission} the suggestions are fetched for
      * @return a list of feedback suggestions
      */
-    public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(Exercise exercise, Submission submission) throws NetworkingException {
+    public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission) throws NetworkingException {
         log.debug("Start Athena Feedback Suggestions Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission));

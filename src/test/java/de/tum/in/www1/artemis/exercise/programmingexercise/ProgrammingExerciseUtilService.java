@@ -135,6 +135,8 @@ public class ProgrammingExerciseUtilService {
         programmingExercise.setTitle("Title");
         programmingExercise.setShortName("Shortname");
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setMaxPoints(10.0);
+        programmingExercise.setBonusPoints(0.0);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         return programmingExercise;
     }
