@@ -43,21 +43,21 @@ export class AttachmentUnitService {
     }
 
     getSplitUnitsData(lectureId: number, filename: string) {
-        return this.httpClient.get<LectureUnitInformationDTO>(`${this.resourceURL}/lectures/${lectureId}/process-units/${filename}`, { observe: 'response' });
+        return this.httpClient.get<LectureUnitInformationDTO>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${filename}`, { observe: 'response' });
     }
 
     createUnits(lectureId: number, filename: string, lectureUnitInformation: LectureUnitInformationDTO) {
-        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/process-units/split/${filename}`, lectureUnitInformation, { observe: 'response' });
+        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/attachment-units/split/${filename}`, lectureUnitInformation, { observe: 'response' });
     }
 
     uploadSlidesForProcessing(lectureId: number, file: File) {
         const formData: FormData = new FormData();
         formData.append('file', file);
-        return this.httpClient.post<string>(`${this.resourceURL}/lectures/${lectureId}/process-units/upload`, formData, { observe: 'response' });
+        return this.httpClient.post<string>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/upload`, formData, { observe: 'response' });
     }
 
     getSlidesToRemove(lectureId: number, filename: string, keyPhrases: string) {
         const params = new HttpParams().set('commaSeparatedKeyPhrases', keyPhrases);
-        return this.httpClient.get<Array<number>>(`${this.resourceURL}/lectures/${lectureId}/process-units/slides-to-remove/${filename}`, { params, observe: 'response' });
+        return this.httpClient.get<Array<number>>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/slides-to-remove/${filename}`, { params, observe: 'response' });
     }
 }

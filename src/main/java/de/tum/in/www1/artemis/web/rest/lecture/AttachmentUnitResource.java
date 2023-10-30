@@ -164,13 +164,13 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * POST lectures/:lectureId/process-units/upload : Temporarily uploads a file which will be processed into lecture units
+     * POST lectures/:lectureId/attachment-units/upload : Temporarily uploads a file which will be processed into lecture units
      *
      * @param file      the file that will be processed
      * @param lectureId the id of the lecture to which the attachment units will be added
      * @return the ResponseEntity with status 200 (ok) and with body filename of the uploaded file
      */
-    @PostMapping("lectures/{lectureId}/process-units/upload")
+    @PostMapping("lectures/{lectureId}/attachment-units/upload")
     @EnforceAtLeastEditor
     public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
         // time until the temporary file gets deleted. Must be greater or equal than MINUTES_UNTIL_DELETION in attachment-units.component.ts
@@ -192,14 +192,14 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * POST lectures/:lectureId/process-units/split : creates new attachment units from the given file and lecture unit information
+     * POST lectures/:lectureId/attachment-units/split : creates new attachment units from the given file and lecture unit information
      *
      * @param lectureId                 the id of the lecture to which the attachment units will be added
      * @param lectureUnitInformationDTO the units that will be created
      * @param filename                  the name of the lecture file, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment units
      */
-    @PostMapping("lectures/{lectureId}/process-units/split/{filename}")
+    @PostMapping("lectures/{lectureId}/attachment-units/split/{filename}")
     @EnforceAtLeastEditor
     public ResponseEntity<List<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestBody LectureUnitInformationDTO lectureUnitInformationDTO,
             @PathVariable String filename) {
@@ -223,13 +223,13 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * GET lectures/:lectureId/process-units : Calculates lecture units by splitting up the given file
+     * GET lectures/:lectureId/attachment-units : Calculates lecture units by splitting up the given file
      *
      * @param lectureId the id of the lecture to which the file is going to be split
      * @param filename  the name of the lecture file to be split, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body attachmentUnitsData
      */
-    @GetMapping("lectures/{lectureId}/process-units/{filename}")
+    @GetMapping("lectures/{lectureId}/attachment-units/{filename}")
     @EnforceAtLeastEditor
     public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to split lecture file : {}", filename);
@@ -250,14 +250,14 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * GET lectures/:lectureId/process-units/slides-to-remove : gets the slides to be removed
+     * GET lectures/:lectureId/attachment-units/slides-to-remove : gets the slides to be removed
      *
      * @param lectureId                the id of the lecture to which the unit belongs
      * @param filename                 the name of the file to be parsed, located in the temp folder
      * @param commaSeparatedKeyPhrases the comma seperated keyphrases to be removed
      * @return the ResponseEntity with status 200 (OK) and with body the list of slides to be removed
      */
-    @GetMapping("lectures/{lectureId}/process-units/slides-to-remove/{filename}")
+    @GetMapping("lectures/{lectureId}/attachment-units/slides-to-remove/{filename}")
     @EnforceAtLeastEditor
     public ResponseEntity<List<Integer>> getSlidesToRemove(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam String commaSeparatedKeyPhrases) {
         log.debug("REST request to get slides to remove for lecture file : {} and keywords : {}", filename, commaSeparatedKeyPhrases);
