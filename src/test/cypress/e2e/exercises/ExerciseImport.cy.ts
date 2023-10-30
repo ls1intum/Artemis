@@ -43,7 +43,7 @@ describe('Import exercises', () => {
                 textExercise = response.body;
             });
             exerciseAPIRequest.createQuizExercise({ course }, [multipleChoiceQuizTemplate]).then((response) => {
-                quizExercise = response.body;
+                quizExercise = convertModelAfterMultiPart(response);
             });
             exerciseAPIRequest.createModelingExercise({ course }).then((response) => {
                 modelingExercise = response.body;
