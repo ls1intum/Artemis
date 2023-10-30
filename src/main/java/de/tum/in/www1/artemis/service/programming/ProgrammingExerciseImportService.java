@@ -17,9 +17,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.FileService;
@@ -141,16 +138,15 @@ public class ProgrammingExerciseImportService {
         // running the plan for the first time
         cloneAndEnableAllBuildPlans(templateExercise, newExercise);
 
-        updatePlanRepositoriesInBuildPlans(newExercise, templateParticipation, solutionParticipation, targetExerciseProjectKey, templateExercise.getTemplateRepositoryUrl(),
-                templateExercise.getSolutionRepositoryUrl(), templateExercise.getTestRepositoryUrl(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
+        updatePlanRepositoriesInBuildPlans(newExercise, targetExerciseProjectKey, templateExercise.getTemplateRepositoryUrl(), templateExercise.getSolutionRepositoryUrl(),
+                templateExercise.getTestRepositoryUrl(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
 
         ContinuousIntegrationTriggerService triggerService = continuousIntegrationTriggerService.orElseThrow();
         triggerService.triggerBuild(templateParticipation);
         triggerService.triggerBuild(solutionParticipation);
     }
 
-    private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, TemplateProgrammingExerciseParticipation templateParticipation,
-            SolutionProgrammingExerciseParticipation solutionParticipation, String targetExerciseProjectKey, String oldExerciseRepoUrl, String oldSolutionRepoUrl,
+    private void updatePlanRepositoriesInBuildPlans(ProgrammingExercise newExercise, String targetExerciseProjectKey, String oldExerciseRepoUrl, String oldSolutionRepoUrl,
             String oldTestRepoUrl, List<AuxiliaryRepository> oldBuildPlanAuxiliaryRepositories) {
         String newExerciseBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(newExercise);
 
@@ -162,7 +158,7 @@ public class ProgrammingExerciseImportService {
         continuousIntegration.updatePlanRepository(targetExerciseProjectKey, newExercise.generateBuildPlanId(BuildPlanType.TEMPLATE), TEST_REPO_NAME, targetExerciseProjectKey,
                 newExercise.getTestRepositoryUrl(), oldTestRepoUrl, newExerciseBranch);
 
-        updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, templateParticipation,
+        updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, BuildPlanType.TEMPLATE,
                 targetExerciseProjectKey, newExercise);
 
         // update 2 repositories for the SOLUTION build plan
@@ -171,18 +167,19 @@ public class ProgrammingExerciseImportService {
         continuousIntegration.updatePlanRepository(targetExerciseProjectKey, newExercise.generateBuildPlanId(BuildPlanType.SOLUTION), TEST_REPO_NAME, targetExerciseProjectKey,
                 newExercise.getTestRepositoryUrl(), oldTestRepoUrl, newExerciseBranch);
 
-        updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, solutionParticipation,
+        updateAuxiliaryRepositoriesForNewExercise(newExercise.getAuxiliaryRepositoriesForBuildPlan(), oldBuildPlanAuxiliaryRepositories, BuildPlanType.SOLUTION,
                 targetExerciseProjectKey, newExercise);
     }
 
-    private void updateAuxiliaryRepositoriesForNewExercise(List<AuxiliaryRepository> newRepositories, List<AuxiliaryRepository> oldRepositories,
-            AbstractBaseProgrammingExerciseParticipation participation, String targetExerciseProjectKey, ProgrammingExercise newExercise) {
+    private void updateAuxiliaryRepositoriesForNewExercise(List<AuxiliaryRepository> newRepositories, List<AuxiliaryRepository> oldRepositories, BuildPlanType buildPlanType,
+            String targetExerciseProjectKey, ProgrammingExercise newExercise) {
         for (int i = 0; i < newRepositories.size(); i++) {
             AuxiliaryRepository newAuxiliaryRepository = newRepositories.get(i);
             AuxiliaryRepository oldAuxiliaryRepository = oldRepositories.get(i);
             String auxiliaryBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(newExercise);
-            continuousIntegrationService.orElseThrow().updatePlanRepository(targetExerciseProjectKey, participation.getBuildPlanId(), newAuxiliaryRepository.getName(),
-                    targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(), oldAuxiliaryRepository.getRepositoryUrl(), auxiliaryBranch);
+            continuousIntegrationService.orElseThrow().updatePlanRepository(targetExerciseProjectKey, newExercise.generateBuildPlanId(buildPlanType),
+                    newAuxiliaryRepository.getName(), targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(), oldAuxiliaryRepository.getRepositoryUrl(),
+                    auxiliaryBranch);
         }
     }
 
