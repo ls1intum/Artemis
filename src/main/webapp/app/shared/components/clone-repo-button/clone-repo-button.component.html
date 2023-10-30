@@ -8,13 +8,18 @@
         [buttonLoading]="loading"
         [smallButton]="smallButtons"
         [hideLabelMobile]="false"
-        [ngbPopover]="popContent"
+        [ngbPopover]="popover"
         [autoClose]="'outside'"
         (click)="onClick()"
         placement="right auto"
         container="body"
     ></button>
-    <ng-template #popContent>
+    <ng-template #popover>
+        <div *ngIf="this.versionControlAccessTokenRequired && !this.user.vcsAccessToken; else fullPopover">
+            {{ 'Data is being loaded. Please wait. (still needs translation)' }}
+        </div>
+    </ng-template>
+    <ng-template #fullPopover>
         <div *ngIf="this.versionControlAccessTokenRequired && !this.user.vcsAccessToken">{{ 'Data is being loaded. Please wait. (still needs translation)' }}</div>
         <div *ngIf="!this.versionControlAccessTokenRequired || (this.versionControlAccessTokenRequired && this.user.vcsAccessToken)">
             <div *ngIf="useSsh && !localVCEnabled" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
