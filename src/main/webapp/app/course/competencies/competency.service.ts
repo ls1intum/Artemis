@@ -118,13 +118,17 @@ export class CompetencyService {
         if (res.body?.lectureUnits) {
             res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
         }
-        if (res.body?.exercises) {
-            res.body.exercises = ExerciseService.convertExercisesDateFromServer(res.body.exercises);
-            res.body.exercises.forEach((exercise) => ExerciseService.parseExerciseCategories(exercise));
-        }
         if (res.body?.course) {
             this.accountService.setAccessRightsForCourse(res.body.course);
         }
+        if (res.body?.exercises) {
+            res.body.exercises = ExerciseService.convertExercisesDateFromServer(res.body.exercises);
+            res.body.exercises.forEach((exercise) => {
+                ExerciseService.parseExerciseCategories(exercise);
+                this.accountService.setAccessRightsForExercise(exercise);
+            });
+        }
+
         return res;
     }
 
