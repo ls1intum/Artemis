@@ -6,8 +6,9 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-modeling-submission-exam',
@@ -64,6 +65,10 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
         return this.exercise.id;
     }
 
+    getExercise(): Exercise {
+        return this.exercise;
+    }
+
     updateViewFromSubmission(): void {
         if (this.studentSubmission) {
             if (this.studentSubmission.model) {
@@ -117,5 +122,33 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     explanationChanged(explanation: string) {
         this.studentSubmission.isSynced = false;
         this.explanationText = explanation;
+    }
+
+    async setSubmissionVersion(submission: SubmissionVersion): Promise<void> {
+        this.submissionVersion = submission;
+        await this.updateViewFromSubmissionVersion();
+    }
+
+    /**
+     * Updates the model and explanation text with the latest submission version.
+     * It extracts the model and explanation text from the submission version and updates the view.
+     */
+    private async updateViewFromSubmissionVersion() {
+        if (this.submissionVersion?.content) {
+            // we need these string operations because we store the string in the database as concatenation of Model: <model>; Explanation: <explanation>
+            // and need to remove the content that was added before the string is saved to the db to get valid JSON
+            let model = this.submissionVersion.content.substring(0, this.submissionVersion.content.indexOf('; Explanation:'));
+            // if we do not wait here for apollon, the redux store might be undefined
+            await this.modelingEditor!.apollonEditor!.nextRender;
+            model = model.replace('Model: ', '');
+            // updates the Apollon editor model state (view) with the latest modeling submission
+            this.umlModel = JSON.parse(model);
+            // same as above regarding the string operations
+            const numberOfCharactersToSkip = 13; // Explanation:  is 13 characters long
+            this.explanationText = this.submissionVersion.content.substring(this.submissionVersion.content.indexOf('Explanation:') + numberOfCharactersToSkip) ?? '';
+
+            // if we do not call this, apollon doesn't show the updated model
+            this.changeDetectorReference.detectChanges();
+        }
     }
 }
