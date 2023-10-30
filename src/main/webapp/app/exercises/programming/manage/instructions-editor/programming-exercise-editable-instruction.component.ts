@@ -1,7 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
-import { Interactable } from '@interactjs/core/Interactable';
-import interact from 'interactjs';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
@@ -40,8 +38,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     savingInstructions = false;
     unsavedChangesValue = false;
-
-    interactResizable: Interactable;
 
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
@@ -120,36 +116,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     ngAfterViewInit() {
-        this.interactResizable = interact('.editable-instruction-container')
-            .resizable({
-                // Enable resize from top edge; triggered by class rg-top
-                edges: { left: false, right: false, bottom: '.rg-bottom', top: false },
-                // Set min and max height
-                modifiers: [
-                    // Set maximum width
-                    interact.modifiers!.restrictSize({
-                        min: { width: 0, height: 200 },
-                        max: { width: 2000, height: 1200 },
-                    }),
-                ],
-                inertia: true,
-            })
-            .on('resizestart', function (event: any) {
-                event.target.classList.add('card-resizable');
-            })
-            .on('resizeend', (event: any) => {
-                event.target.classList.remove('card-resizable');
-                this.markdownEditor.aceEditorContainer.getEditor().resize();
-            })
-            .on('resizemove', function (event: any) {
-                // The first child is the markdown editor.
-                const target = event.target.children && event.target.children[0];
-                if (target) {
-                    // Update element height
-                    target.style.height = event.rect.height + 'px';
-                }
-            });
-
         // If forced to render, generate the instruction HTML.
         if (this.forceRender) {
             this.forceRenderSubscription = this.forceRender.subscribe(() => this.generateHtml());
@@ -208,7 +174,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                         if (testCases) {
                             const sortedTestCaseNames = testCases
                                 .filter((testCase) => testCase.active)
-                                .map((testCase) => testCase.testName)
+                                .map((testCase) => testCase.testName!)
                                 .sort();
                             return of(sortedTestCaseNames);
                         } else if (this.exercise.templateParticipation) {
@@ -235,8 +201,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     loadTestCasesFromTemplateParticipationResult = (templateParticipationId: number): Observable<Array<string | undefined>> => {
         // Fallback for exercises that don't have test cases yet.
         return this.programmingExerciseParticipationService.getLatestResultWithFeedback(templateParticipationId).pipe(
-            rxMap((result) => (!result || !result.feedbacks ? throwError(() => new Error('no result available')) : result)),
-            rxMap(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text).sort()),
+            rxMap((result) => (!result?.feedbacks ? throwError(() => new Error('no result available')) : result)),
+            // use the text (legacy case) or the name of the provided test case attribute
+            rxMap(({ feedbacks }: Result) => feedbacks!.map((feedback) => feedback.text ?? feedback.testCase?.testName).sort()),
             catchError(() => of([])),
         );
     };
