@@ -2,14 +2,18 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
-import { NgxLearningPathDTO } from 'app/entities/competency/learning-path.model';
-import { map } from 'rxjs/operators';
+import { LearningPathInformationDTO, NgxLearningPathDTO } from 'app/entities/competency/learning-path.model';
+import { map, tap } from 'rxjs/operators';
+import { LearningPathStorageService } from 'app/course/learning-paths/participate/learning-path-storage.service';
 
 @Injectable({ providedIn: 'root' })
 export class LearningPathService {
     private resourceURL = 'api';
 
-    constructor(private httpClient: HttpClient) {}
+    constructor(
+        private httpClient: HttpClient,
+        private learningPathStorageService: LearningPathStorageService,
+    ) {}
 
     enableLearningPaths(courseId: number): Observable<HttpResponse<void>> {
         return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/learning-paths/enable`, null, { observe: 'response' });
@@ -23,18 +27,33 @@ export class LearningPathService {
         return this.httpClient.get<LearningPathHealthDTO>(`${this.resourceURL}/courses/${courseId}/learning-path-health`, { observe: 'response' });
     }
 
+    getLearningPath(learningPathId: number): Observable<HttpResponse<LearningPathInformationDTO>> {
+        return this.httpClient.get<LearningPathInformationDTO>(`${this.resourceURL}/learning-path/${learningPathId}`, { observe: 'response' });
+    }
+
     getLearningPathNgxGraph(learningPathId: number): Observable<HttpResponse<NgxLearningPathDTO>> {
         return this.httpClient.get<NgxLearningPathDTO>(`${this.resourceURL}/learning-path/${learningPathId}/graph`, { observe: 'response' }).pipe(
             map((ngxLearningPathResponse) => {
-                if (!ngxLearningPathResponse.body!.nodes) {
-                    ngxLearningPathResponse.body!.nodes = [];
-                }
-                if (!ngxLearningPathResponse.body!.edges) {
-                    ngxLearningPathResponse.body!.edges = [];
-                }
-                return ngxLearningPathResponse;
+                return this.sanitizeNgxLearningPathResponse(ngxLearningPathResponse);
             }),
         );
+    }
+
+    getLearningPathNgxPath(learningPathId: number): Observable<HttpResponse<NgxLearningPathDTO>> {
+        return this.httpClient.get<NgxLearningPathDTO>(`${this.resourceURL}/learning-path/${learningPathId}/path`, { observe: 'response' }).pipe(
+            map((ngxLearningPathResponse) => {
+                return this.sanitizeNgxLearningPathResponse(ngxLearningPathResponse);
+            }),
+            tap((ngxLearningPathResponse) => {
+                this.learningPathStorageService.storeRecommendations(learningPathId, ngxLearningPathResponse.body!);
+            }),
+        );
+    }
+
+    private sanitizeNgxLearningPathResponse(ngxLearningPathResponse: HttpResponse<NgxLearningPathDTO>) {
+        ngxLearningPathResponse.body!.nodes ??= [];
+        ngxLearningPathResponse.body!.edges ??= [];
+        return ngxLearningPathResponse;
     }
 
     getLearningPathId(courseId: number) {

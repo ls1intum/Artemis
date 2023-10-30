@@ -7,6 +7,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -14,9 +17,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
@@ -99,6 +104,52 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
+    @ParameterizedTest
+    @MethodSource("userMentionProvider")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateConversationAnswerPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+        answerPostToSave.setContent(userMention);
+
+        var countBefore = answerPostRepository.count();
+
+        if (!isUserMentionValid) {
+            request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+            return;
+        }
+
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
+        // should not be automatically post resolving
+        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
+
+        // both conversation participants should be notified
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testCreateConversationAnswerPostWithUserMentionOfUserNotInConversation() throws Exception {
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+        User mentionedUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        answerPostToSave.setContent("[user]" + mentionedUser.getName() + "(" + mentionedUser.getLogin() + ")[/user]");
+
+        var countBefore = answerPostRepository.count();
+
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
+        // should not be automatically post resolving
+        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
+
+        // mentioned user is not a member of the conversation and should not be notified
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + mentionedUser.getId() + "/notifications"), any(SingleUserNotification.class));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testMessagingNotAllowedIfCommunicationOnlySetting() throws Exception {
@@ -175,6 +226,30 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         // conversation answerPost of student1 must be editable by them
         AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
         conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts");
+
+        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(),
+                conversationAnswerPostToUpdate, AnswerPost.class, HttpStatus.OK);
+
+        assertThat(conversationAnswerPostToUpdate).isEqualTo(updatedAnswerPost);
+
+        // both conversation participants should be notified
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+    }
+
+    @ParameterizedTest
+    @MethodSource("userMentionProvider")
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void testEditConversationAnswerPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
+        // conversation answerPost of student1 must be editable by them
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts" + userMention);
+
+        if (!isUserMentionValid) {
+            request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(), conversationAnswerPostToUpdate, AnswerPost.class,
+                    HttpStatus.BAD_REQUEST);
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+            return;
+        }
 
         AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(),
                 conversationAnswerPostToUpdate, AnswerPost.class, HttpStatus.OK);
@@ -340,5 +415,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         // check if default values are set correctly on creation
         assertThat(createdAnswerPost.getReactions()).isEmpty();
+    }
+
+    protected static List<Arguments> userMentionProvider() {
+        return userMentionProvider(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
     }
 }

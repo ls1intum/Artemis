@@ -209,7 +209,7 @@
             <ng-container *ngIf="courseId">
                 <jhi-quiz-question-list-edit
                     #quizQuestionsEdit
-                    [courseId]="courseId"
+                    [courseId]="courseId!"
                     [quizQuestions]="quizExercise.quizQuestions ?? []"
                     (onQuestionAdded)="handleQuestionChanged()"
                     (onQuestionDeleted)="handleQuestionChanged()"

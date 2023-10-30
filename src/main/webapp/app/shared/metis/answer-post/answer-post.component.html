@@ -8,7 +8,16 @@
         [lastReadDate]="lastReadDate"
     >
     </jhi-answer-post-header>
-    <jhi-posting-content *ngIf="!createAnswerPostModal.isInputOpen" [content]="posting.content" [isEdited]="!!posting.updatedDate"> </jhi-posting-content>
+    <jhi-posting-content
+        *ngIf="!createAnswerPostModal.isInputOpen"
+        [content]="posting.content"
+        [isEdited]="!!posting.updatedDate"
+        [author]="posting.author"
+        [posting]="posting"
+        [isReply]="true"
+        (userReferenceClicked)="userReferenceClicked.emit($event)"
+    >
+    </jhi-posting-content>
     <ng-container #createEditAnswerPostContainer></ng-container>
     <jhi-answer-post-footer
         [isReadOnlyMode]="isReadOnlyMode"

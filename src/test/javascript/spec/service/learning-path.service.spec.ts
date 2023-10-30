@@ -3,9 +3,11 @@ import { LearningPathService } from 'app/course/learning-paths/learning-path.ser
 import { ArtemisTestModule } from '../test.module';
 import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { LearningPathStorageService } from 'app/course/learning-paths/participate/learning-path-storage.service';
 
 describe('LearningPathService', () => {
     let learningPathService: LearningPathService;
+    let storageService: LearningPathStorageService;
     let httpService: HttpClient;
     let putStub: jest.SpyInstance;
     let getStub: jest.SpyInstance;
@@ -18,7 +20,8 @@ describe('LearningPathService', () => {
             .compileComponents()
             .then(() => {
                 httpService = TestBed.inject(HttpClient);
-                learningPathService = new LearningPathService(httpService);
+                storageService = TestBed.inject(LearningPathStorageService);
+                learningPathService = new LearningPathService(httpService, storageService);
                 putStub = jest.spyOn(httpService, 'put');
                 getStub = jest.spyOn(httpService, 'get');
             });
@@ -46,10 +49,22 @@ describe('LearningPathService', () => {
         expect(getStub).toHaveBeenCalledWith('api/courses/1/learning-path-health', { observe: 'response' });
     });
 
-    it('should send a request to the server to get ngx representation of learning path', () => {
+    it('should send a request to the server to get learning path information', () => {
+        learningPathService.getLearningPath(1).subscribe();
+        expect(getStub).toHaveBeenCalledOnce();
+        expect(getStub).toHaveBeenCalledWith('api/learning-path/1', { observe: 'response' });
+    });
+
+    it('should send a request to the server to get ngx graph representation of learning path', () => {
         learningPathService.getLearningPathNgxGraph(1).subscribe();
         expect(getStub).toHaveBeenCalledOnce();
         expect(getStub).toHaveBeenCalledWith('api/learning-path/1/graph', { observe: 'response' });
+    });
+
+    it('should send a request to the server to get ngx path representation of learning path', () => {
+        learningPathService.getLearningPathNgxPath(1).subscribe();
+        expect(getStub).toHaveBeenCalledOnce();
+        expect(getStub).toHaveBeenCalledWith('api/learning-path/1/path', { observe: 'response' });
     });
 
     it('should send a request to the server to get learning path id of the current user in the course', () => {

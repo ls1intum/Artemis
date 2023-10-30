@@ -209,8 +209,8 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             exercise: exerciseTitle,
             inCourseOrExam: this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.' + (belongsToExam ? 'inExam' : 'inCourse')),
             courseOrExam: courseOrExamTitle,
-            cocLink: 'https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf',
-            aspoLink: 'https://portal.mytum.de/archiv/kompendium_rechtsangelegenheiten/apso/Lesb-F-APSO-vom-18-03-2011-mit-3-AeS-vom-27-04-18-ohne-Markierungen.pdf',
+            cocLink: '/public/documents/student-code-of-conduct.pdf',
+            apsoLink: '/public/documents/apso.pdf',
             dueDate: dayjs().add(7, 'day').format('DD.MM.YYYY'),
         });
     }
@@ -218,7 +218,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     /**
      * Prints the whole page using the theme service
      */
-    printPlagiarismCase(): void {
-        this.themeService.print();
+    async printPlagiarismCase() {
+        return await this.themeService.print();
     }
 }
