@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.web.rest.dto.examevent;
 import java.util.Objects;
 
 /**
- * A DTO for the {@link de.tum.in.www1.artemis.domain.exam.event.ExamWideAnnouncementEvent} entity.
+ * A DTO for the {@link de.tum.in.www1.artemis.domain.exam.event.ExamAttendanceCheckEvent} entity.
  */
 public class ExamAttendanceCheckEventDTO extends ExamLiveEventDTO {
 

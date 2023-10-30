@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO
  * An event indicating an updated working time for a specific student exam.
  */
 @Entity
-@DiscriminatorValue(value = "W")
+@DiscriminatorValue(value = "C")
 public class ExamAttendanceCheckEvent extends ExamLiveEvent {
 
     /**

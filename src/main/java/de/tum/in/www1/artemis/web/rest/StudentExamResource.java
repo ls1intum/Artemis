@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.event.ExamAttendanceCheckEvent;
 import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -232,6 +233,27 @@ public class StudentExamResource {
         }
 
         return ResponseEntity.ok(savedStudentExam);
+    }
+
+    /**
+     * PATCH /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/attendance-check : Throw attandance Check Event in the student exam
+     *
+     * @param courseId      the course to which the student exams belong to
+     * @param examId        the exam to which the student exams belong to
+     * @param studentExamId the id of the student exam to find
+     * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
+     */
+    @PatchMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/attendance-check")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<ExamAttendanceCheckEvent> attendanceCheck(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+            @RequestBody String message) {
+        log.debug("REST request for attendance-check for student exam : {}", studentExamId);
+
+        examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        User currentUser = userRepository.getUser();
+
+        return ResponseEntity.ok(examLiveEventsService.createAndSendExamAttendanceCheckEvent(studentExam, message, currentUser));
     }
 
     /**
