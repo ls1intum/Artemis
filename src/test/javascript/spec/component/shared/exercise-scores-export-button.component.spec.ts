@@ -127,7 +127,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         },
     ];
 
-    const expectedColumnsWithTestCases = ['Name', 'Username', 'Score', 'Points', 'Repo Link', 'TestName1', 'TestName2'];
+    const expectedColumnsWithTestCases = ['Name', 'Username', 'Score', 'Points', 'Repo Link', 'TestName1', 'TestName2', 'Test 3'];
     const expectedRowsWithTestCases = [
         {
             Name: 'Student B',
@@ -137,6 +137,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
             'Repo Link': 'https://www.gitlab.local/studentB',
             TestName1: 'Passed',
             TestName2: 'Failed',
+            'Test 3': 'Failed',
         },
     ];
 
@@ -149,6 +150,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
             'Repo Link': 'https://www.gitlab.local/studentB',
             TestName1: 'Passed',
             TestName2: 'Failed: "Detailed text with \nnewlines and \nsymbols ;.\'~""',
+            'Test 3': 'Failed',
         },
     ];
 
@@ -321,23 +323,29 @@ describe('ExerciseScoresExportButtonComponent', () => {
         const feedbacks: Feedback[] = [];
 
         const feedback1 = new Feedback();
-        feedback1.text = 'TestName1';
+        feedback1.testCase = { testName: 'TestName1' };
         feedback1.positive = true;
         feedback1.type = FeedbackType.AUTOMATIC;
 
         const feedback2 = new Feedback();
-        feedback2.text = 'TestName2';
+        feedback2.testCase = { testName: 'TestName2' };
         feedback2.positive = false;
         feedback2.detailText = 'Detailed text with \nnewlines and \nsymbols ;.\'~"';
         feedback2.type = FeedbackType.AUTOMATIC;
 
         const feedback3 = new Feedback();
-        feedback3.text = 'File src/test/exercise/Main.java at line 123';
+        feedback3.testCase = {}; // no test case name -> fallback "Test 3"
         feedback3.positive = false;
-        feedback3.detailText = 'This is a manual feedback';
-        feedback3.type = FeedbackType.MANUAL;
+        feedback3.type = FeedbackType.AUTOMATIC;
+        // no detail text -> generic 'Failed' fallback
 
-        feedbacks.push(feedback1, feedback2, feedback3);
+        const feedback4 = new Feedback();
+        feedback4.text = 'File src/test/exercise/Main.java at line 123';
+        feedback4.positive = false;
+        feedback4.detailText = 'This is a manual feedback';
+        feedback4.type = FeedbackType.MANUAL;
+
+        feedbacks.push(feedback1, feedback2, feedback3, feedback4);
 
         return feedbacks;
     }
