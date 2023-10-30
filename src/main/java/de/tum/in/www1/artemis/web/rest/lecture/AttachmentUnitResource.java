@@ -175,17 +175,20 @@ public class AttachmentUnitResource {
     public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
         // time until the temporary file gets deleted. Must be greater or equal than MINUTES_UNTIL_DELETION in attachment-units.component.ts
         int minutesUntilDeletion = 30;
-        log.debug("REST request to upload file: {}", file.getOriginalFilename());
+        String originalFilename = file.getOriginalFilename();
+        log.debug("REST request to upload file: {}", originalFilename);
         checkLecture(lectureId);
-        if (!Objects.equals(FilenameUtils.getExtension(file.getOriginalFilename()), "pdf")) {
+        if (!Objects.equals(FilenameUtils.getExtension(originalFilename), "pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
-
-        URI fileURI = fileService.handleSaveFile(file, false, false);
-        fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(fileURI), minutesUntilDeletion);
-        String filename = FilePathService.actualPathForPublicPath(fileURI).getFileName().toString();
-
-        return ResponseEntity.ok().body(GSON.toJson(filename));
+        try {
+            String filename = lectureUnitProcessingService.saveTempFileForProcessing(lectureId, file, minutesUntilDeletion);
+            return ResponseEntity.ok().body(GSON.toJson(filename));
+        }
+        catch (IOException e) {
+            log.error("Could not save file {}", originalFilename, e);
+            throw new InternalServerErrorException("Could not create file");
+        }
     }
 
     /**
@@ -202,10 +205,11 @@ public class AttachmentUnitResource {
             @PathVariable String filename) {
         log.debug("REST request to create AttachmentUnits {} with lectureId {} for file {}", lectureUnitInformationDTO, lectureId, filename);
         checkLecture(lectureId);
-        checkFile(filename);
+        Path filePath = lectureUnitProcessingService.getPathForTempFilename(lectureId, filename);
+        checkFile(filePath);
 
         try {
-            byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(FileService.sanitizeFilename(filename)));
+            byte[] fileBytes = fileService.getFileForPath(filePath);
             List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, fileBytes,
                     lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId));
             savedAttachmentUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
@@ -231,10 +235,11 @@ public class AttachmentUnitResource {
         log.debug("REST request to split lecture file : {}", filename);
 
         checkLecture(lectureId);
-        checkFile(filename);
+        Path filePath = lectureUnitProcessingService.getPathForTempFilename(lectureId, filename);
+        checkFile(filePath);
 
         try {
-            byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(FileService.sanitizeFilename(filename)));
+            byte[] fileBytes = fileService.getFileForPath(filePath);
             LectureUnitInformationDTO attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(fileBytes);
             return ResponseEntity.ok().body(attachmentUnitsData);
         }
@@ -257,10 +262,11 @@ public class AttachmentUnitResource {
     public ResponseEntity<List<Integer>> getSlidesToRemove(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam String commaSeparatedKeyPhrases) {
         log.debug("REST request to get slides to remove for lecture file : {} and keywords : {}", filename, commaSeparatedKeyPhrases);
         checkLecture(lectureId);
-        checkFile(filename);
+        Path filePath = lectureUnitProcessingService.getPathForTempFilename(lectureId, filename);
+        checkFile(filePath);
 
         try {
-            byte[] fileBytes = fileService.getFileForPath(FilePathService.getTempFilePath().resolve(FileService.sanitizeFilename(filename)));
+            byte[] fileBytes = fileService.getFileForPath(filePath);
             List<Integer> slidesToRemove = this.lectureUnitProcessingService.getSlidesToRemoveByKeyphrase(fileBytes, commaSeparatedKeyPhrases);
             return ResponseEntity.ok().body(slidesToRemove);
         }
@@ -301,14 +307,13 @@ public class AttachmentUnitResource {
     /**
      * Checks the file exists on the server and is a .pdf
      *
-     * @param filename the name of the file
+     * @param filePath the path of the file
      */
-    private void checkFile(String filename) {
-        Path filePath = FilePathService.getTempFilePath().resolve(FileService.sanitizeFilename(filename));
+    private void checkFile(Path filePath) {
         if (!Files.exists(filePath)) {
-            throw new EntityNotFoundException(ENTITY_NAME, filename);
+            throw new EntityNotFoundException(ENTITY_NAME, filePath.toString());
         }
-        if (!filename.endsWith(".pdf")) {
+        if (!filePath.toString().endsWith(".pdf")) {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
     }

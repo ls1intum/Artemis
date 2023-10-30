@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -195,6 +198,35 @@ public class LectureUnitProcessingService {
             log.error("Error while preparing the map with information", e);
             throw new InternalServerErrorException("Could not prepare split information");
         }
+    }
+
+    /**
+     * Temporarily saves a file that will be processed into lecture units.
+     *
+     * @param lectureId            the id of the lecture the file belongs to
+     * @param file                 the file to be saved
+     * @param minutesUntilDeletion duration the file gets saved for
+     * @return the last part of the filename. Use {@link LectureUnitProcessingService#getPathForTempFilename(long, String) getPathForTempFilename}
+     *         to get the full file path again.
+     */
+    public String saveTempFileForProcessing(long lectureId, MultipartFile file, int minutesUntilDeletion) throws IOException {
+        String prefix = "Temp_" + lectureId + "_";
+        Path filePath = fileService.generateFilePath(prefix, FilenameUtils.getExtension(file.getOriginalFilename()), FilePathService.getTempFilePath());
+        FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
+        fileService.schedulePathForDeletion(filePath, minutesUntilDeletion);
+        return filePath.getFileName().toString().substring(prefix.length());
+    }
+
+    /**
+     * Gets the path of the temporary file for a give lectureId and filename
+     *
+     * @param lectureId the id of the lecture the file belongs to
+     * @param filename  the last part of the filename (timestamp and extension)
+     * @return Path of the file
+     */
+    public Path getPathForTempFilename(long lectureId, String filename) {
+        String fullFilename = "Temp_" + lectureId + "_" + FileService.sanitizeFilename(filename);
+        return FilePathService.getTempFilePath().resolve(fullFilename);
     }
 
     /**
