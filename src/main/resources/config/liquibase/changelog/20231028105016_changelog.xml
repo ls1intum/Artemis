@@ -1,0 +1,9 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="jakubriegel" id="20231028105016">
+        <addColumn tableName="plagiarism_detection_config">
+            <column name="continuous_plagiarism_control_case_student_response_period" type="int" defaultValueNumeric="7"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

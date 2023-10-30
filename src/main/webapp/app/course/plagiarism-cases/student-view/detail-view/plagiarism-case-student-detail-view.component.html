@@ -49,7 +49,7 @@
                         <div
                             class="alert alert-warning my-2"
                             *ngIf="
-                                (this.posts[0].answers?.length ?? 0) === 0 &&
+                                !this.posts[0].answers?.length &&
                                 (!this.plagiarismCase.createdByContinuousPlagiarismControl || (this.plagiarismCase.createdByContinuousPlagiarismControl && this.isAfterDueDate))
                             "
                         >
@@ -60,7 +60,10 @@
                                         | artemisTranslate
                                             : {
                                                   dueDate: (plagiarismCase.createdByContinuousPlagiarismControl
-                                                      ? dayjs(plagiarismCase.exercise!.dueDate!).add(7, 'day')
+                                                      ? dayjs(plagiarismCase.exercise!.dueDate!).add(
+                                                            plagiarismCase.exercise!.plagiarismDetectionConfig!.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod!,
+                                                            'day'
+                                                        )
                                                       : posts[0].creationDate.add(7, 'day')
                                                   ).format('DD.MM.YYYY')
                                               }

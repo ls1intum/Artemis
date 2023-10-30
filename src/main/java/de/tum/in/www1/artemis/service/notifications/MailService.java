@@ -321,7 +321,10 @@ public class MailService implements InstantNotificationService {
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             return messageSource.getMessage("email.plagiarism.cpc.title", new Object[] { exercise.getTitle(), course.getTitle() }, context.getLocale());
         }
-        context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
+        if (notificationType == NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT) {
+            context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
+            return messageSource.getMessage("artemisApp.singleUserNotification.title.plagiarismCaseVerdictStudent", new Object[] {}, context.getLocale());
+        }
         return notification.getTitle();
     }
 
