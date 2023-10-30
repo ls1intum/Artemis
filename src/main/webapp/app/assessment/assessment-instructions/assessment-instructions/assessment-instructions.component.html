@@ -28,7 +28,7 @@
         </div>
     </ng-container>
     <ng-container *ngSwitchDefault>
-        <jhi-modeling-editor *ngIf="sampleSolutionModel" [readOnly]="true" [diagramType]="sampleSolutionDiagramType!" [umlModel]="sampleSolutionModel!"> </jhi-modeling-editor>
+        <jhi-modeling-editor *ngIf="sampleSolutionModel" [readOnly]="true" [diagramType]="sampleSolutionDiagramType!" [umlModel]="sampleSolutionModel!" />
         <p class="markdown-preview" *ngIf="sampleSolutionExplanation" [innerHTML]="sampleSolutionExplanation!"></p>
     </ng-container>
 </jhi-expandable-section>
