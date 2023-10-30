@@ -1,18 +1,25 @@
 <div class="d-flex pb-3 border-bottom">
     <div class="d-flex flex-column justify-content-center">
-        <h4 *ngIf="!isTestRun" class="mb-0" jhiTranslate="artemisApp.studentExamDetail.studentExam" [translateValues]="{ examTitle: studentExam.exam!.title! }">
+        <h4
+            *ngIf="!isTestRun; else testRunExamTitle"
+            class="mb-0"
+            jhiTranslate="artemisApp.studentExamDetail.studentExam"
+            [translateValues]="{ examTitle: studentExam.exam!.title! }"
+        >
             Student exam ({{ studentExam.exam!.title! }})
         </h4>
-        <h4 *ngIf="isTestRun" class="mb-0" jhiTranslate="artemisApp.studentExamDetail.testRun" [translateValues]="{ examTitle: studentExam.exam!.title! }">
-            Test Run ({{ studentExam.exam!.title! }})
-        </h4>
+        <ng-template #testRunExamTitle>
+            <h4 class="mb-0" jhiTranslate="artemisApp.studentExamDetail.testRun" [translateValues]="{ examTitle: studentExam.exam!.title! }">
+                Test Run ({{ studentExam.exam!.title! }})
+            </h4>
+        </ng-template>
     </div>
 </div>
 <br />
 <div *ngIf="student && studentExam">
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExamDetail.student">Student</span></h5>
-        <ol class="indented-list">
+        <ol class="list-without-numeration ms-4">
             <li>
                 <strong jhiTranslate="artemisApp.studentExamDetail.name">Name:</strong>
                 {{ student.name }}
@@ -31,16 +38,15 @@
             </li>
         </ol>
     </div>
-
     <div class="mb-3" *ngIf="!isTestExam">
         <h5><span jhiTranslate="artemisApp.studentExams.workingTime">Working time</span></h5>
-        <form #form="ngForm" (ngSubmit)="saveWorkingTime()">
+        <form #form="ngForm" (ngSubmit)="saveWorkingTime()" class="ms-4">
             <div class="mb-1 working-time-form">
                 <div class="input-group mb-1 d-flex justify-content-between align-items-center">
                     <label for="hours" class="me-4" jhiTranslate="artemisApp.studentExams.setWorkingTime">Absolute:</label>
                     <input
                         [(ngModel)]="workingTimeFormValues.hours"
-                        (ngModelChange)="updateWorkingTimePercent()"
+                        (ngModelChange)="updateVariablesDependingOnWorkingTimeForm()"
                         [disabled]="isFormDisabled()"
                         id="hours"
                         name="hours"
@@ -53,7 +59,7 @@
                     <label for="hours" class="input-group-text">h</label>
                     <input
                         [(ngModel)]="workingTimeFormValues.minutes"
-                        (ngModelChange)="updateWorkingTimePercent()"
+                        (ngModelChange)="updateVariablesDependingOnWorkingTimeForm()"
                         [disabled]="isFormDisabled()"
                         id="minutes"
                         name="minutes"
@@ -67,7 +73,7 @@
                     <label for="minutes" class="input-group-text">min</label>
                     <input
                         [(ngModel)]="workingTimeFormValues.seconds"
-                        (ngModelChange)="updateWorkingTimePercent()"
+                        (ngModelChange)="updateVariablesDependingOnWorkingTimeForm()"
                         [disabled]="isFormDisabled()"
                         id="seconds"
                         name="seconds"
@@ -97,6 +103,13 @@
                     <label for="percent" class="input-group-text">%</label>
                 </div>
             </div>
+
+            <p *ngIf="this.workingTimeFormValues.percent">
+                {{ 'artemisApp.studentExamDetail.endOfIndividualWorkingTime' | artemisTranslate }} {{ individualEndDate | artemisDate: 'long-date' }}
+                -
+                {{ individualEndDate | artemisDate: 'time' : true }}
+            </p>
+
             <button id="save" type="submit" class="btn btn-primary me-2" [disabled]="!form.valid || isFormDisabled()">
                 <fa-icon [icon]="faSave"></fa-icon>
                 <span jhiTranslate="entity.action.save">Save</span>
@@ -112,8 +125,8 @@
 
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.participationStatus">Participation state</span></h5>
-        <div class="me-2">
-            <ol class="indented-list">
+        <div class="me-2 ms-4">
+            <ol class="list-without-numeration">
                 <li>
                     <strong>{{ 'artemisApp.studentExams.started' | artemisTranslate }}:</strong>
                     {{ (studentExam.started ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
@@ -139,43 +152,72 @@
                     {{ (passed ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
                 </li>
             </ol>
+
+            <div
+                [ngbTooltip]="!isExamOver() ? ('artemisApp.studentExamDetail.disabledChangeSubmissionStateButtonExplanation' | artemisTranslate) : ''"
+                placement="right"
+                class="d-inline"
+            >
+                <button
+                    class="btn btn-danger"
+                    type="button"
+                    *ngIf="course?.isAtLeastInstructor"
+                    (click)="openConfirmationModal(toggleSubmitPopUp)"
+                    [disabled]="!isExamOver() || isSaving"
+                    id="adjust-submitted-state-button"
+                >
+                    <span *ngIf="!studentExam.submitted; else toggleNotSubmitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
+                    <ng-template #toggleNotSubmitted>
+                        <span *ngIf="studentExam.submitted" jhiTranslate="entity.action.toggleToUnsubmitted"></span>
+                    </ng-template>
+                </button>
+            </div>
         </div>
     </div>
     <ng-template #toggleSubmitPopUp let-modal>
         <div class="modal-header">
             <h4 class="modal-title">
-                <span *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToUnsubmitted">Change Student Exam to Unsubmitted</span>
-                <span *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted">Change Student Exam to Submitted</span>
+                <span *ngIf="studentExam.submitted; else notSubmittedModalTitle" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToUnsubmitted"
+                    >Change Student Exam to Unsubmitted</span
+                >
+                <ng-template #notSubmittedModalTitle>
+                    <span *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.titleToSubmitted">Change Student Exam to Submitted</span>
+                </ng-template>
             </h4>
             <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
         </div>
         <div class="modal-body">
             <p jhiTranslate="artemisApp.studentExams.confirmDialog.question">Are you sure you want to change the submission state?</p>
-            <p *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.submitText">
+            <p *ngIf="!studentExam.submitted; else submittedConfirmationDialog" jhiTranslate="artemisApp.studentExams.confirmDialog.submitText">
                 This will set the submission date of the exam to this moment, and set the submitted status to 'Yes'. Un-submitting the student exam later is possible.
             </p>
-            <p *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.unSubmitText">
-                This will remove the submission date and set the submitted status to 'No'.
-            </p>
-            <p *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.warningRemove">Recovering those after the deletion is not possible!</p>
+            <ng-template #submittedConfirmationDialog>
+                <p jhiTranslate="artemisApp.studentExams.confirmDialog.unSubmitText">This will remove the submission date and set the submitted status to 'No'.</p>
+                <p jhiTranslate="artemisApp.studentExams.confirmDialog.warningRemove">Recovering those after the deletion is not possible!</p>
+            </ng-template>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-danger" (click)="modal.close('confirm')">
-                <span *ngIf="!studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.submit"></span>
-                <span *ngIf="studentExam.submitted" jhiTranslate="artemisApp.studentExams.confirmDialog.unsubmit"></span>
+                <span *ngIf="!studentExam.submitted; else isSubmittedFooter" jhiTranslate="artemisApp.studentExams.confirmDialog.submit"></span>
+                <ng-template #isSubmittedFooter>
+                    <span jhiTranslate="artemisApp.studentExams.confirmDialog.unsubmit"></span>
+                </ng-template>
             </button>
         </div>
     </ng-template>
-    <button class="btn btn-danger mb-3" *ngIf="course?.isAtLeastInstructor && examIsOver()" type="button" (click)="openConfirmationModal(toggleSubmitPopUp)" [disabled]="busy">
-        <span *ngIf="!studentExam.submitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
-        <span *ngIf="studentExam.submitted" jhiTranslate="entity.action.toggleToUnsubmitted"></span>
-    </button>
 
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.summary">Student Summary</span></h5>
-        <a *ngIf="course?.isAtLeastInstructor" class="btn btn-primary summery" [routerLink]="'./summary'">
-            <span jhiTranslate="artemisApp.exam.summary">Summary</span>
-        </a>
+        <div class="d-flex flex-row">
+            <a *ngIf="course?.isAtLeastInstructor" class="btn btn-primary summery ms-4" [routerLink]="'./summary'">
+                <span jhiTranslate="artemisApp.exam.summary">Summary</span>
+            </a>
+            <div *ngIf="course?.isAtLeastInstructor" ngbTooltip="{{ 'artemisApp.examTimeline.disabledTooltip' | artemisTranslate }}" [disableTooltip]="studentExam?.submitted!">
+                <button class="btn btn-primary mb-auto ms-5" [routerLink]="'./exam-timeline'" [disabled]="!studentExam.submitted">
+                    <span jhiTranslate="artemisApp.examTimeline.breadcrumb">Timeline</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <div class="mb-3 mt-3">
@@ -221,7 +263,7 @@
             </table>
         </div>
         <ng-template #noSession>
-            <div jhiTranslate="artemisApp.studentExamDetail.noSessions">No sessions</div>
+            <div jhiTranslate="artemisApp.studentExamDetail.noSessions" class="ms-4">No sessions</div>
         </ng-template>
     </div>
 
@@ -267,7 +309,7 @@
                             [course]="course"
                             [examId]="examId"
                             [exercise]="exercise"
-                            [busy]="busy"
+                            [busy]="isSaving"
                             [isTestRun]="isTestRun"
                             [studentExam]="studentExam"
                             [achievedPointsPerExercise]="achievedPointsPerExercise"

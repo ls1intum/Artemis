@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -17,11 +17,10 @@ import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
-import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 
 /**
@@ -36,10 +35,6 @@ public class CompetencyProgressService {
 
     private final CompetencyProgressRepository competencyProgressRepository;
 
-    private final StudentScoreRepository studentScoreRepository;
-
-    private final TeamScoreRepository teamScoreRepository;
-
     private final ExerciseRepository exerciseRepository;
 
     private final LectureUnitRepository lectureUnitRepository;
@@ -48,17 +43,21 @@ public class CompetencyProgressService {
 
     private final LearningPathService learningPathService;
 
-    public CompetencyProgressService(CompetencyRepository competencyRepository, CompetencyProgressRepository competencyProgressRepository,
-            StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ExerciseRepository exerciseRepository,
-            LectureUnitRepository lectureUnitRepository, UserRepository userRepository, LearningPathService learningPathService) {
+    private final ParticipantScoreService participantScoreService;
+
+    private final LearningObjectService learningObjectService;
+
+    public CompetencyProgressService(CompetencyRepository competencyRepository, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
+            LectureUnitRepository lectureUnitRepository, UserRepository userRepository, LearningPathService learningPathService, ParticipantScoreService participantScoreService,
+            LearningObjectService learningObjectService) {
         this.competencyRepository = competencyRepository;
         this.competencyProgressRepository = competencyProgressRepository;
-        this.studentScoreRepository = studentScoreRepository;
-        this.teamScoreRepository = teamScoreRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.userRepository = userRepository;
         this.learningPathService = learningPathService;
+        this.participantScoreService = participantScoreService;
+        this.learningObjectService = learningObjectService;
     }
 
     /**
@@ -188,12 +187,12 @@ public class CompetencyProgressService {
         }
 
         var studentProgress = competencyProgress.orElse(new CompetencyProgress());
-        List<LearningObject> learningObjects = new ArrayList<>();
+        Set<LearningObject> learningObjects = new HashSet<>();
 
-        List<LectureUnit> allLectureUnits = competency.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents).toList();
+        Set<LectureUnit> allLectureUnits = competency.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents).collect(Collectors.toSet());
 
-        List<LectureUnit> lectureUnits = allLectureUnits.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).toList();
-        List<Exercise> exercises = competency.getExercises().stream().filter(Exercise::isVisibleToStudents).toList();
+        Set<LectureUnit> lectureUnits = allLectureUnits.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
+        Set<Exercise> exercises = competency.getExercises().stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
 
         learningObjects.addAll(lectureUnits);
         learningObjects.addAll(exercises);
@@ -233,8 +232,9 @@ public class CompetencyProgressService {
      * @param user            The user for which the progress should be calculated
      * @return The percentage of completed learning objects by the user
      */
-    private double calculateProgress(@NotNull List<LearningObject> learningObjects, @NotNull User user) {
-        return learningObjects.stream().map(learningObject -> hasUserCompleted(user, learningObject)).mapToInt(completed -> completed ? 100 : 0).average().orElse(0.);
+    private double calculateProgress(@NotNull Set<LearningObject> learningObjects, @NotNull User user) {
+        return learningObjects.stream().map(learningObject -> learningObjectService.isCompletedByUser(learningObject, user)).mapToInt(completed -> completed ? 100 : 0).average()
+                .orElse(0.);
     }
 
     /**
@@ -244,29 +244,31 @@ public class CompetencyProgressService {
      * @param user      The user for which the confidence score should be calculated
      * @return The average score of the user in all exercises linked to the competency
      */
-    private double calculateConfidence(@NotNull List<Exercise> exercises, @NotNull User user) {
-        var studentScores = studentScoreRepository.findAllByExercisesAndUser(exercises, user);
-        var teamScores = teamScoreRepository.findAllByExercisesAndUser(exercises, user);
-        return Stream.concat(studentScores.stream(), teamScores.stream()).map(ParticipantScore::getLastScore).mapToDouble(score -> score).summaryStatistics().getAverage();
+    private double calculateConfidence(@NotNull Set<Exercise> exercises, @NotNull User user) {
+        return participantScoreService.getStudentAndTeamParticipationScoresAsDoubleStream(user, exercises).summaryStatistics().getAverage();
     }
 
     /**
-     * Checks if the user has completed the learning object.
+     * Calculates a user's mastery level for competency given the progress.
      *
-     * @param user           The user for which to check the completion status
-     * @param learningObject The lecture unit or exercise
-     * @return True if the user completed the lecture unit or has at least one result for the exercise, false otherwise
+     * @param competencyProgress The user's progress
+     * @return The mastery level
      */
-    private boolean hasUserCompleted(@NotNull User user, LearningObject learningObject) {
-        if (learningObject instanceof LectureUnit lectureUnit) {
-            return lectureUnit.getCompletedUsers().stream().map(LectureUnitCompletion::getUser).anyMatch(user1 -> user1.getId().equals(user.getId()));
-        }
-        else if (learningObject instanceof Exercise exercise) {
-            var studentScores = studentScoreRepository.findAllByExercisesAndUser(List.of(exercise), user);
-            var teamScores = teamScoreRepository.findAllByExercisesAndUser(List.of(exercise), user);
-            return Stream.concat(studentScores.stream(), teamScores.stream()).findAny().isPresent();
-        }
-        throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
+    public static double getMastery(@NotNull CompetencyProgress competencyProgress) {
+        // mastery as a weighted function of progress and confidence (consistent with client)
+        final double weight = 2.0 / 3.0;
+        return (1 - weight) * competencyProgress.getProgress() + weight * competencyProgress.getConfidence();
+    }
+
+    /**
+     * Calculates a user's mastery progress scaled to the mastery threshold of the corresponding competency.
+     *
+     * @param competencyProgress The user's progress
+     * @return The mastery level in percent
+     */
+    public static double getMasteryProgress(@NotNull CompetencyProgress competencyProgress) {
+        final double mastery = getMastery(competencyProgress);
+        return mastery / competencyProgress.getCompetency().getMasteryThreshold();
     }
 
     /**
@@ -276,10 +278,20 @@ public class CompetencyProgressService {
      * @return True if the user mastered the competency, false otherwise
      */
     public static boolean isMastered(@NotNull CompetencyProgress competencyProgress) {
-        // mastery as a weighted function of progress and confidence (consistent with client)
-        final double weight = 2.0 / 3.0;
-        final double mastery = (1 - weight) * competencyProgress.getProgress() + weight * competencyProgress.getConfidence();
+        final double mastery = getMastery(competencyProgress);
         return mastery >= competencyProgress.getCompetency().getMasteryThreshold();
     }
 
+    /**
+     * Checks if the competency can be mastered without completing any exercises.
+     *
+     * @param competency the competency to check
+     * @return true if the competency can be mastered without completing any exercises, false otherwise
+     */
+    public static boolean canBeMasteredWithoutExercises(@NotNull Competency competency) {
+        final var lectureUnits = competency.getLectureUnits().size();
+        final var numberOfLearningObjects = lectureUnits + competency.getExercises().size();
+        final var achievableMasteryScore = ((double) lectureUnits) / (3 * numberOfLearningObjects) * 100;
+        return achievableMasteryScore >= competency.getMasteryThreshold();
+    }
 }

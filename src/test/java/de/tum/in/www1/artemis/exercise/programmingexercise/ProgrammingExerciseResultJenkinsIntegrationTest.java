@@ -21,6 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.CommitDTO;
 import de.tum.in.www1.artemis.util.TestConstants;
@@ -47,15 +48,23 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         gitlabRequestMockProvider.reset();
     }
 
+    private String getRepoName(ProgrammingExercise exercise, String userLogin) {
+        return (exercise.getProjectKey() + "-" + userLogin).toUpperCase();
+    }
+
+    private String getFolderName(ProgrammingExercise exercise, String repoName) {
+        // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
+        return exercise.getProjectKey() + " » " + repoName + " #3";
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldUpdateFeedbackInSemiAutomaticResult() throws Exception {
         var loginName = TEST_PREFIX + "student1";
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
-        var repoName = (exercise.getProjectKey() + "-" + loginName).toUpperCase();
-        // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
-        var notification = ProgrammingExerciseFactory.generateTestResultDTO(exercise.getProjectKey() + " » " + repoName + " #3", repoName, null, exercise.getProgrammingLanguage(),
-                false, List.of("test1"), List.of(), new ArrayList<>(), new ArrayList<>(), null);
+        var repoName = getRepoName(exercise, loginName);
+        var notification = ProgrammingExerciseFactory.generateTestResultDTO(getFolderName(exercise, repoName), repoName, null, exercise.getProgrammingLanguage(), false,
+                List.of("test1"), List.of(), new ArrayList<>(), new ArrayList<>(), null);
         programmingExerciseResultTestService.shouldUpdateFeedbackInSemiAutomaticResult(notification, loginName);
     }
 
@@ -149,5 +158,29 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         var notification = ProgrammingExerciseFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(),
                 List.of(), List.of(commit), null);
         programmingExerciseResultTestService.shouldCreateResultOnCustomDefaultBranch(customDefaultBranch, notification);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCorrectlyNotifyStudentsAboutNewResults() throws Exception {
+        var exercise = programmingExerciseResultTestService.getProgrammingExercise();
+        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
+        String repoName = getRepoName(exercise, TEST_PREFIX + "student1");
+        String folderName = getFolderName(exercise, repoName);
+        var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
+                List.of("test3"), List.of(), List.of(commit), null);
+        programmingExerciseResultTestService.shouldCorrectlyNotifyStudentsAboutNewResults(notification, websocketMessagingService);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRemoveTestCaseNamesFromWebsocketNotification() throws Exception {
+        var exercise = programmingExerciseResultTestService.getProgrammingExercise();
+        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
+        String repoName = getRepoName(exercise, TEST_PREFIX + "student1");
+        String folderName = getFolderName(exercise, repoName);
+        var notification = ProgrammingExerciseFactory.generateTestResultDTO(folderName, repoName, null, ProgrammingLanguage.JAVA, false, List.of("test1", "test2"),
+                List.of("test3", "test4"), List.of(), List.of(commit), null);
+        programmingExerciseResultTestService.shouldRemoveTestCaseNamesFromWebsocketNotification(notification, websocketMessagingService);
     }
 }

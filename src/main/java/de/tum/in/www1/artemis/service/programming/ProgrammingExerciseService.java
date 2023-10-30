@@ -193,13 +193,14 @@ public class ProgrammingExerciseService {
      * </ol>
      *
      * @param programmingExercise The programmingExercise that should be setup
+     * @param isImportedFromFile  defines if the programming exercise is imported from a file
      * @return The new setup exercise
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException     If the template files couldn't be read
      */
     @Transactional // TODO: apply the transaction on a smaller scope
     // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
-    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) throws GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
 
@@ -222,7 +223,7 @@ public class ProgrammingExerciseService {
 
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
-        setupBuildPlansForNewExercise(savedProgrammingExercise);
+        setupBuildPlansForNewExercise(savedProgrammingExercise, isImportedFromFile);
         // save to get the id required for the webhook
         savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
 
@@ -341,11 +342,14 @@ public class ProgrammingExerciseService {
      * 1. Create the project for the exercise on the CI Server
      * 2. Create template and solution build plan in this project
      * 3. Configure CI permissions
+     * 4. Trigger initial build for template and solution build plan (if the exercise is not imported)
      *
      * @param programmingExercise Programming exercise for the build plans should be generated. The programming
      *                                exercise should contain a fully initialized template and solution participation.
+     * @param isImportedFromFile  defines if the programming exercise is imported from a file, if the
+     *                                exercise is imported, the build plans will not be triggered to prevent erroneous builds
      */
-    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
+    public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise, boolean isImportedFromFile) {
         String projectKey = programmingExercise.getProjectKey();
         // Get URLs for repos
         var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
@@ -364,9 +368,13 @@ public class ProgrammingExerciseService {
 
         giveCIProjectPermissions(programmingExercise);
 
-        // trigger BASE and SOLUTION build plans once here
-        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
-        continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
+        // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
+        // we do not trigger them here
+        if (!isImportedFromFile) {
+            // trigger BASE and SOLUTION build plans once here
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getTemplateParticipation());
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(programmingExercise.getSolutionParticipation());
+        }
     }
 
     /**
@@ -444,7 +452,11 @@ public class ProgrammingExerciseService {
         channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         irisSettingsService.updateIrisSettings(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
+        String problemStatementWithTestNames = updatedProgrammingExercise.getProblemStatement();
+        programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
+        // The returned value should use test case names since it gets send back to the client
+        savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
@@ -523,6 +535,7 @@ public class ProgrammingExerciseService {
             throws EntityNotFoundException {
 
         programmingExercise.setProblemStatement(problemStatement);
+        programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
@@ -664,10 +677,6 @@ public class ProgrammingExerciseService {
         // Is true if the exercise is released and has at least one result.
         // We can't use the resultService here due to a circular dependency issue.
         return resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
-    }
-
-    public ProgrammingExercise save(ProgrammingExercise programmingExercise) {
-        return programmingExerciseRepository.save(programmingExercise);
     }
 
     /**

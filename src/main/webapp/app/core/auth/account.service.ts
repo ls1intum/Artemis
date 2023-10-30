@@ -9,7 +9,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { setUser } from '@sentry/angular-ivy';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -59,9 +59,13 @@ export class AccountService implements IAccountService {
         // We only subscribe the feature toggle updates when the user is logged in, otherwise we unsubscribe them.
         if (user) {
             this.websocketService.enableReconnect();
+            this.websocketService.connect();
             this.featureToggleService.subscribeFeatureToggleUpdates();
         } else {
             this.websocketService.disableReconnect();
+            if (this.websocketService.isConnected()) {
+                this.websocketService.disconnect();
+            }
             this.featureToggleService.unsubscribeFeatureToggleUpdates();
         }
     }
@@ -141,7 +145,6 @@ export class AccountService implements IAccountService {
                 map((response: HttpResponse<User>) => {
                     const user = response.body!;
                     if (user) {
-                        this.websocketService.connect();
                         this.userIdentity = user;
 
                         // improved error tracking in sentry
@@ -157,10 +160,6 @@ export class AccountService implements IAccountService {
                     return this.userIdentity;
                 }),
                 catchError(() => {
-                    // this will be called during logout
-                    if (this.websocketService.isConnected()) {
-                        this.websocketService.disconnect();
-                    }
                     this.userIdentity = undefined;
                     return of(undefined);
                 }),
@@ -238,8 +237,9 @@ export class AccountService implements IAccountService {
 
     setAccessRightsForExerciseAndReferencedCourse(exercise: Exercise) {
         this.setAccessRightsForExercise(exercise);
-        if (exercise.course) {
-            this.setAccessRightsForCourse(exercise.course);
+        const course = getCourseFromExercise(exercise);
+        if (course) {
+            this.setAccessRightsForCourse(course);
         }
     }
 

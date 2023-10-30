@@ -65,6 +65,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -154,6 +155,9 @@ class ProgrammingExerciseIntegrationTestService {
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseTestRepository;
 
+    @Autowired
+    private ZipFileTestUtilService zipFileTestUtilService;
+
     private Course course;
 
     public ProgrammingExercise programmingExercise;
@@ -170,11 +174,15 @@ class ProgrammingExerciseIntegrationTestService {
 
     private Git localGit;
 
+    private File remoteRepoFile;
+
     private Git remoteGit;
 
     private File localRepoFile2;
 
     private Git localGit2;
+
+    private File remoteRepo2File;
 
     private Git remoteGit2;
 
@@ -183,10 +191,15 @@ class ProgrammingExerciseIntegrationTestService {
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private VersionControlService versionControlService;
 
-    void setup(String userPrefix, MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
+    // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
+    private ContinuousIntegrationService continuousIntegrationService;
+
+    void setup(String userPrefix, MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService)
+            throws Exception {
         this.userPrefix = userPrefix;
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService; // this can be used like a SpyBean
+        this.continuousIntegrationService = continuousIntegrationService; // this can be used like a SpyBean
 
         userUtilService.addUsers(userPrefix, 3, 2, 2, 2);
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
@@ -204,18 +217,18 @@ class ProgrammingExerciseIntegrationTestService {
 
         localRepoFile = Files.createTempDirectory("repo").toFile();
         localGit = LocalRepository.initialize(localRepoFile, defaultBranch);
-        File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
-        remoteGit = LocalRepository.initialize(originRepoFile, defaultBranch);
+        remoteRepoFile = Files.createTempDirectory("repoOrigin").toFile();
+        remoteGit = LocalRepository.initialize(remoteRepoFile, defaultBranch);
         StoredConfig config = localGit.getRepository().getConfig();
-        config.setString("remote", "origin", "url", originRepoFile.getAbsolutePath());
+        config.setString("remote", "origin", "url", remoteRepoFile.getAbsolutePath());
         config.save();
 
         localRepoFile2 = Files.createTempDirectory("repo2").toFile();
         localGit2 = LocalRepository.initialize(localRepoFile2, defaultBranch);
-        File originRepoFile2 = Files.createTempDirectory("repoOrigin").toFile();
-        remoteGit2 = LocalRepository.initialize(originRepoFile2, defaultBranch);
+        remoteRepo2File = Files.createTempDirectory("repoOrigin").toFile();
+        remoteGit2 = LocalRepository.initialize(remoteRepo2File, defaultBranch);
         StoredConfig config2 = localGit2.getRepository().getConfig();
-        config2.setString("remote", "origin", "url", originRepoFile2.getAbsolutePath());
+        config2.setString("remote", "origin", "url", remoteRepo2File.getAbsolutePath());
         config2.save();
 
         // TODO use createProgrammingExercise or setupTemplateAndPush to create actual content (based on the template repos) in this repository
@@ -225,35 +238,41 @@ class ProgrammingExerciseIntegrationTestService {
         var testjsonFilePath = Path.of(localRepoFile.getPath(), "test", programmingExercise.getPackageFolderName(), "test.json");
         gitUtilService.writeEmptyJsonFileToPath(testjsonFilePath);
         // create two empty commits
-        GitService.commit(localGit).setMessage("empty").setAllowEmpty(true).setAuthor("test", "test@test.com").call();
+        GitService.commit(localGit).setMessage("empty").setAllowEmpty(true).setSign(false).setAuthor("test", "test@test.com").call();
         localGit.push().call();
 
         // we use the temp repository as remote origin for all repositories that are created during the
         // TODO: distinguish between template, test and solution
-        doReturn(new GitUtilService.MockFileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
+        doReturn(new GitUtilService.MockFileRepositoryUrl(remoteRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
     }
 
     void tearDown() throws IOException {
         if (downloadedFile != null && downloadedFile.exists()) {
             FileUtils.forceDelete(downloadedFile);
         }
-        if (localRepoFile != null && localRepoFile.exists()) {
-            FileUtils.deleteDirectory(localRepoFile);
-        }
-        if (repoDownloadClonePath != null && Files.exists(Path.of(repoDownloadClonePath))) {
-            FileUtils.deleteDirectory(new File(repoDownloadClonePath));
-        }
         if (localGit != null) {
             localGit.close();
         }
-        if (remoteGit != null) {
-            remoteGit.close();
+        if (localRepoFile != null && localRepoFile.exists()) {
+            FileUtils.deleteDirectory(localRepoFile);
         }
         if (localGit2 != null) {
             localGit2.close();
         }
+        if (localRepoFile2 != null && localRepoFile2.exists()) {
+            FileUtils.deleteDirectory(localRepoFile2);
+        }
+        if (remoteGit != null) {
+            remoteGit.close();
+        }
+        if (remoteRepoFile != null && remoteRepoFile.exists()) {
+            FileUtils.deleteDirectory(remoteRepoFile);
+        }
         if (remoteGit2 != null) {
             remoteGit2.close();
+        }
+        if (remoteRepo2File != null && remoteRepo2File.exists()) {
+            FileUtils.deleteDirectory(remoteRepo2File);
         }
     }
 
@@ -477,7 +496,7 @@ class ProgrammingExerciseIntegrationTestService {
         // Checks
         assertThat(entries).anyMatch(entry -> entry.endsWith("Test.java"));
         Optional<Path> extractedRepo1 = entries.stream()
-                .filter(entry -> entry.toString().endsWith(Path.of("-" + String.valueOf(participation1.getId()) + "-student-submission.git", ".git").toString())).findFirst();
+                .filter(entry -> entry.toString().endsWith(Path.of("-" + participation1.getId() + "-student-submission.git", ".git").toString())).findFirst();
         assertThat(extractedRepo1).isPresent();
         try (Git downloadedGit = Git.open(extractedRepo1.get().toFile())) {
             RevCommit commit = downloadedGit.log().setMaxCount(1).call().iterator().next();
@@ -492,8 +511,7 @@ class ProgrammingExerciseIntegrationTestService {
      * @return the list of files that the {@code downloadedFile} contained.
      */
     private List<Path> unzipExportedFile() throws Exception {
-        (new ZipFileTestUtilService()).extractZipFileRecursively(downloadedFile.getAbsolutePath());
-        Path extractedZipDir = Path.of(downloadedFile.getPath().substring(0, downloadedFile.getPath().length() - 4));
+        Path extractedZipDir = zipFileTestUtilService.extractZipFileRecursively(downloadedFile.getAbsolutePath());
         try (var files = Files.walk(extractedZipDir)) {
             return files.toList();
         }
@@ -778,11 +796,29 @@ class ProgrammingExerciseIntegrationTestService {
         request.put(ROOT + PROGRAMMING_EXERCISES, programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
+    void updateProgrammingExercise_correctlySavesTestIds() throws Exception {
+        var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        var test1 = tests.get(0);
+
+        String problemStatement = "[task][taskname](test1)";
+        String problemStatementWithId = "[task][taskname](<testid>%s</testid>)".formatted(test1.getId());
+        programmingExercise.setProblemStatement(problemStatement);
+
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        var response = request.putWithResponseBody(ROOT + PROGRAMMING_EXERCISES, programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        assertThat(response.getProblemStatement()).as("the REST endpoint should return a problem statement with test names").isEqualTo(problemStatement);
+
+        programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        assertThat(programmingExercise.getProblemStatement()).as("test saved exercise contains test ids").isEqualTo(problemStatementWithId);
+    }
+
     private void mockBuildPlanAndRepositoryCheck(ProgrammingExercise programmingExercise) throws Exception {
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId(), true, false);
         mockDelegate.mockCheckIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getSolutionBuildPlanId(), true, false);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTemplateRepositoryUrl(), programmingExercise.getProjectKey(), true);
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(), programmingExercise.getProjectKey(), true);
+        mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsTestRepositoryUrl(), programmingExercise.getProjectKey(), true);
     }
 
     private void mockConfigureRepository(ProgrammingExercise programmingExercise) throws Exception {
@@ -1285,23 +1321,27 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void importProgrammingExercise_sameShortNameInCourse_badRequest() throws Exception {
+        String sourceId = programmingExercise.getId().toString();
         programmingExercise.setId(null);
         programmingExercise.setTitle(programmingExercise.getTitle() + "change");
+        String sourceIdExam = programmingExerciseInExam.getId().toString();
         programmingExerciseInExam.setId(null);
         programmingExerciseInExam.setTitle(programmingExerciseInExam.getTitle() + "change");
         // short name will still be the same
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", sourceId), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", sourceIdExam), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_sameTitleInCourse_badRequest() throws Exception {
+        String sourceId = programmingExercise.getId().toString();
         programmingExercise.setId(null);
         programmingExercise.setShortName(programmingExercise.getShortName() + "change");
+        String sourceIdExam = programmingExerciseInExam.getId().toString();
         programmingExerciseInExam.setId(null);
         programmingExerciseInExam.setShortName(programmingExerciseInExam.getShortName() + "change");
         // title will still be the same
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
-        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", sourceId), programmingExercise, HttpStatus.BAD_REQUEST);
+        request.post(ROOT + IMPORT.replace("{sourceExerciseId}", sourceIdExam), programmingExerciseInExam, HttpStatus.BAD_REQUEST);
     }
 
     void importProgrammingExercise_staticCodeAnalysisMustBeSet_badRequest() throws Exception {
@@ -1375,6 +1415,39 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, false);
         mockDelegate.mockCheckIfProjectExistsInCi(programmingExercise, true, false);
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", NON_EXISTING_ID), programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    void importProgrammingExercise_updatesTestCaseIds() throws Exception {
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(programmingExercise.getId());
+        var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        var test1 = tests.get(0);
+
+        String problemStatementWithId = "[task][Taskname](<testid>" + test1.getId() + "</testid>)";
+        String problemStatement = "[task][Taskname](test1)";
+        programmingExercise.setProblemStatement(problemStatementWithId);
+        programmingExerciseRepository.save(programmingExercise);
+
+        String sourceId = programmingExercise.getId().toString();
+
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise, course);
+        exerciseToBeImported.setProblemStatement(problemStatement);
+
+        mockDelegate.mockCheckIfProjectExistsInVcs(programmingExercise, true);
+        mockDelegate.mockConnectorRequestsForImport(programmingExercise, exerciseToBeImported, false, false);
+        mockDelegate.mockConnectorRequestsForSetup(exerciseToBeImported, false);
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+        doNothing().when(versionControlService).addWebHooksForExercise(any());
+        doNothing().when(continuousIntegrationService).updatePlanRepository(any(), any(), any(), any(), any(), any(), any());
+
+        var response = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceId), exerciseToBeImported, ProgrammingExercise.class, HttpStatus.OK);
+
+        assertThat(response.getProblemStatement()).isEqualTo("[task][Taskname](test1)");
+
+        var newTestCase = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(response.getId(), test1.getTestName()).orElseThrow();
+        String newProblemStatement = "[task][Taskname](<testid>" + newTestCase.getId() + "</testid>)";
+        var savedProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(response.getId());
+
+        assertThat(savedProgrammingExercise.getProblemStatement()).isEqualTo(newProblemStatement);
     }
 
     void exportSubmissionsByStudentLogins_notInstructorForExercise_forbidden() throws Exception {
@@ -1707,8 +1780,8 @@ class ProgrammingExerciseIntegrationTestService {
 
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
             assertThat(zipFile.getEntry("overview.json")).isNotNull();
-            assertThat(zipFile.getEntry("files/Submission-1.java/Submission-1.java")).isNotNull();
-            assertThat(zipFile.getEntry("files/Submission-2.java/Submission-2.java")).isNotNull();
+            assertThat(zipFile.getEntry(Path.of("files/Submission-1.java/Submission-1.java").toString())).isNotNull();
+            assertThat(zipFile.getEntry(Path.of("files/Submission-2.java/Submission-2.java").toString())).isNotNull();
 
             // it is random which of the following two exists, but one of them must be part of the zip file
             var json1 = zipFile.getEntry("Submission-2.java-Submission-1.java.json");
@@ -2198,6 +2271,22 @@ class ProgrammingExerciseIntegrationTestService {
 
         request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
                 "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
+    }
+
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommit(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
+            throws Exception {
+        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+
+        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
+                "/api/repository/" + participation1.getId() + "/files-content/" + submission.getCommitHash());
+    }
+
+    void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(BiFunction<ProgrammingExercise, Map<String, String>, ProgrammingSubmission> setupRepositoryMock)
+            throws Exception {
+        var submission = setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
+        // without forwarding the redirectUrl is null
+        request.getWithForwardedUrl("/api/programming-exercise-participations/" + participation1.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.FORBIDDEN,
+                null);
     }
 
     private long getMaxProgrammingExerciseId() {

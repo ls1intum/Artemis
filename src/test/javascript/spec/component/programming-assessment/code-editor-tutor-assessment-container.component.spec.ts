@@ -68,6 +68,9 @@ import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treev
 import { AlertService } from 'app/core/util/alert.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.service';
+import { AthenaService } from 'app/assessment/athena.service';
+import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
@@ -191,6 +194,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: AthenaService, useClass: MockAthenaService },
                 { provide: ActivatedRoute, useValue: route() },
                 MockProvider(ProfileService, { getProfileInfo: () => of({ activeProfiles: [] }) }, 'useValue'),
             ],
@@ -225,6 +229,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
                 findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
                 findWithParticipationsStub.mockReturnValue(of({ body: exercise }));
+
+                // Mock the ResizeObserver, which is not available in the test environment
+                global.ResizeObserver = jest.fn().mockImplementation((...args) => new MockResizeObserver(args));
             });
     });
 
@@ -235,6 +242,27 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     it('should use jhi-assessment-layout', () => {
         const assessmentLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
         expect(assessmentLayout).toBeDefined();
+    });
+
+    it('should show unreferenced feedback suggestions', () => {
+        comp.feedbackSuggestions = [{ reference: 'file:src/Test.java_line:1' }, { reference: 'file:src/Test.java_line:2' }, { reference: undefined }];
+        expect(comp.unreferencedFeedbackSuggestions).toHaveLength(1);
+    });
+
+    it('should not show feedback suggestions where there are already existing manual feedbacks', async () => {
+        comp.unreferencedFeedback = [{ text: 'unreferenced test', detailText: 'some detail', reference: undefined }];
+        comp.referencedFeedback = [{ text: 'referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' }];
+        const feedbackSuggestionsStub = jest.spyOn(comp['athenaService'], 'getFeedbackSuggestionsForProgramming');
+        feedbackSuggestionsStub.mockReturnValue(
+            of([
+                { text: 'unreferenced test', detailText: 'some detail', reference: undefined },
+                { text: 'referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' },
+                { text: 'suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' },
+            ]),
+        );
+        comp['submission'] = { id: undefined }; // Needed for loadFeedbackSuggestions
+        await comp['loadFeedbackSuggestions']();
+        expect(comp.feedbackSuggestions).toStrictEqual([{ text: 'suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' }]);
     });
 
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
@@ -376,7 +404,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     it('should save and submit manual result', fakeAsync(() => {
         comp.ngOnInit();
         tick(100);
-        comp.automaticFeedback = [{ type: FeedbackType.AUTOMATIC, text: 'testCase1', detailText: 'testCase1 failed', credits: 0 }];
+        comp.automaticFeedback = [{ type: FeedbackType.AUTOMATIC, testCase: { testName: 'testCase1' }, detailText: 'testCase1 failed', credits: 0 }];
         comp.referencedFeedback = [{ type: FeedbackType.MANUAL, text: 'manual feedback', detailText: 'manual feedback for a file:1', credits: 2, reference: 'file:1_line:1' }];
         comp.unreferencedFeedback = [{ type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'unreferenced feedback', credits: 1 }];
         comp.validateFeedback();
@@ -612,4 +640,29 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             }
         },
     );
+
+    it('should update and validate referenced feedback', () => {
+        const feedbacks = [
+            { reference: 'file:src/Test.java_line:1', type: FeedbackType.MANUAL },
+            { reference: 'file:src/Test.java_line:2', type: FeedbackType.MANUAL },
+            { reference: undefined, type: FeedbackType.MANUAL },
+        ];
+        const validateFeedbackStub = jest.spyOn(comp, 'validateFeedback');
+        validateFeedbackStub.mockReturnValue(undefined);
+        comp.onUpdateFeedback(feedbacks);
+        expect(comp.referencedFeedback).toEqual([
+            { reference: 'file:src/Test.java_line:1', type: FeedbackType.MANUAL },
+            { reference: 'file:src/Test.java_line:2', type: FeedbackType.MANUAL },
+        ]);
+        expect(validateFeedbackStub).toHaveBeenCalled();
+    });
+
+    it('should correctly remove feedback suggestions', () => {
+        const feedbackSuggestion1 = { id: 1, credits: 1 };
+        const feedbackSuggestion2 = { id: 2, credits: 2 };
+        const feedbackSuggestion3 = { id: 3, credits: 3 };
+        comp.feedbackSuggestions = [feedbackSuggestion1, feedbackSuggestion2, feedbackSuggestion3];
+        comp.removeSuggestion(feedbackSuggestion2);
+        expect(comp.feedbackSuggestions).toEqual([feedbackSuggestion1, feedbackSuggestion3]);
+    });
 });
