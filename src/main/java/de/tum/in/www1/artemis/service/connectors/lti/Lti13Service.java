@@ -17,6 +17,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
@@ -26,14 +27,16 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.google.gson.JsonObject;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lti.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import net.minidev.json.JSONObject;
 
 @Service
 @Profile("lti")
@@ -59,11 +62,13 @@ public class Lti13Service {
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;
 
+    private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
+
     private final RestTemplate restTemplate;
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository,
             LtiService ltiService, ResultRepository resultRepository, Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService,
-            RestTemplate restTemplate) {
+            RestTemplate restTemplate, ArtemisAuthenticationProvider artemisAuthenticationProvider) {
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.courseRepository = courseRepository;
@@ -73,6 +78,7 @@ public class Lti13Service {
         this.tokenRetriever = tokenRetriever;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.restTemplate = restTemplate;
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
     /**
@@ -101,14 +107,23 @@ public class Lti13Service {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
-        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
-                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        ltiService.onSuccessfulLtiAuthentication(user, targetExercise.get());
+        Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail());
 
+        if (!onlineCourseConfiguration.isRequireExistingUser() && optionalUsername.isEmpty()) {
+            SecurityContextHolder.getContext().setAuthentication(ltiService.createNewUserFromLaunchRequest(ltiIdToken.getEmail(),
+                    createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(), ltiIdToken.getFamilyName()));
+
+        }
+
+        String username = optionalUsername.orElseGet(() -> createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration));
+        User user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(username).orElseThrow();
+        ltiService.onSuccessfulLtiAuthentication(user, targetExercise.get());
         Lti13LaunchRequest launchRequest = launchRequestFrom(ltiIdToken, clientRegistrationId);
 
         createOrUpdateResourceLaunch(launchRequest, user, targetExercise.get());
+
+        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
     }
 
     /**
@@ -168,7 +183,7 @@ public class Lti13Service {
                 return;
             }
 
-            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
             if (result.isEmpty()) {
                 log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
@@ -222,15 +237,15 @@ public class Lti13Service {
     }
 
     private String getScoreBody(String userId, String comment, Double score) {
-        JSONObject requestBody = new JSONObject();
-        requestBody.put("userId", userId);
-        requestBody.put("timestamp", (new DateTime()).toString());
-        requestBody.put("activityProgress", "Submitted");
-        requestBody.put("gradingProgress", "FullyGraded");
-        requestBody.put("comment", comment);
-        requestBody.put("scoreGiven", score);
-        requestBody.put("scoreMaximum", 100D);
-        return requestBody.toJSONString();
+        JsonObject requestBody = new JsonObject();
+        requestBody.addProperty("userId", userId);
+        requestBody.addProperty("timestamp", (new DateTime()).toString());
+        requestBody.addProperty("activityProgress", "Submitted");
+        requestBody.addProperty("gradingProgress", "FullyGraded");
+        requestBody.addProperty("comment", comment);
+        requestBody.addProperty("scoreGiven", score);
+        requestBody.addProperty("scoreMaximum", 100D);
+        return requestBody.toString();
     }
 
     /**

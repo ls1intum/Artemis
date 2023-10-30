@@ -1,6 +1,7 @@
 Privacy Statement German template
-"""""""""""""""""""""""""""""""""
-.. code-block:: none
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: markdown
 
    # Datenschutz
 
@@ -53,7 +54,7 @@ Privacy Statement German template
 
    #### Ihre Rechte
 
-  Soweit wir von Ihnen personenbezogene Daten verarbeiten, stehen Ihnen als Betroffener nachfolgende Rechte zu:
+   Soweit wir von Ihnen personenbezogene Daten verarbeiten, stehen Ihnen als Betroffener nachfolgende Rechte zu:
 
    * Sie haben das Recht auf Auskunft über die zu Ihrer Person gespeicherten Daten (Art. 15 DSGVO).
    * Sollten unrichtige personenbezogene Daten verarbeitet werden, steht Ihnen ein Recht auf Berichtigung zu (Art. 16 DSGVO).
@@ -122,8 +123,9 @@ Privacy Statement German template
 
 
 Privacy Statement English template
-""""""""""""""""""""""""""""""""""
-.. code-block:: none
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: markdown
 
    # Privacy
 

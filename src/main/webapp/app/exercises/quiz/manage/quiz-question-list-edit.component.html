@@ -21,8 +21,11 @@
                     #editDragAndDrop
                     [question]="quizQuestion"
                     [questionIndex]="i + 1"
+                    [filePool]="fileMap"
                     (questionUpdated)="handleQuestionUpdated()"
                     (questionDeleted)="handleQuestionDeleted(i)"
+                    (addNewFile)="handleFileAdded($event)"
+                    (removeFile)="handleFileRemoved($event)"
                 >
                 </jhi-drag-and-drop-question-edit>
             </div>
@@ -68,7 +71,9 @@
         <jhi-quiz-question-list-edit-existing
             [show]="showExistingQuestions"
             [courseId]="courseId"
+            [filePool]="fileMap"
             (onQuestionsAdded)="handleExistingQuestionsAdded($event)"
+            (onFilesAdded)="handleFilesAdded($event)"
         ></jhi-quiz-question-list-edit-existing>
     </div>
 </div>
