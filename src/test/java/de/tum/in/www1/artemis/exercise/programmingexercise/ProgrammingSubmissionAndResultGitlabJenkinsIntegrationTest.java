@@ -25,6 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -285,9 +286,9 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
         testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(TEST_PREFIX);
         String userLogin = TEST_PREFIX + "student1";
-        var pushJSON = (JSONObject) new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST);
-        var firstCommitHash = (String) pushJSON.get("before");
-        var secondCommitHash = (String) pushJSON.get("after");
+        var pushJSON = new JsonParser().parse(GITLAB_PUSH_EVENT_REQUEST).getAsJsonObject();
+        var firstCommitHash = pushJSON.get("before").getAsString();
+        var secondCommitHash = pushJSON.get("after").getAsString();
         var firstCommitDate = ZonedDateTime.now().minusSeconds(60);
         var secondCommitDate = ZonedDateTime.now().minusSeconds(30);
 

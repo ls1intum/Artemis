@@ -15,7 +15,6 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import org.eclipse.jgit.lib.ObjectId;
-import org.json.simple.parser.JSONParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,8 +28,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -172,8 +173,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotCreateSubmissionOnNotifyPushForInvalidParticipationId() throws Exception {
         long fakeParticipationId = 9999L;
-        JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST);
+        Object obj = new ObjectMapper().readValue(BITBUCKET_PUSH_EVENT_REQUEST, Object.class);
         // Api should return not found.
         request.postWithoutLocation("/api/public/programming-submissions/" + fakeParticipationId, obj, HttpStatus.NOT_FOUND, new HttpHeaders());
         // No submission should be created for the fake participation.
@@ -645,12 +645,12 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
         testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(TEST_PREFIX);
-        var pushJSON = (JSONObject) new JSONParser().parse(BITBUCKET_PUSH_EVENT_REQUEST);
-        var changes = (JSONArray) pushJSON.get("changes");
-        var firstChange = (JSONObject) changes.get(0);
-        var firstCommitHash = (String) firstChange.get("fromHash");
-        var secondCommitHash = (String) firstChange.get("toHash");
-        var secondCommitDate = ZonedDateTime.parse(pushJSON.get("date").toString(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
+        var pushJSON = JsonParser.parseString(BITBUCKET_PUSH_EVENT_REQUEST).getAsJsonObject();
+        var changes = pushJSON.get("changes").getAsJsonArray();
+        var firstChange = changes.get(0).getAsJsonObject();
+        var firstCommitHash = firstChange.get("fromHash").getAsString();
+        var secondCommitHash = firstChange.get("toHash").getAsString();
+        var secondCommitDate = ZonedDateTime.parse(pushJSON.get("date").getAsString(), DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
         var firstCommitDate = secondCommitDate.minusSeconds(30);
 
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(testService.programmingExercise);
@@ -1048,8 +1048,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @SuppressWarnings("unchecked")
     private void postTestRepositorySubmission() throws Exception {
-        JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST);
+        ObjectMapper mapper = new ObjectMapper();
+        Object obj = mapper.readValue(BITBUCKET_PUSH_EVENT_REQUEST, Object.class);
 
         Map<String, Object> requestBodyMap = (Map<String, Object>) obj;
         List<Map<String, Object>> changes = (List<Map<String, Object>>) requestBodyMap.get("changes");
@@ -1063,8 +1063,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * Simulate a commit to the test repository, this executes a http request from the VCS to Artemis.
      */
     private void postTestRepositorySubmissionWithoutCommit(HttpStatus status) throws Exception {
-        JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST_WITHOUT_COMMIT);
+        ObjectMapper mapper = new ObjectMapper();
+        Object obj = mapper.readValue(BITBUCKET_PUSH_EVENT_REQUEST_WITHOUT_COMMIT, Object.class);
         request.postWithoutLocation("/api/public/programming-exercises/test-cases-changed/" + exerciseId, obj, status, new HttpHeaders());
     }
 
@@ -1126,14 +1126,13 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         request.postWithoutLocation("/api/public/programming-exercises/new-result", alteredObj, expectedStatus, httpHeaders);
     }
 
-    private BambooBuildResultNotificationDTO createBambooBuildResultNotificationDTO(String buildPlanKey) throws Exception {
-        JSONParser jsonParser = new JSONParser();
+    private BambooBuildResultNotificationDTO createBambooBuildResultNotificationDTO(String buildPlanKey) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
         // replace plan.key in BAMBOO_BUILD_RESULT_REQUEST with buildPlanKey as well as the
         var buildResult = BAMBOO_BUILD_RESULT_REQUEST.replace("TEST201904BPROGRAMMINGEXERCISE6-STUDENT1", buildPlanKey).replace("2019-07-27T17:07:46.642Z[Zulu]",
                 ZonedDateTime.now().toString());
-        Object obj = jsonParser.parse(buildResult);
+        Object obj = mapper.readValue(buildResult, Object.class);
 
-        ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
         return mapper.convertValue(obj, BambooBuildResultNotificationDTO.class);
     }

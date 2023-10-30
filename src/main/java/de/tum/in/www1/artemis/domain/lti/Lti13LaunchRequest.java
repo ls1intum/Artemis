@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.lti;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.util.Assert;
 
-import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class Lti13LaunchRequest {
 
@@ -24,8 +24,13 @@ public class Lti13LaunchRequest {
         this.sub = ltiIdToken.getClaim("sub");
         this.deploymentId = ltiIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID);
 
-        JsonObject resourceLinkClaim = ltiIdToken.getClaim(Claims.RESOURCE_LINK);
-        this.resourceLinkId = resourceLinkClaim != null ? resourceLinkClaim.getAsJsonObject("id").getAsString() : null;
+        var resourceLinkClaim = ltiIdToken.getClaim(Claims.RESOURCE_LINK);
+        if (resourceLinkClaim != null) {
+            this.resourceLinkId = JsonParser.parseString(resourceLinkClaim.toString()).getAsJsonObject().get("id").getAsString();
+        }
+        else {
+            this.resourceLinkId = null;
+        }
         this.targetLinkUri = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
 
         this.agsClaim = Lti13AgsClaim.from(ltiIdToken).orElse(null);

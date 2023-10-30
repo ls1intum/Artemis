@@ -17,6 +17,8 @@ import org.mockito.MockedStatic;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.google.gson.JsonObject;
+
 import de.tum.in.www1.artemis.domain.PrivacyStatement;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 
@@ -219,10 +221,10 @@ class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationI
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testUpdatePrivacyStatement_unsupportedLanguageBadRequest() throws Exception {
-        JSONObject body = new JSONObject();
-        body.put("text", "test");
-        body.put("language", "FRENCH");
-        request.put("/api/admin/privacy-statement", body, HttpStatus.BAD_REQUEST);
+        JsonObject body = new JsonObject();
+        body.addProperty("text", "test");
+        body.addProperty("language", "FRENCH");
+        request.put("/api/admin/privacy-statement", body.toString(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
