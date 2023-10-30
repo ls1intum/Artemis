@@ -45,6 +45,7 @@
             "cloneRatedRepository": "Klone dein bewertetes Repository für diese Übung:",
             "clonePracticeRepository": "Klone dein Übungs-Repository für diese Übung:",
             "cloneExerciseRepository": "Klone ein Repository für diese Übung",
+            "waitForData": "Es werden noch Daten nachgeladen. Bitte warte einen Moment.",
             "repositoryPassword": "Dein Passwort lautet:",
             "hoverToShow": "(hover, um es anzuzeigen)",
             "cloneSourceTree": {
