@@ -11,7 +11,7 @@ import { Observable, Subject } from 'rxjs';
  */
 enum IrisCodeEditorWebsocketMessageType {
     MESSAGE = 'MESSAGE',
-    FILES_CHANGED = 'FILES_CHANGED',
+    FILE_CHANGES = 'FILE_CHANGES',
     ERROR = 'ERROR',
 }
 
@@ -61,14 +61,11 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     }
 
     protected handleWebsocketResponse(response: IrisCodeEditorWebsocketDTO): void {
-        if (response.rateLimitInfo) {
-            super.handleRateLimitInfo(response.rateLimitInfo);
-        }
         switch (response.type) {
             case IrisCodeEditorWebsocketMessageType.MESSAGE:
                 super.handleMessage(response.message);
                 break;
-            case IrisCodeEditorWebsocketMessageType.FILES_CHANGED:
+            case IrisCodeEditorWebsocketMessageType.FILE_CHANGES:
                 this.subject.next(response.filesChanged!); // notify subscribers to reload
                 break;
             case IrisCodeEditorWebsocketMessageType.ERROR:

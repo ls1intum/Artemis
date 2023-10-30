@@ -250,6 +250,15 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         return exercisePlan;
     }
 
+    private static IrisExercisePlanMessageContent mockExercisePlan(JsonNode content) throws IrisParseResponseException {
+        var exercisePlan = new IrisExercisePlanMessageContent();
+        List<IrisExercisePlanStep> planSteps = new ArrayList<>();
+        planSteps.add(new IrisExercisePlanStep(exercisePlan, ExerciseComponent.TEMPLATE_REPOSITORY,
+                "I will add a private final String global attribute to the file BubbleSort.java, name it 'TEST', and give it the value 'Hello'"));
+        exercisePlan.setSteps(planSteps);
+        return exercisePlan;
+    }
+
     /**
      * Requests exercise changes from the Iris model for the given session and exercise plan. This method sends a
      * request to the Iris model for each component in the exercise plan, and handles the response to extract the
