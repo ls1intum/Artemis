@@ -31,6 +31,11 @@ jhi-category-selector {
     }
 }
 
+// Otherwise the x will jump when opening the colorpicker
+.remove-button::before {
+    position: absolute;
+}
+
 .tag-option {
     background: #fff;
 
