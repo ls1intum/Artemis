@@ -55,6 +55,7 @@ Instructors have three options for creating a lecture.
        |processed-lecture-units|
 
     The following video shows how to split a lecture PDF into multiple units.
+
     .. raw:: html
 
         <iframe src="https://live.rbg.tum.de/w/artemisintro/39407?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
