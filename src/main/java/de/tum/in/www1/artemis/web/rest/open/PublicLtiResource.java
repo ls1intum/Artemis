@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.web.rest.open;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.time.Instant;
+import java.util.Date;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -19,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.nimbusds.jwt.SignedJWT;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
@@ -28,7 +33,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.SignatureException;
 
 /**
  * REST controller for receiving LTI requests.
@@ -170,15 +174,13 @@ public class PublicLtiResource {
      */
     private boolean isValidJwtIgnoreSignature(String token) {
         try {
-            Jwts.parser().build().parse(token);
+            SignedJWT parsedToken = SignedJWT.parse(token);
+            if (parsedToken.getJWTClaimsSet().getExpirationTime().before(Date.from(Instant.now()))) {
+                return false;
+            }
             return true;
         }
-        catch (SignatureException e) {
-            // TODO: double check if this is actually correct and we can ignore SignatureException
-            // We ignore the signature
-            return true;
-        }
-        catch (ExpiredJwtException | MalformedJwtException | IllegalArgumentException e) {
+        catch (ParseException e) {
             log.info("LTI request: JWT token is invalid: {}", token, e);
             return false;
         }
