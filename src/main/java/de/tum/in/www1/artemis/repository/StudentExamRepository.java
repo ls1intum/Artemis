@@ -172,6 +172,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
                 LEFT JOIN FETCH sp.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
             WHERE se.user.id = sp.student.id
                   AND se.user.id = :userId
             """)

@@ -648,3 +648,10 @@ Now, instead of mocking the whole Service, we can just mock the static method, l
 You should notice here that we can avoid the use of a Bean and also test deeper. Instead of mocking the uppermost method we only throw the exception at the place where it could actually happen. Very important to mention is that you need to close the mock at the end of the test again.
 
 For a real example where a SpyBean was replaced with a static mock look at the SubmissionExportIntegrationTest.java in `here <https://github.com/ls1intum/Artemis/commit/4843137aa01cfdf27ea019400c48df00df36ed45>`__.
+
+27. Avoid Arbitrary JSON Parsing Libraries
+==========================================
+
+* Utilize well-established JSON parsing libraries such as Gson or Jackson.
+* Whenever possible, use ObjectMapper for JSON parsing. If ObjectMapper is not suitable for the specific task, use to Gson's JsonParser.
+* By adhering to these points, we ensure to maintain a consistent and reliable approach to JSON parsing. This helps reduce potential maintenance challenges and compatibility issues.

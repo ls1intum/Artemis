@@ -64,6 +64,11 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
         return findById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
 
+    @NotNull
+    default QuizExercise findWithEagerQuestionsByIdOrElseThrow(Long quizExerciseId) {
+        return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("QuizExercise", quizExerciseId));
+    };
+
     /**
      * Get one quiz exercise
      *
