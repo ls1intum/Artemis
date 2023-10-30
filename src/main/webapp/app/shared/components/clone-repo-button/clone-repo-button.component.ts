@@ -99,6 +99,10 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         }
     }
 
+    onClick() {
+        console.log('click');
+    }
+
     private getRepositoryUrl() {
         return this.activeParticipation?.repositoryUrl ?? this.repositoryUrl!;
     }
