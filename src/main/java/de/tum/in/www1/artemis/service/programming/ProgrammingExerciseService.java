@@ -14,7 +14,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -26,10 +25,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallback;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -137,8 +132,6 @@ public class ProgrammingExerciseService {
 
     private final IrisSettingsService irisSettingsService;
 
-    private final TransactionTemplate transactionTemplate;
-
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -150,7 +143,7 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ExerciseSpecificationService exerciseSpecificationService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
-            ProgrammingSubmissionService programmingSubmissionService, IrisSettingsService irisSettingsService, PlatformTransactionManager transactionManager) {
+            ProgrammingSubmissionService programmingSubmissionService, IrisSettingsService irisSettingsService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -178,7 +171,6 @@ public class ProgrammingExerciseService {
         this.channelService = channelService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.irisSettingsService = irisSettingsService;
-        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -210,68 +202,76 @@ public class ProgrammingExerciseService {
         final User exerciseCreator = userRepository.getUser();
         VersionControlService versionControl = versionControlService.orElseThrow();
 
+        // Step 1: Setting constant facts for a programming exercise
+        System.out.println("Step 1");
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
-        ProgrammingExercise createdExercise;
 
-        try {
-            // We execute the following steps in a transaction to be able to roll back in the case of errors.
-            // As a transactional method cannot be used in the same class, we have to use this workaround.
-            createdExercise = transactionTemplate.execute(new TransactionCallback<ProgrammingExercise>() {
+        // Step 2: Creating repositories for new exercise
+        System.out.println("Step 2");
+        programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
 
-                @Override
-                public ProgrammingExercise doInTransaction(@NotNull TransactionStatus status) {
-                    try {
-                        programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
-                    }
-                    catch (GitAPIException e) {
-                        log.error("An exception occurred while creating repositories for new exercise.", e);
-                        throw new RuntimeException(e);
-                    }
-                    initParticipations(programmingExercise);
-                    setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-                    // Save participations to get the ids required for the webhooks
-                    connectBaseParticipationsToExerciseAndSave(programmingExercise);
+        // Step 3: Initializing solution and template participation
+        System.out.println("Step 3");
+        initParticipations(savedProgrammingExercise);
 
-                    connectAuxiliaryRepositoriesToExercise(programmingExercise);
+        // Step 4a: Setting build plan IDs and URLs for template and solution participation
+        System.out.println("Step 4a");
+        setURLsAndBuildPlanIDsForNewExercise(savedProgrammingExercise);
 
-                    try {
-                        programmingExerciseRepositoryService.setupExerciseTemplate(programmingExercise, exerciseCreator);
-                    }
-                    catch (GitAPIException e) {
-                        log.error("An exception occurred while setting up the exercise template for new programming exercise.", e);
-                        throw new RuntimeException(e);
-                    }
-                    programmingSubmissionService.createInitialSubmissions(programmingExercise);
+        // Step 4b: Connecting base participations with the exercise
+        System.out.println("Step 4b");
+        connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
-                    // Save programming exercise to prevent transient exception
-                    ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        // Step 4c: Connect auxiliary repositories
+        System.out.println("Step 4c");
+        connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 
-                    channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
+        // Step 5: Setup exercise template
+        System.out.println("Step 5");
+        programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator);
 
-                    setupBuildPlansForNewExercise(savedProgrammingExercise);
-                    return programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
-                }
-            });
-        }
-        catch (RuntimeException e) {
-            throw (GitAPIException) e.getCause();
-        }
+        // Step 6: Create initial submission
+        System.out.println("Step 6");
+        programmingSubmissionService.createInitialSubmissions(savedProgrammingExercise);
 
-        programmingExerciseTaskService.updateTasksFromProblemStatement(createdExercise);
+        savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        versionControl.addWebHooksForExercise(createdExercise);
-        scheduleOperations(createdExercise.getId());
-        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(createdExercise);
+        // Step 7: Create exercise channel
+        System.out.println("Step 7");
+        channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
-        // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so
-        // we do not trigger them here
+        // Step 8: Setup build plans for template and solution participation
+        System.out.println("Step 8");
+        setupBuildPlansForNewExercise(savedProgrammingExercise);
+
+        savedProgrammingExercise = programmingExerciseRepository.save(savedProgrammingExercise);
+
+        // Step 9: Update task from problem statement
+        System.out.println("Step 9");
+        programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
+
+        // Step 10: Webhooks and scheduling
+        // Step 10a: Create web hooks for version control
+        System.out.println("Step 10a");
+        versionControl.addWebHooksForExercise(savedProgrammingExercise);
+        // Step 10b: Schedule operations
+        System.out.println("Step 10b");
+        scheduleOperations(savedProgrammingExercise.getId());
+        // Step 10c: Check notifications for new exercise
+        System.out.println("Step 10c");
+        groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
+
+        // Step 11: Trigger build if the exercise is not imported.
+        System.out.println("Step 11");
         if (!isImportedFromFile) {
-            triggerBuildForTemplateAndSolutionParticipation(createdExercise);
+            triggerBuildForTemplateAndSolutionParticipation(savedProgrammingExercise);
         }
 
-        return createdExercise;
+        savedProgrammingExercise = programmingExerciseRepository.saveAndFlush(savedProgrammingExercise);
+        return savedProgrammingExercise;
     }
 
     /**
@@ -424,8 +424,8 @@ public class ProgrammingExerciseService {
         var solutionParticipation = programmingExercise.getSolutionParticipation();
         templateParticipation.setProgrammingExercise(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
-        templateParticipation = templateProgrammingExerciseParticipationRepository.save(templateParticipation);
-        solutionParticipation = solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+        templateParticipation = templateProgrammingExerciseParticipationRepository.saveAndFlush(templateParticipation);
+        solutionParticipation = solutionProgrammingExerciseParticipationRepository.saveAndFlush(solutionParticipation);
         programmingExercise.setTemplateParticipation(templateParticipation);
         programmingExercise.setSolutionParticipation(solutionParticipation);
     }
