@@ -291,4 +291,23 @@ describe('PageDiscussionSectionComponent', () => {
         });
         expect(component.channel).toBe(metisLectureChannel);
     }));
+
+    it('should react to srcoll up event', fakeAsync(() => {
+        const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
+
+        const scrolledUp = new CustomEvent('scrolledUp');
+        component.content.nativeElement.dispatchEvent(scrolledUp);
+
+        expect(fetchNextPageSpy).toHaveBeenCalledOnce();
+    }));
+
+    it('fetches new messages on scroll up if more messages are available', fakeAsync(() => {
+        component.posts = [];
+        const commandMetisToFetchPostsSpy = jest.spyOn(component, 'fetchNextPage');
+
+        const scrolledUp = new CustomEvent('scrolledUp');
+        component.content.nativeElement.dispatchEvent(scrolledUp);
+
+        expect(commandMetisToFetchPostsSpy).toHaveBeenCalledOnce();
+    }));
 });
