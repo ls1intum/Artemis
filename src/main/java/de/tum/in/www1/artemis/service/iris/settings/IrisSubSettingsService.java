@@ -39,6 +39,7 @@ public class IrisSubSettingsService {
      * @param currentSettings Current chat sub settings.
      * @param newSettings     Updated chat sub settings.
      * @param parentSettings  Parent chat sub settings.
+     * @param settingsType    Type of the settings the sub settings belong to.
      * @return Updated chat sub settings.
      */
     public IrisChatSubSettings update(IrisChatSubSettings currentSettings, IrisChatSubSettings newSettings, IrisCombinedChatSubSettingsDTO parentSettings,
@@ -76,6 +77,7 @@ public class IrisSubSettingsService {
      * @param currentSettings Current Hestia sub settings.
      * @param newSettings     Updated Hestia sub settings.
      * @param parentSettings  Parent Hestia sub settings.
+     * @param settingsType    Type of the settings the sub settings belong to.
      * @return Updated Hestia sub settings.
      */
     public IrisHestiaSubSettings update(IrisHestiaSubSettings currentSettings, IrisHestiaSubSettings newSettings, IrisCombinedHestiaSubSettingsDTO parentSettings,
@@ -109,6 +111,7 @@ public class IrisSubSettingsService {
      * @param currentSettings Current Code Editor sub settings.
      * @param newSettings     Updated Code Editor sub settings.
      * @param parentSettings  Parent Code Editor sub settings.
+     * @param settingsType    Type of the settings the sub settings belong to.
      * @return Updated Code Editor sub settings.
      */
     public IrisCodeEditorSubSettings update(IrisCodeEditorSubSettings currentSettings, IrisCodeEditorSubSettings newSettings, IrisCombinedCodeEditorSubSettingsDTO parentSettings,
