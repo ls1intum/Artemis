@@ -1,5 +1,6 @@
 import {
     faArrowDown,
+    faCheck,
     faCircle,
     faCircleInfo,
     faCompress,
@@ -40,7 +41,7 @@ import {
     IrisMessageContent,
     IrisMessageContentType,
     IrisTextMessageContent,
-    getPlanComponent,
+    getPlanSteps,
     getTextContent,
     isPlanContent,
     isTextContent,
@@ -96,6 +97,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     faThumbsUp = faThumbsUp;
     faThumbsDown = faThumbsDown;
     faRedo = faRedo;
+    faCheck = faCheck;
 
     // ViewChilds
     @ViewChild('chatBody') chatBody!: ElementRef;
@@ -734,7 +736,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     }
 
     getPlanSteps(content: IrisMessageContent) {
-        return getPlanComponent(content);
+        return getPlanSteps(content);
     }
 
     isChatSession() {

@@ -79,6 +79,25 @@
                         <div class="bubble-left" *ngIf="isTextContent(content)">
                             <span [innerHTML]="getTextContent(content)! | htmlForMarkdown"></span>
                         </div>
+                        <div class="bubble-left" *ngIf="isExercisePlan(content)">
+                            <div *ngFor="let step of getPlanSteps(content); let i = index">
+                                <div>
+                                    <span [innerHTML]="step.component | htmlForMarkdown"></span>
+                                    <!--TODO: Add show/hide button-->
+                                </div>
+                                <!--TODO: Make it editable-->
+                                <span [innerHTML]="step.instructions! | htmlForMarkdown"></span>
+                                <!--TODO: Add cancel, confirm button-->
+                                <div (click)="executePlanStep(message.id!, content.id!, step.id!)" class="confirm-plan">
+                                    <button class="btn btn-primary">
+                                        <fa-icon [icon]="faCheck"></fa-icon>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="confirm-plan">
+                                <button class="btn btn-primary">confirm</button>
+                            </div>
+                        </div>
                         <div class="rate-message-buttons">
                             <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
                                 <fa-icon
@@ -95,18 +114,6 @@
                                     size="sm"
                                 ></fa-icon>
                             </button>
-                        </div>
-                        <div class="bubble-left" *ngIf="isExercisePlan(content)">
-                            <div *ngFor="let step of getPlanSteps(content); let i = index">
-                                <div>
-                                    <span [innerHTML]="step.component | htmlForMarkdown"></span>
-                                    <!--TODO: Add show/hide button-->
-                                </div>
-                                <!--TODO: Make it editable-->
-                                <span [innerHTML]="step.instructions! | htmlForMarkdown"></span>
-                                <!--TODO: Add cancel, confirm button-->
-                                <button (click)="executePlanStep(message.id!, content.id!, step.id!)" class="btn btn-primary">confirm</button>
-                            </div>
                         </div>
                     </div>
                     <div *ngIf="isArtemisClientSentMessage(message)" style="width: fit-content">

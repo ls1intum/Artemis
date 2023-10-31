@@ -46,7 +46,7 @@ export function isPlanContent(content: IrisMessageContent) {
     return content.type === IrisMessageContentType.PLAN;
 }
 
-export function getPlanComponent(content: IrisMessageContent) {
+export function getPlanSteps(content: IrisMessageContent) {
     if (isPlanContent(content)) {
         const irisMessagePlanContent = content as IrisExercisePlan;
         return irisMessagePlanContent.steps;
