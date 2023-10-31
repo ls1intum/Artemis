@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = ExamWideAnnouncementEventDTO.class, name = "examWideAnnouncement"),
         @JsonSubTypes.Type(value = WorkingTimeUpdateEventDTO.class, name = "workingTimeUpdate"),
+        @JsonSubTypes.Type(value = ExamAttendanceCheckEventDTO.class, name = "examAttendanceCheck"),
 })
 // @formatter:on
 public abstract class ExamLiveEventDTO {

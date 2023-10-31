@@ -16,7 +16,7 @@ type StudentExamAcknowledgedEvents = { lastChange: number; acknowledgedEvents: {
 export enum ExamLiveEventType {
     EXAM_WIDE_ANNOUNCEMENT = 'examWideAnnouncement',
     WORKING_TIME_UPDATE = 'workingTimeUpdate',
-    EXAM_ATTENDANCE_CHECK = 'attendanceCheck',
+    EXAM_ATTENDANCE_CHECK = 'examAttendanceCheck',
 }
 
 export type ExamLiveEvent = {

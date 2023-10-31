@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.exam.event.ExamAttendanceCheckEvent;
 import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -45,6 +44,7 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
+import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -245,15 +245,16 @@ public class StudentExamResource {
      */
     @PatchMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/attendance-check")
     @EnforceAtLeastInstructor
-    public ResponseEntity<ExamAttendanceCheckEvent> attendanceCheck(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
+    public ResponseEntity<ExamAttendanceCheckEventDTO> attendanceCheck(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
             @RequestBody String message) {
         log.debug("REST request for attendance-check for student exam : {}", studentExamId);
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         User currentUser = userRepository.getUser();
+        var event = examLiveEventsService.createAndSendExamAttendanceCheckEvent(studentExam, message, currentUser);
 
-        return ResponseEntity.ok(examLiveEventsService.createAndSendExamAttendanceCheckEvent(studentExam, message, currentUser));
+        return ResponseEntity.ok(event.asDTO());
     }
 
     /**

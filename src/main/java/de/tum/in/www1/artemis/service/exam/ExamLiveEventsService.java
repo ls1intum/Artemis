@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
  * <ul>
  * <li>Exam Wide Announcements
  * <li>Working Time Updates
+ * <li>Exam Attendance Check
  * </ul>
  * <p>
  * In the future, we can incorporate more events here.
