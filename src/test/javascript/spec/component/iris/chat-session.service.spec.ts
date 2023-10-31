@@ -38,30 +38,28 @@ describe('IrisChatSessionService', () => {
             // given
             const exerciseId = 123;
             const sessionId = 456;
-            const createSessionForProgrammingExerciseMock = jest.spyOn(mockHttpSessionService, 'createSessionForProgrammingExercise').mockReturnValueOnce(of({ id: sessionId }));
+            const createSessionMock = jest.spyOn(mockHttpSessionService, 'createSession').mockReturnValueOnce(of({ id: sessionId }));
             const dispatchSpy = jest.spyOn(stateStore, 'dispatch');
 
             // when
             await irisSessionService.createNewSession(exerciseId);
 
             // then
-            expect(createSessionForProgrammingExerciseMock).toHaveBeenCalledWith(exerciseId);
+            expect(createSessionMock).toHaveBeenCalledWith(exerciseId);
             expect(dispatchSpy).toHaveBeenCalledWith(new SessionReceivedAction(sessionId, []));
         });
 
         it('should dispatch error if fail', async () => {
             // given
             const exerciseId = 123;
-            const createSessionForProgrammingExerciseMock = jest
-                .spyOn(mockHttpSessionService, 'createSessionForProgrammingExercise')
-                .mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 500 })));
+            const createSessionMock = jest.spyOn(mockHttpSessionService, 'createSession').mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 500 })));
             const dispatchSpy = jest.spyOn(stateStore, 'dispatch');
 
             // when
             await irisSessionService.createNewSession(exerciseId);
 
             // then
-            expect(createSessionForProgrammingExerciseMock).toHaveBeenCalledWith(exerciseId);
+            expect(createSessionMock).toHaveBeenCalledWith(exerciseId);
             expect(dispatchSpy).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.SESSION_CREATION_FAILED));
         });
     });
@@ -71,7 +69,7 @@ describe('IrisChatSessionService', () => {
         const exerciseId = 123;
         const sessionId = 456;
         const getCurrentSessionMock = jest.spyOn(mockHttpSessionService, 'getCurrentSession').mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 404 })));
-        const createSessionForProgrammingExerciseMock = jest.spyOn(mockHttpSessionService, 'createSessionForProgrammingExercise').mockReturnValueOnce(of({ id: sessionId }));
+        const createSessionMock = jest.spyOn(mockHttpSessionService, 'createSession').mockReturnValueOnce(of({ id: sessionId }));
         const dispatchSpy = jest.spyOn(stateStore, 'dispatch');
 
         // when
@@ -79,7 +77,7 @@ describe('IrisChatSessionService', () => {
 
         // then
         expect(getCurrentSessionMock).toHaveBeenCalledWith(exerciseId);
-        expect(createSessionForProgrammingExerciseMock).toHaveBeenCalledWith(exerciseId);
+        expect(createSessionMock).toHaveBeenCalledWith(exerciseId);
 
         expect(dispatchSpy).toHaveBeenCalledWith(new SessionReceivedAction(sessionId, []));
     });
@@ -160,9 +158,7 @@ describe('IrisChatSessionService', () => {
         // given
         const exerciseId = 123;
         const getCurrentSessionMock = jest.spyOn(mockHttpSessionService, 'getCurrentSession').mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 404 })));
-        const createSessionForProgrammingExerciseMock = jest
-            .spyOn(mockHttpSessionService, 'createSessionForProgrammingExercise')
-            .mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 404 })));
+        const createSessionMock = jest.spyOn(mockHttpSessionService, 'createSession').mockReturnValueOnce(throwError(new HttpErrorResponse({ status: 404 })));
         const dispatchSpy = jest.spyOn(stateStore, 'dispatch');
 
         // when
@@ -170,7 +166,7 @@ describe('IrisChatSessionService', () => {
 
         // then
         expect(getCurrentSessionMock).toHaveBeenCalledWith(exerciseId);
-        expect(createSessionForProgrammingExerciseMock).toHaveBeenCalledWith(exerciseId);
+        expect(createSessionMock).toHaveBeenCalledWith(exerciseId);
 
         expect(dispatchSpy).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.SESSION_CREATION_FAILED));
     });

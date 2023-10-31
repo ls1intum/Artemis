@@ -33,12 +33,11 @@ import { IrisSessionService } from 'app/iris/session.service';
 import { UserService } from 'app/core/user/user.service';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
-import { IrisTutorChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/tutor-chatbot-widget.component';
 import { IrisHttpChatMessageService } from 'app/iris/http-chat-message.service';
 
-describe('TutorChatbotWidgetComponent', () => {
-    let component: IrisTutorChatbotWidgetComponent;
-    let fixture: ComponentFixture<IrisTutorChatbotWidgetComponent>;
+describe('IrisChatbotWidgetComponent', () => {
+    let component: IrisChatbotWidgetComponent;
+    let fixture: ComponentFixture<IrisChatbotWidgetComponent>;
     let stateStore: IrisStateStore;
     let mockHttpMessageService: IrisHttpChatMessageService;
     let mockSessionService: IrisSessionService;
@@ -100,7 +99,7 @@ describe('TutorChatbotWidgetComponent', () => {
                 global.window ??= window;
                 window.scroll = jest.fn();
                 window.HTMLElement.prototype.scrollTo = jest.fn();
-                fixture = TestBed.createComponent(IrisTutorChatbotWidgetComponent);
+                fixture = TestBed.createComponent(IrisChatbotWidgetComponent);
                 component = fixture.componentInstance;
                 component.shouldLoadGreetingMessage = false;
                 fixture.nativeElement.querySelector('.chat-body').scrollTo = jest.fn();
