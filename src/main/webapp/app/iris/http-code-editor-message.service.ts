@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { IrisExercisePlanStep } from 'app/entities/iris/iris-exercise-plan-component.model';
+import { IrisExercisePlanStep } from 'app/entities/iris/iris-content-type.model';
 import { IrisHttpMessageService, Response } from 'app/iris/http-message.service';
 
 /**

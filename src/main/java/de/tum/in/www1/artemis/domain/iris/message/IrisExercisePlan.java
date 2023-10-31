@@ -17,13 +17,10 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 @DiscriminatorValue(value = "EXERCISE_PLAN")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-public class IrisExercisePlanMessageContent extends IrisMessageContent {
+public class IrisExercisePlan extends IrisMessageContent {
 
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<IrisExercisePlanStep> steps;
-
-    @Column(name = "current_component_index")
-    private short currentStepIndex = 0;
 
     public List<IrisExercisePlanStep> getSteps() {
         return steps;
@@ -31,14 +28,6 @@ public class IrisExercisePlanMessageContent extends IrisMessageContent {
 
     public void setSteps(List<IrisExercisePlanStep> steps) {
         this.steps = steps;
-    }
-
-    public short getCurrentStepIndex() {
-        return currentStepIndex;
-    }
-
-    public void setCurrentStepIndex(short currentInstructionIndex) {
-        this.currentStepIndex = currentInstructionIndex;
     }
 
     @Override
@@ -52,7 +41,6 @@ public class IrisExercisePlanMessageContent extends IrisMessageContent {
 
     @Override
     public String toString() {
-        return "IrisExercisePlanMessageContent{" + "message=" + (message == null ? "null" : message.getId()) + ", components=" + steps + ", currentInstructionIndex="
-                + currentStepIndex + '}';
+        return "IrisExercisePlanMessageContent{" + "message=" + (message == null ? "null" : message.getId()) + ", components=" + steps + '}';
     }
 }

@@ -1,0 +1,121 @@
+{{#system~}}The following is a work-in-progress programming exercise.{{~/system}}
+
+{{#system~}}The problem statement:{{~/system}}
+{{#user~}}{{problemStatement}}{{~/user}}
+{{#system~}}End of problem statement.{{~/system}}
+
+{{#system~}}The template repository:{{~/system}}
+{{#each templateRepository}}
+    {{#system~}}"{{@key}}":{{~/system}}
+    {{#user~}}{{this}}{{~/user}}
+{{/each}}
+{{#system~}}End of template repository.{{~/system}}
+
+{{#system~}}The solution repository:{{~/system}}
+{{#each solutionRepository}}
+    {{#system~}}"{{@key}}":{{~/system}}
+    {{#user~}}{{this}}{{~/user}}
+{{/each}}
+{{#system~}}End of solution repository.{{~/system}}
+
+{{#system~}}
+    The test repository contains tests which automatically grade students' submissions.
+    The tests can be structural, behavioral, or unit tests, depending on the requirements of the exercise.
+    In any case, the tests should fully assess the robustness and correctness of the students' code for this exercise,
+    checking as many edge cases as possible. Use JUnit 5 to create the tests.
+    Be sure that the tests do not just test the examples from the problem statement but also other input that the students may not have thought of!
+{{~/system}}
+
+{{#system~}}The test repository:{{~/system}}
+{{#each testRepository}}
+    {{#system~}}"{{@key}}":{{~/system}}
+    {{#user~}}{{this}}{{~/user}}
+{{/each}}
+{{#system~}}End of test repository.{{~/system}}
+
+{{#system~}}You have told the instructor that you will do the following:{{~/system}}
+{{#assistant~}}{{instructions}}{{/assistant}}
+
+{{set 'changes' []}}
+{{#geneach 'changes' num_iterations=20 hidden=True}}
+    {{#system~}}
+        You are now editing the test repository.
+        {{#each changes}}
+            {{#if @first}}So far, you have made the following changes:{{/if}}
+            {{#if (equal this.type 'modify')}}
+                {{#if (equal this.original '!all!')}}
+                    {{this.file}}: {{this.updated}}
+                {{else}}
+                    {{this.file}}: {{this.original}} -> {{this.updated}}
+                {{/if}}
+            {{/if}}
+            {{#if (equal this.type 'create')}}
+                {{this.file}}: {{this.updated}}
+            {{/if}}
+        {{/each}}
+        Would you like to modify an existing file or create a new file?
+        To modify, respond with "modify", or to create, respond with "create".
+        {{#if (not @first)}}
+            Alternatively, if you have no other changes you would like to make, respond with the special response "!done!".
+        {{/if}}
+    {{~/system}}
+    {{#assistant~}}{{gen 'this.type' temperature=0.0 max_tokens=10}}{{~/assistant}}
+    {{#if (equal this.type "!done!")}}
+        {{break}}
+    {{/if}}
+    {{#if (equal this.type 'modify')}}
+        {{#system~}}
+            What file would you like to modify?
+            State the full path of the file, without quotation marks, justification, or any other text.
+            For example, for the hypothetical file "path/to/file/File.txt", you would respond:
+        {{~/system}}
+        {{#assistant~}}path/to/file/File.txt{{~/assistant}}
+        {{#system~}}Exactly. So, what file would you like to modify?{{~/system}}
+        {{#assistant~}}{{gen 'this.file' temperature=0.0 max_tokens=50}}{{~/assistant}}
+        {{#if (not (contains testRepository this.file))}}
+            {{#system~}}
+                The file you specified does not exist in the test repository.
+                As a refresher, here are the paths of all files in the test repository:
+            {{/system}}
+            {{#user~}}
+                {{#each testRepository}}
+                    {{@key}}
+                {{/each}}
+            {{~/user}}
+            {{#system~}}
+                Now respond with the actual full path of the file you would like to change.
+            {{/system}}
+            {{#assistant~}}{{gen 'this.file' temperature=0.0 max_tokens=50}}{{~/assistant}}
+        {{/if}}
+        {{#system~}}
+            You will now identify a part of the file '{{this.file}}' to replace.
+            It is very important that you respond with an exact quote from the file, without quotation marks, and say nothing else.
+            If you want to replace the entire content, respond with the special response "!all!".
+            Do not select the same part of the file twice.
+            Here is the current state of the file from which you may select a part to replace:
+        {{~/system}}
+        {{#user~}}
+            {{#each testRepository}}
+                {{#if (equal @key this.file)}}
+                    {{this}}
+                {{/if}}
+            {{/each}}
+        {{~/user}}
+        {{#assistant~}}{{gen 'this.original' temperature=0.0 max_tokens=1000}}{{~/assistant}}
+        {{#system~}}What should this content be replaced with?{{~/system}}
+        {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=1000}}{{~/assistant}}
+    {{/if}}
+    {{#if (equal this.type 'create')}}
+        {{#system~}}
+            You are now creating a new file in the test repository.
+            What is the full path of the file you would like to create?
+            For example, for the hypothetical file "path/to/file/File.txt", you would respond:
+        {{~/system}}
+        {{#assistant~}}path/to/file/File.txt{{~/assistant}}
+        {{#system~}}Exactly. So, what file would you like to create?{{~/system}}
+        {{#assistant~}}{{gen 'this.file' temperature=0.0 max_tokens=50}}{{~/assistant}}
+        {{set 'this.original' '!all!'}}
+        {{#system~}}Now respond with the content of the new file {{this.file}}.{{/system}}
+        {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=1000}}{{~/assistant}}
+    {{/if}}
+{{/geneach}}

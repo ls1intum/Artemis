@@ -4,7 +4,7 @@ import { IrisSessionService } from 'app/iris/session.service';
 import { IrisHttpCodeEditorSessionService } from 'app/iris/http-code-editor-session.service';
 import { IrisHttpCodeEditorMessageService } from 'app/iris/http-code-editor-message.service';
 import { firstValueFrom } from 'rxjs';
-import { IrisExercisePlanStep } from 'app/entities/iris/iris-exercise-plan-component.model';
+import { IrisExercisePlanStep } from 'app/entities/iris/iris-content-type.model';
 
 /**
  * The IrisCodeEditorSessionService is responsible for managing Iris code editor sessions and retrieving their associated messages.

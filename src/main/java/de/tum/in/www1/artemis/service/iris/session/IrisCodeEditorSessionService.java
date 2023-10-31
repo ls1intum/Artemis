@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.service.iris.session;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,13 +27,13 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisExercisePlanStepRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
-import de.tum.in.www1.artemis.service.iris.IrisConstants;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
@@ -60,6 +62,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private final IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
 
+    private final IrisExercisePlanStepRepository irisExercisePlanStepRepository;
+
     private final VersionControlService versionControlService;
 
     private final GitService gitService;
@@ -72,8 +76,9 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     public IrisCodeEditorSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, AuthorizationCheckService authCheckService,
-            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, VersionControlService versionControlService, GitService gitService,
-            RepositoryService repositoryService, TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
+            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, IrisExercisePlanStepRepository irisExercisePlanStepRepository,
+            VersionControlService versionControlService, GitService gitService, RepositoryService repositoryService,
+            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
@@ -81,6 +86,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         this.irisCodeEditorWebsocketService = irisCodeEditorWebsocketService;
         this.authCheckService = authCheckService;
         this.irisCodeEditorSessionRepository = irisCodeEditorSessionRepository;
+        this.irisExercisePlanStepRepository = irisExercisePlanStepRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -129,26 +135,46 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     /**
+     * Loads the content of the file from the file system in the src/main/resources/iris directory.
+     * ONLY FOR TESTING PURPOSES!
+     *
+     * @param fileName The name of the file to load
+     * @return The content of the file
+     */
+    private static String load(String fileName) {
+        Path path = Path.of("src", "main", "resources", "iris", fileName);
+        try {
+            return FileUtils.readFileToString(path.toFile(), StandardCharsets.UTF_8).trim();
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    /**
      * Sends a request containing the current state of the exercise repositories in the code editor and the entire
      * conversation history to the LLM, and handles the response.
      *
      * @param session The code editor session to send the request for with all messages and message contents loaded
      */
     public void converseWithModel(IrisCodeEditorSession session) {
-
         var params = initializeParams(session.getExercise());
         params.put("chatHistory", session.getMessages()); // Additionally add the chat history to the request
 
         // The template and model are hard-coded for now, but will be configurable in the future
-        irisConnectorService.sendRequestV2(IrisConstants.CODE_EDITOR_CONVERSATION, "STRATEGY_GPT35_TURBO", params).thenAcceptAsync(response -> {
+        irisConnectorService.sendRequestV2(load("conversation.hbs"), load("model.txt"), params).handleAsync((response, err) -> {
+            if (err != null) {
+                log.error("Error while getting response from Iris model", err);
+                irisCodeEditorWebsocketService.sendException(session, err.getCause());
+                return null;
+            }
             if (response == null) {
                 log.error("No response from Iris model");
                 irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
-                return;
+                return null;
             }
-            log.info("Received conversation response from Iris model");
+            log.info("\n\n\nReceived response from iris model: " + response.content().toPrettyString());
             try {
-                log.info(response.content().toPrettyString());
                 var irisMessage = toIrisMessage(response.content());
                 var saved = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);
                 irisCodeEditorWebsocketService.sendMessage(saved);
@@ -157,9 +183,6 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 log.error("Error while parsing response from Iris model", e);
                 irisCodeEditorWebsocketService.sendException(session, e);
             }
-        }).exceptionallyAsync(err -> {
-            log.error("Error while getting response from Iris model", err);
-            irisCodeEditorWebsocketService.sendException(session, err.getCause());
             return null;
         });
     }
@@ -177,12 +200,12 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     private static IrisMessage toIrisMessage(JsonNode content) throws IrisParseResponseException {
         var message = new IrisMessage();
         if (!content.hasNonNull("response")) {
-            throw new IrisParseResponseException(new Throwable("No response"));
+            throw new IrisParseResponseException("Iris model responded, but did not contain a variable 'response'");
         }
         var chatWindowResponse = content.get("response").asText();
         message.addContent(new IrisTextMessageContent(message, chatWindowResponse));
 
-        if (content.hasNonNull("components")) {
+        if (content.hasNonNull("steps")) {
             message.addContent(toExercisePlan(content));
         }
 
@@ -220,17 +243,17 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @return The converted IrisExercisePlanMessageContent
      * @throws IrisParseResponseException If the JsonNode does not have the correct structure
      */
-    private static IrisExercisePlanMessageContent toExercisePlan(JsonNode content) throws IrisParseResponseException {
-        if (!content.get("components").isArray()) {
-            throw new IrisParseResponseException(new Throwable("Exercise plan components is not an array"));
+    private static IrisExercisePlan toExercisePlan(JsonNode content) throws IrisParseResponseException {
+        if (!content.get("steps").isArray()) {
+            throw new IrisParseResponseException("Exercise plan contained a 'steps' variable, but it was not an array");
         }
-        var exercisePlan = new IrisExercisePlanMessageContent();
+        var exercisePlan = new IrisExercisePlan();
         List<IrisExercisePlanStep> planSteps = new ArrayList<>();
-        for (JsonNode node : content.get("components")) {
-            if (!node.hasNonNull("plan")) {
+        for (JsonNode node : content.get("steps")) {
+            if (!node.hasNonNull("instructions")) {
                 continue; // This might happen as a result of the LLM deciding to stop generating components, which is OK
             }
-            var plan = node.get("plan").asText();
+            var plan = node.get("instructions").asText();
             ExerciseComponent component = switch (node.get("component").asText("")) {
                 // The model is instructed to respond with one of these strings, but it might misbehave and send something else
                 case "problem statement" -> ExerciseComponent.PROBLEM_STATEMENT;
@@ -243,18 +266,6 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 planSteps.add(new IrisExercisePlanStep(exercisePlan, component, plan));
             }
         }
-        if (planSteps.isEmpty()) {
-            throw new IrisParseResponseException(new Throwable("No exercise plan components"));
-        }
-        exercisePlan.setSteps(planSteps);
-        return exercisePlan;
-    }
-
-    private static IrisExercisePlanMessageContent mockExercisePlan(JsonNode content) throws IrisParseResponseException {
-        var exercisePlan = new IrisExercisePlanMessageContent();
-        List<IrisExercisePlanStep> planSteps = new ArrayList<>();
-        planSteps.add(new IrisExercisePlanStep(exercisePlan, ExerciseComponent.TEMPLATE_REPOSITORY,
-                "I will add a private final String global attribute to the file BubbleSort.java, name it 'TEST', and give it the value 'Hello'"));
         exercisePlan.setSteps(planSteps);
         return exercisePlan;
     }
@@ -270,10 +281,10 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     public void requestChangesToExerciseComponent(IrisCodeEditorSession session, IrisExercisePlanStep exerciseStep) {
         var component = exerciseStep.getComponent();
         String template = switch (component) {
-            case PROBLEM_STATEMENT -> IrisConstants.CODE_EDITOR_ADAPT_PROBLEM_STATEMENT;
-            case SOLUTION_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_SOLUTION_REPOSITORY;
-            case TEMPLATE_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_TEMPLATE_REPOSITORY;
-            case TEST_REPOSITORY -> IrisConstants.CODE_EDITOR_ADAPT_TEST_REPOSITORY;
+            case PROBLEM_STATEMENT -> load("problem_statement.hbs");
+            case SOLUTION_REPOSITORY -> load("solution_repository.hbs");
+            case TEMPLATE_REPOSITORY -> load("template_repository.hbs");
+            case TEST_REPOSITORY -> load("test_repository.hbs");
         };
 
         var exercise = session.getExercise();
@@ -281,38 +292,42 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         // Add the instructions previously generated by Iris for this step of the plan
         params.put("instructions", exerciseStep.getInstructions());
 
-        irisConnectorService.sendRequestV2(template, "STRATEGY_GPT35_TURBO", params).handleAsync((response, err) -> {
+        irisConnectorService.sendRequestV2(template, load("model.txt"), params).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
                 irisCodeEditorWebsocketService.sendException(session, err.getCause());
+                return null;
             }
-            else if (response == null) {
+            if (response == null) {
                 log.error("No response from Iris model");
                 irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
+                return null;
             }
-            else {
-                log.info("Received response containing changes to exercise " + component + " from Iris model");
-                try {
-                    var changes = extractChangesForComponent(response.content(), component);
-                    if (changes.isEmpty()) {
-                        log.error("No changes for exercise " + component + " in response from Iris model");
-                    }
-                    else {
-                        String updatedProblemStatement = null;
-                        Set<String> paths = null;
-                        switch (component) {
-                            case PROBLEM_STATEMENT -> updatedProblemStatement = injectChangesIntoProblemStatement(exercise, changes);
-                            case SOLUTION_REPOSITORY -> paths = injectChangesIntoRepository(solutionRepository(exercise), changes);
-                            case TEMPLATE_REPOSITORY -> paths = injectChangesIntoRepository(templateRepository(exercise), changes);
-                            case TEST_REPOSITORY -> paths = injectChangesIntoRepository(testRepository(exercise), changes);
-                        }
-                        irisCodeEditorWebsocketService.sendFilesChanged(session, exerciseStep, paths, updatedProblemStatement);
-                    }
+            log.info("\n\n\nReceived response from iris model: " + response.content().toPrettyString());
+            try {
+                var changes = extractChangesForComponent(response.content(), component);
+                if (changes.isEmpty()) {
+                    log.error("No changes for exercise " + component + " in response from Iris model");
                 }
-                catch (IrisParseResponseException e) {
-                    log.error("Error while parsing exercise changes from Iris model", e);
-                    irisCodeEditorWebsocketService.sendException(session, e);
+                else {
+                    log.info("\n\n\nExtracted changes for exercise " + component + ": " + changes);
+                    String updatedProblemStatement = null;
+                    Set<String> paths = null;
+                    switch (component) {
+                        case PROBLEM_STATEMENT -> updatedProblemStatement = injectChangesIntoProblemStatement(exercise, changes);
+                        case SOLUTION_REPOSITORY -> paths = injectChangesIntoRepository(solutionRepository(exercise), changes);
+                        case TEMPLATE_REPOSITORY -> paths = injectChangesIntoRepository(templateRepository(exercise), changes);
+                        case TEST_REPOSITORY -> paths = injectChangesIntoRepository(testRepository(exercise), changes);
+                    }
+                    log.info("Setting exercise step as executed");
+                    exerciseStep.setExecuted(true);
+                    irisExercisePlanStepRepository.save(exerciseStep);
+                    irisCodeEditorWebsocketService.notifyStepSuccess(session, exerciseStep, paths, updatedProblemStatement);
                 }
+            }
+            catch (IrisParseResponseException e) {
+                log.error("Error while parsing exercise changes from Iris model", e);
+                irisCodeEditorWebsocketService.sendException(session, e);
             }
             return null;
         });
@@ -434,7 +449,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         repository.remove(".gitattributes");
         repository.remove("gradlew");
         repository.remove("gradlew.bat");
-        repository.entrySet().removeIf(entry -> entry.getKey().startsWith("gradle/wrapper"));
+        repository.entrySet().removeIf(entry -> entry.getKey().contains("gradle/wrapper"));
         return repository;
     }
 
@@ -523,9 +538,24 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @return The updated problem statement
      */
     private String injectChangesIntoProblemStatement(ProgrammingExercise exercise, List<FileChange> changes) {
+        log.info("\n\n\nInjecting changes into problem statement: \n\n\n" + changes);
         var problemStatement = exercise.getProblemStatement();
         for (FileChange change : changes) {
-            problemStatement = problemStatement.replaceFirst(Pattern.quote(change.original()), Matcher.quoteReplacement(change.updated()));
+            if (change.original().equals("!all!")) {
+                log.info("Replacing entire problem statement with '" + change.updated() + "'");
+                problemStatement = change.updated();
+                continue;
+            }
+            Pattern replace = Pattern.compile(Pattern.quote(change.original()));
+            Matcher matcher = replace.matcher(problemStatement);
+            String replacement = Matcher.quoteReplacement(change.updated());
+            if (matcher.find()) {
+                log.info("Replacing '" + change.original() + "' with '" + change.updated() + "' in problem statement");
+                problemStatement = matcher.replaceFirst(replacement);
+            }
+            else {
+                log.info("Could not find '" + change.original() + "' in problem statement");
+            }
         }
         return problemStatement;
     }
@@ -539,6 +569,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @param changes    The changes to inject
      */
     private Set<String> injectChangesIntoRepository(Repository repository, List<FileChange> changes) {
+        log.info("\n\n\nInjecting changes into repository: \n\n\n" + changes);
         Map<String, Optional<File>> targetedFiles = changes.stream().collect(Collectors.toMap(FileChange::file, change -> gitService.getFileByName(repository, change.file())));
         Set<String> paths = new HashSet<>();
         for (FileChange change : changes) {
@@ -547,28 +578,31 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 case MODIFY -> {
                     if (requestedFile.isPresent()) {
                         try {
-                            log.info("trying to replace " + change.original() + " with " + change.updated() + " in " + change.file());
+                            log.info("trying to replace '" + change.original() + "' with '" + change.updated() + "' in '" + change.file() + "'");
                             replaceInFile(requestedFile.get(), change.original(), change.updated());
                             paths.add(change.file());
                         }
                         catch (IOException e) {
-                            log.error("Could not modify file " + change.file() + " in repository " + repository, e);
+                            log.error("Could not modify file '" + change.file() + "' in repository '" + repository + "'", e);
                         }
                     }
                     else {
-                        log.info("Iris requested that file " + change.file() + " be modified, but it does not exist in the repository");
+                        log.info("Iris requested that file '" + change.file() + "' be modified, but it does not exist in the repository");
                     }
                 }
                 case CREATE -> {
                     if (requestedFile.isEmpty()) {
                         try {
                             repositoryService.createFile(repository, change.file(), new ByteArrayInputStream(change.updated().getBytes()));
+                            paths.add(change.file());
                         }
                         catch (IOException e) {
-                            log.error("File " + change.file() + " already exists");
+                            log.error("File '" + change.file() + "' already exists");
                         }
                     }
-
+                    else {
+                        log.info("Iris requested that file '" + change.file() + "' be created, but it already exists in the repository");
+                    }
                 }
             }
         }
@@ -588,11 +622,11 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             FileUtils.writeStringToFile(file, updated, StandardCharsets.UTF_8);
         }
         else {
-            String currentContents = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+            String currentContent = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
             // We only want to replace the first occurrence of the original string (for now)
             // String.replaceFirst() uses regex, so we need to escape the original string with Pattern.quote()
             // Matcher.quoteReplacement() escapes the updated string so that it can be used as a replacement
-            String newContents = currentContents.replaceFirst(Pattern.quote(original), Matcher.quoteReplacement(updated));
+            String newContents = currentContent.replaceFirst(Pattern.quote(original), Matcher.quoteReplacement(updated));
             FileUtils.writeStringToFile(file, newContents, StandardCharsets.UTF_8);
         }
     }

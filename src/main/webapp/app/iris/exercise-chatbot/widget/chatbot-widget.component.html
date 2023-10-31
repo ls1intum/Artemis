@@ -79,26 +79,7 @@
                         <div class="bubble-left" *ngIf="isTextContent(content)">
                             <span [innerHTML]="getTextContent(content)! | htmlForMarkdown"></span>
                         </div>
-                        <div class="bubble-left" *ngIf="isExercisePlan(content)">
-                            <div *ngFor="let step of getPlanSteps(content); let i = index">
-                                <div>
-                                    <span [innerHTML]="step.component | htmlForMarkdown"></span>
-                                    <!--TODO: Add show/hide button-->
-                                </div>
-                                <!--TODO: Make it editable-->
-                                <span [innerHTML]="step.instructions! | htmlForMarkdown"></span>
-                                <!--TODO: Add cancel, confirm button-->
-                                <div (click)="executePlanStep(message.id!, content.id!, step.id!)" class="confirm-plan">
-                                    <button class="btn btn-primary">
-                                        <fa-icon [icon]="faCheck"></fa-icon>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="confirm-plan">
-                                <button class="btn btn-primary">confirm</button>
-                            </div>
-                        </div>
-                        <div class="rate-message-buttons">
+                        <div class="rate-message-buttons" *ngIf="isTextContent(content)">
                             <button style="all: unset" (click)="rateMessage(message.id, i, true)" [disabled]="message.helpful">
                                 <fa-icon
                                     [class]="message.helpful ? 'thumbs-up-clicked' : 'clickable rate-button-not-clicked'"
@@ -107,13 +88,46 @@
                                     size="sm"
                                 ></fa-icon>
                             </button>
-                            <button style="all: unset" (click)="rateMessage(message.id, i, false)" [disabled]="message.helpful === false">
+                            <button style="all: unset" (click)="rateMessage(message.id, i, false)" [disabled]="!message.helpful">
                                 <fa-icon
                                     [class]="message.helpful === false ? 'thumbs-down-clicked' : 'clickable rate-button-not-clicked'"
                                     [icon]="faThumbsDown"
                                     size="sm"
                                 ></fa-icon>
                             </button>
+                        </div>
+                        <div class="bubble-left" *ngIf="isExercisePlan(content)">
+                            <div
+                                *ngFor="let step of content.steps; let i = index"
+                                [ngStyle]="{ 'background-color': getStepColor(step), 'border-radius': '15px', padding: '15px', margin: '10px' }"
+                            >
+                                <!-- step component with show/hide button -->
+                                <div class="step-component">
+                                    <span [innerHTML]="getStepName(step) | htmlForMarkdown"></span>
+                                    <button (click)="hideOrUnhide(step)" class="btn btn-default">{{ isHidden(step) ? 'Show Details' : 'Hide Details' }}</button>
+                                </div>
+                                <!-- step instructions (editable) in a text box -->
+                                <div *ngIf="!isHidden(step)" [attr.contenteditable]="isNotExecuted(step)" [ngStyle]="{ border: '1px solid #000', padding: '8px' }">
+                                    <span [innerHTML]="step.instructions! | htmlForMarkdown"></span>
+                                </div>
+
+                                <!-- loading icon -->
+                                <div *ngIf="isInProgress(step)">
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                </div>
+                            </div>
+
+                            <!-- execute/pause button -->
+                            <div class="execute-button">
+                                <div *ngIf="!content.executing">
+                                    <button class="btn btn-primary" (click)="setExecuting(message.id, content)" [disabled]="!canExecute(content)">
+                                        {{ getPlanButtonTitle(content) }}
+                                    </button>
+                                </div>
+                                <div *ngIf="content.executing">
+                                    <button (click)="pausePlan(content)" class="btn btn-danger">Pause</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div *ngIf="isArtemisClientSentMessage(message)" style="width: fit-content">
