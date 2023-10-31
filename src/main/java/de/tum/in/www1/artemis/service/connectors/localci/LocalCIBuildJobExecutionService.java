@@ -108,7 +108,7 @@ public class LocalCIBuildJobExecutionService {
      * @return The build result.
      * @throws LocalCIException If some error occurs while preparing or running the build job.
      */
-    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String commitHash, String containerName, String dockerImage) throws InterruptedException {
+    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String commitHash, String containerName, String dockerImage) {
         // Update the build plan status to "BUILDING".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
@@ -191,8 +191,7 @@ public class LocalCIBuildJobExecutionService {
      * @throws LocalCIException if something went wrong while running the build job.
      */
     private LocalCIBuildResult runScriptAndParseResults(ProgrammingExerciseParticipation participation, String containerName, String containerId, String branch, String commitHash,
-            Path assignmentRepositoryPath, Path testsRepositoryPath, Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryNames, Path buildScriptPath)
-            throws InterruptedException {
+            Path assignmentRepositoryPath, Path testsRepositoryPath, Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryNames, Path buildScriptPath) {
 
         long timeNanoStart = System.nanoTime();
 
