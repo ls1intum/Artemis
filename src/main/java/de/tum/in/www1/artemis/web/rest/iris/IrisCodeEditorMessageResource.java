@@ -73,6 +73,7 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
             throw new BadRequestException("Session is not a code editor session");
         }
         var savedMessage = super.postMessage(session, message);
+        session.getMessages().add(savedMessage); // By adding this here we can avoid a second DB call here later
 
         irisCodeEditorSessionService.converseWithModel(session);
         irisCodeEditorWebsocketService.sendMessage(savedMessage);
@@ -126,27 +127,30 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
      * PUT code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}:
      * Update the instructions of an exercise plan step
      *
-     * @param sessionId of the session
-     * @param messageId of the message
-     * @param planId    of the exercise plan
-     * @param stepId    of the plan step
-     * @param planStep  the plan step with updated instructions
+     * @param sessionId   of the session
+     * @param messageId   of the message
+     * @param planId      of the exercise plan
+     * @param stepId      of the plan step
+     * @param updatedStep the plan step with updated instructions
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated component, or with status {@code 404 (Not Found)} if the component could not
      *         be found.
      */
     @PutMapping("code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<IrisExercisePlanStep> updateExercisePlanStepInstructions(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long planId,
-            @PathVariable Long stepId, @RequestBody IrisExercisePlanStep planStep) {
+    public ResponseEntity<IrisExercisePlanStep> updateExercisePlanStep(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long planId,
+            @PathVariable Long stepId, @RequestBody IrisExercisePlanStep updatedStep) {
         var step = irisExercisePlanStepRepository.findByIdElseThrow(stepId);
         var session = checkIdsAndGetSession(sessionId, messageId, planId, step);
 
         irisCodeEditorSessionService.checkIsIrisActivated(session);
         irisCodeEditorSessionService.checkHasAccessToIrisSession(session, null);
 
-        step.setInstructions(planStep.getInstructions());
-        var savedExercisePlanComponent = irisExercisePlanStepRepository.save(step);
-        return ResponseEntity.ok(savedExercisePlanComponent);
+        step.setComponent(updatedStep.getComponent());
+        step.setInstructions(updatedStep.getInstructions());
+        step.setExecuted(updatedStep.isExecuted());
+
+        var savedStep = irisExercisePlanStepRepository.save(step);
+        return ResponseEntity.ok(savedStep);
     }
 
     private static IrisCodeEditorSession checkIdsAndGetSession(Long sessionId, Long messageId, Long planId, IrisExercisePlanStep step) {

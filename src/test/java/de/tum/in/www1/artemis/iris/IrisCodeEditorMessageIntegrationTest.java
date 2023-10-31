@@ -157,8 +157,8 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         var exercisePlanContent = irisMessage.getContent().get(0);
         setupExercise();
-        assertThat(exercisePlanContent instanceof IrisExercisePlanMessageContent).isEqualTo(true);
-        var component = ((IrisExercisePlanMessageContent) exercisePlanContent).getSteps().get(0);
+        assertThat(exercisePlanContent instanceof IrisExercisePlan).isEqualTo(true);
+        var component = ((IrisExercisePlan) exercisePlanContent).getSteps().get(0);
 
         request.putWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/contents/" + exercisePlanContent.getId()
                 + "/components/" + component.getId(), updateProblemStatement(component), IrisExercisePlanStep.class, HttpStatus.OK);
@@ -232,8 +232,8 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         return content;
     }
 
-    private IrisExercisePlanMessageContent createMockExercisePlanContent(IrisMessage message) {
-        var content = new IrisExercisePlanMessageContent();
+    private IrisExercisePlan createMockExercisePlanContent(IrisMessage message) {
+        var content = new IrisExercisePlan();
         content.setSteps(List.of(new IrisExercisePlanStep(content, ExerciseComponent.PROBLEM_STATEMENT, "I will edit the problem statement."),
                 new IrisExercisePlanStep(content, ExerciseComponent.SOLUTION_REPOSITORY, "I will edit the solution repository."),
                 new IrisExercisePlanStep(content, ExerciseComponent.TEMPLATE_REPOSITORY, "I will edit the template repository."),

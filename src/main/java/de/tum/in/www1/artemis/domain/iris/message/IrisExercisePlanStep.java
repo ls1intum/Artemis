@@ -4,22 +4,20 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 
 @Entity
-@Table(name = "iris_exercise_plan_component")
+@Table(name = "iris_exercise_plan_step")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class IrisExercisePlanStep extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "exercise_plan_id")
-    @JsonIgnore
-    private IrisExercisePlanMessageContent plan;
+    private IrisExercisePlan plan;
 
     @NotNull
     @Enumerated(value = EnumType.STRING)
@@ -30,20 +28,23 @@ public class IrisExercisePlanStep extends DomainObject {
     @Column(name = "instructions")
     private String instructions;
 
+    @Column(name = "executed")
+    private boolean executed = false;
+
     public IrisExercisePlanStep() {
     }
 
-    public IrisExercisePlanStep(IrisExercisePlanMessageContent plan, ExerciseComponent component, String instructions) {
+    public IrisExercisePlanStep(IrisExercisePlan plan, ExerciseComponent component, String instructions) {
         this.plan = plan;
         this.component = component;
         this.instructions = instructions;
     }
 
-    public IrisExercisePlanMessageContent getPlan() {
+    public IrisExercisePlan getPlan() {
         return plan;
     }
 
-    public void setPlan(IrisExercisePlanMessageContent plan) {
+    public void setPlan(IrisExercisePlan plan) {
         this.plan = plan;
     }
 
@@ -63,4 +64,11 @@ public class IrisExercisePlanStep extends DomainObject {
         this.instructions = instructions;
     }
 
+    public boolean isExecuted() {
+        return executed;
+    }
+
+    public void setExecuted(boolean executed) {
+        this.executed = executed;
+    }
 }

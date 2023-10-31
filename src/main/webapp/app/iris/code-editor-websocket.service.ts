@@ -5,24 +5,18 @@ import { IrisRateLimitInformation, IrisWebsocketService } from 'app/iris/websock
 import { IrisMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { Observable, Subject } from 'rxjs';
+import { ExerciseComponent } from 'app/entities/iris/iris-content-type.model';
 
 /**
  * The IrisCodeEditorWebsocketMessageType defines the type of message sent over the code editor websocket.
  */
 enum IrisCodeEditorWebsocketMessageType {
     MESSAGE = 'MESSAGE',
-    FILE_CHANGES = 'FILE_CHANGES',
+    STEP_SUCCESS = 'STEP_SUCCESS',
     ERROR = 'ERROR',
 }
 
-export enum ExerciseComponent {
-    PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
-    TEMPLATE_REPOSITORY = 'TEMPLATE_REPOSITORY',
-    SOLUTION_REPOSITORY = 'SOLUTION_REPOSITORY',
-    TEST_REPOSITORY = 'TEST_REPOSITORY',
-}
-
-export class FilesChanged {
+export class StepExecutionSuccess {
     messageId: number;
     planId: number;
     stepId: number;
@@ -38,7 +32,7 @@ export class FilesChanged {
 export class IrisCodeEditorWebsocketDTO {
     type: IrisCodeEditorWebsocketMessageType;
     message?: IrisMessage;
-    filesChanged?: FilesChanged;
+    stepExecutionSuccess?: StepExecutionSuccess;
     errorTranslationKey?: IrisErrorMessageKey;
     translationParams?: Map<string, any>;
     rateLimitInfo?: IrisRateLimitInformation;
@@ -49,7 +43,7 @@ export class IrisCodeEditorWebsocketDTO {
  */
 @Injectable()
 export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
-    private subject: Subject<FilesChanged> = new Subject<FilesChanged>();
+    private subject: Subject<StepExecutionSuccess> = new Subject<StepExecutionSuccess>();
 
     /**
      * Creates an instance of IrisCodeEditorWebsocketService.
@@ -61,12 +55,16 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     }
 
     protected handleWebsocketResponse(response: IrisCodeEditorWebsocketDTO): void {
+        console.log(response);
+        if (response.rateLimitInfo) {
+            this.handleRateLimitInfo(response.rateLimitInfo);
+        }
         switch (response.type) {
             case IrisCodeEditorWebsocketMessageType.MESSAGE:
                 super.handleMessage(response.message);
                 break;
-            case IrisCodeEditorWebsocketMessageType.FILE_CHANGES:
-                this.subject.next(response.filesChanged!); // notify subscribers to reload
+            case IrisCodeEditorWebsocketMessageType.STEP_SUCCESS:
+                this.handleStepSuccess(response.stepExecutionSuccess!);
                 break;
             case IrisCodeEditorWebsocketMessageType.ERROR:
                 super.handleError(response.errorTranslationKey, response.translationParams);
@@ -74,11 +72,15 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
         }
     }
 
+    private handleStepSuccess(response: StepExecutionSuccess): void {
+        this.subject.next(response); // notify subscribers of changes applied
+    }
+
     /**
      * Returns a subject that notifies subscribers when the code editor should be reloaded.
-     * @returns {BehaviorSubject<void>}
+     * @returns {Subject<StepExecutionSuccess>}
      */
-    public onPromptReload(): Observable<FilesChanged> {
+    public onPromptReload(): Observable<StepExecutionSuccess> {
         return this.subject.asObservable();
     }
 }

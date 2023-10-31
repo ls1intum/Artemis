@@ -41,12 +41,12 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
         super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.message(message));
     }
 
-    public void sendFilesChanged(IrisCodeEditorSession session, IrisExercisePlanStep step, Set<String> paths, String updatedProblemStatement) {
+    public void notifyStepSuccess(IrisCodeEditorSession session, IrisExercisePlanStep step, Set<String> paths, String updatedProblemStatement) {
         var messageId = step.getPlan().getMessage().getId();
         var planId = step.getPlan().getId();
         var stepId = step.getId();
-        var filesChanged = new FilesChanged(messageId, planId, stepId, step.getComponent(), paths, updatedProblemStatement);
-        super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.changes(filesChanged));
+        var stepSuccess = new StepExecutionSuccess(messageId, planId, stepId, step.getComponent(), paths, updatedProblemStatement);
+        super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.stepSuccess(stepSuccess));
     }
 
     /**
@@ -60,21 +60,21 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     }
 
     public enum IrisWebsocketMessageType {
-        MESSAGE, FILE_CHANGES, EXCEPTION
+        MESSAGE, STEP_SUCCESS, EXCEPTION
     }
 
-    private record FilesChanged(long messageId, long planId, long stepId, ExerciseComponent component, Set<String> paths, String updatedProblemStatement) {
+    private record StepExecutionSuccess(long messageId, long planId, long stepId, ExerciseComponent component, Set<String> paths, String updatedProblemStatement) {
     }
 
-    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, FilesChanged filesChanged, String errorMessage, String errorTranslationKey,
+    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, StepExecutionSuccess stepExecutionSuccess, String errorMessage, String errorTranslationKey,
             Map<String, Object> translationParams) {
 
         private static IrisWebsocketDTO message(IrisMessage message) {
             return new IrisWebsocketDTO(IrisWebsocketMessageType.MESSAGE, message, null, null, null, null);
         }
 
-        private static IrisWebsocketDTO changes(FilesChanged filesChanged) {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.FILE_CHANGES, null, filesChanged, null, null, null);
+        private static IrisWebsocketDTO stepSuccess(StepExecutionSuccess success) {
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.STEP_SUCCESS, null, success, null, null, null);
         }
 
         private static IrisWebsocketDTO error(Throwable throwable) {

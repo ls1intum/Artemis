@@ -13,9 +13,9 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/p
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ExerciseComponent, FilesChanged, IrisCodeEditorWebsocketService } from 'app/iris/code-editor-websocket.service';
+import { IrisCodeEditorWebsocketService, StepExecutionSuccess } from 'app/iris/code-editor-websocket.service';
 import { IrisCodeEditorChatbotButtonComponent } from 'app/iris/exercise-chatbot/code-editor-chatbot-button.component';
-import { IrisExercisePlan } from 'app/entities/iris/iris-content-type.model';
+import { ExerciseComponent } from 'app/entities/iris/iris-content-type.model';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -48,7 +48,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         codeEditorWebsocketService: IrisCodeEditorWebsocketService,
     ) {
         super(router, exerciseService, courseExerciseService, domainService, programmingExerciseParticipationService, location, participationService, route, alertService);
-        codeEditorWebsocketService.onPromptReload().subscribe((filesChanged: FilesChanged) => {
+        codeEditorWebsocketService.onPromptReload().subscribe((filesChanged: StepExecutionSuccess) => {
             this.handleChangeNotification(filesChanged);
         });
     }
@@ -66,48 +66,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
-    private handleChangeNotification(filesChanged: FilesChanged) {
-        if (filesChanged.component == ExerciseComponent.PROBLEM_STATEMENT) {
-            this.editableInstructions.updateProblemStatement(filesChanged.updatedProblemStatement!);
+    private handleChangeNotification(success: StepExecutionSuccess) {
+        if (success.component == ExerciseComponent.PROBLEM_STATEMENT) {
+            this.editableInstructions.updateProblemStatement(success.updatedProblemStatement!);
         } else {
-            const repository = this.toRepository(filesChanged.component);
+            const repository = this.toRepository(success.component);
             if (!this.selectedRepository || this.selectedRepository === repository) {
-                this.codeEditorContainer.aceEditor.forceReloadAll(filesChanged.paths!);
+                this.codeEditorContainer.aceEditor.forceReloadAll(success.paths!);
             }
         }
         // Find the corresponding plan and step and execute the next step, if there is one.
         // Also, the plan's currentStepIndex must be updated so that the chatbot widget can display the correct step as in progress.
         const widget = this.chatbotButton?.dialogRef?.componentRef?.instance; // Access the widget via the button even if it is not open
-        const message = widget?.messages.find((m) => m.id === filesChanged.messageId);
-        const plan = message?.content.find((c) => c.id === filesChanged.planId) as IrisExercisePlan;
-        if (!widget) {
-            console.error('Received change notification but could not access chatbot widget to forward it.');
-            return;
-        }
-        if (!message) {
-            console.error('Received change notification but could not find corresponding message.');
-            return;
-        }
-        if (!plan) {
-            console.error('Received change notification but could not find corresponding plan.');
-            return;
-        }
-        // Search through steps in the plan until we find the one that was executed
-        for (let i = 0; i < plan.steps.length; i++) {
-            const step = plan.steps[i];
-            if (step.id === filesChanged.stepId) {
-                // Success! Found the corresponding step.
-                plan.currentStepIndex = i; // Update the current step index
-                if (i < plan.steps.length - 1) {
-                    // Execute the next step if the user has not paused the execution
-                    // TODO: Implement plan pausing
-                    const nextStep = plan.steps[i + 1];
-                    widget.executePlanStep(filesChanged.messageId, filesChanged.planId, nextStep.id!);
-                }
-                return;
-            }
-        }
-        console.error('Received change notification but could not find corresponding step.');
+        widget?.notifyStepCompleted(success.messageId, success.planId, success.stepId);
     }
 
     onResizeEditorInstructions() {

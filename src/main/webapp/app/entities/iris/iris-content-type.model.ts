@@ -1,37 +1,86 @@
-import { IrisExercisePlanStep } from 'app/entities/iris/iris-exercise-plan-component.model';
-
 export enum IrisMessageContentType {
     TEXT = 'text',
-    PLAN = 'exercise-plan',
+    EXERCISE_PLAN = 'exercise_plan',
 }
 
 export abstract class IrisMessageContent {
     id?: number;
-    type?: IrisMessageContentType;
-    protected constructor(type: IrisMessageContentType) {
-        this.type = type;
-    }
+    messageId?: number;
+
+    protected constructor(public type: IrisMessageContentType) {}
 }
 
 export class IrisTextMessageContent extends IrisMessageContent {
-    textContent: string;
-    constructor(textContent: string) {
+    constructor(public textContent: string) {
         super(IrisMessageContentType.TEXT);
-        this.textContent = textContent;
     }
 }
 
 export class IrisExercisePlan extends IrisMessageContent {
-    steps: IrisExercisePlanStep[];
-    currentStepIndex: number;
-    constructor(components: IrisExercisePlanStep[], currentComponentIndex: number) {
-        super(IrisMessageContentType.PLAN);
-        this.steps = components;
-        this.currentStepIndex = currentComponentIndex;
+    executing: boolean; // Client-side only
+
+    constructor(public steps: IrisExercisePlanStep[]) {
+        super(IrisMessageContentType.EXERCISE_PLAN);
     }
 }
 
-export function isTextContent(content: IrisMessageContent) {
+export class IrisExercisePlanStep {
+    id: number;
+    plan: number;
+    component: ExerciseComponent;
+    instructions: string;
+    executed: boolean;
+    executionStage?: ExecutionStage; // Client-side only
+    hidden?: boolean; // Client-side only
+}
+
+export function getExecutionStage(step: IrisExercisePlanStep): ExecutionStage {
+    if (!step.executionStage) {
+        // If this is the first time we're checking the execution stage, use the executed flag
+        step.executionStage = step.executed ? ExecutionStage.COMPLETE : ExecutionStage.NOT_EXECUTED;
+    }
+    return step.executionStage;
+}
+
+export function isNotExecuted(step: IrisExercisePlanStep): boolean {
+    return getExecutionStage(step) === ExecutionStage.NOT_EXECUTED;
+}
+
+export function isInProgress(step: IrisExercisePlanStep): boolean {
+    return getExecutionStage(step) === ExecutionStage.IN_PROGRESS;
+}
+
+export function isFailed(step: IrisExercisePlanStep): boolean {
+    return getExecutionStage(step) === ExecutionStage.FAILED;
+}
+
+export function isComplete(step: IrisExercisePlanStep): boolean {
+    return getExecutionStage(step) === ExecutionStage.COMPLETE;
+}
+
+export function hideOrUnhide(step: IrisExercisePlanStep): void {
+    step.hidden = !isHidden(step);
+}
+
+export function isHidden(step: IrisExercisePlanStep): boolean {
+    return step.hidden ?? true; // default to true if undefined
+}
+
+export enum ExerciseComponent {
+    PROBLEM_STATEMENT = 'PROBLEM_STATEMENT',
+    SOLUTION_REPOSITORY = 'SOLUTION_REPOSITORY',
+    TEMPLATE_REPOSITORY = 'TEMPLATE_REPOSITORY',
+    TEST_REPOSITORY = 'TEST_REPOSITORY',
+}
+
+export enum ExecutionStage {
+    NOT_EXECUTED = 'NOT_EXECUTED',
+    IN_PROGRESS = 'IN_PROGRESS',
+    FAILED = 'FAILED',
+    COMPLETE = 'COMPLETE',
+}
+
+export function isTextContent(content: IrisMessageContent): content is IrisTextMessageContent {
     return content.type === IrisMessageContentType.TEXT;
 }
 
@@ -42,17 +91,6 @@ export function getTextContent(content: IrisMessageContent) {
     }
 }
 
-export function isPlanContent(content: IrisMessageContent) {
-    return content.type === IrisMessageContentType.PLAN;
-}
-
-export function getPlanComponent(content: IrisMessageContent) {
-    if (isPlanContent(content)) {
-        const irisMessagePlanContent = content as IrisExercisePlan;
-        return irisMessagePlanContent.steps;
-    }
-}
-
-export function getComponentInstruction(component: IrisExercisePlanStep) {
-    return component.instructions;
+export function isExercisePlan(content: IrisMessageContent): content is IrisExercisePlan {
+    return content.type === IrisMessageContentType.EXERCISE_PLAN;
 }

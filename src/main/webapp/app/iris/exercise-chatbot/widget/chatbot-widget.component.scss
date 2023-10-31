@@ -241,6 +241,10 @@ pre {
     color: var(--secondary);
 }
 
+.execute-button {
+    text-align: right;
+}
+
 @keyframes shake {
     0% {
         transform: translateX(0);
