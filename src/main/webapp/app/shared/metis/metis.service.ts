@@ -495,7 +495,8 @@ export class MetisService implements OnDestroy {
                     const doesNotMatchOwnFilter = this.currentPostContextFilter.filterToOwn && postDTO.post.author?.login !== this.user.login;
                     const doesNotMatchReactedFilter = this.currentPostContextFilter.filterToAnsweredOrReacted;
                     const doesNotMatchSearchString =
-                        this.currentPostContextFilter.searchText?.length && !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase());
+                        this.currentPostContextFilter.searchText?.length &&
+                        !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase().trim());
 
                     if (!postConvId || doesNotMatchOwnFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
                         break;
