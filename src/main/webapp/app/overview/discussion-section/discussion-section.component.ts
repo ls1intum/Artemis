@@ -1,10 +1,10 @@
-import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { DisplayPriority, PageType, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
+import { DisplayPriority, PageType, PostSortCriterion, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { combineLatest, map } from 'rxjs';
+import { Subject, combineLatest, map, takeUntil } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -27,9 +27,21 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     @Input() exercise?: Exercise;
     @Input() lecture?: Lecture;
     @Input() isCommunicationPage?: boolean;
-    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
-    channel: Channel;
 
+    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
+    @ViewChildren('postingThread') messages: QueryList<any>;
+    @ViewChild('itemsContainer') content: ElementRef;
+
+    private ngUnsubscribe = new Subject<void>();
+    private previousScrollDistanceFromTop: number;
+    private page = 1;
+    private readonly pageSize = 50;
+    private totalNumberOfPosts = 0;
+    // as set for the css class '.items-container'
+    private messagesContainerHeight = 700;
+    currentSortDirection = SortDirection.DESCENDING;
+
+    channel: Channel;
     isNotAChannelMember: boolean;
     noChannelAvailable: boolean;
     collapsed = false;
@@ -78,11 +90,17 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             this.resetFormGroup();
         });
         this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.sort(this.sectionSortFn))).subscribe((posts: Post[]) => {
-            this.posts = posts;
+            if (this.content) {
+                this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
+            }
+            this.posts = posts.slice().reverse();
             this.isLoading = false;
             if (this.currentPostId && this.posts.length > 0) {
                 this.currentPost = this.posts.find((post) => post.id === this.currentPostId);
             }
+        });
+        this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
+            this.totalNumberOfPosts = totalNumberOfPosts;
         });
     }
 
@@ -99,21 +117,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * sorted on the backend
      */
     onChangeSortDir(): void {
-        switch (this.currentSortDirection) {
-            case undefined: {
-                this.currentSortDirection = SortDirection.ASCENDING;
-                break;
-            }
-            case SortDirection.ASCENDING: {
-                this.currentSortDirection = SortDirection.DESCENDING;
-                break;
-            }
-            default: {
-                this.currentSortDirection = undefined;
-                break;
-            }
-        }
-        this.posts.sort(this.sectionSortFn);
+        this.currentSortDirection = this.currentSortDirection === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
+        this.onSelectContext();
     }
 
     /**
@@ -174,6 +179,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             return {
                 next: (channel: Channel) => {
                     this.channel = channel ?? undefined;
+                    this.setFilterAndSort();
 
                     if (!this.channel) {
                         this.noChannelAvailable = true;
@@ -181,11 +187,10 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                         return;
                     }
 
-                    const contextFilter = { conversationId: this.channel.id };
                     const channelDTO = new ChannelDTO();
                     channelDTO.isCourseWide = true;
                     channelDTO.id = this.channel.id;
-                    this.metisService.getFilteredPosts(contextFilter, true, channelDTO);
+                    this.metisService.getFilteredPosts(this.currentPostContextFilter, true, channelDTO);
 
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -260,21 +265,55 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });
+
+        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
+    }
+
+    handleScrollOnNewMessage = () => {
+        if ((this.posts.length > 0 && this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
+            this.scrollToBottomOfMessages();
+        }
+    };
+
+    scrollToBottomOfMessages() {
+        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+    }
+
+    fetchNextPage() {
+        const morePostsAvailable = this.posts.length < this.totalNumberOfPosts;
+        if (morePostsAvailable) {
+            this.page += 1;
+            this.commandMetisToFetchPosts();
+        }
+        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollTop + this.pageSize;
+    }
+
+    public commandMetisToFetchPosts(forceUpdate = false) {
+        if (this.currentPostContextFilter) {
+            this.currentPostContextFilter = { ...this.currentPostContextFilter, page: this.page - 1 };
+            this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this.channel);
+        }
     }
 
     /**
      * sets the filter options after receiving user input
      */
     setFilterAndSort(): void {
+        this.page = 1;
         this.currentPostContextFilter = {
             courseId: undefined,
-            exerciseIds: this.exercise?.id ? [this.exercise.id] : undefined,
-            lectureIds: this.lecture?.id ? [this.lecture.id] : undefined,
+            exerciseIds: undefined,
+            lectureIds: undefined,
             conversationId: this.channel?.id,
-            searchText: this.searchText,
+            searchText: this.searchText?.trim(),
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
             filterToOwn: this.formGroup.get('filterToOwn')?.value,
             filterToAnsweredOrReacted: this.formGroup.get('filterToAnsweredOrReacted')?.value,
+            pagingEnabled: true,
+            page: 0,
+            pageSize: this.pageSize,
+            postSortCriterion: PostSortCriterion.CREATION_DATE,
+            sortingOrder: this.currentSortDirection,
         };
     }
 
