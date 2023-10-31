@@ -51,17 +51,6 @@
             <jhi-emoji [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
         </button>
     </div>
-    <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.ARCHIVED || currentUserIsAtLeastTutor">
-        <button
-            class="reaction-button archive"
-            [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
-            [class.reaction-button--reacted]="displayPriority === DisplayPriority.ARCHIVED && currentUserIsAtLeastTutor"
-            [disabled]="!currentUserIsAtLeastTutor || readOnlyMode"
-            (click)="currentUserIsAtLeastTutor && toggleArchive()"
-        >
-            <jhi-emoji [emoji]="archiveEmojiId" [ngbTooltip]="archiveTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
-        </button>
-    </div>
     <ng-container *ngIf="!isCourseMessagesPage; else buttonsForMessagesPage">
         <!-- start discussion -->
         <div class="col-auto p-0" *ngIf="sortedAnswerPosts.length === 0">
