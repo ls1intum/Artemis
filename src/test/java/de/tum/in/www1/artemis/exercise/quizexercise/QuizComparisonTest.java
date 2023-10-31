@@ -173,7 +173,7 @@ class QuizComparisonTest {
             }
             else if (submittedAnswer2 instanceof DragAndDropSubmittedAnswer changedSubmittedAnswer) {
                 List<DragAndDropMapping> dragAndDropMappings = changedSubmittedAnswer.getMappings().stream().toList();
-                assertThat(dragAndDropMappings.size()).isEqualTo(3);
+                assertThat(dragAndDropMappings.size()).isEqualTo(4);
 
                 DragAndDropMapping mapping1 = dragAndDropMappings.get(0);
                 DragAndDropMapping mapping2 = dragAndDropMappings.get(1);
@@ -296,7 +296,7 @@ class QuizComparisonTest {
             }
             else if (submittedAnswer2 instanceof DragAndDropSubmittedAnswer changedSubmittedAnswer && submittedAnswer1 instanceof DragAndDropSubmittedAnswer originalAnswer) {
                 List<DragAndDropMapping> dragAndDropMappings = changedSubmittedAnswer.getMappings().stream().toList();
-                assertThat(dragAndDropMappings.size()).isEqualTo(3);
+                assertThat(dragAndDropMappings.size()).isEqualTo(4);
 
                 DragAndDropMapping mapping1 = dragAndDropMappings.get(0);
                 DragAndDropMapping mapping2 = dragAndDropMappings.get(1);
@@ -397,7 +397,7 @@ class QuizComparisonTest {
             }
             else if (submittedAnswer2 instanceof DragAndDropSubmittedAnswer changedSubmittedAnswer) {
                 List<DragAndDropMapping> dragAndDropMappings = changedSubmittedAnswer.getMappings().stream().toList();
-                assertThat(dragAndDropMappings.size()).isEqualTo(3);
+                assertThat(dragAndDropMappings.size()).isEqualTo(4);
                 DragAndDropMapping mapping1 = dragAndDropMappings.get(0);
                 DragAndDropMapping mapping2 = dragAndDropMappings.get(1);
                 DragAndDropMapping mapping3 = dragAndDropMappings.get(1);

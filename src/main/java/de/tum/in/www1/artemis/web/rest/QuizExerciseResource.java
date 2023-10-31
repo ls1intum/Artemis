@@ -1,28 +1,38 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -93,49 +103,58 @@ public class QuizExerciseResource {
 
     private final SubmissionRepository submissionRepository;
 
+    private final FileService fileService;
+
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
 
-    public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizExerciseRepository quizExerciseRepository, CourseService courseService, UserRepository userRepository,
-            ExerciseDeletionService exerciseDeletionServiceService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
-            QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
-            GroupNotificationService groupNotificationService, ExerciseService exerciseService, ExamDateService examDateService, QuizMessagingService quizMessagingService,
+    private final FilePathService filePathService;
+
+    public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
+            UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
+            ExerciseDeletionService exerciseDeletionService, ExamDateService examDateService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
+            QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
-            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository, ChannelService channelService, ChannelRepository channelRepository) {
+            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository, FileService fileService, ChannelService channelService,
+            ChannelRepository channelRepository, FilePathService filePathService) {
         this.quizExerciseService = quizExerciseService;
+        this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
-        this.exerciseDeletionService = exerciseDeletionServiceService;
         this.userRepository = userRepository;
         this.courseService = courseService;
+        this.courseRepository = courseRepository;
+        this.exerciseService = exerciseService;
+        this.exerciseDeletionService = exerciseDeletionService;
+        this.examDateService = examDateService;
         this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
         this.quizExerciseImportService = quizExerciseImportService;
         this.authCheckService = authCheckService;
         this.groupNotificationService = groupNotificationService;
-        this.exerciseService = exerciseService;
-        this.examDateService = examDateService;
-        this.courseRepository = courseRepository;
-        this.quizMessagingService = quizMessagingService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
         this.submissionRepository = submissionRepository;
+        this.fileService = fileService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
+        this.filePathService = filePathService;
     }
 
     /**
      * POST /quiz-exercises : Create a new quizExercise.
      *
      * @param quizExercise the quizExercise to create
+     * @param files        the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
      * @return the ResponseEntity with status 201 (Created) and with body the new quizExercise, or with status 400 (Bad Request) if the quizExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/quiz-exercises")
+    @PostMapping(value = "/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
-    public ResponseEntity<QuizExercise> createQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
+    public ResponseEntity<QuizExercise> createQuizExercise(@RequestPart("exercise") QuizExercise quizExercise,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
         log.info("REST request to create QuizExercise : {}", quizExercise);
         if (quizExercise.getId() != null) {
             throw new BadRequestAlertException("A new quizExercise cannot already have an ID", ENTITY_NAME, "idExists");
@@ -155,6 +174,8 @@ public class QuizExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
+        quizExerciseService.handleDndQuizFileCreation(quizExercise, files);
+
         QuizExercise result = quizExerciseService.save(quizExercise);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
@@ -164,22 +185,22 @@ public class QuizExerciseResource {
     }
 
     /**
-     * PUT /quiz-exercises : Updates an existing quizExercise.
+     * PUT /quiz-exercises/:exerciseId : Updates an existing quizExercise.
      *
+     * @param exerciseId       the id of the quizExercise to save
      * @param quizExercise     the quizExercise to update
+     * @param files            the new files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
      * @param notificationText about the quiz exercise update that should be displayed to the student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with status 500
      *         (Internal Server Error) if the quizExercise couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/quiz-exercises")
+    @PutMapping(value = "/quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
-    public ResponseEntity<QuizExercise> updateQuizExercise(@RequestBody QuizExercise quizExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
+    public ResponseEntity<QuizExercise> updateQuizExercise(@PathVariable Long exerciseId, @RequestPart("exercise") QuizExercise quizExercise,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files, @RequestParam(value = "notificationText", required = false) String notificationText)
+            throws IOException {
         log.info("REST request to update quiz exercise : {}", quizExercise);
-        if (quizExercise.getId() == null) {
-            return createQuizExercise(quizExercise);
-        }
+        quizExercise.setId(exerciseId);
 
         // check if quiz is valid
         if (!quizExercise.isValid()) {
@@ -191,13 +212,15 @@ public class QuizExerciseResource {
 
         // Valid exercises have set either a course or an exerciseGroup
         quizExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+
+        final var originalQuiz = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(exerciseId);
+
         // Retrieve the course over the exerciseGroup or the given courseId
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalQuiz);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // Forbid conversion between normal course exercise and exam exercise
-        final var originalQuiz = quizExerciseRepository.findByIdElseThrow(quizExercise.getId());
         exerciseService.checkForConversionBetweenExamAndCourseExercise(quizExercise, originalQuiz, ENTITY_NAME);
 
         // check if quiz is has already started
@@ -212,6 +235,8 @@ public class QuizExerciseResource {
         if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED || quizExercise.getQuizBatches() == null || quizExercise.getQuizBatches().size() > 1) {
             quizExercise.setQuizBatches(batches);
         }
+
+        quizExerciseService.handleDndQuizFileUpdates(quizExercise, originalQuiz, files);
 
         Channel updatedChannel = channelService.updateExerciseChannel(originalQuiz, quizExercise);
 
@@ -542,14 +567,35 @@ public class QuizExerciseResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete quiz exercise : {}", quizExerciseId);
-        var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findWithEagerQuestionsByIdOrElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
+
+        List<DragAndDropQuestion> dragAndDropQuestions = quizExercise.getQuizQuestions().stream().filter(question -> question instanceof DragAndDropQuestion)
+                .map(question -> ((DragAndDropQuestion) question)).toList();
+        List<String> backgroundImagePaths = dragAndDropQuestions.stream().map(DragAndDropQuestion::getBackgroundFilePath).toList();
+        List<String> dragItemImagePaths = dragAndDropQuestions.stream().flatMap(question -> question.getDragItems().stream().map(DragItem::getPictureFilePath)).toList();
+        List<Path> imagesToDelete = Stream.concat(backgroundImagePaths.stream(), dragItemImagePaths.stream()).map(path -> {
+            if (path == null) {
+                return null;
+            }
+            try {
+                return filePathService.actualPathForPublicPathOrThrow(URI.create(path));
+            }
+            catch (FilePathParsingException e) {
+                // if the path is invalid, we can't delete it, but we don't want to fail the whole deletion
+                log.warn("Could not find file " + path + " for deletion");
+                return null;
+            }
+        }).filter(Objects::nonNull).toList();
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(quizExerciseId, false, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
+
+        fileService.deleteFiles(imagesToDelete);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, quizExercise.getTitle())).build();
     }
 
@@ -562,12 +608,14 @@ public class QuizExerciseResource {
      *
      * @param quizExerciseId the quiz id for the quiz that should be re-evaluated
      * @param quizExercise   the quizExercise to re-evaluate
+     * @param files          the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
      * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with
      *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
      */
-    @PutMapping("/quiz-exercises/{quizExerciseId}/re-evaluate")
+    @PutMapping(value = "/quiz-exercises/{quizExerciseId}/re-evaluate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructor
-    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestBody QuizExercise quizExercise) {
+    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestPart("exercise") QuizExercise quizExercise,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         log.info("REST request to re-evaluate quiz exercise : {}", quizExerciseId);
         QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
 
@@ -586,7 +634,9 @@ public class QuizExerciseResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
 
-        quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise);
+        List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
+
+        quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise, nullsafeFiles);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
         quizExercise.validateScoreSettings();
@@ -617,15 +667,16 @@ public class QuizExerciseResource {
      * entities will get cloned and assigned a new id.
      *
      * @param sourceExerciseId The ID of the original exercise which should get imported
-     * @param importedExercise The new exercise containing values that should get overwritten in the
-     *                             imported exercise, s.a. the title or difficulty
+     * @param importedExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @param files            the files for drag and drop questions to upload (optional). The original file name must equal the file path of the image in {@code quizExercise}
      * @return The imported exercise (200), a not found error (404) if the template does not exist,
      *         or a forbidden error (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
-    @PostMapping("/quiz-exercises/import/{sourceExerciseId}")
+    @PostMapping(value = "quiz-exercises/import/{sourceExerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
-    public ResponseEntity<QuizExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody QuizExercise importedExercise) throws URISyntaxException {
+    public ResponseEntity<QuizExercise> importExercise(@PathVariable long sourceExerciseId, @RequestPart("exercise") QuizExercise importedExercise,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws URISyntaxException, IOException {
         log.info("REST request to import from quiz exercise : {}", sourceExerciseId);
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
@@ -644,11 +695,14 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
+        List<MultipartFile> nullsafeFiles = files != null ? files : new ArrayList<>();
+
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
+        quizExerciseService.validateQuizExerciseFiles(importedExercise, nullsafeFiles, false);
 
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
-        final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise);
+        final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, nullsafeFiles);
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }
