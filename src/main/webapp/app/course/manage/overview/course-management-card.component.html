@@ -254,7 +254,7 @@
             <span class="d-none d-xl-inline">{{ 'artemisApp.courseOverview.menu.messages' | artemisTranslate }}</span>
         </a>
         <a
-            *ngIf="course.isAtLeastTutor"
+            *ngIf="course.timeZone || course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'tutorial-groups']"
             [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
             class="btn btn-primary me-1 mb-1 hidden-if-mobile"
