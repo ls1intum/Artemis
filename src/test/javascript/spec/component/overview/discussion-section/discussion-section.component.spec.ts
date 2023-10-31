@@ -36,19 +36,11 @@ import {
     metisLecture,
     metisLectureChannel,
     metisPostTechSupport,
-    post1WithCreationDate,
-    post2WithCreationDate,
-    post3WithCreationDate,
-    post4WithCreationDate,
-    post5WithCreationDate,
-    post6WithCreationDate,
-    post7WithCreationDate,
-    postsWithCreationDate,
 } from '../../../helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { PostContextFilter, SortDirection } from 'app/shared/metis/metis.util';
+import { PostContextFilter } from 'app/shared/metis/metis.util';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -154,47 +146,6 @@ describe('PageDiscussionSectionComponent', () => {
         expect(component.currentPost).toBeUndefined();
         expect(component.currentPostId).toBeUndefined();
     }));
-
-    it('should sort posts correctly', () => {
-        const posts = postsWithCreationDate.sort(component.sectionSortFn);
-        expect(posts).toEqual([
-            post1WithCreationDate,
-            post3WithCreationDate,
-            post6WithCreationDate,
-            post5WithCreationDate,
-            post2WithCreationDate,
-            post7WithCreationDate,
-            post4WithCreationDate,
-        ]);
-    });
-
-    it('should sort posts by creationDate ASC', () => {
-        component.currentSortDirection = SortDirection.ASCENDING;
-        const posts = postsWithCreationDate.sort(component.sectionSortFn);
-        expect(posts).toEqual([
-            post1WithCreationDate,
-            post2WithCreationDate,
-            post3WithCreationDate,
-            post6WithCreationDate,
-            post5WithCreationDate,
-            post7WithCreationDate,
-            post4WithCreationDate,
-        ]);
-    });
-
-    it('should sort posts by creationDate DESC', () => {
-        component.currentSortDirection = SortDirection.DESCENDING;
-        const posts = postsWithCreationDate.sort(component.sectionSortFn);
-        expect(posts).toEqual([
-            post1WithCreationDate,
-            post7WithCreationDate,
-            post5WithCreationDate,
-            post6WithCreationDate,
-            post3WithCreationDate,
-            post2WithCreationDate,
-            post4WithCreationDate,
-        ]);
-    });
 
     it('should initialize correctly for exercise posts with default settings', fakeAsync(() => {
         component.exercise = { ...metisExercise, course: metisCourse };
