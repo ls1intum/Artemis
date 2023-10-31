@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisTemplateRepository;
 import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
@@ -55,6 +56,9 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     protected ExerciseUtilService exerciseUtilService;
 
     @Autowired
+    private IrisSettingsRepository irisSettingsRepository;
+
+    @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     private static final long TIMEOUT_MS = 200;
@@ -75,7 +79,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         globalSettings.getIrisChatSettings().setPreferredModel(null);
         globalSettings.getIrisHestiaSettings().setEnabled(true);
         globalSettings.getIrisHestiaSettings().setPreferredModel(null);
-        irisSettingsService.saveIrisSettings(globalSettings);
+        irisSettingsRepository.save(globalSettings);
     }
 
     protected void activateIrisFor(Course course) {
@@ -93,7 +97,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         courseSettings.getIrisCodeEditorSettings().setSolutionRepoGenerationTemplate(null);
         courseSettings.getIrisCodeEditorSettings().setTestRepoGenerationTemplate(null);
         courseSettings.getIrisCodeEditorSettings().setPreferredModel(null);
-        irisSettingsService.saveIrisSettings(courseSettings);
+        irisSettingsRepository.save(courseSettings);
     }
 
     protected void activateIrisFor(ProgrammingExercise exercise) {
@@ -101,7 +105,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         exerciseSettings.getIrisChatSettings().setEnabled(true);
         exerciseSettings.getIrisChatSettings().setTemplate(createDummyTemplate());
         exerciseSettings.getIrisChatSettings().setPreferredModel(null);
-        irisSettingsService.saveIrisSettings(exerciseSettings);
+        irisSettingsRepository.save(exerciseSettings);
     }
 
     protected IrisTemplate createDummyTemplate() {

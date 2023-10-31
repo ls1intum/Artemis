@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -53,9 +52,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private IrisRateLimitService irisRateLimitService;
 
     private ProgrammingExercise exercise;
 
