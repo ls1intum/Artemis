@@ -63,7 +63,7 @@ public class TutorialGroupUtilService {
     private TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
     /**
-     * Creates and saves a Course for TutorialGroup tests
+     * Creates and saves a Course for TutorialGroup tests.
      */
     public void addTutorialCourse() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), tutorialGroupStudents.orElseThrow(),
@@ -100,7 +100,7 @@ public class TutorialGroupUtilService {
      *
      * @param tutorialGroupsConfigurationId The ID of the TutorialGroupsConfiguration
      * @param date                          The date of the TutorialGroupFreePeriod
-     * @param reason                        The reason of the TutorialGroupFreePeriod
+     * @param reason                        The reason for the TutorialGroupFreePeriod
      * @return The created TutorialGroupFreePeriod
      */
     public TutorialGroupFreePeriod addTutorialGroupFreeDay(Long tutorialGroupsConfigurationId, LocalDate date, String reason) {
