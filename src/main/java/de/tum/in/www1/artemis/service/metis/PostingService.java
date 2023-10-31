@@ -42,7 +42,7 @@ public abstract class PostingService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public static final String METIS_POST_ENTITY_NAME = "metis.post";
+    protected static final String METIS_POST_ENTITY_NAME = "metis.post";
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 

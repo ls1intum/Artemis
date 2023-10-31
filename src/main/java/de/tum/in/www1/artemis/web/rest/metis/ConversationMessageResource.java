@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.metis;
 
-import static de.tum.in.www1.artemis.service.metis.PostingService.METIS_POST_ENTITY_NAME;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -103,7 +101,7 @@ public class ConversationMessageResource {
             coursePosts = conversationMessagingService.getCourseWideMessages(pageable, postContextFilter, requestingUser);
         }
         else {
-            throw new BadRequestAlertException("Messages must be associated with a conversion", METIS_POST_ENTITY_NAME, "conversationMissing");
+            throw new BadRequestAlertException("Messages must be associated with a conversion", conversationMessagingService.getEntityName(), "conversationMissing");
         }
         // keep the data as small as possible and avoid unnecessary information sent to the client
         // TODO: in the future we should set conversation to null
