@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsS
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -363,7 +364,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
      * Test for notifyUserAboutNewPossiblePlagiarismCase method
      */
     @Test
-    void testNotifyUserAboutNewPossiblePlagiarismCase() throws MessagingException {
+    void testNotifyUserAboutNewPossiblePlagiarismCase() throws MessagingException, IOException {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         userUtilService.changeUser(TEST_PREFIX + "student1");
         String exerciseTitle = "Test New Plagiarism";
@@ -375,13 +376,14 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         ArgumentCaptor<MimeMessage> mimeMessageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
         verify(javaMailSender, timeout(1000)).send(mimeMessageCaptor.capture());
         assertThat(mimeMessageCaptor.getValue().getSubject()).isEqualTo("New Plagiarism Case: Exercise \"" + exerciseTitle + "\" in the course \"" + course.getTitle() + "\"");
+        assertThat(mimeMessageCaptor.getValue().getContent()).asString().contains(POST_CONTENT);
     }
 
     /**
      * Test for notifyUserAboutFinalPlagiarismState method
      */
     @Test
-    void testNotifyUserAboutFinalPlagiarismState() throws MessagingException {
+    void testNotifyUserAboutFinalPlagiarismState() throws MessagingException, IOException {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         userUtilService.changeUser(TEST_PREFIX + "student1");
         plagiarismCase.setVerdict(PlagiarismVerdict.NO_PLAGIARISM);
@@ -389,7 +391,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
         ArgumentCaptor<MimeMessage> mimeMessageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
         verify(javaMailSender, timeout(1000)).send(mimeMessageCaptor.capture());
-        assertThat(mimeMessageCaptor.getValue().getSubject()).isEqualTo(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
+        assertThat(mimeMessageCaptor.getValue().getSubject()).isEqualTo("Verdict for your plagiarism case");
+        assertThat(mimeMessageCaptor.getValue().getContent()).asString().contains("Verdict reached in plagiarism case for exercise");
     }
 
     @Test
