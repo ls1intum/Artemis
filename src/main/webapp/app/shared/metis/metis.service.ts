@@ -20,6 +20,7 @@ import {
     PageType,
     PostContextFilter,
     RouteComponents,
+    SortDirection,
 } from 'app/shared/metis/metis.util';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -491,11 +492,18 @@ export class MetisService implements OnDestroy {
 
             switch (postDTO.action) {
                 case MetisPostAction.CREATE:
-                    if (
-                        postConvId &&
-                        (!this.currentPostContextFilter.searchText || postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase()))
-                    ) {
-                        // we can add the received conversation message to the cached messages without violating the current context filter setting
+                    const doesNotMatchOwnFilter = this.currentPostContextFilter.filterToOwn && postDTO.post.author?.login !== this.user.login;
+                    const doesNotMatchReactedFilter = this.currentPostContextFilter.filterToAnsweredOrReacted;
+                    const doesNotMatchSearchString =
+                        this.currentPostContextFilter.searchText?.length && !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase());
+
+                    if (!postConvId || doesNotMatchOwnFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
+                        break;
+                    }
+                    // we can add the received conversation message to the cached messages without violating the current context filter setting
+                    if (this.currentPostContextFilter.sortingOrder === SortDirection.ASCENDING) {
+                        this.cachedPosts.push(postDTO.post);
+                    } else {
                         this.cachedPosts = [postDTO.post, ...this.cachedPosts];
                     }
                     this.addTags(postDTO.post.tags);
