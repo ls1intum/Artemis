@@ -205,7 +205,7 @@ public class LocalCIContainerService {
      * @param buildScriptPath            the path to the build script
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths,
-            String[] auxiliaryRepositoriesNames, Path buildScriptPath) throws InterruptedException {
+            String[] auxiliaryRepositoriesNames, Path buildScriptPath) {
 
         ExecCreateCmdResponse createDirectoryCmdReponse = dockerClient.execCreateCmd(buildJobContainerId).withCmd("mkdir", "/repositories").exec();
         dockerClient.execStartCmd(createDirectoryCmdReponse.getId()).exec(new ResultCallback.Adapter<>());
@@ -223,7 +223,7 @@ public class LocalCIContainerService {
         addAndPrepareDirectory(buildJobContainerId, buildScriptPath, "script.sh", false);
     }
 
-    private void addAndPrepareDirectory(String containerId, Path repositoryPath, String newDirectoryName, Boolean isDirectory) throws InterruptedException {
+    private void addAndPrepareDirectory(String containerId, Path repositoryPath, String newDirectoryName, Boolean isDirectory) {
         copyToContainer(repositoryPath.toString(), containerId);
         renameDirectoryOrFile(containerId, repositoryPath.getFileName().toString(), newDirectoryName);
         if (isDirectory) {
@@ -234,16 +234,44 @@ public class LocalCIContainerService {
         }
     }
 
-    private void renameDirectoryOrFile(String containerId, String oldName, String newName) throws InterruptedException {
+    private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
         ExecCreateCmdResponse renameDirectoryCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("mv", oldName, newName).exec();
-        dockerClient.execStartCmd(renameDirectoryCmdResponse.getId()).exec(new ResultCallback.Adapter<>()).awaitCompletion();
+        final CountDownLatch latch = new CountDownLatch(1);
+        dockerClient.execStartCmd(renameDirectoryCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
+
+            @Override
+            public void onComplete() {
+                latch.countDown();
+            }
+        });
+
+        try {
+            latch.await();
+        }
+        catch (InterruptedException e) {
+            throw new LocalCIException("Interrupted while renaming directory or file " + oldName + " to " + newName, e);
+        }
     }
 
-    private void convertDosFilesToUnix(String path, String containerId) throws InterruptedException {
+    private void convertDosFilesToUnix(String path, String containerId) {
         // This is for the case the files where created on a Windows machine and contain DOS line endings.
         ExecCreateCmdResponse convertDosToUnixCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("sh", "-c", "find " + path + " -type f -exec sed -i 's/\\r$//' {} \\;")
                 .exec();
-        dockerClient.execStartCmd(convertDosToUnixCmdResponse.getId()).exec(new ResultCallback.Adapter<>()).awaitCompletion();
+        final CountDownLatch latch = new CountDownLatch(1);
+        dockerClient.execStartCmd(convertDosToUnixCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
+
+            @Override
+            public void onComplete() {
+                latch.countDown();
+            }
+        });
+
+        try {
+            latch.await();
+        }
+        catch (InterruptedException e) {
+            throw new LocalCIException("Interrupted while converting DOS files to Unix", e);
+        }
     }
 
     private void copyToContainer(String sourcePath, String containerId) {
