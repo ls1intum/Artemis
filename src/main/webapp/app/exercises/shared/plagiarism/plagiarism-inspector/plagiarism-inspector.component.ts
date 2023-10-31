@@ -76,7 +76,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     /**
      * Minimum similarity (%) of the comparisons to return.
      */
-    similarityThreshold = 50;
+    similarityThreshold = 90;
 
     /**
      * Ignore submissions with a score less than `minimumScore` in plagiarism detection.
@@ -86,7 +86,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     /**
      * Ignore submissions with a size less than `minimumSize` in plagiarism detection.
      */
-    minimumSize = 0;
+    minimumSize = 50;
 
     /**
      * The minimumScore option is only configurable, if this value is true.
