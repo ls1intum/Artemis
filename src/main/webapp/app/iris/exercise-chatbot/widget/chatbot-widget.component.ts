@@ -684,7 +684,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
      * @param plan - The plan to check.
      */
     canExecute(plan: IrisExercisePlan) {
-        return this.getNextStepIndex(plan) <= plan.steps.length;
+        return this.getNextStepIndex(plan) < plan.steps.length;
     }
 
     /**
@@ -696,7 +696,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
      * @param plan - The plan to execute.
      */
     setExecuting(messageId: number, plan: IrisExercisePlan) {
-        const nextStepIndex = this.getNextStepIndex(plan) - 1;
+        const nextStepIndex = this.getNextStepIndex(plan);
         if (nextStepIndex >= plan.steps.length) {
             console.error('Tried to execute plan that is already complete.');
             return;
