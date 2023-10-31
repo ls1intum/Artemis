@@ -52,7 +52,6 @@ export class CourseCompetenciesDetailsComponent implements OnInit {
         this.competencyService.findById(this.competencyId!, this.courseId!).subscribe({
             next: (resp) => {
                 this.competency = resp.body!;
-                console.log(this.competency);
                 if (this.competency && this.competency.exercises) {
                     // Add exercises as lecture units for display
                     this.competency.lectureUnits = this.competency.lectureUnits ?? [];
