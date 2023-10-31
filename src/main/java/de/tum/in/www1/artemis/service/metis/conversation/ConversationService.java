@@ -119,7 +119,7 @@ public class ConversationService {
      * @param conversationId the id of the conversation
      * @param user           the user
      * @param lastReadDate   Optional date being used for a newly created participant to set the last-read date
-     * @returns an optional conversation
+     * @return an optional conversation
      */
     public Optional<Conversation> isMemberOrCreateForCourseWideElseThrow(Long conversationId, User user, Optional<ZonedDateTime> lastReadDate) {
         if (isMember(conversationId, user.getId())) {
