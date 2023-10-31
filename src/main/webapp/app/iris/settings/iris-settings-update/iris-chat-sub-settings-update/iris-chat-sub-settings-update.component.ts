@@ -1,6 +1,6 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { IrisTemplate } from 'app/entities/iris/settings/iris-template';
-import { IrisChatSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisChatSubSettings, IrisSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 
 @Component({
     selector: 'jhi-iris-chat-sub-settings-update',
@@ -14,10 +14,10 @@ export class IrisChatSubSettingsUpdateComponent implements OnInit, OnChanges {
     parentSubSettings?: IrisChatSubSettings;
 
     @Input()
-    templateOptional = false;
-
-    @Input()
     rateLimitSettable = false;
+
+    @Output()
+    onChanges = new EventEmitter<IrisSubSettings>();
 
     previousTemplate?: IrisTemplate;
 

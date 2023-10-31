@@ -41,7 +41,8 @@ public class IrisSubSettingsService {
      * @param parentSettings  Parent chat sub settings.
      * @return Updated chat sub settings.
      */
-    public IrisChatSubSettings update(IrisChatSubSettings currentSettings, IrisChatSubSettings newSettings, IrisCombinedChatSubSettingsDTO parentSettings) {
+    public IrisChatSubSettings update(IrisChatSubSettings currentSettings, IrisChatSubSettings newSettings, IrisCombinedChatSubSettingsDTO parentSettings,
+            IrisSettingsType settingsType) {
         if (newSettings == null) {
             if (parentSettings == null) {
                 throw new IllegalArgumentException("Cannot delete the chat settings");
@@ -51,7 +52,9 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisChatSubSettings();
         }
-        currentSettings.setEnabled(newSettings.isEnabled());
+        if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
+            currentSettings.setEnabled(newSettings.isEnabled());
+        }
         if (authCheckService.isAdmin()) {
             currentSettings.setRateLimit(newSettings.getRateLimit());
             currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
@@ -75,7 +78,8 @@ public class IrisSubSettingsService {
      * @param parentSettings  Parent Hestia sub settings.
      * @return Updated Hestia sub settings.
      */
-    public IrisHestiaSubSettings update(IrisHestiaSubSettings currentSettings, IrisHestiaSubSettings newSettings, IrisCombinedHestiaSubSettingsDTO parentSettings) {
+    public IrisHestiaSubSettings update(IrisHestiaSubSettings currentSettings, IrisHestiaSubSettings newSettings, IrisCombinedHestiaSubSettingsDTO parentSettings,
+            IrisSettingsType settingsType) {
         if (newSettings == null) {
             if (parentSettings == null) {
                 throw new IllegalArgumentException("Cannot delete the Hestia settings");
@@ -85,7 +89,9 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisHestiaSubSettings();
         }
-        currentSettings.setEnabled(newSettings.isEnabled());
+        if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
+            currentSettings.setEnabled(newSettings.isEnabled());
+        }
         currentSettings.setAllowedModels(selectAllowedModels(currentSettings.getAllowedModels(), newSettings.getAllowedModels()));
         currentSettings.setPreferredModel(validatePreferredModel(currentSettings.getPreferredModel(), newSettings.getPreferredModel(), currentSettings.getAllowedModels(),
                 parentSettings != null ? parentSettings.getAllowedModels() : null));
@@ -105,7 +111,8 @@ public class IrisSubSettingsService {
      * @param parentSettings  Parent Code Editor sub settings.
      * @return Updated Code Editor sub settings.
      */
-    public IrisCodeEditorSubSettings update(IrisCodeEditorSubSettings currentSettings, IrisCodeEditorSubSettings newSettings, IrisCombinedCodeEditorSubSettingsDTO parentSettings) {
+    public IrisCodeEditorSubSettings update(IrisCodeEditorSubSettings currentSettings, IrisCodeEditorSubSettings newSettings, IrisCombinedCodeEditorSubSettingsDTO parentSettings,
+            IrisSettingsType settingsType) {
         if (newSettings == null) {
             if (parentSettings == null) {
                 throw new IllegalArgumentException("Cannot delete the Code Editor settings");
@@ -115,7 +122,9 @@ public class IrisSubSettingsService {
         if (currentSettings == null) {
             currentSettings = new IrisCodeEditorSubSettings();
         }
-        currentSettings.setEnabled(newSettings.isEnabled());
+        if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
+            currentSettings.setEnabled(newSettings.isEnabled());
+        }
         currentSettings.setAllowedModels(selectAllowedModels(currentSettings.getAllowedModels(), newSettings.getAllowedModels()));
         currentSettings.setPreferredModel(validatePreferredModel(currentSettings.getPreferredModel(), newSettings.getPreferredModel(), currentSettings.getAllowedModels(),
                 parentSettings != null ? parentSettings.getAllowedModels() : null));

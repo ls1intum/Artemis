@@ -18,6 +18,7 @@ import { IrisExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-exer
 import { IrisLogoComponent } from './iris-logo/iris-logo.component';
 import { IrisChatSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-chat-sub-settings-update/iris-chat-sub-settings-update.component';
 import { IrisHestiaSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-hestia-sub-settings-update/iris-hestia-sub-settings-update.component';
+import { IrisGlobalAutoupdateSettingsUpdateComponent } from './settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
 
 @NgModule({
     declarations: [
@@ -32,6 +33,7 @@ import { IrisHestiaSubSettingsUpdateComponent } from 'app/iris/settings/iris-set
         IrisLogoComponent,
         IrisChatSubSettingsUpdateComponent,
         IrisHestiaSubSettingsUpdateComponent,
+        IrisGlobalAutoupdateSettingsUpdateComponent,
     ],
     imports: [CommonModule, MatDialogModule, FormsModule, FontAwesomeModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisSharedComponentModule, RouterModule],
     providers: [],

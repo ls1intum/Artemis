@@ -1,11 +1,18 @@
 <div class="form-check form-switch">
-    <input class="form-check-input" type="checkbox" id="enabledDisabledSwitch" [disabled]="!isAdmin" [(ngModel)]="enabled" (change)="onEnabledChange()" />
+    <input
+        class="form-check-input"
+        type="checkbox"
+        id="enabledDisabledSwitch"
+        [disabled]="!isAdmin && settingsType !== EXERCISE"
+        [(ngModel)]="enabled"
+        (change)="onEnabledChange()"
+    />
     <label class="form-check-label" for="enabledDisabledSwitch" jhiTranslate="artemisApp.iris.settings.subSettings.enabled-disabled"> Enabled/Disabled </label>
 </div>
 
 <h4 class="form-label mt-3" jhiTranslate="artemisApp.iris.settings.subSettings.models.title">Models</h4>
-<span><span class="fw-bold fs-5" jhiTranslate="artemisApp.iris.settings.subSettings.allowedModels.title">Allowed Models</span>: </span>
-<div class="form-check form-switch">
+<span><span class="fw-bold fs-5" jhiTranslate="artemisApp.iris.settings.subSettings.models.allowedModels.title">Allowed Models</span>: </span>
+<div *ngIf="parentSubSettings" class="form-check form-switch">
     <input
         class="form-check-input"
         type="checkbox"
@@ -14,7 +21,7 @@
         [(ngModel)]="inheritAllowedModels"
         (change)="onInheritAllowedModelsChange()"
     />
-    <label class="form-check-label" for="inheritAllowedModelsSwitch" jhiTranslate="artemisApp.iris.settings.subSettings.allowedModels.inheritSwitch"> Inherit </label>
+    <label class="form-check-label" for="inheritAllowedModelsSwitch" jhiTranslate="artemisApp.iris.settings.subSettings.models.allowedModels.inheritSwitch"> Inherit </label>
 </div>
 <div class="disabled" disabled="true">
     <div class="form-group">
@@ -36,23 +43,26 @@
     </div>
 </div>
 
-<h5 class="mt-3"><span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.preferredModel">Preferred Model</span>:</h5>
-<div ngbDropdown class="d-inline-block">
-    <button class="btn btn-outline-primary w-100" id="dropdownBasic1" [disabled]="!isAdmin" ngbDropdownToggle>
-        {{ getSelectedModelName() }}
-    </button>
-    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-        <button *ngIf="modelOptional" (click)="setModel(undefined)" [class.selected]="subSettings?.preferredModel === undefined" ngbDropdownItem>
-            {{ 'artemisApp.iris.settings.subSettings.inheritModel' | artemisTranslate }}
+<h5 class="mt-3"><span class="fw-bold" jhiTranslate="artemisApp.iris.settings.subSettings.models.preferredModel.title">Preferred Model</span>:</h5>
+<div class="d-flex align-items-center">
+    <div ngbDropdown class="d-inline-block">
+        <button class="btn btn-outline-primary w-100" id="dropdownBasic1" ngbDropdownToggle>
+            {{ getPreferredModelName() ?? ('artemisApp.iris.settings.subSettings.models.preferredModel.inherit' | artemisTranslate) }}
         </button>
-        <button
-            *ngFor="let model of allowedIrisModels"
-            (click)="setModel(model)"
-            [class.selected]="model.id === subSettings?.preferredModel"
-            [ngbTooltip]="model.description"
-            ngbDropdownItem
-        >
-            {{ model.name }}
-        </button>
+        <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+            <button *ngIf="parentSubSettings" (click)="setModel(undefined)" [class.selected]="subSettings?.preferredModel === undefined" ngbDropdownItem>
+                {{ 'artemisApp.iris.settings.subSettings.models.preferredModel.inherit' | artemisTranslate }}
+            </button>
+            <button
+                *ngFor="let model of allowedIrisModels"
+                (click)="setModel(model)"
+                [class.selected]="model.id === subSettings?.preferredModel"
+                [ngbTooltip]="model.description"
+                ngbDropdownItem
+            >
+                {{ model.name }}
+            </button>
+        </div>
     </div>
+    <span *ngIf="!subSettings?.preferredModel" class="ps-2 text-secondary">{{ getPreferredModelNameParent() }}</span>
 </div>

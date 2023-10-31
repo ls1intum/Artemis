@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { IrisSettings, IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { HttpResponse } from '@angular/common/http';
@@ -14,9 +14,9 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
     selector: 'jhi-iris-settings-update',
     templateUrl: './iris-settings-update.component.html',
 })
-export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactivate {
+export class IrisSettingsUpdateComponent implements OnInit, OnChanges, ComponentCanDeactivate {
     @Input()
-    public settingType: IrisSettingsType;
+    public settingsType: IrisSettingsType;
     @Input()
     public courseId?: number;
     @Input()
@@ -48,6 +48,13 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
 
     ngOnInit(): void {
         this.loadIrisSettings();
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.irisSettings && changes.irisSettings.previousValue) {
+            this.isDirty = true;
+            console.log('dirty');
+        }
     }
 
     canDeactivateWarning?: string;
@@ -98,7 +105,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     }
 
     loadParentIrisSettingsObservable(): Observable<IrisSettings | undefined> {
-        switch (this.settingType) {
+        switch (this.settingsType) {
             case IrisSettingsType.GLOBAL:
                 // Global settings have no parent
                 return new Observable<IrisSettings | undefined>();
@@ -110,7 +117,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     }
 
     loadIrisSettingsObservable(): Observable<IrisSettings | undefined> {
-        switch (this.settingType) {
+        switch (this.settingsType) {
             case IrisSettingsType.GLOBAL:
                 return this.irisSettingsService.getGlobalSettings();
             case IrisSettingsType.COURSE:
@@ -121,7 +128,7 @@ export class IrisSettingsUpdateComponent implements OnInit, ComponentCanDeactiva
     }
 
     saveIrisSettingsObservable(): Observable<HttpResponse<IrisSettings | undefined>> {
-        switch (this.settingType) {
+        switch (this.settingsType) {
             case IrisSettingsType.GLOBAL:
                 return this.irisSettingsService.setGlobalSettings(this.irisSettings!);
             case IrisSettingsType.COURSE:

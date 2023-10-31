@@ -1,9 +1,10 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { IrisSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisModel } from 'app/entities/iris/settings/iris-model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 
 @Component({
     selector: 'jhi-iris-common-sub-settings-update',
@@ -20,7 +21,10 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     allIrisModels: IrisModel[];
 
     @Input()
-    modelOptional = false;
+    settingsType: IrisSettingsType;
+
+    @Output()
+    onChanges = new EventEmitter<IrisSubSettings>();
 
     isAdmin: boolean;
 
@@ -30,6 +34,8 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     enabled: boolean;
 
+    // Settings types
+    EXERCISE = IrisSettingsType.EXERCISE;
     // Button types
     WARNING = ButtonType.WARNING;
     // Icons
@@ -58,8 +64,12 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         return this.allIrisModels.filter((model) => (this.subSettings?.allowedModels ?? this.parentSubSettings?.allowedModels ?? []).includes(model.id));
     }
 
-    getSelectedModelName(): string {
-        return this.allIrisModels.find((model) => model.id === this.subSettings?.preferredModel)?.name ?? this.subSettings?.preferredModel ?? 'Inherit';
+    getPreferredModelName(): string | undefined {
+        return this.allIrisModels.find((model) => model.id === this.subSettings?.preferredModel)?.name ?? this.subSettings?.preferredModel;
+    }
+
+    getPreferredModelNameParent(): string | undefined {
+        return this.allIrisModels.find((model) => model.id === this.parentSubSettings?.preferredModel)?.name ?? this.parentSubSettings?.preferredModel;
     }
 
     onAllowedIrisModelsSelectionChange(model: IrisModel) {

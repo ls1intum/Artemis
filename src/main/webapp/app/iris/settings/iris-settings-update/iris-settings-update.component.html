@@ -3,47 +3,56 @@
     </jhi-button>
     <jhi-button id="save" [btnType]="SUCCESS" [isLoading]="isSaving" [icon]="faSave" [title]="'artemisApp.iris.settings.button.save'" (onClick)="saveIrisSettings()"></jhi-button>
 </div>
+
 <div *ngIf="irisSettings">
+    <div *ngIf="settingsType === GLOBAL">
+        <h3 jhiTranslate="artemisApp.iris.settings.autoUpdate.title">Auto-Update Settings</h3>
+        <jhi-iris-global-autoupdate-settings-update [irisSettings]="irisSettings" (onChanges)="isDirty = true"></jhi-iris-global-autoupdate-settings-update>
+    </div>
+
     <h3 jhiTranslate="artemisApp.iris.settings.subSettings.chatSettings">Chat Settings</h3>
     <div>
         <jhi-iris-common-sub-settings-update
             [subSettings]="irisSettings?.irisChatSettings"
             [parentSubSettings]="parentIrisSettings?.irisChatSettings"
             [allIrisModels]="allIrisModels ?? []"
-            [modelOptional]="settingType !== GLOBAL"
+            [settingsType]="settingsType"
+            (onChanges)="isDirty = true"
         ></jhi-iris-common-sub-settings-update>
         <jhi-iris-chat-sub-settings-update
             [subSettings]="irisSettings?.irisChatSettings"
             [parentSubSettings]="parentIrisSettings?.irisChatSettings"
-            [templateOptional]="settingType !== GLOBAL"
-            [rateLimitSettable]="settingType === GLOBAL"
+            [rateLimitSettable]="settingsType === GLOBAL"
+            (onChanges)="isDirty = true"
         ></jhi-iris-chat-sub-settings-update>
     </div>
 
-    <div *ngIf="settingType !== EXERCISE">
+    <div *ngIf="settingsType !== EXERCISE">
         <hr class="hr" />
         <h3 jhiTranslate="artemisApp.iris.settings.subSettings.hestiaSettings">Hestia Settings</h3>
         <jhi-iris-common-sub-settings-update
             [subSettings]="irisSettings?.irisHestiaSettings!"
             [parentSubSettings]="parentIrisSettings?.irisHestiaSettings"
             [allIrisModels]="allIrisModels ?? []"
-            [modelOptional]="settingType !== GLOBAL"
+            [settingsType]="settingsType"
+            (onChanges)="isDirty = true"
         ></jhi-iris-common-sub-settings-update>
         <jhi-iris-hestia-sub-settings-update
             [subSettings]="irisSettings?.irisHestiaSettings!"
             [parentSubSettings]="parentIrisSettings?.irisHestiaSettings"
-            [templateOptional]="settingType !== GLOBAL"
+            (onChanges)="isDirty = true"
         ></jhi-iris-hestia-sub-settings-update>
     </div>
 
-    <div *ngIf="settingType !== EXERCISE">
+    <div *ngIf="settingsType !== EXERCISE">
         <hr class="hr" />
         <h3 jhiTranslate="artemisApp.iris.settings.subSettings.codeEditorSettings">Code Editor Settings</h3>
         <jhi-iris-common-sub-settings-update
             [subSettings]="irisSettings?.irisCodeEditorSettings"
             [parentSubSettings]="parentIrisSettings?.irisCodeEditorSettings"
             [allIrisModels]="allIrisModels ?? []"
-            [modelOptional]="settingType !== GLOBAL"
+            [settingsType]="settingsType"
+            (onChanges)="isDirty = true"
         ></jhi-iris-common-sub-settings-update>
     </div>
 </div>

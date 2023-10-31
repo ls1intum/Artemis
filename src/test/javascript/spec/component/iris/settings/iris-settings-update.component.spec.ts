@@ -73,7 +73,7 @@ describe('IrisSettingsUpdateComponent Component', () => {
         const irisSettings = baseSettings();
         const getSettingsSpy = jest.spyOn(irisSettingsService, 'getGlobalSettings').mockReturnValue(of(irisSettings));
         const getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(models()));
-        comp.settingType = IrisSettingsType.GLOBAL;
+        comp.settingsType = IrisSettingsType.GLOBAL;
         fixture.detectChanges();
         expect(getSettingsSpy).toHaveBeenCalledOnce();
         expect(getModelsSpy).toHaveBeenCalledOnce();
@@ -85,7 +85,7 @@ describe('IrisSettingsUpdateComponent Component', () => {
         const irisSettings = baseSettings();
         const getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(irisSettings));
         const getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(models()));
-        comp.settingType = IrisSettingsType.COURSE;
+        comp.settingsType = IrisSettingsType.COURSE;
         comp.courseId = 1;
         fixture.detectChanges();
         expect(getSettingsSpy).toHaveBeenCalledWith(1);
@@ -98,7 +98,7 @@ describe('IrisSettingsUpdateComponent Component', () => {
         const irisSettings = baseSettings();
         const getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedProgrammingExerciseSettings').mockReturnValue(of(irisSettings));
         const getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(models()));
-        comp.settingType = IrisSettingsType.PROGRAMMING_EXERCISE;
+        comp.settingsType = IrisSettingsType.PROGRAMMING_EXERCISE;
         comp.programmingExerciseId = 1;
         fixture.detectChanges();
         expect(getSettingsSpy).toHaveBeenCalledWith(1);
@@ -112,7 +112,7 @@ describe('IrisSettingsUpdateComponent Component', () => {
         irisSettings.id = undefined;
         const irisSettingsSaved = baseSettings();
         const setSettingsSpy = jest.spyOn(irisSettingsService, 'setGlobalSettings').mockReturnValue(of(new HttpResponse<IrisSettings>({ body: irisSettingsSaved })));
-        comp.settingType = IrisSettingsType.GLOBAL;
+        comp.settingsType = IrisSettingsType.GLOBAL;
         comp.irisSettings = irisSettings;
         comp.saveIrisSettings();
         expect(setSettingsSpy).toHaveBeenCalledWith(irisSettings);
@@ -124,7 +124,7 @@ describe('IrisSettingsUpdateComponent Component', () => {
         irisSettings.id = undefined;
         const irisSettingsSaved = baseSettings();
         const setSettingsSpy = jest.spyOn(irisSettingsService, 'setCourseSettings').mockReturnValue(of(new HttpResponse<IrisSettings>({ body: irisSettingsSaved })));
-        comp.settingType = IrisSettingsType.COURSE;
+        comp.settingsType = IrisSettingsType.COURSE;
         comp.courseId = 1;
         comp.irisSettings = irisSettings;
         comp.saveIrisSettings();
@@ -137,7 +137,7 @@ describe('IrisSettingsUpdateComponent Component', () => {
         irisSettings.id = undefined;
         const irisSettingsSaved = baseSettings();
         const setSettingsSpy = jest.spyOn(irisSettingsService, 'setProgrammingExerciseSettings').mockReturnValue(of(new HttpResponse<IrisSettings>({ body: irisSettingsSaved })));
-        comp.settingType = IrisSettingsType.PROGRAMMING_EXERCISE;
+        comp.settingsType = IrisSettingsType.PROGRAMMING_EXERCISE;
         comp.programmingExerciseId = 1;
         comp.irisSettings = irisSettings;
         comp.saveIrisSettings();

@@ -24,13 +24,17 @@
                     "hestiaSettings": "Hestia Settings",
                     "codeEditorSettings": "Code Editor Settings",
                     "enabled-disabled": "Enabled/Disabled",
-                    "allowedModels": {
-                        "title": "Allowed Models",
-                        "inheritedInfo": "These models are inherited from higher level settings. Edit them here to overwrite them for this level.",
-                        "inheritButton": "Inherit Allowed Models"
+                    "models": {
+                        "title": "Models",
+                        "allowedModels": {
+                            "title": "Allowed Models",
+                            "inheritSwitch": "Inherit Allowed Models"
+                        },
+                        "preferredModel": {
+                            "title": "Preferred Model",
+                            "inherit": "Inherit"
+                        }
                     },
-                    "preferredModel": "Preferred Model",
-                    "inheritModel": "Inherit Model",
                     "rateLimit": "Rate Limit",
                     "rateLimitTooltip": "The maximum number of answers a user can receive from the LLM in a given time period.",
                     "rateLimitTimeframeHours": "Rate Limit Timeframe (Hours)",
@@ -44,7 +48,14 @@
                 "title": {
                     "global": "Global Iris Settings",
                     "course": "Course Iris Settings",
-                    "programmingExercise": "Programming Exercise Iris Settings"
+                    "exercise": "Exercise Iris Settings"
+                },
+                "autoUpdate": {
+                    "title": "Auto Update Settings",
+                    "tooltip": "If enabled, the specific global Iris settings will be automatically updated when a new release of Artemis provides new Iris settings.",
+                    "chatLabel": "Auto Update Chat Settings",
+                    "hestiaLabel": "Auto Update Hestia Settings",
+                    "codeEditorLabel": "Auto Update Code Editor Settings"
                 }
             },
             "error": {

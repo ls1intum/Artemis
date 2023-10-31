@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.iris.settings;
 
+import static de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType.*;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Objects;
@@ -212,9 +214,10 @@ public class IrisSettingsService {
         existingSettings.setEnableAutoUpdateChat(settingsUpdate.isEnableAutoUpdateChat());
         existingSettings.setEnableAutoUpdateHestia(settingsUpdate.isEnableAutoUpdateHestia());
         existingSettings.setEnableAutoUpdateCodeEditor(settingsUpdate.isEnableAutoUpdateCodeEditor());
-        existingSettings.setIrisChatSettings(irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), null));
-        existingSettings.setIrisHestiaSettings(irisSubSettingsService.update(existingSettings.getIrisHestiaSettings(), settingsUpdate.getIrisHestiaSettings(), null));
-        existingSettings.setIrisCodeEditorSettings(irisSubSettingsService.update(existingSettings.getIrisCodeEditorSettings(), settingsUpdate.getIrisCodeEditorSettings(), null));
+        existingSettings.setIrisChatSettings(irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), null, GLOBAL));
+        existingSettings.setIrisHestiaSettings(irisSubSettingsService.update(existingSettings.getIrisHestiaSettings(), settingsUpdate.getIrisHestiaSettings(), null, GLOBAL));
+        existingSettings
+                .setIrisCodeEditorSettings(irisSubSettingsService.update(existingSettings.getIrisCodeEditorSettings(), settingsUpdate.getIrisCodeEditorSettings(), null, GLOBAL));
         return irisSettingsRepository.save(existingSettings);
     }
 
@@ -228,11 +231,11 @@ public class IrisSettingsService {
     private IrisCourseSettings updateCourseSettings(IrisCourseSettings existingSettings, IrisCourseSettings settingsUpdate) {
         var parentSettings = getCombinedIrisGlobalSettings();
         existingSettings.setIrisChatSettings(
-                irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), parentSettings.irisChatSettings()));
+                irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), parentSettings.irisChatSettings(), COURSE));
         existingSettings.setIrisHestiaSettings(
-                irisSubSettingsService.update(existingSettings.getIrisHestiaSettings(), settingsUpdate.getIrisHestiaSettings(), parentSettings.irisHestiaSettings()));
-        existingSettings.setIrisCodeEditorSettings(
-                irisSubSettingsService.update(existingSettings.getIrisCodeEditorSettings(), settingsUpdate.getIrisCodeEditorSettings(), parentSettings.irisCodeEditorSettings()));
+                irisSubSettingsService.update(existingSettings.getIrisHestiaSettings(), settingsUpdate.getIrisHestiaSettings(), parentSettings.irisHestiaSettings(), COURSE));
+        existingSettings.setIrisCodeEditorSettings(irisSubSettingsService.update(existingSettings.getIrisCodeEditorSettings(), settingsUpdate.getIrisCodeEditorSettings(),
+                parentSettings.irisCodeEditorSettings(), COURSE));
         return irisSettingsRepository.save(existingSettings);
     }
 
@@ -246,7 +249,7 @@ public class IrisSettingsService {
     private IrisExerciseSettings updateExerciseSettings(IrisExerciseSettings existingSettings, IrisExerciseSettings settingsUpdate) {
         var parentSettings = getCombinedIrisSettingsFor(existingSettings.getExercise().getCourseViaExerciseGroupOrCourseMember(), false);
         existingSettings.setIrisChatSettings(
-                irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), parentSettings.irisChatSettings()));
+                irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), parentSettings.irisChatSettings(), EXERCISE));
         return irisSettingsRepository.save(existingSettings);
     }
 
