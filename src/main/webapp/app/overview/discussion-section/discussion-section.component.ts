@@ -129,6 +129,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             return {
                 next: (channel: Channel) => {
                     this.channel = channel ?? undefined;
+                    this.resetFormGroup();
                     this.setFilterAndSort();
 
                     if (!this.channel) {
@@ -226,7 +227,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     };
 
     scrollToBottomOfMessages() {
-        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+        if (this.content?.nativeElement) {
+            this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+        }
     }
 
     fetchNextPage() {

@@ -44,6 +44,16 @@ import { PostContextFilter } from 'app/shared/metis/metis.util';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
+import { Directive, EventEmitter, Input, Output } from '@angular/core';
+
+@Directive({
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: '[infinite-scroll]',
+})
+class InfiniteScrollStubDirective {
+    @Input() scrollWindow = true;
+    @Output() scrolledUp = new EventEmitter<void>();
+}
 
 describe('PageDiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
@@ -76,6 +86,7 @@ describe('PageDiscussionSectionComponent', () => {
             ],
             declarations: [
                 DiscussionSectionComponent,
+                InfiniteScrollStubDirective,
                 MockComponent(PostingThreadComponent),
                 MockComponent(PostCreateEditModalComponent),
                 MockComponent(FaIconComponent),
@@ -111,6 +122,9 @@ describe('PageDiscussionSectionComponent', () => {
                     ),
                 );
                 metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
+                component.lecture = { ...metisLecture, course: metisCourse };
+                component.ngOnInit();
+                fixture.detectChanges();
             });
     });
 
@@ -126,10 +140,11 @@ describe('PageDiscussionSectionComponent', () => {
         expect(component.createdPost).toBeDefined();
         expect(component.channel).toEqual(metisLectureChannel);
         expect(getChannelOfLectureSpy).toHaveBeenCalled();
-        expect(component.posts).toEqual(messagesBetweenUser1User2);
+        expect(component.posts).toEqual(messagesBetweenUser1User2.reverse());
     }));
 
     it('should set course and messages for exercise with exercise channel on initialization', fakeAsync(() => {
+        component.lecture = undefined;
         component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
@@ -137,7 +152,7 @@ describe('PageDiscussionSectionComponent', () => {
         expect(component.createdPost).toBeDefined();
         expect(component.channel).toEqual(metisExerciseChannel);
         expect(getChannelOfExerciseSpy).toHaveBeenCalled();
-        expect(component.posts).toEqual(messagesBetweenUser1User2);
+        expect(component.posts).toEqual(messagesBetweenUser1User2.reverse());
     }));
 
     it('should reset current post', fakeAsync(() => {
@@ -148,6 +163,7 @@ describe('PageDiscussionSectionComponent', () => {
     }));
 
     it('should initialize correctly for exercise posts with default settings', fakeAsync(() => {
+        component.lecture = undefined;
         component.exercise = { ...metisExercise, course: metisCourse };
         component.ngOnInit();
         tick();
@@ -157,6 +173,7 @@ describe('PageDiscussionSectionComponent', () => {
         fixture.detectChanges();
         const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
         expect(searchInput.textContent).toBe('');
+        tick();
     }));
 
     it('should display one new message button for more then 3 messages in channel', fakeAsync(() => {
@@ -198,6 +215,7 @@ describe('PageDiscussionSectionComponent', () => {
     }));
 
     it('should hide search-bar and filters if focused to a post', fakeAsync(() => {
+        component.lecture = undefined;
         component.ngOnInit();
         tick();
         fixture.detectChanges();
@@ -214,6 +232,7 @@ describe('PageDiscussionSectionComponent', () => {
 
     it('triggering filters should invoke the metis service', fakeAsync(() => {
         component.exercise = { ...metisExercise, course: metisCourse };
+        metisServiceGetFilteredPostsSpy.mockReset();
         component.ngOnInit();
         tick();
         fixture.detectChanges();
@@ -237,20 +256,25 @@ describe('PageDiscussionSectionComponent', () => {
         expect(component.currentPostContextFilter.filterToUnresolved).toBeTrue();
         expect(component.currentPostContextFilter.filterToOwn).toBeTrue();
         expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBeTrue();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(5);
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(4);
     }));
 
     it('loads exercise messages if communication only', fakeAsync(() => {
         component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
         component.exercise = { id: 2 } as Exercise;
+        component.lecture = undefined;
 
         component.setChannel(1);
 
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationId: metisExerciseChannel.id } as PostContextFilter, true, {
-            ...new ChannelDTO(),
-            id: metisExerciseChannel.id,
-            isCourseWide: true,
-        });
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
+            { ...component.currentPostContextFilter, conversationId: metisExerciseChannel.id } as PostContextFilter,
+            true,
+            {
+                ...new ChannelDTO(),
+                id: metisExerciseChannel.id,
+                isCourseWide: true,
+            },
+        );
         expect(component.channel).toBe(metisExerciseChannel);
     }));
 
@@ -260,7 +284,7 @@ describe('PageDiscussionSectionComponent', () => {
 
         component.setChannel(1);
 
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationId: metisLectureChannel.id } as PostContextFilter, true, {
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ ...component.currentPostContextFilter, conversationId: metisLectureChannel.id }, true, {
             ...new ChannelDTO(),
             id: metisLectureChannel.id,
             isCourseWide: true,
