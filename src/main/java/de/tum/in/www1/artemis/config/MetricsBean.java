@@ -88,6 +88,10 @@ public class MetricsBean {
 
     private final StatisticsRepository statisticsRepository;
 
+    /**
+     * List that stores active usernames (users with a submission within the last 14 days) which is refreshed
+     * every 60 minutes.
+     */
     private List<String> cachedActiveUserNames;
 
     // Public metrics
