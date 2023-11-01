@@ -19,7 +19,7 @@
                 "noCourse": "No courses available for enrollment",
                 "courseLoading": "Course is loading...",
                 "coursesLoading": "Courses are loading...",
-                "courseEnrollmentConfirmationTitle": "Confirm Course Enrollment"
+                "courseEnrollmentConfirmationTitle": "Confirm enrollment for course \"{{ courseName }}\""
             },
             "course": "Course"
         },
