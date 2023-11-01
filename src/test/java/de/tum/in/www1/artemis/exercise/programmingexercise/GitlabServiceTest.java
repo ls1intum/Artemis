@@ -9,8 +9,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import org.gitlab4j.api.GitLabApiException;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.Commit;
@@ -118,9 +117,9 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     }
 
     @Test
-    void testGetLastCommitDetails() throws ParseException {
+    void testGetLastCommitDetails() throws JsonProcessingException {
         String latestCommitHash = "11028e4104243d8cbae9175f2bc938cb8c2d7924";
-        Object body = new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST);
+        Object body = new ObjectMapper().readValue(GITLAB_PUSH_EVENT_REQUEST, Object.class);
         Commit commit = versionControlService.getLastCommitDetails(body);
         assertThat(commit.getCommitHash()).isEqualTo(latestCommitHash);
         assertThat(commit.getBranch()).isNotNull();
@@ -130,9 +129,9 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     }
 
     @Test
-    void testGetLastCommitDetailsWrongCommitOrder() throws ParseException {
+    void testGetLastCommitDetailsWrongCommitOrder() throws JsonProcessingException {
         String latestCommitHash = "11028e4104243d8cbae9175f2bc938cb8c2d7924";
-        Object body = new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST_WRONG_COMMIT_ORDER);
+        Object body = new ObjectMapper().readValue(GITLAB_PUSH_EVENT_REQUEST_WRONG_COMMIT_ORDER, Object.class);
         Commit commit = versionControlService.getLastCommitDetails(body);
         assertThat(commit.getCommitHash()).isEqualTo(latestCommitHash);
         assertThat(commit.getBranch()).isNotNull();
@@ -142,9 +141,9 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     }
 
     @Test
-    void testGetLastCommitDetailsWithoutCommits() throws ParseException {
+    void testGetLastCommitDetailsWithoutCommits() throws JsonProcessingException {
         String latestCommitHash = "11028e4104243d8cbae9175f2bc938cb8c2d7924";
-        Object body = new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST_WITHOUT_COMMIT);
+        Object body = new ObjectMapper().readValue(GITLAB_PUSH_EVENT_REQUEST_WITHOUT_COMMIT, Object.class);
         Commit commit = versionControlService.getLastCommitDetails(body);
         assertThat(commit.getCommitHash()).isEqualTo(latestCommitHash);
         assertThat(commit.getBranch()).isNull();
