@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceCon
 import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.push_notification.PushNotificationRegisterBody;
 import de.tum.in.www1.artemis.web.rest.push_notification.PushNotificationRegisterDTO;
@@ -36,9 +35,6 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private TokenProvider tokenProvider;
 
     private static final String FAKE_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJhdXRoIjoiUk9MRV9BRE1JTiIsImV4cCI6MjU5MzY5ODYwODg0MH0.52mSTsxFbIxqx0OmRJuy1lohq41GAKtUBO1bAY4Y_RKNW0exsmopaV_0J7iIQpfYySCNS5-37LIG_HX1tVuvxA";
 
