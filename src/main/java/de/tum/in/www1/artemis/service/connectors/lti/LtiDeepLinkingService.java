@@ -65,9 +65,9 @@ public class LtiDeepLinkingService {
         // Validate properties are set to create a response
         validateDeepLinkingResponseSettings(returnUrl, jwt);
 
-        String htmlResponse = fillHtmlResponse(returnUrl, jwt);
-
-        uriComponentsBuilder.queryParam("htmlResponse", UriComponent.encode(htmlResponse, UriComponent.Type.QUERY_PARAM));
+        uriComponentsBuilder.queryParam("jwt", jwt);
+        uriComponentsBuilder.queryParam("id", this.lti13DeepLinkingResponse.getDeploymentId());
+        uriComponentsBuilder.queryParam("deepLinkUri", UriComponent.encode(returnUrl, UriComponent.Type.QUERY_PARAM));
 
         return uriComponentsBuilder.build().toUriString();
 
@@ -143,14 +143,6 @@ public class LtiDeepLinkingService {
         if (isEmptyString(this.lti13DeepLinkingResponse.getDeploymentId())) {
             throw new BadRequestAlertException("Platform deployment id cannot be empty", "LTI", "deploymentIdEmpty");
         }
-    }
-
-    private String fillHtmlResponse(String returnUrl, String jwt) {
-        return "<!DOCTYPE html>\n" + "<html>\n" + "<head>\n" + "</head>\n" + "<body>\n" + "\n" + "    <!-- The auto-submitted form -->\n"
-                + "    <form id=\"ltiRedirectForm\" action=\"" + returnUrl + "\" method=\"post\">\n" + "        <input type=\"hidden\" name=\"JWT\" value=\"" + jwt + "\" />\n"
-                + "        <input type=\"hidden\" name=\"id\" value=\"" + this.lti13DeepLinkingResponse.getDeploymentId() + "\" />\n"
-                + "        <!-- Additional hidden fields if needed -->\n" + "    </form>\n" + "\n" + "    <script>\n"
-                + "        document.getElementById('ltiRedirectForm').submit();\n" + "    </script>\n" + "</body>\n" + "</html>";
     }
 
     boolean isEmptyString(String string) {
