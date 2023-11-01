@@ -37,63 +37,84 @@
     while its weight is a double representing kilograms. Include a constructor and getters and setters for all three attributes."
     "2. [task][Filter, Sort, and Map Lists](testFilter(), testSort(), testMap()){}
     Implement the filter, sort, and map methods. The filter method takes a list of `T` and a `Predicate<T>` as parameters,
-        and returns a list of `T` containing only the elements of the original list for which the predicate returns
-        true. The sort method takes a list of `T` and a `Comparator<T>` as parameters, and returns a list of `T` containing the elements
-        of the original list sorted according to the comparator. The map method takes a list of `T` and a `Function<T, R>` as parameters,
-        and returns a list of `R` containing the results of applying the function to each element of the original list."
-        "3. [task][Lagrange Interpolation](testLagrangeInterpolation()){}
-        Implement the lagrangeInterpolation method. The method takes a list of `Point` and a `double` as parameters,
-        and returns a `double` representing the y-value of the interpolated point. The interpolated point is the point
-        on the polynomial of degree `points.size() - 1` that passes through all the points in the list. The x-value of
-        the interpolated point is the `double` parameter, and the y-value is the return value of the method."
+    and returns a list of `T` containing only the elements of the original list for which the predicate returns
+    true. The sort method takes a list of `T` and a `Comparator<T>` as parameters, and returns a list of `T` containing the elements
+    of the original list sorted according to the comparator. The map method takes a list of `T` and a `Function<T, R>` as parameters,
+    and returns a list of `R` containing the results of applying the function to each element of the original list."
+    "3. [task][Lagrange Interpolation](testLagrangeInterpolation()){}
+    Implement the lagrangeInterpolation method. The method takes a list of `Point` and a `double` as parameters,
+    and returns a `double` representing the y-value of the interpolated point. The interpolated point is the point
+    on the polynomial of degree `points.size() - 1` that passes through all the points in the list. The x-value of
+    the interpolated point is the `double` parameter, and the y-value is the return value of the method."
 
-        The problem statement is a major factor in the perceived difficulty of an exercise.
-        The difficulty can be adjusted as needed by changing the complexity of the tasks to be completed,
-        the associated test cases, the explanation of the tasks, the UML diagram, and/or the thematic story hook.
-
-        Here is the current state of the problem statement:
+    The problem statement is a major factor in the perceived difficulty of an exercise.
+    The difficulty can be adjusted as needed by changing the complexity of the tasks to be completed,
+    the associated test cases, the explanation of the tasks, the UML diagram, and/or the thematic story hook.
 {{~/system}}
 
-{{#user~}}{{problemStatement}}{{~/user}}
+{{#if problemStatement}}
+    {{#system~}}Here is the current state of the problem statement:{{~/system}}
+    {{#user~}}{{problemStatement}}{{~/user}}
+{{/if}}
 
 {{#assistant~}}{{instructions}}{{/assistant}}
 
-{{#block hidden=True}}
-    {{#system~}}
-        You may either rewrite the problem statement from scratch, or replace parts of the existing problem statement.
-        If there are only a few minor changes to be made, it is recommended to replace parts of the existing problem statement.
-        However, extensive changes may be easier to make by rewriting the problem statement from scratch.
-        To rewrite the entire problem statement, respond with the number 1.
-        To replace parts of the existing problem statement, respond with the number 2.
-    {{~/system}}
-    {{#assistant~}}{{gen 'type' max_tokens=2}}{{/assistant}}
-{{/block}}
+{{#if problemStatement}}
+    {{#block hidden=True}}
+        {{#system~}}
+                To write the entire problem statement from scratch, respond with the number 1.
+                To replace just parts of the existing problem statement, respond with the number 2.
+        {{~/system}}
+        {{#assistant~}}{{gen 'modtype' max_tokens=2}}{{/assistant}}
+    {{/block}}
+{{else}}
+    {{set 'modtype' '1'}}
+{{/if}}
 
-{{#if (contains 'type' '1')}}
+
+{{#if (contains 'modtype' '1')}}
     {{#geneach 'changes' num_iterations=1}}
         {{set 'this.type' 'modify'}}
         {{set 'this.file' 'none'}}
         {{set 'this.original' '!all!'}}
-        {{#system~}}Rewrite the problem statement.{{~/system}}
+        {{#system~}}Write a new problem statement for the exercise.{{~/system}}
         {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=1000}}{{~/assistant}}
     {{/geneach}}
 {{else}}
-    {{#geneach 'changes' num_iterations=20}}
+    {{set 'changes' []}}
+    {{#geneach 'changes' num_iterations=20 hidden=True}}
         {{set 'this.type' 'modify'}}
         {{set 'this.file' 'none'}}
         {{#system~}}
-                Quote some text from the problem statement that you would like to change.
-                Respond with the exact text from the original problem statement.
-                It is very important that your entire response can be found in the original text.
-                Do NOT use quotation marks. Do not justify your response.
-            {{#if (not @first)}}
-                    Do not select the same part of the problem statement more than once.
-                    If you have nothing else to replace, respond with the special response "!done!".
-            {{/if}}
+            You are now in the process of editing the problem statement.
+            {{#each changes}}
+                {{#if @first}}So far, you have made the following substitutions:{{/if}}
+                "{{this.original}}" -> "{{this.updated}}"
+            {{/each}}
+            Quote some exact text from the problem statement that you would like to change.
+            Respond with the exact text from the original problem statement.
+            Your entire response must be found in the original text.
+            Do NOT use quotation marks. Do not justify your response.
+        {{#if (not @first)}}
+            Do not select the same part of the problem statement more than once.
+            If you have nothing else to replace, respond with the special response "!done!".
+        {{/if}}
         {{~/system}}
         {{#assistant~}}{{gen 'this.original' temperature=0.0 max_tokens=1000}}{{~/assistant}}
         {{#if (equal this.original '!done!')}}
             {{break}}
+        {{/if}}
+        {{#if (not (contains problemStatement 'this.original'))}}
+            {{set 'this.retry' 'true'}}
+            {{#system~}}
+                That exact text could not be found in the problem statement.
+                Here is the problem statement again for your reference:
+            {{~/system}}
+            {{#user~}}{{problemStatement}}{{~/user}}
+            {{#system~}}
+                Try again. Do not use quotation marks or justify your response.
+            {{~/system}}
+            {{#assistant~}}{{gen 'this.original' temperature=0.0 max_tokens=1000}}{{~/assistant}}
         {{/if}}
         {{#system~}}This text from the problem statement should be replaced by:{{~/system}}
         {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=1000}}{{~/assistant}}

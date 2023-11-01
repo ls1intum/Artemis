@@ -540,11 +540,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     private String injectChangesIntoProblemStatement(ProgrammingExercise exercise, List<FileChange> changes) {
         log.info("\n\n\nInjecting changes into problem statement: \n\n\n" + changes);
         var problemStatement = exercise.getProblemStatement();
+        int successes = 0;
+        int failures = 0;
         for (FileChange change : changes) {
             if (change.original().equals("!all!")) {
                 log.info("Replacing entire problem statement with '" + change.updated() + "'");
                 problemStatement = change.updated();
-                continue;
+                successes++;
+                break;
             }
             Pattern replace = Pattern.compile(Pattern.quote(change.original()));
             Matcher matcher = replace.matcher(problemStatement);
@@ -552,11 +555,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             if (matcher.find()) {
                 log.info("Replacing '" + change.original() + "' with '" + change.updated() + "' in problem statement");
                 problemStatement = matcher.replaceFirst(replacement);
+                successes++;
             }
             else {
                 log.info("Could not find '" + change.original() + "' in problem statement");
+                failures++;
             }
         }
+        log.info("Successfully applied " + successes + " changes to problem statement, " + failures + " changes failed");
         return problemStatement;
     }
 
