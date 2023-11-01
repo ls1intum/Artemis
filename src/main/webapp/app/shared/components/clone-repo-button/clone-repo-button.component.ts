@@ -47,6 +47,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     isTeamParticipation: boolean;
     activeParticipation?: ProgrammingExerciseStudentParticipation;
     isPracticeMode: boolean | undefined;
+    buttonPressed: boolean;
 
     // Icons
     faDownload = faDownload;
@@ -102,16 +103,19 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     onClick() {
-        if (this.versionControlAccessTokenRequired && !this.user.vcsAccessToken) {
+        this.buttonPressed = !this.buttonPressed;
+        if (this.versionControlAccessTokenRequired && this.buttonPressed && !this.user.vcsAccessToken) {
             this.accountService
                 .identity(true)
                 .then((user) => {
                     this.user = user!;
                     if (!this.user.vcsAccessToken) {
-                        this.alertService.error('placeholder');
+                        // if still no access token exists after fetching the user object,
+                        // inform the student that something is wrong and that they should try again
+                        throw new Error();
                     }
                 })
-                .catch(() => this.alertService.error('placeholder'));
+                .catch(() => this.alertService.error('artemisApp.exerciseActions.fetchVCSAccessTokenError'));
         }
     }
 

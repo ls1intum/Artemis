@@ -47,6 +47,7 @@
             "clonePracticeRepository": "Clone your practice repository for this exercise:",
             "cloneExerciseRepository": "Clone a repository for this exercise",
             "waitForData": "Data is still being loaded. Please wait.",
+            "fetchVCSAccessTokenError": "Data could not be retrieved. Please try again in a few seconds.",
             "repositoryPassword": "Your Password is:",
             "hoverToShow": "(hover to show)",
             "cloneSourceTree": {
