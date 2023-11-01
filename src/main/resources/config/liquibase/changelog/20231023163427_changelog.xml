@@ -12,7 +12,6 @@
                 LEFT JOIN conversation conv ON l.id = conv.lecture_id
                 LEFT JOIN course c on l.course_id = c.id
             WHERE conv.lecture_id IS NULL
-              AND (c.end_date IS NULL OR c.end_date > now());
         </sql>
         <comment>Step 2: Move lecture posts to lecture channels</comment>
         <sql>
@@ -41,7 +40,6 @@
                 LEFT JOIN conversation conv ON e.id = conv.exercise_id
                 LEFT JOIN course c on e.course_id = c.id
             WHERE conv.exercise_id IS NULL
-              AND (c.end_date IS NULL OR c.end_date > now());
         </sql>
         <comment>Step 5: Move exercise posts to exercise channels</comment>
         <sql>
@@ -69,28 +67,24 @@
             FROM course c
                      LEFT JOIN conversation conv ON c.id = conv.course_id AND conv.name = 'announcement' AND conv.is_course_wide = true
             WHERE conv.id IS NULL
-              AND (c.end_date IS NULL OR c.end_date > NOW())
 
             UNION ALL
             SELECT c.id, 'organization', 'C', true, false, true, NOW()
             FROM course c
                      LEFT JOIN conversation conv ON c.id = conv.course_id AND conv.name = 'organization' AND conv.is_course_wide = true
             WHERE conv.id IS NULL
-              AND (c.end_date IS NULL OR c.end_date > NOW())
 
             UNION ALL
             SELECT c.id, 'tech-support', 'C', true, false, true, NOW()
             FROM course c
                      LEFT JOIN conversation conv ON c.id = conv.course_id AND conv.name = 'tech-support' AND conv.is_course_wide = true
             WHERE conv.id IS NULL
-              AND (c.end_date IS NULL OR c.end_date > NOW())
 
             UNION ALL
             SELECT c.id, 'random', 'C', true, false, true, NOW()
             FROM course c
                      LEFT JOIN conversation conv ON c.id = conv.course_id AND conv.name = 'random' AND conv.is_course_wide = true
             WHERE conv.id IS NULL
-              AND (c.end_date IS NULL OR c.end_date > NOW());
         </sql>
         <comment>Step 8: Move course-wide-context posts to general course-wide channels</comment>
     </changeSet>
