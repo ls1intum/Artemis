@@ -31,23 +31,30 @@ export abstract class IrisSessionService {
      * @param exerciseId The exercise ID to which the session will be attached.
      */
     getCurrentSessionOrCreate(exerciseId: number): void {
-        firstValueFrom(this.httpSessionService.getCurrentSession(exerciseId))
-            .then(async (irisSessionResponse: HttpResponse<IrisSession>) => {
-                const sessionId = irisSessionResponse.body!.id;
-                try {
-                    const messagesResponse = await firstValueFrom(this.httpMessageService.getMessages(sessionId));
-                    const messages = messagesResponse.body!;
-                    messages.sort((a, b) => {
-                        if (a.sentAt && b.sentAt) {
-                            if (a.sentAt === b.sentAt) return 0;
-                            return a.sentAt.isBefore(b.sentAt) ? -1 : 1;
-                        }
-                        return 0;
+        let sessionId: number;
+
+        this.httpSessionService
+            .getCurrentSession(exerciseId)
+            .toPromise()
+            .then((irisSessionResponse: HttpResponse<IrisSession>) => {
+                sessionId = irisSessionResponse.body!.id;
+                return this.httpMessageService
+                    .getMessages(sessionId)
+                    .toPromise()
+                    .then((messagesResponse: HttpResponse<IrisMessage[]>) => {
+                        const messages = messagesResponse.body!;
+                        messages.sort((a, b) => {
+                            if (a.sentAt && b.sentAt) {
+                                if (a.sentAt === b.sentAt) return 0;
+                                return a.sentAt.isBefore(b.sentAt) ? -1 : 1;
+                            }
+                            return 0;
+                        });
+                        this.dispatchSuccess(sessionId, messages);
+                    })
+                    .catch(() => {
+                        this.dispatchError(IrisErrorMessageKey.HISTORY_LOAD_FAILED);
                     });
-                    this.dispatchSuccess(sessionId, messages);
-                } catch {
-                    this.dispatchError(IrisErrorMessageKey.HISTORY_LOAD_FAILED);
-                }
             })
             .catch((error: HttpErrorResponse) => {
                 if (error.status == 404) {
