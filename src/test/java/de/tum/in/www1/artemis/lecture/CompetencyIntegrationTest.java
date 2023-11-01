@@ -148,16 +148,6 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         teamTextExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(competency), true);
 
         creatingLectureUnitsOfLecture(competency);
-
-        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        competencyProgressUtilService.createCompetencyProgress(competency, student1, 0, 0);
-
-        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
-        competencyProgressUtilService.createCompetencyProgress(competency, student2, 0, 0);
-
-        final var textUnit = textUnitRepository.findById(idOfTextUnitOfLectureOne).get();
-        lectureUtilService.completeLectureUnitForUser(textUnit, student2);
-
     }
 
     private Competency createCompetency() {
@@ -304,6 +294,15 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCompetency_shouldOnlySendUserSpecificData() throws Exception {
+
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        competencyProgressUtilService.createCompetencyProgress(competency, student1, 0, 0);
+
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        competencyProgressUtilService.createCompetencyProgress(competency, student2, 0, 0);
+
+        final var textUnit = textUnitRepository.findById(idOfTextUnitOfLectureOne).get();
+        lectureUtilService.completeLectureUnitForUser(textUnit, student2);
 
         Competency competency = request.get("/api/courses/" + course.getId() + "/competencies/" + this.competency.getId(), HttpStatus.OK, Competency.class);
         assertThat(competency.getId()).isEqualTo(this.competency.getId());
