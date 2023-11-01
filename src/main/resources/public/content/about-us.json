@@ -30,13 +30,13 @@
             "fullName": "Dr. Stephan Krusche",
             "sortBy": "Krusche",
             "photoDirectory": "public/images/about/Stephan_Krusche.jpg",
-            "website": "https://ase.cit.tum.de/people/people/krusche"
+            "website": "https://ase.cit.tum.de/people/krusche"
         },
         {
             "fullName": "Dr. Jan Philip Bernius",
             "sortBy": "Bernius",
             "photoDirectory": "public/images/about/Jan_Philip_Bernius.jpg",
-            "website": "https://ase.cit.tum.de/people/people/bernius"
+            "website": "https://ase.cit.tum.de/people/alumni/bernius/"
         },
         {
             "fullName": "Dr. Nadine von Frankenberg",
@@ -418,8 +418,8 @@
             "photoDirectory": "public/images/about/Rizky_Riyaldhi.jpg"
         },
         {
-            "fullName": "Santiago Berrezueta, PhD.",
-            "sortBy": "Berrezueta, PhD.",
+            "fullName": "Santiago Berrezueta, Ph.D.",
+            "sortBy": "Berrezueta",
             "photoDirectory": "public/images/about/Santiago_Berrezueta.jpg"
         },
         {
