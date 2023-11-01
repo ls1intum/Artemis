@@ -13,7 +13,7 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/p
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { faCircleNotch, faPlus, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { IrisCodeEditorWebsocketService, StepExecutionSuccess } from 'app/iris/code-editor-websocket.service';
+import { IrisCodeEditorWebsocketService, StepExecutionException, StepExecutionSuccess } from 'app/iris/code-editor-websocket.service';
 import { IrisCodeEditorChatbotButtonComponent } from 'app/iris/exercise-chatbot/code-editor-chatbot-button.component';
 import { ExerciseComponent } from 'app/entities/iris/iris-content-type.model';
 
@@ -51,6 +51,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         codeEditorWebsocketService.onPromptReload().subscribe((filesChanged: StepExecutionSuccess) => {
             this.handleChangeNotification(filesChanged);
         });
+        codeEditorWebsocketService.onStepException().subscribe((stepException: StepExecutionException) => {
+            this.handleExceptionNotification(stepException);
+        });
     }
 
     private toRepository(component: ExerciseComponent) {
@@ -79,6 +82,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         // Also, the plan's currentStepIndex must be updated so that the chatbot widget can display the correct step as in progress.
         const widget = this.chatbotButton?.dialogRef?.componentRef?.instance; // Access the widget via the button even if it is not open
         widget?.notifyStepCompleted(success.messageId, success.planId, success.stepId);
+    }
+
+    private handleExceptionNotification(exception: StepExecutionException) {
+        // Find the corresponding plan and failed step and execute the next step, if there is one.
+        const widget = this.chatbotButton?.dialogRef?.componentRef?.instance; // Access the widget via the button even if it is not open
+        widget?.notifyStepFailed(exception.messageId, exception.planId, exception.stepId, exception.errorTranslationKey!, exception.translationParams!);
     }
 
     onResizeEditorInstructions() {

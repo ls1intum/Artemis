@@ -13,6 +13,7 @@ import { ExerciseComponent } from 'app/entities/iris/iris-content-type.model';
 enum IrisCodeEditorWebsocketMessageType {
     MESSAGE = 'MESSAGE',
     STEP_SUCCESS = 'STEP_SUCCESS',
+    STEP_EXCEPTION = 'STEP_EXCEPTION',
     ERROR = 'ERROR',
 }
 
@@ -25,6 +26,15 @@ export class StepExecutionSuccess {
     updatedProblemStatement?: string;
 }
 
+export class StepExecutionException {
+    messageId: number;
+    planId: number;
+    stepId: number;
+    errorMessage?: string;
+    errorTranslationKey?: IrisErrorMessageKey;
+    translationParams?: Map<string, any>;
+}
+
 /**
  * The IrisCodeEditorWebsocketDTO is the data transfer object for messages sent over the code editor websocket.
  * It either contains an IrisMessage or a map of changes or an error message.
@@ -33,6 +43,7 @@ export class IrisCodeEditorWebsocketDTO {
     type: IrisCodeEditorWebsocketMessageType;
     message?: IrisMessage;
     stepExecutionSuccess?: StepExecutionSuccess;
+    stepExecutionException?: StepExecutionException;
     errorTranslationKey?: IrisErrorMessageKey;
     translationParams?: Map<string, any>;
     rateLimitInfo?: IrisRateLimitInformation;
@@ -43,7 +54,8 @@ export class IrisCodeEditorWebsocketDTO {
  */
 @Injectable()
 export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
-    private subject: Subject<StepExecutionSuccess> = new Subject<StepExecutionSuccess>();
+    private stepSuccess: Subject<StepExecutionSuccess> = new Subject<StepExecutionSuccess>();
+    private stepException: Subject<StepExecutionException> = new Subject<StepExecutionException>();
 
     /**
      * Creates an instance of IrisCodeEditorWebsocketService.
@@ -66,6 +78,9 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
             case IrisCodeEditorWebsocketMessageType.STEP_SUCCESS:
                 this.handleStepSuccess(response.stepExecutionSuccess!);
                 break;
+            case IrisCodeEditorWebsocketMessageType.STEP_EXCEPTION:
+                this.handleExecutionException(response.stepExecutionException!);
+                break;
             case IrisCodeEditorWebsocketMessageType.ERROR:
                 super.handleError(response.errorTranslationKey, response.translationParams);
                 break;
@@ -73,7 +88,11 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     }
 
     private handleStepSuccess(response: StepExecutionSuccess): void {
-        this.subject.next(response); // notify subscribers of changes applied
+        this.stepSuccess.next(response); // notify subscribers of changes applied
+    }
+
+    private handleExecutionException(response: StepExecutionException): void {
+        this.stepException.next(response);
     }
 
     /**
@@ -81,6 +100,14 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
      * @returns {Subject<StepExecutionSuccess>}
      */
     public onPromptReload(): Observable<StepExecutionSuccess> {
-        return this.subject.asObservable();
+        return this.stepSuccess.asObservable();
+    }
+
+    /**
+     * Returns a subject that notifies subscribers when the step execution failed.
+     * @returns {Subject<StepExecutionException>}
+     */
+    public onStepException(): Observable<StepExecutionException> {
+        return this.stepException.asObservable();
     }
 }

@@ -758,22 +758,45 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             return;
         }
         // Search through steps in the plan until we find the one that was executed
-        for (let i = 0; i < plan.steps.length; i++) {
-            const step = plan.steps[i];
-            if (step.id === stepId) {
-                // Success! Found the corresponding step.
-                step.executionStage = ExecutionStage.COMPLETE;
-                const nextStepIndex = this.getNextStepIndex(plan);
-                if (plan.executing && nextStepIndex < plan.steps.length) {
-                    // The plan is still executing and there are more steps to execute
-                    this.executePlanStep(messageId, plan.steps[nextStepIndex]);
-                } else {
-                    plan.executing = false;
-                }
-                return;
-            }
+        const step = plan.steps.find((s) => s.id === stepId);
+        if (!step) {
+            console.error('Received change notification but could not find corresponding step.');
+            return;
         }
-        console.error('Received change notification but could not find corresponding step.');
+        step.executionStage = ExecutionStage.COMPLETE;
+        const nextStepIndex = this.getNextStepIndex(plan);
+        if (plan.executing && nextStepIndex < plan.steps.length) {
+            // The plan is still executing and there are more steps to execute
+            this.executePlanStep(messageId, plan.steps[nextStepIndex]);
+        } else {
+            plan.executing = false;
+        }
+    }
+
+    notifyStepFailed(messageId: number, planId: number, stepId: number, errorTranslationKey: IrisErrorMessageKey, translationParams: Map<string, any>) {
+        const message = this.messages.find((m) => m.id === messageId);
+        if (!message) {
+            console.error('Received exception notification but could not find corresponding message.');
+            return;
+        }
+        const plan = message.content.find((c) => c.id === planId) as IrisExercisePlan;
+        if (!plan) {
+            console.error('Received exception notification but could not find corresponding plan.');
+            return;
+        }
+        // Search through steps in the plan until we find the one that was executed
+        const step = plan.steps.find((s) => s.id === stepId);
+        if (!step) {
+            console.error('Received change notification but could not find corresponding step.');
+            return;
+        }
+        step.executionStage = ExecutionStage.FAILED;
+        if (!errorTranslationKey) {
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
+        } else {
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(errorTranslationKey, translationParams));
+        }
+        plan.executing = false;
     }
 
     getStepColor(step: IrisExercisePlanStep) {

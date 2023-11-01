@@ -295,12 +295,12 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         irisConnectorService.sendRequestV2(template, load("model.txt"), params).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
-                irisCodeEditorWebsocketService.sendException(session, err.getCause());
+                irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, err.getCause());
                 return null;
             }
             if (response == null) {
                 log.error("No response from Iris model");
-                irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
+                irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, new IrisNoResponseException());
                 return null;
             }
             log.info("\n\n\nReceived response from iris model: " + response.content().toPrettyString());
@@ -327,7 +327,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             }
             catch (IrisParseResponseException e) {
                 log.error("Error while parsing exercise changes from Iris model", e);
-                irisCodeEditorWebsocketService.sendException(session, e);
+                irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, e);
             }
             return null;
         });

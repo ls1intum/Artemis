@@ -59,27 +59,45 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
         super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.error(throwable));
     }
 
+    public void notifyStepException(IrisCodeEditorSession session, IrisExercisePlanStep step, Throwable throwable) {
+        var messageId = step.getPlan().getMessage().getId();
+        var planId = step.getPlan().getId();
+        var stepId = step.getId();
+        var errorMessage = throwable.getMessage();
+        var errorTranslationKey = throwable instanceof IrisException i ? i.getTranslationKey() : null;
+        var translationParams = throwable instanceof IrisException i ? i.getTranslationParams() : null;
+        var executionException = new StepExecutionException(messageId, planId, stepId, errorMessage, errorTranslationKey, translationParams);
+        super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.stepException(executionException));
+    }
+
     public enum IrisWebsocketMessageType {
-        MESSAGE, STEP_SUCCESS, EXCEPTION
+        MESSAGE, STEP_SUCCESS, STEP_EXCEPTION, EXCEPTION
     }
 
     private record StepExecutionSuccess(long messageId, long planId, long stepId, ExerciseComponent component, Set<String> paths, String updatedProblemStatement) {
     }
 
-    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, StepExecutionSuccess stepExecutionSuccess, String errorMessage, String errorTranslationKey,
-            Map<String, Object> translationParams) {
+    private record StepExecutionException(long messageId, long planId, long stepId, String errorMessage, String errorTranslationKey, Map<String, Object> translationParams) {
+    }
+
+    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, StepExecutionSuccess stepExecutionSuccess, StepExecutionException executionException,
+            String errorMessage, String errorTranslationKey, Map<String, Object> translationParams) {
 
         private static IrisWebsocketDTO message(IrisMessage message) {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.MESSAGE, message, null, null, null, null);
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.MESSAGE, message, null, null, null, null, null);
         }
 
         private static IrisWebsocketDTO stepSuccess(StepExecutionSuccess success) {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.STEP_SUCCESS, null, success, null, null, null);
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.STEP_SUCCESS, null, success, null, null, null, null);
         }
 
         private static IrisWebsocketDTO error(Throwable throwable) {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.EXCEPTION, null, null, throwable.getMessage(), throwable instanceof IrisException i ? i.getTranslationKey() : null,
-                    throwable instanceof IrisException i ? i.getTranslationParams() : null);
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.EXCEPTION, null, null, null, throwable.getMessage(),
+                    throwable instanceof IrisException i ? i.getTranslationKey() : null, throwable instanceof IrisException i ? i.getTranslationParams() : null);
+        }
+
+        private static IrisWebsocketDTO stepException(StepExecutionException exception) {
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.STEP_EXCEPTION, null, null, exception, null, null, null);
         }
 
     }
