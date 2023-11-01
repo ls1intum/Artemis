@@ -165,11 +165,11 @@ class Lti13LaunchFilterTest {
         verify(httpResponse).setCharacterEncoding("UTF-8");
         verify(lti13Service).startDeepLinking(any(), any());
 
-        ArgumentCaptor<JSONObject> argument = ArgumentCaptor.forClass(JSONObject.class);
+        ArgumentCaptor<JsonObject> argument = ArgumentCaptor.forClass(JsonObject.class);
         verify(responseWriter).print(argument.capture());
-        JSONObject responseJsonBody = argument.getValue();
+        JsonObject responseJsonBody = argument.getValue();
         verify(lti13Service).buildLtiResponse(any(), any());
-        assertThat(((String) responseJsonBody.get("targetLinkUri"))).as("Response body contains the expected targetLinkUri")
+        assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri")
                 .contains("https://any-artemis-domain.org/lti/deep-linking/121");
 
     }
