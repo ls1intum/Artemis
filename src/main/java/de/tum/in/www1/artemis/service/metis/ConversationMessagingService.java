@@ -227,7 +227,7 @@ public class ConversationMessagingService extends PostingService {
     }
 
     /**
-     * fetch messages from database by a list of course-wide channels
+     * Fetch messages from database by a list of course-wide channels.
      *
      * @param pageable          requested page and page size
      * @param postContextFilter request object to fetch messages
