@@ -14,6 +14,9 @@ jhi-category-selector {
                 border-radius: 0.25rem;
                 color: #fff;
 
+                display: flex;
+                align-items: center;
+
                 &:hover {
                     opacity: 0.8;
                 }
