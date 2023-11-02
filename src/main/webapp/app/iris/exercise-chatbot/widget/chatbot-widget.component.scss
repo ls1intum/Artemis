@@ -282,7 +282,44 @@ pre {
     z-index: 9999 !important;
 }
 
-.confirm-plan {
+.step-title {
+    margin: auto 0 auto 10px;
+}
+
+.step-component {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+}
+
+.detail-btn {
+    border: 1px solid;
+    color: var(--bs-body-color);
+    font-size: 0.7rem;
+    background-color: transparent;
+    white-space: nowrap;
+    padding: 5px;
+    border-radius: var(--bs-border-radius);
+    width: 74px;
+}
+
+.show-details {
+    border: 1px solid transparent;
+    border-radius: 15px;
+    padding: 15px;
+    margin: 10px;
+}
+.hide-details {
+    border: 1px solid transparent;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    padding: 15px;
+    margin: 0 10px;
+}
+.step-detail {
+    border: 1px solid var(--bs-body-color);
+    background-color: var(--iris-client-chat-background);
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    padding: 15px;
+    margin: 0 10px 10px;
 }

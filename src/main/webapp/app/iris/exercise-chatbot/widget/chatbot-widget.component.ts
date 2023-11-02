@@ -802,13 +802,13 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     getStepColor(step: IrisExercisePlanStep) {
         switch (getExecutionStage(step)) {
             case ExecutionStage.NOT_EXECUTED:
-                return 'darkslategray';
+                return 'var(--iris-chat-widget-background)';
             case ExecutionStage.IN_PROGRESS:
-                return 'goldenrod';
+                return '#ffc107';
             case ExecutionStage.COMPLETE:
-                return 'green';
+                return '#28a745';
             case ExecutionStage.FAILED:
-                return 'tomato';
+                return '#dc3545';
         }
     }
 
