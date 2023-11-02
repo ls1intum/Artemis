@@ -20,6 +20,7 @@ import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-ico
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { switchMap, tap } from 'rxjs/operators';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -75,9 +76,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      * Initializes information relevant to file upload exercise
      */
     ngOnInit() {
-        // This is used to scroll page to the top of the page, because the routing keeps the position for the
-        // new page from previous page.
-        window.scroll(0, 0);
+        scrollToTopOfPage();
 
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {

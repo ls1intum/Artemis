@@ -27,6 +27,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { forkJoin } from 'rxjs';
 import { filterInvalidFeedback } from 'app/exercises/modeling/assess/modeling-assessment.util';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -442,8 +443,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     checkAssessment() {
-        // scroll to top that the user definitely recognizes the response message (success OR score too low/high)
-        window.scroll(0, 0);
+        scrollToTopOfPage();
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
