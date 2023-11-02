@@ -24,6 +24,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -86,9 +87,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * Initializes all relevant data for creating or editing modeling exercise
      */
     ngOnInit(): void {
-        // This is used to scroll page to the top of the page, because the routing keeps the position for the
-        // new page from previous page.
-        window.scroll(0, 0);
+        scrollToTopOfPage();
 
         // Get the modelingExercise
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {

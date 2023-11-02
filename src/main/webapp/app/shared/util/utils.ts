@@ -146,3 +146,12 @@ export class Range {
 export function getAsMutableObject(object: any) {
     return { ...object };
 }
+
+/**
+ * This method is used when the router keeps the position from the previous page for the new page
+ * <br>
+ * <i>-> use it when you always want to start to view the page at the top</i>
+ */
+export function scrollToTopOfPage() {
+    window.scroll(0, 0);
+}

@@ -23,6 +23,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -82,8 +83,7 @@ export class TextExerciseUpdateComponent implements OnInit {
      * Initializes all relevant data for creating or editing text exercise
      */
     ngOnInit() {
-        // otherwise the router keeps the position for the new page from previous page
-        this.scrollToTopOfPage();
+        scrollToTopOfPage();
 
         // Get the textExercise
         this.activatedRoute.data.subscribe(({ textExercise }) => {
@@ -216,9 +216,5 @@ export class TextExerciseUpdateComponent implements OnInit {
             onError(this.alertService, errorRes);
         }
         this.isSaving = false;
-    }
-
-    private scrollToTopOfPage() {
-        window.scroll(0, 0);
     }
 }
