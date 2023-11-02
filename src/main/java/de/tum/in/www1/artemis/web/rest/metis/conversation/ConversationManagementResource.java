@@ -53,4 +53,14 @@ public class ConversationManagementResource {
         }
     }
 
+    /**
+     * Checks if messaging or communication is enabled for the course with the given id, otherwise throws a ResponseStatusException with status 403 (Forbidden)
+     *
+     * @param courseId the course to check
+     */
+    void checkMessagingOrCommunicationEnabledElseThrow(Long courseId) {
+        if (!courseRepository.isMessagingOrCommunicationEnabled(courseId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Messaging is not enabled for this course");
+        }
+    }
 }

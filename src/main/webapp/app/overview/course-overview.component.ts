@@ -135,7 +135,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     private setUpConversationService() {
-        if (!isMessagingEnabled(this.course)) {
+        if (!isMessagingEnabled(this.course) && !isCommunicationEnabled(this.course)) {
             return;
         }
 
@@ -150,7 +150,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                         this.subscribeToHasUnreadMessages();
                     },
                 });
-        } else if (!this.checkedForUnreadMessages) {
+        } else if (!this.checkedForUnreadMessages && isMessagingEnabled(this.course)) {
             this.metisConversationService.checkForUnreadMessages(this.course!);
             this.subscribeToHasUnreadMessages();
             this.checkedForUnreadMessages = true;
