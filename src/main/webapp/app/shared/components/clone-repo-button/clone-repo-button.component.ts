@@ -105,7 +105,9 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     /**
      * Called when the user clicks on the clone repo button. Sometimes the VCS access token is not present in the user
      * object, so the resulting repo URL is wrong. This method tries to retrieve the token from the server by requesting
-     * the user object again. In case the token could not be retrieved, this method is not called again and the student
+     * the user object again. This should usually be enough, since this scenario only occurs when starting an exercise directly after the first time a new user registers via SAML2. In this case Artemis has validated that the authentication is correct and lets the user log in, but further actions happen in the background that populate the missing data.
+     *
+     * In case the token could not be retrieved, this method is not called again and the student
      * is prompted to reload the page. Otherwise, the error would be displayed everytime the button is clicked,
      * including the clicks that make the popover go away (every second click).
      */
