@@ -104,12 +104,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                     if (!this.isExamMode) {
                         this.exerciseCategories = this.textExercise.categories || [];
                         if (this.examCourseId) {
-                            this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe({
-                                next: (categoryRes: HttpResponse<string[]>) => {
-                                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                                },
-                                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                            });
+                            this.loadCourseExerciseCategories(this.examCourseId);
                         }
                     } else {
                         // Lock individual mode for exam exercises
@@ -122,10 +117,11 @@ export class TextExerciseUpdateComponent implements OnInit {
                         }
                     }
                     if (this.isImport) {
+                        const courseId = params['courseId'];
+
                         if (this.isExamMode) {
                             // The target exerciseId where we want to import into
                             const exerciseGroupId = params['exerciseGroupId'];
-                            const courseId = params['courseId'];
                             const examId = params['examId'];
 
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.textExercise.exerciseGroup = res.body!));
@@ -133,11 +129,12 @@ export class TextExerciseUpdateComponent implements OnInit {
                             this.textExercise.course = undefined;
                         } else {
                             // The target course where we want to import into
-                            const targetCourseId = params['courseId'];
-                            this.courseService.find(targetCourseId).subscribe((res) => (this.textExercise.course = res.body!));
+                            this.courseService.find(courseId).subscribe((res) => (this.textExercise.course = res.body!));
                             // We reference normal exercises by their course, having both would lead to conflicts on the server
                             this.textExercise.exerciseGroup = undefined;
                         }
+
+                        this.loadCourseExerciseCategories(courseId);
                         resetDates(this.textExercise);
                     }
                 }),
@@ -188,6 +185,15 @@ export class TextExerciseUpdateComponent implements OnInit {
                     this.isSaving = false;
                 },
             });
+    }
+
+    private loadCourseExerciseCategories(courseId: number) {
+        this.courseService.findAllCategoriesOfCourse(courseId).subscribe({
+            next: (categoryRes: HttpResponse<string[]>) => {
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     private onSaveSuccess(exercise: TextExercise) {
