@@ -26,6 +26,7 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
+import { User } from 'app/core/user/user.model';
 
 describe('CloneRepoButtonComponent', () => {
     let component: CloneRepoButtonComponent;
