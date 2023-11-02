@@ -24,9 +24,9 @@
                 "Never": "Nie"
             },
             "type": {
-                "null": "",
                 "STRUCTURAL": "Struktur",
                 "BEHAVIORAL": "Verhalten",
+                "DEFAULT": "Standard",
                 "MIXED": "Verschieden"
             }
         }

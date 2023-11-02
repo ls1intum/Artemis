@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.team;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.security.Role;
@@ -12,17 +14,18 @@ import de.tum.in.www1.artemis.user.UserFactory;
 public class TeamFactory {
 
     /**
-     * Generate a team
+     * Generates a Team with the given arguments. Also generates the required Users.
+     * Note: The Team cannot be saved to the database without saving the Users first.
      *
-     * @param exercise           exercise of the team
-     * @param name               name of the team
-     * @param shortName          short name of the team
-     * @param loginPrefix        prefix that will be added in front of every user's login
-     * @param numberOfStudents   amount of users to generate for team as students
-     * @param owner              owner of the team generally a tutor
-     * @param creatorLogin       login of user that creates the teams
-     * @param registrationPrefix prefix that will be added in front of every student's registration number
-     * @return team that was generated
+     * @param exercise           The Exercise the Team belongs to
+     * @param name               The name of the Team
+     * @param shortName          The short name of the Team
+     * @param loginPrefix        The prefix that will be added in front of every user's login together with the shortName
+     * @param numberOfStudents   The number of students to generate for the Team
+     * @param owner              The owner of the Team
+     * @param creatorLogin       The login of the user that creates the Teams
+     * @param registrationPrefix The prefix that will be added in front of every student's registration number together with the shortName
+     * @return The generated Team
      */
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String creatorLogin,
             String registrationPrefix) {
@@ -45,14 +48,15 @@ public class TeamFactory {
     }
 
     /**
-     * Generate a team
+     * Generates a Team with the given arguments. Also generates the required Users.
+     * Note: The Team cannot be saved to the database without saving the Users first.
      *
-     * @param exercise         exercise of the team
-     * @param name             name of the team
-     * @param shortName        short name of the team
-     * @param numberOfStudents amount of users to generate for team as students
-     * @param owner            owner of the team generally a tutor
-     * @return team that was generated
+     * @param exercise         The Exercise the Team belongs to
+     * @param name             The name of the Team
+     * @param shortName        The short name of the Team
+     * @param numberOfStudents The number of students to generate for the Team
+     * @param owner            The owner of the Team
+     * @return The generated Team
      */
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
         return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner, null, "R");
