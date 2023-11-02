@@ -102,6 +102,22 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
     }
 
     /**
+     * PUT code-editor-sessions/{sessionId}/messages/{messageId}/helpful/{helpful}: Set the helpful attribute of the message
+     *
+     * @param sessionId of the session
+     * @param messageId of the message
+     * @param helpful   true if the message was helpful, false otherwise, null as default
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated message, or with status {@code 404 (Not Found)} if the session or message could not
+     *         be found.
+     */
+    @PutMapping(value = { "code-editor-sessions/{sessionId}/messages/{messageId}/helpful/null", "code-editor-sessions/{sessionId}/messages/{messageId}/helpful/undefined",
+            "code-editor-sessions/{sessionId}/messages/{messageId}/helpful/{helpful}" })
+    @EnforceAtLeastEditor
+    public ResponseEntity<IrisMessage> rateMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable(required = false) Boolean helpful) {
+        return super.rateMessage(sessionId, messageId, helpful);
+    }
+
+    /**
      * Put code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}/execute:
      * Execute a step of an exercise plan
      *

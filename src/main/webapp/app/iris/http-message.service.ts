@@ -12,7 +12,7 @@ export type Response<T> = Observable<HttpResponse<T>>;
  */
 @Injectable({ providedIn: 'root' })
 export abstract class IrisHttpMessageService {
-    protected apiPrefix: string = 'api/iris/';
+    protected apiPrefix: string = 'api/iris';
 
     protected constructor(
         protected httpClient: HttpClient,
