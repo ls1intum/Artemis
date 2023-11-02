@@ -227,12 +227,4 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations!, this.isPracticeMode)!;
         this.cloneHeadline = this.isPracticeMode ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository';
     }
-
-    getPopoverText(): string {
-        if (this.unableToLoadVCSAccessToken) {
-            return 'artemisApp.exerciseActions.fetchVCSAccessTokenError';
-        } else {
-            return 'artemisApp.exerciseActions.waitForData';
-        }
-    }
 }

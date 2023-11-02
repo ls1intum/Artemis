@@ -16,7 +16,7 @@
     ></button>
     <ng-template #popover>
         <div *ngIf="this.versionControlAccessTokenRequired && !this.user.vcsAccessToken; else fullPopover">
-            {{ getPopoverText() | artemisTranslate }}
+            {{ (unableToLoadVCSAccessToken ? 'artemisApp.exerciseActions.fetchVCSAccessTokenError' : 'artemisApp.exerciseActions.waitForData') | artemisTranslate }}
         </div>
     </ng-template>
     <ng-template #fullPopover>
