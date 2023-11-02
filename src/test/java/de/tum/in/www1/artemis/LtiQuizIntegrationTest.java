@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 
@@ -16,16 +17,22 @@ import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
-import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -68,11 +75,13 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     void init() {
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
         quizScheduleService.stopSchedule();
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         arrangeLtiServiceMocks();
     }
 
@@ -86,7 +95,7 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testLtiServicesAreCalledUponQuizSubmission(boolean isSubmitted) {
 
-        QuizExercise quizExercise = createQuizExercise(ZonedDateTime.now().minusMinutes(1), 240);
+        QuizExercise quizExercise = createSimpleQuizExercise(ZonedDateTime.now().minusMinutes(1), 240);
         quizExercise = quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = new QuizSubmission();
@@ -94,6 +103,7 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
             quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(question));
         }
 
+        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         quizSubmission.submitted(isSubmitted);
         quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> TEST_PREFIX + "student1");
 
@@ -120,34 +130,35 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLtiReevaluateStatistics() throws Exception {
 
-        QuizExercise quizExercise = createQuizExercise(ZonedDateTime.now().plusSeconds(5), 3600);
-        quizExercise = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
-
+        QuizExercise quizExercise = createQuizExercise(ZonedDateTime.now().plusHours(5));
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
-        quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now().minusMinutes(1));
-        quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
+        quizExercise.setDueDate(ZonedDateTime.now().minusHours(2));
 
-        // submission with everything selected
-        QuizSubmission quizSubmission = QuizExerciseFactory.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), true);
-        participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
-        participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+        var now = ZonedDateTime.now();
 
-        // calculate statistics, expected to a call to onNewResult here
-        quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
+        // generate submissions for each student
+        int numberOfParticipants = 10;
+        userUtilService.addStudents(TEST_PREFIX, 2, 14);
 
-        // remove wrong answer option and reevaluate
-        var multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
-        multipleChoiceQuestion.getAnswerOptions().remove(1);
+        for (int i = 1; i <= numberOfParticipants; i++) {
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, i, true, now.minusHours(3));
+            participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
+            participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+        }
 
-        // expected to a call to onNewResult here
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        // calculate statistics
+        QuizExercise quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK,
+                QuizExercise.class);
 
-        verify(lti10Service, times(2)).onNewResult(any());
-        verify(lti13Service, times(2)).onNewResult(any());
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
+        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
+
+        verify(lti10Service, times(10)).onNewResult(any());
+        verify(lti13Service, times(10)).onNewResult(any());
 
     }
 
-    private QuizExercise createQuizExercise(ZonedDateTime releaseDate, int duration) {
+    private QuizExercise createSimpleQuizExercise(ZonedDateTime releaseDate, int duration) {
         Course course = courseUtilService.createCourse();
         course.setOnlineCourse(true);
         courseRepository.save(course);
@@ -160,5 +171,49 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     private void arrangeLtiServiceMocks() {
         doNothing().when(lti10Service).onNewResult(any());
         doNothing().when(lti13Service).onNewResult(any());
+    }
+
+    private QuizExercise createQuizExercise(ZonedDateTime releaseDate) throws Exception {
+        QuizExercise quizExercise = createSimpleQuizExercise(releaseDate, 3600);
+
+        QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED);
+        QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
+        assertThat(quizExerciseServer).isNotNull();
+        assertThat(quizExerciseDatabase).isNotNull();
+
+        return quizExerciseDatabase;
+    }
+
+    private QuizExercise createQuizExerciseWithFiles(QuizExercise quizExercise, HttpStatus expectedStatus) throws Exception {
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/quiz-exercises");
+        addFilesToBuilderAndModifyExercise(builder, quizExercise);
+        builder.file(new MockMultipartFile("exercise", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(quizExercise)))
+                .contentType(MediaType.MULTIPART_FORM_DATA);
+        MvcResult result = request.getMvc().perform(builder).andExpect(status().is(expectedStatus.value())).andReturn();
+        request.restoreSecurityContext();
+        if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
+            assertThat(result.getResponse().getContentAsString()).isNotBlank();
+            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
+        }
+        return null;
+    }
+
+    private void addFilesToBuilderAndModifyExercise(MockMultipartHttpServletRequestBuilder builder, QuizExercise quizExercise) {
+        int index = 0;
+        for (var question : quizExercise.getQuizQuestions()) {
+            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
+                String backgroundFileName = "backgroundImage" + index++ + ".jpg";
+                dragAndDropQuestion.setBackgroundFilePath(backgroundFileName);
+                builder.file(new MockMultipartFile("files", backgroundFileName, MediaType.IMAGE_JPEG_VALUE, "backgroundImage".getBytes()));
+
+                for (var dragItem : dragAndDropQuestion.getDragItems()) {
+                    if (dragItem.getPictureFilePath() != null) {
+                        String filename = "dragItemImage" + index++ + ".png";
+                        dragItem.setPictureFilePath(filename);
+                        builder.file(new MockMultipartFile("files", filename, MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()));
+                    }
+                }
+            }
+        }
     }
 }
