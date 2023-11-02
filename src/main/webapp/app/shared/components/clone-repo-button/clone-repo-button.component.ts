@@ -110,12 +110,12 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
      * including the clicks that make the popover go away (every second click).
      */
     onClick() {
-        if (this.versionControlAccessTokenRequired && this.user.vcsAccessToken && !this.unableToLoadVCSAccessToken) {
+        if (this.versionControlAccessTokenRequired && !this.user.vcsAccessToken && !this.unableToLoadVCSAccessToken) {
             this.accountService
                 .identity(true)
                 .then((user) => {
                     this.user = user!;
-                    if (this.user.vcsAccessToken) {
+                    if (!this.user.vcsAccessToken) {
                         // if still no access token exists after fetching the user object, inform the student that
                         // something is wrong and that they should try again after reloading the page.
                         throw new Error();
@@ -229,10 +229,10 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     getPopoverText(): string {
-        if (!this.unableToLoadVCSAccessToken) {
-            return 'artemisApp.exerciseActions.waitForData';
-        } else {
+        if (this.unableToLoadVCSAccessToken) {
             return 'artemisApp.exerciseActions.fetchVCSAccessTokenError';
+        } else {
+            return 'artemisApp.exerciseActions.waitForData';
         }
     }
 }
