@@ -47,7 +47,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     isTeamParticipation: boolean;
     activeParticipation?: ProgrammingExerciseStudentParticipation;
     isPracticeMode: boolean | undefined;
-    unableToLoadVCSAccessToken: boolean;
+    unableToLoadVCSAccessToken: boolean = false;
 
     // Icons
     faDownload = faDownload;
@@ -119,7 +119,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
             this.accountService
                 .identity(true)
                 .then((user) => {
-                    this.user = user!;
+                    this.user = user ?? this.user;
                     if (!this.user.vcsAccessToken) {
                         // if still no access token exists after fetching the user object, inform the student that
                         // something is wrong and that they should try again after reloading the page.

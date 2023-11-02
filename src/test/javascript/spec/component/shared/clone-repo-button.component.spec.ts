@@ -37,6 +37,8 @@ describe('CloneRepoButtonComponent', () => {
     let localStorageUseSshObserveStub: jest.SpyInstance;
     let localStorageUseSshObserveStubSubject: Subject<boolean | undefined>;
     let localStorageUseSshStoreStub: jest.SpyInstance;
+    let accountServiceIdentityStub: jest.SpyInstance;
+    let alertServiceErrorStub: jest.SpyInstance;
 
     const user = { login: 'user1', guidedTourSettings: [], internal: true, vcsAccessToken: 'token' };
 
@@ -111,6 +113,12 @@ describe('CloneRepoButtonComponent', () => {
         localStorageUseSshStoreStub = jest.spyOn(localStorageMock, 'store');
         localStorageUseSshObserveStubSubject = new Subject();
         localStorageUseSshObserveStub.mockReturnValue(localStorageUseSshObserveStubSubject);
+
+        const accountServiceMock = fixture.debugElement.injector.get(AccountService);
+        accountServiceIdentityStub = jest.spyOn(accountServiceMock, 'identity');
+
+        const alertServiceMock = fixture.debugElement.injector.get(AlertService);
+        alertServiceErrorStub = jest.spyOn(alertServiceMock, 'error');
 
         participation = {};
         component.user = user;
@@ -336,6 +344,49 @@ describe('CloneRepoButtonComponent', () => {
         component.ngOnChanges();
         expect(component.activeParticipation?.id).toBe(expected);
     });
+
+    it('should retrieve user from the server when VCS access token is missing', fakeAsync(() => {
+        component.user.vcsAccessToken = null;
+        component.versionControlAccessTokenRequired = true;
+        component.onClick();
+        expect(accountServiceIdentityStub).toHaveBeenCalledWith(true);
+    }));
+
+    it('should display error when user could not be retrieved', fakeAsync(() => {
+        component.user.vcsAccessToken = null;
+        component.versionControlAccessTokenRequired = true;
+        accountServiceIdentityStub.mockReturnValue(Promise.resolve(undefined));
+        component.onClick();
+        tick();
+        expect(component.unableToLoadVCSAccessToken).toBeTrue();
+        expect(alertServiceErrorStub).toHaveBeenCalledWith('artemisApp.exerciseActions.fetchVCSAccessTokenError');
+    }));
+
+    it('should display error when user token is still not present in the updated user', fakeAsync(() => {
+        component.user.vcsAccessToken = null;
+        component.versionControlAccessTokenRequired = true;
+
+        // new User() doesn't contain access token
+        accountServiceIdentityStub.mockReturnValue(Promise.resolve(new User()));
+        component.onClick();
+        tick();
+        expect(component.unableToLoadVCSAccessToken).toBeTrue();
+        expect(alertServiceErrorStub).toHaveBeenCalledWith('artemisApp.exerciseActions.fetchVCSAccessTokenError');
+    }));
+
+    it('should not display the error more than once', fakeAsync(() => {
+        component.user.vcsAccessToken = null;
+        component.versionControlAccessTokenRequired = true;
+
+        accountServiceIdentityStub.mockReturnValue(Promise.resolve(undefined));
+
+        // click 5 times
+        for (let i = 0; i < 5; i++) {
+            component.onClick();
+            tick();
+        }
+        expect(alertServiceErrorStub).toHaveBeenCalledOnce();
+    }));
 
     function stubServices() {
         const identityStub = jest.spyOn(accountService, 'identity');
