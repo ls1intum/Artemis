@@ -5,7 +5,7 @@
             <fa-icon [icon]="faGraduationCap"></fa-icon>
             <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</span>
         </a>
-        <a class="tab-link" [routerLink]="['/course-management', course.id, 'exercises']" routerLinkActive="active">
+        <a class="tab-link" [routerLink]="['/course-management', course.id, 'exercises']" routerLinkActive="active" [class.active]="shouldHighlightExercisesLink()">
             <fa-icon [icon]="faListAlt"></fa-icon>
             <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>
         </a>

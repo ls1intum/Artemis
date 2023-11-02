@@ -3,9 +3,8 @@ import { ParticipationComponent } from 'app/exercises/shared/participation/parti
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { exerciseTypes } from 'app/entities/exercise.model';
 
-const routes: Routes = exerciseTypes.map((exerciseType) => {
+const routes: Routes = ['modeling', 'quiz', 'text', 'file-upload'].map((exerciseType) => {
     return {
         path: ':courseId/' + exerciseType + '-exercises/:exerciseId/participations',
         component: ParticipationComponent,

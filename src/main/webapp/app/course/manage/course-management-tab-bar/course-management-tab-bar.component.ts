@@ -42,7 +42,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
 
     course?: Course;
 
-    private paramSub?: Subscription;
     private courseSub?: Subscription;
     private eventSubscriber: Subscription;
 
@@ -87,11 +86,8 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
      * On init load the course information and subscribe to listen for changes in course.
      */
     ngOnInit() {
-        let courseId = 0;
-        this.paramSub = this.route.firstChild?.params.subscribe((params) => {
-            courseId = params['courseId'];
-            this.subscribeToCourseUpdates(courseId);
-        });
+        const courseId = Number(this.route.firstChild?.snapshot.params['courseId'] ?? this.route.snapshot.params['courseId']);
+        this.subscribeToCourseUpdates(courseId);
 
         // Subscribe to course modifications and reload the course after a change.
         this.eventSubscriber = this.eventManager.subscribe('courseModification', () => {
@@ -118,9 +114,6 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
      * On destroy unsubscribe all subscriptions.
      */
     ngOnDestroy() {
-        if (this.paramSub) {
-            this.paramSub.unsubscribe();
-        }
         if (this.courseSub) {
             this.courseSub.unsubscribe();
         }
@@ -163,6 +156,14 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         // Example that should not highlight the assessment link: /course-management/{courseId}/exams/{examId}/grading-system/interval
         const assessmentLinkRegex = /^(?!.*exams).*(grading-system|plagiarism-cases|assessment-dashboard)/;
         return assessmentLinkRegex.test(this.router.url);
+    }
+
+    /**
+     * Checks if the current route contains 'exercises', so that the 'Exercises' link is active for all sub-exercise pages
+     * @return true if the current route is parte of the exercises management
+     */
+    shouldHighlightExercisesLink(): boolean {
+        return this.router.url.includes('exercises');
     }
 
     /**

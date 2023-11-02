@@ -3,10 +3,9 @@ import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/ex
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { NgModule } from '@angular/core';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { exerciseTypes } from 'app/entities/exercise.model';
 
 const routes: Routes = [
-    ...exerciseTypes.map((exerciseType) => {
+    ...['modeling', 'quiz', 'text', 'file-upload'].map((exerciseType) => {
         return {
             path: ':courseId/' + exerciseType + '-exercises/:exerciseId/scores',
             component: ExerciseScoresComponent,

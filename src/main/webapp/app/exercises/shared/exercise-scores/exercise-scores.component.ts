@@ -80,7 +80,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     course: Course;
     exercise: Exercise;
-    paramSub: Subscription;
     reverse: boolean;
     participations: Participation[] = [];
     filteredParticipations: Participation[] = [];
@@ -133,28 +132,28 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * Fetches the course and exercise from the server
      */
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.isLoading = true;
-            const findCourse = this.courseService.find(params['courseId']);
-            const findExercise = this.exerciseService.find(params['exerciseId']);
-            const filterValue = this.route.snapshot.queryParamMap.get('scoreRangeFilter');
-            if (filterValue) {
-                this.rangeFilter = this.scoreRanges[Number(filterValue)];
-            }
+        const courseId = this.route.snapshot.params['courseId'] ?? this.route.parent?.snapshot.params['courseId'];
+        const exerciseId = this.route.snapshot.params['exerciseId'] ?? this.route.parent?.snapshot.params['exerciseId'];
+        this.isLoading = true;
+        const findCourse = this.courseService.find(courseId);
+        const findExercise = this.exerciseService.find(exerciseId);
+        const filterValue = this.route.snapshot.queryParamMap.get('scoreRangeFilter');
+        if (filterValue) {
+            this.rangeFilter = this.scoreRanges[Number(filterValue)];
+        }
 
-            forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
-                this.course = courseRes.body!;
-                this.exercise = exerciseRes.body!;
-                // ngFor needs an array to iterate over. This creates an array in the form of [0, 1, ...] up to the correction rounds exclusively (normally 1 or 2)
-                this.correctionRoundIndices = [...Array(this.exercise.exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()];
-                this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
-                // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
-                this.participationService.findAllParticipationsByExercise(this.exercise.id!, true).subscribe((participationsResponse) => {
-                    this.handleNewParticipations(participationsResponse);
-                });
-
-                this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
+        forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
+            this.course = courseRes.body!;
+            this.exercise = exerciseRes.body!;
+            // ngFor needs an array to iterate over. This creates an array in the form of [0, 1, ...] up to the correction rounds exclusively (normally 1 or 2)
+            this.correctionRoundIndices = [...Array(this.exercise.exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()];
+            this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
+            // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
+            this.participationService.findAllParticipationsByExercise(this.exercise.id!, true).subscribe((participationsResponse) => {
+                this.handleNewParticipations(participationsResponse);
             });
+
+            this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
         });
     }
 
@@ -353,7 +352,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * Unsubscribes from all subscriptions
      */
     ngOnDestroy() {
-        this.paramSub.unsubscribe();
         this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise);
     }
 

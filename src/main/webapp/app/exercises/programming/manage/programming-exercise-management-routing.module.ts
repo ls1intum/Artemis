@@ -14,13 +14,16 @@ import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/pl
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { CodeHintGenerationOverviewComponent } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.component';
 import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
+import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
+import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
+import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
     constructor(private service: ProgrammingExerciseService) {}
 
     resolve(route: ActivatedRouteSnapshot) {
-        const exerciseId = route.params['exerciseId'] ? route.params['exerciseId'] : undefined;
+        const exerciseId = route.params['exerciseId'] ?? route.parent?.params['exerciseId'];
         if (exerciseId) {
             return this.service.find(exerciseId, true).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
         }
@@ -30,125 +33,150 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
 
 export const routes: Routes = [
     {
-        path: ':courseId/programming-exercises/new',
-        component: ProgrammingExerciseUpdateComponent,
-        resolve: {
-            programmingExercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/programming-exercises/:exerciseId/edit',
-        component: ProgrammingExerciseUpdateComponent,
-        resolve: {
-            programmingExercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/programming-exercises/import/:exerciseId',
-        component: ProgrammingExerciseUpdateComponent,
-        resolve: {
-            programmingExercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.programmingExercise.home.importLabel',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/programming-exercises/import-from-file',
-        component: ProgrammingExerciseUpdateComponent,
-        resolve: {
-            programmingExercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.programmingExercise.home.importLabel',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/programming-exercises/:exerciseId',
-        component: ProgrammingExerciseDetailComponent,
-        resolve: {
-            programmingExercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/programming-exercises/:exerciseId/plagiarism',
-        component: PlagiarismInspectorComponent,
-        resolve: {
-            exercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/programming-exercises/:exerciseId/grading/:tab',
-        component: ProgrammingExerciseConfigureGradingComponent,
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.programmingExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
         path: ':courseId/programming-exercises',
         redirectTo: ':courseId/exercises',
     },
     {
-        path: ':courseId/programming-exercises/:exerciseId/exercise-statistics',
-        component: ExerciseStatisticsComponent,
-        resolve: {
-            exercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'exercise-statistics.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/programming-exercises/:exerciseId/exercise-hints/code-hint-management',
-        component: CodeHintGenerationOverviewComponent,
-        resolve: {
-            exercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.codeHint.management.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/programming-exercises/:exerciseId/edit-build-plan',
-        component: BuildPlanEditorComponent,
-        resolve: {
-            exercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.programmingExercise.buildPlanEditor',
-        },
-        canActivate: [UserRouteAccessService],
+        path: ':courseId/programming-exercises',
+        component: CourseManagementTabBarComponent,
+        children: [
+            {
+                path: 'new',
+                component: ProgrammingExerciseUpdateComponent,
+                resolve: {
+                    programmingExercise: ProgrammingExerciseResolve,
+                },
+                data: {
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.programmingExercise.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'import/:exerciseId',
+                component: ProgrammingExerciseUpdateComponent,
+                resolve: {
+                    programmingExercise: ProgrammingExerciseResolve,
+                },
+                data: {
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.programmingExercise.home.importLabel',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'import-from-file',
+                component: ProgrammingExerciseUpdateComponent,
+                resolve: {
+                    programmingExercise: ProgrammingExerciseResolve,
+                },
+                data: {
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.programmingExercise.home.importLabel',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':exerciseId/edit',
+                component: ProgrammingExerciseUpdateComponent,
+                resolve: {
+                    programmingExercise: ProgrammingExerciseResolve,
+                },
+                data: {
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.programmingExercise.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':exerciseId',
+                component: ProgrammingExerciseDetailComponent,
+                resolve: {
+                    programmingExercise: ProgrammingExerciseResolve,
+                },
+                data: {
+                    authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.programmingExercise.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+                pathMatch: 'full',
+            },
+            {
+                path: ':exerciseId/scores',
+                component: ExerciseScoresComponent,
+                data: {
+                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+                    pageTitle: 'artemisApp.instructorDashboard.exerciseDashboard',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':exerciseId/participations',
+                component: ParticipationComponent,
+                data: {
+                    authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.participation.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':exerciseId/plagiarism',
+                component: PlagiarismInspectorComponent,
+                resolve: {
+                    exercise: ProgrammingExerciseResolve,
+                },
+                data: {
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':exerciseId/grading/:tab',
+                component: ProgrammingExerciseConfigureGradingComponent,
+                data: {
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.programmingExercise.home.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':exerciseId/exercise-statistics',
+                component: ExerciseStatisticsComponent,
+                resolve: {
+                    exercise: ProgrammingExerciseResolve,
+                },
+                data: {
+                    authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'exercise-statistics.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':exerciseId/exercise-hints/code-hint-management',
+                component: CodeHintGenerationOverviewComponent,
+                resolve: {
+                    exercise: ProgrammingExerciseResolve,
+                },
+                data: {
+                    authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.codeHint.management.title',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: ':exerciseId/edit-build-plan',
+                component: BuildPlanEditorComponent,
+                resolve: {
+                    exercise: ProgrammingExerciseResolve,
+                },
+                data: {
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'artemisApp.programmingExercise.buildPlanEditor',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+        ],
     },
 ];
 
