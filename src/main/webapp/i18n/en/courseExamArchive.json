@@ -6,8 +6,11 @@
             "archiveCourseSuccess": "The course has been archived!",
             "archiveExamSuccess": "The exam has been archived!",
             "archiveSuccessWithWarnings": "The archival process has completed with the following warnings:",
-            "archiveCourseError": "Failed to archive the course",
-            "archiveExamError": "Failed to archive the exam",
+            "archiveCourseError": {
+                "NOTHING_TO_EXPORT": "Did not archive course '{{ courseName }}': Nothing to export.",
+                "DIR_NOT_CREATED": "Failed to archive course '{{ courseName }}': Directory not created."
+            },
+            "archiveExamError": "Failed to archive the exam '{{ examName }}': Directory not created.",
             "archiveDownloadError": "There was a problem downloading the archive",
             "downloadArchive": "Download Archive",
             "popup": {
