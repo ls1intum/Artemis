@@ -230,10 +230,6 @@ export class ExamResultSummaryComponent implements OnInit {
         this.resetExpandingExercisesAndGradingKeys(stateBeforeResetting);
     }
 
-    private scrollToTop() {
-        window.scrollTo(0, 0);
-    }
-
     scrollToOverviewOrTop() {
         const searchedId = 'exam-summary-result-overview';
         const targetElement = document.getElementById(searchedId);
