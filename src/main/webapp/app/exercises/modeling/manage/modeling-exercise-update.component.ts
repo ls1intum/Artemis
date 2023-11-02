@@ -88,7 +88,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     ngOnInit(): void {
         // This is used to scroll page to the top of the page, because the routing keeps the position for the
         // new page from previous page.
-
         window.scroll(0, 0);
 
         // Get the modelingExercise
@@ -111,22 +110,14 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                 ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
+                    let courseId;
+
                     if (!this.isExamMode) {
                         this.exerciseCategories = this.modelingExercise.categories || [];
                         if (this.modelingExercise.course) {
-                            this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id!).subscribe({
-                                next: (categoryRes: HttpResponse<string[]>) => {
-                                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                                },
-                                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                            });
+                            courseId = this.modelingExercise.course!.id!;
                         } else {
-                            this.courseService.findAllCategoriesOfCourse(this.modelingExercise.exerciseGroup!.exam!.course!.id!).subscribe({
-                                next: (categoryRes: HttpResponse<string[]>) => {
-                                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                                },
-                                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                            });
+                            courseId = this.modelingExercise.exerciseGroup!.exam!.course!.id!;
                         }
                     } else {
                         // Lock individual mode for exam exercises
@@ -139,24 +130,26 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                         }
                     }
                     if (this.isImport) {
+                        // The target course where we want to import into
+                        courseId = params['courseId'];
+
                         if (this.isExamMode) {
                             // The target exerciseGroupId where we want to import into
                             const exerciseGroupId = params['exerciseGroupId'];
-                            const courseId = params['courseId'];
                             const examId = params['examId'];
 
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.modelingExercise.exerciseGroup = res.body!));
                             // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
                             this.modelingExercise.course = undefined;
                         } else {
-                            // The target course where we want to import into
-                            const targetCourseId = params['courseId'];
-                            this.courseService.find(targetCourseId).subscribe((res) => (this.modelingExercise.course = res.body!));
+                            this.courseService.find(courseId).subscribe((res) => (this.modelingExercise.course = res.body!));
                             // We reference normal exercises by their course, having both would lead to conflicts on the server
                             this.modelingExercise.exerciseGroup = undefined;
                         }
                         resetDates(this.modelingExercise);
                     }
+
+                    this.loadCourseExerciseCategories(courseId);
                 }),
             )
             .subscribe();
@@ -206,6 +199,19 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      */
     previousState() {
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.modelingExercise);
+    }
+
+    private loadCourseExerciseCategories(courseId?: number) {
+        if (courseId === undefined) {
+            return;
+        }
+
+        this.courseService.findAllCategoriesOfCourse(courseId).subscribe({
+            next: (categoryRes: HttpResponse<string[]>) => {
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     private onSaveSuccess(exercise: ModelingExercise): void {
