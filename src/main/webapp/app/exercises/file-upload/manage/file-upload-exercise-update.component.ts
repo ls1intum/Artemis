@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
@@ -43,8 +43,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     isImport: boolean;
     examCourseId?: number;
 
-    saveCommand: SaveExerciseCommand<FileUploadExercise>;
-
     documentationType = DocumentationType.FileUpload;
 
     // Icons
@@ -57,7 +55,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         private modalService: NgbModal,
         private popupService: ExerciseUpdateWarningService,
         private activatedRoute: ActivatedRoute,
-        private router: Router,
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private alertService: AlertService,
