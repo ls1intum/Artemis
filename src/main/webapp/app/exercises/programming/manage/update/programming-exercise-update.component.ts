@@ -409,6 +409,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             // we need the course id  to make the request to the server if it's an import from file
                             if (this.isImportFromFile) {
                                 this.courseId = params['courseId'];
+                                this.loadCourseExerciseCategories(params['courseId']);
                             }
                         } else if (params['courseId']) {
                             this.courseId = params['courseId'];
@@ -419,12 +420,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                                     this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
                                 }
                                 this.exerciseCategories = this.programmingExercise.categories || [];
-                                this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course!.id!).subscribe({
-                                    next: (categoryRes: HttpResponse<string[]>) => {
-                                        this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                                    },
-                                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                                });
+
+                                this.loadCourseExerciseCategories(this.programmingExercise.course!.id!);
                             });
                         }
                     }
@@ -463,38 +460,30 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         });
 
+        this.defineSupportedProgrammingLanguages();
+    }
+
+    private defineSupportedProgrammingLanguages() {
         this.supportedLanguages = [];
 
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.JAVA)) {
-            this.supportedLanguages.push(ProgrammingLanguage.JAVA);
+        for (const programmingLanguage of Object.values(ProgrammingLanguage)) {
+            if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(programmingLanguage)) {
+                this.supportedLanguages.push(programmingLanguage);
+            }
         }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.PYTHON)) {
-            this.supportedLanguages.push(ProgrammingLanguage.PYTHON);
+    }
+
+    private loadCourseExerciseCategories(courseId?: number) {
+        if (courseId === undefined) {
+            return;
         }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.C)) {
-            this.supportedLanguages.push(ProgrammingLanguage.C);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.HASKELL)) {
-            this.supportedLanguages.push(ProgrammingLanguage.HASKELL);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.KOTLIN)) {
-            this.supportedLanguages.push(ProgrammingLanguage.KOTLIN);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.VHDL)) {
-            this.supportedLanguages.push(ProgrammingLanguage.VHDL);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.ASSEMBLER)) {
-            this.supportedLanguages.push(ProgrammingLanguage.ASSEMBLER);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.SWIFT)) {
-            this.supportedLanguages.push(ProgrammingLanguage.SWIFT);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.OCAML)) {
-            this.supportedLanguages.push(ProgrammingLanguage.OCAML);
-        }
-        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.EMPTY)) {
-            this.supportedLanguages.push(ProgrammingLanguage.EMPTY);
-        }
+
+        this.courseService.findAllCategoriesOfCourse(courseId).subscribe({
+            next: (categoryRes: HttpResponse<string[]>) => {
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
+            },
+            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        });
     }
 
     /**
@@ -507,21 +496,23 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.isImportFromExistingExercise = true;
         this.originalStaticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         // The source exercise is injected via the Resolver. The route parameters determine the target exerciseGroup or course
-        if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
+        const courseId = params['courseId'];
+        if (courseId && params['examId'] && params['exerciseGroupId']) {
             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                 this.programmingExercise.exerciseGroup = res.body!;
                 // Set course to undefined if a normal exercise is imported
                 this.programmingExercise.course = undefined;
             });
             this.isExamMode = true;
-        } else if (params['courseId']) {
-            this.courseService.find(params['courseId']).subscribe((res) => {
+        } else if (courseId) {
+            this.courseService.find(courseId).subscribe((res) => {
                 this.programmingExercise.course = res.body!;
                 // Set exerciseGroup to undefined if an exam exercise is imported
                 this.programmingExercise.exerciseGroup = undefined;
             });
             this.isExamMode = false;
         }
+        this.loadCourseExerciseCategories(courseId);
         resetDates(this.programmingExercise);
 
         this.programmingExercise.projectKey = undefined;
