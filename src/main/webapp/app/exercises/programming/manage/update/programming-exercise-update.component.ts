@@ -475,6 +475,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private loadCourseExerciseCategories(courseId?: number) {
         if (courseId === undefined) {
+            console.error(`Could not load exercise categories for course with id ${courseId}`);
             return;
         }
 
@@ -484,6 +485,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
+
+        if (this.exerciseCategories === undefined) {
+            this.exerciseCategories = [];
+        }
     }
 
     /**
