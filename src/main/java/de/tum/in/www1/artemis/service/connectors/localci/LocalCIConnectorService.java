@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -30,10 +28,8 @@ import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
@@ -63,10 +59,6 @@ public class LocalCIConnectorService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final LocalCIBuildJobManagementService localCIBuildJobManagementService;
-
-    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
-
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final LocalCITriggerService localCITriggerService;
@@ -76,14 +68,11 @@ public class LocalCIConnectorService {
 
     public LocalCIConnectorService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
-            LocalCIBuildJobManagementService localCIBuildJobManagementService, ProgrammingExerciseGradingService programmingExerciseGradingService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, LocalCITriggerService localCITriggerService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
-        this.localCIBuildJobManagementService = localCIBuildJobManagementService;
-        this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.localCITriggerService = localCITriggerService;
     }
@@ -195,27 +184,17 @@ public class LocalCIConnectorService {
             throw new LocalCIException("Could not set test cases changed flag", e);
         }
 
-        // Trigger a build of the solution repository.
-        CompletableFuture<LocalCIBuildResult> futureSolutionBuildResult = localCIBuildJobManagementService.addBuildJobToQueue(solutionParticipation, commitHash);
-        futureSolutionBuildResult.thenAccept(buildResult -> {
+        localCITriggerService.triggerBuild(solutionParticipation, commitHash);
 
-            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-            // Therefore, a mock auth object has to be created.
-            SecurityUtils.setAuthorizationObject();
-            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(solutionParticipation, buildResult);
-            programmingMessagingService.notifyUserAboutNewResult(result, solutionParticipation);
-
-            // The solution participation received a new result, also trigger a build of the template repository.
-            try {
-                programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
-            }
-            catch (EntityNotFoundException e) {
-                // Something went wrong while retrieving the template participation.
-                // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
-                // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
-                log.error("Something went wrong while triggering the template build for exercise {} after the solution build was finished.", exercise.getId(), e);
-            }
-        });
+        try {
+            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
+        }
+        catch (EntityNotFoundException e) {
+            // Something went wrong while retrieving the template participation.
+            // At this point, programmingMessagingService.notifyUserAboutSubmissionError() does not work, because the template participation is not available.
+            // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
+            log.error("Something went wrong while triggering the template build for exercise " + exercise.getId() + " after the solution build was finished.", e);
+        }
     }
 
     /**
