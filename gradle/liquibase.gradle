@@ -9,13 +9,13 @@ dependencies {
 }
 
 if (OperatingSystem.current().isWindows()) {
-    task pathingLiquibaseJar(type: Jar) {
+    tasks.register('pathingLiquibaseJar', Jar) {
         dependsOn configurations.liquibase
         archiveAppendix = 'pathingLiquibase'
 
         doFirst {
             manifest {
-                attributes 'Class-Path': sourceSets.main.runtimeClasspath.plus(configurations.liquibase).collect {
+                attributes 'Class-Path': (sourceSets.main.runtimeClasspath + configurations.liquibase).collect {
                     it.toURI().toURL().toString().replaceFirst(/file:\/+/, '/')
                 }.join(' ')
             }
@@ -23,7 +23,8 @@ if (OperatingSystem.current().isWindows()) {
     }
 }
 
-task initPaths(dependsOn: compileJava) {
+tasks.register('initPaths') {
+    dependsOn compileJava
     group = "liquibase"
     if (OperatingSystem.current().isWindows()) {
         dependsOn pathingLiquibaseJar
@@ -50,25 +51,28 @@ def liquibaseCommand(command) {
     }
 }
 
-task liquibaseDiffChangeLog(dependsOn: initPaths) {
+tasks.register('liquibaseDiffChangeLog') {
+    dependsOn initPaths
     doLast {
         liquibaseCommand("diffChangeLog")
     }
 }
 
-task liquibaseClearChecksums(dependsOn: initPaths) {
+tasks.register('liquibaseClearChecksums') {
+    dependsOn initPaths
     doLast {
         liquibaseCommand("clearChecksums")
     }
 }
 
-task liquibaseGenerateChangelog(dependsOn: initPaths) {
+tasks.register('liquibaseGenerateChangelog') {
+    dependsOn initPaths
     doLast {
         liquibaseCommand("generateChangelog")
     }
 }
 
-def buildTimestamp() {
+static def buildTimestamp() {
     def date = new Date()
     def formattedDate = date.format('yyyyMMddHHmmss')
     return formattedDate
