@@ -12,8 +12,7 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.NetworkingException;
-import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
-import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.*;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
@@ -45,7 +44,7 @@ public class AthenaFeedbackSuggestionsService {
         this.athenaModuleUrlHelper = athenaModuleUrlHelper;
     }
 
-    private record RequestDTO(Object exercise, Object submission) {
+    private record RequestDTO(ExerciseDTO exercise, SubmissionDTO submission) {
     }
 
     private record ResponseDTOText(List<TextFeedbackDTO> data) {

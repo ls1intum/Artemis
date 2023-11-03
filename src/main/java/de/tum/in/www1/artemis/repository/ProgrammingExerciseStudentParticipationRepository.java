@@ -105,7 +105,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
     List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(Long participationId);
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseId(Long exerciseId);

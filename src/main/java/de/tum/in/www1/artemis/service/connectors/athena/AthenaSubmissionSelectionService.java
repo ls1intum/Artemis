@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.exception.NetworkingException;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
 
 /**
  * Service for selecting the "best" submission to assess right now using Athena, e.g. by the highest information gain.
@@ -34,7 +35,7 @@ public class AthenaSubmissionSelectionService {
 
     private final AthenaDTOConverter athenaDTOConverter;
 
-    private record RequestDTO(Object exercise, List<Long> submissionIds // Athena just needs submission IDs => quicker request, because less data is sent
+    private record RequestDTO(ExerciseDTO exercise, List<Long> submissionIds// Athena just needs submission IDs => quicker request, because less data is sent
     ) {
     }
 

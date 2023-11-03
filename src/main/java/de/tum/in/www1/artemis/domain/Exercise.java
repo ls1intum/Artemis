@@ -784,7 +784,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public boolean getFeedbackSuggestionsEnabled() {
-        return Boolean.TRUE.equals(feedbackSuggestionsEnabled);
+        return feedbackSuggestionsEnabled;
     }
 
     public void setFeedbackSuggestionsEnabled(boolean feedbackSuggestionsEnabled) {

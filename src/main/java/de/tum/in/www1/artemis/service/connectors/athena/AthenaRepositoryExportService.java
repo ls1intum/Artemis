@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.ServiceUnavailableException;
 
 /**
  * Service for exporting programming exercise repositories for Athena.
@@ -64,7 +65,7 @@ public class AthenaRepositoryExportService {
     private void checkFeedbackSuggestionsEnabledElseThrow(Exercise exercise) {
         if (!exercise.getFeedbackSuggestionsEnabled()) {
             log.error("Feedback suggestions are not enabled for exercise {}", exercise.getId());
-            throw new AccessForbiddenException("Feedback suggestions are not enabled for exercise");
+            throw new ServiceUnavailableException("Feedback suggestions are not enabled for exercise");
         }
     }
 

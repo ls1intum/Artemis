@@ -225,6 +225,13 @@ public class SubmissionService {
 
     /**
      * Given an exercise, find the submission to assess using Athena, if enabled.
+     *
+     * @param <S>                 the submission type
+     * @param exercise            the exercise for which we want to retrieve a submission without manual result
+     * @param skipAssessmentQueue skip the Athena assessment queue and return a random submission
+     * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param correctionRound     the correction round we want our submission to have results for
+     * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public <S extends Submission> Optional<S> getAthenaSubmissionToAssess(Exercise exercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound,
             Function<Long, Optional<S>> findSubmissionById) {
@@ -248,9 +255,11 @@ public class SubmissionService {
     /**
      * Given an exercise, find a submission to assess using Athena (or alternatively randomly).
      *
-     * @param exercise        the exercise for which we want to retrieve a submission without manual result
-     * @param correctionRound the correction round we want our submission to have results for
-     * @param examMode        flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param <S>                 the submission type
+     * @param exercise            the exercise for which we want to retrieve a submission without manual result
+     * @param skipAssessmentQueue skip the Athena assessment queue and return a random submission
+     * @param correctionRound     the correction round we want our submission to have results for
+     * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public <S extends Submission> Optional<S> getRandomAssessableSubmission(Exercise exercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound,

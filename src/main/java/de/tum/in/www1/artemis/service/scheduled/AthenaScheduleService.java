@@ -54,7 +54,7 @@ public class AthenaScheduleService {
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
         }
-        final List<Exercise> runningExercises = exerciseRepository.findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate();
+        final Set<Exercise> runningExercises = exerciseRepository.findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate();
         runningExercises.forEach(this::scheduleExerciseForAthenaIfRequired);
         log.info("Scheduled Athena for {} exercises with future due dates.", runningExercises.size());
     }

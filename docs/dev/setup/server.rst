@@ -76,12 +76,7 @@ You can override the following configuration options in this file.
            name: Artemis
            email: artemis@in.tum.de
        athena:
-           url: http://localhost:5000
-           secret: abcdef12345
-           modules:
-               # See https://github.com/ls1intum/Athena for a list of available modules
-               text: module_text_cofee
-               programming: module_programming_themisml
+            # If you want to use Athena, look at the dedicated section in the config.
 
 Change all entries with ``<...>`` with proper values, e.g. your TUM
 Online account credentials to connect to the given instances of JIRA,

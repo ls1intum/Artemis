@@ -533,16 +533,16 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      *
      * @param feedbackSuggestionsEnabled - filter by feedback suggestions enabled
      * @param dueDate                    - filter by due date
-     * @return List of Exercises
+     * @return Set of Exercises
      */
-    List<Exercise> findByFeedbackSuggestionsEnabledAndDueDateIsAfter(boolean feedbackSuggestionsEnabled, ZonedDateTime dueDate);
+    Set<Exercise> findByFeedbackSuggestionsEnabledAndDueDateIsAfter(boolean feedbackSuggestionsEnabled, ZonedDateTime dueDate);
 
     /**
      * Find all exercises feedback suggestions (Athena) and with *Due Date* in the future.
      *
-     * @return List of Exercises
+     * @return Set of Exercises
      */
-    default List<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
+    default Set<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
         return findByFeedbackSuggestionsEnabledAndDueDateIsAfter(true, ZonedDateTime.now());
     }
 

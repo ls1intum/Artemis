@@ -455,9 +455,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT DISTINCT e FROM ProgrammingExercise e
             LEFT JOIN FETCH e.gradingCriteria
-            WHERE e.id = :#{#exerciseId}
+            WHERE e.id = :exerciseId
             """)
-    Optional<ProgrammingExercise> findByIdWithGradingCriteria(Long exerciseId);
+    Optional<ProgrammingExercise> findByIdWithGradingCriteria(long exerciseId);
 
     default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
         return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
