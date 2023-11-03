@@ -23,7 +23,7 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
     constructor(private service: ProgrammingExerciseService) {}
 
     resolve(route: ActivatedRouteSnapshot) {
-        const exerciseId = route.params['exerciseId'] ?? route.parent?.params['exerciseId'];
+        const exerciseId = route.params['exerciseId'];
         if (exerciseId) {
             return this.service.find(exerciseId, true).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
         }
