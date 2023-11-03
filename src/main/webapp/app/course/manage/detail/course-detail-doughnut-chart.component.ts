@@ -8,6 +8,8 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { GraphColors } from 'app/entities/statistics.model';
 
+const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
+
 @Component({
     selector: 'jhi-course-detail-doughnut-chart',
     templateUrl: './course-detail-doughnut-chart.component.html',
@@ -34,7 +36,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     ngxData: NgxChartsSingleSeriesDataEntry[] = [
         { name: 'Done', value: 0 },
         { name: 'Not done', value: 0 },
-        { name: 'N/A', value: 0 },
+        { name: 'N/A', value: 0 }, // fallback to display grey circle if there is no maxValue
     ];
     ngxColor = {
         name: 'vivid',
@@ -46,14 +48,14 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
 
     ngOnChanges(): void {
         // [0, 0, 0] will lead to the chart not being displayed,
-        // assigning [0, 0, 1] works around this issue and displays 0 %, 0 / 0 with a grey circle
+        // assigning [0, 0, 1] (PIE_CHART_NA_FALLBACK_VALUE) works around this issue and displays 0 %, 0 / 0 with a grey circle
         if (this.currentAbsolute == undefined && !this.receivedStats) {
-            this.assignValuesToData([0, 0, 1]);
+            this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE);
         } else {
             this.receivedStats = true;
             const remaining = roundValueSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
-            this.stats = [this.currentAbsolute!, remaining, 0];
-            return this.currentMax === 0 ? this.assignValuesToData([0, 0, 1]) : this.assignValuesToData(this.stats);
+            this.stats = [this.currentAbsolute!, remaining, 0]; // done, not done, na
+            return this.currentMax === 0 ? this.updatePieChartData(PIE_CHART_NA_FALLBACK_VALUE) : this.updatePieChartData(this.stats);
         }
     }
 
@@ -102,7 +104,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
      * Assigns a given array of numbers to ngxData
      * @param values the values that should be displayed by the chart
      */
-    private assignValuesToData(values: number[]): void {
+    private updatePieChartData(values: number[]): void {
         this.ngxData.forEach((entry: NgxChartsSingleSeriesDataEntry, index: number) => (entry.value = values[index]));
         this.ngxData = [...this.ngxData];
     }
