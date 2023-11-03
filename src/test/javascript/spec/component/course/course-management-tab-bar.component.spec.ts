@@ -55,6 +55,7 @@ describe('Course Management Tab Bar Component', () => {
                     useValue: {
                         firstChild: {
                             params: of({ courseId: course.id }),
+                            snapshot: { params: { courseId: course.id } },
                         },
                     },
                 },

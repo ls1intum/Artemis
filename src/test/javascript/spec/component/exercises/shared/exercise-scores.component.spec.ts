@@ -32,7 +32,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { Subscription, of } from 'rxjs';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
@@ -108,7 +107,7 @@ describe('Exercise Scores Component', () => {
         data: of({ courseId: 1 }),
         children: [],
         params: of({ courseId: 1, exerciseId: 2 }),
-        snapshot: { queryParamMap: { get: () => undefined } },
+        snapshot: { queryParamMap: { get: () => undefined }, params: { courseId: 1, exerciseId: 2 } },
     } as any as ActivatedRoute;
 
     beforeAll(() => {
@@ -157,7 +156,6 @@ describe('Exercise Scores Component', () => {
                 exerciseService = TestBed.inject(ExerciseService);
                 component.exercise = exercise;
                 jest.spyOn(programmingSubmissionService, 'unsubscribeAllWebsocketTopics');
-                component.paramSub = new Subscription();
             });
     });
 

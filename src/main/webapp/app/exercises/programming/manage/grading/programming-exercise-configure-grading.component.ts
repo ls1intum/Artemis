@@ -183,9 +183,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Also checks if a change guard needs to be activated when the test cases where saved.
      */
     ngOnInit(): void {
-        console.log('route', this.route);
         this.paramSub = this.route.params.pipe(distinctUntilChanged()).subscribe((params) => {
-            console.log('params', params);
             this.isLoading = true;
             const exerciseId = Number(params['exerciseId']);
             const courseId = Number(this.route.parent?.snapshot.params['courseId']);
