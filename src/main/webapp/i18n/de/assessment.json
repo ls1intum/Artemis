@@ -11,15 +11,15 @@
             "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
             "suggestion": {
                 "default": "Vorschlag",
-                "suggested": "Vorschlag (nicht akzeptiert)",
-                "accepted": "Akzeptierter Vorschlag",
+                "suggested": "Offener Vorschlag",
+                "accepted": "Angenommener Vorschlag",
                 "adapted": "Angepasster Vorschlag"
             },
             "suggestionTitle": {
                 "default": "Dieser Vorschlag wurde automatisch erstellt.",
                 "suggested": "Dieser automatisch erstellte Vorschlag ist nicht in der Gesamtbewertung enthalten, solange er nicht explizit akzeptiert wird.",
-                "accepted": "Automatisch erstellter Vorschlag",
-                "adapted": "Automatisch erstellter Vorschlag, bearbeitet"
+                "accepted": "Automatisch erstellter angenommener Vorschlag",
+                "adapted": "Automatisch erstellter bearbeiteter Vorschlag"
             },
             "suggestionPendingDialog": {
                 "title": "Ausstehende Feedback-Vorschläge",
