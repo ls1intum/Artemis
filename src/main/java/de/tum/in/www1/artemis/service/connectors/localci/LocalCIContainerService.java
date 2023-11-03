@@ -91,35 +91,18 @@ public class LocalCIContainerService {
     }
 
     /**
-     * Run the script specified in the container's bind mount and wait for it to finish before returning.
+     * Run the script in the container and wait for it to finish before returning.
      *
      * @param containerId the id of the container in which the script should be run
      */
+
     public void runScriptInContainer(String containerId) {
+        log.info("Started running the build script for build job in container with id {}", containerId);
         // The "sh script.sh" execution command specified here is run inside the container as an additional process. This command runs in the background, independent of the
         // container's
         // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
         // command has finished before trying to extract the results.
-        ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(true).withAttachStderr(true).withCmd("sh", "script.sh").exec();
-
-        // Start the command and wait for it to complete.
-        final CountDownLatch latch = new CountDownLatch(1);
-        dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
-
-            @Override
-            public void onComplete() {
-                latch.countDown();
-            }
-        });
-
-        try {
-            log.info("Started running the build script for build job in container with id {}", containerId);
-            // Block until the latch reaches 0 or until the thread is interrupted.
-            latch.await();
-        }
-        catch (InterruptedException e) {
-            throw new LocalCIException("Interrupted while waiting for command to complete", e);
-        }
+        executeDockerCommand(containerId, true, true, "sh", "script.sh");
     }
 
     /**
@@ -235,43 +218,11 @@ public class LocalCIContainerService {
     }
 
     private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
-        ExecCreateCmdResponse renameDirectoryCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("mv", oldName, newName).exec();
-        final CountDownLatch latch = new CountDownLatch(1);
-        dockerClient.execStartCmd(renameDirectoryCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
-
-            @Override
-            public void onComplete() {
-                latch.countDown();
-            }
-        });
-
-        try {
-            latch.await();
-        }
-        catch (InterruptedException e) {
-            throw new LocalCIException("Interrupted while renaming directory or file " + oldName + " to " + newName, e);
-        }
+        executeDockerCommand(containerId, false, false, "mv", oldName, newName);
     }
 
     private void convertDosFilesToUnix(String path, String containerId) {
-        // This is for the case the files where created on a Windows machine and contain DOS line endings.
-        ExecCreateCmdResponse convertDosToUnixCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("sh", "-c", "find " + path + " -type f -exec sed -i 's/\\r$//' {} \\;")
-                .exec();
-        final CountDownLatch latch = new CountDownLatch(1);
-        dockerClient.execStartCmd(convertDosToUnixCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
-
-            @Override
-            public void onComplete() {
-                latch.countDown();
-            }
-        });
-
-        try {
-            latch.await();
-        }
-        catch (InterruptedException e) {
-            throw new LocalCIException("Interrupted while converting DOS files to Unix", e);
-        }
+        executeDockerCommand(containerId, false, false, "sh", "-c", "find " + path + " -type f -exec sed -i 's/\\r$//' {} \\;");
     }
 
     private void copyToContainer(String sourcePath, String containerId) {
@@ -324,6 +275,26 @@ public class LocalCIContainerService {
                     addFileToTar(tarArchiveOutputStream, child, parent + file.getName() + "/");
                 }
             }
+        }
+    }
+
+    private void executeDockerCommand(String containerId, boolean attachStdout, boolean attachStderr, String... command) {
+        ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(attachStdout).withAttachStderr(attachStderr).withCmd(command).exec();
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
+
+            @Override
+            public void onComplete() {
+                latch.countDown();
+            }
+        });
+
+        try {
+            latch.await();
+        }
+        catch (InterruptedException e) {
+            throw new LocalCIException("Interrupted while executing Docker command: " + String.join(" ", command), e);
         }
     }
 
