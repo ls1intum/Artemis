@@ -45,15 +45,19 @@ describe('DoughnutChartComponent', () => {
     it('should initialize', () => {
         component.contentType = DoughnutChartType.AVERAGE_EXERCISE_SCORE;
         component.ngOnChanges();
-        const expected = [absolute, max - absolute];
+        const expected = [absolute, max - absolute, 0];
         expect(component.stats).toEqual(expected);
         expect(component.ngxDoughnutData[0].value).toBe(expected[0]);
         expect(component.ngxDoughnutData[1].value).toBe(expected[1]);
+        expect(component.ngxDoughnutData[2].value).toBe(expected[2]);
 
         component.currentMax = 0;
         component.ngOnChanges();
-        expect(component.ngxDoughnutData[0].value).toBe(1);
+
+        // should show grey color if currentMax = 0
+        expect(component.ngxDoughnutData[0].value).toBe(0);
         expect(component.ngxDoughnutData[1].value).toBe(0);
+        expect(component.ngxDoughnutData[2].value).toBe(1);
     });
     describe('setting titles for different chart types', () => {
         it('should set title for average exercise score', () => {
