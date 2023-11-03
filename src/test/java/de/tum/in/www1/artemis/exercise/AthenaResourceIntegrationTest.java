@@ -198,8 +198,9 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         var authHeaders = new HttpHeaders();
         authHeaders.add("Authorization", athenaSecret);
 
-        // Expect status 403 because Athena is not enabled for the exercise
-        request.get("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/repository/" + repoType, HttpStatus.FORBIDDEN, Result.class, authHeaders);
+        // Expect status 503 because Athena is not enabled for the exercise
+        request.get("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/repository/" + repoType, HttpStatus.SERVICE_UNAVAILABLE, Result.class,
+                authHeaders);
     }
 
     @ParameterizedTest

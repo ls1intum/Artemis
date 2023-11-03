@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUt
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.ServiceUnavailableException;
 
 class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -83,11 +83,12 @@ class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    void shouldThrowAccessForbiddenWhenFeedbackSuggestionsNotEnabled() {
+    void shouldThrowServiceUnavailableWhenFeedbackSuggestionsNotEnabled() {
         var programmingExercise = new ProgrammingExercise();
         programmingExercise.setFeedbackSuggestionsEnabled(false);
         var programmingExerciseWithId = programmingExerciseRepository.save(programmingExercise);
 
-        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), null, null));
+        assertThatExceptionOfType(ServiceUnavailableException.class)
+                .isThrownBy(() -> athenaRepositoryExportService.exportRepository(programmingExerciseWithId.getId(), null, null));
     }
 }
