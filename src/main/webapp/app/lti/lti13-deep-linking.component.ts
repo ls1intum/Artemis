@@ -75,9 +75,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
      * @param currentLink The current URL to return to after login.
      */
     redirectUserToLoginThenTargetLink(currentLink: any): void {
-        // Redirect the user to the login page
         this.router.navigate(['/']).then(() => {
-            // After navigating to the login page, set up a listener for when the user logs in
             this.accountService.getAuthenticationState().subscribe((user) => {
                 if (user) {
                     window.location.replace(currentLink);

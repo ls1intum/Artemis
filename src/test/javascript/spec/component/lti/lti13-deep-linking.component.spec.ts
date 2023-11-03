@@ -70,6 +70,20 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(component.exercises).toContainAllValues(course.exercises!);
     }));
 
+    it('should navigate on init when user is authenticated', fakeAsync(() => {
+        const redirectSpy = jest.spyOn(component, 'redirectUserToLoginThenTargetLink');
+        accountServiceMock.identity.mockResolvedValue(undefined);
+        routerMock.navigate.mockReturnValue(Promise.resolve({}));
+        accountServiceMock.getAuthenticationState.mockReturnValue(of());
+
+        component.ngOnInit();
+        tick();
+
+        expect(redirectSpy).toHaveBeenCalledWith(window.location.href);
+        expect(routerMock.navigate).toHaveBeenCalledWith(['/']);
+        expect(component.redirectUserToLoginThenTargetLink).toHaveBeenCalled();
+    }));
+
     it('should not course details and exercises on init when courseId is empty', fakeAsync(() => {
         activatedRouteMock.params = of({});
         fixture = TestBed.createComponent(Lti13DeepLinkingComponent);
@@ -126,7 +140,7 @@ describe('Lti13DeepLinkingComponent', () => {
         httpMock.post.mockReturnValue(throwError(() => mockError));
 
         component.sendDeepLinkRequest();
-        tick(); // Simulate time for async operation
+        tick();
 
         expect(component.isLinking).toBeFalse();
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
