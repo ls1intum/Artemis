@@ -22,7 +22,7 @@ export enum DocumentationType {
     Units = <any>'lectures/#lecture-units',
     Assessment = <any>'exercises/assessment/',
     Statistics = <any>'learning-analytics/',
-    SuspiciousBehavior = <any>'exam_mode/instructors_guide.html#suspicious-behavior-detection',
+    SuspiciousBehavior = <any>'exams/instructors_guide.html#suspicious-behavior-detection',
 }
 
 @Component({
