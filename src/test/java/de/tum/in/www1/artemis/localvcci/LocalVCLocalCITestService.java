@@ -7,8 +7,7 @@ import static org.assertj.core.api.Fail.fail;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.*;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -23,11 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -41,6 +36,8 @@ import org.eclipse.jgit.transport.RefSpec;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
@@ -75,9 +72,6 @@ public class LocalVCLocalCITestService {
 
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
@@ -487,7 +481,12 @@ public class LocalVCLocalCITestService {
      */
     public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
         // wait for result to be persisted
-        await().atMost(10, TimeUnit.SECONDS).until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        await().until(() -> {
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            return programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId).orElseThrow().getLatestResult() != null;
+        });
+
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId).orElseThrow();
         if (expectedCommitHash != null) {
             assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);
