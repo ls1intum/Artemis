@@ -12,7 +12,7 @@ config.read('config.ini')
 server_url = config.get('Settings', 'server_url')
 
 
-def create_course(session, course_name, course_short_name):
+def create_course(session, course_name, course_short_name, is_local_course):
     url = f"{server_url}/api/admin/courses"
 
     default_course = {
@@ -20,10 +20,10 @@ def create_course(session, course_name, course_short_name):
         "title": str(course_name),
         "shortName": str(course_short_name),
         "customizeGroupNames": True,
-        "studentGroupName": "students",
-        "teachingAssistantGroupName": "tutors",
-        "editorGroupName": "editors",
-        "instructorGroupName": "instructors",
+        "studentGroupName": None,
+        "teachingAssistantGroupName": None,
+        "editorGroupName": None,
+        "instructorGroupName": None,
         "courseInformationSharingMessagingCodeOfConduct": None,
         "semester": None,
         "testCourse": None,
@@ -48,6 +48,13 @@ def create_course(session, course_name, course_short_name):
         "enrollmentEnabled": False
     }
 
+    if is_local_course:
+        # If it's a local course, use the original group names without the prefix
+        default_course["studentGroupName"] = "students"
+        default_course["teachingAssistantGroupName"] = "tutors"
+        default_course["editorGroupName"] = "editors"
+        default_course["instructorGroupName"] = "instructors"
+
     fields = {
         "course": ('blob.json', json.dumps(default_course), 'application/json')
     }
@@ -63,7 +70,9 @@ def create_course(session, course_name, course_short_name):
         print_success(f"Created course {course_name} with id {course_short_name}")
     else:
         raise Exception(
-            f"Could not create course {course_name}; Status code: {response.status_code}\n Double check whether the courseId is not already used for another course!")
+            f"Could not create course {course_name}; Status code: {response.status_code}\n Double check whether the courseShortName {course_short_name} is not already used for another course!\nResponse content: {response.text}")
+
+
 
 
 def main():
@@ -71,9 +80,10 @@ def main():
 
     course_name = 'Local Course'
     course_short_name = "localCourse"
+    is_local_course = True
 
     login_as_admin(session)
-    create_course(session, course_name, course_short_name)
+    create_course(session, course_name, course_short_name, is_local_course)
 
 
 if __name__ == "__main__":

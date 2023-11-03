@@ -22,6 +22,8 @@ def make_create_user_post_request(session, user_details):
 
     if response.status_code == 201:
         print_success(f"{user_details['login']} was created successfully")
+    elif response.status_code == 400 and "userExists" in response.json().get("errorKey", ""):
+        print(f"User {user_details['login']} already exists.")
     else:
         raise Exception(
             f"Creating {user_details['login']} failed. Status code: {response.status_code}\nResponse content: {response.text}")

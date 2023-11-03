@@ -25,7 +25,7 @@ Scripts in this folder help to configure and setup your first Artemis course to 
 
    ![IntelliJ Module Configuration](./images/localVC-localCI-classpathConfiguration.png)
 
-_Tested on python 3.11.6, other versions might work as well._
+_Tested on python 3.7 & 3.9, other versions might work as well._
 
 ## Usage
 
