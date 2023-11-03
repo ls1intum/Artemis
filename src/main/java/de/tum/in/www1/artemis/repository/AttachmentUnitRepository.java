@@ -24,8 +24,9 @@ public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, 
                 LEFT JOIN TREAT(lecture.lectureUnits as AttachmentUnit) attachmentUnit
                 LEFT JOIN FETCH attachmentUnit.attachment attachment
             WHERE lecture.id = :lectureId
+                AND TYPE (attachmentUnit) = AttachmentUnit
                 AND attachment.attachmentType = :attachmentType
-            ORDER BY INDEX(attachmentUnit)
+            ORDER BY INDEX(lecture.lectureUnits)
             """)
     // INDEX() is used to retrieve the order saved by @OrderColumn, see https://en.wikibooks.org/wiki/Java_Persistence/JPQL#Special_Operators
     List<AttachmentUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType);

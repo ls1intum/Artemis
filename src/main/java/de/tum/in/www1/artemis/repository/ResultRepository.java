@@ -460,7 +460,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
                 )
             FROM
                 Result r join r.participation p join p.exercise e join r.assessor a
-                LEFT JOIN FETCH Rating rating on rating.result = r.id
+                LEFT JOIN FETCH Rating rating on rating.result = r
             WHERE
                 r.completionDate is not null
                 and e.id IN :exerciseIds
@@ -482,7 +482,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             )
             FROM
                 Result r join r.participation p join p.exercise e join r.assessor a
-                LEFT JOIN FETCH Rating rating on rating.result = r.id
+                LEFT JOIN FETCH Rating rating on rating.result = r
             WHERE
                 r.completionDate is not null
                 and e.id = :#{#exerciseId}
@@ -502,7 +502,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             )
             FROM
                 Result r join r.participation p join p.exercise e join e.exerciseGroup eg join eg.exam ex join r.assessor a
-                LEFT JOIN FETCH Rating rating on rating.result = r.id
+                LEFT JOIN FETCH Rating rating on rating.result = r
             WHERE
                 r.completionDate is not null
                 and ex.id = :#{#examId}

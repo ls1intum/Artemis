@@ -61,9 +61,9 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
              FROM Conversation conv
                  LEFT JOIN Channel channel ON conv.id = channel.id
                  LEFT JOIN ConversationParticipant cp ON conv.id = cp.conversation.id AND cp.user.id = :userId
-                 LEFT JOIN Post p ON conv.id = p.conversation.id AND (p.creationDate > cp.lastRead OR (channel.isCourseWide IS true AND cp.lastRead IS null))
+                 LEFT JOIN Post p ON conv.id = p.conversation.id AND (p.creationDate > cp.lastRead OR (channel.isCourseWide = true AND cp.lastRead IS null))
              WHERE conv.id IN :conversationIds
-                 AND (channel.isCourseWide IS true OR (conv.id = cp.conversation.id AND cp.user.id = :userId))
+                 AND (channel.isCourseWide = true OR (conv.id = cp.conversation.id AND cp.user.id = :userId))
              GROUP BY conv.id, cp.id, cp.isModerator, cp.isFavorite, cp.isHidden, cp.lastRead
             """)
     List<UserConversationInfo> getUserInformationForConversations(@Param("conversationIds") Iterable<Long> conversationIds, @Param("userId") Long userId);
@@ -95,7 +95,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
              WHERE c.course.id = :courseId
              AND (
                  p.creationDate > cp.lastRead OR
-                 (ch.isCourseWide IS true AND cp.id IS null)
+                 (ch.isCourseWide = true AND cp.id IS null)
              )
             """)
     boolean userHasUnreadMessageInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);

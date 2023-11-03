@@ -38,7 +38,7 @@ public interface RatingRepository extends JpaRepository<Rating, Long> {
                     sum(case when ra.rating is not null then 1 else 0 end))
                 FROM
                     Result r JOIN r.participation p JOIN p.exercise e
-                    LEFT JOIN FETCH Rating ra ON ra.result = r.id
+                    LEFT JOIN FETCH Rating ra ON ra.result = r
                 WHERE
                     r.completionDate is not null AND
                     e.id = :#{#exerciseId}

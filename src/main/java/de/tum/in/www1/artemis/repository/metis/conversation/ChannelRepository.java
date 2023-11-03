@@ -48,7 +48,7 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
              FROM Channel channel
                  LEFT JOIN channel.conversationParticipants cp
              WHERE channel.course.id = :courseId
-                 AND (channel.isCourseWide IS true OR (channel.id = cp.conversation.id AND cp.user.id = :userId))
+                 AND (channel.isCourseWide = true OR (channel.id = cp.conversation.id AND cp.user.id = :userId))
              ORDER BY channel.name
             """)
     List<Channel> findChannelsOfUser(@Param("courseId") Long courseId, @Param("userId") Long userId);
