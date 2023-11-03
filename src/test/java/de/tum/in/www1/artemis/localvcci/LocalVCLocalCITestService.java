@@ -73,6 +73,9 @@ public class LocalVCLocalCITestService {
     @Autowired
     private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    @Autowired
+    private ResultRepository resultRepository;
+
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
@@ -481,6 +484,7 @@ public class LocalVCLocalCITestService {
      */
     public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed) {
         // wait for result to be persisted
+        await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         await().until(() -> {
             SecurityContextHolder.getContext().setAuthentication(auth);
