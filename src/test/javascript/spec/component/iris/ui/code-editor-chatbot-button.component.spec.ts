@@ -7,20 +7,21 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject } from 'rxjs';
-import { IrisChatSessionService } from 'app/iris/chat-session.service';
-import { IrisHttpChatSessionService } from 'app/iris/http-chat-session.service';
+import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
+import { IrisHttpCodeEditorSessionService } from 'app/iris/http-code-editor-session.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ActivatedRoute } from '@angular/router';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { ActiveConversationMessageLoadedAction, NumNewMessagesResetAction, SessionReceivedAction } from 'app/iris/state-store.model';
-import { mockServerMessage } from './../../../helpers/sample/iris-sample-data';
-import { IrisTutorChatbotButtonComponent } from 'app/iris/exercise-chatbot/tutor-chatbot-button.component';
+import { NumNewMessagesResetAction, SessionReceivedAction } from 'app/iris/state-store.model';
+import { IrisCodeEditorChatbotButtonComponent } from 'app/iris/exercise-chatbot/code-editor-chatbot-button.component';
+import { IrisCodeEditorWebsocketService } from 'app/iris/code-editor-websocket.service';
+import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
 
-describe('TutorChatbotButtonComponent', () => {
-    let component: IrisTutorChatbotButtonComponent;
-    let fixture: ComponentFixture<IrisTutorChatbotButtonComponent>;
-    let sessionService: IrisChatSessionService;
+describe('CodeEditorChatbotButtonComponent', () => {
+    let component: IrisCodeEditorChatbotButtonComponent;
+    let fixture: ComponentFixture<IrisCodeEditorChatbotButtonComponent>;
+    let sessionService: IrisCodeEditorSessionService;
     let stateStore: IrisStateStore;
     let mockDialog: MatDialog;
     let mockOverlay: Overlay;
@@ -54,10 +55,11 @@ describe('TutorChatbotButtonComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [FormsModule, FontAwesomeModule, HttpClientTestingModule],
-            declarations: [IrisTutorChatbotButtonComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [IrisCodeEditorChatbotButtonComponent, MockPipe(ArtemisTranslatePipe), IrisLogoComponent],
             providers: [
-                IrisHttpChatSessionService,
+                IrisHttpCodeEditorSessionService,
                 IrisStateStore,
+                IrisCodeEditorWebsocketService,
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: Overlay, useValue: mockOverlay },
                 { provide: AccountService, useClass: MockAccountService },
@@ -66,10 +68,10 @@ describe('TutorChatbotButtonComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(IrisTutorChatbotButtonComponent);
+                fixture = TestBed.createComponent(IrisCodeEditorChatbotButtonComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
-                sessionService = fixture.debugElement.injector.get(IrisChatSessionService);
+                sessionService = fixture.debugElement.injector.get(IrisCodeEditorSessionService);
                 stateStore = fixture.debugElement.injector.get(IrisStateStore);
             });
     });
@@ -97,33 +99,6 @@ describe('TutorChatbotButtonComponent', () => {
 
         // then
         expect(mockDialogClose).toHaveBeenCalled();
-    });
-
-    it('should show new message indicator when chatbot is closed', () => {
-        // given
-        stateStore.dispatch(new SessionReceivedAction(0, []));
-
-        // when
-        stateStore.dispatch(new ActiveConversationMessageLoadedAction(mockServerMessage));
-
-        // then
-        fixture.detectChanges();
-        const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
-        expect(unreadIndicatorElement).not.toBeNull();
-    });
-
-    it('should not show new message indicator when chatbot is open', () => {
-        // given
-        stateStore.dispatch(new SessionReceivedAction(0, []));
-        component.openChat();
-
-        // when
-        stateStore.dispatch(new ActiveConversationMessageLoadedAction(mockServerMessage));
-
-        // then
-        fixture.detectChanges();
-        const unreadIndicatorElement: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('.unread-indicator');
-        expect(unreadIndicatorElement).toBeNull();
     });
 
     it('should call action to reset number of new messages when close chat', () => {

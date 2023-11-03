@@ -4,8 +4,8 @@ import { take } from 'rxjs/operators';
 import {
     mockClientMessage,
     mockConversation,
-    mockExercisePlanComponent,
-    mockMessagePlanContent,
+    mockExercisePlan,
+    mockExercisePlanStep,
     mockPlanConversation,
     mockServerMessage,
     mockServerPlanMessage,
@@ -52,16 +52,10 @@ describe('Iris Http Code Editor Message Service', () => {
         }));
 
         it('should update component plan instruction field', fakeAsync(() => {
-            const returnedFromService = { ...mockExercisePlanComponent, instructions: 'I will add a QuickSort algorithm task.' };
+            const returnedFromService = { ...mockExercisePlanStep, instructions: 'I will add a QuickSort algorithm task.' };
             const expected = returnedFromService;
             service
-                .updateExercisePlanStepInstructions(
-                    mockPlanConversation.id,
-                    mockServerPlanMessage.id,
-                    mockMessagePlanContent.id!,
-                    mockExercisePlanComponent.id!,
-                    returnedFromService,
-                )
+                .updateExercisePlanStepInstructions(mockPlanConversation.id, mockServerPlanMessage.id, mockExercisePlan.id!, mockExercisePlanStep.id!, returnedFromService)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'PUT' });
@@ -70,10 +64,10 @@ describe('Iris Http Code Editor Message Service', () => {
         }));
 
         it('should execute the exercise component plans', fakeAsync(() => {
-            const returnedFromService = { ...mockExercisePlanComponent };
+            const returnedFromService = { ...mockExercisePlanStep };
             //const expected = { ...returnedFromService, id: 0 };
             service
-                .executePlanStep(mockPlanConversation.id, mockServerPlanMessage.id, mockMessagePlanContent.id!, mockExercisePlanComponent.id!)
+                .executePlanStep(mockPlanConversation.id, mockServerPlanMessage.id, mockExercisePlan.id!, mockExercisePlanStep.id!)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.ok).toBeTrue());
             const req = httpMock.expectOne({ method: 'POST' });
