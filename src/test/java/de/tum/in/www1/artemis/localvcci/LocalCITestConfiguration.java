@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Import;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.command.CopyArchiveToContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmd;
@@ -68,10 +70,18 @@ public class LocalCITestConfiguration {
         StartContainerCmd startContainerCmd = mock(StartContainerCmd.class);
         doReturn(startContainerCmd).when(dockerClient).startContainerCmd(anyString());
 
+        // Mock dockerClient.copyArchiveToContainer(String containerId).withRemotePath(String path).withTarInputStream(InputStream uploadStream).exec()
+        CopyArchiveToContainerCmd copyArchiveToContainerCmd = mock(CopyArchiveToContainerCmd.class);
+        doReturn(copyArchiveToContainerCmd).when(dockerClient).copyArchiveToContainerCmd(anyString());
+        doReturn(copyArchiveToContainerCmd).when(copyArchiveToContainerCmd).withRemotePath(anyString());
+        doReturn(copyArchiveToContainerCmd).when(copyArchiveToContainerCmd).withTarInputStream(any());
+        doNothing().when(copyArchiveToContainerCmd).exec();
+
         // Mock dockerClient.execCreateCmd(String containerId).withAttachStdout(Boolean attachStdout).withAttachStderr(Boolean attachStderr).withCmd(String... cmd).exec()
         ExecCreateCmd execCreateCmd = mock(ExecCreateCmd.class);
         ExecCreateCmdResponse execCreateCmdResponse = mock(ExecCreateCmdResponse.class);
         doReturn(execCreateCmd).when(dockerClient).execCreateCmd(anyString());
+        doReturn(execCreateCmd).when(execCreateCmd).withCmd(any(String[].class));
         doReturn(execCreateCmd).when(execCreateCmd).withAttachStdout(anyBoolean());
         doReturn(execCreateCmd).when(execCreateCmd).withAttachStderr(anyBoolean());
         doReturn(execCreateCmd).when(execCreateCmd).withCmd(anyString(), anyString());

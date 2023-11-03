@@ -11,6 +11,7 @@ on:
     - 'docs/**'
     - '.github/**'
     - '!.github/workflows/build.yml'
+    - '!.github/workflows/testserver.yml'
   push:
     branches:
     - develop
@@ -45,7 +46,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '${{ env.node }}'
         cache: 'npm'
@@ -137,6 +138,8 @@ jobs:
         context: .
         tags: ghcr.io/ls1intum/artemis:${{ steps.compute-tag.outputs.result }}
         push: true
+        cache-from: type=gha
+        cache-to: type=gha,mode=min
 
     # TODO: Push to Docker Hub (develop + tag)
 

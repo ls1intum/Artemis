@@ -87,6 +87,8 @@ public class PostService extends PostingService {
         mayInteractWithPostElseThrow(post, user, course);
         preCheckPostValidity(post);
 
+        parseUserMentions(course, post.getContent());
+
         // set author to current user
         post.setAuthor(user);
         setAuthorRoleForPosting(post, course);
@@ -116,6 +118,17 @@ public class PostService extends PostingService {
     }
 
     /**
+     * Persists the continuous plagiarism control plagiarism case post,
+     * and sends a notification to affected user groups
+     *
+     * @param post post to create
+     */
+    public void createContinuousPlagiarismControlPlagiarismCasePost(Post post) {
+        var savedPost = postRepository.save(post);
+        plagiarismCaseService.saveAnonymousPostForPlagiarismCaseAndNotifyStudent(savedPost.getPlagiarismCase().getId(), savedPost);
+    }
+
+    /**
      * Checks course, user and post validity,
      * updates non-restricted field of the post, persists the post,
      * and ensures that sensitive information is filtered out
@@ -137,6 +150,8 @@ public class PostService extends PostingService {
         Post existingPost = postRepository.findPostByIdElseThrow(postId);
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
+
+        parseUserMentions(course, post.getContent());
 
         boolean contextHasChanged = !existingPost.hasSameContext(post);
         // depending on if there is a context change we need to broadcast different information
@@ -506,5 +521,4 @@ public class PostService extends PostingService {
             groupNotificationService.notifyAllGroupsAboutNewPostForLecture(postForNotification, course);
         }
     }
-
 }

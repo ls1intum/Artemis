@@ -100,34 +100,43 @@ public class LectureImportService {
     private LectureUnit cloneLectureUnit(final LectureUnit importedLectureUnit, final Lecture newLecture) {
         log.debug("Creating a new LectureUnit from lecture unit {}", importedLectureUnit);
 
-        if (importedLectureUnit instanceof TextUnit) {
+        if (importedLectureUnit instanceof TextUnit importedTextUnit) {
             TextUnit textUnit = new TextUnit();
-            textUnit.setName(importedLectureUnit.getName());
-            textUnit.setReleaseDate(importedLectureUnit.getReleaseDate());
-            textUnit.setContent(((TextUnit) importedLectureUnit).getContent());
+            textUnit.setName(importedTextUnit.getName());
+            textUnit.setReleaseDate(importedTextUnit.getReleaseDate());
+            textUnit.setContent(importedTextUnit.getContent());
             return textUnit;
         }
-        else if (importedLectureUnit instanceof VideoUnit) {
+        else if (importedLectureUnit instanceof VideoUnit importedVideoUnit) {
             VideoUnit videoUnit = new VideoUnit();
-            videoUnit.setName(importedLectureUnit.getName());
-            videoUnit.setReleaseDate(importedLectureUnit.getReleaseDate());
-            videoUnit.setDescription(((VideoUnit) importedLectureUnit).getDescription());
-            videoUnit.setSource(((VideoUnit) importedLectureUnit).getSource());
+            videoUnit.setName(importedVideoUnit.getName());
+            videoUnit.setReleaseDate(importedVideoUnit.getReleaseDate());
+            videoUnit.setDescription(importedVideoUnit.getDescription());
+            videoUnit.setSource(importedVideoUnit.getSource());
             return videoUnit;
         }
-        else if (importedLectureUnit instanceof AttachmentUnit) {
+        else if (importedLectureUnit instanceof AttachmentUnit importedAttachmentUnit) {
             // Create and save the attachment unit, then the attachment itself, as the id is needed for file handling
             AttachmentUnit attachmentUnit = new AttachmentUnit();
-            attachmentUnit.setDescription(((AttachmentUnit) importedLectureUnit).getDescription());
+            attachmentUnit.setDescription(importedAttachmentUnit.getDescription());
             attachmentUnit.setLecture(newLecture);
             lectureUnitRepository.save(attachmentUnit);
 
-            Attachment attachment = cloneAttachment(((AttachmentUnit) importedLectureUnit).getAttachment());
+            Attachment attachment = cloneAttachment(importedAttachmentUnit.getAttachment());
             attachment.setAttachmentUnit(attachmentUnit);
             attachmentRepository.save(attachment);
             attachmentUnit.setAttachment(attachment);
 
             return attachmentUnit;
+        }
+        else if (importedLectureUnit instanceof OnlineUnit importedOnlineUnit) {
+            OnlineUnit onlineUnit = new OnlineUnit();
+            onlineUnit.setName(importedOnlineUnit.getName());
+            onlineUnit.setReleaseDate(importedOnlineUnit.getReleaseDate());
+            onlineUnit.setDescription(importedOnlineUnit.getDescription());
+            onlineUnit.setSource(importedOnlineUnit.getSource());
+
+            return onlineUnit;
         }
         else if (importedLectureUnit instanceof ExerciseUnit) {
             // TODO: Import exercises and link them to the exerciseUnit
@@ -153,7 +162,7 @@ public class LectureImportService {
         attachment.setVersion(importedAttachment.getVersion());
         attachment.setAttachmentType(importedAttachment.getAttachmentType());
 
-        Path oldPath = filePathService.actualPathForPublicPath(URI.create(importedAttachment.getLink()));
+        Path oldPath = filePathService.actualPathForPublicPathOrThrow(URI.create(importedAttachment.getLink()));
         Path tempPath = FilePathService.getTempFilePath().resolve(oldPath.getFileName());
 
         try {
@@ -161,7 +170,7 @@ public class LectureImportService {
             FileUtils.copyFile(oldPath.toFile(), tempPath.toFile(), REPLACE_EXISTING);
 
             // File was copied to a temp directory and will be moved once we persist the attachment
-            attachment.setLink(filePathService.publicPathForActualPath(tempPath, null).toString());
+            attachment.setLink(filePathService.publicPathForActualPathOrThrow(tempPath, null).toString());
         }
         catch (IOException e) {
             log.error("Error while copying file", e);

@@ -22,6 +22,7 @@ export enum DocumentationType {
     Units = <any>'lectures/#lecture-units',
     Assessment = <any>'exercises/assessment/',
     Statistics = <any>'learning-analytics/',
+    SuspiciousBehavior = <any>'exams/instructors_guide.html#suspicious-behavior-detection',
 }
 
 @Component({
@@ -34,7 +35,7 @@ export enum DocumentationType {
     `,
 })
 export class DocumentationButtonComponent {
-    baseUrl = 'https://ls1intum.github.io/Artemis/user/';
+    baseUrl = 'https://docs.artemis.cit.tum.de/user/';
 
     @Input() type: DocumentationType;
 

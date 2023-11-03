@@ -17,13 +17,13 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.LearningPathService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathHealthDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathPageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -107,7 +107,7 @@ public class LearningPathResource {
     @GetMapping("courses/{courseId}/learning-paths")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructor
-    public ResponseEntity<SearchResultPageDTO<LearningPathPageableSearchDTO>> getLearningPathsOnPage(@PathVariable long courseId, PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<LearningPathInformationDTO>> getLearningPathsOnPage(@PathVariable long courseId, PageableSearchDTO<String> search) {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
@@ -139,6 +139,25 @@ public class LearningPathResource {
     }
 
     /**
+     * GET learning-path/:learningPathId : Gets the learning path information.
+     *
+     * @param learningPathId the id of the learning path that should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the learning path
+     */
+    @GetMapping("learning-path/{learningPathId}")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastStudent
+    public ResponseEntity<LearningPathInformationDTO> getLearningPath(@PathVariable long learningPathId) {
+        log.debug("REST request to get learning path with id: {}", learningPathId);
+        final var learningPath = learningPathRepository.findWithEagerUserByIdElseThrow(learningPathId);
+        final var user = userRepository.getUser();
+        if (!user.getId().equals(learningPath.getUser().getId())) {
+            throw new AccessForbiddenException("You are not the owner of the learning path.");
+        }
+        return ResponseEntity.ok(new LearningPathInformationDTO(learningPath));
+    }
+
+    /**
      * GET /learning-path/:learningPathId/graph : Gets the ngx representation of the learning path as a graph.
      *
      * @param learningPathId the id of the learning path that should be fetched
@@ -149,7 +168,25 @@ public class LearningPathResource {
     @EnforceAtLeastStudent
     public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxGraph(@PathVariable Long learningPathId) {
         log.debug("REST request to get ngx graph representation of learning path with id: {}", learningPathId);
-        LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPathId);
+        return getLearningPathNgx(learningPathId, NgxRequestType.GRAPH);
+    }
+
+    /**
+     * GET /learning-path/:learningPathId/path : Gets the ngx representation of the learning path as a sequential path.
+     *
+     * @param learningPathId the id of the learning path that should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the ngx representation of the learning path
+     */
+    @GetMapping("/learning-path/{learningPathId}/path")
+    @FeatureToggle(Feature.LearningPaths)
+    @EnforceAtLeastStudent
+    public ResponseEntity<NgxLearningPathDTO> getLearningPathNgxPath(@PathVariable Long learningPathId) {
+        log.debug("REST request to get ngx path representation of learning path with id: {}", learningPathId);
+        return getLearningPathNgx(learningPathId, NgxRequestType.PATH);
+    }
+
+    private ResponseEntity<NgxLearningPathDTO> getLearningPathNgx(@PathVariable Long learningPathId, NgxRequestType type) {
+        LearningPath learningPath = learningPathRepository.findWithEagerCompetenciesAndProgressAndLearningObjectsAndCompletedUsersByIdElseThrow(learningPathId);
         Course course = courseRepository.findByIdElseThrow(learningPath.getCourse().getId());
         if (!course.getLearningPathsEnabled()) {
             throw new BadRequestException("Learning paths are not enabled for this course.");
@@ -160,11 +197,15 @@ public class LearningPathResource {
                 throw new AccessForbiddenException("You are not allowed to access another users learning path.");
             }
         }
-        else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user) && !authorizationCheckService.isAdmin()) {
+        else if (!authorizationCheckService.isAtLeastInstructorInCourse(course, user)) {
             throw new AccessForbiddenException("You are not allowed to access another users learning path.");
         }
-        NgxLearningPathDTO graph = learningPathService.generateNgxGraphRepresentation(learningPath);
-        return ResponseEntity.ok(graph);
+
+        NgxLearningPathDTO ngxLearningPathDTO = switch (type) {
+            case GRAPH -> learningPathService.generateNgxGraphRepresentation(learningPath);
+            case PATH -> learningPathService.generateNgxPathRepresentation(learningPath);
+        };
+        return ResponseEntity.ok(ngxLearningPathDTO);
     }
 
     /**
@@ -198,5 +239,24 @@ public class LearningPathResource {
             learningPath = learningPathOptional.get();
         }
         return ResponseEntity.ok(learningPath.getId());
+    }
+
+    /**
+     * Enum representing the different graph representations that can be requested.
+     */
+    public enum NgxRequestType {
+
+        GRAPH("graph"), PATH("path");
+
+        private final String url;
+
+        NgxRequestType(String url) {
+            this.url = url;
+        }
+
+        @Override
+        public String toString() {
+            return url;
+        }
     }
 }

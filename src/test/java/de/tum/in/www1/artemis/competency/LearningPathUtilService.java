@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.LearningPath;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.LearningPathService;
+import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 
 /**
  * Service responsible for initializing the database with specific testdata related to learning paths for use in integration tests.
@@ -53,6 +53,18 @@ public class LearningPathUtilService {
         final var competencies = competencyRepository.findAllForCourse(course.getId());
         LearningPath learningPath = createLearningPath(competencies);
         learningPath.setCourse(course);
+        return learningPathRepository.save(learningPath);
+    }
+
+    /**
+     * Creates learning path for given user in course.
+     *
+     * @param course the course for which the learning path should be generated
+     * @return the persisted learning path
+     */
+    public LearningPath createLearningPathInCourseForUser(Course course, User user) {
+        final var learningPath = createLearningPathInCourse(course);
+        learningPath.setUser(user);
         return learningPathRepository.save(learningPath);
     }
 
