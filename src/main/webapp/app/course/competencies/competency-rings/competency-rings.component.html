@@ -1,5 +1,5 @@
 <!-- Adapted from https://www.chilitime.design/2018/09/ActivityRings/ -->
-<svg viewBox="0 0 35 35" xmlns="http://www.w3.org/2000/svg" [ngbTooltip]="'artemisApp.competency.competencyCard.ringsTooltip' | artemisTranslate">
+<svg viewBox="0 0 35 35" xmlns="http://www.w3.org/2000/svg" [ngbTooltip]="hideTooltip ? undefined : ('artemisApp.competency.competencyCard.ringsTooltip' | artemisTranslate)">
     <g class="ring ring1">
         <circle class="background" cx="50%" cy="50%" r="15.915" stroke-width="3"></circle>
         <circle
@@ -8,7 +8,7 @@
             cy="50%"
             r="15.915"
             stroke-width="3"
-            [style.opacity]="masteryPercentage == 0 ? 0 : 1"
+            [style.opacity]="masteryPercentage === 0 ? 0 : 1"
             [attr.stroke-dasharray]="masteryPercentage + ', 100'"
         ></circle>
     </g>
@@ -21,7 +21,7 @@
             cy="50%"
             r="15.915"
             stroke-width="4"
-            [style.opacity]="confidencePercentage == 0 ? 0 : 1"
+            [style.opacity]="confidencePercentage === 0 ? 0 : 1"
             [attr.stroke-dasharray]="confidencePercentage + ', 100'"
         ></circle>
     </g>
@@ -34,7 +34,7 @@
             cy="50%"
             r="15.915"
             stroke-width="6"
-            [style.opacity]="progressPercentage == 0 ? 0 : 1"
+            [style.opacity]="progressPercentage === 0 ? 0 : 1"
             [attr.stroke-dasharray]="progressPercentage + ', 100'"
         ></circle>
     </g>
