@@ -34,25 +34,26 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     ngxData: NgxChartsSingleSeriesDataEntry[] = [
         { name: 'Done', value: 0 },
         { name: 'Not done', value: 0 },
+        { name: 'N/A', value: 0 },
     ];
     ngxColor = {
         name: 'vivid',
         selectable: true,
         group: ScaleType.Ordinal,
-        domain: [GraphColors.GREEN, GraphColors.RED],
+        domain: [GraphColors.GREEN, GraphColors.RED, GraphColors.LIGHT_GREY],
     } as Color;
     bindFormatting = this.valueFormatting.bind(this);
 
     ngOnChanges(): void {
-        // [0, 0] will lead to the chart not being displayed,
-        // assigning [1, 0] works around this issue and displays 0 %, 0 / 0 with a green circle
+        // [0, 0, 0] will lead to the chart not being displayed,
+        // assigning [0, 0, 1] works around this issue and displays 0 %, 0 / 0 with a grey circle
         if (this.currentAbsolute == undefined && !this.receivedStats) {
-            this.assignValuesToData([1, 0]);
+            this.assignValuesToData([0, 0, 1]);
         } else {
             this.receivedStats = true;
             const remaining = roundValueSpecifiedByCourseSettings(this.currentMax! - this.currentAbsolute!, this.course);
-            this.stats = [this.currentAbsolute!, remaining];
-            return this.currentMax === 0 ? this.assignValuesToData([1, 0]) : this.assignValuesToData(this.stats);
+            this.stats = [this.currentAbsolute!, remaining, 0];
+            return this.currentMax === 0 ? this.assignValuesToData([0, 0, 1]) : this.assignValuesToData(this.stats);
         }
     }
 
@@ -102,8 +103,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
      * @param values the values that should be displayed by the chart
      */
     private assignValuesToData(values: number[]): void {
-        this.ngxData[0].value = values[0];
-        this.ngxData[1].value = values[1];
+        this.ngxData.forEach((entry: NgxChartsSingleSeriesDataEntry, index: number) => (entry.value = values[index]));
         this.ngxData = [...this.ngxData];
     }
 

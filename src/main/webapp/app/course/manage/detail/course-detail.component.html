@@ -12,6 +12,7 @@
                         [currentMax]="courseDTO?.currentMaxAssessments"
                     ></jhi-course-detail-doughnut-chart>
                     <jhi-course-detail-doughnut-chart
+                        *ngIf="course.complaintsEnabled"
                         class="doughnut-container col-md-6 my-3"
                         [course]="course"
                         [contentType]="DoughnutChartType.COMPLAINTS"
@@ -19,9 +20,8 @@
                         [currentAbsolute]="courseDTO?.currentAbsoluteComplaints"
                         [currentMax]="courseDTO?.currentMaxComplaints"
                     ></jhi-course-detail-doughnut-chart>
-                </div>
-                <div class="row">
                     <jhi-course-detail-doughnut-chart
+                        *ngIf="course.requestMoreFeedbackEnabled"
                         class="doughnut-container col-md-6 my-3"
                         [course]="course"
                         [contentType]="DoughnutChartType.FEEDBACK"
