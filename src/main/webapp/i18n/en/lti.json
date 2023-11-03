@@ -79,7 +79,8 @@
                 "title": "Deep Linking",
                 "linking": "Linking",
                 "linkedSuccessfully": "Linked exercises successfully",
-                "linkedFailed": "Error during deep linking"
+                "linkedFailed": "Error during deep linking",
+                "link": "Link"
             },
             "missingConfigurationWarning": "Missing values in the LTI1.3 configuration. Launches will not work.",
             "selectContentFromCourse": "Select content from course {{ title }}",

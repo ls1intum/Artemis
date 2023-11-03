@@ -7,11 +7,9 @@ import { FormBuilder, FormGroup } from '@angular/forms';
     templateUrl: './lti13-select-content.component.html',
 })
 export class Lti13SelectContentComponent implements OnInit {
-    courseId: number;
-    jwt: string;
-    id: string;
     actionLink: string;
     form: FormGroup;
+    isLinking = true;
 
     constructor(
         private route: ActivatedRoute,
@@ -32,7 +30,9 @@ export class Lti13SelectContentComponent implements OnInit {
     ngOnInit(): void {
         this.route.params.subscribe(() => {
             this.updateFormValues();
-            this.autoSubmitForm();
+            if (this.isLinking) {
+                this.autoSubmitForm();
+            }
         });
     }
 
@@ -42,9 +42,15 @@ export class Lti13SelectContentComponent implements OnInit {
      */
     updateFormValues(): void {
         this.actionLink = this.route.snapshot.queryParamMap.get('deepLinkUri') ?? '';
+        const jwt_token = this.route.snapshot.queryParamMap.get('jwt') ?? '';
+        const id_token = this.route.snapshot.queryParamMap.get('id') ?? '';
+        if (this.actionLink === '' || jwt_token === '' || id_token === '') {
+            this.isLinking = false;
+            return;
+        }
         this.form.patchValue({
-            JWT: this.route.snapshot.queryParamMap.get('jwt') ?? '',
-            id: this.route.snapshot.queryParamMap.get('id') ?? '',
+            JWT: jwt_token,
+            id: id_token,
         });
     }
 

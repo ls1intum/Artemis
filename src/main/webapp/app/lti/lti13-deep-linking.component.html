@@ -1,4 +1,4 @@
-<div>
+<div [hidden]="isLinking">
     <div class="modal-header">
         <div class="col d-flex flex-row pt-3 pb-1">
             <h4 class="modal-title" jhiTranslate="artemisApp.lti13.selectContentFromCourse" [translateValues]="{ title: course?.title }">
@@ -70,8 +70,9 @@
     <div class="modal-footer">
         <div>
             <button type="submit" (click)="sendDeepLinkRequest()" class="btn btn-success">
-                <span class="d-sm-inline" jhiTranslate="artemisApp.exercise.import.table.doImport"></span>
+                <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.link"></span>
             </button>
         </div>
     </div>
 </div>
+<h2 [hidden]="!isLinking" jhiTranslate="artemisApp.lti13.deepLinking.linkedFailed">Error during deep linking</h2>

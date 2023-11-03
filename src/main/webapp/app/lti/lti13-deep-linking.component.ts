@@ -15,18 +15,19 @@ import { Course } from 'app/entities/course.model';
 export class Lti13DeepLinkingComponent implements OnInit {
     courseId: number;
     exercises: Exercise[];
-    selectedExercise: Exercise;
+    selectedExercise?: Exercise;
     course: Course;
 
     predicate = 'type';
     reverse = false;
+    isLinking = true;
 
     // Icons
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faWrench = faWrench;
     constructor(
-        private route: ActivatedRoute,
+        public route: ActivatedRoute,
         private sortService: SortService,
         private courseManagementService: CourseManagementService,
         private http: HttpClient,
@@ -44,18 +45,26 @@ export class Lti13DeepLinkingComponent implements OnInit {
     ngOnInit() {
         this.route.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
-            this.accountService.identity().then((user) => {
-                if (user) {
-                    this.courseManagementService.findWithExercises(this.courseId).subscribe((findWithExercisesResult) => {
-                        if (findWithExercisesResult?.body?.exercises) {
-                            this.course = findWithExercisesResult.body;
-                            this.exercises = findWithExercisesResult.body.exercises;
-                        }
-                    });
-                } else {
-                    this.redirectUserToLoginThenTargetLink(window.location.href);
-                }
-            });
+
+            if (!this.courseId) {
+                this.isLinking = false;
+                return;
+            }
+
+            if (this.isLinking) {
+                this.accountService.identity().then((user) => {
+                    if (user) {
+                        this.courseManagementService.findWithExercises(this.courseId).subscribe((findWithExercisesResult) => {
+                            if (findWithExercisesResult?.body?.exercises) {
+                                this.course = findWithExercisesResult.body;
+                                this.exercises = findWithExercisesResult.body.exercises;
+                            }
+                        });
+                    } else {
+                        this.redirectUserToLoginThenTargetLink(window.location.href);
+                    }
+                });
+            }
         });
     }
 
@@ -118,10 +127,12 @@ export class Lti13DeepLinkingComponent implements OnInit {
                             window.location.replace(targetLink);
                         }
                     } else {
+                        this.isLinking = false;
                         console.log('Unexpected response status:', response.status);
                     }
                 },
                 error: (error) => {
+                    this.isLinking = false;
                     console.error('An error occurred:', error);
                 },
             });
