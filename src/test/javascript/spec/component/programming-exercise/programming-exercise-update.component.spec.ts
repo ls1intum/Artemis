@@ -403,7 +403,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             route.url = of([{ path: 'import' } as UrlSegment]);
         });
 
-        it('should reset dates, id, project key and store zipFile', fakeAsync(() => {
+        it('should reset dates, id and project key', fakeAsync(() => {
             const programmingExercise = getProgrammingExerciseForImport();
 
             route.data = of({ programmingExercise });
