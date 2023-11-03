@@ -33,6 +33,8 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
+    protected abstract get exercises(): Exercise[];
+
     protected constructor(
         private courseService: CourseManagementService,
         protected translateService: TranslateService,
@@ -141,6 +143,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
         } else {
             this.selectedExercises.push(exercise);
         }
+        this.allChecked = this.selectedExercises.length === this.exercises.length;
     }
 
     toggleMultipleExercises(exercises: Exercise[]) {
@@ -148,7 +151,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
         if (!this.allChecked) {
             this.selectedExercises = this.selectedExercises.concat(exercises);
         }
-        this.allChecked = !this.allChecked;
+        this.allChecked = this.selectedExercises.length === this.exercises.length;
     }
 
     isExerciseSelected(exercise: Exercise) {
