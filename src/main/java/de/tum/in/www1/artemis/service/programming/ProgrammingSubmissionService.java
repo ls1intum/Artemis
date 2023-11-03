@@ -527,7 +527,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     public Optional<ProgrammingSubmission> getRandomAssessableSubmission(ProgrammingExercise programmingExercise, boolean skipAssessmentQueue, boolean examMode,
             int correctionRound) {
-        return super.getRandomAssessableSubmission(programmingExercise, skipAssessmentQueue, examMode, correctionRound, programmingSubmissionRepository::findById);
+        return super.getRandomAssessableSubmission(programmingExercise, skipAssessmentQueue, examMode, correctionRound,
+                programmingSubmissionRepository::findWithEagerResultsAndFeedbacksById);
     }
 
     /**
