@@ -15,7 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.nimbusds.jose.shaded.json.JSONObject;
+import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -176,8 +176,8 @@ class LtiDeepLinkingServiceTest {
     }
 
     private void createMockOidcIdToken() {
-        JSONObject mockSettings = new JSONObject();
-        mockSettings.put("deep_link_return_url", "test_return_url");
+        JsonObject mockSettings = new JsonObject();
+        mockSettings.addProperty("deep_link_return_url", "test_return_url");
         when(oidcIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS)).thenReturn(mockSettings);
 
         when(oidcIdToken.getClaim("iss")).thenReturn("http://artemis.com");

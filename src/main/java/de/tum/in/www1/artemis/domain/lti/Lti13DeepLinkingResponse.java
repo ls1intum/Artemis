@@ -6,8 +6,8 @@ import java.util.Map;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import net.minidev.json.JSONObject;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 public class Lti13DeepLinkingResponse {
 
@@ -41,7 +41,7 @@ public class Lti13DeepLinkingResponse {
     @JsonProperty(Claims.CONTENT_ITEMS)
     private String contentItems;
 
-    private JSONObject deepLinkingSettings;
+    private JsonObject deepLinkingSettings;
 
     private String clientRegistrationId;
 
@@ -51,8 +51,8 @@ public class Lti13DeepLinkingResponse {
     }
 
     public Lti13DeepLinkingResponse(OidcIdToken ltiIdToken, String clientRegistrationId) {
-        this.deepLinkingSettings = new JSONObject(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS));
-        this.setReturnUrl(this.deepLinkingSettings.getAsString("deep_link_return_url"));
+        this.deepLinkingSettings = JsonParser.parseString(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS).toString()).getAsJsonObject();
+        this.setReturnUrl(this.deepLinkingSettings.get("deep_link_return_url").toString());
         this.clientRegistrationId = clientRegistrationId;
 
         this.setAud(ltiIdToken.getClaim("iss").toString());
@@ -159,11 +159,11 @@ public class Lti13DeepLinkingResponse {
         this.contentItems = contentItems;
     }
 
-    public JSONObject getDeepLinkingSettings() {
+    public JsonObject getDeepLinkingSettings() {
         return deepLinkingSettings;
     }
 
-    public void setDeepLinkingSettings(JSONObject deepLinkingSettings) {
+    public void setDeepLinkingSettings(JsonObject deepLinkingSettings) {
         this.deepLinkingSettings = deepLinkingSettings;
     }
 

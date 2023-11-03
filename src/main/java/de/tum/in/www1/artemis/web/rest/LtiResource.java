@@ -4,6 +4,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.google.gson.JsonObject;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -11,7 +13,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDeepLinkingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
-import net.minidev.json.JSONObject;
 
 /**
  * REST controller to handle LTI13 launches.
@@ -55,8 +56,8 @@ public class LtiResource {
         ltiDeepLinkingService.populateContentItems(String.valueOf(courseId), exerciseId);
         String targetLink = ltiDeepLinkingService.buildLtiDeepLinkResponse();
 
-        JSONObject json = new JSONObject();
-        json.put("targetLinkUri", targetLink);
-        return ResponseEntity.ok(json.toJSONString());
+        JsonObject json = new JsonObject();
+        json.addProperty("targetLinkUri", targetLink);
+        return ResponseEntity.ok(json.toString());
     }
 }
