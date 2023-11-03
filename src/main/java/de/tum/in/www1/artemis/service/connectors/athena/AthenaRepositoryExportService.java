@@ -43,12 +43,16 @@ public class AthenaRepositoryExportService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     public AthenaRepositoryExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseExportService programmingExerciseExportService,
-            FileService fileService, ProgrammingSubmissionRepository programmingSubmissionRepository) {
+            FileService fileService, ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.fileService = fileService;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
     }
 
     /**
@@ -97,8 +101,10 @@ public class AthenaRepositoryExportService {
 
         if (repositoryType == null) { // Export student repository
             var submission = programmingSubmissionRepository.findById(submissionId).orElseThrow();
-            zipFile = programmingExerciseExportService.createZipForRepositoryWithParticipation(programmingExercise,
-                    (ProgrammingExerciseStudentParticipation) submission.getParticipation(), exportOptions, exportDir, exportDir);
+            // Load participation with eager submissions
+            var participation = (ProgrammingExerciseStudentParticipation) programmingExerciseStudentParticipationRepository
+                    .findWithSubmissionsById(submission.getParticipation().getId()).get(0);
+            zipFile = programmingExerciseExportService.createZipForRepositoryWithParticipation(programmingExercise, participation, exportOptions, exportDir, exportDir);
         }
         else {
             List<String> exportErrors = List.of();
