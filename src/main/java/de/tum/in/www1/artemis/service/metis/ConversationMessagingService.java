@@ -90,10 +90,10 @@ public class ConversationMessagingService extends PostingService {
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        conversationService.isMemberElseThrow(newMessage.getConversation().getId(), author.getId());
+        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(newMessage.getConversation().getId(), author, Optional.empty())
+                .orElse(conversationRepository.findByIdElseThrow(newMessage.getConversation().getId()));
         log.info("      createMessage:conversationService.isMemberElseThrow DONE");
 
-        var conversation = conversationRepository.findByIdElseThrow(newMessage.getConversation().getId());
         log.info("      createMessage:conversationRepository.findByIdElseThrow DONE");
         // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
         conversation.setConversationParticipants(Set.of());
