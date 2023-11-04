@@ -47,15 +47,4 @@ describe('DocumentationButtonComponent', () => {
         expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.documentationLinks.prefix');
         expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.documentationLinks.course');
     });
-
-    it('should open the correct url', () => {
-        const mockedOpen = jest.fn();
-        const originalOpen = window.open;
-        window.open = mockedOpen;
-
-        comp.openDocumentation();
-        expect(mockedOpen).toHaveBeenCalledWith('https://docs.artemis.cit.tum.de/user/courses/customizable/', expect.anything());
-
-        window.open = originalOpen;
-    });
 });

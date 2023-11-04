@@ -28,27 +28,23 @@ const DocumentationLinks = {
 
 export type DocumentationType = keyof typeof DocumentationLinks;
 
-const baseUrl = 'https://docs.artemis.cit.tum.de/user/';
-
 @Component({
     selector: 'jhi-documentation-button',
     styleUrls: ['./documentation-button.component.scss'],
     template: `
-        <button type="button" class="text-primary documentation-button" (click)="openDocumentation()">
+        <a class="text-primary documentation-button" href="{{ baseUrl + DocumentationLinks[this.type] }}">
             <fa-icon [icon]="faCircleInfo" ngbTooltip="{{ getTooltipForType() }}"></fa-icon>
-        </button>
+        </a>
     `,
 })
 export class DocumentationButtonComponent {
+    readonly baseUrl = 'https://docs.artemis.cit.tum.de/user/';
+    readonly faCircleInfo = faCircleInfo;
+    readonly DocumentationLinks = DocumentationLinks;
+
     @Input() type: DocumentationType;
 
-    readonly faCircleInfo = faCircleInfo;
-
     constructor(private translateService: TranslateService) {}
-
-    openDocumentation() {
-        window.open(baseUrl + DocumentationLinks[this.type], '_blank');
-    }
 
     getTooltipForType() {
         const typeKey = 'artemisApp.documentationLinks.' + this.type.toLowerCase();
