@@ -47,7 +47,7 @@ export class DocumentationButtonComponent {
     constructor(private translateService: TranslateService) {}
 
     openDocumentation() {
-        window.open(baseUrl + DocumentationLinks[this.type].toLowerCase(), '_blank');
+        window.open(baseUrl + DocumentationLinks[this.type], '_blank');
     }
 
     getTooltipForType() {
