@@ -1,7 +1,6 @@
 import requests
 import configparser
 
-from authenticate_all_users import authenticate_all_generated_users
 from utils import login_as_admin
 from utils import get_user_details_by_index
 from utils import add_user_to_course
