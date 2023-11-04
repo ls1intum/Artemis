@@ -35,7 +35,7 @@ courseConfigsToTest.forEach((configToTest) => {
         });
 
         describe('Course overview communication', () => {
-            it('instructor should be able pin a post', () => {
+            it('instructor should be able pin a message', () => {
                 const content = 'Pin Post Content';
                 cy.login(studentOne, `/courses/${course.id}/discussion`);
                 communicationAPIRequest.createCourseWideMessage(course, courseWideRandomChannel.id!, content).then((response) => {
@@ -65,7 +65,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 });
             });
 
-            it('other students should be able to see post', () => {
+            it('other students should be able to see message', () => {
                 const content = 'Test Post Content';
                 cy.login(studentOne, `/courses/${course.id}/discussion`);
                 communicationAPIRequest.createCourseWideMessage(course, courseWideRandomChannel.id!, content).then((response) => {
@@ -76,7 +76,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 });
             });
 
-            it('other students should be able to search for post', () => {
+            it('other students should be able to search for message', () => {
                 const content = 'Test Search Post Content';
                 cy.login(studentOne, `/courses/${course.id}/discussion`);
                 communicationAPIRequest.createCourseWideMessage(course, courseWideRandomChannel.id!, content).then((response) => {
@@ -88,7 +88,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 });
             });
 
-            it('other students should be able to filter for post by context', () => {
+            it('other students should be able to filter for message by context', () => {
                 const content = 'Test Context Filter Post Content';
                 cy.intercept(GET, BASE_API + 'courses/*/conversations').as('getConversations');
                 cy.login(studentOne, `/courses/${course.id}/discussion`);
@@ -103,7 +103,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 });
             });
 
-            it('students should be able to filter for post by own', () => {
+            it('students should be able to filter for message by own', () => {
                 const content = 'Test Own Filter Post Content';
                 cy.login(studentThree, `/courses/${course.id}/discussion`);
                 communicationAPIRequest.createCourseWideMessage(course, courseWideRandomChannel.id!, content).then((response) => {
@@ -113,7 +113,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 });
             });
 
-            it('other students should be able to reply to post', () => {
+            it('other students should be able to reply to message', () => {
                 const content = 'Test Reply Post Content';
                 cy.login(studentOne, `/courses/${course.id}/discussion`);
                 communicationAPIRequest.createCourseWideMessage(course, courseWideRandomChannel.id!, content).then((response) => {
@@ -131,7 +131,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 });
             });
 
-            it('other students should be able to react to post', () => {
+            it('other students should be able to react to message', () => {
                 const content = 'Test React Post Content';
                 cy.login(studentOne, `/courses/${course.id}/discussion`);
                 communicationAPIRequest.createCourseWideMessage(course, courseWideRandomChannel.id!, content).then((response) => {
@@ -143,7 +143,7 @@ courseConfigsToTest.forEach((configToTest) => {
                     courseCommunication.checkReaction(post.id, emoji);
                 });
             });
-            it('students should be able to edit their post', () => {
+            it('students should be able to edit their message', () => {
                 const content = 'Test Edit Post Content';
                 const newContent = 'Test Edited Post Content';
                 cy.login(studentOne, `/courses/${course.id}/discussion`);
@@ -155,7 +155,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 });
             });
 
-            it('students should be able to delete their post', () => {
+            it('students should be able to delete their message', () => {
                 const content = 'Test Delete Post Content';
                 cy.login(studentOne, `/courses/${course.id}/discussion`);
                 communicationAPIRequest.createCourseWideMessage(course, courseWideRandomChannel.id!, content).then((response) => {
@@ -202,7 +202,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 courseCommunication.saveMessage();
             });
 
-            it('students should be able to search for exercise posts', () => {
+            it('students should be able to search for exercise messages', () => {
                 const content = 'Exercise Search Test Post Content';
                 cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
                 communicationAPIRequest.createCourseMessage(course, channel.id!, 'channel', content).then((response) => {
@@ -214,7 +214,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 });
             });
 
-            it('other students should be able to filter for exercise post by context', () => {
+            it('other students should be able to filter for exercise message by context', () => {
                 const content = 'Test Context Filter Exercise Post Content';
                 cy.login(studentOne, `/courses/${course.id}/exercises/${textExercise.id}`);
                 communicationAPIRequest.createCourseWideMessage(course, channel.id!, content).then((response) => {
@@ -305,7 +305,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 courseCommunication.saveMessage();
             });
 
-            it('students should be able to search for lecture posts', () => {
+            it('students should be able to search for lecture messages', () => {
                 const content = 'Lecture Search Test Post Content';
                 cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
                 communicationAPIRequest.createCourseWideMessage(course, channel.id!, content).then((response) => {
@@ -340,7 +340,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 });
             });
 
-            it('other students should be able to reply to a lecture post', () => {
+            it('other students should be able to reply to a lecture message', () => {
                 const content = 'Test Reply Post Content';
                 cy.login(studentOne, `/courses/${course.id}/lectures/${lecture.id}`);
                 communicationAPIRequest.createCourseWideMessage(course, channel.id!, content).then((response) => {
@@ -358,7 +358,7 @@ courseConfigsToTest.forEach((configToTest) => {
                 });
             });
 
-            it('other students should be able to react to a lecture post', () => {
+            it('other students should be able to react to a lecture message', () => {
                 const content = 'Test React Post Content';
                 cy.login(studentOne, `/courses/${course.id}/discussion`);
                 communicationAPIRequest.createCourseWideMessage(course, channel.id!, content).then((response) => {
