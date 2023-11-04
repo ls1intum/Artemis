@@ -90,7 +90,9 @@ courseConfigsToTest.forEach((configToTest) => {
 
             it('other students should be able to filter for post by context', () => {
                 const content = 'Test Context Filter Post Content';
+                cy.intercept(GET, BASE_API + 'courses/*/conversations').as('getConversations');
                 cy.login(studentOne, `/courses/${course.id}/discussion`);
+                cy.wait('@getConversations');
                 communicationAPIRequest.createCourseWideMessage(course, courseWideRandomChannel.id!, content).then((response) => {
                     const post = response.body;
                     cy.intercept(GET, BASE_API + 'courses/*/conversations').as('getConversations');
