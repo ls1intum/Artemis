@@ -141,7 +141,7 @@ public class SecurityConfiguration {
                 .requestMatchers(new AntPathRequestMatcher("/.well-known/jwks.json")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/management/prometheus/**")).access((authentication, context) ->
                     new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
-                .requestMatchers(new AntPathRequestMatcher("/api/**")).authenticated()
+                .requestMatchers(new AntPathRequestMatcher("/**")).authenticated()
             )
             .apply(securityConfigurerAdapter());
         // @formatter:on
