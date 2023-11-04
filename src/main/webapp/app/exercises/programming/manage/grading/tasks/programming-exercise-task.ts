@@ -8,7 +8,7 @@ export class ProgrammingExerciseTask extends ProgrammingExerciseServerSideTask {
     bonusMultiplier?: number;
     bonusPoints?: number;
     visibility?: Visibility;
-    type?: ProgrammingExerciseTestCaseType;
+    type?: ProgrammingExerciseTestCaseType | 'MIXED';
     resultingPoints?: number;
     resultingPointsPercent?: number;
     stats: TestCaseStats | undefined;

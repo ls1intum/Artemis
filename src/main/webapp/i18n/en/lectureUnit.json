@@ -121,6 +121,7 @@
                     "secondLine": "Artemis expects a repetition of the Outline slide at the start of every unit.",
                     "note": "Note: You will have the option to edit the information before finally submitting the attachment units."
                 },
+                "noFile": "There is no file for the automatic unit processing. Please go back and try again.",
                 "noUnitDetected": "No unit was detected and could not split automatically. Please add information for each unit!",
                 "pageTitle": "Process units",
                 "addUnit": "Add unit",
@@ -128,7 +129,12 @@
                 "processUnits": "Process units",
                 "processAutomatically": "Automatic unit processing",
                 "removeSlides": "Remove slides",
-                "removeSlidesInfo": "All slides that contain any of the following key phrases will be removed from all units. Multiple key phrases are comma-separated; key phrases are not case-sensitive. For example: 'Break, Solution slides'",
+                "removeSlidesInfo": {
+                    "firstLine": "All slides that contain any of the following key phrases will be removed from all units.",
+                    "secondLine": "Multiple key phrases are comma-separated, key phrases are not case-sensitive.",
+                    "thirdLine": "The following slides will be removed:"
+                },
+                "timeout": "Timed out during automatic unit processing. Please try again.",
                 "removeSlidesPlaceholder": "Example: 'Break, Solution slides'",
                 "validation": {
                     "invalidPages": "The start page or end page of {{ unitName }} are set incorrectly.",

@@ -27,6 +27,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.google.gson.JsonObject;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lti.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -35,7 +37,6 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import net.minidev.json.JSONObject;
 
 @Service
 @Profile("lti")
@@ -236,15 +237,15 @@ public class Lti13Service {
     }
 
     private String getScoreBody(String userId, String comment, Double score) {
-        JSONObject requestBody = new JSONObject();
-        requestBody.put("userId", userId);
-        requestBody.put("timestamp", (new DateTime()).toString());
-        requestBody.put("activityProgress", "Submitted");
-        requestBody.put("gradingProgress", "FullyGraded");
-        requestBody.put("comment", comment);
-        requestBody.put("scoreGiven", score);
-        requestBody.put("scoreMaximum", 100D);
-        return requestBody.toJSONString();
+        JsonObject requestBody = new JsonObject();
+        requestBody.addProperty("userId", userId);
+        requestBody.addProperty("timestamp", (new DateTime()).toString());
+        requestBody.addProperty("activityProgress", "Submitted");
+        requestBody.addProperty("gradingProgress", "FullyGraded");
+        requestBody.addProperty("comment", comment);
+        requestBody.addProperty("scoreGiven", score);
+        requestBody.addProperty("scoreMaximum", 100D);
+        return requestBody.toString();
     }
 
     /**
