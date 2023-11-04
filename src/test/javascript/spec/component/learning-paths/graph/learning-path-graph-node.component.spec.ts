@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
-import { MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { LearningPathNodeComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-node.component';
-import { NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
+import { CompetencyProgressForLearningPathDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover.directive';
+import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 
 describe('LearningPathGraphNodeComponent', () => {
     let fixture: ComponentFixture<LearningPathNodeComponent>;
@@ -13,7 +14,7 @@ describe('LearningPathGraphNodeComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [LearningPathNodeComponent, MockDirective(StickyPopoverDirective)],
+            declarations: [LearningPathNodeComponent, MockDirective(StickyPopoverDirective), MockComponent(CompetencyRingsComponent)],
             providers: [],
         })
             .compileComponents()
@@ -37,8 +38,9 @@ describe('LearningPathGraphNodeComponent', () => {
 
     it.each([NodeType.COMPETENCY_START, NodeType.COMPETENCY_END])('should display correct icon for competency node', (type: NodeType) => {
         comp.node = { id: '1', type: type } as NgxLearningPathNode;
+        comp.competencyProgressDTO = { competencyId: 1, masteryThreshold: 0, progress: 0, confidence: 0 } as CompetencyProgressForLearningPathDTO;
         fixture.detectChanges();
-        expect(fixture.debugElement.query(By.css('#competency')).nativeElement).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('#competency' + (type === NodeType.COMPETENCY_START ? '-start' : '-end'))).nativeElement).toBeTruthy();
     });
 
     it.each([NodeType.MATCH_START, NodeType.MATCH_END])('should display correct icon for match node', (type: NodeType) => {
