@@ -123,16 +123,31 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetFeedbackSuggestionsNotFound() throws Exception {
+    void testGetTextFeedbackSuggestionsNotFound() throws Exception {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
         request.get("/api/athena/text-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetProgrammingFeedbackSuggestionsNotFound() throws Exception {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+        request.get("/api/athena/programming-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetFeedbackSuggestionsAccessForbidden() throws Exception {
+    void testGetTextFeedbackSuggestionsAccessForbidden() throws Exception {
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
         request.get("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testGetProgrammingFeedbackSuggestionsAccessForbidden() throws Exception {
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
+        request.get("/api/athena/programming-exercises/" + textExercise.getId() + "/submissions/" + programmingSubmission.getId() + "/feedback-suggestions", HttpStatus.FORBIDDEN,
+                List.class);
     }
 
     @Test
@@ -171,8 +186,8 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "template", "solution", "tests" })
-    void testRepositoryExportEndpoint(String repoType) throws Exception {
+    @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests" })
+    void testRepositoryExportEndpoint(String urlSuffix) throws Exception {
         // Enable Athena for the exercise
         programmingExercise.setFeedbackSuggestionsEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
@@ -183,8 +198,8 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         // Get exports from endpoint
         var authHeaders = new HttpHeaders();
         authHeaders.add("Authorization", athenaSecret);
-        var repoZip = request.getFile("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/repository/" + repoType, HttpStatus.OK,
-                new LinkedMultiValueMap<>(), authHeaders, null);
+        var repoZip = request.getFile("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.OK, new LinkedMultiValueMap<>(),
+                authHeaders, null);
 
         // Check that ZIP contains file
         try (var zipFile = new ZipFile(repoZip)) {
@@ -193,14 +208,13 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "template", "solution", "tests" })
-    void testRepositoryExportEndpointsFailWhenAthenaNotEnabled(String repoType) throws Exception {
+    @ValueSource(strings = { "repository/template", "repository/solution", "repository/tests", "submissions/100/repository" })
+    void testRepositoryExportEndpointsFailWhenAthenaNotEnabled(String urlSuffix) throws Exception {
         var authHeaders = new HttpHeaders();
         authHeaders.add("Authorization", athenaSecret);
 
         // Expect status 503 because Athena is not enabled for the exercise
-        request.get("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/repository/" + repoType, HttpStatus.SERVICE_UNAVAILABLE, Result.class,
-                authHeaders);
+        request.get("/api/public/athena/programming-exercises/" + programmingExercise.getId() + "/" + urlSuffix, HttpStatus.SERVICE_UNAVAILABLE, Result.class, authHeaders);
     }
 
     @ParameterizedTest

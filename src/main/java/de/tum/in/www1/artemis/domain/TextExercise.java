@@ -6,7 +6,6 @@ import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 
 /**
@@ -32,16 +31,6 @@ public class TextExercise extends Exercise {
 
     public void setExampleSolution(String exampleSolution) {
         this.exampleSolution = exampleSolution;
-    }
-
-    /**
-     * Disable feedback suggestions for this exercise by setting the assessment type to MANUAL.
-     * Only changes the assessment type if feedback suggestions are currently enabled.
-     */
-    public void disableFeedbackSuggestions() {
-        if (this.getFeedbackSuggestionsEnabled()) {
-            setAssessmentType(AssessmentType.MANUAL);
-        }
     }
 
     /**

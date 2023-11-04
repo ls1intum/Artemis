@@ -18,8 +18,8 @@
             "suggestionTitle": {
                 "default": "This is an automatically generated feedback suggestion.",
                 "suggested": "This automatically generated feedback suggestion is not included in the final assessment unless you explicitly accept it.",
-                "accepted": "Automatically generated accepted feedback",
-                "adapted": "Automatically generated feedback, manually adapted"
+                "accepted": "Automatically generated accepted suggestion",
+                "adapted": "Automatically generated suggestion, manually adapted"
             },
             "suggestionPendingDialog": {
                 "title": "Pending Feedback Suggestions",

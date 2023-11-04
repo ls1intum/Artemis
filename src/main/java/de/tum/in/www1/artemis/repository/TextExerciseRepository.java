@@ -50,7 +50,7 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     @Query("""
             SELECT DISTINCT e FROM TextExercise e
             LEFT JOIN FETCH e.gradingCriteria
-            WHERE e.id = :#{#exerciseId}
+            WHERE e.id = :exerciseId
             """)
     Optional<TextExercise> findByIdWithGradingCriteria(long exerciseId);
 

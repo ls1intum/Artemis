@@ -83,7 +83,7 @@ public class AthenaSubmissionSendingService {
         // Find all submissions for exercise (later we will support others)
         Pageable pageRequest = PageRequest.of(0, SUBMISSIONS_PER_REQUEST);
         while (true) {
-            Page<Submission> submissions = submissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId(), pageRequest);
+            Page<Submission> submissions = submissionRepository.findLatestSubmittedSubmissionsByExerciseId(exercise.getId(), pageRequest);
             sendSubmissions(exercise, submissions.toSet(), maxRetries);
             if (submissions.isLast()) {
                 break;
@@ -113,7 +113,8 @@ public class AthenaSubmissionSendingService {
             return;
         }
 
-        log.info("Calling Athena to calculate automatic feedback for {} submissions.", filteredSubmissions.size());
+        log.info("Calling Athena to calculate automatic feedback for {} submissions (skipped {} because of individual due date filter)", filteredSubmissions.size(),
+                submissions.size() - filteredSubmissions.size());
 
         try {
             final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise),

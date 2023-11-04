@@ -73,9 +73,17 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testSubmissionSelectionFromEmpty() {
+    void testTextSubmissionSelectionFromEmpty() {
         athenaRequestMockProvider.ensureNoRequest();
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of());
+        assertThat(submission).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testProgrammingSubmissionSelectionFromEmpty() {
+        athenaRequestMockProvider.ensureNoRequest();
+        var submission = athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of());
         assertThat(submission).isEmpty();
     }
 
@@ -98,9 +106,18 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testNoSubmissionSelectionFromOne() {
+    void testTextNoSubmissionSelectionFromOne() {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", -1, jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId()));
+        assertThat(submission).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testProgrammingNoSubmissionSelectionFromOne() {
+        athenaRequestMockProvider.mockSelectSubmissionsAndExpect("programming", -1, jsonPath("$.exercise.id").value(programmingExercise.getId()),
+                jsonPath("$.submissionIds").isArray());
+        var submission = athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of(programmingSubmission1.getId()));
         assertThat(submission).isEmpty();
     }
 
@@ -123,7 +140,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testSubmissionSelectionWithFeedbackSuggestionsDisabled() {
+    void testTextSubmissionSelectionWithFeedbackSuggestionsDisabled() {
         textExercise.setFeedbackSuggestionsEnabled(false);
         assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId())))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -131,8 +148,23 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testSubmissionSelectionWithException() {
-        athenaRequestMockProvider.mockGetSelectedSubmissionAndExpectNetworkingException();
+    void testProgrammingSubmissionSelectionWithFeedbackSuggestionsDisabled() {
+        programmingExercise.setFeedbackSuggestionsEnabled(false);
+        assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of(programmingSubmission1.getId())))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testTextSubmissionSelectionWithException() {
+        athenaRequestMockProvider.mockGetSelectedSubmissionAndExpectNetworkingException("text");
         assertThatNoException().isThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId())));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testProgrammingSubmissionSelectionWithException() {
+        athenaRequestMockProvider.mockGetSelectedSubmissionAndExpectNetworkingException("programming");
+        assertThatNoException().isThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of(programmingSubmission1.getId())));
     }
 }

@@ -166,7 +166,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
     }
 
     @Test
-    void testFeedbackSendingWrongExerciseType() {
+    void testFeedbackSendingUnsupportedExerciseType() {
         athenaRequestMockProvider.mockSendFeedbackAndExpect("modeling");
         assertThatThrownBy(() -> athenaFeedbackSendingService.sendFeedback(new ModelingExercise(), new ModelingSubmission(), List.of()))
                 .isInstanceOf(IllegalArgumentException.class);

@@ -445,21 +445,24 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     }
 
     /**
-     * Gets all Submissions which are submitted
+     * Gets all latest submitted Submissions, only one per participation
      *
      * @param exerciseId the ID of the exercise
      * @param pageable   the pagination information for the query
-     * @return Set of Submissions
+     * @return Page of Submissions
      */
-    Page<Submission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId, Pageable pageable);
-
-    /**
-     * Gets all submitted Submissions
-     *
-     * @param exerciseId the ID of the exercise
-     * @return Set of Submissions
-     */
-    Set<Submission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
+    @Query("""
+                SELECT s FROM Submission s
+                WHERE s.participation.exercise.id = :exerciseId
+                      AND s.submitted = true
+                      AND s.submissionDate = (
+                        SELECT MAX(s2.submissionDate)
+                        FROM Submission s2
+                        WHERE s2.participation.id = s.participation.id
+                        AND s2.submitted = true
+                      )
+            """)
+    Page<Submission> findLatestSubmittedSubmissionsByExerciseId(@Param("exerciseId") long exerciseId, Pageable pageable);
 
     default Submission findByIdElseThrow(long submissionId) {
         return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", submissionId));

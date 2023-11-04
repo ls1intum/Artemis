@@ -374,7 +374,8 @@ public class Feedback extends DomainObject {
     }
 
     /**
-     * Checks whether the feedback was given manually by a tutor
+     * Checks whether the feedback was given manually by a tutor.
+     * (This includes feedback that is automatically created by Athena and approved by tutors.)
      *
      * @return true if it is a manual feedback else false
      */
