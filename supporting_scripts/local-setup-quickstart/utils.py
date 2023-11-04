@@ -13,6 +13,7 @@ class Colors:
     # See https://stackoverflow.com/a/287944/16540383 if you want to
     # extend the colors and styling options for explanation
     SUCCESS = '\033[92m'
+    ERROR = '\033[91m'
     ENDC = '\033[0m'
 
 
@@ -20,8 +21,21 @@ def print_success(success_message):
     print(f"{Colors.SUCCESS}{success_message}{Colors.ENDC}")
 
 
+def print_error(error_message):
+    print(f"{Colors.ERROR}{error_message}{Colors.ENDC}")
+
+
 def login_as_admin(session):
     authenticate_user(admin_user, admin_password, session)
+
+
+def add_user_to_course(session, course_id, user_group, user_name):
+    url = f"{server_url}/api/courses/{course_id}/{user_group}/{user_name}"
+    response = session.post(url)
+    if response.status_code == 200:
+        print_success(f"Added user {user_name} to group {user_group}")
+    else:
+        print_error(f"Could not add user {user_name} to group {user_group}")
 
 
 def authenticate_user(username, password, session=requests.Session()):

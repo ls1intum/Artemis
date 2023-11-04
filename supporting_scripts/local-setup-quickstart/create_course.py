@@ -2,24 +2,47 @@ import requests
 import configparser
 import json
 import urllib3
+import re
 
 from utils import login_as_admin
 from utils import print_success
+from utils import add_user_to_course
+from utils import get_user_details_by_index
 
 config = configparser.ConfigParser()
 config.read('config.ini')
 
 server_url = config.get('Settings', 'server_url')
+course_id = config.get('CourseSettings', 'course_id')
+is_local_course = config.get('CourseSettings', 'is_local_course')
+is_local_course = is_local_course.lower() == 'true' # convert to boolean
+course_name = config.get('CourseSettings', 'course_name')
+
+special_characters_reg_ex = r'[^a-zA-Z0-9_]'
 
 
-def create_course(session, course_name, course_short_name, is_local_course):
+def parse_course_name_to_short_name(course_name):
+    short_name = course_name.strip()
+    # short_name = short_name.lower()
+    short_name = short_name.replace(' ', '')
+    short_name = re.sub(special_characters_reg_ex, '', short_name)
+
+    short_name_does_not_start_with_letter = len(short_name) > 0 and not short_name[0].isalpha()
+    if short_name_does_not_start_with_letter:
+        short_name = 'a' + short_name
+
+    return short_name
+
+
+def create_course(session):
     url = f"{server_url}/api/admin/courses"
 
+    course_short_name = parse_course_name_to_short_name(course_name)
     default_course = {
         "id": None,
         "title": str(course_name),
         "shortName": str(course_short_name),
-        "customizeGroupNames": True,
+        "customizeGroupNames": False,
         "studentGroupName": None,
         "teachingAssistantGroupName": None,
         "editorGroupName": None,
@@ -49,6 +72,7 @@ def create_course(session, course_name, course_short_name, is_local_course):
     }
 
     if is_local_course:
+        default_course["customizeGroupNames"] = True
         # If it's a local course, use the original group names without the prefix
         default_course["studentGroupName"] = "students"
         default_course["teachingAssistantGroupName"] = "tutors"
@@ -67,23 +91,31 @@ def create_course(session, course_name, course_short_name, is_local_course):
     response = session.post(url, data=body, headers=headers)
 
     if response.status_code == 201:
-        print_success(f"Created course {course_name} with id {course_short_name}")
+        print_success(f"Created course {course_name} with shortName {course_short_name}")
     else:
         raise Exception(
             f"Could not create course {course_name}; Status code: {response.status_code}\n Double check whether the courseShortName {course_short_name} is not already used for another course!\nResponse content: {response.text}")
 
+    return response
 
+
+def add_users_to_groups_of_course(session, course_id):
+    print(f"Adding users to course with id {course_id}")
+    for userIndex in range(1, 21):
+        user_details = get_user_details_by_index(userIndex)
+        add_user_to_course(session, course_id, user_details["groups"][0], user_details["login"])
 
 
 def main():
     session = requests.session()
-
-    course_name = 'Local Course'
-    course_short_name = "localCourse"
-    is_local_course = True
-
     login_as_admin(session)
-    create_course(session, course_name, course_short_name, is_local_course)
+    # created_course_response = create_course(session)
+
+    print(is_local_course)
+    print(course_id)
+    # for the local course the users are already imported by the groups
+    if not is_local_course:
+        add_users_to_groups_of_course(session, course_id)
 
 
 if __name__ == "__main__":

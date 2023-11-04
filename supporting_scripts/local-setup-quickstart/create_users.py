@@ -65,4 +65,6 @@ def main():
 
 
 if __name__ == "__main__":
+    # DO ONLY USE FOR LOCAL COURSE SETUP!
+    # (Otherwise users will be created for whom the credentials are public in the repository!)
     main()
