@@ -91,9 +91,10 @@ def create_course(session):
         print_success(f"Created course {course_name} with shortName {course_short_name}")
         print(response.json())
     else:
+        print("Problem with the group 'students' and interacting with a test server? Is 'is_local_course' in "
+              "'config.ini' set to 'False'?")
         raise Exception(
             f"Could not create course {course_name}; Status code: {response.status_code}\n Double check whether the courseShortName {course_short_name} is not already used for another course!\nResponse content: {response.text}")
-
     return response
 
 
