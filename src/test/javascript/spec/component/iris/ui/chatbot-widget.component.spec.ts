@@ -189,7 +189,7 @@ describe('IrisChatbotWidgetComponent', () => {
         await fixture.whenStable();
         const message = component.messages.find((m) => m.id === mockServerPlanMessage.id);
         const planId = mockExercisePlanStep.plan;
-        const plan = message!.content.find((p) => p.id === planId);
+        const plan = message!.content.find((p) => p.id === planId) as IrisExercisePlan;
         const step = plan!.steps.find((s) => s.id === mockExercisePlanStep.id);
         expect(executeMock).toHaveBeenCalledWith(mockServerPlanMessage.id, mockExercisePlanStep);
         expect(step.executionStage).toEqual(ExecutionStage.IN_PROGRESS);
@@ -533,7 +533,7 @@ describe('IrisChatbotWidgetComponent', () => {
         fixture.detectChanges();
 
         const message = component.messages.find((m) => m.id === 2);
-        const plan = message!.content.find((p) => p.id === 2);
+        const plan = message!.content.find((p) => p.id === 2) as IrisExercisePlan;
         const step = plan!.steps.find((s) => s.id === 2);
         expect(notifyMock).toHaveBeenCalledWith(2, 2, 2);
         expect(step.executionStage).toEqual(ExecutionStage.COMPLETE);
@@ -571,7 +571,7 @@ describe('IrisChatbotWidgetComponent', () => {
         fixture.detectChanges();
 
         const message = component.messages.find((m) => m.id === 2);
-        const plan = message!.content.find((p) => p.id === 2);
+        const plan = message!.content.find((p) => p.id === 2) as IrisExercisePlan;
         const step = plan!.steps.find((s) => s.id === 8);
 
         expect(notifyMock).toHaveBeenCalledWith(2, 2, 8);
@@ -582,13 +582,13 @@ describe('IrisChatbotWidgetComponent', () => {
         stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerPlanMessage]));
         const notifyMock = jest.spyOn(component, 'notifyStepFailed');
         const dispatchMock = jest.spyOn(stateStore, 'dispatch');
-        component.notifyStepFailed(2, 2, 2, IrisErrorMessageKey.INTERNAL_PYRIS_ERROR, null);
+        component.notifyStepFailed(2, 2, 2, IrisErrorMessageKey.INTERNAL_PYRIS_ERROR);
         fixture.detectChanges();
 
         const message = component.messages.find((m) => m.id === 2);
         const plan = message!.content.find((p) => p.id === 2) as IrisExercisePlan;
         const step = plan!.steps.find((s) => s.id === 2);
-        expect(notifyMock).toHaveBeenCalledWith(2, 2, 2, IrisErrorMessageKey.INTERNAL_PYRIS_ERROR, null);
+        expect(notifyMock).toHaveBeenCalledWith(2, 2, 2, IrisErrorMessageKey.INTERNAL_PYRIS_ERROR);
         expect(dispatchMock).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.INTERNAL_PYRIS_ERROR));
         expect(step.executionStage).toEqual(ExecutionStage.FAILED);
         expect(plan.executing).toBeFalse();
@@ -598,13 +598,13 @@ describe('IrisChatbotWidgetComponent', () => {
         stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerPlanMessage]));
         const notifyMock = jest.spyOn(component, 'notifyStepFailed');
         const dispatchMock = jest.spyOn(stateStore, 'dispatch');
-        component.notifyStepFailed(2, 2, 2, null, null);
+        component.notifyStepFailed(2, 2, 2);
         fixture.detectChanges();
 
         const message = component.messages.find((m) => m.id === 2);
         const plan = message!.content.find((p) => p.id === 2) as IrisExercisePlan;
         const step = plan!.steps.find((s) => s.id === 2);
-        expect(notifyMock).toHaveBeenCalledWith(2, 2, 2, null, null);
+        expect(notifyMock).toHaveBeenCalledWith(2, 2, 2);
         expect(dispatchMock).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
         expect(step.executionStage).toEqual(ExecutionStage.FAILED);
         expect(plan.executing).toBeFalse();
@@ -613,37 +613,37 @@ describe('IrisChatbotWidgetComponent', () => {
     it('should notify step failed without corresponding message', () => {
         stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerPlanMessage]));
         const notifyMock = jest.spyOn(component, 'notifyStepFailed');
-        component.notifyStepFailed(3, 2, 2, null, null);
+        component.notifyStepFailed(3, 2, 2);
         fixture.detectChanges();
 
         const message = component.messages.find((m) => m.id === 3);
 
-        expect(notifyMock).toHaveBeenCalledWith(3, 2, 2, null, null);
+        expect(notifyMock).toHaveBeenCalledWith(3, 2, 2);
         expect(message).toBeUndefined();
     });
 
     it('should notify step failed without corresponding plan', () => {
         stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerPlanMessage]));
         const notifyMock = jest.spyOn(component, 'notifyStepFailed');
-        component.notifyStepFailed(2, 3, 2, null, null);
+        component.notifyStepFailed(2, 3, 2);
         fixture.detectChanges();
 
         const message = component.messages.find((m) => m.id === 2);
         const plan = message!.content.find((p) => p.id === 3);
-        expect(notifyMock).toHaveBeenCalledWith(2, 3, 2, null, null);
+        expect(notifyMock).toHaveBeenCalledWith(2, 3, 2);
         expect(plan).toBeUndefined();
     });
 
     it('should notify step failed without corresponding step', () => {
         stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerPlanMessage]));
         const notifyMock = jest.spyOn(component, 'notifyStepFailed');
-        component.notifyStepFailed(2, 2, 10, null, null);
+        component.notifyStepFailed(2, 2, 10);
         fixture.detectChanges();
 
         const message = component.messages.find((m) => m.id === 2);
         const plan = message!.content.find((p) => p.id === 2) as IrisExercisePlan;
         const step = plan!.steps.find((s) => s.id === 10);
-        expect(notifyMock).toHaveBeenCalledWith(2, 2, 10, null, null);
+        expect(notifyMock).toHaveBeenCalledWith(2, 2, 10);
         expect(step).toBeUndefined();
     });
 

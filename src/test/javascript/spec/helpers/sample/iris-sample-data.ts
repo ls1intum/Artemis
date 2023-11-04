@@ -150,6 +150,21 @@ export const mockCodeEditorWebsocketStepSuccess = {
     stepExecutionSuccess: mockPSExecutionSuccess,
 } as IrisCodeEditorWebsocketDTO;
 
+export const mockCodeEditorWebsocketSolutionSuccess = {
+    type: IrisCodeEditorWebsocketMessageType.STEP_SUCCESS,
+    stepExecutionSuccess: mockSolutionExecutionSuccess,
+} as IrisCodeEditorWebsocketDTO;
+
+export const mockCodeEditorWebsocketTemplateSuccess = {
+    type: IrisCodeEditorWebsocketMessageType.STEP_SUCCESS,
+    stepExecutionSuccess: mockTemplateExecutionSuccess,
+} as IrisCodeEditorWebsocketDTO;
+
+export const mockCodeEditorWebsocketTestSuccess = {
+    type: IrisCodeEditorWebsocketMessageType.STEP_SUCCESS,
+    stepExecutionSuccess: mockTestExecutionSuccess,
+} as IrisCodeEditorWebsocketDTO;
+
 export const mockCodeEditorWebsocketStepException = {
     type: IrisCodeEditorWebsocketMessageType.STEP_EXCEPTION,
     stepExecutionException: mockStepExecutionException,

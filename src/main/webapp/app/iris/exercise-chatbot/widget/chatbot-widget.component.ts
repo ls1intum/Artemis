@@ -773,7 +773,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
         }
     }
 
-    notifyStepFailed(messageId: number, planId: number, stepId: number, errorTranslationKey: IrisErrorMessageKey, translationParams: Map<string, any>) {
+    notifyStepFailed(messageId: number, planId: number, stepId: number, errorTranslationKey?: IrisErrorMessageKey, translationParams?: Map<string, any>) {
         const message = this.messages.find((m) => m.id === messageId);
         if (!message) {
             console.error('Received exception notification but could not find corresponding message.');
