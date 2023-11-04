@@ -44,7 +44,7 @@ public class AthenaFeedbackSuggestionsService {
         this.athenaModuleUrlHelper = athenaModuleUrlHelper;
     }
 
-    private record RequestDTO(Object exercise, Object submission) {
+    private record RequestDTO(ExerciseDTO exercise, SubmissionDTO submission) {
     }
 
     private record ResponseDTOText(List<TextFeedbackDTO> data) {

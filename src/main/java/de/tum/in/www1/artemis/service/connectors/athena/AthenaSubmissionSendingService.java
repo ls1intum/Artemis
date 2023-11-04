@@ -18,6 +18,8 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.SubmissionDTO;
 
 /**
  * Service for sending submissions to the Athena service for further processing
@@ -50,7 +52,7 @@ public class AthenaSubmissionSendingService {
         this.athenaDTOConverter = athenaDTOConverter;
     }
 
-    private record RequestDTO(Object exercise, List<Object> submissions) {
+    private record RequestDTO(ExerciseDTO exercise, List<SubmissionDTO> submissions) {
     }
 
     private record ResponseDTO(String data) {

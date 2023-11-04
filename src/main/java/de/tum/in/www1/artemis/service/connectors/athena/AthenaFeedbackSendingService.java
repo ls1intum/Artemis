@@ -12,6 +12,9 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.NetworkingException;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.FeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.SubmissionDTO;
 
 /**
  * Service for publishing feedback to the Athena service for further processing
@@ -39,7 +42,7 @@ public class AthenaFeedbackSendingService {
         this.athenaDTOConverter = athenaDTOConverter;
     }
 
-    private record RequestDTO(Object exercise, Object submission, List<Object> feedbacks) {
+    private record RequestDTO(ExerciseDTO exercise, SubmissionDTO submission, List<FeedbackDTO> feedbacks) {
     }
 
     private record ResponseDTO(String data) {

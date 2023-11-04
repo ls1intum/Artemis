@@ -36,7 +36,7 @@ public class AthenaDTOConverter {
      * @param exercise the exercise to convert
      * @return *ExerciseDTO for Athena
      */
-    public Object ofExercise(Exercise exercise) {
+    public ExerciseDTO ofExercise(Exercise exercise) {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 // Fetch text exercise with grade criteria
@@ -59,7 +59,7 @@ public class AthenaDTOConverter {
      * @param submission the submission to convert
      * @return *SubmissionDTO for Athena
      */
-    public Object ofSubmission(long exerciseId, Submission submission) {
+    public SubmissionDTO ofSubmission(long exerciseId, Submission submission) {
         if (submission instanceof TextSubmission textSubmission) {
             return TextSubmissionDTO.of(exerciseId, textSubmission);
         }
@@ -77,7 +77,7 @@ public class AthenaDTOConverter {
      * @param feedback     the feedback to convert
      * @return *FeedbackDTO for Athena
      */
-    public Object ofFeedback(Exercise exercise, long submissionId, Feedback feedback) {
+    public FeedbackDTO ofFeedback(Exercise exercise, long submissionId, Feedback feedback) {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 TextBlock feedbackTextBlock = null;
