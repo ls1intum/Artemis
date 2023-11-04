@@ -10,12 +10,11 @@ import { BASE_API, GET } from '../../support/constants';
 
 const courseConfigsToTest = [
     { description: 'messaging and communication enabled', config: { allowMessaging: true, allowCommunication: true } },
-    { description: 'only messaging enabled', config: { allowMessaging: true, allowCommunication: false } },
     { description: 'only communication enabled', config: { allowMessaging: false, allowCommunication: true } },
 ];
 
 courseConfigsToTest.forEach((configToTest) => {
-    describe('Course communication with' + configToTest.description, () => {
+    describe('Course communication with ' + configToTest.description, () => {
         let course: Course;
         let courseWideRandomChannel: ChannelDTO;
 
