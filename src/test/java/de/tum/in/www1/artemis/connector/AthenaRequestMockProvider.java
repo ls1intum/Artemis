@@ -132,6 +132,8 @@ public class AthenaRequestMockProvider {
     /**
      * Mocks the /select_submission API from Athena used to retrieve the selected submission for manual assessment
      * with a server error.
+     *
+     * @param moduleType The type of the module: "text" or "programming"
      */
     public void mockGetSelectedSubmissionAndExpectNetworkingException(String moduleType) {
         mockServerVeryShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules/" + moduleType + "/" + getTestModuleName(moduleType) + "/select_submission"))

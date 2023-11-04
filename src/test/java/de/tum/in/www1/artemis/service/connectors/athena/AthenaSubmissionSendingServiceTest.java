@@ -75,9 +75,9 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
     @AfterEach
     void tearDown() {
-        submissionRepository.deleteAll();
+        submissionRepository.deleteAll(submissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(textExercise.getId()));
         studentParticipationRepository.deleteAll(studentParticipationRepository.findByExerciseId(textExercise.getId()));
-        submissionRepository.deleteAll();
+        submissionRepository.deleteAll(submissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(programmingExercise.getId()));
         studentParticipationRepository.deleteAll(studentParticipationRepository.findByExerciseId(programmingExercise.getId()));
     }
 
