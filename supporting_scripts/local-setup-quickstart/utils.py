@@ -13,10 +13,11 @@ class Colors:
     # See https://stackoverflow.com/a/287944/16540383 if you want to
     # extend the colors and styling options for explanation
     SUCCESS = '\033[92m'
+    ENDC = '\033[0m'
 
 
 def print_success(success_message):
-    print(f"{Colors.SUCCESS}{success_message}{Colors.SUCCESS}")
+    print(f"{Colors.SUCCESS}{success_message}{Colors.ENDC}")
 
 
 def login_as_admin(session):
@@ -52,17 +53,19 @@ def get_user_details_by_index(user_index):
     authorities = []
     groups = []
 
+    user_role = "ROLE_USER"
+
     if 1 <= user_index <= 5 or user_index in {100, 102, 104, 105, 106}:
-        authorities = ["ROLE_USER"]
+        authorities = [user_role]
         groups = ["students"]
     elif 6 <= user_index <= 10 or user_index == 101:
-        authorities = ["ROLE_TA"]
+        authorities = [user_role, "ROLE_TA"]
         groups = ["tutors"]
     elif 11 <= user_index <= 15:
-        authorities = ["ROLE_EDITOR"]
+        authorities = [user_role, "ROLE_EDITOR"]
         groups = ["editors"]
     elif 16 <= user_index <= 20 or user_index == 103:
-        authorities = ["ROLE_INSTRUCTOR"]
+        authorities = [user_role, "ROLE_INSTRUCTOR"]
         groups = ["instructors"]
 
     return {
