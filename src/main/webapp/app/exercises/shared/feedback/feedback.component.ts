@@ -48,8 +48,12 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
     @Input() exercise?: Exercise;
     @Input() result: Result;
-    // Specify the feedback.text values that should be shown, all other values will not be visible.
-    @Input() feedbackFilter: string[];
+
+    /**
+     * Specify the feedback.testCase.id values that should be shown, all other values will not be visible.
+     * Used to show only feedback related to a specific task.
+     */
+    @Input() feedbackFilter: number[];
     @Input() showScoreChart = false;
     @Input() exerciseType: ExerciseType;
     /**
