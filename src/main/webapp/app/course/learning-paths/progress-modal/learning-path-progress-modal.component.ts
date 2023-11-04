@@ -1,7 +1,8 @@
 import { Component, Input, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
-import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathInformationDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 
 @Component({
     selector: 'jhi-learning-path-progress-modal',
@@ -13,9 +14,23 @@ export class LearningPathProgressModalComponent {
     @Input() learningPath: LearningPathInformationDTO;
     @ViewChild('learningPathGraphComponent') learningPathGraphComponent: LearningPathGraphComponent;
 
-    constructor(private activeModal: NgbActiveModal) {}
+    constructor(
+        private activeModal: NgbActiveModal,
+        private router: Router,
+    ) {}
 
     close() {
         this.activeModal.close();
+    }
+
+    onNodeClicked(node: NgxLearningPathNode) {
+        if (node.type === NodeType.COMPETENCY_START || node.type === NodeType.COMPETENCY_END) {
+            this.navigateToCompetency(node);
+        }
+    }
+
+    navigateToCompetency(node: NgxLearningPathNode) {
+        this.router.navigate(['courses', this.courseId, 'competencies', node.linkedResource]);
+        this.close();
     }
 }
