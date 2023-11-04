@@ -6,16 +6,14 @@ import re
 
 from utils import login_as_admin
 from utils import print_success
-from utils import add_user_to_course
-from utils import get_user_details_by_index
+from add_users_to_course import add_users_to_groups_of_course
 
 config = configparser.ConfigParser()
 config.read('config.ini')
 
 server_url = config.get('Settings', 'server_url')
-course_id = config.get('CourseSettings', 'course_id')
 is_local_course = config.get('CourseSettings', 'is_local_course')
-is_local_course = is_local_course.lower() == 'true' # convert to boolean
+is_local_course = is_local_course.lower() == 'true'  # convert to boolean
 course_name = config.get('CourseSettings', 'course_name')
 
 special_characters_reg_ex = r'[^a-zA-Z0-9_]'
@@ -23,7 +21,6 @@ special_characters_reg_ex = r'[^a-zA-Z0-9_]'
 
 def parse_course_name_to_short_name(course_name):
     short_name = course_name.strip()
-    # short_name = short_name.lower()
     short_name = short_name.replace(' ', '')
     short_name = re.sub(special_characters_reg_ex, '', short_name)
 
@@ -92,6 +89,7 @@ def create_course(session):
 
     if response.status_code == 201:
         print_success(f"Created course {course_name} with shortName {course_short_name}")
+        print(response.json())
     else:
         raise Exception(
             f"Could not create course {course_name}; Status code: {response.status_code}\n Double check whether the courseShortName {course_short_name} is not already used for another course!\nResponse content: {response.text}")
@@ -99,23 +97,15 @@ def create_course(session):
     return response
 
 
-def add_users_to_groups_of_course(session, course_id):
-    print(f"Adding users to course with id {course_id}")
-    for userIndex in range(1, 21):
-        user_details = get_user_details_by_index(userIndex)
-        add_user_to_course(session, course_id, user_details["groups"][0], user_details["login"])
-
-
 def main():
     session = requests.session()
     login_as_admin(session)
-    # created_course_response = create_course(session)
+    created_course_response = create_course(session)
 
-    print(is_local_course)
-    print(course_id)
-    # for the local course the users are already imported by the groups
-    if not is_local_course:
-        add_users_to_groups_of_course(session, course_id)
+    response_data = created_course_response.json()  # This will parse the response content as JSON
+    course_id = response_data["id"]
+
+    add_users_to_groups_of_course(session, course_id)
 
 
 if __name__ == "__main__":
