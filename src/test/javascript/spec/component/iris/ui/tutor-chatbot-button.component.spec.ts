@@ -57,6 +57,7 @@ describe('TutorChatbotButtonComponent', () => {
             declarations: [IrisTutorChatbotButtonComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 IrisHttpChatSessionService,
+                IrisStateStore,
                 { provide: MatDialog, useValue: mockDialog },
                 { provide: Overlay, useValue: mockOverlay },
                 { provide: AccountService, useClass: MockAccountService },

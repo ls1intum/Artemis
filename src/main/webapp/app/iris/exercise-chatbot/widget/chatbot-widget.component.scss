@@ -299,7 +299,8 @@ pre {
     white-space: nowrap;
     padding: 5px;
     border-radius: var(--bs-border-radius);
-    width: 74px;
+    width: 75px;
+    min-width: 75px;
 }
 
 .show-details {
@@ -320,6 +321,6 @@ pre {
     background-color: var(--iris-client-chat-background);
     border-bottom-left-radius: 15px;
     border-bottom-right-radius: 15px;
-    padding: 15px;
+    padding: 0 15px;
     margin: 0 10px 10px;
 }

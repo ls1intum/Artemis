@@ -10,7 +10,7 @@ import { ExerciseComponent } from 'app/entities/iris/iris-content-type.model';
 /**
  * The IrisCodeEditorWebsocketMessageType defines the type of message sent over the code editor websocket.
  */
-enum IrisCodeEditorWebsocketMessageType {
+export enum IrisCodeEditorWebsocketMessageType {
     MESSAGE = 'MESSAGE',
     STEP_SUCCESS = 'STEP_SUCCESS',
     STEP_EXCEPTION = 'STEP_EXCEPTION',
@@ -69,7 +69,7 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     protected handleWebsocketResponse(response: IrisCodeEditorWebsocketDTO): void {
         console.log(response);
         if (response.rateLimitInfo) {
-            this.handleRateLimitInfo(response.rateLimitInfo);
+            super.handleRateLimitInfo(response.rateLimitInfo);
         }
         switch (response.type) {
             case IrisCodeEditorWebsocketMessageType.MESSAGE:
@@ -79,7 +79,7 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
                 this.handleStepSuccess(response.stepExecutionSuccess!);
                 break;
             case IrisCodeEditorWebsocketMessageType.STEP_EXCEPTION:
-                this.handleExecutionException(response.stepExecutionException!);
+                this.handleStepException(response.stepExecutionException!);
                 break;
             case IrisCodeEditorWebsocketMessageType.ERROR:
                 super.handleError(response.errorTranslationKey, response.translationParams);
@@ -91,7 +91,7 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
         this.stepSuccess.next(response); // notify subscribers of changes applied
     }
 
-    private handleExecutionException(response: StepExecutionException): void {
+    private handleStepException(response: StepExecutionException): void {
         this.stepException.next(response);
     }
 

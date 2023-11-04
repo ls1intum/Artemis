@@ -19,7 +19,10 @@
             class="col-auto btn btn-danger btn-sm me-2"
             [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]"
         >
-            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
+            <span *ngIf="!plagiarismCaseInfo?.createdByContinuousPlagiarismControl" jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
+            <span *ngIf="plagiarismCaseInfo?.createdByContinuousPlagiarismControl" jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCaseSignificantSimilarity"
+                >Significant Similarity</span
+            >
         </a>
 
         <div class="d-flex flex-column gap-2">

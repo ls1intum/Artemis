@@ -56,7 +56,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
     }
 
-    private toRepository(component: ExerciseComponent) {
+    toRepository(component: ExerciseComponent) {
         switch (component) {
             case ExerciseComponent.TEMPLATE_REPOSITORY:
                 return REPOSITORY.TEMPLATE;
