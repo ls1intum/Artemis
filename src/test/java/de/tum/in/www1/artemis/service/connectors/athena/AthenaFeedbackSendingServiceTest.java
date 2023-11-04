@@ -112,6 +112,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.feedbacks[0].indexStart").value(textBlock.getStartIndex()), jsonPath("$.feedbacks[0].indexEnd").value(textBlock.getEndIndex()));
 
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
+        athenaRequestMockProvider.verify();
     }
 
     private GradingCriterion createExampleGradingCriterion() {
@@ -151,6 +152,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.feedbacks[0].indexEnd").value(textBlock.getEndIndex()), jsonPath("$.feedbacks[0].structuredGradingInstructionId").value(101));
 
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
+        athenaRequestMockProvider.verify();
     }
 
     @Test
@@ -163,6 +165,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.feedbacks[0].lineStart").value(12), jsonPath("$.feedbacks[0].lineEnd").value(12));
 
         athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback));
+        athenaRequestMockProvider.verify();
     }
 
     @Test
@@ -174,9 +177,9 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Test
     void testEmptyFeedbackNotSending() {
-        athenaRequestMockProvider.ensureNoRequest();
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of());
         athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of());
+        athenaRequestMockProvider.verify(); // Ensure that there was no request
     }
 
     @Test

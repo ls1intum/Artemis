@@ -65,6 +65,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         List<TextFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(textExercise, textSubmission);
         assertThat(suggestions.get(0).title()).isEqualTo("Not so good");
         assertThat(suggestions.get(0).indexStart()).isEqualTo(3);
+        athenaRequestMockProvider.verify();
     }
 
     @Test
@@ -77,6 +78,7 @@ class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
         List<ProgrammingFeedbackDTO> suggestions = athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(programmingExercise, programmingSubmission);
         assertThat(suggestions.get(0).title()).isEqualTo("Not so good");
         assertThat(suggestions.get(0).lineStart()).isEqualTo(3);
+        athenaRequestMockProvider.verify();
     }
 
     @Test

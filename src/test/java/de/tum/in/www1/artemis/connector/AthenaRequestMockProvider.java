@@ -225,9 +225,9 @@ public class AthenaRequestMockProvider {
     }
 
     /**
-     * Ensures that there is no request to Athena
+     * Verify the requests made to Athena
      */
-    public void ensureNoRequest() {
+    public void verify() {
         mockServer.verify();
     }
 

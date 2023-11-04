@@ -98,7 +98,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testSendSubmissionsSuccessText() {
+    void testSendTextSubmissionsSuccess() {
         createTextSubmissionsForSubmissionSending(1);
         athenaRequestMockProvider.mockSendSubmissionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.exercise.maxPoints").value(textExercise.getMaxPoints()),
@@ -107,6 +107,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.submissions[0].text").value(DEFAULT_SUBMISSION_TEXT), jsonPath("$.submissions[0].language").value(DEFAULT_SUBMISSION_LANGUAGE.toString()));
 
         athenaSubmissionSendingService.sendSubmissions(textExercise);
+        athenaRequestMockProvider.verify();
     }
 
     private void createProgrammingSubmissionForSubmissionSending() {
@@ -117,6 +118,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
         studentParticipationRepository.save(studentParticipation);
         submission.setParticipation(studentParticipation);
         submissionRepository.save(submission);
+        athenaRequestMockProvider.verify();
     }
 
     @Test
@@ -131,14 +133,15 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.submissions[0].exerciseId").value(programmingExercise.getId()), jsonPath("$.submissions[0].repositoryUrl").value("TODO"));
 
         athenaSubmissionSendingService.sendSubmissions(programmingExercise);
+        athenaRequestMockProvider.verify();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendNoSubmissions() {
-        athenaRequestMockProvider.ensureNoRequest();
         athenaSubmissionSendingService.sendSubmissions(textExercise);
         athenaSubmissionSendingService.sendSubmissions(programmingExercise);
+        athenaRequestMockProvider.verify(); // Ensure that there was no request
     }
 
     @Test
@@ -153,6 +156,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
                 jsonPath("$.submissions[0].text").value(DEFAULT_SUBMISSION_TEXT));
 
         athenaSubmissionSendingService.sendSubmissions(textExercise);
+        athenaRequestMockProvider.verify();
     }
 
     @Test

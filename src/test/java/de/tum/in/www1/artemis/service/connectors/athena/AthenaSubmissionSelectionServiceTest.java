@@ -74,17 +74,17 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTextSubmissionSelectionFromEmpty() {
-        athenaRequestMockProvider.ensureNoRequest();
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of());
         assertThat(submission).isEmpty();
+        athenaRequestMockProvider.verify(); // Ensure that there was no request
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testProgrammingSubmissionSelectionFromEmpty() {
-        athenaRequestMockProvider.ensureNoRequest();
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of());
         assertThat(submission).isEmpty();
+        athenaRequestMockProvider.verify(); // Ensure that there was no request
     }
 
     @Test
@@ -93,6 +93,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", 1, jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId()));
         assertThat(submission).contains(textSubmission1.getId());
+        athenaRequestMockProvider.verify();
     }
 
     @Test
@@ -102,6 +103,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
                 jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of(programmingSubmission1.getId()));
         assertThat(submission).contains(programmingSubmission1.getId());
+        athenaRequestMockProvider.verify();
     }
 
     @Test
@@ -110,6 +112,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", -1, jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId()));
         assertThat(submission).isEmpty();
+        athenaRequestMockProvider.verify();
     }
 
     @Test
@@ -119,6 +122,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
                 jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of(programmingSubmission1.getId()));
         assertThat(submission).isEmpty();
+        athenaRequestMockProvider.verify();
     }
 
     @Test
@@ -127,6 +131,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
         athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", 1, jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId(), textSubmission2.getId()));
         assertThat(submission).contains(textSubmission1.getId());
+        athenaRequestMockProvider.verify();
     }
 
     @Test
@@ -136,6 +141,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
                 jsonPath("$.submissionIds").isArray());
         var submission = athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of(programmingSubmission1.getId(), programmingSubmission2.getId()));
         assertThat(submission).contains(programmingSubmission2.getId());
+        athenaRequestMockProvider.verify();
     }
 
     @Test
