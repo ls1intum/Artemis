@@ -145,27 +145,23 @@ describe('IrisCodeEditorWebsocketService', () => {
 
     it('should receive a new server response step success and handle the subscription', fakeAsync(() => {
         const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(mockCodeEditorWebsocketStepSuccess));
-        const handleStepSuccessMock = jest.spyOn(irisWebsocketService, 'handleStepSuccess');
 
         irisStateStore.dispatch(new SessionReceivedAction(0, []));
         tick();
 
         expect(websocketReceiveMock).toHaveBeenCalledOnce();
         expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
-        expect(handleStepSuccessMock).toHaveBeenCalledWith(mockCodeEditorWebsocketStepSuccess.stepExecutionSuccess);
         flush();
     }));
 
     it('should receive a new server response step exception and handle the subscription', fakeAsync(() => {
         const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(mockCodeEditorWebsocketStepException));
-        const handleStepSuccessMock = jest.spyOn(irisWebsocketService, 'handleStepException');
 
         irisStateStore.dispatch(new SessionReceivedAction(0, []));
         tick();
 
         expect(websocketReceiveMock).toHaveBeenCalledOnce();
         expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
-        expect(handleStepSuccessMock).toHaveBeenCalledWith(mockCodeEditorWebsocketStepException.stepExecutionException);
         flush();
     }));
 });

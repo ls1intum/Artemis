@@ -80,6 +80,22 @@ export const mockSolutionExecutionSuccess = {
     paths: ['test'],
 } as StepExecutionSuccess;
 
+export const mockTemplateExecutionSuccess = {
+    messageId: 1,
+    planId: 1,
+    stepId: 3,
+    component: ExerciseComponent.TEMPLATE_REPOSITORY,
+    paths: [''],
+} as StepExecutionSuccess;
+
+export const mockTestExecutionSuccess = {
+    messageId: 1,
+    planId: 1,
+    stepId: 4,
+    component: ExerciseComponent.TEST_REPOSITORY,
+    paths: [''],
+} as StepExecutionSuccess;
+
 export const mockStepExecutionException = {
     messageId: 1,
     planId: 1,

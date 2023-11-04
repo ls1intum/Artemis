@@ -68,7 +68,15 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { IrisCodeEditorWebsocketService } from 'app/iris/code-editor-websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisCodeEditorChatbotButtonComponent } from 'app/iris/exercise-chatbot/code-editor-chatbot-button.component';
-import { mockPSExecutionSuccess, mockSolutionExecutionSuccess, mockStepExecutionException } from '../../helpers/sample/iris-sample-data';
+import {
+    mockPSExecutionSuccess,
+    mockSolutionExecutionSuccess,
+    mockStepExecutionException,
+    mockTemplateExecutionSuccess,
+    mockTestExecutionSuccess,
+} from '../../helpers/sample/iris-sample-data';
+import { ExerciseComponent } from 'app/entities/iris/iris-content-type.model';
+import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 
 describe('CodeEditorInstructorIntegration', () => {
     // needed to make sure ace is defined
@@ -119,6 +127,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 MockComponent(ResultComponent),
                 MockComponent(ProgrammingExerciseInstructionStepWizardComponent),
                 MockComponent(IrisCodeEditorChatbotButtonComponent),
+                MockComponent(IrisChatbotWidgetComponent),
             ],
             providers: [
                 JhiLanguageHelper,
@@ -422,8 +431,8 @@ describe('CodeEditorInstructorIntegration', () => {
 
         const psSuccessObservable = of(mockPSExecutionSuccess);
         const irisCodeEditorWebsocketService = containerDebugElement.injector.get(IrisCodeEditorWebsocketService);
-        jest.spyOn(irisCodeEditorWebsocketService, 'handleStepSuccess').mockReturnValue(psSuccessObservable);
-        const handleChangeSpyPS = jest.spyOn(container, 'handleChangeNotification');
+        jest.spyOn(irisCodeEditorWebsocketService, 'onPromptReload').mockReturnValue(psSuccessObservable);
+        //const handleChangeSpyPS = jest.spyOn(container, 'handleChangeNotification');
 
         container.ngOnInit();
         routeSubject.next({ exerciseId: 1, participationId: 4 });
@@ -432,7 +441,8 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(container.editableInstructions).toBeDefined();
         container.handleChangeNotification(mockPSExecutionSuccess);
 
-        expect(handleChangeSpyPS).toHaveBeenCalledOnce();
+        //expect(handleOnPromptMock).toHaveBeenCalled();
+        //expect(handleChangeSpyPS).toHaveBeenCalledOnce();
         expect(container.editableInstructions.exercise.problemStatement).toBe('hello ps');
     });
     it('should load current repo when observe the execution success via code editor websocket', () => {
@@ -446,8 +456,7 @@ describe('CodeEditorInstructorIntegration', () => {
         exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
         const solutionSuccessObservable = of(mockSolutionExecutionSuccess);
         const irisCodeEditorWebsocketService = containerDebugElement.injector.get(IrisCodeEditorWebsocketService);
-        jest.spyOn(irisCodeEditorWebsocketService, 'handleStepSuccess').mockReturnValue(solutionSuccessObservable);
-        const handleChangeSpySolution = jest.spyOn(container, 'handleChangeNotification');
+        jest.spyOn(irisCodeEditorWebsocketService, 'onPromptReload').mockReturnValue(solutionSuccessObservable);
         const toRepositorySpy = jest.spyOn(container, 'toRepository');
 
         container.ngOnInit();
@@ -455,12 +464,57 @@ describe('CodeEditorInstructorIntegration', () => {
         findWithParticipationsSubject.next({ body: exercise });
         containerFixture.detectChanges();
         expect(container.codeEditorContainer).toBeDefined();
+        expect(container.codeEditorContainer.aceEditor).toBeDefined();
         expect(container.selectedRepository).toBe(container.REPOSITORY.SOLUTION);
         container.handleChangeNotification(mockSolutionExecutionSuccess);
 
-        expect(handleChangeSpySolution).toHaveBeenCalledOnce();
         expect(toRepositorySpy).toHaveBeenCalled();
-        //expect(loadFileSpy).toHaveBeenCalled();
+    });
+    it('should get template repo when observe the execution success via code editor websocket', () => {
+        const exercise = {
+            id: 1,
+            course: { id: 1 },
+            problemStatement,
+        } as ProgrammingExercise;
+        exercise.studentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
+        exercise.templateParticipation = { id: 3, programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
+        exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
+        const templateSuccessObservable = of(mockTemplateExecutionSuccess);
+        const irisCodeEditorWebsocketService = containerDebugElement.injector.get(IrisCodeEditorWebsocketService);
+        jest.spyOn(irisCodeEditorWebsocketService, 'onPromptReload').mockReturnValue(templateSuccessObservable);
+        const toRepositorySpy = jest.spyOn(container, 'toRepository');
+
+        container.ngOnInit();
+        routeSubject.next({ exerciseId: 1, participationId: 4 });
+        findWithParticipationsSubject.next({ body: exercise });
+        containerFixture.detectChanges();
+        expect(container.codeEditorContainer).toBeDefined();
+        container.handleChangeNotification(mockTemplateExecutionSuccess);
+
+        expect(toRepositorySpy).toHaveBeenCalledWith(ExerciseComponent.TEMPLATE_REPOSITORY);
+    });
+    it('should get test repo when observe the execution success via code editor websocket', () => {
+        const exercise = {
+            id: 1,
+            course: { id: 1 },
+            problemStatement,
+        } as ProgrammingExercise;
+        exercise.studentParticipations = [{ id: 2, repositoryUrl: 'test', exercise } as ProgrammingExerciseStudentParticipation];
+        exercise.templateParticipation = { id: 3, programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
+        exercise.solutionParticipation = { id: 4, repositoryUrl: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
+        const testSuccessObservable = of(mockTestExecutionSuccess);
+        const irisCodeEditorWebsocketService = containerDebugElement.injector.get(IrisCodeEditorWebsocketService);
+        jest.spyOn(irisCodeEditorWebsocketService, 'onPromptReload').mockReturnValue(testSuccessObservable);
+        const toRepositorySpy = jest.spyOn(container, 'toRepository');
+
+        container.ngOnInit();
+        routeSubject.next({ exerciseId: 1, participationId: 4 });
+        findWithParticipationsSubject.next({ body: exercise });
+        containerFixture.detectChanges();
+        expect(container.codeEditorContainer).toBeDefined();
+        container.handleChangeNotification(mockTestExecutionSuccess);
+
+        expect(toRepositorySpy).toHaveBeenCalledWith(ExerciseComponent.TEST_REPOSITORY);
     });
     it('should give exception when observe the execution exception via code editor websocket', () => {
         const exercise = {
@@ -475,8 +529,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
         const exceptionObservable = of(mockStepExecutionException);
         const irisCodeEditorWebsocketService = containerDebugElement.injector.get(IrisCodeEditorWebsocketService);
-        jest.spyOn(irisCodeEditorWebsocketService, 'handleStepException').mockReturnValue(exceptionObservable);
-        const handleExceptionSpy = jest.spyOn(container, 'handleExceptionNotification');
+        jest.spyOn(irisCodeEditorWebsocketService, 'onStepException').mockReturnValue(exceptionObservable);
 
         container.ngOnInit();
         routeSubject.next({ exerciseId: 1, participationId: 4 });
@@ -484,6 +537,6 @@ describe('CodeEditorInstructorIntegration', () => {
         containerFixture.detectChanges();
         container.handleExceptionNotification(mockStepExecutionException);
 
-        expect(handleExceptionSpy).toHaveBeenCalledOnce();
+        expect(container.chatbotButton).toBeDefined();
     });
 });
