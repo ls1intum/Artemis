@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, Subject } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingDates } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,7 +12,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, IncludedInOverallScore, ValidationReason, resetDates } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -518,10 +518,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.isExamMode = false;
         }
         this.loadCourseExerciseCategories(courseId);
-        resetDates(this.programmingExercise);
+        resetProgrammingDates(this.programmingExercise);
 
         this.programmingExercise.projectKey = undefined;
-        this.programmingExercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
         this.programmingExercise.shortName = undefined;
         this.programmingExercise.title = undefined;
         if (this.programmingExercise.submissionPolicy) {
@@ -1011,14 +1010,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.programmingExercise.exerciseGroup = undefined;
         this.programmingExercise.course = undefined;
         this.programmingExercise.projectKey = undefined;
-        this.programmingExercise.dueDate = undefined;
-        this.programmingExercise.assessmentDueDate = undefined;
-        this.programmingExercise.releaseDate = undefined;
-        this.programmingExercise.startDate = undefined;
-        this.programmingExercise.exampleSolutionPublicationDate = undefined;
-        //without dates set, they can only be false
-        this.programmingExercise.allowComplaintsForAutomaticAssessments = false;
-        this.programmingExercise.allowManualFeedbackRequests = false;
+
+        resetProgrammingDates(this.programmingExercise);
+
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
         // we need to get it from the history object as setting the programming language
         // sets the project type of the programming exercise to the default value for the programming language.
