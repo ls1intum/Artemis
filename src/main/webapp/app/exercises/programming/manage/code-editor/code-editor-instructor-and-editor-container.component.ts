@@ -48,7 +48,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         codeEditorWebsocketService: IrisCodeEditorWebsocketService,
     ) {
         super(router, exerciseService, courseExerciseService, domainService, programmingExerciseParticipationService, location, participationService, route, alertService);
-        codeEditorWebsocketService.onPromptReload().subscribe((filesChanged: StepExecutionSuccess) => {
+        codeEditorWebsocketService.onStepSuccess().subscribe((filesChanged: StepExecutionSuccess) => {
             this.handleChangeNotification(filesChanged);
         });
         codeEditorWebsocketService.onStepException().subscribe((stepException: StepExecutionException) => {
@@ -78,14 +78,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 this.codeEditorContainer.aceEditor.forceReloadAll(success.paths!);
             }
         }
-        // Find the corresponding plan and step and execute the next step, if there is one.
-        // Also, the plan's currentStepIndex must be updated so that the chatbot widget can display the correct step as in progress.
         const widget = this.chatbotButton?.dialogRef?.componentRef?.instance; // Access the widget via the button even if it is not open
         widget?.notifyStepCompleted(success.messageId, success.planId, success.stepId);
     }
 
     private handleExceptionNotification(exception: StepExecutionException) {
-        // Find the corresponding plan and failed step and execute the next step, if there is one.
         const widget = this.chatbotButton?.dialogRef?.componentRef?.instance; // Access the widget via the button even if it is not open
         widget?.notifyStepFailed(exception.messageId, exception.planId, exception.stepId, exception.errorTranslationKey!, exception.translationParams!);
     }

@@ -71,7 +71,7 @@
             <column name="instructions" type="TEXT">
                 <constraints nullable="false"/>
             </column>
-            <column name="executed" type="BOOLEAN">
+            <column name="executionStage" type="VARCHAR(20)">
                 <constraints nullable="false"/>
             </column>
         </createTable>

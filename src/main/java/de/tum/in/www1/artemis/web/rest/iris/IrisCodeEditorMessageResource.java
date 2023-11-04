@@ -163,7 +163,7 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
 
         step.setComponent(updatedStep.getComponent());
         step.setInstructions(updatedStep.getInstructions());
-        step.setExecuted(updatedStep.isExecuted());
+        step.setExecutionStage(updatedStep.getExecutionStage());
 
         var savedStep = irisExercisePlanStepRepository.save(step);
         return ResponseEntity.ok(savedStep);

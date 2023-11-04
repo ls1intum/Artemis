@@ -15,6 +15,10 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class IrisExercisePlanStep extends DomainObject {
 
+    public enum ExecutionStage {
+        NOT_EXECUTED, IN_PROGRESS, FAILED, COMPLETE
+    }
+
     @ManyToOne
     @JoinColumn(name = "exercise_plan_id")
     private IrisExercisePlan plan;
@@ -28,8 +32,9 @@ public class IrisExercisePlanStep extends DomainObject {
     @Column(name = "instructions")
     private String instructions;
 
-    @Column(name = "executed")
-    private boolean executed = false;
+    @Column(name = "execution_stage")
+    @Enumerated(EnumType.STRING)
+    private ExecutionStage executionStage;
 
     public IrisExercisePlanStep() {
     }
@@ -38,6 +43,7 @@ public class IrisExercisePlanStep extends DomainObject {
         this.plan = plan;
         this.component = component;
         this.instructions = instructions;
+        this.executionStage = ExecutionStage.NOT_EXECUTED;
     }
 
     public IrisExercisePlan getPlan() {
@@ -64,11 +70,11 @@ public class IrisExercisePlanStep extends DomainObject {
         this.instructions = instructions;
     }
 
-    public boolean isExecuted() {
-        return executed;
+    public ExecutionStage getExecutionStage() {
+        return executionStage;
     }
 
-    public void setExecuted(boolean executed) {
-        this.executed = executed;
+    public void setExecutionStage(ExecutionStage executionStage) {
+        this.executionStage = executionStage;
     }
 }

@@ -29,7 +29,7 @@
     {{#user~}}{{problemStatement}}{{~/user}}
     {{#system~}}End of problem statement.{{~/system}}
 {{else}}
-    {{#system~}}The problem statement has not yet been written.{{/system}}
+    {{#system~}}The problem statement has not yet been written.{{~/system}}
 {{/if}}
 
 {{#system~}}Here are all the filepaths and file contents in the template repository:{{~/system}}
@@ -66,29 +66,43 @@
 {{~/system}}
 {{#each (truncate chatHistory 5)}}
     {{#if (equal this.sender "user")}}
-        {{#user~}}{{this.content[0].textContent}}{{~/user}}
+        {{#if @last}}
+            {{#system~}}Here is the last thing the instructor said, expecting a response from you.{{~/system}}
+        {{/if}}
+        {{#user~}}
+            {{#each this.content}}
+                {{this.contentAsString}}
+            {{/each}}
+        {{~/user}}
     {{else}}
-        {{#assistant~}}{{this.content[0].textContent}}{{~/assistant}}
+        {{#assistant~}}
+            {{#each this.content}}
+                {{this.contentAsString}}
+            {{/each}}
+        {{~/assistant}}
     {{/if}}
 {{/each}}
-{{#system~}}
-    Now, continue the conversation. Respond to the instructor like a helpful assistant would.
-    Be sure to respond in future tense, as you have not yet actually taken any action.
-{{~/system}}
-{{#assistant~}}{{gen 'response' temperature=0.7 max_tokens=200}}{{~/assistant}}
 
-{{#system~}}
-    Has the instructor's intention been made clear enough for you to confidently make actual changes to the exercise?
-    If so, respond with the number 1. Otherwise, respond with 0.
-{{~/system}}
-{{#assistant~}}{{gen 'will_suggest_changes' max_tokens=1}}{{~/assistant}}
+{{#block hidden=True}}
+    {{#system~}}
+        Has the instructor's intention been made clear enough for you to confidently make actual changes to the exercise?
+        If so, respond with the number 1. Otherwise, respond with 0.
+    {{~/system}}
+    {{#assistant~}}{{gen 'will_suggest_changes' max_tokens=1}}{{~/assistant}}
+{{/block}}
 
 {{#if (contains will_suggest_changes "1")}}
+    {{#system~}}
+        Now, continue the conversation. Respond to the instructor like a helpful assistant would.
+        Be sure to respond in future tense, as you have not yet actually taken any action.
+        Instead of listing the things you will change, make reference to the plan you are about to write.
+    {{~/system}}
+    {{#assistant~}}{{gen 'response' temperature=0.7 max_tokens=200}}{{~/assistant}}
     {{#system~}}
         You are now drafting a plan for the exercise to show to the instructor.
         You may choose to edit any or all components.
         For each exercise component you choose to edit, you will describe your intended changes to that component.
-    {{/system}}
+    {{~/system}}
     {{#geneach 'steps' num_iterations=4}}
         {{#system~}}
             Say the exercise component that you would like to make changes to (priority {{add @index 1}}).
@@ -108,4 +122,10 @@
         {{~/system}}
         {{#assistant~}}{{gen 'this.instructions' temperature=0.5 max_tokens=150}}{{~/assistant}}
     {{/geneach}}
+{{else}}
+    {{#system~}}
+        Now, continue the conversation. Respond to the instructor like a helpful assistant would.
+        Be sure to respond in future tense, as you have not yet actually taken any action.
+    {{~/system}}
+    {{#assistant~}}{{gen 'response' temperature=0.7 max_tokens=200}}{{~/assistant}}
 {{/if}}

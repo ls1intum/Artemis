@@ -43,7 +43,6 @@ import {
     IrisMessageContent,
     IrisMessageContentType,
     IrisTextMessageContent,
-    getExecutionStage,
     getTextContent,
     hideOrUnhide,
     isComplete,
@@ -495,6 +494,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     onClearSession(content: any) {
         this.modalService.open(content).result.then((result: string) => {
             if (result === 'confirm') {
+                this.isLoading = false;
                 this.createNewSession();
             }
         });
@@ -701,12 +701,12 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             console.error('Tried to execute plan that is already complete.');
             return;
         }
-        plan.executing = true;
         const step = plan.steps[nextStepIndex];
         if (!step) {
             console.error('Could not find next step to execute.');
             return;
         }
+        plan.executing = true;
         if (isInProgress(step)) {
             console.log('Step already in progress, awaiting response.');
             return;
@@ -747,60 +747,57 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
      * @param stepId - The id of the step that was completed.
      */
     notifyStepCompleted(messageId: number, planId: number, stepId: number) {
-        const message = this.messages.find((m) => m.id === messageId);
-        if (!message) {
-            console.error('Received change notification but could not find corresponding message.');
-            return;
-        }
-        const plan = message.content.find((c) => c.id === planId) as IrisExercisePlan;
-        if (!plan) {
-            console.error('Received change notification but could not find corresponding plan.');
-            return;
-        }
-        // Search through steps in the plan until we find the one that was executed
-        const step = plan.steps.find((s) => s.id === stepId);
-        if (!step) {
-            console.error('Received change notification but could not find corresponding step.');
+        const [plan, step] = this.findPlanStep(messageId, planId, stepId);
+        if (!plan || !step) {
             return;
         }
         step.executionStage = ExecutionStage.COMPLETE;
-        const nextStepIndex = this.getNextStepIndex(plan);
-        if (plan.executing && nextStepIndex < plan.steps.length) {
-            // The plan is still executing and there are more steps to execute
-            this.executePlanStep(messageId, plan.steps[nextStepIndex]);
-        } else {
-            plan.executing = false;
+        if (plan.executing) {
+            const nextStepIndex = this.getNextStepIndex(plan);
+            if (nextStepIndex < plan.steps.length) {
+                // The plan is still executing and there are more steps to execute
+                this.executePlanStep(messageId, plan.steps[nextStepIndex]);
+            } else {
+                plan.executing = false;
+            }
         }
     }
 
     notifyStepFailed(messageId: number, planId: number, stepId: number, errorTranslationKey: IrisErrorMessageKey, translationParams: Map<string, any>) {
-        const message = this.messages.find((m) => m.id === messageId);
-        if (!message) {
-            console.error('Received exception notification but could not find corresponding message.');
+        const [plan, step] = this.findPlanStep(messageId, planId, stepId);
+        if (!plan || !step) {
             return;
         }
-        const plan = message.content.find((c) => c.id === planId) as IrisExercisePlan;
-        if (!plan) {
-            console.error('Received exception notification but could not find corresponding plan.');
-            return;
-        }
-        // Search through steps in the plan until we find the one that was executed
-        const step = plan.steps.find((s) => s.id === stepId);
-        if (!step) {
-            console.error('Received change notification but could not find corresponding step.');
-            return;
-        }
+        plan.executing = false;
         step.executionStage = ExecutionStage.FAILED;
         if (!errorTranslationKey) {
             this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
         } else {
             this.stateStore.dispatch(new ConversationErrorOccurredAction(errorTranslationKey, translationParams));
         }
-        plan.executing = false;
+    }
+
+    private findPlanStep(messageId: number, planId: number, stepId: number): [IrisExercisePlan?, IrisExercisePlanStep?] {
+        const message = this.messages.find((m) => m.id === messageId);
+        if (!message) {
+            console.error('Could not find message with id ' + messageId);
+            return [undefined, undefined];
+        }
+        const plan = message.content.find((c) => c.id === planId) as IrisExercisePlan;
+        if (!plan) {
+            console.error('Could not find plan with id ' + planId);
+            return [undefined, undefined];
+        }
+        const step = plan.steps.find((s) => s.id === stepId);
+        if (!step) {
+            console.error('Could not find exercise step with id ' + stepId);
+            return [plan, undefined];
+        }
+        return [plan, step];
     }
 
     getStepColor(step: IrisExercisePlanStep) {
-        switch (getExecutionStage(step)) {
+        switch (step.executionStage) {
             case ExecutionStage.NOT_EXECUTED:
                 return 'var(--iris-chat-widget-background)';
             case ExecutionStage.IN_PROGRESS:

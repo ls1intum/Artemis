@@ -29,33 +29,24 @@ export class IrisExercisePlanStep {
     plan: number;
     component: ExerciseComponent;
     instructions: string;
-    executed: boolean;
-    executionStage?: ExecutionStage; // Client-side only
+    executionStage: ExecutionStage;
     hidden?: boolean; // Client-side only
 }
 
-export function getExecutionStage(step: IrisExercisePlanStep): ExecutionStage {
-    if (!step.executionStage) {
-        // If this is the first time we're checking the execution stage, use the executed flag
-        step.executionStage = step.executed ? ExecutionStage.COMPLETE : ExecutionStage.NOT_EXECUTED;
-    }
-    return step.executionStage;
-}
-
 export function isNotExecuted(step: IrisExercisePlanStep): boolean {
-    return getExecutionStage(step) === ExecutionStage.NOT_EXECUTED;
+    return step.executionStage === ExecutionStage.NOT_EXECUTED;
 }
 
 export function isInProgress(step: IrisExercisePlanStep): boolean {
-    return getExecutionStage(step) === ExecutionStage.IN_PROGRESS;
+    return step.executionStage === ExecutionStage.IN_PROGRESS;
 }
 
 export function isFailed(step: IrisExercisePlanStep): boolean {
-    return getExecutionStage(step) === ExecutionStage.FAILED;
+    return step.executionStage === ExecutionStage.FAILED;
 }
 
 export function isComplete(step: IrisExercisePlanStep): boolean {
-    return getExecutionStage(step) === ExecutionStage.COMPLETE;
+    return step.executionStage === ExecutionStage.COMPLETE;
 }
 
 export function hideOrUnhide(step: IrisExercisePlanStep): void {
@@ -63,7 +54,11 @@ export function hideOrUnhide(step: IrisExercisePlanStep): void {
 }
 
 export function isHidden(step: IrisExercisePlanStep): boolean {
-    return step.hidden ?? true; // default to true if undefined
+    if (step.hidden === undefined) {
+        // When a plan is first loaded, all steps are hidden by default
+        step.hidden = true;
+    }
+    return step.hidden;
 }
 
 export enum ExerciseComponent {

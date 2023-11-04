@@ -99,7 +99,7 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
      * Returns a subject that notifies subscribers when the code editor should be reloaded.
      * @returns {Subject<StepExecutionSuccess>}
      */
-    public onPromptReload(): Observable<StepExecutionSuccess> {
+    public onStepSuccess(): Observable<StepExecutionSuccess> {
         return this.stepSuccess.asObservable();
     }
 

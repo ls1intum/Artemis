@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisCodeEditorWebsocketService;
+import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -168,8 +169,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 irisCodeEditorWebsocketService.sendException(session, err.getCause());
                 return null;
             }
-            if (response == null) {
-                log.error("No response from Iris model");
+            if (response == null || !response.content().hasNonNull("response")) {
+                log.error("No response from Iris model: " + response);
                 irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
                 return null;
             }
@@ -197,15 +198,18 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @return The converted IrisMessage
      * @throws IrisParseResponseException If the JsonNode does not have the correct structure
      */
-    private static IrisMessage toIrisMessage(JsonNode content) throws IrisParseResponseException {
+    private IrisMessage toIrisMessage(JsonNode content) throws IrisParseResponseException {
         var message = new IrisMessage();
-        if (!content.hasNonNull("response")) {
-            throw new IrisParseResponseException("Iris model responded, but did not contain a variable 'response'");
+        try {
+            var chatWindowResponse = content.required("response").asText();
+            message.addContent(new IrisTextMessageContent(message, chatWindowResponse));
         }
-        var chatWindowResponse = content.get("response").asText();
-        message.addContent(new IrisTextMessageContent(message, chatWindowResponse));
+        catch (IllegalArgumentException e) {
+            log.error("Missing fields, could not parse IrisTextMessageContent: " + content.toPrettyString(), e);
+            throw new IrisParseResponseException("Iris response does not have the correct structure");
+        }
 
-        if (content.hasNonNull("steps")) {
+        if (content.path("steps").isArray()) {
             message.addContent(toExercisePlan(content));
         }
 
@@ -213,28 +217,17 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     /**
-     * Converts a JsonNode into an IrisExercisePlanMessageContent. In order for this to succeed, the JsonNode must have
-     * the following structure:
+     * Converts a JsonNode into an IrisExercisePlanMessageContent.
+     * In order for this to succeed, the JsonNode must have the following structure:
      *
      * <pre>
      *     {
-     *          "components": [
+     *          "steps": [
      *              {
-     *                  "component": "problem statement",
-     *                  "plan": "..."
+     *                  "component": "problem statement"|"solution"|"template"|"tests",
+     *                  "instructions": "..."
      *              },
-     *              {
-     *                  "component": "solution",
-     *                  "plan": "..."
-     *              },
-     *              {
-     *                  "component": "template",
-     *                  "plan": "..."
-     *              },
-     *              {
-     *                  "component": "test",
-     *                  "plan": "..."
-     *              }
+     *              ...
      *          ]
      *     }
      * </pre>
@@ -243,27 +236,28 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @return The converted IrisExercisePlanMessageContent
      * @throws IrisParseResponseException If the JsonNode does not have the correct structure
      */
-    private static IrisExercisePlan toExercisePlan(JsonNode content) throws IrisParseResponseException {
-        if (!content.get("steps").isArray()) {
-            throw new IrisParseResponseException("Exercise plan contained a 'steps' variable, but it was not an array");
-        }
+    private IrisExercisePlan toExercisePlan(JsonNode content) throws IrisParseResponseException {
         var exercisePlan = new IrisExercisePlan();
         List<IrisExercisePlanStep> planSteps = new ArrayList<>();
         for (JsonNode node : content.get("steps")) {
-            if (!node.hasNonNull("instructions")) {
-                continue; // This might happen as a result of the LLM deciding to stop generating components, which is OK
+            try {
+                ExerciseComponent component = switch (node.required("component").asText()) {
+                    // The model is instructed to respond with one of these strings or !done! to indicate that it is done
+                    // The model might also misbehave and send something else, in which case we will ignore it
+                    case "problem statement" -> ExerciseComponent.PROBLEM_STATEMENT;
+                    case "solution" -> ExerciseComponent.SOLUTION_REPOSITORY;
+                    case "template" -> ExerciseComponent.TEMPLATE_REPOSITORY;
+                    case "tests" -> ExerciseComponent.TEST_REPOSITORY;
+                    default -> null;
+                };
+                if (component == null) {
+                    continue;
+                }
+                var instructions = node.required("instructions").asText();
+                planSteps.add(new IrisExercisePlanStep(exercisePlan, component, instructions));
             }
-            var plan = node.get("instructions").asText();
-            ExerciseComponent component = switch (node.get("component").asText("")) {
-                // The model is instructed to respond with one of these strings, but it might misbehave and send something else
-                case "problem statement" -> ExerciseComponent.PROBLEM_STATEMENT;
-                case "solution" -> ExerciseComponent.SOLUTION_REPOSITORY;
-                case "template" -> ExerciseComponent.TEMPLATE_REPOSITORY;
-                case "tests" -> ExerciseComponent.TEST_REPOSITORY;
-                default -> null; // No idea what the model responded with, so we just ignore it
-            };
-            if (component != null) {
-                planSteps.add(new IrisExercisePlanStep(exercisePlan, component, plan));
+            catch (IllegalArgumentException e) {
+                log.error("Missing fields, could not parse IrisExercisePlanStep: " + node.toPrettyString(), e);
             }
         }
         exercisePlan.setSteps(planSteps);
@@ -279,6 +273,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @param exerciseStep The IrisExercisePlanComponent to request exercise changes for
      */
     public void requestChangesToExerciseComponent(IrisCodeEditorSession session, IrisExercisePlanStep exerciseStep) {
+        irisExercisePlanStepRepository.setInProgress(exerciseStep);
         var component = exerciseStep.getComponent();
         String template = switch (component) {
             case PROBLEM_STATEMENT -> load("problem_statement.hbs");
@@ -295,38 +290,39 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         irisConnectorService.sendRequestV2(template, load("model.txt"), params).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
+                irisExercisePlanStepRepository.setFailed(exerciseStep);
                 irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, err.getCause());
                 return null;
             }
-            if (response == null) {
-                log.error("No response from Iris model");
+            if (response == null || !response.content().path("changes").isArray()) {
+                log.error("No response from Iris model: " + response);
+                irisExercisePlanStepRepository.setFailed(exerciseStep);
                 irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, new IrisNoResponseException());
                 return null;
             }
-            log.info("\n\n\nReceived response from iris model: " + response.content().toPrettyString());
+            log.info("Received response from iris model: " + response.content().toPrettyString());
             try {
-                var changes = extractChangesForComponent(response.content(), component);
-                if (changes.isEmpty()) {
-                    log.error("No changes for exercise " + component + " in response from Iris model");
+                String updatedProblemStatement = null;
+                Set<String> paths = null;
+                if (component == ExerciseComponent.PROBLEM_STATEMENT) {
+                    var changes = extractProblemStatementChanges(response.content());
+                    log.info("Extracted problem statement changes: " + changes);
+                    updatedProblemStatement = injectChangesIntoProblemStatement(exercise, changes);
                 }
                 else {
-                    log.info("\n\n\nExtracted changes for exercise " + component + ": " + changes);
-                    String updatedProblemStatement = null;
-                    Set<String> paths = null;
-                    switch (component) {
-                        case PROBLEM_STATEMENT -> updatedProblemStatement = injectChangesIntoProblemStatement(exercise, changes);
-                        case SOLUTION_REPOSITORY -> paths = injectChangesIntoRepository(solutionRepository(exercise), changes);
-                        case TEMPLATE_REPOSITORY -> paths = injectChangesIntoRepository(templateRepository(exercise), changes);
-                        case TEST_REPOSITORY -> paths = injectChangesIntoRepository(testRepository(exercise), changes);
+                    var changes = extractFileChanges(response.content());
+                    log.info("Extracted file changes for exercise " + component + ": " + changes);
+                    try (Repository repository = repositoryFor(exercise, component)) {
+                        paths = injectChangesIntoRepository(repository, changes);
                     }
-                    log.info("Setting exercise step as executed");
-                    exerciseStep.setExecuted(true);
-                    irisExercisePlanStepRepository.save(exerciseStep);
-                    irisCodeEditorWebsocketService.notifyStepSuccess(session, exerciseStep, paths, updatedProblemStatement);
                 }
+                log.info("Setting exercise step as executed");
+                irisExercisePlanStepRepository.setCompleted(exerciseStep);
+                irisCodeEditorWebsocketService.notifyStepSuccess(session, exerciseStep, paths, updatedProblemStatement);
             }
             catch (IrisParseResponseException e) {
                 log.error("Error while parsing exercise changes from Iris model", e);
+                irisExercisePlanStepRepository.setFailed(exerciseStep);
                 irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, e);
             }
             return null;
@@ -343,9 +339,13 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     private Map<String, Object> initializeParams(ProgrammingExercise exercise) {
         var params = new HashMap<String, Object>();
         params.put("problemStatement", exercise.getProblemStatement());
-        params.put("solutionRepository", filterFiles(read(solutionRepository(exercise))));
-        params.put("templateRepository", filterFiles(read(templateRepository(exercise))));
-        params.put("testRepository", filterFiles(read(testRepository(exercise))));
+        try (Repository solutionRepository = solutionRepository(exercise);
+                Repository templateRepository = templateRepository(exercise);
+                Repository testRepository = testRepository(exercise)) {
+            params.put("solutionRepository", filterFiles(read(solutionRepository)));
+            params.put("templateRepository", filterFiles(read(templateRepository)));
+            params.put("testRepository", filterFiles(read(testRepository)));
+        }
         return params;
     }
 
@@ -382,6 +382,15 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      */
     private Repository testRepository(ProgrammingExercise exercise) {
         return Optional.ofNullable(exercise.getVcsTestRepositoryUrl()).map(this::repositoryAt).orElseThrow();
+    }
+
+    private Repository repositoryFor(ProgrammingExercise exercise, ExerciseComponent component) {
+        return switch (component) {
+            case PROBLEM_STATEMENT -> throw new IllegalArgumentException("Cannot get repository for problem statement");
+            case SOLUTION_REPOSITORY -> solutionRepository(exercise);
+            case TEMPLATE_REPOSITORY -> templateRepository(exercise);
+            case TEST_REPOSITORY -> testRepository(exercise);
+        };
     }
 
     /**
@@ -454,79 +463,393 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     /**
-     * Iris can generate different types of changes to files in the exercise repositories. This enum represents the
-     * different types of changes that Iris can generate. Currently, only MODIFY is supported.
-     * In the future we would like to support more types of changes, such as CREATE, DELETE, and RENAME.
-     */
-    private enum FileChangeType {
-        MODIFY, CREATE,
-        // Add more types here in the future
-    }
-
-    /**
-     * A file change represents a change to a file in an exercise repository. It contains the type of change, the name
-     * of the file, and the original and updated contents of the file.
-     * How the original and updated contents are used depends on the type of change.
-     *
-     * @param type     the type of change
-     * @param file     the name of the file
-     * @param original the original contents of the file
-     * @param updated  the updated contents of the file
-     */
-    private record FileChange(FileChangeType type, String file, String original, String updated) {
-    }
-
-    /**
-     * Extracts the changes for a specific component from the response of the LLM. The response must have the following
-     * structure:
+     * Extracts the problem statement changes from the response of the LLM.
+     * The response must have one of the following structures:
      *
      * <pre>
      *     {
+     *         "type": "modify",
      *         "changes": [
      *             {
-     *                 "type": "modify",
-     *                 "file": "path/to/file",
-     *                 "original": "original file contents",
-     *                 "updated": "updated file contents"
+     *                 "from": "start of quote to replace (inclusive)",
+     *                 "to": "end of quote to replace (exclusive)",
+     *                 "updated": "updated content to replace the quote with"
      *             },
      *             ...
      *         ]
      *     }
      * </pre>
      *
-     * @param content   The JsonNode to extract the changes from
-     * @param component The component to extract the changes for
+     * or
+     *
+     * <pre>
+     *     {
+     *         "type": "overwrite",
+     *         "updated": "new problem statement"
+     *     }
+     * </pre>
+     *
+     * @param content The JsonNode to extract the problem statement changes from
+     * @return The extracted problem statement changes
+     * @throws IrisParseResponseException If the JsonNode does not have the correct structure
+     */
+    private List<ProblemStatementChange> extractProblemStatementChanges(JsonNode content) {
+        List<ProblemStatementChange> changes = new ArrayList<>();
+        try {
+            var type = content.required("type").asText();
+            switch (type) {
+                case "overwrite" -> changes.add(ProblemStatementOverwrite.parse(content));
+                case "modify" -> {
+                    for (JsonNode node : content.required("changes")) {
+                        try {
+                            if (node.required("from").asText().equals("!done!")) {
+                                // This is a special case when the LLM decides to stop generating changes.
+                                // It means that the previous change was the final one, and we should stop parsing the response.
+                                // Ideally, this last iteration should not even happen.
+                                // The only reason it needs to is because of a bug with Guidance that compels us to
+                                // use a workaround to break from the #geneach loop manually
+                                // (see https://github.com/guidance-ai/guidance/issues/385).
+                                break;
+                            }
+                            changes.add(ProblemStatementReplacement.parse(node));
+                        }
+                        catch (IllegalArgumentException e) {
+                            log.error("Missing fields, could not parse ProblemStatementReplacement: " + node.toPrettyString(), e);
+                        }
+                    }
+                }
+            }
+        }
+        catch (IllegalArgumentException e) {
+            log.error("Missing fields, could not parse ProblemStatementChange: " + content.toPrettyString(), e);
+        }
+        return changes;
+    }
+
+    /**
+     * Extracts the changes for a specific component from the response of the LLM.
+     * The response must have the following structure:
+     *
+     * <pre>
+     *     {
+     *         "changes": [
+     *             {
+     *                 "type": "modify|overwrite|create|delete|rename",
+     *                 "file": "path/to/file",
+     *                 --other fields depending on the specific type of change--
+     *             },
+     *             ...
+     *         ]
+     *     }
+     * </pre>
+     *
+     * If the type of change is unrecognized, it will be ignored.
+     * This conveniently also allows us to ignore the final "!done!" change that Iris sends.
+     *
+     * @param content The JsonNode to extract the changes from
      * @return The extracted changes
      * @throws IrisParseResponseException If the JsonNode does not have the correct structure
      */
-    private static List<FileChange> extractChangesForComponent(JsonNode content, ExerciseComponent component) throws IrisParseResponseException {
-        if (!content.get("changes").isArray()) {
-            throw new IrisParseResponseException(new Throwable("Array of exercise changes was not present in response"));
-        }
+    private List<FileChange> extractFileChanges(JsonNode content) {
         List<FileChange> changes = new ArrayList<>();
         for (JsonNode node : content.get("changes")) {
-            // We will support different file change types in the future. For now, every file change has type MODIFY
-            var type = switch (node.get("type").asText("")) {
-                case "modify" -> FileChangeType.MODIFY;
-                case "create" -> FileChangeType.CREATE;
-                default -> null;
-            };
-            if (type == null) {
-                continue;
+            try {
+                var fileChange = switch (node.path("type").asText()) {
+                    case "overwrite" -> OverwriteFileChange.parse(node);
+                    case "modify" -> ModifyFileChange.parse(node);
+                    case "create" -> CreateFileChange.parse(node);
+                    case "delete" -> DeleteFileChange.parse(node);
+                    case "rename" -> RenameFileChange.parse(node);
+                    default -> null;
+                };
+                if (fileChange != null) {
+                    changes.add(fileChange);
+                }
             }
-            var file = node.get("file").asText("");
-            var original = node.get("original").asText();
-            if (component == ExerciseComponent.PROBLEM_STATEMENT && original.trim().equals("!done!")) {
-                // This is a special case when the LLM decided to stop generating changes for a component.
-                // Ideally, this should not need to be handled here. The only reason it needs to be is because of
-                // a bug with Guidance geneach that compels us to use a workaround to break from the loop manually
-                // in the guidance program (see https://github.com/guidance-ai/guidance/issues/385).
-                break;
+            catch (IllegalArgumentException e) {
+                log.error("Missing fields, could not parse FileChange: " + node.toPrettyString(), e);
             }
-            var updated = node.get("updated").asText();
-            changes.add(new FileChange(type, file, original, updated));
         }
         return changes;
+    }
+
+    /**
+     * An exception that occurs when Iris generates a change that cannot be applied for some reason.
+     */
+    private static class IrisChangeException extends Exception {
+
+        public IrisChangeException(String message) {
+            super(message);
+        }
+    }
+
+    /**
+     * Iris can generate different kinds of changes to files.
+     * This interface represents a change that can be applied to a file.
+     */
+    private interface FileChange {
+
+        /**
+         * Returns the path of the file that this change should be applied to.
+         *
+         * @return The path of the file
+         */
+        String path();
+
+        /**
+         * Applies the change to the provided Optional<File>. Some change types expect the file to exist, while others
+         * do not. If the file does not exist, the Optional will be empty.
+         *
+         * @param file              The file to apply the change to
+         * @param repositoryService The repository service to use for applying the change
+         * @param repository        The repository to apply the change to
+         * @throws IOException         If an I/O error occurs
+         * @throws IrisChangeException If the change cannot be applied because of a mistake made by Iris
+         */
+        void apply(Optional<File> file, RepositoryService repositoryService, Repository repository) throws IOException, IrisChangeException;
+    }
+
+    /**
+     * A file change that modifies the contents of a file by performing a find-and-replace operation.
+     *
+     * @param path     The path of the file to modify
+     * @param original The original contents of the file (to replace)
+     * @param updated  The updated contents of the file
+     */
+    private record ModifyFileChange(String path, String original, String updated) implements FileChange {
+
+        /**
+         * Replaces the first occurrence of the original string with the updated string in the given file.
+         *
+         * @throws IOException If the file could not be read or written to
+         */
+        @Override
+        public void apply(Optional<File> requestedFile, RepositoryService repositoryService, Repository repository) throws IOException, IrisChangeException {
+            if (requestedFile.isEmpty()) {
+                throw new IrisChangeException("Could not modify file '" + path + "' because it does not exist");
+            }
+            String currentContent = FileUtils.readFileToString(requestedFile.get(), StandardCharsets.UTF_8);
+            // We only want to replace the first occurrence of the original string (for now)
+            // String.replaceFirst() uses regex, so we need to escape the original string with Pattern.quote()
+            // Matcher.quoteReplacement() escapes the updated string so that it can be used as a replacement
+            String newContents = currentContent.replaceFirst(Pattern.quote(original), Matcher.quoteReplacement(updated));
+            FileUtils.writeStringToFile(requestedFile.get(), newContents, StandardCharsets.UTF_8);
+        }
+
+        /**
+         * Parses a JsonNode into a ModifyFileChange.
+         * The JsonNode must have strings for the fields "path", "original", and "updated".
+         *
+         * @param node The JsonNode to parse
+         * @return The parsed ModifyFileChange
+         * @throws IllegalArgumentException If the JsonNode does not have the correct structure
+         */
+        static FileChange parse(JsonNode node) throws IllegalArgumentException {
+            String path = node.required("path").asText();
+            String original = node.required("original").asText();
+            String updated = node.required("updated").asText();
+            return new ModifyFileChange(path, original, updated);
+        }
+    }
+
+    /**
+     * A file change that overwrites the contents of a file with the given contents.
+     *
+     * @param path    The path of the file to overwrite
+     * @param updated The new contents of the file
+     */
+    private record OverwriteFileChange(String path, String updated) implements FileChange {
+
+        @Override
+        public void apply(Optional<File> requestedFile, RepositoryService repositoryService, Repository repository) throws IOException, IrisChangeException {
+            if (requestedFile.isEmpty()) {
+                throw new IrisChangeException("Could not overwrite file '" + path + "' because it does not exist");
+            }
+            FileUtils.writeStringToFile(requestedFile.get(), updated, StandardCharsets.UTF_8);
+        }
+
+        /**
+         * Parses a JsonNode into an OverwriteFileChange.
+         * The JsonNode must have strings for the fields "path" and "content".
+         *
+         * @param node The JsonNode to parse
+         * @return The parsed OverwriteFileChange
+         * @throws IllegalArgumentException If the JsonNode does not have the correct structure
+         */
+        static FileChange parse(JsonNode node) throws IllegalArgumentException {
+            String path = node.required("path").asText();
+            String updated = node.required("updated").asText();
+            return new OverwriteFileChange(path, updated);
+        }
+    }
+
+    /**
+     * A file change that creates a new file with the given contents.
+     *
+     * @param path    The path of the file to create
+     * @param content The contents of the file to create
+     */
+    private record CreateFileChange(String path, String content) implements FileChange {
+
+        @Override
+        public void apply(Optional<File> requestedFile, RepositoryService repositoryService, Repository repository) throws IOException, IrisChangeException {
+            if (requestedFile.isPresent()) {
+                throw new IrisChangeException("Could not create file '" + path + "' because it already exists");
+            }
+            repositoryService.createFile(repository, path, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
+        }
+
+        /**
+         * Parses a JsonNode into a CreateFileChange.
+         * The JsonNode must have strings for the fields "path" and "content".
+         *
+         * @param node The JsonNode to parse
+         * @return The parsed CreateFileChange
+         * @throws IllegalArgumentException If the JsonNode does not have the correct structure
+         */
+        static FileChange parse(JsonNode node) throws IllegalArgumentException {
+            String path = node.required("path").asText();
+            String content = node.required("content").asText();
+            return new CreateFileChange(path, content);
+        }
+    }
+
+    /**
+     * A file change that deletes a file.
+     *
+     * @param path The path of the file to delete
+     */
+    private record DeleteFileChange(String path) implements FileChange {
+
+        @Override
+        public void apply(Optional<File> requestedFile, RepositoryService repositoryService, Repository repository) throws IOException, IrisChangeException {
+            if (requestedFile.isEmpty()) {
+                throw new IrisChangeException("Could not delete file '" + path + "' because it does not exist");
+            }
+            repositoryService.deleteFile(repository, path);
+        }
+
+        /**
+         * Parses a JsonNode into a DeleteFileChange.
+         * The JsonNode must have a string for the field "path".
+         *
+         * @param node The JsonNode to parse
+         * @return The parsed DeleteFileChange
+         * @throws IllegalArgumentException If the JsonNode does not have the correct structure
+         */
+        static FileChange parse(JsonNode node) throws IllegalArgumentException {
+            String path = node.required("path").asText();
+            return new DeleteFileChange(path);
+        }
+    }
+
+    /**
+     * A file change that renames a file.
+     *
+     * @param path    The path of the file to rename
+     * @param newPath The new path of the file
+     */
+    private record RenameFileChange(String path, String newPath) implements FileChange {
+
+        @Override
+        public void apply(Optional<File> requestedFile, RepositoryService repositoryService, Repository repository) throws IOException, IrisChangeException {
+            if (requestedFile.isEmpty()) {
+                throw new IrisChangeException("Could not rename file '" + path + "' because it does not exist");
+            }
+            repositoryService.renameFile(repository, new FileMove(path, newPath));
+        }
+
+        /**
+         * Parses a JsonNode into a RenameFileChange.
+         * The JsonNode must have strings for the fields "path" and "newPath".
+         *
+         * @param node The JsonNode to parse
+         * @return The parsed RenameFileChange
+         * @throws IllegalArgumentException If the JsonNode does not have the correct structure
+         */
+        static FileChange parse(JsonNode node) throws IllegalArgumentException {
+            String path = node.required("path").asText();
+            String newPath = node.required("newPath").asText();
+            return new RenameFileChange(path, newPath);
+        }
+    }
+
+    /**
+     * A change that can be applied to the problem statement of an exercise.
+     */
+    private interface ProblemStatementChange {
+
+        String apply(String problemStatement) throws IrisChangeException;
+    }
+
+    /**
+     * A change that replaces a range of text in the problem statement with the updated string.
+     *
+     * @param from    The start of the range to replace, inclusive
+     * @param to      The end of the range to replace, exclusive
+     * @param updated The updated string to replace the range with
+     */
+    private record ProblemStatementReplacement(String from, String to, String updated) implements ProblemStatementChange {
+
+        @Override
+        public String apply(String problemStatement) throws IrisChangeException {
+            String before;
+            int startIndex;
+            if (from.equals("!start!")) {
+                before = "";
+                startIndex = 0;
+            }
+            else {
+                // Search for the start string in the problem statement
+                startIndex = problemStatement.indexOf(from);
+                if (startIndex == -1) {
+                    throw new IrisChangeException("Could not locate range start '" + from + "'");
+                }
+                before = problemStatement.substring(0, startIndex);
+            }
+
+            String after;
+            if (to.equals("!end!")) {
+                after = "";
+            }
+            else {
+                // Search for the end string in the remaining string
+                int endIndex = problemStatement.substring(startIndex).indexOf(to);
+                if (endIndex == -1) {
+                    throw new IrisChangeException("Could not find range end '" + to + "' after range start '" + from + "'");
+                }
+                endIndex += startIndex; // Add the start index to get the index in the original problem statement
+                after = problemStatement.substring(endIndex);
+            }
+
+            // Replace the range with the updated string
+            return before + updated + after;
+        }
+
+        static ProblemStatementChange parse(JsonNode node) throws IllegalArgumentException {
+            String from = node.required("from").asText();
+            String to = node.required("to").asText();
+            String updated = node.required("updated").asText();
+            return new ProblemStatementReplacement(from, to, updated);
+        }
+    }
+
+    /**
+     * A change that overwrites the entire problem statement of an exercise.
+     *
+     * @param updated The new problem statement
+     */
+    private record ProblemStatementOverwrite(String updated) implements ProblemStatementChange {
+
+        @Override
+        public String apply(String problemStatement) {
+            return updated;
+        }
+
+        static ProblemStatementChange parse(JsonNode node) throws IllegalArgumentException {
+            String updated = node.required("updated").asText();
+            return new ProblemStatementOverwrite(updated);
+        }
     }
 
     /**
@@ -537,28 +860,19 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @param changes  The changes to inject
      * @return The updated problem statement
      */
-    private String injectChangesIntoProblemStatement(ProgrammingExercise exercise, List<FileChange> changes) {
-        log.info("\n\n\nInjecting changes into problem statement: \n\n\n" + changes);
+    private String injectChangesIntoProblemStatement(ProgrammingExercise exercise, List<ProblemStatementChange> changes) {
+        log.info("Injecting changes into problem statement: \n\n\n" + changes);
         var problemStatement = exercise.getProblemStatement();
         int successes = 0;
         int failures = 0;
-        for (FileChange change : changes) {
-            if (change.original().equals("!all!")) {
-                log.info("Replacing entire problem statement with '" + change.updated() + "'");
-                problemStatement = change.updated();
-                successes++;
-                break;
-            }
-            Pattern replace = Pattern.compile(Pattern.quote(change.original()));
-            Matcher matcher = replace.matcher(problemStatement);
-            String replacement = Matcher.quoteReplacement(change.updated());
-            if (matcher.find()) {
-                log.info("Replacing '" + change.original() + "' with '" + change.updated() + "' in problem statement");
-                problemStatement = matcher.replaceFirst(replacement);
+        for (ProblemStatementChange change : changes) {
+            try {
+                // Replace the range with the updated string
+                problemStatement = change.apply(problemStatement);
                 successes++;
             }
-            else {
-                log.info("Could not find '" + change.original() + "' in problem statement");
+            catch (IrisChangeException e) {
+                log.info(e.getMessage());
                 failures++;
             }
         }
@@ -575,66 +889,29 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @param changes    The changes to inject
      */
     private Set<String> injectChangesIntoRepository(Repository repository, List<FileChange> changes) {
-        log.info("\n\n\nInjecting changes into repository: \n\n\n" + changes);
-        Map<String, Optional<File>> targetedFiles = changes.stream().collect(Collectors.toMap(FileChange::file, change -> gitService.getFileByName(repository, change.file())));
-        Set<String> paths = new HashSet<>();
+        log.info("Injecting changes into repository: \n\n\n" + changes);
+        Map<String, Optional<File>> targetedFiles = changes.stream().map(FileChange::path).distinct()
+                .collect(Collectors.toMap(fileName -> fileName, fileName -> gitService.getFileByName(repository, fileName)));
+        Set<String> pathsToUpdate = new HashSet<>();
+        int successes = 0;
+        int failures = 0;
         for (FileChange change : changes) {
-            Optional<File> requestedFile = targetedFiles.get(change.file());
-            switch (change.type()) {
-                case MODIFY -> {
-                    if (requestedFile.isPresent()) {
-                        try {
-                            log.info("trying to replace '" + change.original() + "' with '" + change.updated() + "' in '" + change.file() + "'");
-                            replaceInFile(requestedFile.get(), change.original(), change.updated());
-                            paths.add(change.file());
-                        }
-                        catch (IOException e) {
-                            log.error("Could not modify file '" + change.file() + "' in repository '" + repository + "'", e);
-                        }
-                    }
-                    else {
-                        log.info("Iris requested that file '" + change.file() + "' be modified, but it does not exist in the repository");
-                    }
-                }
-                case CREATE -> {
-                    if (requestedFile.isEmpty()) {
-                        try {
-                            repositoryService.createFile(repository, change.file(), new ByteArrayInputStream(change.updated().getBytes()));
-                            paths.add(change.file());
-                        }
-                        catch (IOException e) {
-                            log.error("File '" + change.file() + "' already exists");
-                        }
-                    }
-                    else {
-                        log.info("Iris requested that file '" + change.file() + "' be created, but it already exists in the repository");
-                    }
-                }
+            Optional<File> requestedFile = targetedFiles.get(change.path());
+            try {
+                change.apply(requestedFile, repositoryService, repository);
+                pathsToUpdate.add(change.path());
+                successes++;
+            }
+            catch (IOException e) {
+                log.error("Encountered an IOException while applying change: " + change, e);
+            }
+            catch (IrisChangeException e) {
+                log.info(e.getMessage());
+                failures++;
             }
         }
-        return paths;
-    }
-
-    /**
-     * Replaces the first occurrence of the original string with the updated string in the given file.
-     *
-     * @param file     The file to modify
-     * @param original The original string to replace
-     * @param updated  The updated string to replace the original string with
-     * @throws IOException If the file could not be read or written to
-     */
-    private void replaceInFile(File file, String original, String updated) throws IOException {
-        if (original.equals("!all!")) {
-            FileUtils.writeStringToFile(file, updated, StandardCharsets.UTF_8);
-        }
-        else {
-            String currentContent = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
-            // We only want to replace the first occurrence of the original string (for now)
-            // String.replaceFirst() uses regex, so we need to escape the original string with Pattern.quote()
-            // Matcher.quoteReplacement() escapes the updated string so that it can be used as a replacement
-            String newContents = currentContent.replaceFirst(Pattern.quote(original), Matcher.quoteReplacement(updated));
-            FileUtils.writeStringToFile(file, newContents, StandardCharsets.UTF_8);
-        }
+        log.info("Successfully applied " + successes + " changes to repository, " + failures + " changes failed");
+        return pathsToUpdate;
     }
 
 }
