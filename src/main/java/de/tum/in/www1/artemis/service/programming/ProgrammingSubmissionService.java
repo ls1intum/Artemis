@@ -521,6 +521,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
+     * @param skipAssessmentQueue flag to determine if the submission should be retrieved from the assessment queue
      * @param correctionRound     - the correction round we want our submission to have results for
      * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found

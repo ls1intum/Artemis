@@ -231,6 +231,7 @@ public class SubmissionService {
      * @param skipAssessmentQueue skip the Athena assessment queue and return a random submission
      * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @param correctionRound     the correction round we want our submission to have results for
+     * @param findSubmissionById  method to find a submission by id
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public <S extends Submission> Optional<S> getAthenaSubmissionToAssess(Exercise exercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound,
@@ -260,6 +261,7 @@ public class SubmissionService {
      * @param skipAssessmentQueue skip the Athena assessment queue and return a random submission
      * @param correctionRound     the correction round we want our submission to have results for
      * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param findSubmissionById  method to find a submission by id
      * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public <S extends Submission> Optional<S> getRandomAssessableSubmission(Exercise exercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound,
