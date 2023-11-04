@@ -79,9 +79,14 @@
         <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlides' | artemisTranslate }}</span>
         <div>
             <div class="alert alert-warning mt-3 ml-3">
-                <span>
-                    {{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesInfo' | artemisTranslate }}
-                </span>
+                <ul>
+                    <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesInfo.firstLine' | artemisTranslate }}</li>
+                    <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesInfo.secondLine' | artemisTranslate }}</li>
+                    <li>
+                        {{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesInfo.thirdLine' | artemisTranslate }}
+                        {{ removedSlidesNumbers.length > 0 ? removedSlidesNumbers : '-' }}
+                    </li>
+                </ul>
             </div>
             <input
                 type="text"
@@ -89,7 +94,7 @@
                 id="removeSlidesCommaSeparatedKeyPhrases"
                 placeholder="{{ 'artemisApp.attachmentUnit.createAttachmentUnits.removeSlidesPlaceholder' | artemisTranslate }}"
                 autocomplete="off"
-                [(ngModel)]="removeSlidesCommaSeparatedKeyPhrases"
+                [(ngModel)]="searchTerm"
             />
         </div>
     </div>
