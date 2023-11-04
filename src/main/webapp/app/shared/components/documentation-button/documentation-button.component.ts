@@ -1,51 +1,57 @@
 import { Component, Input } from '@angular/core';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
 
 // The routes here are used to build the link to the documentation.
 // Therefore, it's important that they exactly match the url to the subpage of the documentation.
 // Additionally, the case names must match the keys in documentationLinks.json for the tooltip.
-export enum DocumentationType {
-    Course = <any>'courses/customizable/',
-    Lecture = <any>'lectures/',
-    Exercise = <any>'exercises/',
-    Quiz = <any>'exercises/quiz/',
-    Model = <any>'exercises/modeling/',
-    Programming = <any>'exercises/programming/',
-    Text = <any>'exercises/textual/',
-    FileUpload = <any>'exercises/file-upload/',
-    Notifications = <any>'notifications/',
-    Competencies = <any>'learning-analytics/#id3',
-    Communications = <any>'communication/',
-    Exams = <any>'exam_mode/',
-    PlagiarismChecks = <any>'plagiarism-check/',
-    Grading = <any>'grading/',
-    Units = <any>'lectures/#lecture-units',
-    Assessment = <any>'exercises/assessment/',
-    Statistics = <any>'learning-analytics/',
-    SuspiciousBehavior = <any>'exams/instructors_guide.html#suspicious-behavior-detection',
-}
+const DocumentationLinks = {
+    Course: 'courses/customizable/',
+    Lecture: 'lectures/',
+    Exercise: 'exercises/',
+    Quiz: 'exercises/quiz/',
+    Model: 'exercises/modeling/',
+    Programming: 'exercises/programming/',
+    Text: 'exercises/textual/',
+    FileUpload: 'exercises/file-upload/',
+    Notifications: 'notifications/',
+    Competencies: 'learning-analytics/#id3',
+    Communications: 'communication/',
+    Exams: 'exam_mode/',
+    PlagiarismChecks: 'plagiarism-check/',
+    Grading: 'grading/',
+    Units: 'lectures/#lecture-units',
+    Assessment: 'assessment/',
+    Statistics: 'learning-analytics/',
+    SuspiciousBehavior: 'exams/instructors_guide.html#suspicious-behavior-detection',
+};
+
+export type DocumentationType = keyof typeof DocumentationLinks;
+
+const baseUrl = 'https://docs.artemis.cit.tum.de/user/';
 
 @Component({
     selector: 'jhi-documentation-button',
     styleUrls: ['./documentation-button.component.scss'],
     template: `
         <button type="button" class="text-primary documentation-button" (click)="openDocumentation()">
-            <fa-icon [icon]="faCircleInfo" ngbTooltip="{{ getTooltipForType() | artemisTranslate }}"></fa-icon>
+            <fa-icon [icon]="faCircleInfo" ngbTooltip="{{ getTooltipForType() }}"></fa-icon>
         </button>
     `,
 })
 export class DocumentationButtonComponent {
-    baseUrl = 'https://docs.artemis.cit.tum.de/user/';
-
     @Input() type: DocumentationType;
 
-    faCircleInfo = faCircleInfo;
+    readonly faCircleInfo = faCircleInfo;
+
+    constructor(private translateService: TranslateService) {}
 
     openDocumentation() {
-        window.open(this.baseUrl + this.type, '_blank');
+        window.open(baseUrl + DocumentationLinks[this.type].toLowerCase(), '_blank');
     }
 
     getTooltipForType() {
-        return 'artemisApp.documentationLinks.' + DocumentationType[this.type].toLowerCase();
+        const typeKey = 'artemisApp.documentationLinks.' + this.type.toLowerCase();
+        return this.translateService.instant('artemisApp.documentationLinks.prefix') + this.translateService.instant(typeKey);
     }
 }

@@ -32,9 +32,9 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     itemsPerPage = ITEMS_PER_PAGE;
     page = 1;
 
-    documentationType = DocumentationType.Communications;
-
     forceReload = true;
+
+    readonly documentationType: DocumentationType = 'Communications';
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly pageType = PageType.OVERVIEW;
