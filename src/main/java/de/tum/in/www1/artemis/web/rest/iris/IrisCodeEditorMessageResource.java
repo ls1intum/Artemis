@@ -161,9 +161,7 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
         irisCodeEditorSessionService.checkIsIrisActivated(session);
         irisCodeEditorSessionService.checkHasAccessToIrisSession(session, null);
 
-        step.setComponent(updatedStep.getComponent());
         step.setInstructions(updatedStep.getInstructions());
-        step.setExecutionStage(updatedStep.getExecutionStage());
 
         var savedStep = irisExercisePlanStepRepository.save(step);
         return ResponseEntity.ok(savedStep);

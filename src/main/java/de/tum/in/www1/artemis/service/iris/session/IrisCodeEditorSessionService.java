@@ -294,7 +294,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, err.getCause());
                 return null;
             }
-            if (response == null || !response.content().path("changes").isArray()) {
+            if (response == null) {
                 log.error("No response from Iris model: " + response);
                 irisExercisePlanStepRepository.setFailed(exerciseStep);
                 irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, new IrisNoResponseException());
@@ -321,7 +321,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 irisCodeEditorWebsocketService.notifyStepSuccess(session, exerciseStep, paths, updatedProblemStatement);
             }
             catch (IrisParseResponseException e) {
-                log.error("Error while parsing exercise changes from Iris model", e);
+                log.error(e.getMessage(), e);
                 irisExercisePlanStepRepository.setFailed(exerciseStep);
                 irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, e);
             }
@@ -493,13 +493,17 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @return The extracted problem statement changes
      * @throws IrisParseResponseException If the JsonNode does not have the correct structure
      */
-    private List<ProblemStatementChange> extractProblemStatementChanges(JsonNode content) {
+    private List<ProblemStatementChange> extractProblemStatementChanges(JsonNode content) throws IrisParseResponseException {
         List<ProblemStatementChange> changes = new ArrayList<>();
         try {
             var type = content.required("type").asText();
             switch (type) {
                 case "overwrite" -> changes.add(ProblemStatementOverwrite.parse(content));
                 case "modify" -> {
+                    if (!content.path("changes").isArray()) {
+                        log.error("Missing fields, could not parse ProblemStatementChange: " + content.toPrettyString());
+                        break;
+                    }
                     for (JsonNode node : content.required("changes")) {
                         try {
                             if (node.required("from").asText().equals("!done!")) {
@@ -522,6 +526,9 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         }
         catch (IllegalArgumentException e) {
             log.error("Missing fields, could not parse ProblemStatementChange: " + content.toPrettyString(), e);
+        }
+        if (changes.isEmpty()) {
+            throw new IrisParseResponseException("Was not able to parse any changes");
         }
         return changes;
     }
@@ -550,9 +557,12 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @return The extracted changes
      * @throws IrisParseResponseException If the JsonNode does not have the correct structure
      */
-    private List<FileChange> extractFileChanges(JsonNode content) {
+    private List<FileChange> extractFileChanges(JsonNode content) throws IrisParseResponseException {
+        if (!content.path("changes").isArray()) {
+            throw new IrisParseResponseException("Could not parse file changes: " + content.toPrettyString());
+        }
         List<FileChange> changes = new ArrayList<>();
-        for (JsonNode node : content.get("changes")) {
+        for (JsonNode node : content.path("changes")) {
             try {
                 var fileChange = switch (node.path("type").asText()) {
                     case "overwrite" -> OverwriteFileChange.parse(node);
@@ -569,6 +579,9 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             catch (IllegalArgumentException e) {
                 log.error("Missing fields, could not parse FileChange: " + node.toPrettyString(), e);
             }
+        }
+        if (changes.isEmpty()) {
+            throw new IrisParseResponseException("Was not able to parse any changes");
         }
         return changes;
     }
