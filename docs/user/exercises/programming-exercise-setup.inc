@@ -276,14 +276,14 @@ Exercise Creation
 
     |
 
-    .. figure:: programming/programming-options-instructions.png
+    .. figure:: programming/programming-options-problem-statement.png
               :align: center
 
     - **Problem Statement:** The problem statement of the exercise. Refer to :ref:`interactive problem statement <interactive_problem_statement>` for more information.
 
     |
 
-    .. figure:: programming/programming-options-grading-instructions.png
+    .. figure:: programming/programming-options-instructions.png
               :align: center
 
     - **Grading Instructions:** Available if **Manual Review** is active. Create instructions for tutors to use during manual assessment.
