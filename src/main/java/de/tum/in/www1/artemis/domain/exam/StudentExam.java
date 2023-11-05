@@ -70,11 +70,11 @@ public class StudentExam extends AbstractAuditingEntity {
         return submitted;
     }
 
-    public Boolean isAbandoned() {
+    public boolean isAbandoned() {
         return abandoned;
     }
 
-    public void setAbandoned(Boolean abandoned) {
+    public void setAbandoned(boolean abandoned) {
         this.abandoned = abandoned;
     }
 
