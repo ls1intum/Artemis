@@ -7,15 +7,18 @@
 
                     <div *ngIf="courseDescription" style="display: block">
                         <h6 id="course-header-description" class="fw-normal">{{ courseDescription }}</h6>
-                        <h6 class="fw-medium show-more d-flex" role="button" *ngIf="enableShowMore" (click)="toggleCourseDescription()">
+                        <div class="fw-medium show-more d-flex h6" role="button" *ngIf="enableShowMore" (click)="toggleCourseDescription()">
                             {{ 'artemisApp.courseOverview.' + (longDescriptionShown ? 'showLess' : 'showMore') | artemisTranslate }}
-
-                            <fa-icon [icon]="faArrowDown" [class.rotate180]="longDescriptionShown" class="rotate-icon"></fa-icon>
-                        </h6>
+                            &nbsp; <fa-icon [icon]="faArrowDown" [class.rotate180]="longDescriptionShown" class="rotate-icon"></fa-icon>
+                        </div>
                     </div>
                 </div>
 
-                <div class="d-flex align-items-center justify-content-center" *ngIf="shouldShowGoToCourseManagementButton()" style="width: fit-content; height: fit-content">
+                <div
+                    class="d-flex align-items-center justify-content-center"
+                    *ngIf="shouldShowGoToCourseManagementButton()"
+                    style="width: fit-content; height: fit-content; margin-left: 1rem"
+                >
                     <button class="btn btn-secondary" (click)="redirectToCourseManagement()">
                         {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
                     </button>
