@@ -54,6 +54,7 @@ import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participa
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
+import * as Utils from 'app/shared/util/utils';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -480,16 +481,16 @@ describe('ExamResultSummaryComponent', () => {
         const EXAM_SUMMARY_RESULT_OVERVIEW_ID = 'exam-summary-result-overview';
 
         it('should scroll to top when overview is not displayed', () => {
-            const scrollToSpy = jest.spyOn(window, 'scrollTo');
+            const scrollToSpy = jest.spyOn(Utils, 'scrollToTopOfPage');
 
             const button = fixture.debugElement.nativeElement.querySelector('#' + BACK_TO_OVERVIEW_BUTTON_ID);
             button.click();
 
-            expect(scrollToSpy).toHaveBeenCalledWith(0, 0);
+            expect(scrollToSpy).toHaveBeenCalledOnce();
         });
 
         it('should scroll to overview when it is displayed', () => {
-            const scrollToSpy = jest.spyOn(window, 'scrollTo');
+            const scrollToSpy = jest.spyOn(Utils, 'scrollToTopOfPage');
             const scrollIntoViewSpy = jest.fn();
 
             const getElementByIdMock = jest.spyOn(document, 'getElementById').mockReturnValue({
