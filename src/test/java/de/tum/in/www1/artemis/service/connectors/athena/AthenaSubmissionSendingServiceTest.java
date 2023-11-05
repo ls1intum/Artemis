@@ -83,14 +83,16 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
     private void createTextSubmissionsForSubmissionSending(int totalSubmissions) {
         for (long i = 0; i < totalSubmissions; i++) {
-            var submission = new TextSubmission();
-            submission.setLanguage(DEFAULT_SUBMISSION_LANGUAGE);
-            submission.setText(DEFAULT_SUBMISSION_TEXT);
-            submission.setSubmitted(true);
             var studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise,
                     userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1)));
             studentParticipation.setExercise(textExercise);
             studentParticipationRepository.save(studentParticipation);
+            var submission = new TextSubmission();
+            submission.setLanguage(DEFAULT_SUBMISSION_LANGUAGE);
+            submission.setText(DEFAULT_SUBMISSION_TEXT);
+            submission.setSubmitted(true);
+            // Set a submission date so that the submission is found
+            submission.setSubmissionDate(studentParticipation.getInitializationDate());
             submission.setParticipation(studentParticipation);
             submissionRepository.save(submission);
         }
@@ -111,11 +113,11 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     }
 
     private void createProgrammingSubmissionForSubmissionSending() {
-        var submission = ParticipationFactory.generateProgrammingSubmission(true);
         var studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, programmingExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        studentParticipation.setExercise(textExercise);
+        studentParticipation.setExercise(programmingExercise);
         studentParticipationRepository.save(studentParticipation);
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission.setParticipation(studentParticipation);
         submissionRepository.save(submission);
         athenaRequestMockProvider.verify();
@@ -125,12 +127,12 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendSubmissionsSuccessProgramming() {
         createProgrammingSubmissionForSubmissionSending();
-        athenaRequestMockProvider.mockSendSubmissionsAndExpect("text", jsonPath("$.exercise.id").value(programmingExercise.getId()),
+        athenaRequestMockProvider.mockSendSubmissionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
                 jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.exercise.maxPoints").value(programmingExercise.getMaxPoints()),
                 jsonPath("$.exercise.bonusPoints").value(programmingExercise.getBonusPoints()),
                 jsonPath("$.exercise.gradingInstructions").value(programmingExercise.getGradingInstructions()),
                 jsonPath("$.exercise.problemStatement").value(programmingExercise.getProblemStatement()),
-                jsonPath("$.submissions[0].exerciseId").value(programmingExercise.getId()), jsonPath("$.submissions[0].repositoryUrl").value("TODO"));
+                jsonPath("$.submissions[0].exerciseId").value(programmingExercise.getId()), jsonPath("$.submissions[0].repositoryUrl").isString());
 
         athenaSubmissionSendingService.sendSubmissions(programmingExercise);
         athenaRequestMockProvider.verify();
