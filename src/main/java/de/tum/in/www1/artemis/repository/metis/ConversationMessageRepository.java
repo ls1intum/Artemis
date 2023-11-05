@@ -35,11 +35,30 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
      * @return returns a Page of Messages
      */
     default Page<Post> findMessages(PostContextFilter postContextFilter, Pageable pageable, long userId) {
-        Specification<Post> specification = Specification.where(getConversationSpecification(postContextFilter.getConversationId())
-                .and(MessageSpecs.getSearchTextSpecification(postContextFilter.getSearchText()).and(getSortSpecification())
-                        .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId)))
+        Specification<Post> specification = Specification.where(getConversationSpecification(postContextFilter.getConversationId()))
+                .and(MessageSpecs.getSearchTextSpecification(postContextFilter.getSearchText())).and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
                 .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
-                .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved())));
+                .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
+                .and(getSortSpecification(true, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
+
+        return findAll(specification, pageable);
+    }
+
+    /**
+     * Generates SQL Query via specifications to find and sort messages from course-wide
+     *
+     * @param postContextFilter filtering and sorting properties for post objects
+     * @param pageable          paging object which contains the page number and number of records to fetch
+     * @param userId            the id of the user for which the messages should be returned
+     * @return returns a Page of Messages
+     */
+    default Page<Post> findCourseWideMessages(PostContextFilter postContextFilter, Pageable pageable, long userId) {
+        Specification<Post> specification = Specification.where(getCourseWideChannelsSpecification(postContextFilter.getCourseId()))
+                .and(getConversationsSpecification(postContextFilter.getCourseWideChannelIds())).and(MessageSpecs.getSearchTextSpecification(postContextFilter.getSearchText()))
+                .and(getOwnSpecification(postContextFilter.getFilterToOwn(), userId))
+                .and(getAnsweredOrReactedSpecification(postContextFilter.getFilterToAnsweredOrReacted(), userId))
+                .and(getUnresolvedSpecification(postContextFilter.getFilterToUnresolved()))
+                .and(getSortSpecification(true, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
 
         return findAll(specification, pageable);
     }
