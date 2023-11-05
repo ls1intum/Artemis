@@ -292,8 +292,10 @@ export class OrionConnectorService {
      * @param exercise the current programming exercise
      */
     initializeTestRepository(exercise: ProgrammingExercise) {
-        if (exercise.releaseTestsWithExampleSolution && exercise.testRepositoryUrl !== undefined) {
+        if (exercise.testRepositoryUrl !== undefined) {
             theWindow().orionExerciseConnector.initializeTestRepository(exercise.testRepositoryUrl);
+        } else {
+            theWindow().orionExerciseConnector.initializeTestRepository('null');
         }
     }
 
