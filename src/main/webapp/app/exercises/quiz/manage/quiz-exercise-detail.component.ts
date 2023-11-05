@@ -447,8 +447,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     /**
      * Callback function for when the save succeeds
      * Terminates the saving process and assign the returned quizExercise to the local entities
-     * @param {QuizExercise} quizExercise: Saved quizExercise entity
-     * @param {boolean} isCreate: Flag if the quizExercise was created or updated
+     * @param quizExercise Saved quizExercise entity
+     * @param isCreate Flag if the quizExercise was created or updated
      */
     private onSaveSuccess(quizExercise: QuizExercise, isCreate: boolean): void {
         this.isSaving = false;
