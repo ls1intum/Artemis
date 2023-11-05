@@ -190,6 +190,8 @@ describe('CodeEditorAceComponent', () => {
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: true } };
         const initEditorSpy = jest.spyOn(comp, 'initEditor');
         const loadFileSpy = jest.spyOn(comp, 'fetchFileContent');
+        const loadFileSubject = new Subject<{ fileName: 'dummy'; fileContent: 'lorem ipsum' }>();
+        loadRepositoryFileStub.mockReturnValue(loadFileSubject);
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
 
