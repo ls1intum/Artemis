@@ -138,7 +138,7 @@ describe('Course messages', () => {
                 cy.login(admin);
                 communicationAPIRequest.createCourseMessageChannel(course, 'test-channel', 'Test Channel', true, true).then((response) => {
                     channel = response.body;
-                    communicationAPIRequest.joinUserIntoChannel(course, channel, instructor);
+                    communicationAPIRequest.joinUserIntoChannel(course, channel.id!, instructor);
                 });
             });
 
@@ -208,7 +208,7 @@ describe('Course messages', () => {
                 cy.login(admin);
                 communicationAPIRequest.createCourseMessageChannel(course, 'write-test-channel', 'Write Test Channel', false, true).then((response) => {
                     channel = response.body;
-                    communicationAPIRequest.joinUserIntoChannel(course, channel, studentOne);
+                    communicationAPIRequest.joinUserIntoChannel(course, channel.id!, studentOne);
                 });
             });
 
