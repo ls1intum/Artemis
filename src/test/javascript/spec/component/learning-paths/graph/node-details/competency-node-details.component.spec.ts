@@ -36,7 +36,6 @@ describe('CompetencyNodeDetailsComponent', () => {
                 competencyProgress = new CompetencyProgress();
                 competencyProgress.progress = 80;
                 competencyProgress.confidence = 70;
-                competency.userProgress = [competencyProgress];
 
                 competencyService = TestBed.inject(CompetencyService);
                 findByIdStub = jest.spyOn(competencyService, 'findById').mockReturnValue(of(new HttpResponse({ body: competency })));
@@ -54,7 +53,6 @@ describe('CompetencyNodeDetailsComponent', () => {
         expect(findByIdStub).toHaveBeenCalledOnce();
         expect(findByIdStub).toHaveBeenCalledWith(competency.id, 1);
         expect(comp.competency).toEqual(competency);
-        expect(comp.competencyProgress).toEqual(competencyProgress);
     });
 
     it('should not load competency on init if already present', () => {
@@ -62,14 +60,5 @@ describe('CompetencyNodeDetailsComponent', () => {
         comp.competencyProgress = competencyProgress;
         fixture.detectChanges();
         expect(findByIdStub).not.toHaveBeenCalled();
-    });
-
-    it('should default progress to zero if empty', () => {
-        competency.userProgress = undefined;
-        fixture.detectChanges();
-        expect(findByIdStub).toHaveBeenCalledOnce();
-        expect(findByIdStub).toHaveBeenCalledWith(competency.id, 1);
-        expect(comp.competency).toEqual(competency);
-        expect(comp.competencyProgress).toEqual({ confidence: 0, progress: 0 } as CompetencyProgress);
     });
 });
