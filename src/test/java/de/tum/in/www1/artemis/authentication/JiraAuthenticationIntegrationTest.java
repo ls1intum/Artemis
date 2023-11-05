@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUt
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.connectors.jira.JiraAuthenticationProvider;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
@@ -57,9 +56,6 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private ApplicationContext applicationContext;
-
-    @Autowired
-    private JiraAuthenticationProvider jiraAuthenticationProvider;
 
     @Autowired
     protected ProgrammingExerciseRepository programmingExerciseRepository;
