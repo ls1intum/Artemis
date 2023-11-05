@@ -18,6 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -194,6 +195,14 @@ describe('TextExercise Management Update Component', () => {
             expect(comp.textExercise.releaseDate).toBeUndefined();
             expect(comp.textExercise.dueDate).toBeUndefined();
         }));
+
+        it('should load exercise categories', () => {
+            const loadExerciseCategoriesSpy = jest.spyOn(Utils, 'loadCourseExerciseCategories');
+
+            comp.ngOnInit();
+
+            expect(loadExerciseCategoriesSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('ngOnInit in import mode: Exam to Course', () => {

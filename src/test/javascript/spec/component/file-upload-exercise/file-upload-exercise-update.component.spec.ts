@@ -21,7 +21,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exam } from 'app/entities/exam.model';
 import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 
-describe('FileUploadExercise Management Update Component', () => {
+describe('FileUploadExerciseUpdateComponent', () => {
     let comp: FileUploadExerciseUpdateComponent;
     let fixture: ComponentFixture<FileUploadExerciseUpdateComponent>;
     let service: FileUploadExerciseService;
