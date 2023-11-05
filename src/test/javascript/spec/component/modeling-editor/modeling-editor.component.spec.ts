@@ -62,10 +62,9 @@ describe('ModelingEditorComponent', () => {
         const editor: ApollonEditor = component['apollonEditor'] as ApollonEditor;
         // Check that editor exists
         expect(editor).toBeDefined();
-        await addDelay(500).then(() => {
-            // check that editor contains elements of our model (direct equality check won't work somehow due to missing properties)
-            expect(Object.keys(editor.model.elements)).toEqual(Object.keys(classDiagram.elements));
-        });
+        await editor.nextRender;
+
+        expect(Object.keys(editor.model.elements)).toEqual(Object.keys(classDiagram.elements));
     });
 
     it('ngOnDestroy', () => {
