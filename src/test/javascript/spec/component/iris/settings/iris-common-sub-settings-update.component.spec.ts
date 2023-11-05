@@ -21,7 +21,7 @@ function baseSettings() {
     const allowedModels = mockModels();
     allowedModels.pop();
     irisSubSettings.allowedModels = allowedModels.map((model) => model.id!);
-    irisSubSettings.preferredModel = allowedModels[0];
+    irisSubSettings.preferredModel = allowedModels[0].id!;
     return irisSubSettings;
 }
 
@@ -141,8 +141,8 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
         newModels.pop();
 
         const changes: SimpleChanges = {
-            subSettings: new SimpleChange(comp.subSettings, newSubSettings),
-            allIrisModels: new SimpleChange(comp.allIrisModels, newModels),
+            subSettings: new SimpleChange(comp.subSettings, newSubSettings, false),
+            allIrisModels: new SimpleChange(comp.allIrisModels, newModels, false),
         };
         comp.subSettings = newSubSettings;
         comp.allIrisModels = mockModels();

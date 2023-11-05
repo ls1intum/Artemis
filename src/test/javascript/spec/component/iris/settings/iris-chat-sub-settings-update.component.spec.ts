@@ -91,7 +91,7 @@ describe('IrisChatSubSettingsUpdateComponent Component', () => {
         comp.templateContent = 'Hello World 2';
         comp.onTemplateChanged();
 
-        expect(comp.subSettings.template?.content).toBe('Hello World 2');
+        expect(comp.subSettings.template!.content).toBe('Hello World 2');
     });
 
     it('sub settings changes', () => {
@@ -101,7 +101,7 @@ describe('IrisChatSubSettingsUpdateComponent Component', () => {
         newSubSettings.template!.content = 'Hello World 2';
 
         const changes: SimpleChanges = {
-            subSettings: new SimpleChange(comp.subSettings, newSubSettings),
+            subSettings: new SimpleChange(comp.subSettings, newSubSettings, false),
         };
         comp.subSettings = newSubSettings;
         comp.ngOnChanges(changes);

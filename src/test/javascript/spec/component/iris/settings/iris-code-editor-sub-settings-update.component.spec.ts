@@ -145,7 +145,7 @@ describe('IrisCodeEditorSubSettingsUpdateComponent Component', () => {
         newSubSettings.testRepoGenerationTemplate!.content = 'Hello World 6';
 
         const changes: SimpleChanges = {
-            subSettings: new SimpleChange(comp.subSettings, newSubSettings),
+            subSettings: new SimpleChange(comp.subSettings, newSubSettings, false),
         };
         comp.subSettings = newSubSettings;
         comp.ngOnChanges(changes);
