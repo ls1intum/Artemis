@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.notification.ConversationNotificatio
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,9 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory;
+import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationNotificationRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
@@ -29,11 +33,14 @@ public class ConversationNotificationService {
 
     private final GeneralInstantNotificationService generalInstantNotificationService;
 
+    private final SingleUserNotificationRepository singleUserNotificationRepository;
+
     public ConversationNotificationService(ConversationNotificationRepository conversationNotificationRepository, WebsocketMessagingService websocketMessagingService,
-            GeneralInstantNotificationService generalInstantNotificationService) {
+            GeneralInstantNotificationService generalInstantNotificationService, SingleUserNotificationRepository singleUserNotificationRepository) {
         this.conversationNotificationRepository = conversationNotificationRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.generalInstantNotificationService = generalInstantNotificationService;
+        this.singleUserNotificationRepository = singleUserNotificationRepository;
     }
 
     /**
@@ -41,9 +48,10 @@ public class ConversationNotificationService {
      *
      * @param createdMessage the new message
      * @param recipients     the users which should be notified about the new message
+     * @param mentionedUsers users mentioned in the message
      * @param course         the course in which the message was posted
      */
-    public void notifyAboutNewMessage(Post createdMessage, Set<User> recipients, Course course) {
+    public void notifyAboutNewMessage(Post createdMessage, Set<User> recipients, Course course, Set<User> mentionedUsers) {
         String notificationText;
         String[] placeholders;
         String conversationName = createdMessage.getConversation().getHumanReadableNameForReceiver(createdMessage.getAuthor());
@@ -65,12 +73,19 @@ public class ConversationNotificationService {
                     conversationName, "oneToOneChat" };
         }
         var notification = createConversationMessageNotification(course.getId(), createdMessage, NotificationType.CONVERSATION_NEW_MESSAGE, notificationText, true, placeholders);
-        saveAndSend(notification, recipients);
+        saveAndSend(notification, recipients, mentionedUsers, placeholders);
     }
 
-    private void saveAndSend(ConversationNotification notification, Set<User> recipients) {
+    private void saveAndSend(ConversationNotification notification, Set<User> recipients, Set<User> mentionedUsers, String[] placeHolders) {
         conversationNotificationRepository.save(notification);
-        sendNotificationViaWebSocket(notification, recipients);
+
+        Set<SingleUserNotification> mentionedUserNotifications = mentionedUsers.stream().map(mentionedUser -> SingleUserNotificationFactory
+                .createNotification(notification.getMessage(), NotificationType.CONVERSATION_USER_MENTIONED, notification.getText(), placeHolders, mentionedUser))
+                .collect(Collectors.toSet());
+        singleUserNotificationRepository.saveAll(mentionedUserNotifications);
+        mentionedUserNotifications.forEach(singleUserNotification -> websocketMessagingService.sendMessage(singleUserNotification.getTopic(), singleUserNotification));
+
+        sendNotificationViaWebSocket(notification, recipients.stream().filter(recipient -> !mentionedUsers.contains(recipient)).collect(Collectors.toSet()));
 
         generalInstantNotificationService.sendNotification(notification, recipients, null);
     }
