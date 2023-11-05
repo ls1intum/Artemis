@@ -47,8 +47,8 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
      * Calls ngOnInit of its superclass and initialize the subscription to
      * the Orion connector service, on component initialization
      */
-    async ngOnInit(): Promise<void> {
-        await super.ngOnInit();
+    ngOnInit(): void {
+        super.ngOnInit();
         this.orionConnectorService.state().subscribe((state) => (this.orionState = state));
     }
 

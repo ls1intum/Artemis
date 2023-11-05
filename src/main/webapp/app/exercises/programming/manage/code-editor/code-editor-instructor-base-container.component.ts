@@ -88,11 +88,11 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      * Initialize the route params subscription.
      * On route param change load the exercise and the selected participation OR the test repository.
      */
-    async ngOnInit(): Promise<void> {
+    ngOnInit(): void {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.paramSub = this.route!.params.subscribe(async (params) => {
+        this.paramSub = this.route!.params.subscribe((params) => {
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
             this.loadingState = LOADING_STATE.INITIALIZING;
