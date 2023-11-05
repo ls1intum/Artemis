@@ -39,7 +39,7 @@
                         <span *ngIf="submission.latestResult?.score != undefined">{{ submission.latestResult!.score }}%</span>
                     </td>
                     <td>
-                        <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR', 'ROLE_TA']">
+                        <span>
                             <a
                                 *ngIf="submission.participation!.exercise!.type === ExerciseType.TEXT"
                                 [routerLink]="[
