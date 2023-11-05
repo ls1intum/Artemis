@@ -1,12 +1,6 @@
 package de.tum.in.www1.artemis.notification;
 
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_ADD_USER_CHANNEL;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_ADD_USER_GROUP_CHAT;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_CREATE_GROUP_CHAT;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_CREATE_ONE_TO_ONE_CHAT;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_DELETE_CHANNEL;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_REMOVE_USER_CHANNEL;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_REMOVE_USER_GROUP_CHAT;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,7 +8,9 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -457,7 +453,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         answerPost.setCreationDate(ZonedDateTime.now().plusSeconds(5));
         answerPost.setPost(post);
 
-        singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo);
+        singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo, CONVERSATION_NEW_REPLY_MESSAGE);
         verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 

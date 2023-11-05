@@ -109,6 +109,7 @@
                 "tutorialGroupAssigned": "Du wurdest zugeteilt eine Übungsgruppe zu leiten",
                 "tutorialGroupUnassigned": "Dir wurde die Leitung einer Übungsgruppe entzogen",
                 "messageReply": "Neue Antwort auf eine Nachricht in einer Unterhaltung",
+                "mentionedInMessage": "Du wurdest erwähnt",
                 "deleteChannel": "Kanal gelöscht",
                 "removeUserChannel": "Du wurdest aus einem Kanal entfernt",
                 "addUserChannel": "Du wurdest zu einem Kanal hinzugefügt",
