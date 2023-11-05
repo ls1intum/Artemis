@@ -1,4 +1,4 @@
-<div [hidden]="isLinking">
+<div [hidden]="!isLinking" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
     <div class="modal-header">
         <div class="col d-flex flex-row pt-3 pb-1">
             <h4 class="modal-title" jhiTranslate="artemisApp.lti13.selectContentFromCourse" [translateValues]="{ title: course?.title }">
@@ -75,4 +75,4 @@
         </div>
     </div>
 </div>
-<h2 [hidden]="!isLinking" jhiTranslate="artemisApp.lti13.deepLinking.linkedFailed">Error during deep linking</h2>
+<h2 [hidden]="isLinking" jhiTranslate="artemisApp.lti13.deepLinking.linkedFailed">Error during deep linking</h2>

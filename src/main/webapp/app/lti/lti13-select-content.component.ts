@@ -1,25 +1,21 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, SecurityContext } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
     selector: 'jhi-select-exercise',
     templateUrl: './lti13-select-content.component.html',
 })
 export class Lti13SelectContentComponent implements OnInit {
+    jwt: string;
+    id: string;
     actionLink: string;
-    form: FormGroup;
     isLinking = true;
 
     constructor(
         private route: ActivatedRoute,
-        private formBuilder: FormBuilder,
-    ) {
-        this.form = this.formBuilder.group({
-            JWT: [''],
-            id: [''],
-        });
-    }
+        private sanitizer: DomSanitizer,
+    ) {}
 
     /**
      * Initializes the component.
@@ -41,17 +37,17 @@ export class Lti13SelectContentComponent implements OnInit {
      * - Retrieves query parameters from the route snapshot.
      */
     updateFormValues(): void {
-        this.actionLink = this.route.snapshot.queryParamMap.get('deepLinkUri') ?? '';
-        const jwt_token = this.route.snapshot.queryParamMap.get('jwt') ?? '';
-        const id_token = this.route.snapshot.queryParamMap.get('id') ?? '';
-        if (this.actionLink === '' || jwt_token === '' || id_token === '') {
+        // this.actionLink = this.route.snapshot.queryParamMap.get('deepLinkUri') ?? '';
+
+        const deepLinkUri = this.route.snapshot.queryParamMap.get('deepLinkUri') ?? '';
+        this.actionLink = this.sanitizer.sanitize(SecurityContext.URL, deepLinkUri) || '';
+
+        this.jwt = this.route.snapshot.queryParamMap.get('jwt') ?? '';
+        this.id = this.route.snapshot.queryParamMap.get('id') ?? '';
+        if (this.actionLink === '' || this.jwt === '' || this.id === '') {
             this.isLinking = false;
             return;
         }
-        this.form.patchValue({
-            JWT: jwt_token,
-            id: id_token,
-        });
     }
 
     /**
@@ -62,6 +58,8 @@ export class Lti13SelectContentComponent implements OnInit {
     autoSubmitForm(): void {
         const form = document.getElementById('deepLinkingForm') as HTMLFormElement;
         form.action = this.actionLink;
+        (<HTMLInputElement>document.getElementById('JWT'))!.value = this.jwt;
+        (<HTMLInputElement>document.getElementById('id'))!.value = this.id;
         form.submit();
     }
 }
