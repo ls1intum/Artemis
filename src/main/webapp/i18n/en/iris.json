@@ -41,8 +41,16 @@
                     "rateLimitTimeframeHoursTooltip": "The time period in which the rate limit applies in hours.",
                     "template": {
                         "title": "Template",
-                        "inherit": "Inherit Template",
-                        "inheritedInfo": "This template is inherited from higher level settings. Edit it here to overwrite it for this level."
+                        "inherit": "Inherit Template"
+                    },
+                    "codeEditor": {
+                        "templates": "Templates",
+                        "templatesInheritSwitch": "Inherit Templates",
+                        "chatTemplate": "Chat Template",
+                        "problemStatementTemplate": "Problem Statement Generation Template",
+                        "templateRepoTemplate": "Template Repository Generation Template",
+                        "solutionRepoTemplate": "Solution Repository Generation Template",
+                        "testRepoTemplate": "Test Repository Generation Template"
                     }
                 },
                 "title": {
