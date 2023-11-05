@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.parsers;
+package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v2;
 
 import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 
@@ -14,6 +14,7 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.object.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class ObjectDiagramParser {
 

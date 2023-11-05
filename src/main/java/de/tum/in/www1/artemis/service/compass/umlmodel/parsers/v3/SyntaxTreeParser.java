@@ -1,53 +1,50 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.parsers;
+package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v3;
 
 import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 
 import java.io.IOException;
 import java.util.*;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTree;
-import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTreeLink;
-import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTreeNonterminal;
-import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.SyntaxTreeTerminal;
+import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
+import de.tum.in.www1.artemis.service.compass.umlmodel.syntaxtree.*;
 
 public class SyntaxTreeParser {
 
     /**
-     * Create a syntax tree from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
+     * Create a syntax tree from the model and relationship elements given as JSON objects. It parses the JSON objects to corresponding Java objects and creates a
      * syntax tree containing these UML model elements.
      *
-     * @param modelElements     the model elements as JSON array
-     * @param relationships     the relationship elements as JSON array
+     * @param modelElements     the model elements as JSON object
+     * @param relationships     the relationship elements as JSON object
      * @param modelSubmissionId the ID of the corresponding modeling submission
      * @return a syntax tree containing the parsed model elements and relationships
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
      */
-    protected static SyntaxTree buildSyntaxTreeFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
+    protected static SyntaxTree buildSyntaxTreeFromJSON(JsonObject modelElements, JsonObject relationships, long modelSubmissionId) throws IOException {
         List<SyntaxTreeLink> syntaxTreeLinkList = new ArrayList<>();
         Map<String, SyntaxTreeTerminal> terminalMap = new HashMap<>();
         Map<String, SyntaxTreeNonterminal> nonTerminalMap = new HashMap<>();
         Map<String, UMLElement> allElementsMap = new HashMap<>();
 
         // loop over all JSON elements and create the UML objects
-        for (JsonElement jsonElement : modelElements) {
-            JsonObject jsonObject = jsonElement.getAsJsonObject();
+        for (var entry : modelElements.entrySet()) {
+            String id = entry.getKey();
+            JsonObject jsonObject = entry.getValue().getAsJsonObject();
             String elementType = jsonObject.get(ELEMENT_TYPE).getAsString();
             // elementType is never null
             switch (elementType) {
                 case SyntaxTreeTerminal.SYNTAX_TREE_TERMINAL_TYPE -> {
                     SyntaxTreeTerminal terminal = parseTerminal(jsonObject);
-                    terminalMap.put(terminal.getJSONElementID(), terminal);
-                    allElementsMap.put(terminal.getJSONElementID(), terminal);
+                    terminalMap.put(id, terminal);
+                    allElementsMap.put(id, terminal);
                 }
                 case SyntaxTreeNonterminal.SYNTAX_TREE_NONTERMINAL_TYPE -> {
                     SyntaxTreeNonterminal nonTerminal = parseNonTerminal(jsonObject);
-                    nonTerminalMap.put(nonTerminal.getJSONElementID(), nonTerminal);
-                    allElementsMap.put(nonTerminal.getJSONElementID(), nonTerminal);
+                    nonTerminalMap.put(id, nonTerminal);
+                    allElementsMap.put(id, nonTerminal);
                 }
                 default -> {
                     // ignore unknown elements
@@ -56,8 +53,8 @@ public class SyntaxTreeParser {
         }
 
         // loop over all JSON control flow elements and create syntax tree links
-        for (JsonElement rel : relationships) {
-            Optional<SyntaxTreeLink> syntaxTreeLink = parseSyntaxTreeLink(rel.getAsJsonObject(), allElementsMap);
+        for (var entry : relationships.entrySet()) {
+            Optional<SyntaxTreeLink> syntaxTreeLink = parseSyntaxTreeLink(entry.getValue().getAsJsonObject(), allElementsMap);
             syntaxTreeLink.ifPresent(syntaxTreeLinkList::add);
         }
 

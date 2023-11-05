@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.parsers;
+package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v3;
 
 import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 
@@ -10,57 +10,59 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.lang3.EnumUtils;
 
 import com.google.common.base.CaseFormat;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class ClassDiagramParser {
 
     /**
-     * Create a UML class diagram from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a class
+     * Create a UML class diagram from the model and relationship elements given as JSON objects. It parses the JSON objects to corresponding Java objects and creates a class
      * diagram containing these UML model elements.
      *
-     * @param modelElements     the model elements as JSON array
-     * @param relationships     the relationship elements as JSON array
+     * @param modelElements     the model elements as JSON object
+     * @param relationships     the relationship elements as JSON object
      * @param modelSubmissionId the ID of the corresponding modeling submission
      * @return a UML class diagram containing the parsed model elements and relationships
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
      */
-    protected static UMLClassDiagram buildClassDiagramFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
+    protected static UMLClassDiagram buildClassDiagramFromJSON(JsonObject modelElements, JsonObject relationships, long modelSubmissionId) throws IOException {
         Map<String, UMLClass> umlClassMap = new HashMap<>();
         List<UMLRelationship> umlRelationshipList = new ArrayList<>();
         Map<String, UMLPackage> umlPackageMap = new HashMap<>();
 
         // loop over all JSON elements and UML package objects
-        for (JsonElement elem : modelElements) {
-            JsonObject element = elem.getAsJsonObject();
+        for (var entry : modelElements.entrySet()) {
+            String id = entry.getKey();
+            JsonObject element = entry.getValue().getAsJsonObject();
             String elementType = element.get(ELEMENT_TYPE).getAsString();
 
             if (elementType.equals(UMLPackage.UML_PACKAGE_TYPE)) {
                 UMLPackage umlPackage = parsePackage(element);
-                umlPackageMap.put(umlPackage.getJSONElementID(), umlPackage);
+                umlPackageMap.put(id, umlPackage);
             }
         }
 
         // loop over all JSON elements and create the UML class objects
-        for (JsonElement elem : modelElements) {
-            JsonObject element = elem.getAsJsonObject();
+        for (var entry : modelElements.entrySet()) {
+            String id = entry.getKey();
+            JsonObject element = entry.getValue().getAsJsonObject();
 
             String elementType = element.get(ELEMENT_TYPE).getAsString();
             elementType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType);
 
             if (EnumUtils.isValidEnum(UMLClass.UMLClassType.class, elementType)) {
                 UMLClass umlClass = parseClass(elementType, element, modelElements, umlPackageMap);
-                umlClassMap.put(umlClass.getJSONElementID(), umlClass);
+                umlClassMap.put(id, umlClass);
             }
         }
 
         // loop over all JSON relationship elements and create UML relationships
-        for (JsonElement rel : relationships) {
-            Optional<UMLRelationship> relationship = parseRelationship(rel.getAsJsonObject(), umlClassMap, umlPackageMap);
+        for (var entry : relationships.entrySet()) {
+            Optional<UMLRelationship> relationship = parseRelationship(entry.getValue().getAsJsonObject(), umlClassMap, umlPackageMap);
             relationship.ifPresent(umlRelationshipList::add);
         }
 
@@ -85,11 +87,11 @@ public class ClassDiagramParser {
      *
      * @param classType     the type of the UML class
      * @param classJson     the JSON object containing the UML class
-     * @param modelElements a JSON array containing all the model elements of the corresponding UML class diagram as JSON objects
+     * @param modelElements a JSON object containing all the model elements of the corresponding UML class diagram as JSON objects
      * @param umlPackageMap a map containing all the packages of the corresponding UML class diagram
      * @return the UMLClass object parsed from the JSON object
      */
-    private static UMLClass parseClass(String classType, JsonObject classJson, JsonArray modelElements, Map<String, UMLPackage> umlPackageMap) {
+    private static UMLClass parseClass(String classType, JsonObject classJson, JsonObject modelElements, Map<String, UMLPackage> umlPackageMap) {
         Map<String, JsonObject> jsonElementMap = UMLModelParser.generateJsonElementMap(modelElements);
 
         UMLClass.UMLClassType umlClassType = UMLClass.UMLClassType.valueOf(classType);

@@ -1,30 +1,29 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.parsers;
+package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v3;
 
 import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 
 import java.io.IOException;
 import java.util.*;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.flowchart.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class FlowchartParser {
 
     /**
-     * Create a flowchart from the model and relationship elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates a
+     * Create a flowchart from the model and relationship elements given as JSON objects. It parses the JSON objects to corresponding Java objects and creates a
      * flowchart containing these UML model elements.
      *
-     * @param modelElements     the model elements as JSON array
-     * @param relationships     the relationship elements as JSON array
+     * @param modelElements     the model elements as JSON object
+     * @param relationships     the relationship elements as JSON object
      * @param modelSubmissionId the ID of the corresponding modeling submission
      * @return a flowchart containing the parsed model elements and relationships
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the relationship JSON objects
      */
-    protected static Flowchart buildFlowchartFromJSON(JsonArray modelElements, JsonArray relationships, long modelSubmissionId) throws IOException {
+    protected static Flowchart buildFlowchartFromJSON(JsonObject modelElements, JsonObject relationships, long modelSubmissionId) throws IOException {
         List<FlowchartFlowline> flowchartFlowlineList = new ArrayList<>();
         Map<String, FlowchartTerminal> terminalMap = new HashMap<>();
         Map<String, FlowchartDecision> decisionMap = new HashMap<>();
@@ -34,35 +33,36 @@ public class FlowchartParser {
         Map<String, UMLElement> allElementsMap = new HashMap<>();
 
         // loop over all JSON elements and create the UML objects
-        for (JsonElement jsonElement : modelElements) {
-            JsonObject jsonObject = jsonElement.getAsJsonObject();
+        for (var entry : modelElements.entrySet()) {
+            String id = entry.getKey();
+            JsonObject jsonObject = entry.getValue().getAsJsonObject();
             String elementType = jsonObject.get(ELEMENT_TYPE).getAsString();
             // elementType is never null
             switch (elementType) {
                 case FlowchartTerminal.FLOWCHART_TERMINAL_TYPE -> {
                     FlowchartTerminal terminal = parseFlowchartTerminal(jsonObject);
-                    terminalMap.put(terminal.getJSONElementID(), terminal);
-                    allElementsMap.put(terminal.getJSONElementID(), terminal);
+                    terminalMap.put(id, terminal);
+                    allElementsMap.put(id, terminal);
                 }
                 case FlowchartDecision.FLOWCHART_DECISION_TYPE -> {
                     FlowchartDecision decision = parseFlowchartDecision(jsonObject);
-                    decisionMap.put(decision.getJSONElementID(), decision);
-                    allElementsMap.put(decision.getJSONElementID(), decision);
+                    decisionMap.put(id, decision);
+                    allElementsMap.put(id, decision);
                 }
                 case FlowchartProcess.FLOWCHART_PROCESS_TYPE -> {
                     FlowchartProcess process = parseFlowchartProcess(jsonObject);
-                    processMap.put(process.getJSONElementID(), process);
-                    allElementsMap.put(process.getJSONElementID(), process);
+                    processMap.put(id, process);
+                    allElementsMap.put(id, process);
                 }
                 case FlowchartInputOutput.FLOWCHART_INPUT_OUTPUT_TYPE -> {
                     FlowchartInputOutput inputOutput = parseFlowchartInputOutput(jsonObject);
-                    inputOutputMap.put(inputOutput.getJSONElementID(), inputOutput);
-                    allElementsMap.put(inputOutput.getJSONElementID(), inputOutput);
+                    inputOutputMap.put(id, inputOutput);
+                    allElementsMap.put(id, inputOutput);
                 }
                 case FlowchartFunctionCall.FLOWCHART_FUNCTION_CALL_TYPE -> {
                     FlowchartFunctionCall functionCall = parseFlowchartFunctionCall(jsonObject);
-                    functionCallMap.put(functionCall.getJSONElementID(), functionCall);
-                    allElementsMap.put(functionCall.getJSONElementID(), functionCall);
+                    functionCallMap.put(id, functionCall);
+                    allElementsMap.put(id, functionCall);
                 }
                 default -> {
                     // ignore unknown elements
@@ -71,8 +71,8 @@ public class FlowchartParser {
         }
 
         // loop over all JSON flowchart elements and create flowlines
-        for (JsonElement rel : relationships) {
-            Optional<FlowchartFlowline> flowchartFlowline = parseFlowchartFlowline(rel.getAsJsonObject(), allElementsMap);
+        for (var entry : relationships.entrySet()) {
+            Optional<FlowchartFlowline> flowchartFlowline = parseFlowchartFlowline(entry.getValue().getAsJsonObject(), allElementsMap);
             flowchartFlowline.ifPresent(flowchartFlowlineList::add);
         }
 
