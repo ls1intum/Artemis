@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -23,6 +24,7 @@ import com.tngtech.archunit.lang.*;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 
 class ArchitectureTest extends AbstractArchitectureTest {
 
@@ -141,5 +143,13 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 }
             }
         };
+    }
+
+    @Test
+    void testNoDirectGitCommitCalls() {
+        ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
+        var classesWithoutGitService = allClasses.that(not(assignableTo(GitService.class)));
+        usage.check(classesWithoutGitService);
+        usage.check(testClasses);
     }
 }
