@@ -127,11 +127,11 @@ describe('IrisCodeEditorSubSettingsUpdateComponent Component', () => {
         comp.testRepoGenerationTemplateContent = 'Hello World 6';
         comp.onTemplateChanged();
 
-        expect(comp.subSettings.chatTemplate?.content).toBe('Hello World 2');
-        expect(comp.subSettings.problemStatementGenerationTemplate?.content).toBe('Hello World 3');
-        expect(comp.subSettings.templateRepoGenerationTemplate?.content).toBe('Hello World 4');
-        expect(comp.subSettings.solutionRepoGenerationTemplate?.content).toBe('Hello World 5');
-        expect(comp.subSettings.testRepoGenerationTemplate?.content).toBe('Hello World 6');
+        expect(comp.subSettings.chatTemplate!.content).toBe('Hello World 2');
+        expect(comp.subSettings.problemStatementGenerationTemplate!.content).toBe('Hello World 3');
+        expect(comp.subSettings.templateRepoGenerationTemplate!.content).toBe('Hello World 4');
+        expect(comp.subSettings.solutionRepoGenerationTemplate!.content).toBe('Hello World 5');
+        expect(comp.subSettings.testRepoGenerationTemplate!.content).toBe('Hello World 6');
     });
 
     it('sub settings changes', () => {
