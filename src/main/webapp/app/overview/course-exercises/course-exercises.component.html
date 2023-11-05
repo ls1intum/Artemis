@@ -6,10 +6,10 @@
                     {{ 'artemisApp.courseOverview.exerciseList.view' | artemisTranslate }}
                 </button>
                 <div class="dropdown-menu" ngbDropdownMenu>
-                    <a (click)="setShowExercisesGroupedByDueDateCategory(true)" class="dropdown-item {{ showExercisesGroupedByDueDateCategory ? 'active' : '' }}">
+                    <a (click)="setShowExercisesGroupedByDueDateCategory(true)" class="dropdown-item {{ showExercisesGroupedByTimeframe ? 'active' : '' }}">
                         {{ 'artemisApp.courseOverview.exerciseList.timeframeView' | artemisTranslate }}
                     </a>
-                    <a (click)="setShowExercisesGroupedByDueDateCategory(false)" class="dropdown-item {{ !showExercisesGroupedByDueDateCategory ? 'active' : '' }}">
+                    <a (click)="setShowExercisesGroupedByDueDateCategory(false)" class="dropdown-item {{ !showExercisesGroupedByTimeframe ? 'active' : '' }}">
                         {{ 'artemisApp.courseOverview.exerciseList.weeklyView' | artemisTranslate }}
                     </a>
                 </div>
@@ -117,21 +117,20 @@
             </div>
 
             <ng-container *ngIf="course?.exercises?.length !== 0; else noExercisesAvailableForCourse">
-                <jhi-course-exercises-grouped-by-category
-                    *ngIf="showExercisesGroupedByDueDateCategory; else exercisesGroupedByWeek"
-                    [filteredExercises]="filteredExercises"
+                <jhi-course-exercises-grouped-by-timeframe
+                    *ngIf="showExercisesGroupedByTimeframe; else exercisesGroupedByWeek"
+                    [filteredAndSortedExercises]="filteredAndSortedExercises"
                     [course]="course"
                     [exerciseForGuidedTour]="exerciseForGuidedTour"
                     [appliedSearchString]="lastAppliedSearchString"
                 />
                 <ng-template #exercisesGroupedByWeek>
                     <jhi-course-exercises-grouped-by-week
-                        [nextRelevantExercise]="nextRelevantExercise"
+                        [filteredAndSortedExercises]="filteredAndSortedExercises"
                         [course]="course!"
                         [exerciseForGuidedTour]="exerciseForGuidedTour"
-                        [weeklyIndexKeys]="weeklyIndexKeys"
-                        [immutableWeeklyExercisesGrouped]="weeklyExercisesGrouped"
                         [activeFilters]="activeFilters"
+                        [sortingAttribute]="sortingAttribute"
                     />
                 </ng-template>
             </ng-container>

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.metis;
 
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -19,7 +20,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
@@ -89,10 +90,10 @@ public class ConversationMessagingService extends PostingService {
         newMessage.setAuthor(author);
         newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        conversationService.isMemberElseThrow(newMessage.getConversation().getId(), author.getId());
+        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(newMessage.getConversation().getId(), author, Optional.empty())
+                .orElse(conversationRepository.findByIdElseThrow(newMessage.getConversation().getId()));
         log.info("      createMessage:conversationService.isMemberElseThrow DONE");
 
-        var conversation = conversationRepository.findByIdElseThrow(newMessage.getConversation().getId());
         log.info("      createMessage:conversationRepository.findByIdElseThrow DONE");
         // IMPORTANT we don't need it in the conversation any more, so we reduce the amount of data sent to clients
         conversation.setConversationParticipants(Set.of());
@@ -160,7 +161,7 @@ public class ConversationMessagingService extends PostingService {
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
         Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
-        conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course);
+        conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course, mentionedUsers);
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
     }
 
@@ -206,29 +207,11 @@ public class ConversationMessagingService extends PostingService {
      *
      * @param pageable          requested page and page size
      * @param postContextFilter request object to fetch posts
+     * @param requestingUser    the user requesting messages in course-wide channels
      * @return page of posts that match the given context
      */
-    public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilter postContextFilter) {
-
-        if (postContextFilter.getConversationId() == null) {
-            throw new BadRequestAlertException("Messages must be associated with a conversion", METIS_POST_ENTITY_NAME, "conversationMissing");
-        }
-
-        var requestingUser = userRepository.getUser();
-        if (!conversationService.isMember(postContextFilter.getConversationId(), requestingUser.getId())) {
-            Conversation conversation = conversationRepository.findByIdElseThrow(postContextFilter.getConversationId());
-
-            if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-                ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(requestingUser, channel);
-                // Mark messages as read
-                conversationParticipant.setLastRead(ZonedDateTime.now());
-                conversationParticipantRepository.saveAndFlush(conversationParticipant);
-            }
-            else {
-                throw new AccessForbiddenException("User not allowed to access this conversation!");
-            }
-
-        }
+    public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilter postContextFilter, User requestingUser) {
+        conversationService.isMemberOrCreateForCourseWideElseThrow(postContextFilter.getConversationId(), requestingUser, Optional.of(ZonedDateTime.now()));
 
         // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
@@ -239,6 +222,23 @@ public class ConversationMessagingService extends PostingService {
 
         // invoke async due to db write access to avoid that the client has to wait
         conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), postContextFilter.getConversationId(), ZonedDateTime.now());
+
+        return conversationPosts;
+    }
+
+    /**
+     * Fetch messages from database by a list of course-wide channels.
+     *
+     * @param pageable          requested page and page size
+     * @param postContextFilter request object to fetch messages
+     * @param requestingUser    the user requesting messages in course-wide channels
+     * @return page of posts that match the given context
+     */
+    public Page<Post> getCourseWideMessages(Pageable pageable, @Valid PostContextFilter postContextFilter, User requestingUser) {
+        // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
+        Page<Post> conversationPosts = conversationMessageRepository.findCourseWideMessages(postContextFilter, pageable, requestingUser.getId());
+
+        setAuthorRoleOfPostings(conversationPosts.getContent());
 
         return conversationPosts;
     }
@@ -303,6 +303,30 @@ public class ConversationMessagingService extends PostingService {
         conversationService.notifyAllConversationMembersAboutUpdate(conversation);
 
         broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course, null);
+    }
+
+    /**
+     * Invokes the updateMessage method to persist the change of displayPriority
+     *
+     * @param courseId        id of the course the post belongs to
+     * @param postId          id of the message to change the pin state for
+     * @param displayPriority new displayPriority
+     * @return updated post that was persisted
+     */
+    public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = preCheckUserAndCourseForMessaging(user, courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+
+        Post message = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
+        message.setDisplayPriority(displayPriority);
+
+        conversationService.isMemberOrCreateForCourseWideElseThrow(message.getConversation().getId(), user, Optional.empty());
+
+        Post updatedMessage = conversationMessageRepository.save(message);
+        message.getConversation().hideDetails();
+        broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course, null);
+        return updatedMessage;
     }
 
     private Conversation mayUpdateOrDeleteMessageElseThrow(Post existingMessagePost, User user) {

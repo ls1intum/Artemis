@@ -63,7 +63,7 @@
                     <span *ngIf="!modelingExercise.exampleSolutionPublicationDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
                 </dd>
             </dl>
-            <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN']">
+            <ng-container *jhiHasAnyAuthority="'ROLE_ADMIN'">
                 <dl class="row-md">
                     <dt>
                         <span jhiTranslate="artemisApp.modelingExercise.clusters">Clusters</span>
