@@ -43,8 +43,7 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
     });
 
     it('child setup works', () => {
-        const subSettings = baseSettings();
-        comp.subSettings = subSettings;
+        comp.subSettings = baseSettings();
         comp.parentSubSettings = baseSettings();
         comp.allIrisModels = mockModels();
         comp.settingsType = IrisSettingsType.EXERCISE;
@@ -52,7 +51,7 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
 
         expect(comp.enabled).toBeTrue();
         expect(comp.inheritAllowedModels).toBeFalse();
-        expect(comp.allowedIrisModels).toEqual([subSettings.preferredModel]);
+        expect(comp.allowedIrisModels).toEqual([mockModels()[0]]);
     });
 
     it('parent setup works', () => {
@@ -67,7 +66,7 @@ describe('IrisCommonSubSettingsUpdateComponent Component', () => {
 
         expect(comp.enabled).toBeTrue();
         expect(comp.inheritAllowedModels).toBeTrue();
-        expect(comp.allowedIrisModels).toEqual([comp.parentSubSettings.preferredModel]);
+        expect(comp.allowedIrisModels).toEqual([mockModels()[0]]);
     });
 
     it('change allowed model', () => {
