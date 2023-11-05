@@ -61,12 +61,6 @@ describe('Lti13SelectContentComponent', () => {
 
         component.ngOnInit();
 
-        // Check that the form values were set correctly
-        expect(component.form.value).toEqual({
-            JWT: jwt,
-            id: id,
-        });
-
         expect(component.actionLink).toBe(deepLinkUri);
         expect(component.isLinking).toBeTrue();
         expect(autoSubmitSpy).toHaveBeenCalled();

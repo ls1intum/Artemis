@@ -2,6 +2,12 @@ import { Component, OnInit, SecurityContext } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 
+/**
+ * Component responsible for sending deep linking content.
+ * It reads the necessary parameters from the route, sanitizes return URL,
+ * and automatically submits a form with the relevant data.
+ * According to LTI documentation auto submit form must be used.
+ */
 @Component({
     selector: 'jhi-select-exercise',
     templateUrl: './lti13-select-content.component.html',
@@ -37,11 +43,8 @@ export class Lti13SelectContentComponent implements OnInit {
      * - Retrieves query parameters from the route snapshot.
      */
     updateFormValues(): void {
-        // this.actionLink = this.route.snapshot.queryParamMap.get('deepLinkUri') ?? '';
-
         const deepLinkUri = this.route.snapshot.queryParamMap.get('deepLinkUri') ?? '';
         this.actionLink = this.sanitizer.sanitize(SecurityContext.URL, deepLinkUri) || '';
-
         this.jwt = this.route.snapshot.queryParamMap.get('jwt') ?? '';
         this.id = this.route.snapshot.queryParamMap.get('id') ?? '';
         if (this.actionLink === '' || this.jwt === '' || this.id === '') {
