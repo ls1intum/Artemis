@@ -32,15 +32,15 @@ public class IrisExercisePlan extends IrisMessageContent {
 
     @Override
     public String getContentAsString() {
-        var sb = new StringBuilder("Exercise plan:\n");
-        for (var entry : steps) {
-            sb.append(entry.getComponent().toString()).append(": \"").append(entry.getInstructions()).append("\"\n");
+        var sb = new StringBuilder("Exercise Plan:\n");
+        for (var step : steps) {
+            sb.append(step.getComponent()).append(": \"").append(step.getInstructions()).append("\" - ").append(step.getExecutionStage()).append("\n");
         }
         return sb.toString();
     }
 
     @Override
     public String toString() {
-        return "IrisExercisePlanMessageContent{" + "message=" + (message == null ? "null" : message.getId()) + ", components=" + steps + '}';
+        return "IrisExercisePlan{" + "message=" + (message == null ? "null" : message.getId()) + ", steps=" + steps + '}';
     }
 }
