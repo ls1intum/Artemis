@@ -6,7 +6,6 @@ import { Observable } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
-import { IrisHestiaSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisModel } from 'app/entities/iris/settings/iris-model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 
@@ -135,16 +134,6 @@ export class IrisSettingsUpdateComponent implements OnInit, OnChanges, Component
                 return this.irisSettingsService.setCourseSettings(this.courseId!, this.irisSettings!);
             case IrisSettingsType.EXERCISE:
                 return this.irisSettingsService.setProgrammingExerciseSettings(this.exerciseId!, this.irisSettings!);
-        }
-    }
-
-    onInheritHestiaSettingsChanged() {
-        if (this.irisSettings?.irisHestiaSettings) {
-            this.irisSettings!.irisHestiaSettings = undefined;
-        } else {
-            const irisSubSettings = new IrisHestiaSubSettings();
-            irisSubSettings.enabled = true;
-            this.irisSettings!.irisHestiaSettings = irisSubSettings;
         }
     }
 }
