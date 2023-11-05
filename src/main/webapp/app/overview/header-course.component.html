@@ -7,8 +7,10 @@
 
                     <div *ngIf="courseDescription" style="display: block">
                         <h6 id="course-header-description" class="fw-normal">{{ courseDescription }}</h6>
-                        <h6 class="fw-medium show-more" role="button" *ngIf="enableShowMore" (click)="toggleCourseDescription()">
+                        <h6 class="fw-medium show-more d-flex" role="button" *ngIf="enableShowMore" (click)="toggleCourseDescription()">
                             {{ 'artemisApp.courseOverview.' + (longDescriptionShown ? 'showLess' : 'showMore') | artemisTranslate }}
+
+                            <fa-icon [icon]="faArrowDown" [class.rotate180]="longDescriptionShown" class="rotate-icon"></fa-icon>
                         </h6>
                     </div>
                 </div>
