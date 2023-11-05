@@ -9,7 +9,7 @@ import { IrisChatSubSettingsUpdateComponent } from 'app/iris/settings/iris-setti
 import { IrisHestiaSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-hestia-sub-settings-update/iris-hestia-sub-settings-update.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { IrisGlobalAutoupdateSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
-import { mockSettings, models } from './mock-settings';
+import { mockModels, mockSettings } from './mock-settings';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgModel } from '@angular/forms';
@@ -54,7 +54,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
 
                 const irisSettings = mockSettings();
                 getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedCourseSettings').mockReturnValue(of(irisSettings));
-                getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(models()));
+                getModelsSpy = jest.spyOn(irisSettingsService, 'getIrisModels').mockReturnValue(of(mockModels()));
                 getParentSettingsSpy = jest.spyOn(irisSettingsService, 'getGlobalSettings').mockReturnValue(of(irisSettings));
             });
         fixture = TestBed.createComponent(IrisCourseSettingsUpdateComponent);

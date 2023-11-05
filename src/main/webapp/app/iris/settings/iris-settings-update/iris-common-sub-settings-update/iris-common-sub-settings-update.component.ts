@@ -92,11 +92,9 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     onInheritAllowedModelsChange() {
         if (this.inheritAllowedModels) {
-            this.inheritAllowedModels = true;
             this.subSettings!.allowedModels = undefined;
             this.allowedIrisModels = this.getAvailableModels();
         } else {
-            this.inheritAllowedModels = false;
             this.subSettings!.allowedModels = this.allowedIrisModels.map((model) => model.id);
         }
     }

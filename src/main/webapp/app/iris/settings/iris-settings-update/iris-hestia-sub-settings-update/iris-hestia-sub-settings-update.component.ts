@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { IrisTemplate } from 'app/entities/iris/settings/iris-template';
 import { IrisHestiaSubSettings, IrisSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 
@@ -6,7 +6,7 @@ import { IrisHestiaSubSettings, IrisSubSettings } from 'app/entities/iris/settin
     selector: 'jhi-iris-hestia-sub-settings-update',
     templateUrl: './iris-hestia-sub-settings-update.component.html',
 })
-export class IrisHestiaSubSettingsUpdateComponent implements OnInit {
+export class IrisHestiaSubSettingsUpdateComponent implements OnInit, OnChanges {
     @Input()
     subSettings: IrisHestiaSubSettings;
 
@@ -24,6 +24,12 @@ export class IrisHestiaSubSettingsUpdateComponent implements OnInit {
 
     ngOnInit(): void {
         this.templateContent = this.subSettings.template?.content ?? this.parentSubSettings?.template?.content ?? '';
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.subSettings || changes.parentSubSettings) {
+            this.templateContent = this.subSettings?.template?.content ?? this.parentSubSettings?.template?.content ?? '';
+        }
     }
 
     onInheritTemplateChanged() {

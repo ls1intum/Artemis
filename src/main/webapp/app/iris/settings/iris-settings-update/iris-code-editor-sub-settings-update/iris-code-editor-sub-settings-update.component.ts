@@ -16,7 +16,11 @@ export class IrisCodeEditorSubSettingsUpdateComponent implements OnInit, OnChang
     @Output()
     onChanges = new EventEmitter<IrisSubSettings>();
 
-    previousTemplate?: IrisTemplate;
+    previousChatTemplate?: IrisTemplate;
+    previousProblemStatementGenerationTemplate?: IrisTemplate;
+    previousTemplateRepoGenerationTemplate?: IrisTemplate;
+    previousSolutionRepoGenerationTemplate?: IrisTemplate;
+    previousTestRepoGenerationTemplate?: IrisTemplate;
 
     chatTemplateContent: string;
     problemStatementGenerationTemplateContent: string;
@@ -47,49 +51,49 @@ export class IrisCodeEditorSubSettingsUpdateComponent implements OnInit, OnChang
 
     onInheritTemplateChanged() {
         if (this.subSettings?.chatTemplate) {
-            this.previousTemplate = this.subSettings?.chatTemplate;
+            this.previousChatTemplate = this.subSettings?.chatTemplate;
             this.subSettings.chatTemplate = undefined;
             this.chatTemplateContent = this.parentSubSettings?.chatTemplate?.content ?? '';
         } else {
             const irisTemplate = new IrisTemplate();
             irisTemplate.content = '';
-            this.subSettings!.chatTemplate = this.previousTemplate ?? irisTemplate;
+            this.subSettings!.chatTemplate = this.previousChatTemplate ?? irisTemplate;
         }
         if (this.subSettings?.problemStatementGenerationTemplate) {
-            this.previousTemplate = this.subSettings?.problemStatementGenerationTemplate;
+            this.previousProblemStatementGenerationTemplate = this.subSettings?.problemStatementGenerationTemplate;
             this.subSettings.problemStatementGenerationTemplate = undefined;
             this.problemStatementGenerationTemplateContent = this.parentSubSettings?.problemStatementGenerationTemplate?.content ?? '';
         } else {
             const irisTemplate = new IrisTemplate();
             irisTemplate.content = '';
-            this.subSettings!.problemStatementGenerationTemplate = this.previousTemplate ?? irisTemplate;
+            this.subSettings!.problemStatementGenerationTemplate = this.previousProblemStatementGenerationTemplate ?? irisTemplate;
         }
         if (this.subSettings?.templateRepoGenerationTemplate) {
-            this.previousTemplate = this.subSettings?.templateRepoGenerationTemplate;
+            this.previousTemplateRepoGenerationTemplate = this.subSettings?.templateRepoGenerationTemplate;
             this.subSettings.templateRepoGenerationTemplate = undefined;
             this.templateRepoGenerationTemplateContent = this.parentSubSettings?.templateRepoGenerationTemplate?.content ?? '';
         } else {
             const irisTemplate = new IrisTemplate();
             irisTemplate.content = '';
-            this.subSettings!.templateRepoGenerationTemplate = this.previousTemplate ?? irisTemplate;
+            this.subSettings!.templateRepoGenerationTemplate = this.previousTemplateRepoGenerationTemplate ?? irisTemplate;
         }
         if (this.subSettings?.solutionRepoGenerationTemplate) {
-            this.previousTemplate = this.subSettings?.solutionRepoGenerationTemplate;
+            this.previousSolutionRepoGenerationTemplate = this.subSettings?.solutionRepoGenerationTemplate;
             this.subSettings.solutionRepoGenerationTemplate = undefined;
             this.solutionRepoGenerationTemplateContent = this.parentSubSettings?.solutionRepoGenerationTemplate?.content ?? '';
         } else {
             const irisTemplate = new IrisTemplate();
             irisTemplate.content = '';
-            this.subSettings!.solutionRepoGenerationTemplate = this.previousTemplate ?? irisTemplate;
+            this.subSettings!.solutionRepoGenerationTemplate = this.previousSolutionRepoGenerationTemplate ?? irisTemplate;
         }
         if (this.subSettings?.testRepoGenerationTemplate) {
-            this.previousTemplate = this.subSettings?.testRepoGenerationTemplate;
+            this.previousTestRepoGenerationTemplate = this.subSettings?.testRepoGenerationTemplate;
             this.subSettings.testRepoGenerationTemplate = undefined;
             this.testRepoGenerationTemplateContent = this.parentSubSettings?.testRepoGenerationTemplate?.content ?? '';
         } else {
             const irisTemplate = new IrisTemplate();
             irisTemplate.content = '';
-            this.subSettings!.testRepoGenerationTemplate = this.previousTemplate ?? irisTemplate;
+            this.subSettings!.testRepoGenerationTemplate = this.previousTestRepoGenerationTemplate ?? irisTemplate;
         }
     }
 

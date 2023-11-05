@@ -26,7 +26,7 @@ export function mockSettings() {
     return irisSettings;
 }
 
-export function models() {
+export function mockModels() {
     return [
         {
             id: '1',

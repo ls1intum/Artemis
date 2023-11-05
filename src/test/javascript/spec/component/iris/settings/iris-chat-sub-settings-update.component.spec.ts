@@ -6,6 +6,7 @@ import { IrisChatSubSettings } from 'app/entities/iris/settings/iris-sub-setting
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective } from 'ng-mocks';
 import { IrisChatSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-chat-sub-settings-update/iris-chat-sub-settings-update.component';
+import { SimpleChange, SimpleChanges } from '@angular/core';
 
 function baseSettings() {
     const mockTemplate = new IrisTemplate();
@@ -18,7 +19,7 @@ function baseSettings() {
     return irisSubSettings;
 }
 
-describe('IrisSubSettingsUpdateComponent Component', () => {
+describe('IrisChatSubSettingsUpdateComponent Component', () => {
     let comp: IrisChatSubSettingsUpdateComponent;
     let fixture: ComponentFixture<IrisChatSubSettingsUpdateComponent>;
 
@@ -72,5 +73,39 @@ describe('IrisSubSettingsUpdateComponent Component', () => {
         expect(comp.subSettings.template).toBeDefined();
         expect(fixture.debugElement.nativeElement.querySelector('#inheritTemplate')).toBeTruthy();
         expect(fixture.debugElement.nativeElement.querySelector('#template-editor')).toBeTruthy();
+    });
+
+    it('template changes', () => {
+        comp.subSettings = baseSettings();
+        fixture.detectChanges();
+        comp.templateContent = 'Hello World 2';
+        comp.onTemplateChanged();
+
+        expect(comp.subSettings.template?.content).toBe('Hello World 2');
+    });
+
+    it('template created', () => {
+        comp.subSettings = baseSettings();
+        comp.subSettings.template = undefined;
+        fixture.detectChanges();
+        comp.templateContent = 'Hello World 2';
+        comp.onTemplateChanged();
+
+        expect(comp.subSettings.template?.content).toBe('Hello World 2');
+    });
+
+    it('sub settings changes', () => {
+        comp.subSettings = baseSettings();
+        fixture.detectChanges();
+        const newSubSettings = baseSettings();
+        newSubSettings.template!.content = 'Hello World 2';
+
+        const changes: SimpleChanges = {
+            subSettings: new SimpleChange(comp.subSettings, newSubSettings),
+        };
+        comp.subSettings = newSubSettings;
+        comp.ngOnChanges(changes);
+
+        expect(comp.templateContent).toBe('Hello World 2');
     });
 });
