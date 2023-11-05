@@ -12,7 +12,6 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { ArtemisTestModule } from '../../test.module';
-import { addDelay } from '../../helpers/utils/general.utils';
 import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -63,10 +62,10 @@ describe('ModelingEditorComponent', () => {
         const editor: ApollonEditor = component['apollonEditor'] as ApollonEditor;
         // Check that editor exists
         expect(editor).toBeDefined();
-        await addDelay(500).then(() => {
-            // check that editor contains elements of our model (direct equality check won't work somehow due to missing properties)
-            expect(editor.model.elements.map((e) => e.id)).toEqual(classDiagram.elements.map((e) => e.id));
-        });
+        await editor.nextRender;
+
+        // check that editor contains elements of our model (direct equality check won't work somehow due to missing properties)
+        expect(editor.model.elements.map((e) => e.id)).toEqual(classDiagram.elements.map((e) => e.id));
     });
 
     it('ngOnDestroy', () => {
@@ -94,14 +93,14 @@ describe('ModelingEditorComponent', () => {
         // note: using cloneDeep a default value exists, which would prevent the comparison below to pass, therefore we need to remove it here
         changedModel.default = undefined;
         // test
-        await addDelay(100);
+        await component.apollonEditor?.nextRender;
         component.ngOnChanges({
             umlModel: {
                 currentValue: changedModel,
                 previousValue: model,
             } as SimpleChange,
         });
-        await addDelay(100);
+        await component.apollonEditor?.nextRender;
         const componentModel = component['apollonEditor']!.model as UMLModel;
         expect(componentModel).toEqual(changedModel);
     });
@@ -253,25 +252,24 @@ describe('ModelingEditorComponent', () => {
         let updateSpyCallCount = 0;
         let currentUmlName = personUML.name;
 
-        await addDelay(500).then(() => {
-            subject.next(currentUmlName);
-            expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
-            updateSpyCallCount++;
-            expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
+        await fixture.componentInstance.apollonEditor?.nextRender;
+        subject.next(currentUmlName);
+        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
+        updateSpyCallCount++;
+        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
 
-            currentUmlName = studentUML.name;
-            subject.next(currentUmlName);
-            expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
+        currentUmlName = studentUML.name;
+        subject.next(currentUmlName);
+        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
 
-            updateSpyCallCount++;
-            expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
+        updateSpyCallCount++;
+        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
 
-            currentUmlName = associationUML.name;
-            subject.next(currentUmlName);
-            expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
+        currentUmlName = associationUML.name;
+        subject.next(currentUmlName);
+        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
 
-            updateSpyCallCount++;
-            expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
-        });
+        updateSpyCallCount++;
+        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
     });
 });
