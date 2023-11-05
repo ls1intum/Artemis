@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick, waitForAsync } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
@@ -336,13 +336,14 @@ describe('CodeEditorContainerIntegration', () => {
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
     }));
 
-    it('should update the file browser and ace editor on file selection', () => {
+    it('should update the file browser and ace editor on file selection', waitForAsync(async () => {
         cleanInitialize();
         const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
         const fileContent = 'lorem ipsum';
         loadFile(selectedFile, fileContent);
 
         containerFixture.detectChanges();
+        await containerFixture.whenStable();
         expect(container.selectedFile).toBe(selectedFile);
         expect(container.aceEditor.selectedFile).toBe(selectedFile);
         expect(container.aceEditor.isLoading).toBeFalse();
@@ -352,9 +353,9 @@ describe('CodeEditorContainerIntegration', () => {
 
         containerFixture.detectChanges();
         expect(container.aceEditor.editor.getEditor().getSession().getValue()).toBe(fileContent);
-    });
+    }));
 
-    it('should mark file to have unsaved changes in file tree if the file was changed in editor', () => {
+    it('should mark file to have unsaved changes in file tree if the file was changed in editor', waitForAsync(async () => {
         cleanInitialize();
         const selectedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
         const fileContent = 'lorem ipsum';
@@ -364,6 +365,7 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
         container.aceEditor.onFileTextChanged(newFileContent);
         containerFixture.detectChanges();
+        await containerFixture.whenStable();
 
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
@@ -371,7 +373,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.fileBrowser.unsavedFiles).toEqual([selectedFile]);
         expect(container.editorState).toBe(EditorState.UNSAVED_CHANGES);
         expect(container.actions.editorState).toBe(EditorState.UNSAVED_CHANGES);
-    });
+    }));
 
     it('should save files and remove unsaved status of saved files afterwards', () => {
         // setup
