@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 
+import javax.crypto.SecretKey;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,7 +20,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.in.www1.artemis.management.SecurityMetersService;
 import de.tum.in.www1.artemis.security.Role;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.micrometer.core.instrument.Counter;
@@ -131,9 +132,9 @@ class TokenProviderSecurityMetersTest {
     }
 
     private String createUnsupportedToken() {
-        Key key = (Key) ReflectionTestUtils.getField(tokenProvider, "key");
+        SecretKey key = (SecretKey) ReflectionTestUtils.getField(tokenProvider, "key");
 
-        return Jwts.builder().setPayload("payload").signWith(key, SignatureAlgorithm.HS256).compact();
+        return Jwts.builder().content("payload").signWith(key, Jwts.SIG.HS256).compact();
     }
 
     private String createMalformedToken() {
@@ -143,9 +144,9 @@ class TokenProviderSecurityMetersTest {
     }
 
     private String createTokenWithDifferentSignature() {
-        Key otherKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode("Xfd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8"));
+        SecretKey otherKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode("Xfd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8"));
 
-        return Jwts.builder().setSubject("anonymous").signWith(otherKey, SignatureAlgorithm.HS512).setExpiration(new Date(new Date().getTime() + ONE_MINUTE)).compact();
+        return Jwts.builder().subject("anonymous").signWith(otherKey, Jwts.SIG.HS512).expiration(new Date(new Date().getTime() + ONE_MINUTE)).compact();
     }
 
     private double aggregate(Collection<Counter> counters) {
