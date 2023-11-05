@@ -22,7 +22,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 
-describe('ModelingExercise Management Update Component', () => {
+describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
     let fixture: ComponentFixture<ModelingExerciseUpdateComponent>;
     let service: ModelingExerciseService;
@@ -125,10 +125,10 @@ describe('ModelingExercise Management Update Component', () => {
         modelingExercise.dueDate = dayjs();
         modelingExercise.assessmentDueDate = dayjs();
         modelingExercise.channelName = 'test';
-        const courseId = 1;
+        const courseIdImportingCourse = 1;
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ courseId });
+            route.params = of({ courseId: courseIdImportingCourse });
             route.url = of([{ path: 'import' } as UrlSegment]);
             route.data = of({ modelingExercise });
         });
@@ -144,7 +144,7 @@ describe('ModelingExercise Management Update Component', () => {
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
-            expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(course.id);
+            expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseIdImportingCourse);
             expect(comp.existingCategories).toEqual(categories);
         }));
     });
