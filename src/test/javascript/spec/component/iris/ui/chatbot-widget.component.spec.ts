@@ -192,7 +192,7 @@ describe('IrisChatbotWidgetComponent', () => {
         const plan = message!.content.find((p) => p.id === planId) as IrisExercisePlan;
         const step = plan!.steps.find((s) => s.id === mockExercisePlanStep.id);
         expect(executeMock).toHaveBeenCalledWith(mockServerPlanMessage.id, mockExercisePlanStep);
-        expect(step.executionStage).toEqual(ExecutionStage.IN_PROGRESS);
+        expect(step!.executionStage).toEqual(ExecutionStage.IN_PROGRESS);
     }));
 
     it('should set executing', () => {
@@ -536,7 +536,7 @@ describe('IrisChatbotWidgetComponent', () => {
         const plan = message!.content.find((p) => p.id === 2) as IrisExercisePlan;
         const step = plan!.steps.find((s) => s.id === 2);
         expect(notifyMock).toHaveBeenCalledWith(2, 2, 2);
-        expect(step.executionStage).toEqual(ExecutionStage.COMPLETE);
+        expect(step!.executionStage).toEqual(ExecutionStage.COMPLETE);
     });
 
     it('should notify step completed without corresponding message', () => {
@@ -590,7 +590,7 @@ describe('IrisChatbotWidgetComponent', () => {
         const step = plan!.steps.find((s) => s.id === 2);
         expect(notifyMock).toHaveBeenCalledWith(2, 2, 2, IrisErrorMessageKey.INTERNAL_PYRIS_ERROR);
         expect(dispatchMock).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.INTERNAL_PYRIS_ERROR));
-        expect(step.executionStage).toEqual(ExecutionStage.FAILED);
+        expect(step!.executionStage).toEqual(ExecutionStage.FAILED);
         expect(plan.executing).toBeFalse();
     });
 
@@ -606,7 +606,7 @@ describe('IrisChatbotWidgetComponent', () => {
         const step = plan!.steps.find((s) => s.id === 2);
         expect(notifyMock).toHaveBeenCalledWith(2, 2, 2);
         expect(dispatchMock).toHaveBeenCalledWith(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));
-        expect(step.executionStage).toEqual(ExecutionStage.FAILED);
+        expect(step!.executionStage).toEqual(ExecutionStage.FAILED);
         expect(plan.executing).toBeFalse();
     });
 

@@ -763,7 +763,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
         }
     }
 
-    notifyStepFailed(messageId: number, planId: number, stepId: number, errorTranslationKey: IrisErrorMessageKey, translationParams?: Map<string, any>) {
+    notifyStepFailed(messageId: number, planId: number, stepId: number, errorTranslationKey?: IrisErrorMessageKey, translationParams?: Map<string, any>) {
         const [plan, step] = this.findPlanStep(messageId, planId, stepId);
         if (!plan || !step) {
             return;

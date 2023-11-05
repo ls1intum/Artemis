@@ -12,8 +12,6 @@ import {
     mockCodeEditorWebsocketClientMessage,
     mockCodeEditorWebsocketKnownError,
     mockCodeEditorWebsocketServerMessage,
-    mockCodeEditorWebsocketStepException,
-    mockCodeEditorWebsocketStepSuccess,
     mockCodeEditorWebsocketUnknownError,
     mockServerMessage,
 } from '../../helpers/sample/iris-sample-data';
@@ -140,28 +138,6 @@ describe('IrisCodeEditorWebsocketService', () => {
             ),
             timeoutId: expect.any(Number),
         });
-        flush();
-    }));
-
-    it('should receive a new server response step success and handle the subscription', fakeAsync(() => {
-        const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(mockCodeEditorWebsocketStepSuccess));
-
-        irisStateStore.dispatch(new SessionReceivedAction(0, []));
-        tick();
-
-        expect(websocketReceiveMock).toHaveBeenCalledOnce();
-        expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
-        flush();
-    }));
-
-    it('should receive a new server response step exception and handle the subscription', fakeAsync(() => {
-        const websocketReceiveMock = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(mockCodeEditorWebsocketStepException));
-
-        irisStateStore.dispatch(new SessionReceivedAction(0, []));
-        tick();
-
-        expect(websocketReceiveMock).toHaveBeenCalledOnce();
-        expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
         flush();
     }));
 });
