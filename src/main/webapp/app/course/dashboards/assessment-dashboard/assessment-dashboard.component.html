@@ -192,20 +192,16 @@
                                 </a>
                             </ng-template>
 
-                            <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                                <ng-container
-                                    class="col-lg-3 col-md-6 col-sm-6"
-                                    *ngIf="
-                                        course?.isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1
-                                    "
-                                >
-                                    <jhi-second-correction-enable-button
-                                        class="me-1 mb-1"
-                                        (ngModelChange)="toggleSecondCorrection(exercise.id!)"
-                                        [secondCorrectionEnabled]="exercise.secondCorrectionEnabled"
-                                        [togglingSecondCorrectionButton]="isTogglingSecondCorrection.get(exercise.id!)!"
-                                    ></jhi-second-correction-enable-button>
-                                </ng-container>
+                            <ng-container
+                                class="col-lg-3 col-md-6 col-sm-6"
+                                *ngIf="course?.isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1"
+                            >
+                                <jhi-second-correction-enable-button
+                                    class="me-1 mb-1"
+                                    (ngModelChange)="toggleSecondCorrection(exercise.id!)"
+                                    [secondCorrectionEnabled]="exercise.secondCorrectionEnabled"
+                                    [togglingSecondCorrectionButton]="isTogglingSecondCorrection.get(exercise.id!)!"
+                                ></jhi-second-correction-enable-button>
                             </ng-container>
                         </td>
                     </tr>

@@ -28,10 +28,11 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
+import com.google.gson.JsonObject;
+
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.lti.Lti13LaunchFilter;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
-import net.minidev.json.JSONObject;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
@@ -108,8 +109,8 @@ class Lti13LaunchFilterTest {
         idTokenClaims.put("iss", "https://some.lms.org");
         idTokenClaims.put("sub", "23423435");
         idTokenClaims.put(Claims.LTI_DEPLOYMENT_ID, "some-deployment-id");
-        JSONObject resourceLinkClaim = new JSONObject();
-        resourceLinkClaim.put("id", "some-resource-id");
+        JsonObject resourceLinkClaim = new JsonObject();
+        resourceLinkClaim.addProperty("id", "some-resource-id");
         idTokenClaims.put(Claims.RESOURCE_LINK, resourceLinkClaim);
         idTokenClaims.put(Claims.TARGET_LINK_URI, targetLinkUri);
     }
@@ -129,11 +130,11 @@ class Lti13LaunchFilterTest {
         verify(httpResponse).setCharacterEncoding("UTF-8");
         verify(lti13Service).performLaunch(any(), any());
 
-        ArgumentCaptor<JSONObject> argument = ArgumentCaptor.forClass(JSONObject.class);
+        ArgumentCaptor<JsonObject> argument = ArgumentCaptor.forClass(JsonObject.class);
         verify(responseWriter).print(argument.capture());
-        JSONObject responseJsonBody = argument.getValue();
+        JsonObject responseJsonBody = argument.getValue();
         verify(lti13Service).buildLtiResponse(any(), any());
-        assertThat(((String) responseJsonBody.get("targetLinkUri"))).as("Response body contains the expected targetLinkUri").contains(this.targetLinkUri);
+        assertThat((responseJsonBody.get("targetLinkUri").getAsString())).as("Response body contains the expected targetLinkUri").contains(this.targetLinkUri);
     }
 
     @Test

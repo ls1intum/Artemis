@@ -185,11 +185,6 @@
                     "name": "Name",
                     "login": "Login",
                     "progress": "Fortschritt"
-                },
-                "progressNav": {
-                    "header": "Lernpfad",
-                    "refresh": "Aktualisieren",
-                    "center": "Zentrieren"
                 }
             },
             "sideBar": {
@@ -202,6 +197,35 @@
                 "noTaskSelected": "Aktuell hast du keine Vorlesungseinheit oder Aufgabe ausgewählt.",
                 "prevHint": "Zurück zur letzten Empfehlung",
                 "nextHint": "Weiter zur nächsten Empfehlung"
+            },
+            "graph": {
+                "progressNav": {
+                    "header": "Lernpfad",
+                    "refresh": "Aktualisieren",
+                    "center": "Zentrieren"
+                },
+                "legend": {
+                    "competencyEnd": {
+                        "title": "Kompetenzende",
+                        "tooltip": "Hier endet eine Kompetenz. Die Knoten zwischen Kompetenzbeginn und -ende sind Inhalte die dir beim erreichen dieser Kompetenz helfen."
+                    },
+                    "matchStart": {
+                        "title": "Verzweigung",
+                        "tooltip": "Hier hast du die Wahl an welcher der folgenden Kompetenzen du arbeiten möchtest. Die Kompetenzen wurden von deiner Lehrkraft als gleichbedeutend hinterlegt, d.h. eine der Kompetenzen zu meistern ist hinreichend."
+                    },
+                    "matchEnd": {
+                        "title": "Verzweigungsende",
+                        "tooltip": "Hier treffen die verschiedenen Kompetenzen wieder zusammen. Die Kompetenzen wurden von deiner Lehrkraft als gleichbedeutend hinterlegt, d.h. eine der Kompetenzen zu meistern ist hinreichend."
+                    },
+                    "learningObject": {
+                        "title": "Ausstehende Lerneinheit / Aufgabe",
+                        "tooltip": "Eine Lerneinheit oder Aufgabe die noch nicht hinreichend gelöst wurde."
+                    },
+                    "completedLearningObject": {
+                        "title": "Abgeschlossene Lerneinheit/Aufgabe",
+                        "tooltip": "Eine Lerneinheit oder Aufgabe die hinreichend gelöst wurde."
+                    }
+                }
             }
         }
     }
