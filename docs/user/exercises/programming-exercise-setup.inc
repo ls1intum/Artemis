@@ -573,7 +573,7 @@ To get a better understanding of the feature, you can watch the following video:
     .. note::
       **Example 3**: Given the configuration of **Example 2** with additional bonus points of 5 for TC B. The points achieved for passing TC A and TC C do not change. Passing TC B now accounts for 2.5 points plus 5 bonus points (7.5). If the student passes all test cases he will receive 10 (TC A) + 7.5 (TC B) + 2.5 (TC C) points, which amounts to 10 points and 10 bonus points and a score of 200%.
 
-  - On the right side of the page, charts display statistics about the current test case configuration. If changes are made to the configuration, a |grading-preview| of the statistics is shown.
+  - On the right side of the page, charts display statistics about the current test case configuration. If changes are made to the configuration, a preview of the statistics is shown.
 
     - **Weight Distribution**: The distribution of test case weights. Visualizes the impact of each test case for the score calculation
     - **Total Points**: The percentage of points given to students according to a specific test case. 100% in the chart represents full scores (100%) of **all** students
@@ -746,7 +746,6 @@ On exercise import, Artemis copies the repositories, build plans, interactive pr
 .. |submit| image:: programming/submit.png
 .. |course-management| image:: general/course-management.png
 .. |generate| image:: programming/generate-button.png
-.. |grading-preview| image:: programming/configure-grading-preview.png
 .. |grading-save| image:: programming/configure-grading-save.png
 .. |grading-reset| image:: programming/configure-grading-reset.png
 .. |grading-reevaluate-all| image:: programming/configure-grading-reevaluate-all.png
