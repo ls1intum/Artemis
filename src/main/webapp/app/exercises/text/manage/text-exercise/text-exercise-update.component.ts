@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -24,6 +24,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -188,11 +189,8 @@ export class TextExerciseUpdateComponent implements OnInit {
     }
 
     private loadCourseExerciseCategories(courseId: number) {
-        this.courseService.findAllCategoriesOfCourse(courseId).subscribe({
-            next: (categoryRes: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-            },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
+            this.existingCategories = existingCategories;
         });
     }
 

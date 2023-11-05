@@ -23,13 +23,13 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { onError } from 'app/shared/util/global.utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faBan, faExclamationCircle, faHandshakeAngle, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
+import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -474,16 +474,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private loadCourseExerciseCategories(courseId?: number) {
-        if (courseId === undefined) {
-            console.error(`Could not load exercise categories for course with id ${courseId}`);
-            return;
-        }
-
-        this.courseService.findAllCategoriesOfCourse(courseId).subscribe({
-            next: (categoryRes: HttpResponse<string[]>) => {
-                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-            },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
+        loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
+            this.existingCategories = existingCategories;
         });
 
         if (this.exerciseCategories === undefined) {
