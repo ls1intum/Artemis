@@ -86,9 +86,15 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     // CREATE
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("courseInformationSharingConfigurationProvider")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void testCreateConversationAnswerPost() throws Exception {
+    void testCreateConversationAnswerPost(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var persistedCourse = courseRepository.findByIdElseThrow(courseId);
+        persistedCourse.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        persistedCourse = courseRepository.saveAndFlush(persistedCourse);
+        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
+
         AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
 
         var countBefore = answerPostRepository.count();
@@ -152,21 +158,11 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void testMessagingNotAllowedIfCommunicationOnlySetting() throws Exception {
-        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testMessagingNotAllowedIfDisabledSetting() throws Exception {
-        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.DISABLED);
-    }
-
-    private void messagingFeatureDisabledTest(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         var persistedCourse = courseRepository.findByIdElseThrow(courseId);
-        persistedCourse.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         persistedCourse = courseRepository.saveAndFlush(persistedCourse);
-        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
+        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.DISABLED);
 
         var countBefore = answerPostRepository.count();
         AnswerPost postToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
@@ -419,5 +415,10 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     protected static List<Arguments> userMentionProvider() {
         return userMentionProvider(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+    }
+
+    private static List<CourseInformationSharingConfiguration> courseInformationSharingConfigurationProvider() {
+        return List.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
+                CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 }

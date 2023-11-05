@@ -8,7 +8,9 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -71,17 +73,13 @@ class ConversationIntegrationTest extends AbstractConversationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @MethodSource("courseConfigurationProvider")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getConversationsOfUser_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        getConversationsOfUser_messagingDeactivated(courseInformationSharingConfiguration);
-
-    }
-
-    void getConversationsOfUser_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+    void getConversationsOfUser_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+            HttpStatus expectedStatus) throws Exception {
         setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
 
-        request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.FORBIDDEN, ConversationDTO.class);
+        request.getList("/api/courses/" + exampleCourseId + "/conversations", expectedStatus, ConversationDTO.class);
 
         // active messaging again
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -500,4 +498,10 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         return List.of(exerciseChannel.getId(), examChannel.getId(), lectureChannel.getId());
     }
 
+    private static List<Arguments> courseConfigurationProvider() {
+        return List.of(Arguments.of(CourseInformationSharingConfiguration.DISABLED, HttpStatus.FORBIDDEN),
+                Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING, HttpStatus.OK),
+                Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, HttpStatus.OK),
+                Arguments.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, HttpStatus.OK));
+    }
 }

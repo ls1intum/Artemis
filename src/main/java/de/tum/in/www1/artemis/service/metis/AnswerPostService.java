@@ -142,7 +142,8 @@ public class AnswerPostService extends PostingService {
      * @param courseId   id of the course the answer post belongs to
      */
     public void updateWithReaction(AnswerPost answerPost, Reaction reaction, Long courseId) {
-        final Course course = preCheckUserAndCourseForCommunication(reaction.getUser(), courseId);
+        final Course course = preCheckUserAndCourseForCommunicationOrMessaging(reaction.getUser(), courseId);
+
         answerPost.addReaction(reaction);
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
         updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
