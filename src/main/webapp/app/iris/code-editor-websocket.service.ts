@@ -67,7 +67,6 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     }
 
     protected handleWebsocketResponse(response: IrisCodeEditorWebsocketDTO): void {
-        console.log(response);
         if (response.rateLimitInfo) {
             super.handleRateLimitInfo(response.rateLimitInfo);
         }
