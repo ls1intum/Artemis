@@ -289,4 +289,15 @@ describe('TextExercise Management Update Component', () => {
             expect(comp.textExercise.dueDate).toBeUndefined();
         }));
     });
+
+    it('should updateCategories properly by making category available for selection again when removing it', () => {
+        comp.textExercise = new TextExercise(undefined, undefined);
+        comp.exerciseCategories = [];
+        const newCategories = [{ category: 'Easy' }, { category: 'Hard' }];
+
+        comp.updateCategories(newCategories);
+
+        expect(comp.textExercise.categories).toEqual(newCategories);
+        expect(comp.exerciseCategories).toEqual(newCategories);
+    });
 });

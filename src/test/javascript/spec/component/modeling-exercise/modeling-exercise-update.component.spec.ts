@@ -267,4 +267,15 @@ describe('ModelingExerciseUpdateComponent', () => {
         comp.diagramTypeChanged();
         expect(comp.modelingExercise.assessmentType).toEqual(AssessmentType.SEMI_AUTOMATIC);
     });
+
+    it('should updateCategories properly by making category available for selection again when removing it', () => {
+        comp.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        comp.exerciseCategories = [];
+        const newCategories = [{ category: 'Easy' }, { category: 'Hard' }];
+
+        comp.updateCategories(newCategories);
+
+        expect(comp.modelingExercise.categories).toEqual(newCategories);
+        expect(comp.exerciseCategories).toEqual(newCategories);
+    });
 });

@@ -73,6 +73,7 @@ describe('QuizExercise Management Detail Component', () => {
         quizExercise.releaseDate = undefined;
         quizExercise.dueDate = undefined;
         quizExercise.quizMode = QuizMode.SYNCHRONIZED;
+        quizExercise.categories = [];
     };
 
     resetQuizExercise();
@@ -440,6 +441,17 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.init();
                 expect(comp.quizExercise.isEditable).toBeFalse();
             });
+        });
+
+        it('should updateCategories properly by making category available for selection again when removing it', () => {
+            comp.quizExercise = quizExercise;
+            comp.exerciseCategories = [];
+            const newCategories = [{ category: 'Easy' }, { category: 'Hard' }];
+
+            comp.updateCategories(newCategories);
+
+            expect(comp.quizExercise.categories).toEqual(newCategories);
+            expect(comp.exerciseCategories).toEqual(newCategories);
         });
     });
 
