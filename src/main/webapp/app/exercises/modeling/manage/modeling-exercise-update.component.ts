@@ -172,6 +172,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      */
     updateCategories(categories: ExerciseCategory[]): void {
         this.modelingExercise.categories = categories;
+        this.exerciseCategories = categories;
     }
 
     /**

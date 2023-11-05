@@ -181,6 +181,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.fileUploadExercise.categories = categories;
+        this.exerciseCategories = categories;
     }
 
     private onSaveSuccess(exercise: Exercise) {

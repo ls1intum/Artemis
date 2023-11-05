@@ -172,6 +172,7 @@ export class TextExerciseUpdateComponent implements OnInit {
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.textExercise.categories = categories;
+        this.exerciseCategories = categories;
     }
 
     save() {

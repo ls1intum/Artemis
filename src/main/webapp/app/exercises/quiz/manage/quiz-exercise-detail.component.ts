@@ -319,6 +319,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.quizExercise.categories = categories;
+        this.exerciseCategories = categories;
         this.cacheValidation();
     }
 
