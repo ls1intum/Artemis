@@ -31,7 +31,7 @@
             </div>
             <div class="col-auto">
                 <a
-                    *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                    *ngIf="competency.course?.isAtLeastInstructor"
                     class="btn btn-sm btn-warning float-end"
                     [routerLink]="['/course-management', courseId, 'competency-management', competency.id, 'edit']"
                 >

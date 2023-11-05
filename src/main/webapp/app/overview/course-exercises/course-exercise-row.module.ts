@@ -11,7 +11,7 @@ import { GradingKeyOverviewModule } from 'app/grading-system/grading-key-overvie
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { CourseExercisesGroupedByWeekComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-week.component';
-import { CourseExercisesGroupedByCategoryComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-category.component';
+import { CourseExercisesGroupedByTimeframeComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-timeframe.component';
 
 @NgModule({
     imports: [
@@ -26,7 +26,7 @@ import { CourseExercisesGroupedByCategoryComponent } from 'app/overview/course-e
         SubmissionResultStatusModule,
         ExerciseCategoriesModule,
     ],
-    declarations: [CourseExerciseRowComponent, CourseExercisesGroupedByWeekComponent, CourseExercisesGroupedByCategoryComponent],
-    exports: [CourseExerciseRowComponent, CourseExercisesGroupedByWeekComponent, CourseExercisesGroupedByCategoryComponent],
+    declarations: [CourseExerciseRowComponent, CourseExercisesGroupedByWeekComponent, CourseExercisesGroupedByTimeframeComponent],
+    exports: [CourseExerciseRowComponent, CourseExercisesGroupedByWeekComponent, CourseExercisesGroupedByTimeframeComponent],
 })
 export class ArtemisCourseExerciseRowModule {}
