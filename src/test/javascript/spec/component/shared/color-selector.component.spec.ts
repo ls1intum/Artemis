@@ -25,6 +25,15 @@ describe('ColorSelectorComponent', () => {
         expect(component.colorSelectorPosition).toEqual({ left: 0, top: 0 });
     });
 
+    it('should register click event listener on init', () => {
+        //@ts-ignore spying on private method
+        const addEventListenerSpy = jest.spyOn(component, 'addEventListenerToCloseComponentOnClickOutside');
+
+        component.ngOnInit();
+
+        expect(addEventListenerSpy).toHaveBeenCalledOnce();
+    });
+
     it('should position the color selector after opening correctly', () => {
         const target = document.createElement('div');
         const event = {
@@ -84,30 +93,31 @@ describe('ColorSelectorComponent', () => {
         expect(component.showColorSelector).toBeFalse();
     });
 
-    // FIXME
-    // it('should close the color selector correctly', () => {
-    //     const target = {
-    //         className: 'color-selector',
-    //     };
-    //     const event = {
-    //         target,
-    //     };
-    //     component.showColorSelector = true;
-    //
-    //     component.clickOutside(event);
-    //
-    //     expect(component.showColorSelector).toBeTrue();
-    //
-    //     target.className = 'color-preview';
-    //
-    //     component.clickOutside(event);
-    //
-    //     expect(component.showColorSelector).toBeTrue();
-    //
-    //     target.className = 'jhi-alert';
-    //
-    //     component.clickOutside(event);
-    //
-    //     expect(component.showColorSelector).toBeFalse();
-    // });
+    describe('should handle close actions properly', () => {
+        beforeEach(() => {
+            // Make sure that the event Listener is registered
+            component.ngOnInit();
+            component.showColorSelector = true;
+        });
+
+        it('and close when clicked outside', () => {
+            // Simulate a click event outside the component by dispatching a custom event
+            const clickEvent = new Event('click');
+            document.dispatchEvent(clickEvent);
+
+            expect(component.showColorSelector).toBeFalse();
+        });
+
+        it('and stay open when clicked inside but not clicking a color', () => {
+            expect(component.showColorSelector).toBeTrue();
+
+            const insideDummyElement = document.createElement('div');
+            fixture.nativeElement.appendChild(insideDummyElement);
+
+            const clickEvent = new MouseEvent('click', { bubbles: true });
+            insideDummyElement.dispatchEvent(clickEvent);
+
+            expect(component.showColorSelector).toBeTrue();
+        });
+    });
 });
