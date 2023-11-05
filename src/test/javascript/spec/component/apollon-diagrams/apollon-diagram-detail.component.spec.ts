@@ -19,7 +19,6 @@ import * as testClassDiagram from '../../util/modeling/test-models/class-diagram
 import { UMLModel } from '@ls1intum/apollon';
 import { ElementRef } from '@angular/core';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
-import { addDelay } from '../../helpers/utils/general.utils';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -93,7 +92,7 @@ describe('ApollonDiagramDetail Component', () => {
         expect(fixture.componentInstance.apollonEditor).toBeTruthy();
 
         // test
-        await addDelay(500);
+        await fixture.componentInstance.apollonEditor?.nextRender;
         await fixture.componentInstance.saveDiagram();
         expect(updateStub).toHaveBeenCalledOnce();
         // clear the set time interval
@@ -116,9 +115,28 @@ describe('ApollonDiagramDetail Component', () => {
         const successSpy = jest.spyOn(alertService, 'success');
 
         // test
-        await addDelay(500);
+        await fixture.componentInstance.apollonEditor?.nextRender;
         await fixture.componentInstance.generateExercise();
         expect(successSpy).toHaveBeenCalledOnce();
+
+        // clear the set time interval
+        fixture.componentInstance.ngOnDestroy();
+    });
+
+    it('validateGeneration', async () => {
+        const nonInteractiveModel = { ...model, interactive: { ...model.interactive, elements: [], relationships: [] } };
+
+        // setup
+        const div = document.createElement('div');
+        fixture.componentInstance.editorContainer = new ElementRef(div);
+        fixture.componentInstance.apollonDiagram = diagram;
+        fixture.componentInstance.initializeApollonEditor(nonInteractiveModel);
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        // test
+        await fixture.componentInstance.apollonEditor?.nextRender;
+        await fixture.componentInstance.generateExercise();
+        expect(errorSpy).toHaveBeenCalledOnce();
 
         // clear the set time interval
         fixture.componentInstance.ngOnDestroy();
@@ -132,9 +150,10 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.apollonDiagram = diagram;
         fixture.componentInstance.initializeApollonEditor(model);
         // ApollonEditor is the child
-        await addDelay(300).then(() => {
-            expect(div.children).toHaveLength(1);
-        });
+
+        await fixture.componentInstance.apollonEditor?.nextRender;
+        expect(div.children).toHaveLength(1);
+
         // set selection
         fixture.componentInstance.apollonEditor!.selection = { elements: model.elements.map((element) => element.id), relationships: [] };
         fixture.detectChanges();

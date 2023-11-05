@@ -39,8 +39,13 @@ public class Lti13AgsClaim {
             agsClaim.setScope(Collections.singletonList(Scopes.AGS_SCORE));
         }
 
-        agsClaim.setLineItem(agsClaimJson.get("lineitem").getAsString());
-
+        JsonElement lineItem = agsClaimJson.get("lineitem");
+        if (lineItem != null) {
+            agsClaim.setLineItem(lineItem.getAsString());
+        }
+        else {
+            agsClaim.setLineItem(null);
+        }
         return Optional.of(agsClaim);
     }
 
