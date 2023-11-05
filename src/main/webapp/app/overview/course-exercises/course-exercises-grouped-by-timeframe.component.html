@@ -1,8 +1,8 @@
-<div *ngIf="!filteredExercises?.length; else exercisesWithAppliedSearchAndFilters">
+<div *ngIf="!filteredAndSortedExercises?.length; else exercisesWithAppliedSearchAndFilters">
     {{ 'artemisApp.courseOverview.exerciseList.noExerciseMatchesSearchAndFilters' | artemisTranslate }}
 </div>
 <ng-template #exercisesWithAppliedSearchAndFilters>
-    <div class="exercise-row-container mb-3" *ngFor="let exerciseGroupKey of Object.keys(exerciseGroups)">
+    <div class="guided-tour exercise-row-container mb-3" *ngFor="let exerciseGroupKey of Object.keys(exerciseGroups)">
         <ng-container *ngIf="exerciseGroups[exerciseGroupKey].exercises.length">
             <div class="control-label d-flex align-items-center" (click)="toggleGroupCategoryCollapse(exerciseGroupKey)">
                 <div class="icon-container pe-3">

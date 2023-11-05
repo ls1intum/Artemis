@@ -31,13 +31,11 @@
                 *ngIf="exercise.isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam && exam?.numberOfCorrectionRoundsInExam! > 1 && isExamMode && !isTestRun"
                 class="d-inline-block"
             >
-                <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                    <jhi-second-correction-enable-button
-                        (ngModelChange)="toggleSecondCorrection()"
-                        [secondCorrectionEnabled]="secondCorrectionEnabled"
-                        [togglingSecondCorrectionButton]="togglingSecondCorrectionButton"
-                    ></jhi-second-correction-enable-button>
-                </ng-container>
+                <jhi-second-correction-enable-button
+                    (ngModelChange)="toggleSecondCorrection()"
+                    [secondCorrectionEnabled]="secondCorrectionEnabled"
+                    [togglingSecondCorrectionButton]="togglingSecondCorrectionButton"
+                ></jhi-second-correction-enable-button>
             </div>
         </div>
 
