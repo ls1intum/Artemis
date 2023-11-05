@@ -56,7 +56,8 @@ export class ColorSelectorComponent implements OnInit {
             if (this.showColorSelector) {
                 const target = event.target as HTMLElement;
 
-                if (!this.elementRef.nativeElement.contains(target)) {
+                const isClickOutsideOfComponent = !this.elementRef.nativeElement.contains(target);
+                if (isClickOutsideOfComponent) {
                     this.showColorSelector = false;
                 }
             }
