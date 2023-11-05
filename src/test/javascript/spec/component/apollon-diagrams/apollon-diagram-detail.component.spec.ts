@@ -124,7 +124,7 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('validateGeneration', async () => {
-        const nonInteractiveModel = { ...model, interactive: { ...model.interactive, elements: [] } };
+        const nonInteractiveModel = { ...model, interactive: { ...model.interactive, elements: [], relationships: [] } };
 
         // setup
         const div = document.createElement('div');
