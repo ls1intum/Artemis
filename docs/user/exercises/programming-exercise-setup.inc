@@ -151,35 +151,30 @@ Exercise Creation
 
     |
 
-    .. figure:: programming/programming-options-general-information.png
+    .. figure:: programming/programming-options-categories.png
               :align: center
 
     - **Categories:** Instructors can freely define up to two categories per exercise. The categories are visible to students
       and should be used consistently to group similar kinds of exercises.
-    - **Difficulty:** Instructors can give students information about the difficulty of the exercise.
 
     |
 
-    .. figure:: programming/programming-options-mode.png
+    .. figure:: programming/programming-options-participation-mode.png
               :align: center
 
-    - **Mode:** The mode determines whether students work on the exercise alone or in teams. **Cannot** be changed after the exercise creation.
+
+    - **Difficulty:** Instructors can give students information about the difficulty of the exercise.
+    - **Participation:** The participation mode determines whether students work on the exercise alone or in teams. **Cannot** be changed after the exercise creation.
+      Learn more about team exercises :doc:`here <team-exercises>`.
     - **Team size:** If ``Team`` mode is chosen, instructors can additionally give recommendations for the team size. Instructors/Tutors define the teams after
       the exercise creation.
-
-    |
-
-    .. figure:: programming/programming-online-ide.png
-                  :align: center
-
-
     - **Allow Offline IDE:** Allow students to clone their personal repository and work on the exercise with their preferred IDE.
     - **Allow Online Editor:** Allow students to work on the exercise using the Artemis Online Code Editor.
     - **Publish Build Plan:** Allow students to access and edit their personal build plan. Useful for exercises where students should
-          configure parts of the build plan themselves.
+      configure parts of the build plan themselves.
 
-    .. note::
-            At least one of the options **Allow Offline IDE:** and **Allow Online Editor:** must be active
+        .. note::
+                At least one of the options **Allow Offline IDE** and **Allow Online Editor** must be active
 
     .. figure:: programming/programming-options-programming-language.png
               :align: center
@@ -190,31 +185,17 @@ Exercise Creation
     - **With exemplary dependency:** Adds an external Apache commons-lang dependency to the generated project as an example
       how maven dependencies should be used with Artemis exercises. Only available for Java exercises.
     - **Package Name:** The package name used for this exercise. Not available for all programming languages.
-
-    |
-
-    .. figure:: programming/programming-options-timeline-manual.png
-              :align: center
-    .. figure:: programming/programming-options-timeline-automatic.png
-              :align: center
-
-    - **Release Date:** Release date of the exercise. Students will only be able to participate in the exercise after this date.
-    - **Automatic Tests:** Every commit of a participant triggers the execution of the tests in the **Test** repository.
-      Excluded are tests, which are specified to run after the due date. This is only possible if **Run Tests once after Due Date** has been activated.
-      The tests that only run after the due date are chosen in the :ref:`grading configuration <configure_grading>`.
-    - **Due Date:** The deadline for the exercise. Commits made after this date are not graded.
-    - **Complaint on Automatic Assessment:** This option allows students to write a complaint on the automatic assessment after the due date.
-        This option is only available if complaints are enabled in the course or the exercise is part of an exam.
-
-      .. note::
-        Students can still commit code and receive feedback after the exercise due date, if manual review and complaints are not activated.
-        The results for these submissions will not be rated.
-
-    - **Run Tests once after Due Date:** Activate this option to build and test the latest in-time submission of each student on this date.
-      This date must be after the due date. The results created by this test run will be rated.
-    - **Manual Review:** Instructors/Tutors have to manually review the latest student submissions after the automatic tests were executed.
-    - **Assessment Due Date:** The deadline for the manual reviews. On this date, all manual assessments will be released to the students.
-    - **Example Solution Publication Date:** The date when the solution repository becomes available to download for students. If left blank, example solutions are never published.
+    - **Enable Static Code Analysis:** Enable static code analysis for the exercise.
+      The build plans will additionally execute static code analysis tools to find code quality issues in the submissions.
+      This option cannot be changed after the exercise creation. Artemis provides a default configuration for the static code analysis tools
+      but instructors are free to :ref:`configure the static code analysis tools <configure_static_code_analysis_tools>`.
+      Refer to the :ref:`programming exercise features <programming_features>` to see which programming languages support static code analysis.
+    - **Sequential Test Runs:** Activate this option to first run structural and then behavior tests.
+      This feature allows students to better concentrate on the immediate challenge at hand.
+      Not supported together with static code analysis. Cannot be changed after the exercise creation.
+    - **Record Testwise Coverage:** Activate this option to record the testwise coverage for the solution repository.
+      This is necessary when working with Hestia to generate code-based hints.
+      This option is only available for Java/Kotlin-exercises with non-sequential test runs.
 
     |
 
@@ -227,12 +208,6 @@ Exercise Creation
         The achieved total points will count towards the total course/exam score
       - ``Bonus``: The achieved **Points** will count towards the total course/exam score as a bonus.
       - ``No``: The achieved **Points** will **not** count towards the total course/exam score.
-
-    |
-
-    .. figure:: programming/submission-policy-none-form.png
-              :align: center
-
     - **Submission Policy:** Configure an initial submission policy for the exercise.
       The submission policy defines the effect that a submission has on the participation of one participant in a programming exercise.
       You can choose between 3 different types of submission policies: *None*, *Lock Repository*, *Submission Penalty*. Those policies can be used
@@ -244,16 +219,53 @@ Exercise Creation
       .. note::
         Submission policies can only be edited on the Grading Page of the programming exercise after the initial exercise generation.
 
+
+    |
+
+    .. figure:: programming/programming-options-timeline-manual.png
+              :align: center
+    .. figure:: programming/programming-options-timeline-automatic.png
+              :align: center
+
+    - **Release Date:** Release date of the exercise. Students will be able to view the exercise after this date.
+    - **Start Date:** Students will be able to participate in the exercise after this date.
+      If no value is set, students will be immediately able to participate once the exercise got released.
+    - **Automatic Tests:** Every commit of a participant triggers the execution of the tests in the **Test** repository.
+      Excluded are tests, which are specified to run after the due date. This is only possible if **Run Tests once after Due Date** has been activated.
+      The tests that only run after the due date are chosen in the :ref:`grading configuration <configure_grading>`.
+    - **Due Date:** The deadline for the exercise. Commits made after this date are not graded.
+    - **Run Tests after Due Date:** Activate this option to build and test the latest in-time submission of each student on this date.
+      This date must be after the due date. The results created by this test run will be rated.
+      Use this option to automatically executed hidden tests.
+    - **Assessment Type:** Choose between **Automatic Assessment** and **Manual Assessment**. If manual assessment is active, Tutors have to manually review submissions.
+    - **Assessment Due Date:** The deadline for the manual reviews. On this date, all manual assessments will be released to the students.
+    - **Example Solution Publication Date:** The date when the solution repository becomes available to download for students. If left blank, example solutions are never published.
+
+    |
+
+    .. figure:: programming/programming-options-assessment.png
+              :align: center
+
+
+    - **Complaint on Automatic Assessment:** This option allows students to write a complaint on the automatic assessment after the due date.
+      This option is only available if complaints are enabled in the course or the exercise is part of an exam.
+
+      .. note::
+        Using the practice mode, students can still commit code and receive feedback after the exercise due date.
+        The results for these submissions will not be rated.
+    - **Manual feedback requests**: Enable the feature for manual feedback requests, allowing students to request feedback prior to the deadline.
+      In this scenario, each student can initiate a single feedback request at a time. Once an instructor or tutor reviews the submitted work and provides feedback,
+      the student can then submit another request. This iterative process continues until the instructor or tutor has no further suggestions for the submission.
+    - **Show Test Names to Students:** Activate this option to show the names of the automated test cases to the students.
+      If this option is disabled, students will not be able to visually differentiate between automatic and manual feedback.
+    - **Include tests into example solution**: If active, the example solution also contains the test cases.
+      This allows students to locally run the test cases and to verify their result.
+
     |
 
     .. figure:: programming/programming-options-sca.png
               :align: center
 
-    - **Enable Static Code Analysis:** Enable static code analysis for the exercise.
-      The build plans will additionally execute static code analysis tools to find code quality issues in the submissions.
-      This option cannot be changed after the exercise creation. Artemis provides a default configuration for the static code analysis tools
-      but instructors are free to :ref:`configure the static code analysis tools <configure_static_code_analysis_tools>`.
-      Refer to the :ref:`programming exercise features <programming_features>` to see which programming languages support static code analysis.
     - **Max Static Code Analysis Penalty:** Available if static code analysis is active.
       Determines the maximum amount of points that can be deducted for code quality issues found in a submission as a percentage (between 0% and 100%) of **Points**.
       Defaults to 100% if left empty. Further options to configure the grading of code quality issues are available in the :ref:`grading configuration <configure_grading>`.
@@ -275,21 +287,6 @@ Exercise Creation
               :align: center
 
     - **Grading Instructions:** Available if **Manual Review** is active. Create instructions for tutors to use during manual assessment.
-
-    |
-
-    .. figure:: programming/programming-options-advanced-configuration.png
-              :align: center
-
-    - **Sequential Test Runs:** Activate this option to first run structural and then behavior tests.
-      This feature allows students to better concentrate on the immediate challenge at hand.
-      Not supported together with static code analysis. Cannot be changed after the exercise creation.
-    - **Check out repository of sample solution:** Activate this option to checkout the solution into the 'solution' path.
-      This option is useful to compare the student's submission with the sample solution. This option is not available for all programming languages.
-    - **Record Testwise Coverage:** Activate this option to record the testwise coverage for the solution repository.
-      This option is only available for Java/Kotlin-exercises with non-sequential test runs.
-    - **Show Test Names to Students:** Activate this option to show the names of the automated test cases to the students.
-      If this option is disabled, students will not be able to visually differentiate between automatic and manual feedback.
 
 - Click on |generate| to create the exercise
 
