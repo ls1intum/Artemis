@@ -1,17 +1,19 @@
 <div class="course-info-bar" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }" id="course-detail-info-bar">
     <div class="row">
         <div class="col general-info">
-            <h3 id="course-header-title" class="fw-medium" [class.mb-0]="!courseDescription">{{ course.title }}</h3>
+            <div class="d-flex align-items-center">
+                <div>
+                    <h3 id="course-header-title" class="fw-medium" [class.mb-0]="!courseDescription">{{ course.title }}</h3>
 
-            <div class="d-flex">
-                <div *ngIf="courseDescription" style="display: block">
-                    <h6 id="course-header-description" class="fw-normal">{{ courseDescription }}</h6>
-                    <h6 class="fw-medium show-more" role="button" *ngIf="enableShowMore" (click)="toggleCourseDescription()">
-                        {{ 'artemisApp.courseOverview.' + (longDescriptionShown ? 'showLess' : 'showMore') | artemisTranslate }}
-                    </h6>
+                    <div *ngIf="courseDescription" style="display: block">
+                        <h6 id="course-header-description" class="fw-normal">{{ courseDescription }}</h6>
+                        <h6 class="fw-medium show-more" role="button" *ngIf="enableShowMore" (click)="toggleCourseDescription()">
+                            {{ 'artemisApp.courseOverview.' + (longDescriptionShown ? 'showLess' : 'showMore') | artemisTranslate }}
+                        </h6>
+                    </div>
                 </div>
 
-                <div class="d-flex align-items-center" *ngIf="shouldShowGoToCourseManagementButton()" style="width: fit-content; height: fit-content">
+                <div class="d-flex align-items-center justify-content-center" *ngIf="shouldShowGoToCourseManagementButton()" style="width: fit-content; height: fit-content">
                     <button class="btn btn-secondary" (click)="redirectToCourseManagement()">
                         {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
                     </button>
@@ -21,7 +23,7 @@
         <div class="col-auto d-none d-lg-flex justify-content-end course-icon" *ngIf="course.courseIcon">
             <jhi-secured-image
                 class="d-flex justify-content-center align-items-center"
-                [src]="course.courseIcon"
+                [src]="course.courseIcon!"
                 [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"
                 [alt]="'artemisApp.courseOverview.noCourseIcon' | artemisTranslate"
             >
