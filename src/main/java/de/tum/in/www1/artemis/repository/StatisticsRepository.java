@@ -82,15 +82,14 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
     List<StatisticsEntry> getActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            select
-            distinct u.login
-            from User u, Submission s, StudentParticipation p
-            where
-                s.participation.id = p.id and
-                p.student.id = u.id and
-                s.submissionDate >= :#{#startDate} and
-                s.submissionDate <= :#{#endDate} and
-                u.login not like '%test%'
+            SELECT DISTINCT u.login
+            FROM User u, Submission s, StudentParticipation p
+            WHERE
+                s.participation.id = p.id AND
+                p.student.id = u.id AND
+                s.submissionDate >= :startDate AND
+                s.submissionDate <= :endDate AND
+                u.login NOT LIKE '%test%'
             """)
     List<String> getActiveUserNames(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
