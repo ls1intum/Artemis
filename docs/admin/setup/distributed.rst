@@ -506,7 +506,7 @@ It relays message between instances:
 
 Running multiple instances locally
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-For testing purposes, you can also run multiple instances on the same machine. This can be done by using
+For testing purposes, you can also run multiple instances on the same machine. You can do this by using
 different ports and a unique instance ID for each instance.
 
 #. In ``application-local.yml``, add the following configuration:
@@ -519,7 +519,7 @@ different ports and a unique instance ID for each instance.
 
 #. Create additional run configurations for each instance. You will have to add CLI arguments to each additional run
    configuration to set the instance ID and the port, e.g. ``--server.port=8081 --eureka.instance.instanceId="Artemis:2"``.
-   Also make sure that only one instance has the ``scheduling`` profile enabled:
+   Also, make sure that only one instance has the ``scheduling`` profile enabled:
 
    .. figure:: distributed/run-config.png
       :align: center
@@ -527,8 +527,8 @@ different ports and a unique instance ID for each instance.
 
 #. Start the registry service, e.g., by running ``docker compose -f docker/broker-registry.yml up``.
 
-#. Start the first instance with the default run configuration (no additional CLI arguments, ``scheduling`` enabled.)
-   and wait until it is registered in the registry.
+#. Start the first instance with the default run configuration (no additional CLI arguments, ``scheduling`` enabled)
+   and wait until it is up and running.
 
 #. Start the remaining instances.
 
