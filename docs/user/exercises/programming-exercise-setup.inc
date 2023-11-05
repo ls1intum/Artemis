@@ -515,7 +515,15 @@ Exercise Creation
   .. warning::
     Artemis always grades new submissions with the latest configuration but existing submissions might have been graded with an outdated configuration. Artemis warns instructors about grading inconsistencies with the **Updated grading** badge.
 
-- **Test Case Tab**: Adapt the contribution of each test case to the overall score or set the grading based on entire tasks
+- **Test Case Tab**: Adapt the contribution of each test case to the overall score or set the grading based on entire tasks.
+
+To get a better understanding of the feature, you can watch the following video:
+
+.. raw:: html
+
+    <iframe src="https://tum.live/w/artemisintro/40747?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
 
   .. figure:: programming/configure-grading-test-cases.png
             :align: center
