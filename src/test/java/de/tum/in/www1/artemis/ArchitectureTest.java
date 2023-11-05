@@ -145,6 +145,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
         };
     }
 
+    /**
+     * Checks that no class directly calls Git.commit(), but instead uses GitService.commit()
+     * This is necessary to ensure that committing is identical for all setups, with and without commit signing
+     */
     @Test
     void testNoDirectGitCommitCalls() {
         ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
