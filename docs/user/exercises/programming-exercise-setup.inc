@@ -519,9 +519,9 @@ Exercise Creation
 
 To get a better understanding of the feature, you can watch the following video:
 
-.. raw:: html
+  .. raw:: html
 
-    <iframe src="https://tum.live/w/artemisintro/40747?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+    <iframe src="https://tum.live/w/artemisintro/40747?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
         Watch this video on TUM-Live.
     </iframe>
 
