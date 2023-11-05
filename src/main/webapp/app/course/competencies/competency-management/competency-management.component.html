@@ -10,7 +10,7 @@
             <h2 jhiTranslate="artemisApp.competency.manageCompetencies.title">Competency Management</h2>
             <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
         </div>
-        <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+        <div class="ms-auto text-truncate justify-content-end">
             <button class="btn btn-primary" id="competencyImportButton" (click)="openImportModal()">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span>{{ 'artemisApp.competency.manageCompetencies.import' | artemisTranslate }}</span>
@@ -189,16 +189,11 @@
                         <span>{{ 'global.generic.' + (competency.optional ? 'yes' : 'no') | artemisTranslate }}</span>
                     </td>
                     <td class="text-end">
-                        <a
-                            *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
-                            class="btn btn-sm btn-primary"
-                            [routerLink]="['/course-management', courseId, 'competency-management', competency.id, 'edit']"
-                        >
+                        <a class="btn btn-sm btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', competency.id, 'edit']">
                             <fa-icon [icon]="faPencilAlt"></fa-icon>
                             <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
                         </a>
                         <button
-                            *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                             jhiDeleteButton
                             [entityTitle]="competency.title || ''"
                             [deleteQuestion]="'artemisApp.competency.competencyCard.delete.question'"
@@ -216,7 +211,7 @@
 
     <div class="d-flex flex-wrap">
         <h2 jhiTranslate="artemisApp.competency.prerequisite.managePrerequisites.title">Prerequisite Management</h2>
-        <div class="ms-auto text-truncate justify-content-end" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+        <div class="ms-auto text-truncate justify-content-end">
             <a class="btn btn-primary" (click)="openPrerequisiteSelectionModal()">
                 <fa-icon [icon]="faPlus"></fa-icon>
                 <span>{{ 'artemisApp.competency.prerequisite.managePrerequisites.select' | artemisTranslate }}</span>
@@ -257,12 +252,7 @@
                         </div>
                     </td>
                     <td class="text-end">
-                        <button
-                            *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
-                            id="removeButton"
-                            class="btn btn-secondary btn-sm"
-                            (click)="removePrerequisite(prerequisite.id!)"
-                        >
+                        <button id="removeButton" class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
                             <fa-icon [icon]="faTimes"></fa-icon> {{ 'artemisApp.competency.competencyCard.remove' | artemisTranslate }}
                         </button>
                     </td>
