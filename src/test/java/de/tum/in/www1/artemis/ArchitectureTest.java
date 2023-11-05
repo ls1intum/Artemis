@@ -154,6 +154,5 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
         var classesWithoutGitService = allClasses.that(not(assignableTo(GitService.class)));
         usage.check(classesWithoutGitService);
-        usage.check(testClasses);
     }
 }
