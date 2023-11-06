@@ -96,15 +96,24 @@ We encourage instructors to contribute improvements to the existing ``templates`
 Exercise Creation
 ^^^^^^^^^^^^^^^^^
 
-1. **Open Course Management**
+Creating an exercise consists of the following steps:
+
+#. `Generate programming exercise`_: Start by configuring basic settings and add a new exercise to the course.
+#. `Update exercise code in repositories`_: Update the template, solution, and test-repositories to contain the code of your exercise.
+#. `Adapt the build plans`_ (optional): If needed, tailor the build plans to suit your requirements.
+#. `Configure static code analysis`_ (optional): If static code analysis is activated, customize the configuration as per your needs.
+#. `Adapt the interactive problem statement`_: DClearly define your exercise in the problem statement Use tasks to create a group of test cases.
+# `Configure Grading`_: Configure the way students can score points in the exercise. Hide test cases that should only be visible after the due date ("hidden tests").
+# `Verify the exercise configuration`_:  Ensure that the exercise is accurately configured and solvable by students.
+
+Generate programming exercise
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Open |course-management|
 - Navigate into **Exercises** of your preferred course
 
     .. figure:: general/course-management-course-dashboard-exercises.png
               :align: center
-
-2. **Generate programming exercise**
 
 - Click on **Generate new programming exercise**
 
@@ -313,7 +322,8 @@ Exercise Creation
   .. figure:: programming/programming-view-3.png
             :align: center
 
-3. **Update exercise code in repositories**
+Update exercise code in repositories
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - **Alternative 1:** Clone the 3 repositories and adapt the code on your local computer in your preferred development environment (e.g. Eclipse).
 
@@ -441,15 +451,17 @@ Exercise Creation
 - In case of a |build_failed| result, some configuration is wrong, please check the build errors on the corresponding build plan.
 - **Hints:** Test cases should only reference code, that is available in the template repository. In case this is **not** possible, please try out the option **Sequential Test Runs**
 
-4. **Optional:** Adapt the build plans
+Adapt the build plans
+~~~~~~~~~~~~~~~~~~~~~
 
-- The build plans are preconfigured and typically do not need to be adapted
-- However, if you have additional build steps or different configurations, you can adapt the BASE and SOLUTION build plan as needed
-- When students start the programming exercise, the current version of the BASE build plan will be copied. All changes in the configuration will be considered
+This section is optional. In most cases, the preconfigured build plans do not need to be changed.
+However, if you have additional build steps or different configurations, you can adapt the BASE and SOLUTION build plan as needed.
+When students start the programming exercise, the current version of the BASE build plan will be copied. All changes in the configuration will be considered.
 
 .. _configure_static_code_analysis_tools:
 
-5. **Optional:** Configure static code analysis tools
+Configure static code analysis
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - The **Test** repository contains files for the configuration of static code analysis tools, if static code analysis was activated during the creation/import of the exercise
 - The folder *staticCodeAnalysisConfig* contains configuration files for each used static code analysis tool
@@ -489,7 +501,8 @@ Exercise Creation
 
 .. _interactive_problem_statement:
 
-6. Adapt the interactive problem statement
+Adapt the interactive problem statement
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   .. figure:: programming/course-dashboard-programming-edit.png
             :align: center
@@ -499,7 +512,8 @@ Exercise Creation
 
 .. _configure_grading:
 
-7. Configure Grading
+Configure Grading
+~~~~~~~~~~~~~~~~~
 
 - **General Actions**
 
@@ -672,7 +686,8 @@ To get a better understanding of the feature, you can watch the following video:
     - Max Penalty: Limits the amount of points deducted for code quality issues belonging to this category
     - Detected Issues: Visualizes how many students encountered a specific number of issues in this category
 
-8. Verify the exercise configuration
+Verify the exercise configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Open the |view| page of the programming exercise
 

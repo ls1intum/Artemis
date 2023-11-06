@@ -5,7 +5,7 @@ Programming Exercise
 
 .. contents:: Content of this document
     :local:
-    :depth: 2
+    :depth: 3
 
 |
 
