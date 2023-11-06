@@ -82,7 +82,7 @@ export class CategorySelectorComponent implements OnChanges {
      */
     openColorSelector(event: MouseEvent, tagItem: ExerciseCategory) {
         /**
-         * without {@link event#stopPropagation} would the color picker would close immediately as the mouseEvent
+         * without {@link event#stopPropagation} the color picker would close immediately as the mouseEvent
          * is triggered again for the child component {@link ColorSelectorComponent} which would interpret
          * it as a click outside the colorpicker
          */
