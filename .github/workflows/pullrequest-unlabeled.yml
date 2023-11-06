@@ -9,6 +9,7 @@ jobs:
   update_badges:
     name: Update test server badges
     runs-on: ubuntu-latest
+    if: startsWith(github.event.label.name, 'lock:artemis-test')
 
     steps:
       - name: Get badge id

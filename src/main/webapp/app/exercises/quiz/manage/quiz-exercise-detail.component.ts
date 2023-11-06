@@ -7,11 +7,9 @@ import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exerci
 import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Duration } from './quiz-exercise-interfaces';
-import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
-import { Location } from '@angular/common';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
@@ -22,7 +20,6 @@ import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-g
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { cloneDeep } from 'lodash-es';
 import { Exam } from 'app/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
@@ -44,7 +41,7 @@ import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-qu
 })
 export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
     @ViewChild('quizQuestionsEdit')
-    quizQuestionsEditComponent: QuizQuestionListEditComponent;
+    quizQuestionListEditComponent: QuizQuestionListEditComponent;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
@@ -84,34 +81,29 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     examId?: number;
     courseId?: number;
 
-    documentationType = DocumentationType.Quiz;
-
     // Icons
     faPlus = faPlus;
     faXmark = faXmark;
     faExclamationCircle = faExclamationCircle;
 
     readonly QuizMode = QuizMode;
+    readonly documentationType: DocumentationType = 'Quiz';
 
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
-        private examRepository: ExamManagementService,
         private quizExerciseService: QuizExerciseService,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private router: Router,
         private translateService: TranslateService,
-        private fileUploaderService: FileUploaderService,
         private exerciseService: ExerciseService,
         private alertService: AlertService,
-        private location: Location,
-        private modalService: NgbModal,
         public changeDetector: ChangeDetectorRef,
         private exerciseGroupService: ExerciseGroupService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
     ) {
-        super();
+        super(dragAndDropQuestionUtil, shortAnswerQuestionUtil);
     }
 
     /**
@@ -399,15 +391,20 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
 
         Exercise.sanitize(this.quizExercise);
+        const filesMap = this.quizQuestionListEditComponent.fileMap;
+        const files = new Map<string, Blob>();
+        filesMap.forEach((value, key) => {
+            files.set(key, value.file);
+        });
 
         this.isSaving = true;
-        this.quizQuestionsEditComponent.parseAllQuestions();
+        this.quizQuestionListEditComponent.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
             if (this.isImport) {
-                this.quizExerciseService.import(this.quizExercise).subscribe({
+                this.quizExerciseService.import(this.quizExercise, files).subscribe({
                     next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                         if (quizExerciseResponse.body) {
-                            this.onSaveSuccess(quizExerciseResponse.body);
+                            this.onSaveSuccess(quizExerciseResponse.body, true);
                         } else {
                             this.onSaveError();
                         }
@@ -419,11 +416,11 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                 if (this.notificationText) {
                     requestOptions.notificationText = this.notificationText;
                 }
-                this.quizExerciseService.update(this.quizExercise, requestOptions).subscribe({
+                this.quizExerciseService.update(this.quizExercise.id, this.quizExercise, files, requestOptions).subscribe({
                     next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                         this.notificationText = undefined;
                         if (quizExerciseResponse.body) {
-                            this.onSaveSuccess(quizExerciseResponse.body);
+                            this.onSaveSuccess(quizExerciseResponse.body, false);
                         } else {
                             this.onSaveError();
                         }
@@ -432,10 +429,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                 });
             }
         } else {
-            this.quizExerciseService.create(this.quizExercise).subscribe({
+            this.quizExerciseService.create(this.quizExercise, files).subscribe({
                 next: (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                     if (quizExerciseResponse.body) {
-                        this.onSaveSuccess(quizExerciseResponse.body);
+                        this.onSaveSuccess(quizExerciseResponse.body, true);
                     } else {
                         this.onSaveError();
                     }
@@ -449,11 +446,13 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      * Callback function for when the save succeeds
      * Terminates the saving process and assign the returned quizExercise to the local entities
      * @param {QuizExercise} quizExercise: Saved quizExercise entity
+     * @param {boolean} isCreate: Flag if the quizExercise was created or updated
      */
-    private onSaveSuccess(quizExercise: QuizExercise): void {
+    private onSaveSuccess(quizExercise: QuizExercise, isCreate: boolean): void {
         this.isSaving = false;
         this.pendingChangesCache = false;
         this.prepareEntity(quizExercise);
+        this.quizQuestionListEditComponent.fileMap.clear();
         this.quizExercise = quizExercise;
         this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
@@ -470,6 +469,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         // If we edit the exercise, a user might just want to save the current state of the added quiz questions without going back
         if (this.isImport) {
             this.previousState();
+        } else if (isCreate) {
+            this.router.navigate(['..', quizExercise.id, 'edit'], { relativeTo: this.route });
         }
     }
 

@@ -120,13 +120,19 @@
                     "secondLine": "Artemis erwartet eine Wiederholung der Gliederungsfolie vor jeder Einheit.",
                     "note": "Hinweis: Du kannst die Informationen bearbeiten, bevor die angehängten Einheiten übermittelt werden."
                 },
+                "noFile": "Es gibt keine Datei für die automatische Einheitenverarbeitung. Bitte gehen Sie einen Schritt zurück und versuchen Sie es erneut.",
                 "noUnitDetected": "Es wurde keine Einheit erkannt und konnte nicht automatisch geteilt werden. Bitte füge Informationen für jede Einheit hinzu!",
                 "pageTitle": "Einheiten",
                 "addUnit": "Einheit hinzufügen",
                 "processUnits": "Einheiten festlegen",
                 "processAutomatically": "Automatische Einheitenverarbeitung",
                 "removeSlides": "Entferne Folien",
-                "removeSlidesInfo": "Alle Folien, die einen der folgenden Schlüsselsätze enthalten, werden entfernt. Mehrere Schlüsselsätze werden mit einem Komma getrennt; zwischen Groß- und Kleinbuchstaben wird nicht unterschieden. Ein Beispiel: 'Pause, Beispiellösungen'",
+                "removeSlidesInfo": {
+                    "firstLine": "Alle Folien, die einen der folgenden Schlüsselsätze enthalten, werden entfernt.",
+                    "secondLine": "Mehrere Schlüsselsätze werden mit einem Komma getrennt, zwischen Groß- und Kleinbuchstaben wird nicht unterschieden.",
+                    "thirdLine": "Folgende Folien werden entfernt:"
+                },
+                "timeout": "Zeitüberschreitung während der automatischen Einheitenverarbeitung. Bitte versuchen Sie es erneut.",
                 "removeSlidesPlaceholder": "Beispiel: 'Pause, Beispiellösungen'",
                 "validation": {
                     "invalidPages": "Die Startseite oder die letzte Seite von {{ unitName }} sind falsch eingestellt.",

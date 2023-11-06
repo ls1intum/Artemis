@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.HIGH;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 
@@ -125,6 +125,12 @@ public class SingleUserNotificationFactory {
                 placeholderValues = new String[] { affectedExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
                         affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle() };
             }
+            case NEW_CPC_PLAGIARISM_CASE_STUDENT -> {
+                title = NEW_CPC_PLAGIARISM_CASE_STUDENT_TITLE;
+                notificationText = NEW_CPC_PLAGIARISM_CASE_STUDENT_TEXT;
+                placeholderValues = new String[] { affectedExercise.getCourseViaExerciseGroupOrCourseMember().getTitle(),
+                        affectedExercise.getExerciseType().toString().toLowerCase(), affectedExercise.getTitle() };
+            }
             case PLAGIARISM_CASE_VERDICT_STUDENT -> {
                 title = PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
                 notificationText = PLAGIARISM_CASE_VERDICT_STUDENT_TEXT;
@@ -235,7 +241,7 @@ public class SingleUserNotificationFactory {
             throw new IllegalArgumentException("No users provided for notification");
         }
 
-        if (notificationType != NotificationType.CONVERSATION_NEW_REPLY_MESSAGE) {
+        if (notificationType != NotificationType.CONVERSATION_NEW_REPLY_MESSAGE && notificationType != NotificationType.CONVERSATION_USER_MENTIONED) {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
@@ -247,6 +253,32 @@ public class SingleUserNotificationFactory {
         SingleUserNotification notification = new SingleUserNotification(user, title, MESSAGE_REPLY_IN_CONVERSATION_TEXT, true, placeholders);
         notification.setTransientAndStringTarget(createMessageReplyTarget(answerPost, answerPost.getPost().getConversation().getCourse().getId()));
         notification.setAuthor(responsibleForAction);
+        return notification;
+    }
+
+    /**
+     * Creates an instance of SingleUserNotification for messages where the recipient is mentioned.
+     *
+     * @param message          to which the notification is related
+     * @param notificationType type of the notification that should be created
+     * @param notificationText placeholder text key
+     * @param placeholders     placeholders for the text
+     * @param recipient        who should be notified or are related to the notification
+     * @return an instance of SingleUserNotification
+     */
+    public static SingleUserNotification createNotification(Post message, NotificationType notificationType, String notificationText, String[] placeholders, User recipient) {
+        String title = findCorrespondingNotificationTitleOrThrow(notificationType);
+        if (recipient == null) {
+            throw new IllegalArgumentException("No users provided for notification");
+        }
+
+        if (notificationType != NotificationType.CONVERSATION_USER_MENTIONED) {
+            throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
+        }
+
+        SingleUserNotification notification = new SingleUserNotification(recipient, title, notificationText, true, placeholders);
+        notification.setTransientAndStringTarget(createConversationMessageTarget(message, message.getConversation().getCourse().getId()));
+        notification.setAuthor(message.getAuthor());
         return notification;
     }
 

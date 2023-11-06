@@ -3,7 +3,7 @@
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                 <th *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(textExercises)" />
+                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(textExercises)" [ngModel]="allChecked" />
                 </th>
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
@@ -26,13 +26,13 @@
                     <input class="form-check-input" type="checkbox" (change)="toggleExercise(textExercise)" [ngModel]="isExerciseSelected(textExercise)" />
                 </td>
                 <td>
-                    <a *ngIf="textExercise.isAtLeastEditor; else showId" [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{
+                    <a *ngIf="textExercise.isAtLeastTutor; else showId" [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{
                         textExercise.id
                     }}</a>
                     <ng-template #showId>{{ textExercise.id }}</ng-template>
                 </td>
                 <td>
-                    <a *ngIf="textExercise.isAtLeastEditor; else showTitle" [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{
+                    <a *ngIf="textExercise.isAtLeastTutor; else showTitle" [routerLink]="['/course-management', course.id, 'text-exercises', textExercise.id]">{{
                         textExercise.title
                     }}</a>
                     <ng-template #showTitle>{{ textExercise.title }}</ng-template>

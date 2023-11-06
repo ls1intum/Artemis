@@ -100,3 +100,16 @@ export function getIconTooltip(competencyTaxonomy?: CompetencyTaxonomy): string 
 
     return tooltips[competencyTaxonomy];
 }
+
+export function getProgress(competencyProgress: CompetencyProgress) {
+    return Math.round(competencyProgress?.progress ?? 0);
+}
+
+export function getConfidence(competencyProgress: CompetencyProgress, masteryThreshold: number): number {
+    return Math.min(Math.round(((competencyProgress?.confidence ?? 0) / (masteryThreshold ?? 100)) * 100), 100);
+}
+
+export function getMastery(competencyProgress: CompetencyProgress, masteryThreshold: number): number {
+    const weight = 2 / 3;
+    return Math.round((1 - weight) * getProgress(competencyProgress) + weight * getConfidence(competencyProgress, masteryThreshold));
+}

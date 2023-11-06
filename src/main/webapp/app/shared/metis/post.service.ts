@@ -57,6 +57,9 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.exerciseIds?.length) {
             params = params.set('exerciseIds', postContextFilter.exerciseIds.toString());
         }
+        if (postContextFilter.courseWideChannelIds) {
+            params = params.set('courseWideChannelIds', postContextFilter.courseWideChannelIds.toString());
+        }
         if (postContextFilter.plagiarismCaseId) {
             params = params.set('plagiarismCaseId', postContextFilter.plagiarismCaseId.toString());
         }
@@ -119,7 +122,7 @@ export class PostService extends PostingService<Post> {
      */
     updatePostDisplayPriority(courseId: number, postId: number, displayPriority: DisplayPriority): Observable<EntityResponseType> {
         return this.http
-            .put(`${this.resourceUrl}${courseId}/posts/${postId}/display-priority`, {}, { params: { displayPriority }, observe: 'response' })
+            .put(`${this.resourceUrl}${courseId}/messages/${postId}/display-priority`, {}, { params: { displayPriority }, observe: 'response' })
             .pipe(map(this.convertPostingResponseDateFromServer));
     }
 
@@ -167,7 +170,7 @@ export class PostService extends PostingService<Post> {
         if (post?.conversation || postContextFilter?.conversationId) {
             return '/messages';
         } else {
-            return '/posts';
+            return '/messages';
         }
     }
 }

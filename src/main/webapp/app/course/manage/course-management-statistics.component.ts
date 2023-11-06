@@ -12,7 +12,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     styleUrls: ['./course-management-statistics.component.scss'],
 })
 export class CourseManagementStatisticsComponent implements OnInit {
-    documentationType = DocumentationType.Statistics;
+    readonly documentationType: DocumentationType = 'Statistics';
     // html properties
     SpanType = SpanType;
     graph = Graphs;

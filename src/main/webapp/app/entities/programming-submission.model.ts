@@ -1,4 +1,5 @@
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import dayjs from 'dayjs/esm';
 
 export class ProgrammingSubmission extends Submission {
     public commitHash?: string;
@@ -20,4 +21,10 @@ export class ProgrammingSubmission extends Submission {
         submission.submitted = false;
         return submission;
     }
+}
+export class CommitInfo {
+    hash?: string;
+    message?: string;
+    timestamp?: dayjs.Dayjs;
+    author?: string;
 }
