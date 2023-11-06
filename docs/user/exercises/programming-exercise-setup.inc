@@ -53,7 +53,7 @@ Generate programming exercise
     .. figure:: programming/programming-options-auxiliary-repositories.png
               :align: center
 
-    - **Auxiliary Repositories:** Instructors can add auxiliary repositories with a name, checkout directory and description.
+    - **Auxiliary Repositories:** Instructors can add auxiliary repositories with a name, checkout directory, and description.
       These repositories are created and added to the build plan when the exercise is created. Auxiliary repositories
       cannot be changed after the creation of the exercise.
 
@@ -124,8 +124,8 @@ Generate programming exercise
     - **Submission Policy:** Configure an initial submission policy for the exercise.
       The submission policy defines the effect that a submission has on the participation of one participant in a programming exercise.
       You can choose between 3 different types of submission policies: *None*, *Lock Repository*, *Submission Penalty*. Those policies can be used
-      to limit how many times student can submit their code and receive feedback from automated tests. The feature and configuration
-      is independent from programming language settings and works in combination with static code analysis penalties.
+      to limit how many times a student can submit their code and receive feedback from automated tests. The feature and configuration
+      is independent of programming language settings and works in combination with static code analysis penalties.
       Detailed information about the different types of policies and their respective setup can be found in the section
       :ref:`configuring submission policies <configure_submission_policies>`.
 
@@ -142,14 +142,14 @@ Generate programming exercise
 
     - **Release Date:** Release date of the exercise. Students will be able to view the exercise after this date.
     - **Start Date:** Students will be able to participate in the exercise after this date.
-      If no value is set, students will be immediately able to participate once the exercise got released.
+      If no value is set, students will be immediately able to participate once the exercise is released.
     - **Automatic Tests:** Every commit of a participant triggers the execution of the tests in the **Test** repository.
       Excluded are tests, which are specified to run after the due date. This is only possible if **Run Tests once after Due Date** has been activated.
       The tests that only run after the due date are chosen in the :ref:`grading configuration <configure_grading>`.
     - **Due Date:** The deadline for the exercise. Commits made after this date are not graded.
     - **Run Tests after Due Date:** Activate this option to build and test the latest in-time submission of each student on this date.
       This date must be after the due date. The results created by this test run will be rated.
-      Use this option to automatically executed hidden tests.
+      Use this option to automatically execute hidden tests.
     - **Assessment Type:** Choose between **Automatic Assessment** and **Manual Assessment**. If manual assessment is active, Tutors have to manually review submissions.
     - **Assessment Due Date:** The deadline for the manual reviews. On this date, all manual assessments will be released to the students.
     - **Example Solution Publication Date:** The date when the solution repository becomes available to download for students. If left blank, example solutions are never published.
@@ -166,13 +166,13 @@ Generate programming exercise
       .. note::
         Using the practice mode, students can still commit code and receive feedback after the exercise due date.
         The results for these submissions will not be rated.
-    - **Manual feedback requests**: Enable the feature for manual feedback requests, allowing students to request feedback prior to the deadline.
+    - **Manual feedback requests**: Enable the feature for manual feedback requests, allowing students to request feedback before the deadline.
       In this scenario, each student can initiate a single feedback request at a time. Once an instructor or tutor reviews the submitted work and provides feedback,
       the student can then submit another request. This iterative process continues until the instructor or tutor has no further suggestions for the submission.
     - **Show Test Names to Students:** Activate this option to show the names of the automated test cases to the students.
       If this option is disabled, students will not be able to visually differentiate between automatic and manual feedback.
     - **Include tests into example solution**: If active, the example solution also contains the test cases.
-      This allows students to locally run the test cases and to verify their result.
+      This allows students to locally run the test cases and verify their result.
 
     |
 
@@ -211,7 +211,7 @@ Generate programming exercise
   Artemis creates the repositories:
 
   - **Template:** template code, can be empty, all students receive this code at the beginning of the exercises
-  - **Test:** contains all test cases, e.g. based on JUnit and optionally static code analysis configuration files. The repository is hidden for students
+  - **Test:** contains all test cases, e.g. based on JUnit and optionally static code analysis configuration files. The repository is hidden from students
   - **Solution:** solution code, typically hidden for students, can be made available after the exercise
 
   Artemis creates two build plans
@@ -339,7 +339,7 @@ Update exercise code in repositories
     It is possible to checkout additional student repositories next to the solution and template folder to run tests on them for manual grading.
 
 
-- **Alternative 2:** Open |edit-in-editor| in Artemis (in the browser) and adapt the code in online code editor
+- **Alternative 2:** Open |edit-in-editor| in Artemis (in the browser) and adapt the code in the online code editor
 
   - You can change between the different repos and submit the code when needed
 
@@ -367,11 +367,11 @@ When students start the programming exercise, the current version of the BASE bu
 Configure static code analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- The **Test** repository contains files for the configuration of static code analysis tools, if static code analysis was activated during the creation/import of the exercise
+- The **Test** repository contains files for the configuration of static code analysis tools if static code analysis was activated during the creation/import of the exercise
 - The folder *staticCodeAnalysisConfig* contains configuration files for each used static code analysis tool
 - On exercise creation, Artemis generates a default configuration for each tool, which contains a predefined set of parameterized activated/excluded rules. The configuration files serve as a documented template that instructors can freely tailor to their needs.
 - On exercise import, Artemis copies the configuration files from the imported exercise
-- The following table depicts the supported static code analysis tools for each programming language, the dependency mechanism used to execute the tools and the name of their respective configuration files
+- The following table depicts the supported static code analysis tools for each programming language, the dependency mechanism used to execute the tools, and the name of their respective configuration files
 
 +----------------------+---------------------------+-------------------------------+------------------------------+
 | Programming Language | Execution Mechanism       | Supported Tools               | Configuration File           |
@@ -412,7 +412,7 @@ Adapt the interactive problem statement
             :align: center
 
 - Click the |edit| button of the programming exercise or navigate into |edit-in-editor| and adapt the interactive problem statement.
-- The initial example shows how to integrate tasks, link tests and integrate interactive UML diagrams
+- The initial example shows how to integrate tasks, link tests, and integrate interactive UML diagrams
 
 .. _configure_grading:
 
@@ -422,7 +422,7 @@ Configure Grading
 - **General Actions**
 
   - |grading-save| Save the current grading configuration of the open tab
-  - |grading-reset| Reset the current grading configuration of the open tab to the default values. For **Test Case Tab**, all test cases are set to weight 1, bonus multiplier 1 and bonus points 0. For the **Code Analysis Tab**, the default configuration depends on the selected programming language.
+  - |grading-reset| Reset the current grading configuration of the open tab to the default values. For **Test Case Tab**, all test cases are set to weight 1, bonus multiplier 1, and bonus points 0. For the **Code Analysis Tab**, the default configuration depends on the selected programming language.
   - |grading-reevaluate-all| Re-evaluates all scores according to the currently saved settings using the individual feedback stored in the database.
   - |grading-trigger-all| Trigger all build plans. This leads to the creation of new results using the updated grading configuration.
   - Two badges display if the current configuration has been saved yet and if the grading was changed. The following graphic visualizes how each action affects the grading page state:
@@ -473,9 +473,9 @@ To get a better understanding of the feature, you can watch the following video:
         Other students can however still see if the tests passed or failed and receive points accordingly, even if the latest individual due has not passed yet.
 
         .. warning ::
-          For manual assessments all feedback details will be visible to this student, even if the due date has not passed yet for others.
+          For manual assessments, all feedback details will be visible to this student, even if the due date has not passed yet for others.
           Tutors can start the manual assessment for all students with the regular due date as soon as it has passed.
-          Set an appropriate assessment due date in the exercise settings to make sure that students cannot tell still working students about the test case details.
+          Set an appropriate **assessment due date** in the exercise settings to make sure that students cannot tell still working students about the test case details.
       - **Never**: Feedback associated with this test case is *never* visible to students even after the due date for this exercise has passed.
         Tutors and Instructors are able to see the feedback before and after the due date, e.g. when manually assessing submissions.
         Additionally, results of this test case are *not* considered in the student score calculation.

@@ -31,7 +31,7 @@ Instructors can still use those templates to generate programming exercises and 
   | OCaml                | yes    | no      | no        | no       |
   +----------------------+--------+---------+-+---------+----------+
 
-- Not all ``templates`` support the same feature set and supported features can also change depending on the continuous integration system set up.
+- Not all ``templates`` support the same feature set and supported features can also change depending on the continuous integration system setup.
   Depending on the feature set, some options might not be available during the creation of the programming exercise.
   The table below provides an overview of the supported features.
   In case a feature has different support for different continuous integration systems, the table shows the differences between Bamboo **(B)**, Jenkins **(J)**, GitLab CI **(G)**, and Local CI **(L)**.
