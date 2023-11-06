@@ -17,8 +17,9 @@ import { faArchive, faCircleNotch, faDownload, faEraser } from '@fortawesome/fre
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 export type CourseExamArchiveState = {
-    exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS';
+    exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS' | 'COMPLETED_WITH_ERRORS';
     message: string;
+    subMessage?: string;
 };
 
 @Component({
@@ -107,10 +108,9 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
     }
 
     handleArchiveStateChanges(courseArchiveState: CourseExamArchiveState) {
-        const { exportState, message } = courseArchiveState;
+        const { exportState, message, subMessage } = courseArchiveState;
         this.isBeingArchived = exportState === 'RUNNING';
         this.archiveButtonText = exportState === 'RUNNING' ? message : this.getArchiveButtonText();
-
         if (exportState === 'COMPLETED') {
             this.alertService.success(this.getArchiveSuccessText());
             this.reloadCourseOrExam();
@@ -118,6 +118,8 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             this.archiveWarnings = message.split('\n');
             this.openModal(this.archiveCompleteWithWarningsModal);
             this.reloadCourseOrExam();
+        } else if (exportState === 'COMPLETED_WITH_ERRORS') {
+            this.alertService.error(this.getArchiveErrorText(subMessage!));
         }
     }
 
@@ -140,6 +142,14 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
             return this.translateService.instant('artemisApp.courseExamArchive.archiveCourseSuccess');
         } else {
             return this.translateService.instant('artemisApp.courseExamArchive.archiveExamSuccess');
+        }
+    }
+
+    getArchiveErrorText(message: string) {
+        if (this.archiveMode === 'Course') {
+            return this.translateService.instant(`artemisApp.courseExamArchive.archiveCourseError.${message}`, { courseName: this.course.title });
+        } else {
+            return this.translateService.instant('artemisApp.courseExamArchive.archiveExamError', { examName: this.exam?.title });
         }
     }
 
@@ -198,7 +208,6 @@ export class CourseExamArchiveButtonComponent implements OnInit, OnDestroy {
         } else {
             hasArchive = (this.course.courseArchivePath?.length ?? 0) > 0;
         }
-
         // You can only download one if the path to the archive is present
         return this.accountService.isAtLeastInstructorInCourse(this.course) && hasArchive;
     }

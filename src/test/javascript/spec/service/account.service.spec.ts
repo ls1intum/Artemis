@@ -409,11 +409,20 @@ describe('AccountService', () => {
         accountService.setAccessRightsForExerciseAndReferencedCourse(exercise);
 
         expect(exercise.isAtLeastEditor).toBeTrue();
-        expect(exercise.isAtLeastEditor).toBeTrue();
         expect(exercise.isAtLeastInstructor).toBeTrue();
         expect(exercise.course!.isAtLeastEditor).toBeTrue();
-        expect(exercise.course!.isAtLeastEditor).toBeTrue();
         expect(exercise.course!.isAtLeastInstructor).toBeTrue();
+    });
+
+    it('should set access rights for referenced course in exam mode', () => {
+        accountService.userIdentity = { id: 10, groups: ['INSTRUCTOR'], authorities } as User;
+
+        accountService.setAccessRightsForExerciseAndReferencedCourse(examExercise);
+
+        expect(examExercise.isAtLeastEditor).toBeTrue();
+        expect(examExercise.isAtLeastInstructor).toBeTrue();
+        expect(examExercise.exerciseGroup!.exam!.course!.isAtLeastEditor).toBeTrue();
+        expect(examExercise.exerciseGroup!.exam!.course!.isAtLeastInstructor).toBeTrue();
     });
 
     it('should set access rights for referenced exercise', () => {
@@ -423,9 +432,7 @@ describe('AccountService', () => {
         accountService.setAccessRightsForCourseAndReferencedExercises(course);
 
         expect(exercise.isAtLeastEditor).toBeTrue();
-        expect(exercise.isAtLeastEditor).toBeTrue();
         expect(exercise.isAtLeastInstructor).toBeTrue();
-        expect(exercise.course!.isAtLeastEditor).toBeTrue();
         expect(exercise.course!.isAtLeastEditor).toBeTrue();
         expect(exercise.course!.isAtLeastInstructor).toBeTrue();
     });

@@ -7,6 +7,7 @@ import { map, tap } from 'rxjs/operators';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { AccountService } from 'app/core/auth/account.service';
 
 type EntityResponseType = HttpResponse<Competency>;
 type EntityArrayResponseType = HttpResponse<Competency[]>;
@@ -21,6 +22,7 @@ export class CompetencyService {
         private httpClient: HttpClient,
         private entityTitleService: EntityTitleService,
         private lectureUnitService: LectureUnitService,
+        private accountService: AccountService,
     ) {}
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
@@ -116,10 +118,17 @@ export class CompetencyService {
         if (res.body?.lectureUnits) {
             res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
         }
+        if (res.body?.course) {
+            this.accountService.setAccessRightsForCourse(res.body.course);
+        }
         if (res.body?.exercises) {
             res.body.exercises = ExerciseService.convertExercisesDateFromServer(res.body.exercises);
-            res.body.exercises.forEach((exercise) => ExerciseService.parseExerciseCategories(exercise));
+            res.body.exercises.forEach((exercise) => {
+                ExerciseService.parseExerciseCategories(exercise);
+                this.accountService.setAccessRightsForExercise(exercise);
+            });
         }
+
         return res;
     }
 
