@@ -111,7 +111,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
      * the missing data.
      *
      * In case the token could not be retrieved, this method is not called again and the student
-     * is prompted to reload the page. Otherwise, the error would be displayed everytime the button is clicked,
+     * is prompted to reload the page. Otherwise, the error would be displayed every time the button is clicked,
      * including the clicks that make the popover go away (every second click).
      */
     onClick() {
