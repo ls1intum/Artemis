@@ -89,9 +89,10 @@
         If so, respond with the number 1. Otherwise, respond with 0.
     {{~/system}}
     {{#assistant~}}{{gen 'will_suggest_changes' max_tokens=1}}{{~/assistant}}
+    {{set will_suggest_changes (contains will_suggest_changes "1")}}
 {{/block}}
 
-{{#if (contains will_suggest_changes "1")}}
+{{#if will_suggest_changes}}
     {{#system~}}
         Now, continue the conversation. Respond to the instructor like a helpful assistant would.
         Be sure to respond in future tense, as you have not yet actually taken any action.

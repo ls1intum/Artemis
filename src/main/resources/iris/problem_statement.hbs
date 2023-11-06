@@ -116,17 +116,15 @@
                 {{break}}
             {{/if}}
         {{/if}}
-        {{#block hidden=True}}
-            {{#system~}}
-                Now, using as few words as possible,
-                uniquely identify the first text after '{{this.from}}' that should remain in the problem statement.
-                Your updated text will lead directly into this text.
-                Do not use quotation marks. Do not justify your response. Be sure to account for spaces, punctuation, and line breaks.
-                Use the special response "!end!" to quickly identify the very end of the text.
-                Uniquely identify the first text that should remain.
-            {{/system}}
-            {{#assistant~}}{{gen 'this.to' temperature=0.0 max_tokens=15}}{{~/assistant}}
-        {{/block}}
+        {{#system~}}
+            Now, using as few words as possible,
+            uniquely identify the first text after '{{this.from}}' that should remain in the problem statement.
+            Your updated text will lead directly into this text.
+            Do not use quotation marks. Do not justify your response. Be sure to account for spaces, punctuation, and line breaks.
+            Use the special response "!end!" to quickly identify the very end of the text.
+            Uniquely identify the first text that should remain.
+        {{/system}}
+        {{#assistant~}}{{gen 'this.to' temperature=0.0 max_tokens=15}}{{~/assistant}}
         {{#system~}}
             The excerpt from the problem statement starting with '{{this.from}}' and ending before '{{this.to}}' should be overwritten with:
         {{~/system}}
