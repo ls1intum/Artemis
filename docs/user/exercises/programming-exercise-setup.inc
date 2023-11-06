@@ -10,6 +10,7 @@ Creating an exercise consists of the following steps:
 # `Configure Grading`_: Configure the way students can score points in the exercise. Hide test cases that should only be visible after the due date ("hidden tests").
 # `Verify the exercise configuration`_:  Ensure that the exercise is accurately configured and solvable by students.
 
+
 Generate programming exercise
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

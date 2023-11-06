@@ -42,5 +42,4 @@ On exercise import, Artemis copies the repositories, build plans, interactive pr
 .. note::
   The interactive problem statement can be edited after finishing the import. Some options such as **Sequential Test Runs** cannot be changed on exercise import.
 
-.. |course-management| image:: general/course-management.png
 .. |import| image:: programming/programming-exercise-import-button.png
