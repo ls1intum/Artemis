@@ -40,7 +40,7 @@ import {
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { PostContextFilter } from 'app/shared/metis/metis.util';
+import { PostContextFilter, SortDirection } from 'app/shared/metis/metis.util';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -337,5 +337,31 @@ describe('PageDiscussionSectionComponent', () => {
         tick();
 
         expect(setActiveConversationSpy).toHaveBeenCalledWith(metisLectureChannel.id);
+    }));
+
+    it('should toggle sendMessage', fakeAsync(() => {
+        component.shouldSendMessage = false;
+
+        component.toggleSendMessage();
+        expect(component.shouldSendMessage).toBeTrue();
+
+        component.toggleSendMessage();
+        expect(component.shouldSendMessage).toBeFalse();
+    }));
+
+    it('should change sorting direction', fakeAsync(() => {
+        component.currentSortDirection = SortDirection.ASCENDING;
+
+        const onSelectContextSpy = jest.spyOn(component, 'onSelectContext');
+        component.onChangeSortDir();
+
+        expect(component.currentSortDirection).toBe(SortDirection.DESCENDING);
+        expect(onSelectContextSpy).toHaveBeenCalledOnce();
+
+        onSelectContextSpy.mockReset();
+        component.onChangeSortDir();
+
+        expect(component.currentSortDirection).toBe(SortDirection.ASCENDING);
+        expect(onSelectContextSpy).toHaveBeenCalledOnce();
     }));
 });

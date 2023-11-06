@@ -9,7 +9,7 @@ import { CONVERSATION_CREATE_GROUP_CHAT_TITLE, DATA_EXPORT_CREATED_TITLE, DATA_E
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -309,6 +309,28 @@ describe('Notification Service', () => {
             // pushes new quizExercise
             wsQuizExerciseSubject.next(quizExercise);
             // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
+        });
+
+        it('should increment page and load', () => {
+            notificationService.page = 1;
+            const queryNotificationsSpy = jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings').mockReturnValue(of());
+
+            notificationService.incrementPageAndLoad();
+
+            expect(notificationService.page).toBe(2);
+            expect(queryNotificationsSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should reset and load', () => {
+            notificationService.page = 1;
+            const queryNotificationsSpy = jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings').mockReturnValue(of());
+
+            notificationService.resetAndLoad();
+
+            expect(notificationService.page).toBe(0);
+            expect(notificationService.notifications).toBeEmpty();
+            expect(notificationService.totalNotifications).toBe(0);
+            expect(queryNotificationsSpy).toHaveBeenCalledOnce();
         });
     });
 });
