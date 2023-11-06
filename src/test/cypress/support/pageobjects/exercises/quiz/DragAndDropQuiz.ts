@@ -61,13 +61,13 @@ export class DragAndDropQuiz {
 
     generateQuizExercise() {
         cy.get('#generate-quiz-exercise').click();
-        cy.get('#generate-quiz-exercise-save').should('be.visible', { timeout: 5000 });
+        cy.get('#generate-quiz-exercise-save').should('be.visible');
         cy.wait(100);
         cy.get('#generate-quiz-exercise-save').click();
     }
 
     waitForQuizExerciseToBeGenerated() {
-        cy.get('#jhi-text-exercise-heading-edit', { timeout: 5000 }).should('be.visible');
+        cy.get('#jhi-text-exercise-heading-edit').should('be.visible');
     }
 
     previewQuiz() {
@@ -75,7 +75,7 @@ export class DragAndDropQuiz {
     }
 
     waitForQuizPreviewToLoad() {
-        cy.get('.drag-and-drop-area', { timeout: 5000 }).should('be.visible');
+        cy.get('.drag-and-drop-area').should('be.visible');
         cy.wait(200);
     }
 
