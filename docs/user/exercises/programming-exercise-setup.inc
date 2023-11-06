@@ -6,7 +6,7 @@ Creating an exercise consists of the following steps:
 #. `Update exercise code in repositories`_: Update the template, solution, and test-repositories to contain the code of your exercise.
 #. `Adapt the build plans`_ (optional): If needed, tailor the build plans to suit your requirements.
 #. `Configure static code analysis`_ (optional): If static code analysis is activated, customize the configuration as per your needs.
-#. `Adapt the interactive problem statement`_: Clearly define your exercise in the problem statement Use tasks to create a group of test cases.
+#. `Adapt the interactive problem statement`_: Clearly define your exercise in the problem statement. Use tasks to create a group of test cases.
 #. `Configure Grading`_: Configure the way students can score points in the exercise. Hide test cases that should only be visible after the due date ("hidden tests").
 #. `Verify the exercise configuration`_:  Ensure that the exercise is accurately configured and solvable by students.
 
