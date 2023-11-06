@@ -39,7 +39,7 @@ import {
 } from '../../../helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { PostContextFilter } from 'app/shared/metis/metis.util';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
