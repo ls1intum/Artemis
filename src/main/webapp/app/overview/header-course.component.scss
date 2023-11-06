@@ -30,10 +30,16 @@
     transform: rotate(180deg);
 }
 
-.manage-button {
+.manage-button-container {
     margin-left: 0.5em;
+}
+
+.manage-button {
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 .course-description {
     overflow-wrap: anywhere;
+    justify-content: space-between;
 }
