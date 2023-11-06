@@ -57,7 +57,7 @@
                     {{this.content}}
                 {{/if}}
                 {{#if (equal this.type 'rename')}}
-                    Renamed '{{this.path}}' to '{{this.newPath}}'
+                    Renamed '{{this.path}}' to '{{this.updated}}'
                 {{/if}}
                 {{#if (equal this.type 'delete')}}
                     Deleted '{{this.path}}'
@@ -123,7 +123,7 @@
     {{/if}}
     {{#if (equal this.type 'rename')}}
         {{#system~}}Now respond with the new full path of the file {{this.path}}.{{~/system}}
-        {{#assistant~}}{{gen 'this.newPath' temperature=0.5 max_tokens=50}}{{~/assistant}}
+        {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=50}}{{~/assistant}}
     {{/if}}
     {{#if (equal this.type 'modify')}}
         {{#system~}}

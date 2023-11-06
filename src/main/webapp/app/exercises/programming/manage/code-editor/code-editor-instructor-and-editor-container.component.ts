@@ -16,6 +16,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { IrisCodeEditorWebsocketService, StepExecutionException, StepExecutionSuccess } from 'app/iris/code-editor-websocket.service';
 import { IrisCodeEditorChatbotButtonComponent } from 'app/iris/exercise-chatbot/code-editor-chatbot-button.component';
 import { ExerciseComponent } from 'app/entities/iris/iris-content-type.model';
+import { DeleteFileChange, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -75,7 +76,34 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         } else {
             const repository = this.toRepository(success.component);
             if (!this.selectedRepository || this.selectedRepository === repository) {
-                this.codeEditorContainer.aceEditor.forceReloadAll(success.paths!);
+                const reloadPaths: string[] = [];
+                const deletePaths: string[] = [];
+                success.fileChanges?.forEach((fileChange) => {
+                    switch (fileChange.type) {
+                        case 'create':
+                        case 'modify':
+                        case 'overwrite':
+                            reloadPaths.push(fileChange.path);
+                            break;
+                        case 'delete':
+                            deletePaths.push(fileChange.path);
+                            break;
+                        case 'rename':
+                            reloadPaths.push(fileChange.updated!);
+                            deletePaths.push(fileChange.original!);
+                            break;
+                    }
+                });
+
+                for (const path of deletePaths) {
+                    // Files which do not exist anymore should be removed from the file browser
+                    this.codeEditorContainer.fileBrowser.handleFileChange(new DeleteFileChange(FileType.FILE, path));
+                }
+                for (const path of reloadPaths) {
+                    // TODO: Figure out a better way to ensure all new files are displayed in the file browser
+                    this.codeEditorContainer.fileBrowser.repositoryFiles[path] = FileType.FILE;
+                }
+                this.codeEditorContainer.aceEditor.forceReloadAll(reloadPaths);
             }
         }
         const widget = this.chatbotButton?.dialogRef?.componentRef?.instance; // Access the widget via the button even if it is not open

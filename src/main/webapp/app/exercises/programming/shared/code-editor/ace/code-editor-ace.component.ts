@@ -273,7 +273,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     /**
      * Reloads the file with the specified filename from the server and overwrites the file session.
      * If there is an error loading the file, the file session is still updated, but the loadingError flag is set to true.
-     * Loading errors must also be handled by the caller with a catch block.
      * @param fileName Name of the file to be reloaded
      */
     async forceReloadFileContents(fileName: string) {
@@ -283,7 +282,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             })
             .catch((error) => {
                 this.fileSession[fileName] = { code: '', cursor: { column: 0, row: 0 }, loadingError: true };
-                throw error; // rethrow error so that the caller can handle it (e.g. show error message to the user)
+                if (error.message === ConnectionError.message) {
+                    this.onError.emit('loadingFailed' + error.message);
+                } else {
+                    this.onError.emit('loadingFailed');
+                }
             });
     }
 
@@ -298,13 +301,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         // If the file is not yet loaded or loading failed, fetch it from the server
         // If the file is already loaded, we don't need to load it again
         if (!this.fileSession[fileName] || this.fileSession[fileName].loadingError) {
-            await this.forceReloadFileContents(fileName).catch((error) => {
-                if (error.message === ConnectionError.message) {
-                    this.onError.emit('loadingFailed' + error.message);
-                } else {
-                    this.onError.emit('loadingFailed');
-                }
-            });
+            await this.forceReloadFileContents(fileName);
         }
 
         // Only initialize the editor if the selected file has not changed in between
@@ -317,23 +314,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
 
     async forceReloadAll(fileNames: string[]) {
         this.isLoading = true;
-        let errorThrown = false;
         await Promise.all(
             fileNames.map(async (fileName) => {
-                try {
-                    await this.forceReloadFileContents(fileName);
-                } catch (error) {
-                    // We do not want to spam the user with errors if multiple files fail to load
-                    // Therefore we only emit the first error (or first few, accounting for async)
-                    if (!errorThrown) {
-                        if (error.message === ConnectionError.message) {
-                            this.onError.emit('loadingFailed' + error.message);
-                        } else {
-                            this.onError.emit('loadingFailed');
-                        }
-                        errorThrown = true;
-                    }
-                }
+                await this.forceReloadFileContents(fileName);
                 if (this.selectedFile === fileName) {
                     await this.initEditor();
                 }
@@ -459,14 +442,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     async onFileChange(fileChange: FileChange) {
         if (fileChange instanceof RenameFileChange) {
             this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
-            this.annotationsArray = this.annotationsArray.map((a) =>
-                a.fileName !== fileChange.oldFileName
-                    ? a
-                    : {
-                          ...a,
-                          fileName: fileChange.newFileName,
-                      },
-            );
+            for (const a of this.annotationsArray) {
+                if (a.fileName === fileChange.oldFileName) {
+                    a.fileName = fileChange.newFileName;
+                }
+            }
             this.storeAnnotations([fileChange.newFileName]);
         } else if (fileChange instanceof DeleteFileChange) {
             this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);

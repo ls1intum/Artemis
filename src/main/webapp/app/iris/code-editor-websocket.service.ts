@@ -17,12 +17,20 @@ export enum IrisCodeEditorWebsocketMessageType {
     ERROR = 'ERROR',
 }
 
+class FileChange {
+    type: string;
+    path: string;
+    content?: string;
+    original?: string;
+    updated?: string;
+}
+
 export class StepExecutionSuccess {
     messageId: number;
     planId: number;
     stepId: number;
     component: ExerciseComponent;
-    paths?: string[];
+    fileChanges?: FileChange[];
     updatedProblemStatement?: string;
 }
 

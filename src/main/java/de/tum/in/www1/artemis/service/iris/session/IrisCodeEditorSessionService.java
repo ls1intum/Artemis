@@ -1,13 +1,10 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -38,8 +35,10 @@ import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
+import de.tum.in.www1.artemis.service.iris.session.codeeditor.IrisChangeException;
+import de.tum.in.www1.artemis.service.iris.session.codeeditor.file.*;
+import de.tum.in.www1.artemis.service.iris.session.codeeditor.problemstatement.*;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisCodeEditorWebsocketService;
-import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -303,7 +302,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             log.info("Received response from iris model: " + response.content().toPrettyString());
             try {
                 String updatedProblemStatement = null;
-                Set<String> paths = null;
+                Set<FileChange> successfulChanges = null;
                 if (component == ExerciseComponent.PROBLEM_STATEMENT) {
                     var changes = extractProblemStatementChanges(response.content());
                     log.info("Extracted problem statement changes: " + changes);
@@ -313,12 +312,12 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                     var changes = extractFileChanges(response.content());
                     log.info("Extracted file changes for exercise " + component + ": " + changes);
                     try (Repository repository = repositoryFor(exercise, component)) {
-                        paths = injectChangesIntoRepository(repository, changes);
+                        successfulChanges = injectChangesIntoRepository(repository, changes);
                     }
                 }
                 log.info("Setting exercise step as executed");
                 irisExercisePlanStepRepository.setCompleted(exerciseStep);
-                irisCodeEditorWebsocketService.notifyStepSuccess(session, exerciseStep, paths, updatedProblemStatement);
+                irisCodeEditorWebsocketService.notifyStepSuccess(session, exerciseStep, successfulChanges, updatedProblemStatement);
             }
             catch (IrisParseResponseException e) {
                 log.error(e.getMessage(), e);
@@ -587,285 +586,6 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     /**
-     * An exception that occurs when Iris generates a change that cannot be applied for some reason.
-     */
-    private static class IrisChangeException extends Exception {
-
-        public IrisChangeException(String message) {
-            super(message);
-        }
-    }
-
-    /**
-     * Iris can generate different kinds of changes to files.
-     * This interface represents a change that can be applied to a file.
-     */
-    private interface FileChange {
-
-        /**
-         * Returns the path of the file that this change should be applied to.
-         *
-         * @return The path of the file
-         */
-        String path();
-
-        /**
-         * Applies the change to the provided Optional<File>. Some change types expect the file to exist, while others
-         * do not. If the file does not exist, the Optional will be empty.
-         *
-         * @param file              The file to apply the change to
-         * @param repositoryService The repository service to use for applying the change
-         * @param repository        The repository to apply the change to
-         * @throws IOException         If an I/O error occurs
-         * @throws IrisChangeException If the change cannot be applied because of a mistake made by Iris
-         */
-        void apply(Optional<File> file, RepositoryService repositoryService, Repository repository) throws IOException, IrisChangeException;
-    }
-
-    /**
-     * A file change that modifies the contents of a file by performing a find-and-replace operation.
-     *
-     * @param path     The path of the file to modify
-     * @param original The original contents of the file (to replace)
-     * @param updated  The updated contents of the file
-     */
-    private record ModifyFileChange(String path, String original, String updated) implements FileChange {
-
-        /**
-         * Replaces the first occurrence of the original string with the updated string in the given file.
-         *
-         * @throws IOException If the file could not be read or written to
-         */
-        @Override
-        public void apply(Optional<File> requestedFile, RepositoryService repositoryService, Repository repository) throws IOException, IrisChangeException {
-            if (requestedFile.isEmpty()) {
-                throw new IrisChangeException("Could not modify file '" + path + "' because it does not exist");
-            }
-            String currentContent = FileUtils.readFileToString(requestedFile.get(), StandardCharsets.UTF_8);
-            // We only want to replace the first occurrence of the original string (for now)
-            // String.replaceFirst() uses regex, so we need to escape the original string with Pattern.quote()
-            // Matcher.quoteReplacement() escapes the updated string so that it can be used as a replacement
-            String newContents = currentContent.replaceFirst(Pattern.quote(original), Matcher.quoteReplacement(updated));
-            FileUtils.writeStringToFile(requestedFile.get(), newContents, StandardCharsets.UTF_8);
-        }
-
-        /**
-         * Parses a JsonNode into a ModifyFileChange.
-         * The JsonNode must have strings for the fields "path", "original", and "updated".
-         *
-         * @param node The JsonNode to parse
-         * @return The parsed ModifyFileChange
-         * @throws IllegalArgumentException If the JsonNode does not have the correct structure
-         */
-        static FileChange parse(JsonNode node) throws IllegalArgumentException {
-            String path = node.required("path").asText();
-            String original = node.required("original").asText();
-            String updated = node.required("updated").asText();
-            return new ModifyFileChange(path, original, updated);
-        }
-    }
-
-    /**
-     * A file change that overwrites the contents of a file with the given contents.
-     *
-     * @param path    The path of the file to overwrite
-     * @param updated The new contents of the file
-     */
-    private record OverwriteFileChange(String path, String updated) implements FileChange {
-
-        @Override
-        public void apply(Optional<File> requestedFile, RepositoryService repositoryService, Repository repository) throws IOException, IrisChangeException {
-            if (requestedFile.isEmpty()) {
-                throw new IrisChangeException("Could not overwrite file '" + path + "' because it does not exist");
-            }
-            FileUtils.writeStringToFile(requestedFile.get(), updated, StandardCharsets.UTF_8);
-        }
-
-        /**
-         * Parses a JsonNode into an OverwriteFileChange.
-         * The JsonNode must have strings for the fields "path" and "content".
-         *
-         * @param node The JsonNode to parse
-         * @return The parsed OverwriteFileChange
-         * @throws IllegalArgumentException If the JsonNode does not have the correct structure
-         */
-        static FileChange parse(JsonNode node) throws IllegalArgumentException {
-            String path = node.required("path").asText();
-            String updated = node.required("updated").asText();
-            return new OverwriteFileChange(path, updated);
-        }
-    }
-
-    /**
-     * A file change that creates a new file with the given contents.
-     *
-     * @param path    The path of the file to create
-     * @param content The contents of the file to create
-     */
-    private record CreateFileChange(String path, String content) implements FileChange {
-
-        @Override
-        public void apply(Optional<File> requestedFile, RepositoryService repositoryService, Repository repository) throws IOException, IrisChangeException {
-            if (requestedFile.isPresent()) {
-                throw new IrisChangeException("Could not create file '" + path + "' because it already exists");
-            }
-            repositoryService.createFile(repository, path, new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)));
-        }
-
-        /**
-         * Parses a JsonNode into a CreateFileChange.
-         * The JsonNode must have strings for the fields "path" and "content".
-         *
-         * @param node The JsonNode to parse
-         * @return The parsed CreateFileChange
-         * @throws IllegalArgumentException If the JsonNode does not have the correct structure
-         */
-        static FileChange parse(JsonNode node) throws IllegalArgumentException {
-            String path = node.required("path").asText();
-            String content = node.required("content").asText();
-            return new CreateFileChange(path, content);
-        }
-    }
-
-    /**
-     * A file change that deletes a file.
-     *
-     * @param path The path of the file to delete
-     */
-    private record DeleteFileChange(String path) implements FileChange {
-
-        @Override
-        public void apply(Optional<File> requestedFile, RepositoryService repositoryService, Repository repository) throws IOException, IrisChangeException {
-            if (requestedFile.isEmpty()) {
-                throw new IrisChangeException("Could not delete file '" + path + "' because it does not exist");
-            }
-            repositoryService.deleteFile(repository, path);
-        }
-
-        /**
-         * Parses a JsonNode into a DeleteFileChange.
-         * The JsonNode must have a string for the field "path".
-         *
-         * @param node The JsonNode to parse
-         * @return The parsed DeleteFileChange
-         * @throws IllegalArgumentException If the JsonNode does not have the correct structure
-         */
-        static FileChange parse(JsonNode node) throws IllegalArgumentException {
-            String path = node.required("path").asText();
-            return new DeleteFileChange(path);
-        }
-    }
-
-    /**
-     * A file change that renames a file.
-     *
-     * @param path    The path of the file to rename
-     * @param newPath The new path of the file
-     */
-    private record RenameFileChange(String path, String newPath) implements FileChange {
-
-        @Override
-        public void apply(Optional<File> requestedFile, RepositoryService repositoryService, Repository repository) throws IOException, IrisChangeException {
-            if (requestedFile.isEmpty()) {
-                throw new IrisChangeException("Could not rename file '" + path + "' because it does not exist");
-            }
-            repositoryService.renameFile(repository, new FileMove(path, newPath));
-        }
-
-        /**
-         * Parses a JsonNode into a RenameFileChange.
-         * The JsonNode must have strings for the fields "path" and "newPath".
-         *
-         * @param node The JsonNode to parse
-         * @return The parsed RenameFileChange
-         * @throws IllegalArgumentException If the JsonNode does not have the correct structure
-         */
-        static FileChange parse(JsonNode node) throws IllegalArgumentException {
-            String path = node.required("path").asText();
-            String newPath = node.required("newPath").asText();
-            return new RenameFileChange(path, newPath);
-        }
-    }
-
-    /**
-     * A change that can be applied to the problem statement of an exercise.
-     */
-    private interface ProblemStatementChange {
-
-        String apply(String problemStatement) throws IrisChangeException;
-    }
-
-    /**
-     * A change that replaces a range of text in the problem statement with the updated string.
-     *
-     * @param from    The start of the range to replace, inclusive
-     * @param to      The end of the range to replace, exclusive
-     * @param updated The updated string to replace the range with
-     */
-    private record ProblemStatementReplacement(String from, String to, String updated) implements ProblemStatementChange {
-
-        @Override
-        public String apply(String problemStatement) throws IrisChangeException {
-            String before;
-            int startIndex;
-            if (from.equals("!start!")) {
-                before = "";
-                startIndex = 0;
-            }
-            else {
-                // Search for the start string in the problem statement
-                startIndex = problemStatement.indexOf(from);
-                if (startIndex == -1) {
-                    throw new IrisChangeException("Could not locate range start '" + from + "'");
-                }
-                before = problemStatement.substring(0, startIndex);
-            }
-
-            String after;
-            if (to.equals("!end!")) {
-                after = "";
-            }
-            else {
-                // Search for the end string in the remaining string
-                int endIndex = problemStatement.substring(startIndex).indexOf(to);
-                if (endIndex == -1) {
-                    throw new IrisChangeException("Could not find range end '" + to + "' after range start '" + from + "'");
-                }
-                endIndex += startIndex; // Add the start index to get the index in the original problem statement
-                after = problemStatement.substring(endIndex);
-            }
-
-            // Replace the range with the updated string
-            return before + updated + after;
-        }
-
-        static ProblemStatementChange parse(JsonNode node) throws IllegalArgumentException {
-            String from = node.required("from").asText();
-            String to = node.required("to").asText();
-            String updated = node.required("updated").asText();
-            return new ProblemStatementReplacement(from, to, updated);
-        }
-    }
-
-    /**
-     * A change that overwrites the entire problem statement of an exercise.
-     *
-     * @param updated The new problem statement
-     */
-    private record ProblemStatementOverwrite(String updated) implements ProblemStatementChange {
-
-        @Override
-        public String apply(String problemStatement) {
-            return updated;
-        }
-
-        static ProblemStatementChange parse(JsonNode node) throws IllegalArgumentException {
-            String updated = node.required("updated").asText();
-            return new ProblemStatementOverwrite(updated);
-        }
-    }
-
-    /**
      * Injects the changes into the problem statement of the exercise. This method replaces the first occurrence of each
      * original string with the corresponding updated string in the problem statement.
      *
@@ -901,18 +621,18 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @param repository The repository to inject the changes into
      * @param changes    The changes to inject
      */
-    private Set<String> injectChangesIntoRepository(Repository repository, List<FileChange> changes) {
+    private Set<FileChange> injectChangesIntoRepository(Repository repository, List<FileChange> changes) {
         log.info("Injecting changes into repository: \n\n\n" + changes);
         Map<String, Optional<File>> targetedFiles = changes.stream().map(FileChange::path).distinct()
                 .collect(Collectors.toMap(fileName -> fileName, fileName -> gitService.getFileByName(repository, fileName)));
-        Set<String> pathsToUpdate = new HashSet<>();
+        Set<FileChange> successful = new HashSet<>();
         int successes = 0;
         int failures = 0;
         for (FileChange change : changes) {
             Optional<File> requestedFile = targetedFiles.get(change.path());
             try {
                 change.apply(requestedFile, repositoryService, repository);
-                pathsToUpdate.add(change.path());
+                successful.add(change);
                 successes++;
             }
             catch (IOException e) {
@@ -924,7 +644,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             }
         }
         log.info("Successfully applied " + successes + " changes to repository, " + failures + " changes failed");
-        return pathsToUpdate;
+        return successful;
     }
 
 }
