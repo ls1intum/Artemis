@@ -521,7 +521,7 @@ To get a better understanding of the feature, you can watch the following video:
 
   .. raw:: html
 
-    <iframe src="https://tum.live/w/artemisintro/40748?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
+    <iframe src="https://tum.live/w/artemisintro/40748/PRES?video_only=1&" allowfullscreen="1" frameborder="0" width="600" height="400">
         Watch this video on TUM-Live.
     </iframe>
 
