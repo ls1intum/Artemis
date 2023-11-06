@@ -35,7 +35,7 @@ export class NotificationSidebarComponent implements OnInit, OnDestroy {
     loading = false;
     totalNotifications = 0;
 
-    documentationType = DocumentationType.Notifications;
+    readonly documentationType: DocumentationType = 'Notifications';
 
     subscriptions: Subscription[] = [];
 
