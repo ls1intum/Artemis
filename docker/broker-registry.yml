@@ -33,6 +33,9 @@ services:
         environment:
             ARTEMIS_USER: ${BROKER_USER:-guest}
             ARTEMIS_PASSWORD: ${BROKER_PASSWORD:-guest}
+            # "--http-host 0.0.0.0 --relax-jolokia" is the default
+            # "--nio" is apparently required to make it work on ARM CPUs
+            EXTRA_ARGS: --http-host 0.0.0.0 --relax-jolokia --nio
         ports:
             - "61616:61616"
         # expose the port to make it reachable docker internally even if the external port mapping changes
