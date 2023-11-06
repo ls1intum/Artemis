@@ -93,6 +93,13 @@ public class ContinuousPlagiarismControlService {
         log.debug("Continuous plagiarism control done.");
     }
 
+    /**
+     * Performs plagiarism checks on the given exercise.
+     * In case any exception is thrown, the method catches it, logs it and removes any plagiarism results associated with the exercise.
+     *
+     * @param exercise the exercise to perform plagiarism checks on
+     * @return result of plagiarism checks or null if any exception was thrown
+     */
     private PlagiarismResult<?> executeChecksForExerciseSilencingExceptions(Exercise exercise) {
         try {
             return executeChecksForExercise(exercise);
