@@ -10,6 +10,7 @@ import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { objectToJsonBlob } from 'app/utils/blob-util';
+import { LectureUnitInformationDTO } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-units/attachment-units.component';
 
 describe('AttachmentUnitService', () => {
     let service: AttachmentUnitService;
@@ -121,22 +122,22 @@ describe('AttachmentUnitService', () => {
         const returnedFromService = { ...returnedAttachmentUnits };
 
         const expected = { ...returnedFromService };
-        const file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
-        const formData: FormData = new FormData();
-        formData.append('file', file);
-        formData.append(
-            'lectureUnitSplitDTOs',
-            objectToJsonBlob([
+        const filename = 'filename-on-server';
+        const lectureUnitInformation: LectureUnitInformationDTO = {
+            units: [
                 {
                     unitName: 'Unit 1',
                     releaseDate: dayjs().year(2022).month(3).date(5),
                     startPage: 1,
                     endPage: 20,
                 },
-            ]),
-        );
+            ],
+            numberOfPages: 0,
+            removeSlidesCommaSeparatedKeyPhrases: '',
+        };
+
         service
-            .createUnits(1, formData)
+            .createUnits(1, filename, lectureUnitInformation)
             .pipe(take(1))
             .subscribe((resp) => (response = resp));
         const req = httpMock.expectOne({ method: 'POST' });
@@ -157,16 +158,45 @@ describe('AttachmentUnitService', () => {
 
         const expected = { ...returnedFromService };
 
+        const filename = 'filename-on-server';
+        service
+            .getSplitUnitsData(1, filename)
+            .pipe(take(1))
+            .subscribe((resp) => (response = resp));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        expect(response.body).toEqual(expected);
+    }));
+
+    it('should get removed slides data', fakeAsync(() => {
+        let response: any;
+        const returnedFromService = [1, 2, 3];
+        const expected = [...returnedFromService];
+
+        const keyphrases = 'phrase1, phrase2';
+        const filename = 'filename-on-server';
+        service
+            .getSlidesToRemove(1, filename, keyphrases)
+            .pipe(take(1))
+            .subscribe((resp) => (response = resp));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        expect(response.body).toEqual(expected);
+    }));
+
+    it('should upload slides', fakeAsync(() => {
+        let response: any;
+        const returnedFromService = 'filename-on-server';
+        const expected = 'filename-on-server';
         const file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
-        const formData: FormData = new FormData();
-        formData.append('file', file);
 
         service
-            .getSplitUnitsData(1, formData)
+            .uploadSlidesForProcessing(1, file)
             .pipe(take(1))
             .subscribe((resp) => (response = resp));
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
+
         expect(response.body).toEqual(expected);
     }));
 });

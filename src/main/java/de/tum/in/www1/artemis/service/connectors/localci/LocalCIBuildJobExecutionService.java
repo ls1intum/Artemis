@@ -123,7 +123,7 @@ public class LocalCIBuildJobExecutionService {
         }
 
         // Prepare script
-        Path buildScriptPath = localCIContainerService.createBuildScript(participation.getProgrammingExercise(), auxiliaryRepositories);
+        Path buildScriptPath = localCIContainerService.createBuildScript(participation.getProgrammingExercise());
 
         // Retrieve the paths to the repositories that the build job needs.
         // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
@@ -197,14 +197,14 @@ public class LocalCIBuildJobExecutionService {
 
         localCIContainerService.startContainer(containerId);
 
-        log.info("Started container for build job " + containerName);
+        log.info("Started container for build job {}", containerName);
 
         localCIContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, auxiliaryRepositoriesPaths, auxiliaryRepositoryNames,
                 buildScriptPath);
 
         localCIContainerService.runScriptInContainer(containerId);
 
-        log.info("Finished running the build script in container " + containerName);
+        log.info("Finished running the build script in container {}", containerName);
 
         ZonedDateTime buildCompletedDate = ZonedDateTime.now();
 

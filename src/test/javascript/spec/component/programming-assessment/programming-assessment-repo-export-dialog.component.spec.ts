@@ -124,6 +124,23 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         expect(exportReposStub).toHaveBeenCalledOnce();
     }));
 
+    it('Should not change the ExportOptions during export', fakeAsync(() => {
+        comp.participationIdList = [];
+        comp.participantIdentifierList = 'ab12cde, cd34efg';
+        comp.ngOnInit();
+
+        const copyOfExportOptions = { ...comp.repositoryExportOptions };
+
+        const httpResponse = createBlobHttpResponse();
+        const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
+        fixture.detectChanges();
+
+        comp.exportRepos();
+        tick();
+        expect(comp.repositoryExportOptions).toEqual(copyOfExportOptions);
+        expect(exportReposStub).toHaveBeenCalledOnce();
+    }));
+
     it('Export of multiple repos download multiple files', fakeAsync(() => {
         const programmingExercise2 = new ProgrammingExercise(new Course(), undefined);
         programmingExercise2.id = 43;
@@ -135,7 +152,6 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
         comp.exportRepos();
         tick();
-        expect(comp.repositoryExportOptions.exportAllParticipants).toBeTrue();
         expect(comp.exportInProgress).toBeFalse();
         expect(exportReposStub).toHaveBeenCalledTimes(2);
     }));

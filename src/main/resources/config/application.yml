@@ -37,7 +37,7 @@ artemis:
         batch-waiting-time: 30000   # in ms = 30s
     iosAppId: "2J3C6P6X3N.de.tum.cit.artemis"
     androidAppPackage: "de.tum.informatics.www1.artemis.native_app.android"
-    androidSha256CertFingerprints: "D4:5C:58:77:B2:4E:2F:15:60:59:BB:C0:9C:1C:B0:A9:FD:3D:D8:F3:88:A8:B3:EA:DB:05:06:3B:7E:AF:0C:4F"
+    androidSha256CertFingerprints: "1F:EB:DD:BA:A1:72:BF:A8:23:DF:72:A0:96:41:5E:10:75:2D:88:90:00:F3:EE:AC:CF:B7:3C:9C:21:86:EC:CF"
 
     # activate the following line if you want to support push notifications for the mobile clients.
     # More information about the TUM hosted hermes service can be found here: https://github.com/ls1intum/Hermes
@@ -225,6 +225,11 @@ spring:
         phone:
             home:
                 enabled: false
+        slow:
+            operation:
+                detector:
+                    enabled: true
+
     autoconfigure:
         # These AutoConfiguration are excluded as they include metrics which are not evaluated and only cause unnecessary network load
         # They can be included once they are processed

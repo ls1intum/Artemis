@@ -64,8 +64,8 @@ Users of a course can communicate in private via the Messages page. (see image b
 Conversation sidebar on the left, where users can search for other participants of the current course and start a conversation
 with them.
 
-If the recipient is browsing another conversation when they receive a new message, an envelope icon appears in their
-Conversation sidebar, next to the affiliated user who has sent the message. This way, users become aware of the new message
+If the recipient is browsing another conversation when they receive a new message, an icon with an unread-messages counter is displayed in their
+conversation sidebar, next to the affiliated conversation that the new message was sent to. This way, users become aware of the new message
 within that discussion.
 
 The authorities of tutors and instructors are more restricted in the Messages Page compared to the Course Communication
@@ -77,6 +77,25 @@ Messages do not consist of titles. Users can continue a discussion around a spec
 located on the right-hand side of the Messages Page when displayed.
 
 |messages|
+
+This video shows how link previews work in Artemis:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/40580?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
+If the message content contains links, a preview of the link will be shown under the message. This way, users will have a good understanding
+of what that link is about. If they prefer not to have a preview, they can hover over the preview and click the appearing `X` button.
+The preview will be removed.
+
+|link-preview|
+
+If the message contains more than one link, the preview will not have a preview image of the link to have more compact previews
+for multiple links.
+
+|link-preview-multiple|
 
 Features for Users
 ------------------
@@ -182,6 +201,33 @@ Reference Lecture Attachments
 Users can refer to lectures of the current course, via the dropdown menu ``Lecture`` available on the posting markdown
 editor (see image above). Here, lecture attachments can be found in a nested structure.
 
+Reference Lecture Attachment Units
+""""""""""""""""""""""""""""""""""
+
+Users can refer to lecture attachment units of the current course, via the dropdown menu ``Lecture`` available on the posting markdown
+editor, see image below. Here, lecture attachment units can be found when users hover over the specific lecture.
+
+Reference Lecture Unit Slides
+"""""""""""""""""""""""""""""
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/40579?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
+Users can refer to lecture unit slides of the current course, via the dropdown menu ``Lecture``. Here, slides can be found when users
+hover over a specific unit, see image below.
+
+|slide-reference-menu|
+
+After the user references a single slide they can see it as an image included in the message. Additionally, they can preview the slide
+in order to easily read the content by clicking the image.
+
+|slide-reference|
+
+|referenced-slide-preview|
+
 Prevent Post Duplication
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -267,3 +313,13 @@ Additionally, announcements visually differ from normal posts and are always dis
     :width: 600
 .. |messages| image:: communication/messages.png
     :width: 1000
+.. |slide-reference| image:: communication/slide-reference.png
+    :width: 600
+.. |slide-reference-menu| image:: communication/slide-reference-menu.png
+    :width: 1000
+.. |referenced-slide-preview| image:: communication/referenced-slide-preview.png
+    :width: 600
+.. |link-preview| image:: communication/link-preview.png
+    :width: 600
+.. |link-preview-multiple| image:: communication/link-preview-multiple.png
+    :width: 600

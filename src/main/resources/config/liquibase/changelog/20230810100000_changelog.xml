@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+                   xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.6.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="welscher" id="20230810100000-1">
+        <comment>Part 1: Add the new table and foreign keys</comment>
+        <addColumn tableName="feedback">
+            <column name="test_case_id" type="bigint"/>
+        </addColumn>
+        <addPrimaryKey columnNames="test_case_id, task_id" constraintName="programming_exercise_task_test_casePK"
+                       tableName="programming_exercise_task_test_case"/>
+        <addForeignKeyConstraint baseColumnNames="test_case_id" baseTableName="feedback"
+                                 constraintName="FK_feedback_test_case_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id"
+                                 referencedTableName="programming_exercise_test_case" validate="true"/>
+    </changeSet>
+    <changeSet author="welscher" id="20230810100000-21">
+        <!-- MySQL -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="mysql"/>
+        </preConditions>
+
+        <comment>
+            Part 2 (MySQL): Find the referenced test case and populate the test_case_id column.
+            This only affects student participations, not template and solution participations.
+            The change set below uses the same query, but a different UPDATE syntax.
+        </comment>
+
+        <sql>
+            <!-- Maps every feedback to their exercise id -->
+            WITH fe AS (SELECT feedback.id, feedback.text, exercise.id AS exercise_id
+                        FROM feedback
+                          LEFT JOIN result ON feedback.result_id = result.id
+                          LEFT JOIN participation ON result.participation_id = participation.id
+                          LEFT JOIN exercise ON participation.exercise_id = exercise.id
+                        WHERE feedback.type = 3
+                          AND feedback.text IS NOT NULL
+                          AND feedback.text NOT LIKE 'SubPolFeedbackIdentifier%' <!-- Filter out Submission policy feedback -->
+                          AND feedback.reference IS NULL <!-- Filter out SCA feedback -->
+                          AND exercise.id IS NOT NULL
+            )
+            <!-- Find the testcase by matching the text / test name and the exercise -->
+            UPDATE feedback, programming_exercise_test_case, fe
+            SET test_case_id = programming_exercise_test_case.id
+            WHERE feedback.id = fe.id
+                AND programming_exercise_test_case.test_name = feedback.text
+                AND programming_exercise_test_case.exercise_id = fe.exercise_id
+        </sql>
+
+    </changeSet>
+    <changeSet author="welscher" id="20230810100000-22">
+        <!-- Postgres -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="postgresql"/>
+        </preConditions>
+
+        <comment>
+            Part 2 (Postgres): Find the referenced test case and populate the test_case_id column.
+            The change set above uses the same query, but a different UPDATE syntax.
+        </comment>
+
+        <sql>
+            WITH fe AS (SELECT feedback.id, feedback.text, exercise.id AS exercise_id
+                        FROM feedback
+                            LEFT JOIN result ON feedback.result_id = result.id
+                            LEFT JOIN participation ON result.participation_id = participation.id
+                            LEFT JOIN exercise ON participation.exercise_id = exercise.id
+                        WHERE feedback.type = 3
+                            AND feedback.text IS NOT NULL
+                            AND feedback.text NOT LIKE 'SubPolFeedbackIdentifier%' <!-- Filter out Submission policy feedback -->
+                            AND feedback.reference IS NULL <!-- Filter out SCA feedback -->
+                            AND exercise.id IS NOT NULL
+            )
+            <!-- Find the testcase by matching the text / test name and the exercise -->
+            UPDATE feedback
+            SET test_case_id = programming_exercise_test_case.id
+            FROM programming_exercise_test_case, fe
+            WHERE feedback.id = fe.id
+                AND programming_exercise_test_case.test_name = feedback.text
+                AND programming_exercise_test_case.exercise_id = fe.exercise_id
+        </sql>
+    </changeSet>
+    <changeSet author="welscher" id="20230810100000-31">
+        <!-- MySQL -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="mysql"/>
+        </preConditions>
+
+        <comment>
+            Part 3 (MySQL): Apply the migration for template participations.
+        </comment>
+
+        <sql>
+            <!-- Helper tables with all template participation ids and their corresponding exercises.
+            Needed since participation.exerciseId is null for these types of participation -->
+            WITH tp AS (SELECT exercise.id, exercise.template_participation_id
+                        FROM exercise
+                        WHERE exercise.discriminator = 'P'
+                          AND exercise.template_participation_id IS NOT NULL)
+               , fe AS (SELECT feedback.id, feedback.text, tp.id AS exercise_id
+                        FROM feedback
+                          LEFT JOIN result ON feedback.result_id = result.id
+                          LEFT JOIN participation ON result.participation_id = participation.id
+                          LEFT JOIN tp ON participation.id = tp.template_participation_id
+                        WHERE feedback.type = 3 <!-- Automatic -->
+                            AND feedback.text IS NOT NULL
+                            AND feedback.text NOT LIKE 'SubPolFeedbackIdentifier%' <!-- Filter out Submission policy feedback -->
+                            AND feedback.reference IS NULL <!-- Filter out SCA feedback -->
+            )
+            UPDATE feedback, programming_exercise_test_case, fe
+            SET test_case_id = programming_exercise_test_case.id
+            WHERE feedback.id = fe.id
+                AND programming_exercise_test_case.test_name = feedback.text
+                AND programming_exercise_test_case.exercise_id = fe.exercise_id
+        </sql>
+    </changeSet>
+    <changeSet author="welscher" id="20230810100000-32">
+        <!-- Postgres -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="postgresql"/>
+        </preConditions>
+
+        <comment>
+            Part 3 (Postgres): Apply the migration for template participations.
+        </comment>
+
+        <sql>
+            <!-- Helper tables with all template participation ids and their corresponding exercises.
+            Needed since participation.exerciseId is null for these types of participation -->
+            WITH tp AS (SELECT exercise.id, exercise.template_participation_id
+                        FROM exercise
+                        WHERE exercise.discriminator = 'P'
+                          AND exercise.template_participation_id IS NOT NULL)
+               , fe AS (SELECT feedback.id, feedback.text, tp.id AS exercise_id
+                        FROM feedback
+                            LEFT JOIN result ON feedback.result_id = result.id
+                            LEFT JOIN participation ON result.participation_id = participation.id
+                            LEFT JOIN tp ON participation.id = tp.template_participation_id
+                        WHERE feedback.type = 3 <!-- Automatic -->
+                            AND feedback.text IS NOT NULL
+                            AND feedback.text NOT LIKE 'SubPolFeedbackIdentifier%' <!-- Filter out Submission policy feedback -->
+                            AND feedback.reference IS NULL <!-- Filter out SCA feedback -->
+            )
+            UPDATE feedback
+            SET test_case_id = programming_exercise_test_case.id
+            FROM programming_exercise_test_case, fe
+            WHERE feedback.id = fe.id
+                AND programming_exercise_test_case.test_name = feedback.text
+                AND programming_exercise_test_case.exercise_id = fe.exercise_id
+        </sql>
+    </changeSet>
+    <changeSet author="welscher" id="20230810100000-41">
+        <!-- MySQL -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="mysql"/>
+        </preConditions>
+
+        <comment>
+            Part 3 (MySQL): Apply the migration for solution participations.
+        </comment>
+
+        <sql>
+            <!-- Helper tables with all solution participation ids and their corresponding exercises.
+            Needed since participation.exerciseId is null for these participations -->
+            WITH sp AS (SELECT exercise.id, exercise.solution_participation_id
+                        FROM exercise
+                        WHERE exercise.discriminator = 'P'
+                          AND exercise.solution_participation_id IS NOT NULL)
+               , fe AS (SELECT feedback.id, feedback.text, sp.id AS exercise_id
+                        FROM feedback
+                            LEFT JOIN result ON feedback.result_id = result.id
+                            LEFT JOIN participation ON result.participation_id = participation.id
+                            LEFT JOIN sp ON participation.id = sp.solution_participation_id
+                        WHERE feedback.type = 3 <!-- Automatic -->
+                            AND feedback.text IS NOT NULL
+                            AND feedback.text NOT LIKE 'SubPolFeedbackIdentifier%' <!-- Filter out Submission policy feedback -->
+                            AND feedback.reference IS NULL <!-- Filter out SCA feedback -->
+            )
+            UPDATE feedback, programming_exercise_test_case, fe
+            SET test_case_id = programming_exercise_test_case.id
+            WHERE feedback.id = fe.id
+              AND programming_exercise_test_case.test_name = feedback.text
+              AND programming_exercise_test_case.exercise_id = fe.exercise_id
+        </sql>
+    </changeSet>
+    <changeSet author="welscher" id="20230810100000-42">
+        <!-- Postgres -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="postgresql"/>
+        </preConditions>
+
+        <comment>
+            Part 3 (Postgres): Apply the migration for solution participations.
+        </comment>
+
+        <sql>
+            <!-- Helper tables with all solution participation ids and their corresponding exercises.
+            Needed since participation.exerciseId is null for these participations -->
+            WITH sp AS (SELECT exercise.id, exercise.solution_participation_id
+                        FROM exercise
+                        WHERE exercise.discriminator = 'P'
+                          AND exercise.solution_participation_id IS NOT NULL)
+               , fe AS (SELECT feedback.id, feedback.text, sp.id AS exercise_id
+                        FROM feedback
+                            LEFT JOIN result ON feedback.result_id = result.id
+                            LEFT JOIN participation ON result.participation_id = participation.id
+                            LEFT JOIN sp ON participation.id = sp.solution_participation_id
+                        WHERE feedback.type = 3 <!-- Automatic -->
+                            AND feedback.text IS NOT NULL
+                            AND feedback.text NOT LIKE 'SubPolFeedbackIdentifier%' <!-- Filter out Submission policy feedback -->
+                            AND feedback.reference IS NULL <!-- Filter out SCA feedback -->
+            )
+            UPDATE feedback
+            SET test_case_id = programming_exercise_test_case.id
+                FROM programming_exercise_test_case, fe
+            WHERE feedback.id = fe.id
+              AND programming_exercise_test_case.test_name = feedback.text
+              AND programming_exercise_test_case.exercise_id = fe.exercise_id
+        </sql>
+    </changeSet>
+    <changeSet author="welscher" id="20230810100000-5">
+        <comment>Remove the (now duplicated) text information if a test case got linked during this migration.</comment>
+        <sql>
+            UPDATE feedback
+            SET text = NULL
+            WHERE test_case_id IS NOT NULL
+        </sql>
+    </changeSet>
+</databaseChangeLog>
+
