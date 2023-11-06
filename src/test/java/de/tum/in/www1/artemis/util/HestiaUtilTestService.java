@@ -210,7 +210,7 @@ public class HestiaUtilTestService {
             FileUtils.write(filePath.toFile(), content, Charset.defaultCharset());
         }
         participationRepo.localGit.add().addFilepattern(".").call();
-        participationRepo.localGit.commit().setMessage("commit").call();
+        GitService.commit(participationRepo.localGit).setMessage("commit").call();
         var commits = participationRepo.localGit.log().call();
         var commitsList = StreamSupport.stream(commits.spliterator(), false).toList();
 

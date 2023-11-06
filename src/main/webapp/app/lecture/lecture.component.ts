@@ -34,12 +34,11 @@ export class LectureComponent implements OnInit {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     activeFilters = new Set<LectureDateFilter>();
-    readonly filterType = LectureDateFilter;
-
     predicate: string;
     ascending: boolean;
 
-    documentationType = DocumentationType.Lecture;
+    readonly filterType = LectureDateFilter;
+    readonly documentationType: DocumentationType = 'Lecture';
 
     // Icons
     faPlus = faPlus;

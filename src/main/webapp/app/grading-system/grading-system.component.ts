@@ -18,7 +18,7 @@ export class GradingSystemComponent implements OnInit {
     isExam = false;
     childComponent?: BaseGradingSystemComponent;
 
-    documentationType = DocumentationType.Grading;
+    readonly documentationType: DocumentationType = 'Grading';
 
     // Icons
     readonly faExclamationTriangle = faExclamationTriangle;

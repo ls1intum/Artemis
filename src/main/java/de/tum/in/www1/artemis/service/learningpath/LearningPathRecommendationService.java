@@ -70,7 +70,7 @@ public class LearningPathRecommendationService {
      * cdf(0.40), medium: cdf(0.85) - cdf(0.40), hard: 1 - cdf(0.85)}.
      * Each array corresponds to the mean=idx/#distributions.
      */
-    private final static double[][] EXERCISE_DIFFICULTY_DISTRIBUTION_LUT = new double[][] { { 0.87, 0.12, 0.01 }, { 0.80, 0.18, 0.02 }, { 0.72, 0.25, 0.03 }, { 0.61, 0.33, 0.06 },
+    private static final double[][] EXERCISE_DIFFICULTY_DISTRIBUTION_LUT = new double[][] { { 0.87, 0.12, 0.01 }, { 0.80, 0.18, 0.02 }, { 0.72, 0.25, 0.03 }, { 0.61, 0.33, 0.06 },
             { 0.50, 0.40, 0.10 }, { 0.39, 0.45, 0.16 }, { 0.28, 0.48, 0.24 }, { 0.20, 0.47, 0.33 }, { 0.13, 0.43, 0.44 }, { 0.08, 0.37, 0.55 }, { 0.04, 0.29, 0.67 }, };
 
     protected LearningPathRecommendationService(CompetencyRelationRepository competencyRelationRepository, LearningObjectService learningObjectService,
@@ -332,7 +332,7 @@ public class LearningPathRecommendationService {
      */
     private static double computePriorUtility(Competency competency, RecommendationState state) {
         // return max utility if no prior competencies are present
-        if (state.priorCompetencies.get(competency.getId()).size() == 0) {
+        if (state.priorCompetencies.get(competency.getId()).isEmpty()) {
             return PRIOR_UTILITY;
         }
         final double masteredPriorCompetencies = state.priorCompetencies.get(competency.getId()).stream()
@@ -589,7 +589,7 @@ public class LearningPathRecommendationService {
         return EXERCISE_DIFFICULTY_DISTRIBUTION_LUT[distributionIndex];
     }
 
-    protected record RecommendationState(Map<Long, Competency> competencyIdMap, List<Long> recommendedOrderOfCompetencies, Set<Long> masteredCompetencies,
+    public record RecommendationState(Map<Long, Competency> competencyIdMap, List<Long> recommendedOrderOfCompetencies, Set<Long> masteredCompetencies,
             Map<Long, Double> competencyMastery, Map<Long, Set<Long>> matchingClusters, Map<Long, Set<Long>> priorCompetencies, Map<Long, Long> extendsCompetencies,
             Map<Long, Long> assumesCompetencies) {
     }
