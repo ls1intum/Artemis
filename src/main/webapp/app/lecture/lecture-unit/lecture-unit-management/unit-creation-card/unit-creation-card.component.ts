@@ -10,7 +10,7 @@ import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
     templateUrl: './unit-creation-card.component.html',
 })
 export class UnitCreationCardComponent {
-    documentationType = DocumentationType.Units;
+    readonly documentationType: DocumentationType = 'Units';
 
     @Input() emitEvents = false;
 

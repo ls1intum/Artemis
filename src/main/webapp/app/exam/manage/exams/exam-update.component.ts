@@ -41,7 +41,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
     @ViewChild('workingTimeConfirmationContent') public workingTimeConfirmationContent: TemplateRef<any>;
 
-    documentationType = DocumentationType.Exams;
+    readonly documentationType: DocumentationType = 'Exams';
 
     // Icons
     faSave = faSave;

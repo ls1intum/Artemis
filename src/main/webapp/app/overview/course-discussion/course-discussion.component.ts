@@ -39,9 +39,9 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     page = 1;
     isCommunicationEnabled: boolean;
 
-    documentationType = DocumentationType.Communications;
-
     forceReload = true;
+
+    readonly documentationType: DocumentationType = 'Communications';
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly pageType = PageType.OVERVIEW;
