@@ -81,14 +81,13 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     examId?: number;
     courseId?: number;
 
-    documentationType = DocumentationType.Quiz;
-
     // Icons
     faPlus = faPlus;
     faXmark = faXmark;
     faExclamationCircle = faExclamationCircle;
 
     readonly QuizMode = QuizMode;
+    readonly documentationType: DocumentationType = 'Quiz';
 
     constructor(
         private route: ActivatedRoute,

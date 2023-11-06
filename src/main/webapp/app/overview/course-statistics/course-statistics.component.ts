@@ -94,7 +94,7 @@ enum ChartBarTitle {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
-    documentationType = DocumentationType.Statistics;
+    readonly documentationType: DocumentationType = 'Statistics';
 
     courseId: number;
     private courseExercises: Exercise[];
