@@ -74,6 +74,10 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faPencilAlt = faPencilAlt;
     faFileSignature = faFileSignature;
 
+    protected get exercises() {
+        return this.programmingExercises;
+    }
+
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,

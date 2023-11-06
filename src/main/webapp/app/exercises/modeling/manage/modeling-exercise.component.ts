@@ -34,6 +34,10 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     faWrench = faWrench;
     faTimes = faTimes;
 
+    protected get exercises() {
+        return this.modelingExercises;
+    }
+
     constructor(
         public exerciseService: ExerciseService,
         public modelingExerciseService: ModelingExerciseService,
