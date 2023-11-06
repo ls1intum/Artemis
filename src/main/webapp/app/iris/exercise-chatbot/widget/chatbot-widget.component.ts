@@ -822,6 +822,19 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
         }
     }
 
+    getStepStatus(step: IrisExercisePlanStep) {
+        switch (step.executionStage) {
+            case ExecutionStage.NOT_EXECUTED:
+                return '';
+            case ExecutionStage.IN_PROGRESS:
+                return 'Generating changes, please be patient...';
+            case ExecutionStage.COMPLETE:
+                return 'Changes applied.';
+            case ExecutionStage.FAILED:
+                return 'Encountered an error.';
+        }
+    }
+
     /**
      * Creates a new user message.
      * @param message - The content of the message.

@@ -99,12 +99,12 @@
                         <div class="bubble-left" *ngIf="isExercisePlan(content)">
                             <div *ngFor="let step of content.steps; let i = index">
                                 <!-- step component with show/hide button -->
-                                <div
-                                    [ngClass]="isHidden(step) ? 'step-component show-details' : 'step-component hide-details'"
-                                    [ngStyle]="{ 'background-color': getStepColor(step) }"
-                                >
-                                    <span [innerHTML]="getStepName(step) | htmlForMarkdown"></span>
-                                    <button (click)="hideOrUnhide(step)" class="detail-btn step-title">{{ isHidden(step) ? 'Show Details' : 'Hide Details' }}</button>
+                                <div [ngStyle]="{ 'background-color': getStepColor(step) }" [ngClass]="isHidden(step) ? 'show-details' : 'hide-details'">
+                                    <div class="step-component">
+                                        <span [innerHTML]="getStepName(step) | htmlForMarkdown"></span>
+                                        <button (click)="hideOrUnhide(step)" class="detail-btn step-title">{{ isHidden(step) ? 'Show Details' : 'Hide Details' }}</button>
+                                    </div>
+                                    <span class="step-status" [innerHTML]="getStepStatus(step) | htmlForMarkdown"></span>
                                 </div>
                                 <!-- step instructions (editable) in a text box -->
                                 <div *ngIf="!isHidden(step)" [attr.contenteditable]="isNotExecuted(step)" class="step-detail">
