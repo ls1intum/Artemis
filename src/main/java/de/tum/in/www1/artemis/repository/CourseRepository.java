@@ -428,6 +428,17 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     /**
+     * Checks if the communication feature is enabled for a course.
+     *
+     * @param courseId the id of the course
+     * @return true if the communication feature is enabled for the course, false otherwise
+     */
+    default boolean isMessagingOrCommunicationEnabled(long courseId) {
+        return informationSharingConfigurationIsOneOf(courseId, Set.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
+                CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING));
+    }
+
+    /**
      * Utility method used to check whether a user is member of at least one organization of a given course
      *
      * @param user   the user to check, organizations must NOT be lazily loaded

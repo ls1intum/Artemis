@@ -3,7 +3,7 @@
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                 <th *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(fileUploadExercises)" />
+                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(fileUploadExercises)" [ngModel]="allChecked" />
                 </th>
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
@@ -27,13 +27,13 @@
                     <input class="form-check-input" type="checkbox" (change)="toggleExercise(fileUploadExercise)" [ngModel]="isExerciseSelected(fileUploadExercise)" />
                 </td>
                 <td>
-                    <a *ngIf="fileUploadExercise.isAtLeastEditor; else showId" [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]">
+                    <a *ngIf="fileUploadExercise.isAtLeastTutor; else showId" [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]">
                         {{ fileUploadExercise.id }}
                     </a>
                     <ng-template #showId>{{ fileUploadExercise.id }}</ng-template>
                 </td>
                 <td>
-                    <a *ngIf="fileUploadExercise.isAtLeastEditor; else showTitle" [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]">
+                    <a *ngIf="fileUploadExercise.isAtLeastTutor; else showTitle" [routerLink]="['/course-management', courseId, 'file-upload-exercises', fileUploadExercise.id]">
                         {{ fileUploadExercise.title }}
                     </a>
                     <ng-template #showTitle>{{ fileUploadExercise.title }}</ng-template>

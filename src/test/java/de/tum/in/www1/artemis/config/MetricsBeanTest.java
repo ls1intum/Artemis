@@ -351,6 +351,8 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         quizExerciseUtilService.saveQuizSubmission(exerciseUtilService.getFirstExerciseWithType(course1, QuizExercise.class), ParticipationFactory.generateQuizSubmission(true),
                 users.get(0).getLogin());
 
+        // We have to first refresh the active users and then the metrics to ensure the data is updated correctly
+        metricsBean.calculateCachedActiveUserNames();
         metricsBean.recalculateMetrics();
 
         // Should now have one active user
@@ -364,6 +366,8 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         quizExerciseUtilService.saveQuizSubmission(exerciseUtilService.getFirstExerciseWithType(course1, QuizExercise.class), ParticipationFactory.generateQuizSubmission(true),
                 users.get(1).getLogin());
 
+        // We have to first refresh the active users and then the metrics to ensure the data is updated correctly
+        metricsBean.calculateCachedActiveUserNames();
         metricsBean.recalculateMetrics();
 
         // Should now have two active users

@@ -3,7 +3,7 @@ import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * @whatItDoes Conditionally includes an HTML element if current user has any
- * of the authorities passed as the `expression`.
+ * of the authorities in any course passed as the `expression`.
  *
  * @howToUse
  * ```
