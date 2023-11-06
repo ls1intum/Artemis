@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, resetDates } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
@@ -95,4 +95,12 @@ export class ProgrammingExercise extends Exercise {
         this.showTestNamesToStudents = false; // default value
         this.testwiseCoverageEnabled = false; // default value
     }
+}
+
+export function resetProgrammingDates(exercise: ProgrammingExercise) {
+    resetDates(exercise);
+
+    // without dates set, they have to be reset as well
+    exercise.releaseTestsWithExampleSolution = false;
+    exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined;
 }

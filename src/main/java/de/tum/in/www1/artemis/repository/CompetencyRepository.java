@@ -49,6 +49,15 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             """)
     Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
+    /**
+     * Fetches a competency with all linked exercises, lecture units, the associated progress, and completion of the specified user.
+     * <p>
+     * IMPORTANT: We use the entity graph to fetch the lazy loaded data. The fetched data is limited by joining on the user id.
+     *
+     * @param competencyId the id of the competency that should be fetched
+     * @param userId       the id of the user whose progress should be fetched
+     * @return the competency
+     */
     @Query("""
             SELECT competency
             FROM Competency competency

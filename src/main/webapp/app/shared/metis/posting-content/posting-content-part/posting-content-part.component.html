@@ -6,6 +6,9 @@
 <a class="reference" *ngIf="postingContentPart.linkToReference" [routerLink]="postingContentPart.linkToReference" [queryParams]="postingContentPart.queryParams">
     <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)"></fa-icon>{{ postingContentPart.referenceStr }}
 </a>
+<a class="reference" *ngIf="postingContentPart.referenceType === ReferenceType.POST && !postingContentPart.linkToReference">
+    <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)"></fa-icon>{{ postingContentPart.referenceStr }}
+</a>
 <a class="reference" *ngIf="postingContentPart.referenceType === ReferenceType.USER" (click)="onClickUserReference(postingContentPart.queryParams?.referenceUserLogin)">
     <fa-icon class="px-1" [icon]="faAt"></fa-icon>{{ postingContentPart.referenceStr }}
 </a>

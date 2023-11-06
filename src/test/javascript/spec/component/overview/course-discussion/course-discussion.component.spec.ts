@@ -5,7 +5,7 @@ import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-ed
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { getElement } from '../../../helpers/utils/general.utils';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -28,15 +28,16 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import {
     metisCourse,
-    metisCoursePosts,
-    metisCoursePostsWithCourseWideContext,
+    metisExamChannelDto,
     metisExercise,
     metisExercise2,
-    metisExercisePosts,
+    metisExerciseChannelDto,
+    metisGeneralChannelDto,
     metisLecture,
     metisLecture2,
     metisLecture3,
-    metisLecturePosts,
+    metisLectureChannelDto,
+    metisPostInChannel,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
 import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
@@ -44,6 +45,8 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { MatSelectModule } from '@angular/material/select';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -88,11 +91,21 @@ describe('CourseDiscussionComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisService, useClass: MetisService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
             ],
         })
             .compileComponents()
             .then(() => {
                 courseStorageService = TestBed.inject(CourseStorageService);
+
+                const metisConversationService = TestBed.inject(MetisConversationService);
+                Object.defineProperty(metisConversationService, 'isServiceSetup$', {
+                    get: () => new BehaviorSubject(true).asObservable(),
+                });
+                Object.defineProperty(metisConversationService, 'conversationsOfUser$', {
+                    get: () => new BehaviorSubject([metisGeneralChannelDto, metisExerciseChannelDto, metisLectureChannelDto, metisExamChannelDto]).asObservable(),
+                });
+
                 jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(metisCourse));
                 fixture = TestBed.createComponent(CourseDiscussionComponent);
                 component = fixture.componentInstance;
@@ -112,12 +125,13 @@ describe('CourseDiscussionComponent', () => {
         tick();
         expect(component.course).toBe(metisCourse);
         expect(component.createdPost).not.toBeNull();
-        expect(component.posts).toEqual(metisCoursePosts);
+        expect(component.posts).toEqual([metisPostInChannel]);
         expect(component.currentPostContextFilter).toEqual({
             courseId: metisCourse.id,
-            courseWideContext: undefined,
-            exerciseId: undefined,
-            lectureId: undefined,
+            courseWideContexts: undefined,
+            exerciseIds: undefined,
+            lectureIds: undefined,
+            courseWideChannelIds: [],
             searchText: undefined,
             filterToUnresolved: false,
             filterToOwn: false,
@@ -150,11 +164,12 @@ describe('CourseDiscussionComponent', () => {
         const contextOptions = getElement(fixture.debugElement, 'mat-select[name=context]');
         expect(component.lectures).toEqual([metisLecture, metisLecture2, metisLecture3]);
         expect(component.exercises).toEqual([metisExercise, metisExercise2]);
+        expect(component.courseWideChannels).toEqual([metisGeneralChannelDto, metisExerciseChannelDto, metisLectureChannelDto, metisExamChannelDto]);
         // select should provide all context options
-        expect(contextOptions.textContent).toContain(metisLecture.title);
-        expect(contextOptions.textContent).toContain(metisLecture2.title);
-        expect(contextOptions.textContent).toContain(metisExercise.title);
-        expect(contextOptions.textContent).toContain(metisExercise2.title);
+        expect(contextOptions.textContent).toContain(metisGeneralChannelDto.name);
+        expect(contextOptions.textContent).toContain(metisExerciseChannelDto.name);
+        expect(contextOptions.textContent).toContain(metisLectureChannelDto.name);
+        expect(contextOptions.textContent).toContain(metisExamChannelDto.name);
         // nothing should be selected
         const selectedContextOption = getElement(fixture.debugElement, 'mat-select[name=context]');
         expect(selectedContextOption.value).toBeUndefined();
@@ -164,7 +179,7 @@ describe('CourseDiscussionComponent', () => {
         // descending should be selected as sort direction
         // show correct number of posts found
         const postCountInformation = getElement(fixture.debugElement, '.post-result-information');
-        expect(component.posts).toEqual(metisCoursePosts);
+        expect(component.posts).toEqual([metisPostInChannel]);
         expect(postCountInformation.textContent).not.toBeNull();
     }));
 
@@ -178,6 +193,7 @@ describe('CourseDiscussionComponent', () => {
             courseWideContexts: undefined,
             exerciseIds: undefined,
             lectureIds: undefined,
+            courseWideChannelIds: [],
             searchText: component.searchText,
             filterToUnresolved: false,
             filterToOwn: false,
@@ -255,14 +271,14 @@ describe('CourseDiscussionComponent', () => {
         // actual post filtering done at server side, tested by PostIntegrationTest
     }));
 
-    it('should fetch new posts when context filter changes to course-wide-context', fakeAsync(() => {
+    it('should fetch new posts when context filter changes to conversation', fakeAsync(() => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
         component.formGroup.patchValue({
             context: [
                 {
-                    courseWideContext: CourseWideContext.ORGANIZATION,
+                    conversationId: metisPostInChannel.conversation!.id!,
                 },
             ],
         });
@@ -271,45 +287,7 @@ describe('CourseDiscussionComponent', () => {
         tick();
         fixture.detectChanges();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-        expect(component.posts).toEqual(metisCoursePostsWithCourseWideContext.filter((post) => post.courseWideContext === CourseWideContext.ORGANIZATION));
-    }));
-
-    it('should fetch new posts when context filter changes to exercise', fakeAsync(async () => {
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
-        component.formGroup.patchValue({
-            context: [
-                {
-                    exerciseId: metisExercise.id,
-                },
-            ],
-        });
-        const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
-        contextOptions.triggerEventHandler('selectionChange', false);
-        tick();
-        fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-        expect(component.posts).toEqual(metisExercisePosts);
-    }));
-
-    it('should fetch new posts when context filter changes to lecture', fakeAsync(() => {
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
-        component.formGroup.patchValue({
-            context: [
-                {
-                    lectureId: metisLecture.id,
-                },
-            ],
-        });
-        const contextOptions = fixture.debugElement.query(By.css('mat-select[name=context]'));
-        contextOptions.triggerEventHandler('selectionChange', false);
-        tick();
-        fixture.detectChanges();
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-        expect(component.posts).toEqual(metisLecturePosts);
+        expect(component.posts).toEqual([metisPostInChannel]);
     }));
 
     it('should fetch new posts when multiple context filters are selected', fakeAsync(() => {
@@ -319,19 +297,10 @@ describe('CourseDiscussionComponent', () => {
         component.formGroup.patchValue({
             context: [
                 {
-                    lectureId: metisLecture.id,
+                    conversationId: 1,
                 },
                 {
-                    exerciseId: metisExercise.id,
-                },
-                {
-                    courseWideContext: CourseWideContext.TECH_SUPPORT,
-                },
-                {
-                    courseWideContext: CourseWideContext.RANDOM,
-                },
-                {
-                    courseWideContext: CourseWideContext.ORGANIZATION,
+                    conversationId: 2,
                 },
             ],
         });
@@ -342,9 +311,9 @@ describe('CourseDiscussionComponent', () => {
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
         expect(metisServiceGetFilteredPostsSpy.mock.calls[2][0]).toEqual({
             ...component.currentPostContextFilter,
-            courseWideContexts: [CourseWideContext.TECH_SUPPORT, CourseWideContext.RANDOM, CourseWideContext.ORGANIZATION],
-            lectureIds: [metisLecture.id],
-            exerciseIds: [metisExercise.id],
+            courseWideContexts: undefined,
+            lectureIds: undefined,
+            exerciseIds: undefined,
         });
     }));
 
@@ -367,10 +336,11 @@ describe('CourseDiscussionComponent', () => {
     }));
 
     it('should fetch next page of posts if exists', fakeAsync(() => {
-        component.itemsPerPage = 5;
+        component.itemsPerPage = 1;
         component.ngOnInit();
         tick();
         fixture.detectChanges();
+        component.totalItems = 2;
         component.fetchNextPage();
         // next page does not exist, service method won't be called again
         component.fetchNextPage();
@@ -401,9 +371,10 @@ describe('CourseDiscussionComponent', () => {
     function expectGetFilteredPostsToBeCalled() {
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
             courseId: metisCourse.id,
-            courseWideContext: undefined,
-            exerciseId: undefined,
-            lectureId: undefined,
+            courseWideContexts: undefined,
+            exerciseIds: undefined,
+            lectureIds: undefined,
+            courseWideChannelIds: [],
             page: component.page - 1,
             pageSize: component.itemsPerPage,
             pagingEnabled: true,

@@ -18,6 +18,7 @@ import {
     CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE,
     DATA_EXPORT_CREATED_TITLE,
     DATA_EXPORT_FAILED_TITLE,
+    MENTIONED_IN_MESSAGE_TITLE,
     NEW_ANNOUNCEMENT_POST_TITLE,
     NEW_COURSE_POST_TITLE,
     NEW_EXERCISE_POST_TITLE,
@@ -246,6 +247,10 @@ export class NotificationService {
                 notification.title === CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE ||
                 notification.title === CONVERSATION_REMOVE_USER_CHANNEL_TITLE
             ) {
+                const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
+                const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
+                this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
+            } else if (notification.title === MENTIONED_IN_MESSAGE_TITLE) {
                 const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
                 const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
