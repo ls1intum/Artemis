@@ -20,7 +20,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     templateUrl: './file-upload-exercise-detail.component.html',
 })
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
-    documentationType = DocumentationType.FileUpload;
+    readonly documentationType: DocumentationType = 'FileUpload';
 
     readonly dayjs = dayjs;
     fileUploadExercise: FileUploadExercise;

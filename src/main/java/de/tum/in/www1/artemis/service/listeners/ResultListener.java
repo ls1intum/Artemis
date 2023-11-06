@@ -27,7 +27,7 @@ public class ResultListener {
         // Empty constructor for Spring
     }
 
-    @Autowired
+    @Autowired // ok
     public ResultListener(@Lazy InstanceMessageSendService instanceMessageSendService) {
         this.instanceMessageSendService = instanceMessageSendService;
     }
