@@ -16,7 +16,7 @@ export class LearningPathGraphComponent implements OnInit {
     @Input() courseId: number;
     @Output() nodeClicked: EventEmitter<NgxLearningPathNode> = new EventEmitter();
     ngxLearningPath: NgxLearningPathDTO;
-    nodeTypes: Set<NodeType>;
+    nodeTypes: Set<NodeType> = new Set();
     competencyProgress: Map<number, CompetencyProgressForLearningPathDTO> = new Map();
 
     layout: string | Layout = 'dagreCluster';
@@ -108,7 +108,7 @@ export class LearningPathGraphComponent implements OnInit {
             this.ngxLearningPath = ngxLearningPathResponse.body!;
 
             // update contained node types
-            this.nodeTypes = new Set<NodeType>();
+            this.nodeTypes = new Set();
             this.ngxLearningPath.nodes.forEach((node) => {
                 this.nodeTypes.add(node.type!);
             });
