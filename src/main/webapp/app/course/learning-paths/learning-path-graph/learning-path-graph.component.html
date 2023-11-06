@@ -51,11 +51,3 @@
     </ngx-graph>
     <jhi-learning-path-legend class="legend" [nodeTypes]="nodeTypes" />
 </div>
-
-<ng-template #nodeTemplateRef let-node>
-    <svg:g class="node" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
-        <svg:foreignObject [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
-            <jhi-learning-path-graph-node class="node" [courseId]="courseId" [node]="node" (click)="nodeClicked.emit(node)"></jhi-learning-path-graph-node>
-        </svg:foreignObject>
-    </svg:g>
-</ng-template>
