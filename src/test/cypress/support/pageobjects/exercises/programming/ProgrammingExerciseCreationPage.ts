@@ -68,18 +68,18 @@ export class ProgrammingExerciseCreationPage {
     }
 
     /**
-     * Sets the Due Date field
+     * Sets the Due Date field by using the owl datepicker
      * @param date
      * */
     setDueDate(date: Dayjs) {
         cy.get('#programming-exercise-due-date-picker').click();
 
+        // Important to make sure that all event listeners are registered, see https://www.cypress.io/blog/2019/01/22/when-can-the-test-click for more information
+        cy.get('.owl-dt-popup').should('be.visible');
+
         const ariaLabelDate = date.format(OWL_DATEPICKER_ARIA_LABEL_DATE_FORMAT);
         cy.get(`td[aria-label="${ariaLabelDate}"]`).click();
 
         cy.get('.owl-dt-control-content.owl-dt-control-button-content').contains('Set').should('exist').click();
-
-        // FIXME for an yet unknown reason the set button appears to be clicked, the due date is set,
-        //  but the owl datepicker overlay seems to persist, did not find a way to close it => import button cannot be clicked
     }
 }
