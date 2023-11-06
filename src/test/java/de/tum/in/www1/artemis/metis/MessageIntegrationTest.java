@@ -48,8 +48,8 @@ import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
-import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -153,9 +153,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("courseInformationSharingConfigurationProvider")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateConversationPost() throws Exception {
+    void testCreateConversationPost(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+        var persistedCourse = courseRepository.findByIdElseThrow(courseId);
+        persistedCourse.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        persistedCourse = courseRepository.saveAndFlush(persistedCourse);
+        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
+
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
@@ -187,7 +193,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // conversation participants should be notified via one broadcast
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId + "/conversations/" + channel.getId()), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostDTO.class));
     }
 
     @ParameterizedTest
@@ -214,7 +220,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // conversation participants should be notified via one broadcast
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId + "/conversations/" + channel.getId()), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostDTO.class));
     }
 
     @ParameterizedTest
@@ -236,10 +242,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         checkCreatedMessagePost(postToSave, createdPost);
 
         // author should not get a notification
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + author.getUser().getId() + "/notifications/conversations"), any(ConversationNotification.class));
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + author.getUser().getId() + "/notifications/conversations"), any());
         // mentioned user should get a notification
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/user/" + mentionedUserParticipant.getUser().getId() + "/notifications/conversations"),
-                any(ConversationNotification.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/user/" + mentionedUserParticipant.getUser().getId() + "/notifications"),
+                any(SingleUserNotification.class));
     }
 
     @Test
@@ -294,21 +300,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testMessagingNotAllowedIfCommunicationOnlySetting() throws Exception {
-        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testMessagingNotAllowedIfDisabledSetting() throws Exception {
-        messagingFeatureDisabledTest(CourseInformationSharingConfiguration.DISABLED);
-    }
-
-    private void messagingFeatureDisabledTest(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
         var persistedCourse = courseRepository.findByIdElseThrow(courseId);
-        persistedCourse.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         persistedCourse = courseRepository.saveAndFlush(persistedCourse);
-        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
+        assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.DISABLED);
 
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         var requestingUser = userRepository.getUser();
@@ -407,6 +403,36 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
         assertThat(returnedPosts).hasSize(existingConversationPosts.stream().filter(post -> post.getConversation().getId() == conversationId).toList().size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetCourseWideMessages() throws Exception {
+        // conversation set will fetch all posts of conversation if the user is involved
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("courseWideChannelIds", "");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        // get amount of posts with that certain
+        int numberOfCourseWidePosts = existingConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList()
+                .size();
+        assertThat(returnedPosts).isNotEmpty();
+        assertThat(returnedPosts).hasSize(numberOfCourseWidePosts);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetCourseWideMessagesFromOneChannel() throws Exception {
+        // conversation set will fetch all posts of conversation if the user is involved
+        var params = new LinkedMultiValueMap<String, String>();
+        var courseWidePosts = existingConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
+        var courseWideChannelId = courseWidePosts.get(0).getConversation().getId();
+        params.add("courseWideChannelIds", courseWideChannelId.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        // get amount of posts with that certain
+        assertThat(returnedPosts).hasSize(existingConversationPosts.stream().filter(post -> post.getConversation().getId() == courseWideChannelId).toList().size());
+        assertThat(returnedPosts.size()).isLessThan(courseWidePosts.size());
     }
 
     @Test
@@ -618,5 +644,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     protected static List<Arguments> userMentionProvider() {
         return userMentionProvider(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+    }
+
+    private static List<CourseInformationSharingConfiguration> courseInformationSharingConfigurationProvider() {
+        return List.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
+                CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 }
