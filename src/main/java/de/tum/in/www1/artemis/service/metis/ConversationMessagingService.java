@@ -132,9 +132,10 @@ public class ConversationMessagingService extends PostingService {
     private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage, Set<User> mentionedUsers) {
         Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
         log.debug("      getWebSocketRecipients DONE");
-        Set<User> broadcastRecipients = webSocketRecipients.stream().map(summary -> new User(summary.userId(), summary.userLogin())).collect(Collectors.toSet());
+        Set<User> broadcastRecipients = webSocketRecipients.stream().map(summary -> new User(summary.userId(), summary.userLogin(), summary.userLangKey(), summary.userEmail()))
+                .collect(Collectors.toSet());
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
-        mentionedUsers = mentionedUsers.stream().map(user -> new User(user.getId(), user.getLogin())).collect(Collectors.toSet());
+        mentionedUsers = mentionedUsers.stream().map(user -> new User(user.getId(), user.getLogin(), user.getLangKey(), user.getEmail())).collect(Collectors.toSet());
         broadcastRecipients.addAll(mentionedUsers);
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
@@ -186,8 +187,8 @@ public class ConversationMessagingService extends PostingService {
         if (conversation instanceof Channel channel) {
             // If a channel is not an announcement channel, filter out users, that hid the conversation
             if (!channel.getIsAnnouncementChannel()) {
-                filter = filter.and(
-                        recipientSummary -> !recipientSummary.isConversationHidden() || mentionedUsers.contains(new User(recipientSummary.userId(), recipientSummary.userLogin())));
+                filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden() || mentionedUsers
+                        .contains(new User(recipientSummary.userId(), recipientSummary.userLogin(), recipientSummary.userLangKey(), recipientSummary.userEmail())));
             }
 
             // If a channel is not visible to students, filter out participants that are only students
@@ -199,7 +200,8 @@ public class ConversationMessagingService extends PostingService {
             filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden());
         }
 
-        return webSocketRecipients.stream().filter(filter).map(summary -> new User(summary.userId(), summary.userLogin())).collect(Collectors.toSet());
+        return webSocketRecipients.stream().filter(filter).map(summary -> new User(summary.userId(), summary.userLogin(), summary.userLangKey(), summary.userEmail()))
+                .collect(Collectors.toSet());
     }
 
     /**

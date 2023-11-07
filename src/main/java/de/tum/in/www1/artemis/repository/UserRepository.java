@@ -125,6 +125,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             SELECT NEW de.tum.in.www1.artemis.domain.ConversationWebSocketRecipientSummary (
                 user.id,
                 user.login,
+                user.langKey,
+                user.email,
                 CASE WHEN cp.isHidden = true THEN true ELSE false END,
                 CASE WHEN ug.group = :teachingAssistantGroupName OR ug.group = :editorGroupName OR ug.group = :instructorGroupName THEN true ELSE false END
             )
