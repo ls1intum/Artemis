@@ -41,13 +41,19 @@ export class FileService {
      * Fetches the aeolus template file for the given programming language
      * @param {ProgrammingLanguage} language
      * @param {ProjectType} projectType (if available)
+     * @param staticAnalysis
+     * @param sequentalRuns
+     * @param coverage
      * @returns json test file
      */
-    getAeolusTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType): Observable<string> {
+    getAeolusTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentalRuns?: boolean, coverage?: boolean): Observable<string> {
         const urlParts: string[] = [language];
         if (projectType) {
             urlParts.push(projectType);
         }
+        urlParts.push(Boolean(staticAnalysis).toString());
+        urlParts.push(Boolean(sequentalRuns).toString());
+        urlParts.push(Boolean(coverage).toString());
         return this.http.get<string>(`${this.resourceUrl}/aeolus/templates/` + urlParts.join('/'), { responseType: 'text' as 'json' });
     }
 

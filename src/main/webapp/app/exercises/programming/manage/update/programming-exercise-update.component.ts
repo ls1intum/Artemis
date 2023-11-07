@@ -1054,35 +1054,43 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (!this.programmingExercise.programmingLanguage) {
             return;
         }
-        this.fileService.getAeolusTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
-            next: (file) => {
-                if (file && !this.buildPlanLoaded) {
+        this.fileService
+            .getAeolusTemplateFile(
+                this.programmingExercise.programmingLanguage,
+                this.programmingExercise.projectType,
+                this.programmingExercise.staticCodeAnalysisEnabled,
+                this.programmingExercise.sequentialTestRuns,
+                this.programmingExercise.testwiseCoverageEnabled,
+            )
+            .subscribe({
+                next: (file) => {
+                    if (file && !this.buildPlanLoaded) {
+                        this.buildPlanLoaded = true;
+                        const templateFile: WindFile = JSON.parse(file);
+                        const actions: BuildAction[] = [];
+                        templateFile.actions.forEach((anyAction: any) => {
+                            let action: BuildAction | undefined;
+                            if (anyAction.script) {
+                                action = new ScriptAction();
+                                (action as ScriptAction).script = anyAction.script;
+                            } else {
+                                action = new PlatformAction();
+                                (action as PlatformAction).kind = anyAction.kind;
+                                (action as PlatformAction).parameters = anyAction.parameters;
+                            }
+                            action.name = anyAction.name;
+                            action.run_always = anyAction.run_always;
+                            actions.push(action);
+                        });
+                        templateFile.actions = actions;
+                        this.programmingExercise.windFile = templateFile;
+                    }
+                },
+                error: () => {
+                    this.programmingExercise.windFile = undefined;
                     this.buildPlanLoaded = true;
-                    const templateFile: WindFile = JSON.parse(file);
-                    const actions: BuildAction[] = [];
-                    templateFile.actions.forEach((anyAction: any) => {
-                        let action: BuildAction | undefined;
-                        if (anyAction.script) {
-                            action = new ScriptAction();
-                            (action as ScriptAction).script = anyAction.script;
-                        } else {
-                            action = new PlatformAction();
-                            (action as PlatformAction).kind = anyAction.kind;
-                            (action as PlatformAction).parameters = anyAction.parameters;
-                        }
-                        action.name = anyAction.name;
-                        action.run_always = anyAction.run_always;
-                        actions.push(action);
-                    });
-                    templateFile.actions = actions;
-                    this.programmingExercise.windFile = templateFile;
-                }
-            },
-            error: () => {
-                this.programmingExercise.windFile = undefined;
-                this.buildPlanLoaded = true;
-            },
-        });
+                },
+            });
     }
 
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
