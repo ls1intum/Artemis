@@ -24,8 +24,8 @@ public class Windfile {
     public static Windfile toWindfile(AeolusDefinition aeolusDefinition) {
         Windfile windfile = new Windfile();
         windfile.setApi(aeolusDefinition.getApi());
-        windfile.setId(aeolusDefinition.getMetadata().getId());
         windfile.setMetadata(aeolusDefinition.getMetadata());
+        windfile.setId(aeolusDefinition.getMetadata().getId());
         List<Action> actions = new ArrayList<>();
         for (SerializedAction action : aeolusDefinition.getActions()) {
             if (action.getScript() != null) {
@@ -65,6 +65,9 @@ public class Windfile {
     }
 
     public void setId(String id) {
+        if (this.metadata == null) {
+            this.metadata = new Metadata();
+        }
         this.metadata.setId(id);
     }
 }
