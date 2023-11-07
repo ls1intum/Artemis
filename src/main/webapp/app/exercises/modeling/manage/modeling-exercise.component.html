@@ -3,7 +3,7 @@
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                 <th *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(modelingExercises)" />
+                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(modelingExercises)" [ngModel]="allChecked" />
                 </th>
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
@@ -28,7 +28,7 @@
                 </td>
                 <td>
                     <a
-                        *ngIf="modelingExercise.isAtLeastEditor; else showId"
+                        *ngIf="modelingExercise.isAtLeastTutor; else showId"
                         [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]"
                     >
                         {{ modelingExercise.id }}
@@ -37,7 +37,7 @@
                 </td>
                 <td id="modeling-exercise-{{ modelingExercise.id }}-title">
                     <a
-                        *ngIf="modelingExercise.isAtLeastEditor; else showTitle"
+                        *ngIf="modelingExercise.isAtLeastTutor; else showTitle"
                         [routerLink]="['/course-management', modelingExercise.course?.id, 'modeling-exercises', modelingExercise.id]"
                     >
                         {{ modelingExercise.title }}

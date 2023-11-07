@@ -79,7 +79,7 @@
             <jhi-course-exam-archive-button *ngIf="course.isAtLeastInstructor" [archiveMode]="'Course'" [course]="course" class="archive-button"></jhi-course-exam-archive-button>
             <button
                 id="delete-course"
-                *jhiHasAnyAuthority="['ROLE_ADMIN']"
+                *jhiHasAnyAuthority="'ROLE_ADMIN'"
                 [buttonSize]="ButtonSize.MEDIUM"
                 jhiDeleteButton
                 [entityTitle]="course.title || ''"

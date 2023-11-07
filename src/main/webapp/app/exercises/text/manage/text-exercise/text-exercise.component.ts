@@ -31,6 +31,10 @@ export class TextExerciseComponent extends ExerciseComponent {
     faPlus = faPlus;
     faTimes = faTimes;
 
+    protected get exercises() {
+        return this.textExercises;
+    }
+
     constructor(
         public exerciseService: ExerciseService,
         public textExerciseService: TextExerciseService,

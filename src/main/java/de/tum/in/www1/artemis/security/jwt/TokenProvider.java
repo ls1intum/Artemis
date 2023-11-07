@@ -1,13 +1,13 @@
 package de.tum.in.www1.artemis.security.jwt;
 
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
+import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,7 @@ public class TokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
 
-    private Key key;
+    private SecretKey key;
 
     private long tokenValidityInMilliseconds;
 
@@ -90,7 +90,7 @@ public class TokenProvider {
 
         long now = (new Date()).getTime();
         Date validity = new Date(now + getTokenValidity(rememberMe));
-        return Jwts.builder().setSubject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
+        return Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, Jwts.SIG.HS512).expiration(validity).compact();
     }
 
     /**
@@ -158,6 +158,11 @@ public class TokenProvider {
     }
 
     private Claims parseClaims(String authToken) {
-        return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(authToken).getBody();
+        return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
     }
+
+    public Date getExpirationDate(String authToken) {
+        return parseClaims(authToken).getExpiration();
+    }
+
 }

@@ -9,10 +9,10 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
 import { Attachment } from 'app/entities/attachment.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-participant.model';
-import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { Channel, ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { Exam } from 'app/entities/exam.model';
 
 export const metisSlide1 = { id: 1, slideNumber: 1, slideImagePath: 'directory/attachments/slides/Metis-Slide-1.png' } as Slide;
@@ -310,3 +310,39 @@ export const metisPostInChannel = {
     creationDate: undefined,
     conversation: metisChannel,
 } as Post;
+
+export const metisGeneralChannelDto = {
+    id: 17,
+    type: ConversationType.CHANNEL,
+    subType: ChannelSubType.GENERAL,
+    isCourseWide: true,
+    name: 'general-channel',
+} as ChannelDTO;
+
+export const metisExerciseChannelDto = {
+    id: 18,
+    type: ConversationType.CHANNEL,
+    subType: ChannelSubType.EXERCISE,
+    isCourseWide: true,
+    subTypeReferenceId: metisExercise.id,
+
+    name: 'exercise-channel',
+} as ChannelDTO;
+
+export const metisLectureChannelDto = {
+    id: 19,
+    type: ConversationType.CHANNEL,
+    subType: ChannelSubType.LECTURE,
+    isCourseWide: true,
+    subTypeReferenceId: metisLecture.id,
+    name: 'lecture-channel',
+} as ChannelDTO;
+
+export const metisExamChannelDto = {
+    id: 19,
+    type: ConversationType.CHANNEL,
+    subType: ChannelSubType.EXAM,
+    isCourseWide: true,
+    subTypeReferenceId: metisExam.id,
+    name: 'exam-channel',
+} as ChannelDTO;

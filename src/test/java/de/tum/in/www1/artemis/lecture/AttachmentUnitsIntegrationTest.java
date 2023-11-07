@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,16 +18,21 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.SlideRepository;
+import de.tum.in.www1.artemis.service.LectureUnitProcessingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
@@ -49,14 +57,20 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
     @Autowired
     private LectureUtilService lectureUtilService;
 
+    @Autowired
+    private LectureUnitProcessingService lectureUnitProcessingService;
+
     private LectureUnitInformationDTO lectureUnitSplits;
 
     private Lecture lecture1;
+
+    private Lecture invalidLecture;
 
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
+        this.invalidLecture = lectureUtilService.createLecture(null, null);
         List<LectureUnitSplitDTO> units = new ArrayList<>();
         this.lectureUnitSplits = new LectureUnitInformationDTO(units, 1, "Break");
         // Add users that are not in the course
@@ -87,11 +101,79 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
+    void testAll_LectureWithoutCourse_shouldReturnConflict() throws Exception {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("commaSeparatedKeyPhrases", "Break, Example Solution");
+
+        request.postWithMultipartFile("/api/lectures/" + invalidLecture.getId() + "/attachment-units/upload", null, "upload", createLectureFile(true), String.class,
+                HttpStatus.CONFLICT);
+        request.get("/api/lectures/" + invalidLecture.getId() + "/attachment-units/data/any-file", HttpStatus.CONFLICT, LectureUnitInformationDTO.class);
+        request.get("/api/lectures/" + invalidLecture.getId() + "/attachment-units/slides-to-remove/any-file", HttpStatus.CONFLICT, LectureUnitInformationDTO.class, params);
+        request.postListWithResponseBody("/api/lectures/" + invalidLecture.getId() + "/attachment-units/split/any-file", lectureUnitSplits, AttachmentUnit.class,
+                HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAll_WrongLecture_shouldReturnNotFound() throws Exception {
+        // Tests that files created for another lecture are not accessible
+        // even by instructors of other lectures
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("commaSeparatedKeyPhrases", "Break, Example Solution");
+        var lectureFile = createLectureFile(true);
+        String filename = manualFileUpload(invalidLecture.getId(), lectureFile);
+        Path filePath = lectureUnitProcessingService.getPathForTempFilename(invalidLecture.getId(), filename);
+
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.NOT_FOUND, LectureUnitInformationDTO.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/" + filename, HttpStatus.NOT_FOUND, LectureUnitInformationDTO.class, params);
+        request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename, lectureUnitSplits, AttachmentUnit.class,
+                HttpStatus.NOT_FOUND);
+        assertThat(Files.exists(filePath)).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testAll_IOException_ShouldReturnInternalServerError() throws Exception {
+        var lectureFile = createLectureFile(true);
+        String filename = manualFileUpload(lecture1.getId(), lectureFile);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("commaSeparatedKeyPhrases", "");
+
+        try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class)) {
+            mockedFiles.when(() -> Files.readAllBytes(any())).thenThrow(IOException.class);
+            mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
+            request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.INTERNAL_SERVER_ERROR, LectureUnitInformationDTO.class);
+            request.getList("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/" + filename, HttpStatus.INTERNAL_SERVER_ERROR, Integer.class, params);
+            request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename, lectureUnitSplits, AttachmentUnit.class,
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void uploadSlidesForProcessing_asInstructor_shouldGetFilename() throws Exception {
         var filePart = createLectureFile(true);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
+        String uploadInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/upload", null, "upload", filePart, String.class, HttpStatus.OK);
+        assertThat(uploadInfo).contains(".pdf");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void uploadSlidesForProcessing_asInstructor_shouldThrowError() throws Exception {
+        var filePartWord = createLectureFile(false);
+        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/upload", null, "upload", filePartWord, LectureUnitInformationDTO.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getAttachmentUnitsData_asInstructor_shouldGetUnitsInformation() throws Exception {
+        var lectureFile = createLectureFile(true);
+        String filename = manualFileUpload(lecture1.getId(), lectureFile);
+
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
+                LectureUnitInformationDTO.class);
 
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
@@ -99,19 +181,57 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void splitLectureFile_asInstructor_shouldCreateAttachmentUnits() throws Exception {
-        var filePart = createLectureFile(true);
+    void getAttachmentUnitsData_asInstructor_shouldThrowError() throws Exception {
+        var lectureFile = createLectureFile(false);
+        String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.BAD_REQUEST, LectureUnitInformationDTO.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/non-existent-file", HttpStatus.NOT_FOUND, LectureUnitInformationDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getSlidesToRemove_asInstructor_shouldGetUnitsInformation() throws Exception {
+        var lectureFile = createLectureFile(true);
+        String filename = manualFileUpload(lecture1.getId(), lectureFile);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("commaSeparatedKeyPhrases", "Break, Example Solution");
+
+        List<Integer> removedSlides = request.getList("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/" + filename, HttpStatus.OK, Integer.class, params);
+
+        assertThat(removedSlides).hasSize(2);
+        // index is one lower than in createLectureFile because the loop starts at 1.
+        assertThat(removedSlides).contains(5, 6);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getSlidesToRemove_asInstructor_shouldThrowError() throws Exception {
+        var lectureFile = createLectureFile(false);
+        String filename = manualFileUpload(lecture1.getId(), lectureFile);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("commaSeparatedKeyPhrases", "Break, Example Solution");
+
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/" + filename, HttpStatus.BAD_REQUEST, LectureUnitInformationDTO.class, params);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/non-existent-file", HttpStatus.NOT_FOUND, LectureUnitInformationDTO.class, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentUnits_asInstructor_shouldCreateAttachmentUnits() throws Exception {
+        var lectureFile = createLectureFile(true);
+        String filename = manualFileUpload(lecture1.getId(), lectureFile);
+
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
+                LectureUnitInformationDTO.class);
 
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), "");
 
-        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
-                "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
+        List<AttachmentUnit> attachmentUnits = request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename, lectureUnitSplitInfo,
+                AttachmentUnit.class, HttpStatus.OK);
 
         assertThat(attachmentUnits).hasSize(2);
         assertThat(slideRepository.findAll()).hasSize(20); // 20 slides should be created for 2 attachment units
@@ -125,42 +245,20 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void splitLectureFile_asInstructor_shouldThrowError() throws Exception {
-        var filePartWord = createLectureFile(false);
-        // if trying to process not the right pdf file then it should throw server error
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePartWord, LectureUnitInformationDTO.class,
-                HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    void createAttachmentUnits_asInstructor_shouldRemoveSlides() throws Exception {
+        var lectureFile = createLectureFile(true);
+        String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void splitLectureFile_asInstructor_createAttachmentUnits_shouldThrowError() throws Exception {
-        var filePartPDF = createLectureFile(true);
-        var filePartWord = createLectureFile(false);
-
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePartPDF,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
-
-        // if trying to create multiple units with not the right pdf file then it should throw error
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo, "lectureUnitInformationDTO", filePartWord,
-                AttachmentUnit[].class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void splitLectureFile_asInstructor_shouldRemoveSolutionSlides_and_removeBreakSlides() throws Exception {
-        var filePart = createLectureFile(true);
-
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", filePart,
-                LectureUnitInformationDTO.class, HttpStatus.OK);
+        LectureUnitInformationDTO lectureUnitSplitInfo = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
+                LectureUnitInformationDTO.class);
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
         var commaSeparatedKeyPhrases = String.join(",", new String[] { "Break", "Example solution" });
         lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), commaSeparatedKeyPhrases);
 
-        List<AttachmentUnit> attachmentUnits = List.of(request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplitInfo,
-                "lectureUnitInformationDTO", filePart, AttachmentUnit[].class, HttpStatus.OK));
+        List<AttachmentUnit> attachmentUnits = request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename, lectureUnitSplitInfo,
+                AttachmentUnit.class, HttpStatus.OK);
         assertThat(attachmentUnits).hasSize(2);
         assertThat(slideRepository.findAll()).hasSize(18); // 18 slides should be created for 2 attachment units (1 break slide is removed and 1 solution slide is removed)
 
@@ -189,11 +287,27 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         }
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentUnits_asInstructor_shouldThrowError() throws Exception {
+        var lectureFile = createLectureFile(false);
+        String filename = manualFileUpload(lecture1.getId(), lectureFile);
+
+        request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename, lectureUnitSplits, AttachmentUnit.class,
+                HttpStatus.BAD_REQUEST);
+        request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units/split/non-existent-file", lectureUnitSplits, AttachmentUnit.class,
+                HttpStatus.NOT_FOUND);
+    }
+
     private void testAllPreAuthorize() throws Exception {
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/process-units", null, "process-units", createLectureFile(true), LectureUnitInformationDTO.class,
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("commaSeparatedKeyPhrases", "");
+
+        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/upload", null, "upload", createLectureFile(true), String.class,
                 HttpStatus.FORBIDDEN);
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/split", lectureUnitSplits, "lectureUnitInformationDTO", createLectureFile(true),
-                AttachmentUnit[].class, HttpStatus.FORBIDDEN);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/any-file", HttpStatus.FORBIDDEN, LectureUnitInformationDTO.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/any-file", HttpStatus.FORBIDDEN, LectureUnitInformationDTO.class, params);
+        request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units/split/any-file", lectureUnitSplits, AttachmentUnit.class, HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -273,4 +387,13 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         }
     }
 
+    /**
+     * Uploads a lecture file. Needed to test some errors (wrong filetype) and to keep test cases independent.
+     *
+     * @param file the file to be uploaded
+     * @return String filename in the temp folder
+     */
+    private String manualFileUpload(long lectureId, MockMultipartFile file) throws IOException {
+        return lectureUnitProcessingService.saveTempFileForProcessing(lectureId, file, 10);
+    }
 }

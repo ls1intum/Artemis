@@ -17,6 +17,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam-session.model';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { FormsModule } from '@angular/forms';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('SuspiciousBehaviorComponent', () => {
     let component: SuspiciousBehaviorComponent;
@@ -72,7 +73,13 @@ describe('SuspiciousBehaviorComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockRouterLinkDirective, MockModule(FormsModule)],
-            declarations: [SuspiciousBehaviorComponent, MockPipe(ArtemisTranslatePipe), MockComponent(PlagiarismCasesOverviewComponent), MockComponent(ButtonComponent)],
+            declarations: [
+                SuspiciousBehaviorComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(PlagiarismCasesOverviewComponent),
+                MockComponent(ButtonComponent),
+                MockComponent(DocumentationButtonComponent),
+            ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
