@@ -1,10 +1,15 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.*;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.Posting;
+import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
@@ -130,6 +135,7 @@ public class ReactionService {
             updatedPost = updatedAnswerPost.getPost();
             // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
             // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
+            postService.preCheckUserAndCourseForCommunicationOrMessaging(reaction.getUser(), course);
             updatedPost.removeAnswerPost(updatedAnswerPost);
             updatedPost.addAnswerPost(updatedAnswerPost);
         }
@@ -139,7 +145,7 @@ public class ReactionService {
 
     private void mayInteractWithConversationIfConversationMessageElseThrow(User user, Post post) {
         if (post.getConversation() != null) {
-            conversationService.isMemberElseThrow(post.getConversation().getId(), user.getId());
+            conversationService.isMemberOrCreateForCourseWideElseThrow(post.getConversation().getId(), user, Optional.empty());
         }
     }
 }

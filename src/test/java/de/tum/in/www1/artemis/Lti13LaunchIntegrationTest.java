@@ -5,14 +5,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.time.Instant;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.SecretKey;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -24,7 +20,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.web.rest.LtiResource;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 
 /**
  * LTI 1.3 Exercise Launch
@@ -39,13 +34,13 @@ import io.jsonwebtoken.SignatureAlgorithm;
  */
 class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final Key SIGNING_KEY = new SecretKeySpec("a".repeat(100).getBytes(), SignatureAlgorithm.HS256.getJcaName());
+    private static final SecretKey SIGNING_KEY = Jwts.SIG.HS256.key().build();
 
-    private static final String VALID_ID_TOKEN = Jwts.builder().setExpiration(Date.from(Instant.now().plusSeconds(60))).setIssuer("https://example.com").setAudience("client-id")
-            .setId("1234").signWith(SIGNING_KEY).compact();
+    private static final String VALID_ID_TOKEN = Jwts.builder().expiration(Date.from(Instant.now().plusSeconds(60))).issuer("https://example.com").audience().add("client-id").and()
+            .id("1234").signWith(SIGNING_KEY).compact();
 
-    private static final String OUTDATED_TOKEN = Jwts.builder().setExpiration(Date.from(Instant.now().minusSeconds(60))).setIssuer("https://example.com").setAudience("client-id")
-            .setId("1234").signWith(SIGNING_KEY).compact();
+    private static final String OUTDATED_TOKEN = Jwts.builder().expiration(Date.from(Instant.now().minusSeconds(60))).issuer("https://example.com").audience().add("client-id")
+            .and().id("1234").signWith(SIGNING_KEY).compact();
 
     private static final String VALID_STATE = "validState";
 

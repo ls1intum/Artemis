@@ -85,7 +85,7 @@ public class CourseExamExportService {
     public Optional<Path> exportCourse(Course course, Path outputDir, List<String> exportErrors) {
         // Used for sending export progress notifications to instructors
         var notificationTopic = "/topic/courses/" + course.getId() + "/export-course";
-        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."));
+        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."), null);
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + timestamp;
@@ -98,14 +98,20 @@ public class CourseExamExportService {
             Files.createDirectories(tmpCourseDir);
         }
         catch (IOException e) {
-            logMessageAndAppendToList("Failed to export course " + course.getId() + " because the temporary directory: " + tmpCourseDir + " cannot be created.", exportErrors, e);
+            String message = "Failed to export course " + course.getId() + " because the temporary directory: " + tmpCourseDir + " cannot be created.";
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED_WITH_ERRORS, List.of(message),
+                    CourseExamExportErrorCause.DIR_NOT_CREATED.toString());
+            logMessageAndAppendToList(message, exportErrors, e);
             return Optional.empty();
         }
 
         // Export course exercises and exams
         List<Path> exportedFiles = exportCourseAndExamExercises(notificationTopic, course, tmpCourseDir.toString(), exportErrors, reportData);
         if (exportedFiles.isEmpty()) {
-            exportErrors.add("Did not export course " + course.getId() + " because there are no exercises/exams to export.");
+            String message = "Did not export course " + course.getId() + " because there are no exercises/exams to export.";
+            exportErrors.add(message);
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED_WITH_ERRORS, List.of(message),
+                    CourseExamExportErrorCause.NOTHING_TO_EXPORT.toString());
             return Optional.empty();
         }
 
@@ -126,7 +132,7 @@ public class CourseExamExportService {
 
     private Optional<Path> zipExportedExercises(Path outputDir, List<String> exportErrors, String notificationTopic, Path tmpDir) {
         // Zip all exported exercises into a single zip file.
-        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Done exporting exercises. Creating course zip..."));
+        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Done exporting exercises. Creating course zip..."), null);
         Path courseZip = outputDir.resolve(tmpDir.getFileName() + ".zip");
         var exportedCourse = createCourseZipFile(courseZip, List.of(tmpDir), exportErrors);
 
@@ -134,7 +140,7 @@ public class CourseExamExportService {
         fileService.scheduleDirectoryPathForRecursiveDeletion(tmpDir, 1);
 
         var exportState = exportErrors.isEmpty() ? CourseExamExportState.COMPLETED : CourseExamExportState.COMPLETED_WITH_WARNINGS;
-        notifyUserAboutExerciseExportState(notificationTopic, exportState, exportErrors);
+        notifyUserAboutExerciseExportState(notificationTopic, exportState, exportErrors, null);
         return exportedCourse;
     }
 
@@ -150,7 +156,7 @@ public class CourseExamExportService {
     public Optional<Path> exportExam(Exam exam, Path outputDir, List<String> exportErrors) {
         // Used for sending export progress notifications to instructors
         var notificationTopic = "/topic/exams/" + exam.getId() + "/export";
-        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."));
+        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."), null);
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var examDirName = exam.getId() + "-" + exam.getTitle() + "-" + timestamp;
@@ -163,12 +169,15 @@ public class CourseExamExportService {
             Files.createDirectories(tempExamsDir);
         }
         catch (IOException e) {
-            logMessageAndAppendToList("Failed to export exam " + exam.getId() + " because the temporary directory: " + tempExamsDir + " cannot be created.", exportErrors, e);
+            String message = "Failed to export exam " + exam.getId() + " because the temporary directory: " + tempExamsDir + " cannot be created.";
+            logMessageAndAppendToList(message, exportErrors, e);
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED_WITH_ERRORS, List.of(message),
+                    CourseExamExportErrorCause.DIR_NOT_CREATED.toString());
             return Optional.empty();
         }
 
         // Export exam exercises
-        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export exam exercises..."));
+        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export exam exercises..."), null);
         var exercises = examRepository.findAllExercisesByExamId(exam.getId());
         List<Path> exportedExercises = exportExercises(notificationTopic, exercises, tempExamsDir, 0, exercises.size(), exportErrors, reportData);
 
@@ -198,7 +207,7 @@ public class CourseExamExportService {
      * @return list of zip files
      */
     private List<Path> exportCourseAndExamExercises(String notificationTopic, Course course, String outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) {
-        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export course exercises and exams..."));
+        notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export course exercises and exams..."), null);
 
         // Get every course and exam exercise
         Set<Exercise> courseExercises = course.getExercises();
@@ -365,7 +374,7 @@ public class CourseExamExportService {
 
             // Notify the user after the progress
             currentProgress++;
-            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of(currentProgress + "/" + totalExerciseCount + " done"));
+            notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of(currentProgress + "/" + totalExerciseCount + " done"), null);
             // add the id because the exercise title might not be unique, leading to the same directory
             // name for two exercises and the second exercise overriding the first one
             var exerciseExportDir = outputDir.resolve(exercise.getSanitizedExerciseTitle() + "_" + exercise.getId());
@@ -454,10 +463,11 @@ public class CourseExamExportService {
      * @param exportState The export state
      * @param messages    optional messages to send
      */
-    private void notifyUserAboutExerciseExportState(String topic, CourseExamExportState exportState, List<String> messages) {
+    private void notifyUserAboutExerciseExportState(String topic, CourseExamExportState exportState, List<String> messages, String subMessage) {
         Map<String, String> payload = new HashMap<>();
         payload.put("exportState", exportState.toString());
         payload.put("message", String.join("\n", messages));
+        payload.put("subMessage", subMessage);
 
         var mapper = new ObjectMapper();
         try {

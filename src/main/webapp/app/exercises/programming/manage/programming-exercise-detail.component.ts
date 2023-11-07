@@ -71,8 +71,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly ButtonSize = ButtonSize;
     readonly AssessmentType = AssessmentType;
-
-    documentationType = DocumentationType.Programming;
+    readonly documentationType: DocumentationType = 'Programming';
 
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;

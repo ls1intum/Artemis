@@ -28,15 +28,15 @@ import de.tum.in.www1.artemis.web.rest.push_notification.PushNotificationUnregis
 class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
+    private PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository;
 
     @Autowired
     private UserUtilService userUtilService;
 
-    private static final String FAKE_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ4eDQ0eHh4IiwiYXV0aCI6IlJPTEVfVEEsUk9MRV9JTlNUUlVDVE9SLFJPTEVfVVNFUiIsImV4cCI6NDgzMjgzODk2M30.jTzuQGl1nwvkKfwRUa8DpoAotw0zXf9DuLo2-OPYFub7GyBheKHBRgsqtFKSdv5ISYuEFuPIWJCuQOA8cH5UWA";
+    private static final String FAKE_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJhdXRoIjoiUk9MRV9BRE1JTiIsImV4cCI6MjU5MzY5ODYwODg0MH0.52mSTsxFbIxqx0OmRJuy1lohq41GAKtUBO1bAY4Y_RKNW0exsmopaV_0J7iIQpfYySCNS5-37LIG_HX1tVuvxA";
 
     private static final String USER_LOGIN = "test-user";
 
