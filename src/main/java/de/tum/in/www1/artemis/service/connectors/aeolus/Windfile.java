@@ -66,4 +66,8 @@ public class Windfile {
         }
         return scriptActions;
     }
+
+    public void setGitCredentials(String credentials) {
+        this.metadata.setGitCredentials(credentials);
+    }
 }
