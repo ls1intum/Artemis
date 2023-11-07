@@ -23,7 +23,8 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     templateUrl: './modeling-exercise-detail.component.html',
 })
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
-    documentationType = DocumentationType.Model;
+    readonly documentationType: DocumentationType = 'Model';
+    readonly ExerciseType = ExerciseType;
 
     readonly dayjs = dayjs;
     modelingExercise: ModelingExercise;
@@ -36,7 +37,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     exampleSolutionUML: UMLModel;
     numberOfClusters: number;
 
-    readonly ExerciseType = ExerciseType;
     doughnutStats: ExerciseManagementStatisticsDto;
     isExamExercise: boolean;
 
