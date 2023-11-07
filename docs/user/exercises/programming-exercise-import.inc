@@ -21,7 +21,7 @@ On exercise import, Artemis copies the repositories, build plans, interactive pr
               :align: center
 
 .. note::
-  Instructors can import exercises from courses, where they are registered as instructors
+  Instructors can import exercises from courses in which they are registered as instructors.
 
 - Artemis provides special options to update the assessment process
 
@@ -36,7 +36,7 @@ On exercise import, Artemis copies the repositories, build plans, interactive pr
 - Instructors are able to activate/deactivate static code analysis. Changing this option from the original value requires the activation of **Recreate Build Plans** and **Update Template**.
 
 .. note::
-  **Recreate Build Plans** and **Update Template** are automatically seft if the static code analysis option changes compared to the imported exercise.
+  **Recreate Build Plans** and **Update Template** are automatically set if the static code analysis option changes compared to the imported exercise.
   The plugins, dependencies, and static code analysis tool configurations are added/deleted/copied depending on the new and the original state of this option.
 
 - Fill out all mandatory values and click on |import|
