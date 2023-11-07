@@ -9,6 +9,9 @@ import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -37,6 +40,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.service.notifications.ConversationNotificationService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -58,17 +62,20 @@ public class ConversationMessagingService extends PostingService {
 
     private final ConversationRepository conversationRepository;
 
+    private final GroupNotificationService groupNotificationService;
+
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
-            ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService,
-            ConversationRepository conversationRepository) {
+            ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService, ConversationRepository conversationRepository,
+            GroupNotificationService groupNotificationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationNotificationService = conversationNotificationService;
         this.channelAuthorizationService = channelAuthorizationService;
         this.conversationRepository = conversationRepository;
+        this.groupNotificationService = groupNotificationService;
     }
 
     /**
@@ -164,6 +171,10 @@ public class ConversationMessagingService extends PostingService {
         Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
         conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course, mentionedUsers);
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
+
+        if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
+            sendAnnouncementEmail(createdMessage, channel, course);
+        }
     }
 
     /**
@@ -352,5 +363,38 @@ public class ConversationMessagingService extends PostingService {
     @Override
     public String getEntityName() {
         return METIS_POST_ENTITY_NAME;
+    }
+
+    /**
+     * Sends notification to affected groups
+     *
+     * @param message message that triggered the notification
+     * @param channel announcement channel the message belongs to
+     * @param course  course the channel belongs to
+     */
+    private void sendAnnouncementEmail(Post message, Channel channel, Course course) {
+        // create post for notification
+        Post postForNotification = new Post();
+        postForNotification.setId(message.getId());
+        postForNotification.setAuthor(message.getAuthor());
+        postForNotification.setCourse(course);
+        postForNotification.setConversation(channel);
+        postForNotification.setCreationDate(message.getCreationDate());
+        postForNotification.setTitle(message.getTitle());
+
+        // create html content
+        Parser parser = Parser.builder().build();
+        String htmlPostContent;
+        try {
+            Node document = parser.parse(message.getContent());
+            HtmlRenderer renderer = HtmlRenderer.builder().build();
+            htmlPostContent = renderer.render(document);
+        }
+        catch (Exception e) {
+            htmlPostContent = "";
+        }
+        postForNotification.setContent(htmlPostContent);
+
+        groupNotificationService.notifyAllGroupsAboutNewAnnouncement(postForNotification, course);
     }
 }

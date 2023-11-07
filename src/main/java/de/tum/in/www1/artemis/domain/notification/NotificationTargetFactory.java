@@ -229,7 +229,10 @@ public class NotificationTargetFactory {
      * @return the final NotificationTarget
      */
     public static NotificationTarget createCoursePostTarget(Post post, Course course) {
-        return new NotificationTarget(post.getId(), course.getId());
+        NotificationTarget target = new NotificationTarget(post.getId(), course.getId());
+        if (post.getConversation() != null)
+            target.setConversationId(post.getConversation().getId());
+        return target;
     }
 
     // Plagiarism related targets
