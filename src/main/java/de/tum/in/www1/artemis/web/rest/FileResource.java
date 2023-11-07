@@ -212,9 +212,6 @@ public class FileResource {
             Boolean testCoverage) {
         try {
             List<String> fileNameComponents = new ArrayList<>();
-            if (!projectTypePrefix.isEmpty()) {
-                fileNameComponents.add("default");
-            }
             if (staticAnalysis) {
                 fileNameComponents.add("static");
             }
@@ -224,11 +221,10 @@ public class FileResource {
             if (testCoverage) {
                 fileNameComponents.add("coverage");
             }
-            String fileName = fileNameComponents.stream().reduce("", (a, b) -> a + "_" + b) + ".yaml";
+            String fileName = fileNameComponents.stream().reduce(projectTypePrefix.isEmpty() ? "default" : projectTypePrefix, (a, b) -> a + "_" + b) + ".yaml";
             Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", languagePrefix, fileName));
-            if (!fileResource.exists() || projectTypePrefix.isEmpty()) {
-                // Load without project type if not found with project type
-                fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", languagePrefix, languagePrefix + ".yaml"));
+            if (!fileResource.exists()) {
+                throw new IOException("File " + fileName + " not found");
             }
             byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
             String yaml = new String(fileContent, StandardCharsets.UTF_8);

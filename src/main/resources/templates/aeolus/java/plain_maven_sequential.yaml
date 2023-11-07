@@ -1,6 +1,6 @@
 api: v0.0.1
 metadata:
-    name: java-gradle
+    name: java-maven-sequential
     id: java-windfile
     description: Build Plan for a java Exercise with maven
     author: Andreas Resch
@@ -21,6 +21,14 @@ metadata:
             - --pids-limit
             - '"1000"'
 actions:
-    - name: gradle
-      script: maven clean test
+    - name: maven
+      script: |
+          cd structural
+          mvn clean test
+          if [ $? -eq 0 ]; then
+            cd ..
+            cd behavior
+            mvn clean test
+          fi
+          cd ..
       run_always: false

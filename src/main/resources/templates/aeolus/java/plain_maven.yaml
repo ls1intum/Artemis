@@ -1,6 +1,6 @@
 api: v0.0.1
 metadata:
-    name: java-gradle
+    name: java-maven
     id: java-windfile
     description: Build Plan for a java Exercise with maven
     author: Andreas Resch
@@ -22,13 +22,5 @@ metadata:
             - '"1000"'
 actions:
     - name: maven
-      script: |
-          cd structural
-          mvn clean test
-          if [ $? -eq 0 ]; then
-            cd ..
-            cd behavior
-            mvn clean test
-          fi
-          cd ..
+      script: maven clean test
       run_always: false
