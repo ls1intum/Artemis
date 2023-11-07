@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -22,6 +22,7 @@ export class ApollonDiagramListComponent implements OnInit {
     apollonDiagrams: ApollonDiagram[] = [];
     predicate: string;
     reverse: boolean;
+    @Input()
     courseId: number;
     course: Course;
 
@@ -46,7 +47,9 @@ export class ApollonDiagramListComponent implements OnInit {
      * Initializes Apollon diagrams from the server
      */
     ngOnInit() {
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        if (!this.courseId) {
+            this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        }
         this.courseService.find(this.courseId).subscribe((courseResponse: HttpResponse<Course>) => {
             this.course = courseResponse.body!;
         });

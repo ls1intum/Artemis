@@ -1,0 +1,6 @@
+<ng-container>
+    <jhi-apollon-diagram-list *ngIf="this.isInEditView; else editView" [courseId]="this.courseId" />
+</ng-container>
+<ng-template #editView>
+    <jhi-apollon-diagram-detail />
+</ng-template>
