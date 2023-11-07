@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
     @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
     @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"),
     @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
+    @JsonSubTypes.Type(value = MathExercise.class, name = "math"),
     @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload")
 })
 // @formatter:on

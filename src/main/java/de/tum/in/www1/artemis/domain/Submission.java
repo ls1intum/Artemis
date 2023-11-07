@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
     @JsonSubTypes.Type(value = ModelingSubmission.class, name = "modeling"),
     @JsonSubTypes.Type(value = QuizSubmission.class, name = "quiz"),
     @JsonSubTypes.Type(value = TextSubmission.class, name = "text"),
+    @JsonSubTypes.Type(value = MathSubmission.class, name = "math"),
     @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload")
 })
 // @formatter:on
@@ -165,10 +166,10 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     /**
      * removes all elements from the results list, which are null.
-     *
+     * <p>
      * This can be used to prepare a submission before sending it to the client. In some cases the submission is loaded from the database
      * with a results list which contains undesired null values. To get rid of them this function can be used.
-     *
+     * <p>
      * When a submission with results is fetched for a specific assessor, hibernate wants to keep the order of the results list,
      * as it is in the ordered column in the database.
      * To maintain the index of the result with the assessor within the results list, null elements are used as padding.

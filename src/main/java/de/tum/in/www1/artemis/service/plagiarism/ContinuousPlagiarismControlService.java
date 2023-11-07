@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.plagiarism;
 import static java.lang.String.format;
 
 import java.time.ZonedDateTime;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 import org.jvnet.hk2.annotations.Service;
@@ -20,11 +20,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
+import de.tum.in.www1.artemis.domain.plagiarism.*;
 import de.tum.in.www1.artemis.exception.ArtemisMailException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
@@ -105,7 +101,7 @@ public class ContinuousPlagiarismControlService {
             case TEXT -> plagiarismDetectionService.checkTextExercise((TextExercise) exercise);
             case PROGRAMMING -> plagiarismDetectionService.checkProgrammingExercise((ProgrammingExercise) exercise);
             case MODELING -> plagiarismDetectionService.checkModelingExercise((ModelingExercise) exercise);
-            case FILE_UPLOAD, QUIZ -> throw new IllegalStateException(
+            case FILE_UPLOAD, MATH, QUIZ -> throw new IllegalStateException(
                     format("Cannot check plagiarism for exercise: type=%s, id=%s.", exercise.getExerciseType(), exercise.getId()));
         };
     }

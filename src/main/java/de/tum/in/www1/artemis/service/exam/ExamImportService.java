@@ -26,6 +26,10 @@ public class ExamImportService {
 
     private final TextExerciseRepository textExerciseRepository;
 
+    private final MathExerciseRepository mathExerciseRepository;
+
+    private final MathExerciseImportService mathExerciseImportService;
+
     private final ModelingExerciseImportService modelingExerciseImportService;
 
     private final ModelingExerciseRepository modelingExerciseRepository;
@@ -56,17 +60,19 @@ public class ExamImportService {
 
     private final ChannelService channelService;
 
-    public ExamImportService(TextExerciseImportService textExerciseImportService, TextExerciseRepository textExerciseRepository,
-            ModelingExerciseImportService modelingExerciseImportService, ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository,
-            ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise,
-            CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
-            FileUploadExerciseImportService fileUploadExerciseImportService, GradingCriterionRepository gradingCriterionRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService) {
+    public ExamImportService(TextExerciseImportService textExerciseImportService, TextExerciseRepository textExerciseRepository, MathExerciseRepository mathExerciseRepository,
+            MathExerciseImportService mathExerciseImportService, ModelingExerciseImportService modelingExerciseImportService, ModelingExerciseRepository modelingExerciseRepository,
+            ExamRepository examRepository, ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository,
+            QuizExerciseImportService importQuizExercise, CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService1,
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseImportService programmingExerciseImportService,
+            FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadExerciseImportService fileUploadExerciseImportService,
+            GradingCriterionRepository gradingCriterionRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService) {
         this.textExerciseImportService = textExerciseImportService;
         this.textExerciseRepository = textExerciseRepository;
-        this.modelingExerciseImportService = modelingExerciseImportService;
+        this.mathExerciseRepository = mathExerciseRepository;
+        this.mathExerciseImportService = mathExerciseImportService;
         this.modelingExerciseRepository = modelingExerciseRepository;
+        this.modelingExerciseImportService = modelingExerciseImportService;
         this.examRepository = examRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -295,6 +301,14 @@ public class ExamImportService {
 
                     prepareProgrammingExerciseForExamImport((ProgrammingExercise) exerciseToCopy);
                     yield Optional.of(programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, (ProgrammingExercise) exerciseToCopy, false, false));
+                }
+
+                case MATH -> {
+                    final Optional<MathExercise> optionalOriginalMathExercise = mathExerciseRepository.findByIdWithExampleSubmissionsAndResults(exerciseToCopy.getId());
+                    if (optionalOriginalMathExercise.isEmpty()) {
+                        yield Optional.empty();
+                    }
+                    yield Optional.of(mathExerciseImportService.importMathExercise(optionalOriginalMathExercise.get(), (MathExercise) exerciseToCopy));
                 }
 
                 case FILE_UPLOAD -> {
