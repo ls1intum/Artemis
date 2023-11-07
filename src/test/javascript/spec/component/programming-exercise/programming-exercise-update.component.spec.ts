@@ -64,6 +64,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
+import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -744,6 +745,16 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
                 translateValues: {},
             });
+        });
+
+        it('should update AuxiliaryRepository checkout directory', () => {
+            const auxiliaryRepository = new AuxiliaryRepository();
+            auxiliaryRepository.checkoutDirectory = 'aux';
+            auxiliaryRepository.name = 'aux';
+            auxiliaryRepository.repositoryUrl = 'auxurl';
+            comp.programmingExercise.auxiliaryRepositories = [auxiliaryRepository];
+            const returned = comp.updateCheckoutDirectory(auxiliaryRepository)('new-value');
+            expect(returned).toBe('new-value');
         });
 
         it('should find no validation errors for valid input', () => {

@@ -143,4 +143,13 @@ describe('ProgrammingExercise Custom Build Plan', () => {
             expect(action.script).toBe('this is some code');
         }
     });
+
+    it('should set editor text', () => {
+        const elementRef: ElementRef = new ElementRef(document.createElement('div'));
+        const zone: NgZone = new NgZone({});
+        comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        comp.changeActiveAction('gradle');
+        // make a spy on the editor
+        expect(comp.editor.text).toBe(gradleBuildAction.script);
+    });
 });
