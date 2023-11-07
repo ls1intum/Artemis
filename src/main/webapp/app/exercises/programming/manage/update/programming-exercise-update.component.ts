@@ -764,7 +764,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
-        console.log('Loading template for ' + language);
         this.loadAeolusTemplate();
         this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
             next: (file) => {
@@ -1086,7 +1085,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             actions.push(action);
                         });
                         templateFile.actions = actions;
-                        console.log(templateFile);
                         this.programmingExercise.windFile = templateFile;
                     }
                 },
