@@ -14,8 +14,6 @@ public class Windfile {
 
     private List<Action> actions;
 
-    private Map<String, AeolusRepository> repositories;
-
     /**
      * Converts the serialized form of a windfile ({@link AeolusDefinition}) to a
      * windfile object that can be used to generate a Bamboo build plan or a Jenkinsfile.
@@ -26,6 +24,7 @@ public class Windfile {
     public static Windfile toWindfile(AeolusDefinition aeolusDefinition) {
         Windfile windfile = new Windfile();
         windfile.setApi(aeolusDefinition.getApi());
+        windfile.setId(aeolusDefinition.getMetadata().getId());
         windfile.setMetadata(aeolusDefinition.getMetadata());
         List<Action> actions = new ArrayList<>();
         for (SerializedAction action : aeolusDefinition.getActions()) {
@@ -37,7 +36,7 @@ public class Windfile {
             }
         }
 
-        windfile.actions = actions;
+        windfile.setActions(actions);
         return windfile;
     }
 
@@ -65,19 +64,7 @@ public class Windfile {
         this.actions = actions;
     }
 
-    public Map<String, AeolusRepository> getRepositories() {
-        return repositories;
-    }
-
-    public void setRepositories(Map<String, AeolusRepository> repositories) {
-        this.repositories = repositories;
-    }
-
     public void setId(String id) {
         this.metadata.setId(id);
-    }
-
-    public void setGitCredentials(String credentials) {
-        this.metadata.setGitCredentials(credentials);
     }
 }
