@@ -167,10 +167,10 @@ export class PostService extends PostingService<Post> {
     }
 
     private static getResourceEndpoint(postContextFilter?: PostContextFilter, post?: Post): string {
-        if (post?.conversation || postContextFilter?.conversationId) {
+        if (post?.conversation || postContextFilter?.conversationId || postContextFilter?.courseWideChannelIds) {
             return '/messages';
         } else {
-            return '/messages';
+            return '/posts';
         }
     }
 }
