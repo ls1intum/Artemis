@@ -14,9 +14,6 @@ public class AeolusDefinition {
 
     private List<SerializedAction> actions;
 
-    public AeolusDefinition() {
-    }
-
     public String getApi() {
         return api;
     }
