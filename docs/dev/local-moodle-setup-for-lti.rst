@@ -13,7 +13,7 @@ Docker Compose is a separate tool bundled with Docker on some platforms, but you
 
 Setup Instructions
 ------------------
-The setup process utilizes Bitnami's Docker images for Moodle to ensure a streamlined and consistent deployment.
+The setup process utilizes `Bitnami's Docker images for Moodle <https://github.com/bitnami/containers/tree/main/bitnami/moodle>`_ to ensure a streamlined and consistent deployment.
 Bitnami offers several compelling advantages:
 
 - Bitnami ensures timely updates with the latest bug fixes and features.
@@ -29,10 +29,11 @@ Moodle requires access to a MySQL or MariaDB database to store information. Bitn
 Downloading the Docker Compose File
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 For Windows operating system:
+Download the `docker-compose file <https://github.com/bitnami/containers/blob/main/bitnami/moodle/docker-compose.yml>`_ and run it using the below command.
 
 .. code-block:: bash
 
-    Download the docker-compose file and run it using the `docker compose -f docker-compose.yml up` command.
+     docker compose -f docker-compose.yml up
 
 For other operating systems:
 
@@ -59,7 +60,7 @@ Available environment variables:
 
 Customization
 ---------------
-Moodle port number can be customized over the docker-compose.yml file.
+You can customize Moodle port number over the docker-compose.yml file.
 
 .. code-block:: yaml
 
@@ -71,7 +72,7 @@ Moodle port number can be customized over the docker-compose.yml file.
 
 Accessing Moodle
 ------------------
-It can be accessed over `localhost:port` in the browser.
+You can be access your local Moodle instance over `localhost:port` in the browser.
 
 Troubleshooting
 ----------------
