@@ -6,6 +6,8 @@ import dayjs from 'dayjs/esm';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, Observable, Subject, Subscription, distinct, filter, map, tap } from 'rxjs';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { User } from 'app/core/user/user.model';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 const EVENT_ACKNOWLEDGEMENT_LOCAL_STORAGE_KEY = 'examLastAcknowledgedEvent';
 
@@ -25,6 +27,7 @@ export type ExamLiveEvent = {
     createdDate: dayjs.Dayjs;
     eventType: ExamLiveEventType;
     acknowledgeTimestamps?: AcknowledgeTimestamps;
+    user?: User;
 };
 
 export type ExamWideAnnouncementEvent = ExamLiveEvent & {
@@ -46,6 +49,7 @@ export class ExamParticipationLiveEventsService {
     private courseId?: number;
     private examId?: number;
     private studentExamId?: number;
+    private studentExam?: StudentExam;
     private lastAcknowledgedEventStatus?: StudentExamAcknowledgedEvents;
 
     private currentWebsocketChannels?: string[];
@@ -96,6 +100,7 @@ export class ExamParticipationLiveEventsService {
                 this.studentExamId = studentExam.id;
                 this.examId = studentExam.exam?.id;
                 this.courseId = studentExam.exam?.course?.id;
+                this.studentExam = studentExam;
 
                 if (!this.studentExamId || !this.examId || !this.courseId) {
                     throw new Error('ExamParticipationLiveEventsService: Received invalid values for student exam id, exam id or course id');
@@ -152,6 +157,7 @@ export class ExamParticipationLiveEventsService {
         }
 
         event.createdDate = convertDateFromServer(event.createdDate)!;
+        event.user = this.studentExam?.user;
 
         this.events.unshift(event);
         this.newSystemEventSubject.next(event);

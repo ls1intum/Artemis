@@ -6,9 +6,7 @@ import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -29,9 +27,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExamSession;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.*;
 import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -238,19 +234,22 @@ public class StudentExamResource {
     /**
      * PATCH /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/attendance-check : Throw attandance Check Event in the student exam
      *
-     * @param courseId      the course to which the student exams belong to
-     * @param examId        the exam to which the student exams belong to
-     * @param studentExamId the id of the student exam to find
+     * @param courseId     the course to which the student exams belong to
+     * @param examId       the exam to which the student exams belong to
+     * @param studentLogin the id of the student exam to find
      * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
      */
-    @PatchMapping("/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/attendance-check")
+    @PatchMapping("/courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}/attendance-check")
     @EnforceAtLeastInstructor
-    public ResponseEntity<ExamAttendanceCheckEventDTO> attendanceCheck(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long studentExamId,
-            @RequestBody String message) {
-        log.debug("REST request for attendance-check for student exam : {}", studentExamId);
+    public ResponseEntity<ExamAttendanceCheckEventDTO> attendanceCheck(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin,
+            @RequestBody(required = false) String message) {
+        log.debug("REST request for attendance-check for student : {}", studentLogin);
 
-        examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
+                .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + studentLogin + "\" does not exist"));
+
+        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), examId).orElseThrow();
+        examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExam.getId());
         User currentUser = userRepository.getUser();
         var event = examLiveEventsService.createAndSendExamAttendanceCheckEvent(studentExam, message, currentUser);
 

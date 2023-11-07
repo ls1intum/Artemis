@@ -7,6 +7,7 @@ import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } 
 import { ExamLiveEventsOverlayComponent } from 'app/exam/participate/events/exam-live-events-overlay.component';
 
 export const USER_DISPLAY_RELEVANT_EVENTS = [ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT, ExamLiveEventType.WORKING_TIME_UPDATE, ExamLiveEventType.EXAM_ATTENDANCE_CHECK];
+export const USER_DISPLAY_RELEVANT_EVENTS_REOPEN = [ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT, ExamLiveEventType.WORKING_TIME_UPDATE];
 
 @Component({
     selector: 'jhi-exam-live-events-button',
@@ -31,7 +32,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit(): void {
-        this.allEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS).subscribe((events: ExamLiveEvent[]) => {
+        this.allEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS_REOPEN).subscribe((events: ExamLiveEvent[]) => {
             this.eventCount = events.length;
         });
 

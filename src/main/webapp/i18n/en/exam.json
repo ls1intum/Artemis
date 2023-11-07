@@ -185,7 +185,8 @@
                         "new": "New working time"
                     },
                     "examAttendanceCheck": {
-                        "description": "An exam supervisor has triggered the attendance check for you. Please follow the instructions of the supervisor."
+                        "description": "An exam supervisor has triggered the attendance check for you. Please follow the instructions of the supervisor.",
+                        "comment": "Supervisor comment:"
                     }
                 }
             }

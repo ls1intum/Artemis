@@ -25,20 +25,27 @@
         </div>
         <div *ngSwitchCase="ExamLiveEventType.EXAM_ATTENDANCE_CHECK">
             <div jhiTranslate="artemisApp.exam.events.messages.examAttendanceCheck.description" class="wt-title"></div>
-            <span [innerHTML]="examAttendanceCheckEvent.text | htmlForMarkdown"></span>
-            <table class="table table-borderless mx-auto d-block">
+            <table *ngIf="event.user" class="table table-borderless mx-auto">
                 <tbody>
                     <tr>
                         <th>{{ 'artemisApp.studentExamDetail.name' | artemisTranslate }}</th>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <th>{{ 'artemisApp.studentExamDetail.matriculationNumber' | artemisTranslate }}</th>
-                        <td></td>
+                        <td>{{ event.user?.firstName }} {{ event.user?.lastName }}</td>
                     </tr>
                     <tr>
                         <th>{{ 'artemisApp.studentExamDetail.login' | artemisTranslate }}</th>
-                        <td></td>
+                        <td>{{ event.user?.login }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'artemisApp.studentExamDetail.email' | artemisTranslate }}</th>
+                        <td>{{ event.user?.email }}</td>
+                    </tr>
+                    <tr *ngIf="event.user?.visibleRegistrationNumber">
+                        <th>{{ 'artemisApp.studentExamDetail.registrationNumber' | artemisTranslate }}</th>
+                        <td>{{ event.user?.visibleRegistrationNumber }}</td>
+                    </tr>
+                    <tr *ngIf="examAttendanceCheckEvent.text && examAttendanceCheckEvent.text.length > 0">
+                        <th>{{ 'artemisApp.exam.events.messages.examAttendanceCheck.comment' | artemisTranslate }}</th>
+                        <td [innerHTML]="examAttendanceCheckEvent.text | htmlForMarkdown"></td>
                     </tr>
                 </tbody>
             </table>
