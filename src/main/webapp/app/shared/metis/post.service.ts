@@ -166,6 +166,15 @@ export class PostService extends PostingService<Post> {
         return res;
     }
 
+    /**
+     * Determines whether to use the /messages or /posts API endpoints based on the presence of certain properties in the postContextFilter or post objects.
+     * If any properties related to conversations are present (conversation, conversationId, or courseWideChannelIds), it returns /messages.
+     * Otherwise, it defaults to /posts.
+     *
+     * @param postContextFilter current post context filter in use
+     * @param post new or updated post
+     * @return '/messages' or '/posts'
+     */
     private static getResourceEndpoint(postContextFilter?: PostContextFilter, post?: Post): string {
         if (post?.conversation || postContextFilter?.conversationId || postContextFilter?.courseWideChannelIds) {
             return '/messages';
