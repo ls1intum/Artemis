@@ -81,7 +81,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("aeolus")
+    @Profile("localci")
     public RestTemplate aeolusRestTemplate() {
         return createRestTemplate();
     }
@@ -156,7 +156,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("aeolus")
+    @Profile("localci")
     public RestTemplate shortTimeoutAeolusRestTemplate() {
         return createShortTimeoutRestTemplate();
     }
