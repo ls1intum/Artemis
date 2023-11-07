@@ -475,7 +475,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.customBuildPlansSupported = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
+            this.customBuildPlansSupported = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
         });
         this.defineSupportedProgrammingLanguages();
     }
@@ -763,7 +763,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
-        console.log('Loading template for ' + language);
         this.loadAeolusTemplate();
         this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
             next: (file) => {
@@ -1085,7 +1084,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             actions.push(action);
                         });
                         templateFile.actions = actions;
-                        console.log(templateFile);
                         this.programmingExercise.windFile = templateFile;
                     }
                 },

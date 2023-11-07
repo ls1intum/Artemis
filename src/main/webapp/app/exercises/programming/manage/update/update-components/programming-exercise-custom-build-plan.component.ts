@@ -1,16 +1,15 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
-import { BuildAction, PlatformAction, ProgrammingExercise, ProjectType, ScriptAction } from 'app/entities/programming-exercise.model';
+import { Component, Input, ViewChild } from '@angular/core';
+import { BuildAction, ProgrammingExercise, ProjectType, ScriptAction } from 'app/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import ace from 'brace';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
     templateUrl: './programming-exercise-custom-build-plan.component.html',
     styleUrls: ['../../programming-exercise-form.scss'],
 })
-export class ProgrammingExerciseCustomBuildPlanComponent implements OnInit {
+export class ProgrammingExerciseCustomBuildPlanComponent {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
@@ -35,10 +34,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnInit {
 
     faQuestionCircle = faQuestionCircle;
 
-    ngOnInit(): void {
-        ace.Range = ace.acequire('ace/range').Range;
-    }
-
     protected getActionScript(action: string): string {
         const foundAction: BuildAction | undefined = this.programmingExercise.windFile?.actions.find((a) => a.name === action);
         if (foundAction && foundAction instanceof ScriptAction) {
@@ -47,7 +42,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnInit {
         return '';
     }
 
-    protected isScriptAction(action: BuildAction): boolean {
+    isScriptAction(action: BuildAction): boolean {
         return action instanceof ScriptAction;
     }
 
@@ -61,22 +56,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnInit {
         if (this.needsEditor() && this.editor) {
             this.editor.setText(this.code);
         }
-    }
-
-    protected getParameterKeys(): string[] {
-        if (this.active instanceof PlatformAction) {
-            const keys = (this.active as PlatformAction).parameters;
-            // somehow keys.keys() does not work
-            return Object.getOwnPropertyNames(keys);
-        }
-        return [];
-    }
-
-    protected getParameter(key: string): string | boolean | number {
-        if (this.active instanceof PlatformAction) {
-            return (this.active as PlatformAction).parameters[key] ?? '';
-        }
-        return '';
     }
 
     protected needsEditor(): boolean {
@@ -113,7 +92,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnInit {
     /**
      * Sets up an ace editor for the template or solution file.
      */
-    private setupEditor(): void {
+    setupEditor(): void {
         if (!this._editor) {
             return;
         }

@@ -1,12 +1,18 @@
 import { TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { ProgrammingExerciseComponent } from 'app/exercises/programming/manage/programming-exercise.component';
 import { BuildAction, ProgrammingExercise, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-custom-build-plan.component';
+import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
+import { ElementRef, NgZone } from '@angular/core';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { MockComponent } from 'ng-mocks';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
-describe('ProgrammingExercise Custom Build PLan', () => {
+describe('ProgrammingExercise Custom Build Plan', () => {
+    let mockThemeService: ThemeService;
     let comp: ProgrammingExerciseCustomBuildPlanComponent;
     const course = { id: 123 } as Course;
 
@@ -36,9 +42,13 @@ describe('ProgrammingExercise Custom Build PLan', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseComponent],
+            declarations: [ProgrammingExerciseCustomBuildPlanComponent, MockComponent(FaIconComponent), MockComponent(HelpIconComponent), MockComponent(AceEditorComponent)],
             providers: [{ provide: ActivatedRoute, useValue: route }],
-        }).compileComponents();
+        })
+            .compileComponents()
+            .then(() => {
+                mockThemeService = TestBed.inject(ThemeService);
+            });
 
         const fixture = TestBed.createComponent(ProgrammingExerciseCustomBuildPlanComponent);
         comp = fixture.componentInstance;
@@ -77,11 +87,60 @@ describe('ProgrammingExercise Custom Build PLan', () => {
         expect(programmingExercise.windFile?.actions.length).toBe(3);
     });
 
+    it('should accept editor', () => {
+        const elementRef: ElementRef = new ElementRef(document.createElement('div'));
+        const zone: NgZone = new NgZone({});
+        comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+    });
+
     it('should change code of active action', () => {
         comp.changeActiveAction('gradle');
-        const code = comp.code;
-        expect(code).toBe(gradleBuildAction.script);
+        expect(comp.code).toBe(gradleBuildAction.script);
         comp.codeChanged('test');
         expect(gradleBuildAction.script).toBe('test');
+    });
+
+    it('should change code if deleting active action and unset active action', () => {
+        comp.changeActiveAction('gradle');
+        expect(comp.code).toBe(gradleBuildAction.script);
+        comp.deleteAction('gradle');
+        expect(comp.code).toBe('');
+        expect(comp.active).toBeUndefined();
+    });
+
+    it('should return true', () => {
+        expect(comp.isScriptAction(gradleBuildAction)).toBeTrue();
+    });
+
+    it('should return false', () => {
+        expect(comp.isScriptAction(new BuildAction())).toBeFalse();
+    });
+
+    it('should do nothing without a windfile', () => {
+        comp.programmingExercise.windFile = undefined;
+        comp.code = 'this should not change';
+        comp.changeActiveAction('');
+        expect(comp.code).toBe('this should not change');
+    });
+
+    it('should do nothing on delete invalid action', () => {
+        comp.changeActiveAction('');
+        expect(comp.code).toBe('');
+        expect(comp.active).toBeUndefined();
+    });
+
+    it('should not fail if setting up undefined editor', () => {
+        comp.setupEditor();
+    });
+
+    it('should change code', () => {
+        comp.changeActiveAction('gradle');
+        comp.codeChanged('this is some code');
+        const action: BuildAction | undefined = comp.active;
+        expect(action).toBeDefined();
+        expect(action).toBeInstanceOf(ScriptAction);
+        if (action instanceof ScriptAction) {
+            expect(action.script).toBe('this is some code');
+        }
     });
 });

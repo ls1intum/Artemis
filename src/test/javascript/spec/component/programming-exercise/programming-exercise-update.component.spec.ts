@@ -8,7 +8,7 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType, WindFile } from 'app/entities/programming-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -389,6 +389,20 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.selectedProjectType).toBe(ProjectType.FACT);
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
+        }));
+
+        it('should clear custom build definition on programming language change', fakeAsync(() => {
+            // WHEN
+            fixture.detectChanges();
+            comp.programmingExercise.buildPlanConfiguration = 'some custom build definition';
+            comp.programmingExercise.windFile = new WindFile();
+            tick();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+            comp.onProjectTypeChange(ProjectType.FACT);
+
+            // THEN
+            expect(comp.programmingExercise.buildPlanConfiguration).toBeUndefined();
+            expect(comp.programmingExercise.windFile).toBeUndefined();
         }));
     });
 
