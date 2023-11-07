@@ -86,6 +86,19 @@ public class PlagiarismCaseService {
     }
 
     /**
+     * Save a post for a plagiarism case and notify the student about the plagiarism case.
+     *
+     * @param plagiarismCaseId the ID of the plagiarism case for which to save the post
+     * @param post             the post which belongs to the plagiarism case
+     */
+    public void saveAnonymousPostForPlagiarismCaseAndNotifyStudent(long plagiarismCaseId, Post post) {
+        PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCaseId);
+        plagiarismCase.setPost(post);
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+        singleUserNotificationService.notifyUserAboutNewContinuousPlagiarismControlPlagiarismCase(plagiarismCase, plagiarismCase.getStudent());
+    }
+
+    /**
      * Create or add to plagiarism cases for both students involved in a plagiarism comparison if it is determined to be plagiarism.
      *
      * @param plagiarismComparisonId the ID of the plagiarism comparison
@@ -93,9 +106,9 @@ public class PlagiarismCaseService {
     public void createOrAddToPlagiarismCasesForComparison(long plagiarismComparisonId) {
         var plagiarismComparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparisonId);
         // handle student A
-        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA());
+        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionA(), false);
         // handle student B
-        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB());
+        createOrAddToPlagiarismCaseForStudent(plagiarismComparison, plagiarismComparison.getSubmissionB(), false);
     }
 
     /**
@@ -107,10 +120,13 @@ public class PlagiarismCaseService {
      * <li>Add the submission of the student to existing plagiarism case otherwise</li>
      * </ul>
      *
-     * @param plagiarismComparison the plagiarism comparison for which to create the plagiarism case
-     * @param plagiarismSubmission the plagiarism submission of the student for which to create the plagiarism case
+     * @param plagiarismComparison                 the plagiarism comparison for which to create the plagiarism case
+     * @param plagiarismSubmission                 the plagiarism submission of the student for which to create the plagiarism case
+     * @param createdByContinuousPlagiarismControl true is the plagiarism comparison was created by the continuous plagiarism control
+     * @return the created or updated plagiarism case
      */
-    public void createOrAddToPlagiarismCaseForStudent(PlagiarismComparison<?> plagiarismComparison, PlagiarismSubmission<?> plagiarismSubmission) {
+    public PlagiarismCase createOrAddToPlagiarismCaseForStudent(PlagiarismComparison<?> plagiarismComparison, PlagiarismSubmission<?> plagiarismSubmission,
+            boolean createdByContinuousPlagiarismControl) {
         var plagiarismCase = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(plagiarismSubmission.getStudentLogin(),
                 plagiarismComparison.getPlagiarismResult().getExercise().getId());
         if (plagiarismCase.isPresent()) {
@@ -119,6 +135,7 @@ public class PlagiarismCaseService {
             // we do not save plagiarism comparison or plagiarism submission directly because due to issues with Cascade_All, it will automatically delete matches and re-add them
             // we actually use a custom modifying query to avoid all issues with Cascade ALL
             plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismSubmission.getId(), plagiarismCase.get());
+            return plagiarismCase.get();
         }
         else {
             // create new PlagiarismCase for student
@@ -126,11 +143,13 @@ public class PlagiarismCaseService {
             PlagiarismCase newPlagiarismCase = new PlagiarismCase();
             newPlagiarismCase.setExercise(plagiarismComparison.getPlagiarismResult().getExercise());
             newPlagiarismCase.setStudent(student);
+            newPlagiarismCase.setCreatedByContinuousPlagiarismControl(createdByContinuousPlagiarismControl);
             var savedPlagiarismCase = plagiarismCaseRepository.save(newPlagiarismCase);
             plagiarismSubmission.setPlagiarismCase(savedPlagiarismCase);
             // we do not save plagiarism comparison or plagiarism submission directly because due to issues with Cascade_All, it will automatically delete matches and re-add them
             // we actually use a custom modifying query to avoid all issues with Cascade ALL
             plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismSubmission.getId(), savedPlagiarismCase);
+            return savedPlagiarismCase;
         }
     }
 

@@ -72,3 +72,16 @@ jhi-learning-path-graph-node:hover {
     display: block;
     max-width: 40vw;
 }
+
+.legend {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    margin-right: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.legend-wrapper {
+    background: var(--bs-body-bg);
+    border-radius: 5px;
+}

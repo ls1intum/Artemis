@@ -1,27 +1,27 @@
 .. _pyris-setup:
 
 Pyris Setup Guide
-=================
+-----------------
 
 .. contents::
 
 Prerequisites
----------------------
+^^^^^^^^^^^^^
 
 - A server/VM or local machine
 - Docker installed on the machine
 
 Installation Steps
--------------------------
+^^^^^^^^^^^^^^^^^^
 
 Create a Directory for Pyris Deployment
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""""""""""""
 
 Create a directory where you will deploy Pyris. For example, you can create a directory at ``/opt/pyris`` on the machine.
 For local development, you can create a directory at ``~/pyris``.
 
 Clone the Pyris Repository
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""
 
 To get started with Pyris, you need to clone the Pyris repository (``https://github.com/ls1intum/Pyris``) into a
 directory on your machine. For example, you can clone the repository into a folder called ``Pyris`` in the directory
@@ -29,7 +29,7 @@ you created in the previous step.
 E.g.: ``git clone https://github.com/ls1intum/Pyris.git Pyris``
 
 Create an Application Configuration File
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""""
 
 Create an ``application.yml`` file using the provided ``application.example.yml`` in the Pyris repository as a base.
 E.g.: ``cp Pyris/application.example.yml application.yml``
@@ -67,7 +67,7 @@ Now you need to configure the ``application.yml`` file. Here is an example confi
                     token: <token>
 
 Create Environment Variables File
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""""""""
 
 Create a ``.env`` file containing the following variables:
 
@@ -77,7 +77,7 @@ Create a ``.env`` file containing the following variables:
 - ``NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH``: The absolute path to the SSL certificate key to use. Defaults to self-signed certificates. For production, you should use a valid SSL certificate. For local development, you an ignore this variable.
 
 Start Pyris
-^^^^^^^^^^^
+"""""""""""
 
 You can now start Pyris using the following command:
 

@@ -184,11 +184,6 @@
                     "name": "Name",
                     "login": "Login",
                     "progress": "Progress"
-                },
-                "progressNav": {
-                    "header": "Learning Path",
-                    "refresh": "Refresh",
-                    "center": "Center view"
                 }
             },
             "sideBar": {
@@ -201,6 +196,35 @@
                 "noTaskSelected": "Currently you have no lecture unit or exercise selected.",
                 "prevHint": "Go to previous recommendation",
                 "nextHint": "Go to next recommendation"
+            },
+            "graph": {
+                "progressNav": {
+                    "header": "Learning Path",
+                    "refresh": "Refresh",
+                    "center": "Center view"
+                },
+                "legend": {
+                    "competencyEnd": {
+                        "title": "Competency end",
+                        "tooltip": "This is the end of a competency. The nodes between the competency start and end help you to master this competency."
+                    },
+                    "matchStart": {
+                        "title": "Branch",
+                        "tooltip": "It's up to you with which competency you're going to continue. The competencies have been defined as equivalent by your instructor, i.e. mastering one of the competencies is sufficient."
+                    },
+                    "matchEnd": {
+                        "title": "Convergence",
+                        "tooltip": "Here the different competencies join again. The competencies have been defined as equivalent by your instructor, i.e. mastering one of the competencies is sufficient."
+                    },
+                    "learningObject": {
+                        "title": "Pending lecture unit / exercise",
+                        "tooltip": "A lecture unit or exercise that has not been sufficiently solved."
+                    },
+                    "completedLearningObject": {
+                        "title": "Completed lecture unit / exercise",
+                        "tooltip": "A lecture unit or exercise that has been sufficiently solved."
+                    }
+                }
             }
         }
     }

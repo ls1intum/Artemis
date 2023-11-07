@@ -1,23 +1,25 @@
 {
     "artemisApp": {
         "documentationLinks": {
-            "course": "Go to the documentation for courses.",
-            "lecture": "Go to the documentation for lectures.",
-            "exercise": "Go to the documentation for exercises.",
-            "quiz": "Go to the documentation for quizzes.",
-            "model": "Go to the documentation for modelling exercises.",
-            "programming": "Go to the documentation for programming exercises.",
-            "text": "Go to the documentation for text exercises.",
-            "fileupload": "Go to the documentation for file upload exercises.",
-            "notifications": "Go to the documentation for notifications.",
-            "competencies": "Go to the documentation for competencies.",
-            "communications": "Go to the documentation for communications.",
-            "exams": "Go to the documentation for exams.",
-            "plagiarismchecks": "Go to the documentation for plagiarism checks.",
-            "grading": "Go to the documentation for grading.",
-            "units": "Go to the documentation for lecture units.",
-            "assessment": "Go to the documentation for assessments.",
-            "statistics": "Go to the documentation for statistics."
+            "prefix": "Open the documentation for ",
+            "course": "courses.",
+            "lecture": "lectures.",
+            "exercise": "exercises.",
+            "quiz": "quizzes.",
+            "model": "modelling exercises.",
+            "programming": "programming exercises.",
+            "text": "text exercises.",
+            "fileupload": "file upload exercises.",
+            "notifications": "notifications.",
+            "competencies": "competencies.",
+            "communications": "communications.",
+            "exams": "exams.",
+            "plagiarismchecks": "plagiarism checks.",
+            "grading": "grading.",
+            "units": "lecture units.",
+            "assessment": "assessments.",
+            "statistics": "statistics.",
+            "suspiciousbehavior": "suspicious behavior."
         }
     }
 }

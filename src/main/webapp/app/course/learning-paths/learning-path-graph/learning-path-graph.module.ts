@@ -8,6 +8,7 @@ import { ExerciseNodeDetailsComponent } from 'app/course/learning-paths/learning
 import { LectureUnitNodeDetailsComponent } from 'app/course/learning-paths/learning-path-graph/node-details/lecture-unit-node-details.component';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
 import { LearningPathComponent } from 'app/course/learning-paths/learning-path-graph/learning-path.component';
+import { LearningPathLegendComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-legend.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, NgxGraphModule, ArtemisCompetenciesModule],
@@ -18,6 +19,7 @@ import { LearningPathComponent } from 'app/course/learning-paths/learning-path-g
         ExerciseNodeDetailsComponent,
         LectureUnitNodeDetailsComponent,
         LearningPathComponent,
+        LearningPathLegendComponent,
     ],
     exports: [LearningPathGraphComponent, LearningPathComponent],
 })

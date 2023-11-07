@@ -29,9 +29,10 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("""
-                    SELECT r
-                    FROM Result r LEFT JOIN FETCH r.assessor
-                    WHERE r.id = :resultId
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.assessor
+            WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerAssessor(@Param("resultId") Long resultId);
 
@@ -53,23 +54,27 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return a list of results.
      */
     @Query("""
-            select distinct r from Result r left join fetch r.feedbacks
-            where r.completionDate =
-                (select max(rr.completionDate) from Result rr
-                    where rr.assessmentType = 'AUTOMATIC'
-                    and rr.participation.exercise.id = :exerciseId
-                    and rr.participation.student.id = r.participation.student.id)
-                and r.participation.exercise.id = :exerciseId
-                and r.participation.student.id IS NOT NULL
-            order by r.completionDate asc
+            SELECT DISTINCT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
+            WHERE r.completionDate =
+                (SELECT max(rr.completionDate) FROM Result rr
+                    WHERE rr.assessmentType = 'AUTOMATIC'
+                        AND rr.participation.exercise.id = :exerciseId
+                        AND rr.participation.student.id = r.participation.student.id
+                )
+                AND r.participation.exercise.id = :exerciseId
+                AND r.participation.student.id IS NOT NULL
+            ORDER BY r.completionDate ASC
               """)
     List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = "feedbacks")
-    Optional<Result> findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(Long participationId);
+    @EntityGraph(type = LOAD, attributePaths = { "feedbacks", "feedbacks.testCase" })
+    Optional<Result> findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
-    Optional<Result> findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(Long participationId);
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
+    Optional<Result> findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
@@ -83,14 +88,16 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("""
             SELECT r FROM Result r
-            LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
 
     @Query("""
             SELECT r FROM Result r
-                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.feedbacks f
+                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH r.assessor
             WHERE r.id = :resultId
             """)
@@ -638,15 +645,15 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId, boolean withSubmission) {
         if (withSubmission) {
-            return findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+            return findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
         }
         else {
-            return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+            return findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
         }
     }
 
     default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
-        return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId)
+        return findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Result by participationId", participationId));
     }
 

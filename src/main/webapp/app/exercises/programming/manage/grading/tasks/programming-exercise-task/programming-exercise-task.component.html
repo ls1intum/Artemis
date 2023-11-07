@@ -61,7 +61,7 @@
                 <span class="task__field">{{ task.resultingPoints }}P ({{ task.resultingPointsPercent }}%)</span>
             </div>
             <div class="task__row__cell">
-                <span class="task__field">{{ 'artemisApp.programmingExerciseTestCase.type.' + (task.type ?? 'MIXED') | artemisTranslate }}</span>
+                <span class="task__field">{{ 'artemisApp.programmingExerciseTestCase.type.' + (task.type ?? 'DEFAULT') | artemisTranslate }}</span>
             </div>
             <div class="task__row__cell">
                 <jhi-test-case-passed-builds-chart class="w-100" [testCaseStats]="task.stats" [totalParticipations]="numParticipations"></jhi-test-case-passed-builds-chart>
@@ -102,7 +102,7 @@
                 <span class="task__field">{{ test.resultingPoints }}P ({{ test.resultingPointsPercent }}%)</span>
             </div>
             <div class="task__row__cell">
-                <span class="task__field">{{ 'artemisApp.programmingExerciseTestCase.type.' + test.type | artemisTranslate }}</span>
+                <span class="task__field">{{ 'artemisApp.programmingExerciseTestCase.type.' + (test.type ?? 'DEFAULT') | artemisTranslate }}</span>
             </div>
             <div class="task__row__cell">
                 <jhi-test-case-passed-builds-chart class="w-100" [testCaseStats]="test.testCaseStats" [totalParticipations]="numParticipations"></jhi-test-case-passed-builds-chart>

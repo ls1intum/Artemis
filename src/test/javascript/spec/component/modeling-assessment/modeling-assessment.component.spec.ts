@@ -80,32 +80,32 @@ describe('ModelingAssessmentComponent', () => {
     };
 
     const mockModel = generateMockModel('elementId1', 'elementId2', 'relationshipId');
-    const mockFeedbackWithReference = {
+    const mockFeedbackWithReference: Feedback = {
         text: 'FeedbackWithReference',
         referenceId: 'relationshipId',
         reference: 'reference',
         credits: 30,
         correctionStatus: 'CORRECT',
-    } as Feedback;
-    const mockFeedbackWithReferenceCopied = {
+    };
+    const mockFeedbackWithReferenceCopied: Feedback = {
         text: 'FeedbackWithReference Copied',
         referenceId: 'relationshipId',
         reference: 'reference',
         credits: 35,
         copiedFeedbackId: 12,
-    } as Feedback;
-    const mockFeedbackWithoutReference = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
-    const mockFeedbackInvalid = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE };
+    };
+    const mockFeedbackWithoutReference: Feedback = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED };
+    const mockFeedbackInvalid: Feedback = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE };
     const mockValidFeedbacks = [mockFeedbackWithReference, mockFeedbackWithoutReference];
     const mockFeedbacks = [...mockValidFeedbacks, mockFeedbackInvalid];
 
-    const mockFeedbackWithGradingInstruction = {
+    const mockFeedbackWithGradingInstruction: Feedback = {
         text: 'FeedbackWithGradingInstruction',
         referenceId: 'relationshipId',
         reference: 'reference',
         credits: 30,
         gradingInstruction: new GradingInstruction(),
-    } as Feedback;
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({

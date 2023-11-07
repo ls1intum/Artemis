@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.CompetencyService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -131,7 +132,8 @@ public class CompetencyResource {
     }
 
     /**
-     * GET /courses/:courseId/competencies/:competencyId : gets the competency with the specified id
+     * GET /courses/:courseId/competencies/:competencyId : gets the competency with the specified id including its related exercises and lecture units
+     * This method also calculates the user progress
      *
      * @param competencyId the id of the competency to retrieve
      * @param courseId     the id of the course to which the competency belongs
@@ -140,21 +142,18 @@ public class CompetencyResource {
     @GetMapping("/courses/{courseId}/competencies/{competencyId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Competency> getCompetency(@PathVariable Long competencyId, @PathVariable Long courseId) {
-        log.debug("REST request to get Competency : {}", competencyId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        log.info("REST request to get Competency : {}", competencyId);
+        long start = System.nanoTime();
+        var currentUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
+        var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(competencyId, currentUser.getId());
         checkAuthorizationForCompetency(Role.STUDENT, course, competency);
 
-        competency.setUserProgress(competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, user.getId()).map(Set::of).orElse(Set.of()));
-        // Set completion status and remove exercise units (redundant as we also return all exercises)
-        competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
-                .filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)).map(lectureUnit -> {
-                    lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
-                    return lectureUnit;
-                }).collect(Collectors.toSet()));
-        competency
-                .setExercises(competency.getExercises().stream().filter(exercise -> authorizationCheckService.isAllowedToSeeExercise(exercise, user)).collect(Collectors.toSet()));
+        competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, currentUser))
+                .peek(lectureUnit -> lectureUnit.setCompleted(lectureUnit.isCompletedFor(currentUser))).collect(Collectors.toSet()));
+        competency.setExercises(
+                competency.getExercises().stream().filter(exercise -> authorizationCheckService.isAllowedToSeeExercise(exercise, currentUser)).collect(Collectors.toSet()));
+        log.info("getCompetency took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().body(competency);
     }
 
@@ -173,7 +172,7 @@ public class CompetencyResource {
             throw new BadRequestException();
         }
         var course = courseRepository.findByIdElseThrow(courseId);
-        var existingCompetency = this.competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
+        var existingCompetency = competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, existingCompetency);
 
         existingCompetency.setTitle(competency.getTitle());

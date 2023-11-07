@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChildren, ViewEncapsulation } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -17,6 +17,7 @@ import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { faExclamationCircle, faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manage/re-evaluate/drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -27,6 +28,9 @@ import { faExclamationCircle, faExclamationTriangle, faUndo } from '@fortawesome
 })
 export class QuizReEvaluateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, OnDestroy {
     private subscription: Subscription;
+
+    @ViewChildren(ReEvaluateDragAndDropQuestionComponent)
+    reEvaluateDragAndDropQuestionComponents: ReEvaluateDragAndDropQuestionComponent[];
 
     modalService: NgbModal;
     popupService: QuizExercisePopupService;
@@ -42,14 +46,14 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     constructor(
         private quizExerciseService: QuizExerciseService,
         private route: ActivatedRoute,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private modalServiceC: NgbModal,
         private quizExercisePopupService: QuizExercisePopupService,
         public changeDetector: ChangeDetectorRef,
         private navigationUtilService: ArtemisNavigationUtilService,
+        dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
     ) {
-        super();
+        super(dragAndDropQuestionUtil, shortAnswerQuestionUtil);
     }
 
     ngOnInit(): void {
@@ -106,7 +110,13 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
      *  -> if canceled: close Modal
      */
     save(): void {
-        this.popupService.open(QuizReEvaluateWarningComponent as Component, this.quizExercise).then((res) => {
+        const files = new Map<string, File>();
+        for (const component of this.reEvaluateDragAndDropQuestionComponents) {
+            component.fileMap.forEach((value, filename) => {
+                files.set(filename, value.file);
+            });
+        }
+        this.popupService.open(QuizReEvaluateWarningComponent as Component, this.quizExercise, files).then((res) => {
             res.result.then(() => {
                 this.savedEntity = cloneDeep(this.quizExercise);
             });

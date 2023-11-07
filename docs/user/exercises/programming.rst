@@ -112,6 +112,9 @@ Its main features are
 
 **For more information see** `Ares GitHub <https://github.com/ls1intum/Ares>`__
 
+
+.. _best_practices_for_test_cases:
+
 Best practices for writing test cases
 -------------------------------------
 

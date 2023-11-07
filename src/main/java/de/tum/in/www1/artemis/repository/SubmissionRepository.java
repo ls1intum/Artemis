@@ -365,7 +365,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("""
             SELECT DISTINCT submission FROM Submission submission
             LEFT JOIN FETCH submission.results r
-            LEFT JOIN FETCH r.feedbacks
+            LEFT JOIN FETCH r.feedbacks f
+            LEFT JOIN FETCH f.testCase
             LEFT JOIN FETCH r.assessor
             WHERE submission.id = :#{#submissionId}
             """)

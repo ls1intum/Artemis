@@ -1,13 +1,13 @@
-.. _programming-exercises:
+.. _programming_exercises:
 
-Programming Exercise adjustments
+Programming Exercise Adjustments
 --------------------------------
 
 There are several variables that can be configured when using programming exercises.
 They are presented in this separate section to keep the 'normal' setup guide shorter.
 
 
-Path variables
+Path Variables
 ^^^^^^^^^^^^^^
 
 There are variables for several paths:
@@ -56,8 +56,7 @@ it is loaded from the classpath (e.g. the ``.war`` archive).
 
 We plan to make other folders configurable as well, but this is not supported yet.
 
-
-Jenkins template
+Jenkins Template
 """"""""""""""""
 
 The build process in Jenkins is stored in a ``config.xml``-file (in ``src/main/resources/templates/jenkins/``).

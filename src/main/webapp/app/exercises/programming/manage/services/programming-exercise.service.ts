@@ -214,10 +214,14 @@ export class ProgrammingExerciseService {
     /**
      * Finds the programming exercise for the given exerciseId
      * @param programmingExerciseId of the programming exercise to retrieve
+     * @param withPlagiarismDetectionConfig true if plagiarism detection context should be fetched with the exercise
      */
-    find(programmingExerciseId: number): Observable<EntityResponseType> {
+    find(programmingExerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
         return this.http
-            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, { observe: 'response' })
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}`, {
+                observe: 'response',
+                params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig },
+            })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 

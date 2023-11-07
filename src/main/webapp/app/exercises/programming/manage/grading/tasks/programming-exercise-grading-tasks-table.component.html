@@ -125,7 +125,7 @@
         <button
             type="button"
             class="task__row__cell sort__button"
-            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.type' | artemisTranslate"
+            [ngbTooltip]="exercise.programmingLanguage === 'JAVA' ? ('artemisApp.programmingExercise.configureGrading.help.type' | artemisTranslate) : undefined"
             placement="bottom auto"
             (click)="changeSort('type')"
         >

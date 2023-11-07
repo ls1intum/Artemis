@@ -373,10 +373,14 @@ export class ExerciseAPIRequests {
         } else {
             newQuizExercise = Object.assign({}, quizExercise, body);
         }
+
+        const formData = new FormData();
+        formData.append('exercise', new File([JSON.stringify(newQuizExercise)], 'exercise', { type: 'application/json' }));
+
         return cy.request({
             url: QUIZ_EXERCISE_BASE,
             method: POST,
-            body: newQuizExercise,
+            body: formData,
         });
     }
 

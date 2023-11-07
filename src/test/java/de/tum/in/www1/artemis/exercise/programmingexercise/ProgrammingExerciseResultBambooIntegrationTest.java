@@ -150,11 +150,21 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCorrectlyNotifyStudentsAboutNewResults() throws Exception {
+        var exercise = programmingExerciseResultTestService.getProgrammingExercise();
+        var planKey = (exercise.getProjectKey() + "-" + TEST_PREFIX + "student1").toUpperCase();
+        var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, planKey, null, null, List.of("test1", "test2"),
+                List.of("test3", "test4"), List.of());
+        programmingExerciseResultTestService.shouldCorrectlyNotifyStudentsAboutNewResults(notification, websocketMessagingService);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldRemoveTestCaseNamesFromWebsocketNotification() throws Exception {
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
         var planKey = (exercise.getProjectKey() + "-" + TEST_PREFIX + "student1").toUpperCase();
-        var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, planKey, null, null, List.of("test1", "test2"), List.of("test3"),
-                List.of());
-        programmingExerciseResultTestService.shouldCorrectlyNotifyStudentsAboutNewResults(notification, websocketMessagingService);
+        var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, planKey, null, null, List.of("test1", "test2"),
+                List.of("test3", "test4"), List.of());
+        programmingExerciseResultTestService.shouldRemoveTestCaseNamesFromWebsocketNotification(notification, websocketMessagingService);
     }
 }

@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
@@ -100,10 +101,8 @@ public abstract class PostingService {
             websocketMessagingService.sendMessage(specificTopicName, postDTO);
         }
         else if (postConversation != null) {
-            String conversationTopicName = genericTopicName + "/conversations/" + postConversation.getId();
-
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
-                websocketMessagingService.sendMessage(conversationTopicName, postDTO);
+                websocketMessagingService.sendMessage(genericTopicName, postDTO);
             }
             else {
                 if (recipients == null) {
@@ -111,7 +110,7 @@ public abstract class PostingService {
                     recipients = conversationParticipantRepository.findConversationParticipantByConversationId(postConversation.getId()).stream()
                             .map(ConversationParticipant::getUser).collect(Collectors.toSet());
                 }
-                recipients.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), conversationTopicName, postDTO));
+                recipients.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), genericTopicName + "/conversations/" + postConversation.getId(), postDTO));
             }
 
             return;
@@ -185,8 +184,22 @@ public abstract class PostingService {
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        if (!courseRepository.isMessagingEnabled(course.getId())) {
-            throw new BadRequestAlertException("Messaging is not enabled for this course", getEntityName(), "400", true);
+        if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
+            throw new BadRequestAlertException("Communication and messaging is disabled for this course", getEntityName(), "400", true);
+        }
+        return course;
+    }
+
+    protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Long courseId) {
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        return preCheckUserAndCourseForCommunicationOrMessaging(user, course);
+    }
+
+    protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
+            throw new BadRequestAlertException("Communication and messaging is disabled for this course", getEntityName(), "400", true);
         }
         return course;
     }
@@ -200,7 +213,10 @@ public abstract class PostingService {
         // prepares a unique set of userIds that authored the current list of postings
         Set<Long> userIds = new HashSet<>();
         postsInCourse.forEach(post -> {
-            userIds.add(post.getAuthor().getId());
+            // needs to handle posts created by SingleUserNotificationService.notifyUserAboutNewPlagiarismCaseBySystem
+            if (post.getAuthor() != null) {
+                userIds.add(post.getAuthor().getId());
+            }
             post.getAnswers().forEach(answerPost -> userIds.add(answerPost.getAuthor().getId()));
         });
 
@@ -209,14 +225,16 @@ public abstract class PostingService {
         Map<Long, User> authors = userRepository.findAllWithGroupsAndAuthoritiesByIdIn(userIds).stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
 
         // sets respective author role to display user authority icon on posting headers
-        postsInCourse.forEach(post -> {
-            post.setAuthor(authors.get(post.getAuthor().getId()));
-            setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
-            post.getAnswers().forEach(answerPost -> {
-                answerPost.setAuthor(authors.get(answerPost.getAuthor().getId()));
-                setAuthorRoleForPosting(answerPost, answerPost.getCoursePostingBelongsTo());
-            });
-        });
+        postsInCourse.stream()
+                // needs to handle posts created by SingleUserNotificationService.notifyUserAboutNewPlagiarismCaseBySystem
+                .filter(post -> post.getAuthor() != null).forEach(post -> {
+                    post.setAuthor(authors.get(post.getAuthor().getId()));
+                    setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
+                    post.getAnswers().forEach(answerPost -> {
+                        answerPost.setAuthor(authors.get(answerPost.getAuthor().getId()));
+                        setAuthorRoleForPosting(answerPost, answerPost.getCoursePostingBelongsTo());
+                    });
+                });
     }
 
     /**

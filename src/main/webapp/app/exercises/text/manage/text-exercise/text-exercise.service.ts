@@ -69,10 +69,11 @@ export class TextExerciseService implements ExerciseServicable<TextExercise> {
     /**
      * Finds the text exercise of the given exerciseId.
      * @param exerciseId of text exercise of type {number}
+     * @param withPlagiarismDetectionConfig true if plagiarism detection context should be fetched with the exercise
      */
-    find(exerciseId: number): Observable<EntityResponseType> {
+    find(exerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
         return this.http
-            .get<TextExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
+            .get<TextExercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response', params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig } })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

@@ -233,7 +233,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @Override
     public String toString() {
         return "ProgrammingExerciseTestCase{" + "id=" + getId() + ", testName='" + testName + '\'' + ", weight=" + weight + ", active=" + active + ", visibility=" + visibility
-                + ", bonusMultiplier=" + bonusMultiplier + ", bonusPoints=" + bonusPoints + '}';
+                + ", bonusMultiplier=" + bonusMultiplier + ", bonusPoints=" + bonusPoints + ", type=" + type + '}';
     }
 
     /**
@@ -244,8 +244,8 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      */
     public boolean isSuccessful(Result result) {
         return result.getFeedbacks().stream().anyMatch(feedback -> {
-            boolean testNameAreSame = feedback.getText() != null && feedback.getText().equalsIgnoreCase(this.getTestName());
-            return testNameAreSame && Boolean.TRUE.equals(feedback.isPositive());
+            boolean testsAreSame = this.equals(feedback.getTestCase());
+            return testsAreSame && Boolean.TRUE.equals(feedback.isPositive());
         });
     }
 
@@ -256,8 +256,6 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      * @return true if there is no feedback for a given test.
      */
     public boolean wasNotExecuted(Result result) {
-        return result.getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC)
-                .noneMatch(feedback -> feedback.getText() != null && feedback.getText().equalsIgnoreCase(this.getTestName()));
+        return result.getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).noneMatch(feedback -> this.equals(feedback.getTestCase()));
     }
-
 }

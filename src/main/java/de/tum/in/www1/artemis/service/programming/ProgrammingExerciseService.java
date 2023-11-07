@@ -452,7 +452,11 @@ public class ProgrammingExerciseService {
         channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         irisSettingsService.updateIrisSettings(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
+        String problemStatementWithTestNames = updatedProgrammingExercise.getProblemStatement();
+        programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
+        // The returned value should use test case names since it gets send back to the client
+        savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
@@ -531,6 +535,7 @@ public class ProgrammingExerciseService {
             throws EntityNotFoundException {
 
         programmingExercise.setProblemStatement(problemStatement);
+        programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(updatedProgrammingExercise);
@@ -672,10 +677,6 @@ public class ProgrammingExerciseService {
         // Is true if the exercise is released and has at least one result.
         // We can't use the resultService here due to a circular dependency issue.
         return resultRepository.existsByParticipation_ExerciseId(programmingExercise.getId());
-    }
-
-    public ProgrammingExercise save(ProgrammingExercise programmingExercise) {
-        return programmingExerciseRepository.save(programmingExercise);
     }
 
     /**
