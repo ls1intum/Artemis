@@ -40,6 +40,10 @@ export class QuizExerciseComponent extends ExerciseComponent {
     faPlayCircle = faPlayCircle;
     faStopCircle = faStopCircle;
 
+    protected get exercises() {
+        return this.quizExercises;
+    }
+
     constructor(
         public quizExerciseService: QuizExerciseService,
         private accountService: AccountService,

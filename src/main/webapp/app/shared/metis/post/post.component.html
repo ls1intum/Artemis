@@ -33,6 +33,7 @@
                     class="linked-context-information"
                     *ngIf="contextInformation.routerLinkComponents"
                     [routerLink]="contextInformation.routerLinkComponents"
+                    [queryParams]="contextInformation.queryParams"
                     (click)="onNavigateToContext($event)"
                     routerLinkActive="active"
                     >{{ contextInformation.displayName }}:</a
