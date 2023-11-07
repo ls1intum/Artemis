@@ -83,15 +83,15 @@ public class GroupNotificationService {
     /**
      * Auxiliary method to call the correct factory method and start the process to save & sent the notification
      *
-     * @param groups                    is an array of GroupNotificationTypes that should be notified (e.g. STUDENTS, INSTRUCTORS)
-     * @param notificationType          is the discriminator for the factory
-     * @param notificationSubject       is the subject of the notification (e.g. exercise, attachment)
-     * @param typeSpecificInformation   is based on the current use case (e.g. POST -> course, ARCHIVE -> List<String> archiveErrors)
-     * @param author                    is the user who initiated the process of the notifications. Can be null if not specified
-     * @param skipWebSocketNotification whether sending a WS message should be skipped
+     * @param groups                  is an array of GroupNotificationTypes that should be notified (e.g. STUDENTS, INSTRUCTORS)
+     * @param notificationType        is the discriminator for the factory
+     * @param notificationSubject     is the subject of the notification (e.g. exercise, attachment)
+     * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, ARCHIVE -> List<String> archiveErrors)
+     * @param author                  is the user who initiated the process of the notifications. Can be null if not specified
+     * @param onlySave                whether the notification should only be saved and not sent to users
      */
     private void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
-            User author, boolean skipWebSocketNotification) {
+            User author, boolean onlySave) {
         for (GroupNotificationType group : groups) {
             GroupNotification resultingGroupNotification = switch (notificationType) {
                 // Post Types
@@ -118,7 +118,7 @@ public class GroupNotificationService {
                         (String) typeSpecificInformation);
                 default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
             };
-            saveAndSend(resultingGroupNotification, notificationSubject, author, skipWebSocketNotification);
+            saveAndSend(resultingGroupNotification, notificationSubject, author, onlySave);
         }
     }
 
@@ -328,12 +328,12 @@ public class GroupNotificationService {
      * Saves the given notification in database and sends it to the client via websocket.
      * Also starts the process of sending the information contained in the notification via email.
      *
-     * @param notification              that should be saved and sent
-     * @param notificationSubject       which information will be extracted to create the email
-     * @param author                    the author, if set, will not be notified via instant notification.
-     * @param skipWebSocketNotification whether sending a WS message should be skipped. Still sends emails or push notifications if supported by notification type
+     * @param notification        that should be saved and sent
+     * @param notificationSubject which information will be extracted to create the email
+     * @param author              the author, if set, will not be notified via instant notification.
+     * @param onlySave            whether the notification should only be saved and no
      */
-    private void saveAndSend(GroupNotification notification, Object notificationSubject, User author, boolean skipWebSocketNotification) {
+    private void saveAndSend(GroupNotification notification, Object notificationSubject, User author, boolean onlySave) {
         if (LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
             saveExamNotification(notification);
             websocketMessagingService.sendMessage(notification.getTopic(), notification);
@@ -341,9 +341,12 @@ public class GroupNotificationService {
         }
 
         groupNotificationRepository.save(notification);
-        if (!skipWebSocketNotification) {
-            websocketMessagingService.sendMessage(notification.getTopic(), notification);
+
+        if (onlySave) {
+            return;
         }
+
+        websocketMessagingService.sendMessage(notification.getTopic(), notification);
 
         NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
 

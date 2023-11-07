@@ -173,7 +173,7 @@ public class ConversationMessagingService extends PostingService {
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
 
         if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
-            sendAnnouncementEmail(createdMessage, channel, course);
+            saveAnnouncementNotification(createdMessage, channel, course);
         }
     }
 
@@ -372,7 +372,7 @@ public class ConversationMessagingService extends PostingService {
      * @param channel announcement channel the message belongs to
      * @param course  course the channel belongs to
      */
-    private void sendAnnouncementEmail(Post message, Channel channel, Course course) {
+    private void saveAnnouncementNotification(Post message, Channel channel, Course course) {
         // create post for notification
         Post postForNotification = new Post();
         postForNotification.setId(message.getId());

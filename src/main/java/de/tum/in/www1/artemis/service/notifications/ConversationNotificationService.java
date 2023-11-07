@@ -54,6 +54,7 @@ public class ConversationNotificationService {
     public void notifyAboutNewMessage(Post createdMessage, Set<User> recipients, Course course, Set<User> mentionedUsers) {
         String notificationText;
         String[] placeholders;
+        NotificationType notificationType = NotificationType.CONVERSATION_NEW_MESSAGE;
         String conversationName = createdMessage.getConversation().getHumanReadableNameForReceiver(createdMessage.getAuthor());
 
         // add channel/groupChat/oneToOneChat string to placeholders for notification to distinguish in mobile client
@@ -61,6 +62,7 @@ public class ConversationNotificationService {
             notificationText = NEW_MESSAGE_CHANNEL_TEXT;
             placeholders = new String[] { course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(), channel.getName(),
                     createdMessage.getAuthor().getName(), "channel" };
+            notificationType = NotificationType.NEW_ANNOUNCEMENT_POST;
         }
         else if (createdMessage.getConversation() instanceof GroupChat groupChat) {
             notificationText = NEW_MESSAGE_GROUP_CHAT_TEXT;
@@ -72,7 +74,7 @@ public class ConversationNotificationService {
             placeholders = new String[] { course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(), createdMessage.getAuthor().getName(),
                     conversationName, "oneToOneChat" };
         }
-        var notification = createConversationMessageNotification(course.getId(), createdMessage, NotificationType.CONVERSATION_NEW_MESSAGE, notificationText, true, placeholders);
+        var notification = createConversationMessageNotification(course.getId(), createdMessage, notificationType, notificationText, true, placeholders);
         saveAndSend(notification, createdMessage, course, recipients, mentionedUsers, placeholders);
     }
 
