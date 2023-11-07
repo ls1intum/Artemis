@@ -239,7 +239,7 @@ public class StudentExamResource {
      * @param studentLogin the id of the student exam to find
      * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
      */
-    @PatchMapping("/courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}/attendance-check")
+    @PostMapping("/courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}/attendance-check")
     @EnforceAtLeastInstructor
     public ResponseEntity<ExamAttendanceCheckEventDTO> attendanceCheck(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable String studentLogin,
             @RequestBody(required = false) String message) {
