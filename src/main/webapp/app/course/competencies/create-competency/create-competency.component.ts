@@ -17,7 +17,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     styles: [],
 })
 export class CreateCompetencyComponent implements OnInit {
-    documentationType = DocumentationType.Competencies;
+    readonly documentationType: DocumentationType = 'Competencies';
     competencyToCreate: Competency = new Competency();
     isLoading: boolean;
     courseId: number;
