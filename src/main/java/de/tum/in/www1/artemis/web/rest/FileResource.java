@@ -182,9 +182,10 @@ public class FileResource {
      * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "files/aeolus/templates/{language}/{projectType}", "files/aeolus/templates/{language}" })
+    @GetMapping({ "files/aeolus/templates/{language}/{projectType}", "files/aeolus/templates/{language}/{sequential}" })
     @EnforceAtLeastEditor
-    public ResponseEntity<String> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType) {
+    public ResponseEntity<String> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
+            @PathVariable Optional<Boolean> sequential) {
         log.debug("REST request to get aeolus template for programming language {} and project type {}", language, projectType);
 
         String languagePrefix = language.name().toLowerCase();
