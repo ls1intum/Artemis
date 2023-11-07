@@ -50,9 +50,18 @@ public class LtiResource {
         ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfiguration, registrationToken);
     }
 
+    /**
+     * Handles the HTTP POST request for LTI 1.3 Deep Linking. This endpoint is used for deep linking of LTI links
+     * for exercises within a course. The method populates content items with the provided course and exercise identifiers,
+     * builds a deep linking response, and returns the target link URI in a JSON object.
+     *
+     * @param courseId   The identifier of the course for which the deep linking is being performed.
+     * @param exerciseId The identifier of the exercise to be included in the deep linking response.
+     * @return A ResponseEntity containing a JSON object with the 'targetLinkUri' property set to the deep linking response target link.
+     */
     @PostMapping("/lti13/deep-linking/{courseId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<String> lti13DynamicRegistration(@PathVariable Long courseId, @RequestParam(name = "exerciseId") String exerciseId) {
+    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseId") String exerciseId) {
         ltiDeepLinkingService.populateContentItems(String.valueOf(courseId), exerciseId);
         String targetLink = ltiDeepLinkingService.buildLtiDeepLinkResponse();
 

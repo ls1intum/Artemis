@@ -87,6 +87,17 @@ public class Lti13TokenRetriever {
         }
     }
 
+    /**
+     * Creates a signed JWT for LTI Deep Linking using a specific client registration ID and a set of custom claims.
+     * The JWT is signed using the RSA algorithm with SHA-256.
+     *
+     * @param clientRegistrationId The client registration ID associated with the JWK to be used for signing the JWT.
+     * @param customClaims         A map of custom claims to be included in the JWT. These claims are additional data
+     *                                 that the consuming service may require.
+     * @return A serialized signed JWT as a String.
+     * @throws IllegalArgumentException If no JWK could be retrieved for the provided client registration ID.
+     * @throws JOSEException            If there is an error creating the RSA key pair or signing the JWT.
+     */
     public String createDeepLinkingJWT(String clientRegistrationId, Map<String, Object> customClaims) {
         JWK jwk = oAuth2JWKSService.getJWK(clientRegistrationId);
 

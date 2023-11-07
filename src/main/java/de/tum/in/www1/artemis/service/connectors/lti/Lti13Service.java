@@ -341,6 +341,13 @@ public class Lti13Service {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);
     }
 
+    /**
+     * Initiates the deep linking process for a course based on the provided LTI ID token and client registration ID.
+     *
+     * @param ltiIdToken           The ID token containing the deep linking information.
+     * @param clientRegistrationId The client registration ID of the LTI platform.
+     * @throws BadRequestAlertException if the course is not found or LTI is not configured for the course.
+     */
     public void startDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId) {
 
         String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);

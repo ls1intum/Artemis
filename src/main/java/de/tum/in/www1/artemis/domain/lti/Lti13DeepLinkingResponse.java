@@ -9,6 +9,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+/**
+ * Represents the LTI 1.3 Deep Linking Response.
+ * It encapsulates the necessary information to construct a valid deep linking response
+ * according to the LTI 1.3 specification.
+ */
 public class Lti13DeepLinkingResponse {
 
     @JsonProperty("aud")
@@ -50,6 +55,12 @@ public class Lti13DeepLinkingResponse {
     public Lti13DeepLinkingResponse() {
     }
 
+    /**
+     * Constructs an Lti13DeepLinkingResponse from an OIDC ID token and client registration ID.
+     *
+     * @param ltiIdToken           the OIDC ID token
+     * @param clientRegistrationId the client registration ID
+     */
     public Lti13DeepLinkingResponse(OidcIdToken ltiIdToken, String clientRegistrationId) {
         this.deepLinkingSettings = JsonParser.parseString(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS).toString()).getAsJsonObject();
         this.setReturnUrl(this.deepLinkingSettings.get("deep_link_return_url").getAsString());
@@ -66,6 +77,11 @@ public class Lti13DeepLinkingResponse {
         this.setLtiVersion("1.3.0");
     }
 
+    /**
+     * Retrieves a map of claims to be included in the ID token.
+     *
+     * @return a map of claims
+     */
     public Map<String, Object> getClaims() {
         Map<String, Object> claims = new HashMap<>();
 
