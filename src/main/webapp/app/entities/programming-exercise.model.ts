@@ -77,7 +77,7 @@ export class ProgrammingExercise extends Exercise {
     public solutionParticipation?: SolutionProgrammingExerciseParticipation;
     public testRepositoryUrl?: string;
     public publishBuildPlanUrl?: boolean;
-    public customizeBuildPlanWithAeolus?: boolean = false;
+    public customizeBuildPlanWithAeolus?: boolean;
     public allowOnlineEditor?: boolean;
     public staticCodeAnalysisEnabled?: boolean;
     /**

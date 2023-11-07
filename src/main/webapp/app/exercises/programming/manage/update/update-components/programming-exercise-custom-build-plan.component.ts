@@ -16,8 +16,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnInit {
 
     protected readonly ProjectType = ProjectType;
 
-    protected code: string = '#!/bin/bash\n\n# Add your custom build plan here\n\nexit 0';
-    protected active?: BuildAction = undefined;
+    code: string = '#!/bin/bash\n\n# Add your custom build plan here\n\nexit 0';
+    active?: BuildAction = undefined;
 
     private _editor?: AceEditorComponent;
 
@@ -51,7 +51,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnInit {
         return action instanceof ScriptAction;
     }
 
-    protected changeActiveAction(action: string): void {
+    changeActiveAction(action: string): void {
         if (!this.programmingExercise.windFile) {
             return;
         }
@@ -83,7 +83,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnInit {
         return this.active instanceof ScriptAction;
     }
 
-    protected deleteAction(action: string): void {
+    deleteAction(action: string): void {
         if (this.programmingExercise.windFile) {
             this.programmingExercise.windFile.actions = this.programmingExercise.windFile.actions.filter((a) => a.name !== action);
             if (this.active?.name === action) {
@@ -93,7 +93,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnInit {
         }
     }
 
-    protected addAction(action: string): void {
+    addAction(action: string): void {
         if (this.programmingExercise.windFile) {
             const newAction = new ScriptAction();
             newAction.script = '#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0';
