@@ -111,8 +111,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private static final String INSTRUCTOR_OF_COURSE = TEST_PREFIX + "instructor1";
 
-    private User studentNotInCourse;
-
     @BeforeEach
     void enableLearningPathsFeatureToggle() {
         featureToggleService.enableFeature(Feature.LearningPaths);
@@ -128,16 +126,22 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
 
         // Add users that are not in the course
-        studentNotInCourse = userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1337");
 
         course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).get(0);
         competencies = competencyUtilService.createCompetencies(course, 5);
 
+        // set threshold to 60, 70, and 80 respectively
+        for (int i = 0; i < competencies.length; i++) {
+            competencies[i] = competencyUtilService.updateMasteryThreshold(competencies[i], 60 + i * 10);
+        }
+
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, past(1), future(1), future(2));
         List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, STUDENT_OF_COURSE);
+        competencyUtilService.linkExerciseToCompetency(competencies[1], textExercise);
 
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");
@@ -146,6 +150,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         textUnit = lectureUtilService.createTextUnit();
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(textUnit));
+        competencyUtilService.linkLectureUnitToCompetency(competencies[2], textUnit);
 
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         lectureUnitService.setLectureUnitCompletion(textUnit, student, true);
@@ -469,7 +474,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void getLearningPathId() throws Exception {
+    void testGetLearningPathId() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
@@ -479,7 +484,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Test
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void getLearningPathIdNotExisting() throws Exception {
+    void testGetLearningPathIdNotExisting() throws Exception {
         course.setLearningPathsEnabled(true);
         course = courseRepository.save(course);
         var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
@@ -487,6 +492,35 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         learningPathRepository.deleteAll(student.getLearningPaths());
         final var result = request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.OK, Long.class);
         assertThat(result).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetCompetencyProgressForLearningPathByOtherStudent() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId() + "/competency-progress", HttpStatus.FORBIDDEN, Set.class);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetCompetencyProgressForLearningPathByOwner() throws Exception {
+        testGetCompetencyProgressForLearningPath();
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testGetCompetencyProgressForLearningPathByInstructor() throws Exception {
+        testGetCompetencyProgressForLearningPath();
+    }
+
+    void testGetCompetencyProgressForLearningPath() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/competency-progress", HttpStatus.OK, Set.class);
+        assertThat(result).hasSize(5);
     }
 
 }
