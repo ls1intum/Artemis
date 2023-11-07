@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import dayjs from 'dayjs/esm';
+import { DisplayPriority } from 'app/shared/metis/metis.util';
 
 @Component({
     selector: 'jhi-posting-thread',
@@ -16,4 +17,6 @@ export class PostingThreadComponent {
     @Input() isCommunicationPage?: boolean;
     @Input() hasChannelModerationRights = false;
     @Output() openThread = new EventEmitter<Post>();
+
+    protected readonly DisplayPriority = DisplayPriority;
 }

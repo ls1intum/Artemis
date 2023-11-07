@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency, CompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
+import { Competency, CompetencyProgress, getConfidence, getIcon, getIconTooltip, getMastery, getProgress } from 'app/entities/competency.model';
 import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
@@ -14,10 +14,12 @@ export class CompetencyNodeDetailsComponent implements OnInit {
     @Input() competencyId: number;
     @Input() competency?: Competency;
     @Output() competencyChange = new EventEmitter<Competency>();
-    @Input() competencyProgress?: CompetencyProgress;
-    @Output() competencyProgressChange = new EventEmitter<CompetencyProgress>();
+    @Input() competencyProgress: CompetencyProgress;
 
     isLoading = false;
+
+    protected readonly getIcon = getIcon;
+    protected readonly getIconTooltip = getIconTooltip;
 
     constructor(
         private competencyService: CompetencyService,
@@ -25,7 +27,7 @@ export class CompetencyNodeDetailsComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        if (!this.competency || !this.competencyProgress) {
+        if (!this.competency) {
             this.loadData();
         }
     }
@@ -34,32 +36,22 @@ export class CompetencyNodeDetailsComponent implements OnInit {
         this.competencyService.findById(this.competencyId!, this.courseId!).subscribe({
             next: (resp) => {
                 this.competency = resp.body!;
-                if (this.competency.userProgress?.length) {
-                    this.competencyProgress = this.competency.userProgress.first()!;
-                } else {
-                    this.competencyProgress = { progress: 0, confidence: 0 } as CompetencyProgress;
-                }
                 this.isLoading = false;
                 this.competencyChange.emit(this.competency);
-                this.competencyProgressChange.emit(this.competencyProgress);
             },
             error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
         });
     }
 
     get progress(): number {
-        return Math.round(this.competencyProgress?.progress ?? 0);
+        return getProgress(this.competencyProgress!);
     }
 
     get confidence(): number {
-        return Math.min(Math.round(((this.competencyProgress?.confidence ?? 0) / (this.competency?.masteryThreshold ?? 100)) * 100), 100);
+        return getConfidence(this.competencyProgress!, this.competency!.masteryThreshold!);
     }
 
     get mastery(): number {
-        const weight = 2 / 3;
-        return Math.round((1 - weight) * this.progress + weight * this.confidence);
+        return getMastery(this.competencyProgress!, this.competency!.masteryThreshold!);
     }
-
-    protected readonly getIcon = getIcon;
-    protected readonly getIconTooltip = getIconTooltip;
 }

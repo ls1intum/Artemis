@@ -79,20 +79,6 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     }
 
     /**
-     * changes the state of the displayPriority property on a post to ARCHIVED by invoking the metis service,
-     * in case the displayPriority is already set to ARCHIVED, it will be changed to NONE
-     */
-    toggleArchive() {
-        if (this.displayPriority === DisplayPriority.ARCHIVED) {
-            this.displayPriority = DisplayPriority.NONE;
-        } else {
-            this.displayPriority = DisplayPriority.ARCHIVED;
-        }
-        this.posting.displayPriority = this.displayPriority;
-        this.metisService.updatePostDisplayPriority(this.posting.id!, this.displayPriority).subscribe();
-    }
-
-    /**
      * provides the tooltip for the pin icon dependent on the user authority and the pin state of a posting
      *
      */

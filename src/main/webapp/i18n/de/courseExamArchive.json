@@ -6,8 +6,11 @@
             "archiveCourseSuccess": "Der Kurs wurde archiviert!",
             "archiveExamSuccess": "Die Prüfung wurde archiviert!",
             "archiveSuccessWithWarnings": "Der Archivierungsprozess wurde mit den folgenden Warnungen abgeschlossen:",
-            "archiveCourseError": "Der Kurs konnte nicht archiviert werden",
-            "archiveExamError": "Die Prüfung konnte nicht archiviert werden",
+            "archiveCourseError": {
+                "NOTHING_TO_EXPORT": "Der Kurs '{{ courseName }}' wurde nicht archiviert, da er leer ist.",
+                "DIR_NOT_CREATED": "Der Kurs '{{ courseName }}' konnte nicht archiviert werden: Der Ordner konnte nicht erstellt werden"
+            },
+            "archiveExamError": "Die Prüfung konnte nicht archiviert werden '{{ examName }}': Der Ordner konnte nicht erstellt werden",
             "archiveDownloadError": "Beim Herunterladen des Archivs ist ein Problem aufgetreten",
             "downloadArchive": "Kursarchiv herunterladen",
             "popup": {

@@ -68,7 +68,7 @@ public class ConversationResource extends ConversationManagementResource {
     @GetMapping("/{courseId}/conversations")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ConversationDTO>> getConversationsOfUser(@PathVariable Long courseId) {
-        checkMessagingEnabledElseThrow(courseId);
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);

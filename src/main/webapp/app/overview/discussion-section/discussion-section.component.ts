@@ -1,14 +1,12 @@
-import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import interact from 'interactjs';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { DisplayPriority, PageType, SortDirection, VOTE_EMOJI_ID } from 'app/shared/metis/metis.util';
-import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { combineLatest, map } from 'rxjs';
+import { Subject, combineLatest, map, takeUntil } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
-import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -28,9 +26,21 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     @Input() exercise?: Exercise;
     @Input() lecture?: Lecture;
     @Input() isCommunicationPage?: boolean;
-    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
-    channel: Channel;
 
+    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
+    @ViewChildren('postingThread') messages: QueryList<any>;
+    @ViewChild('itemsContainer') content: ElementRef;
+
+    private ngUnsubscribe = new Subject<void>();
+    private previousScrollDistanceFromTop: number;
+    private page = 1;
+    private readonly pageSize = 50;
+    private totalNumberOfPosts = 0;
+    // as set for the css class '.items-container'
+    private messagesContainerHeight = 700;
+    currentSortDirection = SortDirection.DESCENDING;
+
+    channel: Channel;
     isNotAChannelMember: boolean;
     noChannelAvailable: boolean;
     collapsed = false;
@@ -78,12 +88,18 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             this.createEmptyPost();
             this.resetFormGroup();
         });
-        this.postsSubscription = this.metisService.posts.pipe(map((posts: Post[]) => posts.sort(this.sectionSortFn))).subscribe((posts: Post[]) => {
-            this.posts = posts;
+        this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
+            if (this.content) {
+                this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
+            }
+            this.posts = posts.slice().reverse();
             this.isLoading = false;
             if (this.currentPostId && this.posts.length > 0) {
                 this.currentPost = this.posts.find((post) => post.id === this.currentPostId);
             }
+        });
+        this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
+            this.totalNumberOfPosts = totalNumberOfPosts;
         });
     }
 
@@ -100,107 +116,32 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * sorted on the backend
      */
     onChangeSortDir(): void {
-        switch (this.currentSortDirection) {
-            case undefined: {
-                this.currentSortDirection = SortDirection.ASCENDING;
-                break;
-            }
-            case SortDirection.ASCENDING: {
-                this.currentSortDirection = SortDirection.DESCENDING;
-                break;
-            }
-            default: {
-                this.currentSortDirection = undefined;
-                break;
-            }
-        }
-        this.posts.sort(this.sectionSortFn);
+        this.currentSortDirection = this.currentSortDirection === SortDirection.DESCENDING ? SortDirection.ASCENDING : SortDirection.DESCENDING;
+        this.onSelectContext();
     }
-
-    /**
-     * sorts posts by following criteria
-     * 1. criterion: displayPriority is PINNED -> pinned posts come first
-     * 2. criterion: displayPriority is ARCHIVED  -> archived posts come last
-     * -- in between pinned and archived posts --
-     * 3. criterion (optional): creationDate - if activated by user through the sort arrow -> most recent comes at the end (chronologically from top to bottom)
-     * 4. criterion: if 3'rd criterion was not activated by the user, vote-emoji count -> posts with more vote-emoji counts comes first
-     * 5. criterion: most recent posts comes at the end (chronologically from top to bottom)
-     * @return Post[] sorted array of posts
-     */
-    sectionSortFn = (postA: Post, postB: Post): number => {
-        // 1st criterion
-        if (postA.displayPriority === DisplayPriority.PINNED && postB.displayPriority !== DisplayPriority.PINNED) {
-            return -1;
-        }
-        if (postA.displayPriority !== DisplayPriority.PINNED && postB.displayPriority === DisplayPriority.PINNED) {
-            return 1;
-        }
-
-        // 2nd criterion
-        if (postA.displayPriority === DisplayPriority.ARCHIVED && postB.displayPriority !== DisplayPriority.ARCHIVED) {
-            return 1;
-        }
-        if (postA.displayPriority !== DisplayPriority.ARCHIVED && postB.displayPriority === DisplayPriority.ARCHIVED) {
-            return -1;
-        }
-
-        // 3rd criterion
-        if (this.currentSortDirection) {
-            const comparison = this.sortByDate(postA, postB, this.currentSortDirection);
-            if (comparison !== 0) {
-                return comparison;
-            }
-        }
-
-        // 4th criterion
-        const postAVoteEmojiCount = postA.reactions?.filter((reaction: Reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
-        const postBVoteEmojiCount = postB.reactions?.filter((reaction: Reaction) => reaction.emojiId === VOTE_EMOJI_ID).length ?? 0;
-        if (postAVoteEmojiCount > postBVoteEmojiCount) {
-            return -1;
-        }
-        if (postAVoteEmojiCount < postBVoteEmojiCount) {
-            return 1;
-        }
-
-        // 5th criterion
-        return this.sortByDate(postA, postB, SortDirection.ASCENDING);
-    };
 
     /**
      * Set the channel for the discussion section, either for a lecture or an exercise
      * @param courseId
      */
     setChannel(courseId: number): void {
-        if (this.course?.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.COMMUNICATION_ONLY) {
-            this.metisService.getFilteredPosts({
-                exerciseIds: this.exercise?.id !== undefined ? [this.exercise.id] : undefined,
-                lectureIds: this.lecture?.id !== undefined ? [this.lecture.id] : undefined,
-            });
-            return;
-        }
         const getChannel = () => {
             return {
                 next: (channel: Channel) => {
                     this.channel = channel ?? undefined;
+                    this.resetFormGroup();
+                    this.setFilterAndSort();
 
-                    if (!this.channel && this.course?.courseInformationSharingConfiguration === CourseInformationSharingConfiguration.MESSAGING_ONLY) {
+                    if (!this.channel) {
                         this.noChannelAvailable = true;
                         this.collapsed = true;
                         return;
                     }
 
-                    if (this.channel?.id) {
-                        const contextFilter = { conversationId: this.channel.id };
-                        const channelDTO = new ChannelDTO();
-                        channelDTO.isCourseWide = true;
-                        this.metisService.getFilteredPosts(contextFilter, true, channelDTO);
-                    } else {
-                        const contextFilter = {
-                            exerciseIds: this.exercise?.id ? [this.exercise.id] : undefined,
-                            lectureIds: this.lecture?.id ? [this.lecture.id] : undefined,
-                        };
-                        this.metisService.getFilteredPosts(contextFilter);
-                    }
+                    const channelDTO = new ChannelDTO();
+                    channelDTO.isCourseWide = true;
+                    channelDTO.id = this.channel.id;
+                    this.metisService.getFilteredPosts(this.currentPostContextFilter, true, channelDTO);
 
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -275,21 +216,58 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });
+
+        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
+    }
+
+    handleScrollOnNewMessage = () => {
+        if ((this.posts.length > 0 && this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
+            this.scrollToBottomOfMessages();
+        }
+    };
+
+    scrollToBottomOfMessages() {
+        if (this.content?.nativeElement) {
+            this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+        }
+    }
+
+    fetchNextPage() {
+        const morePostsAvailable = this.posts.length < this.totalNumberOfPosts;
+        if (morePostsAvailable) {
+            this.page += 1;
+            this.commandMetisToFetchPosts();
+        }
+        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollTop + this.pageSize;
+    }
+
+    public commandMetisToFetchPosts(forceUpdate = false) {
+        if (this.currentPostContextFilter) {
+            this.currentPostContextFilter = { ...this.currentPostContextFilter, page: this.page - 1 };
+            this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this.channel);
+        }
     }
 
     /**
      * sets the filter options after receiving user input
      */
     setFilterAndSort(): void {
+        this.page = 1;
+        this.scrollToBottomOfMessages();
         this.currentPostContextFilter = {
             courseId: undefined,
-            exerciseIds: this.exercise?.id ? [this.exercise.id] : undefined,
-            lectureIds: this.lecture?.id ? [this.lecture.id] : undefined,
+            exerciseIds: undefined,
+            lectureIds: undefined,
             conversationId: this.channel?.id,
-            searchText: this.searchText,
+            searchText: this.searchText?.trim(),
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
             filterToOwn: this.formGroup.get('filterToOwn')?.value,
             filterToAnsweredOrReacted: this.formGroup.get('filterToAnsweredOrReacted')?.value,
+            pagingEnabled: true,
+            page: 0,
+            pageSize: this.pageSize,
+            postSortCriterion: PostSortCriterion.CREATION_DATE,
+            sortingOrder: this.currentSortDirection,
         };
     }
 
@@ -317,23 +295,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             filterToAnsweredOrReacted: false,
         });
     }
-
-    /**
-     * helper method which returns the order which posts must be listed
-     * @param postA     first post to compare
-     * @param postB     second post to compare
-     * @param sortDirection ascending or descending
-     * @return number   the order which posts must be listed
-     */
-    sortByDate = (postA: Post, postB: Post, sortDirection: SortDirection): number => {
-        if (Number(postA.creationDate) > Number(postB.creationDate)) {
-            return sortDirection === SortDirection.DESCENDING ? -1 : 1;
-        }
-        if (Number(postA.creationDate) < Number(postB.creationDate)) {
-            return sortDirection === SortDirection.DESCENDING ? 1 : -1;
-        }
-        return 0;
-    };
 
     toggleSendMessage(): void {
         this.shouldSendMessage = !this.shouldSendMessage;
