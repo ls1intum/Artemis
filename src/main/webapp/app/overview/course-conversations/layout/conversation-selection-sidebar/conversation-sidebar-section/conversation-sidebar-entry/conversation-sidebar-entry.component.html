@@ -12,6 +12,9 @@
                 <jhi-group-chat-icon></jhi-group-chat-icon>
             </ng-container>
             {{ conversationService.getConversationName(conversation) }}
+            <ng-container *ngIf="conversationAsChannel?.muted === 'MUTED'">
+                <fa-icon [icon]="faBellSlash" size="xs"></fa-icon>
+            </ng-container>
         </span>
         <span [hidden]="!isConversationUnread">
             <span class="badge bg-info">

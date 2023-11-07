@@ -44,10 +44,18 @@ export abstract class ConversationDto {
     public creator?: ConversationUserDTO;
     public isCreator?: boolean;
     public isFavorite?: boolean;
-
     public isHidden?: boolean;
+    public muted?: Muted;
 
     protected constructor(type: ConversationType) {
         this.type = type;
     }
+}
+
+/**
+ * Muted
+ */
+export enum Muted {
+    MUTED = 'MUTED',
+    UNMUTED = 'UNMUTED',
 }

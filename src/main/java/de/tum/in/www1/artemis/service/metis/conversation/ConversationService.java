@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.Muted;
 import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -389,6 +390,19 @@ public class ConversationService {
     public void switchHiddenStatus(Long conversationId, User requestingUser, Boolean hiddenStatus) {
         ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
         conversationParticipant.setIsHidden(hiddenStatus);
+        conversationParticipantRepository.save(conversationParticipant);
+    }
+
+    /**
+     * Switch the muted status of a conversation for a user
+     *
+     * @param conversationId the id of the conversation
+     * @param requestingUser the user that wants to switch the muted status
+     * @param mutedStatus    the new muted status
+     */
+    public void switchMutedStatus(Long conversationId, User requestingUser, Muted mutedStatus) {
+        var conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
+        conversationParticipant.setMuted(mutedStatus);
         conversationParticipantRepository.save(conversationParticipant);
     }
 

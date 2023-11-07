@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { Conversation, ConversationDto, Muted } from 'app/entities/metis/conversation/conversation.model';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
@@ -116,6 +116,12 @@ export class ConversationService {
         let params = new HttpParams();
         params = params.append('isHidden', isHidden.toString());
         return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/hidden`, null, { observe: 'response', params });
+    }
+
+    changeMutedStatus(courseId: number, conversationId: number, muted: Muted): Observable<HttpResponse<void>> {
+        const params = new HttpParams();
+        params.append('muted', muted.toString());
+        return this.http.post<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/muted`, null, { observe: 'response', params });
     }
 
     checkForUnreadMessages(courseId: number): Observable<HttpResponse<boolean>> {

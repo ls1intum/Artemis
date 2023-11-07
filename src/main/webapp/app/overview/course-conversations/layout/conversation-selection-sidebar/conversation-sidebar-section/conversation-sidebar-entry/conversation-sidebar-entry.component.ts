@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
-import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDto, Muted } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { faEllipsis, faMessage } from '@fortawesome/free-solid-svg-icons';
+import { faBellSlash, faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -29,8 +29,9 @@ import { MetisService } from 'app/shared/metis/metis.service';
 export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
-    hide$ = new Subject<boolean>();
     favorite$ = new Subject<boolean>();
+    hide$ = new Subject<boolean>();
+    muted$ = new Subject<Muted>();
 
     @Input()
     course: Course;
@@ -45,17 +46,22 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     settingsChanged = new EventEmitter<void>();
 
     @Output()
+    conversationFavoriteStatusChange = new EventEmitter<void>();
+
+    @Output()
     conversationHiddenStatusChange = new EventEmitter<void>();
 
     @Output()
-    conversationFavoriteStatusChange = new EventEmitter<void>();
+    conversationMutedStatusChange = new EventEmitter<void>();
 
     conversationAsChannel?: ChannelDTO;
     channelSubTypeReferenceTranslationKey?: string;
     channelSubTypeReferenceRouterLink?: string;
 
     faEllipsis = faEllipsis;
-    faMessage = faMessage;
+    faBellSlash = faBellSlash;
+    //
+
     constructor(
         public conversationService: ConversationService,
         private metisService: MetisService,
@@ -107,6 +113,15 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
             });
     }
     ngOnInit(): void {
+        this.favorite$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((shouldFavorite) => {
+            this.conversationService.changeFavoriteStatus(this.course.id!, this.conversation.id!, shouldFavorite).subscribe({
+                next: () => {
+                    this.conversation.isFavorite = shouldFavorite;
+                    this.conversationFavoriteStatusChange.emit();
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+        });
         this.hide$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((shouldHide) => {
             this.conversationService.changeHiddenStatus(this.course.id!, this.conversation.id!, shouldHide).subscribe({
                 next: () => {
@@ -116,11 +131,11 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         });
-        this.favorite$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((shouldFavorite) => {
-            this.conversationService.changeFavoriteStatus(this.course.id!, this.conversation.id!, shouldFavorite).subscribe({
+        this.muted$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((muted) => {
+            this.conversationService.changeMutedStatus(this.course.id!, this.conversation.id!, muted).subscribe({
                 next: () => {
-                    this.conversation.isFavorite = shouldFavorite;
-                    this.conversationFavoriteStatusChange.emit();
+                    this.conversation.muted = muted;
+                    this.conversationMutedStatusChange.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });

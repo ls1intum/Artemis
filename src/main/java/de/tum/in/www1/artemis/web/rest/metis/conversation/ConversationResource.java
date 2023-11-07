@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.in.www1.artemis.domain.metis.Muted;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -109,6 +110,31 @@ public class ConversationResource extends ConversationManagementResource {
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         conversationService.switchHiddenStatus(conversationId, requestingUser, isHidden);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * POST /api/courses/:courseId/conversations/:conversationId/muted : Updates the muted status of a conversation for the requesting user
+     *
+     * @param courseId
+     * @param conversationId
+     * @param mutedStatus
+     * @return ResponseEntity with status 200 (Ok)
+     */
+    @PostMapping("/{courseId}/conversations/{conversationId}/muted")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> switchMutedStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Muted mutedStatus) {
+        checkMessagingEnabledElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+        switch (mutedStatus) {
+            case MUTED:
+                conversationService.switchMutedStatus(conversationId, requestingUser, Muted.UNMUTED);
+                break;
+            case UNMUTED:
+                conversationService.switchMutedStatus(conversationId, requestingUser, Muted.MUTED);
+                break;
+        }
         return ResponseEntity.ok().build();
     }
 

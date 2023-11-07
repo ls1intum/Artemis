@@ -343,6 +343,10 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         this.onConversationsUpdate([...this.allConversations]);
     }
 
+    onConversationMutedStatusChange() {
+        this.onConversationsUpdate([...this.allConversations]);
+    }
+
     private setDisplayedChannels(channels: ChannelDTO[]): void {
         this.displayedChannelConversations = channels;
         this.displayedGeneralChannels = this.filterChannelsOfType(ChannelSubType.GENERAL);

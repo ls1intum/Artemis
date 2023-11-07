@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipantSettingsView;
+import de.tum.in.www1.artemis.domain.metis.Muted;
 import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -280,6 +281,7 @@ public class ConversationDTOService {
         });
         conversationDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
         conversationDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
+        conversationDTO.setMuted(participantOptional.map(ConversationParticipant::getMuted).orElse(Muted.UNMUTED));
     }
 
     private void setDTOCreatorProperty(User requestingUser, Conversation conversation, ConversationDTO conversationDTO) {
@@ -298,6 +300,7 @@ public class ConversationDTOService {
         conversationDTO.setIsMember(participantOptional.isPresent());
         conversationDTO.setIsFavorite(participantOptional.map(ConversationParticipantSettingsView::isFavorite).orElse(false));
         conversationDTO.setIsHidden(participantOptional.map(ConversationParticipantSettingsView::isHidden).orElse(false));
+        conversationDTO.setMuted(participantOptional.map(ConversationParticipantSettingsView::muted).orElse(Muted.UNMUTED));
         participantOptional.ifPresent(participant -> conversationDTO.setLastReadDate(participant.lastRead()));
 
         conversationDTO.setUnreadMessagesCount(conversationSummary.userConversationInfo().getUnreadMessagesCount());

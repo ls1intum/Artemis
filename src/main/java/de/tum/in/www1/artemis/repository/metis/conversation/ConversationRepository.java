@@ -48,6 +48,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
      * @param userId          the user id the information is related to
      * @return a list of user-related conversation info for the provided conversations
      */
+    // TODO
     @Query("""
              SELECT new de.tum.in.www1.artemis.domain.metis.conversation.UserConversationInfo (
                  conv.id,
