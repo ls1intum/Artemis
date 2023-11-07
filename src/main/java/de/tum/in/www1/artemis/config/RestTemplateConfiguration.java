@@ -81,6 +81,12 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
+    @Profile("aeolus")
+    public RestTemplate aeolusRestTemplate() {
+        return createRestTemplate();
+    }
+
+    @Bean
     @Profile("iris")
     public RestTemplate irisRestTemplate(IrisAuthorizationInterceptor irisAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(irisAuthorizationInterceptor, createRestTemplate());
@@ -146,6 +152,12 @@ public class RestTemplateConfiguration {
     @Bean
     @Profile("iris")
     public RestTemplate shortTimeoutIrisRestTemplate() {
+        return createShortTimeoutRestTemplate();
+    }
+
+    @Bean
+    @Profile("aeolus")
+    public RestTemplate shortTimeoutAeolusRestTemplate() {
         return createShortTimeoutRestTemplate();
     }
 
