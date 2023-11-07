@@ -1,16 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
-import java.net.FileNameMap;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLConnection;
+import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,10 +38,7 @@ import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -57,9 +49,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("/api")
 public class FileResource {
 
-    private final Logger log = LoggerFactory.getLogger(FileResource.class);
-
     private static final int DAYS_TO_CACHE = 1;
+
+    private final Logger log = LoggerFactory.getLogger(FileResource.class);
 
     private final FileService fileService;
 
@@ -114,6 +106,19 @@ public class FileResource {
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
         this.filePathService = filePathService;
+    }
+
+    /**
+     * removes illegal characters and compares the resulting with the original file name
+     * If both are not equal, it throws an exception
+     *
+     * @param filename the filename which is validated
+     */
+    private static void sanitizeFilenameElseThrow(String filename) {
+        String sanitizedFileName = FileService.sanitizeFilename(filename);
+        if (!sanitizedFileName.equals(filename)) {
+            throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
+        }
     }
 
     /**
@@ -182,16 +187,18 @@ public class FileResource {
      * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "files/aeolus/templates/{language}/{projectType}", "files/aeolus/templates/{language}/{sequential}" })
+    @GetMapping({ "files/aeolus/templates/{language}/{projectType}/{staticAnalysis}/{sequentialRuns}/{testCoverage}",
+            "files/aeolus/templates/{language}/{staticAnalysis}/{sequentialRuns}/{testCoverage}" })
     @EnforceAtLeastEditor
     public ResponseEntity<String> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
-            @PathVariable Optional<Boolean> sequential) {
-        log.debug("REST request to get aeolus template for programming language {} and project type {}", language, projectType);
+            @PathVariable Optional<Boolean> staticAnalysis, @PathVariable Optional<Boolean> sequentialRuns, @PathVariable Optional<Boolean> testCoverage) {
+        log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
+                projectType, staticAnalysis, sequentialRuns, testCoverage);
 
         String languagePrefix = language.name().toLowerCase();
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
-        return getAeolusTemplateFileContentWithResponse(languagePrefix, projectTypePrefix);
+        return getAeolusTemplateFileContentWithResponse(languagePrefix, projectTypePrefix, staticAnalysis.orElse(false), sequentialRuns.orElse(false), testCoverage.orElse(false));
     }
 
     /**
@@ -201,9 +208,24 @@ public class FileResource {
      * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @return The requested file, or 404 if the file doesn't exist
      */
-    private ResponseEntity<String> getAeolusTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix) {
+    private ResponseEntity<String> getAeolusTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix, Boolean staticAnalysis, Boolean sequentialRuns,
+            Boolean testCoverage) {
         try {
-            Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", languagePrefix, projectTypePrefix + ".yaml"));
+            List<String> fileNameComponents = new ArrayList<>();
+            if (!projectTypePrefix.isEmpty()) {
+                fileNameComponents.add("default");
+            }
+            if (staticAnalysis) {
+                fileNameComponents.add("static");
+            }
+            if (sequentialRuns) {
+                fileNameComponents.add("sequential");
+            }
+            if (testCoverage) {
+                fileNameComponents.add("coverage");
+            }
+            String fileName = fileNameComponents.stream().reduce("", (a, b) -> a + "_" + b) + ".yaml";
+            Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", languagePrefix, fileName));
             if (!fileResource.exists() || projectTypePrefix.isEmpty()) {
                 // Load without project type if not found with project type
                 fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", languagePrefix, languagePrefix + ".yaml"));
@@ -616,19 +638,6 @@ public class FileResource {
         catch (IOException e) {
             log.error("Failed to return requested file with path {}", filePath, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    /**
-     * removes illegal characters and compares the resulting with the original file name
-     * If both are not equal, it throws an exception
-     *
-     * @param filename the filename which is validated
-     */
-    private static void sanitizeFilenameElseThrow(String filename) {
-        String sanitizedFileName = FileService.sanitizeFilename(filename);
-        if (!sanitizedFileName.equals(filename)) {
-            throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
         }
     }
 
