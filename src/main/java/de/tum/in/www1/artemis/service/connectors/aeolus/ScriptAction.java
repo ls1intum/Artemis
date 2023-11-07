@@ -7,9 +7,6 @@ public class ScriptAction extends Action {
 
     private String script;
 
-    public ScriptAction() {
-    }
-
     public String getScript() {
         return script;
     }

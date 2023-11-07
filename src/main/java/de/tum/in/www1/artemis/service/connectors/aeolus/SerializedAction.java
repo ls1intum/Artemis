@@ -24,9 +24,6 @@ public class SerializedAction {
 
     private Map<String, Object> environment;
 
-    public SerializedAction() {
-    }
-
     public String getName() {
         return name;
     }

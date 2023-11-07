@@ -9,9 +9,6 @@ public class PlatformAction extends Action {
 
     private String type;
 
-    public PlatformAction() {
-    }
-
     public String getKind() {
         return kind;
     }
