@@ -307,6 +307,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         // update the (selected) project type
         this.updateProjectTypeSettings(type);
 
+        console.log('Selected project type: ' + this.programmingExercise.projectType);
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined && !this.isImportFromFile) {
             this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!);
@@ -763,6 +764,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
+        console.log('Loading template for ' + language);
         this.loadAeolusTemplate();
         this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
             next: (file) => {
@@ -1040,7 +1042,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * @private
      */
     private resetCustomBuildPlan() {
-        this.programmingExercise.customizeBuildPlanWithAeolus = false;
         this.programmingExercise.windFile = undefined;
         this.programmingExercise.buildPlanConfiguration = undefined;
         this.buildPlanLoaded = false;
@@ -1052,6 +1053,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * @private
      */
     private loadAeolusTemplate() {
+        this.resetCustomBuildPlan();
         if (!this.programmingExercise.programmingLanguage) {
             return;
         }
@@ -1084,6 +1086,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             actions.push(action);
                         });
                         templateFile.actions = actions;
+                        console.log(templateFile);
                         this.programmingExercise.windFile = templateFile;
                     }
                 },
