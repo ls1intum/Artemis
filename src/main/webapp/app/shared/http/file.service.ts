@@ -38,6 +38,20 @@ export class FileService {
     }
 
     /**
+     * Fetches the aeolus template file for the given programming language
+     * @param {ProgrammingLanguage} language
+     * @param {ProjectType} projectType (if available)
+     * @returns json test file
+     */
+    getAeolusTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType): Observable<string> {
+        const urlParts: string[] = [language];
+        if (projectType) {
+            urlParts.push(projectType);
+        }
+        return this.http.get<string>(`${this.resourceUrl}/aeolus/templates/` + urlParts.join('/'), { responseType: 'text' as 'json' });
+    }
+
+    /**
      * Fetches the template code of conduct
      * @returns markdown file
      */

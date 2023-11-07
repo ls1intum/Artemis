@@ -4,7 +4,16 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, Subject } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingDates } from 'app/entities/programming-exercise.model';
+import {
+    BuildAction,
+    PlatformAction,
+    ProgrammingExercise,
+    ProgrammingLanguage,
+    ProjectType,
+    ScriptAction,
+    WindFile,
+    resetProgrammingDates,
+} from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,6 +39,7 @@ import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.c
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -69,6 +79,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     isSaving: boolean;
     goBackAfterSaving = false;
     problemStatementLoaded = false;
+    buildPlanLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText?: string;
     courseId: number;
@@ -115,11 +126,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public packageNameRequired = true;
     public staticCodeAnalysisAllowed = false;
     public checkoutSolutionRepositoryAllowed = false;
+    public customizeBuildPlanWithAeolus = false;
     public sequentialTestRunsAllowed = false;
     public publishBuildPlanUrlAllowed = false;
     public testwiseCoverageAnalysisSupported = false;
     public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
+    public customBuildPlansSupported = false;
 
     // Additional options for import
     public recreateBuildPlans = false;
@@ -261,6 +274,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.programmingExercise.projectType = this.projectTypes[0];
             this.selectedProjectTypeValue = this.projectTypes[0]!;
             this.withDependenciesValue = false;
+            this.resetCustomBuildPlan();
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -459,6 +473,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         });
 
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.customBuildPlansSupported = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
+        });
         this.defineSupportedProgrammingLanguages();
     }
 
@@ -561,6 +578,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * Saves the programming exercise with the provided input
      */
     saveExercise() {
+        if (this.programmingExercise.customizeBuildPlanWithAeolus) {
+            this.programmingExercise.buildPlanConfiguration = JSON.stringify(this.programmingExercise.windFile);
+        } else {
+            this.programmingExercise.buildPlanConfiguration = undefined;
+            this.programmingExercise.windFile = undefined;
+        }
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
         if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {
             this.programmingExercise.submissionPolicy = undefined;
@@ -739,6 +762,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
+        this.loadAeolusTemplate();
         this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
             next: (file) => {
                 this.programmingExercise.problemStatement = file;
@@ -1010,6 +1034,57 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.selectedProjectType = history.state.programmingExerciseForImportFromFile.projectType;
     }
 
+    /**
+     * In case the programming language or project type changes, we need to reset the template and the build plan
+     * @private
+     */
+    private resetCustomBuildPlan() {
+        this.programmingExercise.customizeBuildPlanWithAeolus = false;
+        this.programmingExercise.windFile = undefined;
+        this.programmingExercise.buildPlanConfiguration = undefined;
+        this.buildPlanLoaded = false;
+    }
+
+    /**
+     * Loads the predefined template for the selected programming language and project type
+     * if there is one available.
+     * @private
+     */
+    private loadAeolusTemplate() {
+        if (!this.programmingExercise.programmingLanguage) {
+            return;
+        }
+        this.fileService.getAeolusTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
+            next: (file) => {
+                if (file && !this.buildPlanLoaded) {
+                    this.buildPlanLoaded = true;
+                    const templateFile: WindFile = JSON.parse(file);
+                    const actions: BuildAction[] = [];
+                    templateFile.actions.forEach((anyAction: any) => {
+                        let action: BuildAction | undefined;
+                        if (anyAction.script) {
+                            action = new ScriptAction();
+                            (action as ScriptAction).script = anyAction.script;
+                        } else {
+                            action = new PlatformAction();
+                            (action as PlatformAction).kind = anyAction.kind;
+                            (action as PlatformAction).parameters = anyAction.parameters;
+                        }
+                        action.name = anyAction.name;
+                        action.run_always = anyAction.run_always;
+                        actions.push(action);
+                    });
+                    templateFile.actions = actions;
+                    this.programmingExercise.windFile = templateFile;
+                }
+            },
+            error: () => {
+                this.programmingExercise.windFile = undefined;
+                this.buildPlanLoaded = true;
+            },
+        });
+    }
+
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
         return {
             isImportFromFile: this.isImportFromFile,
@@ -1021,6 +1096,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
             auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
             checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
+            customBuildPlansSupported: this.customBuildPlansSupported,
             invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
             invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
             titleNamePattern: this.titleNamePattern,
@@ -1059,6 +1135,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             updateTemplate: this.updateTemplate,
             publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
+            buildPlanLoaded: this.buildPlanLoaded,
         };
     }
 }

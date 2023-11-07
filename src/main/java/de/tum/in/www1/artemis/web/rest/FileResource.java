@@ -5,6 +5,7 @@ import java.net.FileNameMap;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
@@ -24,6 +25,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
@@ -165,6 +170,70 @@ public class FileResource {
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
         return getTemplateFileContentWithResponse(languagePrefix, projectTypePrefix);
+    }
+
+    /**
+     * GET /files/aeolus/templates/:language/:projectType : Get the aeolus template file with the given filename<br/>
+     * GET /files/aeolus/templates/:language : Get the aeolus template file with the given filename
+     * <p>
+     * The windfile contains the default build plan configuration for new programming exercises.
+     *
+     * @param language    The programming language for which the aeolus template file should be returned
+     * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
+     * @return The requested file, or 404 if the file doesn't exist
+     */
+    @GetMapping({ "files/aeolus/templates/{language}/{projectType}", "files/aeolus/templates/{language}" })
+    @EnforceAtLeastEditor
+    public ResponseEntity<String> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType) {
+        log.debug("REST request to get aeolus template for programming language {} and project type {}", language, projectType);
+
+        String languagePrefix = language.name().toLowerCase();
+        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
+
+        return getAeolusTemplateFileContentWithResponse(languagePrefix, projectTypePrefix);
+    }
+
+    /**
+     * Returns the file content of the template file for the given language and project type as JSON
+     *
+     * @param languagePrefix    The programming language for which the template file should be returned
+     * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
+     * @return The requested file, or 404 if the file doesn't exist
+     */
+    private ResponseEntity<String> getAeolusTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix) {
+        try {
+            Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", languagePrefix, projectTypePrefix + ".yaml"));
+            if (!fileResource.exists() || projectTypePrefix.isEmpty()) {
+                // Load without project type if not found with project type
+                fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", languagePrefix, languagePrefix + ".yaml"));
+            }
+            byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
+            String yaml = new String(fileContent, StandardCharsets.UTF_8);
+            String json = convertYamlToJson(yaml);
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentType(MediaType.APPLICATION_JSON);
+            return new ResponseEntity<>(json, responseHeaders, HttpStatus.OK);
+        }
+        catch (IOException ex) {
+            log.debug("Error when retrieving aeolus template file : {}", ex.getMessage());
+            HttpHeaders responseHeaders = new HttpHeaders();
+            return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /**
+     * Converts a YAML string to a JSON string for easier communication with the client
+     *
+     * @param yaml YAML string
+     * @return JSON string
+     * @throws JsonProcessingException
+     */
+    private String convertYamlToJson(String yaml) throws JsonProcessingException {
+        ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
+        Object obj = yamlReader.readValue(yaml, Object.class);
+
+        ObjectMapper jsonWriter = new ObjectMapper();
+        return jsonWriter.writeValueAsString(obj);
     }
 
     private ResponseEntity<byte[]> getTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix) {

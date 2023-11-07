@@ -97,6 +97,17 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetAeolusTemplateFile() throws Exception {
+        String javaAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_GRADLE", HttpStatus.OK, String.class);
+        assertThat(javaAeolusTemplate).isNotEmpty();
+        String cTemplate = request.get("/api/files/aeolus/templates/C/GCC", HttpStatus.OK, String.class);
+        assertThat(cTemplate).isNotEmpty();
+        String pythonTemplate = request.get("/api/files/aeolus/templates/PYTHON", HttpStatus.OK, String.class);
+        assertThat(pythonTemplate).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCodeOfConductTemplate() throws Exception {
         var template = request.get("/api/files/templates/code-of-conduct", HttpStatus.OK, String.class);
         assertThat(template).startsWith("<!-- Code of Conduct Template");

@@ -21,4 +21,6 @@ export const ARTEMIS_VERSION_HEADER = 'Content-Version';
 
 export const PROFILE_LOCALVC = 'localvc';
 
+export const PROFILE_LOCALCI = 'localci';
+
 export const PROFILE_LTI = 'lti';

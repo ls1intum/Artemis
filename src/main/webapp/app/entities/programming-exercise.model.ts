@@ -10,6 +10,42 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
 
+export class BuildAction {
+    name: string;
+    run_always: boolean;
+}
+
+export class ScriptAction extends BuildAction {
+    script: string;
+}
+
+export class PlatformAction extends BuildAction {
+    type: string;
+    parameters: Map<string, string | boolean | number>;
+    kind: string;
+}
+
+export class WindMetadata {
+    author: string | any;
+    description: string;
+    id: string;
+    name: string;
+    docker: DockerConfiguration;
+}
+
+export class DockerConfiguration {
+    image: string;
+    tag?: string;
+    volumes: Map<string, string>;
+    parameters: Map<string, string>;
+}
+
+export class WindFile {
+    api: string;
+    metadata: WindMetadata;
+    actions: BuildAction[];
+}
+
 export enum ProgrammingLanguage {
     JAVA = 'JAVA',
     PYTHON = 'PYTHON',
@@ -41,6 +77,7 @@ export class ProgrammingExercise extends Exercise {
     public solutionParticipation?: SolutionProgrammingExerciseParticipation;
     public testRepositoryUrl?: string;
     public publishBuildPlanUrl?: boolean;
+    public customizeBuildPlanWithAeolus?: boolean = false;
     public allowOnlineEditor?: boolean;
     public staticCodeAnalysisEnabled?: boolean;
     /**
@@ -64,6 +101,8 @@ export class ProgrammingExercise extends Exercise {
     public testCasesChanged?: boolean;
 
     public projectType?: ProjectType;
+    public windFile?: WindFile;
+    public buildPlanConfiguration?: string;
 
     public testwiseCoverageEnabled?: boolean;
 

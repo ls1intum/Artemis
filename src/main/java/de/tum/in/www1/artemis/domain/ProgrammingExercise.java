@@ -17,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
@@ -28,6 +30,8 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusDefinition;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -146,6 +150,9 @@ public class ProgrammingExercise extends Exercise {
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "iris_settings_id", table = "programming_exercise_details")
     private IrisSettings irisSettings;
+
+    @Column(name = "build_plan_configuration", table = "programming_exercise_details")
+    private String buildPlanConfiguration;
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
@@ -871,5 +878,32 @@ public class ProgrammingExercise extends Exercise {
 
     public void setIrisSettings(IrisSettings irisSettings) {
         this.irisSettings = irisSettings;
+    }
+
+    public String getBuildPlanConfiguration() {
+        return buildPlanConfiguration;
+    }
+
+    public void setBuildPlanConfiguration(String buildPlanConfiguration) {
+        this.buildPlanConfiguration = buildPlanConfiguration;
+    }
+
+    private AeolusDefinition getBuildPlanDefinition() {
+        Gson g = new Gson();
+        return g.fromJson(this.buildPlanConfiguration, AeolusDefinition.class);
+    }
+
+    public Windfile getWindfile() {
+        try {
+            AeolusDefinition aeolusDefinition = getBuildPlanDefinition();
+            if (aeolusDefinition == null) {
+                return null;
+            }
+            return Windfile.toWindfile(aeolusDefinition);
+        }
+        catch (JsonSyntaxException e) {
+            log.error("Could not parse build plan configuration for programming exercise " + this.getId() + " with exception: " + e.getMessage());
+        }
+        return null;
     }
 }
