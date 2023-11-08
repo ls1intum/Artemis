@@ -281,6 +281,7 @@ public class ConversationMessagingService extends PostingService {
 
         // update: allow overwriting of values only for depicted fields
         existingMessage.setContent(messagePost.getContent());
+        existingMessage.setTitle(messagePost.getTitle());
         existingMessage.setUpdatedDate(ZonedDateTime.now());
 
         Post updatedPost = conversationMessageRepository.save(existingMessage);
