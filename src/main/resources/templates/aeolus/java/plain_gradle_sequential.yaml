@@ -23,6 +23,7 @@ metadata:
 actions:
     - name: gradle
       script: |
+          chmod +x gradlew
           ./gradlew clean structuralTests
           if [ $? -eq 0 ]; then
               ./gradlew behaviorTests
