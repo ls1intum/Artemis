@@ -152,4 +152,13 @@ describe('ModelingExercise Management Component', () => {
         expect(sortSpy).toHaveBeenCalledWith(comp.modelingExercises, comp.predicate, comp.reverse);
         expect(sortSpy).toHaveBeenCalledOnce();
     });
+
+    it('should have working selection', () => {
+        // WHEN
+        comp.toggleExercise(modelingExercise);
+
+        // THEN
+        expect(comp.selectedExercises[0]).toContainEntry(['id', modelingExercise.id]);
+        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.modelingExercises.length);
+    });
 });

@@ -253,7 +253,9 @@
             "totalColumn": "Total",
             "exerciseGroupTitle": "Average scores of exercise group \"{{ groupTitle }}\" in comparison",
             "gradesBeforeBonus": "Grades before bonus",
-            "gradesAfterBonus": "Grades after bonus"
+            "gradesAfterBonus": "Grades after bonus",
+            "noStudentResultAvailable": "No student results available",
+            "noExerciseGroupAvailable": "No exercise groups available"
         },
         "examParticipation": {
             "timer": "Time left: ",
