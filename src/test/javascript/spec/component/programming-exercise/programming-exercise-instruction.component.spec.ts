@@ -11,12 +11,12 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
 import {
-    problemStatement,
     problemStatementBubbleSortFailsHtml,
     problemStatementBubbleSortNotExecutedHtml,
     problemStatementEmptySecondTask,
     problemStatementEmptySecondTaskNotExecutedHtml,
     problemStatementPlantUMLWithTest,
+    problemStatementWithIds,
 } from '../../helpers/sample/problemStatement.json';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
@@ -320,12 +320,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testMergeSort', detailText: 'lorem ipsum', positive: true }],
+            feedbacks: [{ testCase: { testName: 'testMergeSort', id: 2 }, detailText: 'lorem ipsum', positive: true }],
         };
         const exercise: ProgrammingExercise = {
             id: 3,
             course: { id: 4 },
-            problemStatement,
+            problemStatement: problemStatementWithIds,
             showTestNamesToStudents: true,
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
@@ -343,15 +343,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.tasks).toHaveLength(2);
         expect(comp.tasks[0]).toEqual({
             id: 0,
-            completeString: '[task][Implement Bubble Sort](testBubbleSort)',
+            completeString: '[task][Implement Bubble Sort](<testid>1</testid>)',
             taskName: 'Implement Bubble Sort',
-            tests: ['testBubbleSort'],
+            testIds: [1],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
-            completeString: '[task][Implement Merge Sort](testMergeSort)',
+            completeString: '[task][Implement Merge Sort](<testid>2</testid>)',
             taskName: 'Implement Merge Sort',
-            tests: ['testMergeSort'],
+            testIds: [2],
         });
         fixture.detectChanges();
 
@@ -373,7 +373,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testBubbleSort'],
+                feedbackFilter: [1],
                 result,
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 1,
@@ -385,7 +385,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testMergeSort'],
+                feedbackFilter: [2],
                 result,
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
@@ -397,12 +397,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum' }],
+            feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum' }],
         };
         const exercise: ProgrammingExercise = {
             id: 3,
             course: { id: 4 },
-            problemStatement,
+            problemStatement: problemStatementWithIds,
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
@@ -419,15 +419,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.tasks).toHaveLength(2);
         expect(comp.tasks[0]).toEqual({
             id: 0,
-            completeString: '[task][Implement Bubble Sort](testBubbleSort)',
+            completeString: '[task][Implement Bubble Sort](<testid>1</testid>)',
             taskName: 'Implement Bubble Sort',
-            tests: ['testBubbleSort'],
+            testIds: [1],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
-            completeString: '[task][Implement Merge Sort](testMergeSort)',
+            completeString: '[task][Implement Merge Sort](<testid>2</testid>)',
             taskName: 'Implement Merge Sort',
-            tests: ['testMergeSort'],
+            testIds: [2],
         });
         fixture.detectChanges();
 
@@ -449,7 +449,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testBubbleSort'],
+                feedbackFilter: [1],
                 result,
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 0,
@@ -461,7 +461,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testMergeSort'],
+                feedbackFilter: [2],
                 result,
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
@@ -473,7 +473,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum', positive: true }],
+            feedbacks: [{ testCase: { testName: 'testBubbleSort', id: 1 }, detailText: 'lorem ipsum', positive: true }],
         };
         const exercise: ProgrammingExercise = {
             id: 3,
@@ -496,15 +496,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(comp.tasks).toHaveLength(2);
         expect(comp.tasks[0]).toEqual({
             id: 0,
-            completeString: '[task][Bubble Sort](testBubbleSort)',
+            completeString: '[task][Bubble Sort](<testid>1</testid>)',
             taskName: 'Bubble Sort',
-            tests: ['testBubbleSort'],
+            testIds: [1],
         });
         expect(comp.tasks[1]).toEqual({
             id: 1,
             completeString: '[task][Merge Sort]()',
             taskName: 'Merge Sort',
-            tests: [],
+            testIds: [],
         });
         fixture.detectChanges();
 
@@ -526,7 +526,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             componentInstance: {
                 exercise,
                 exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: ['testBubbleSort'],
+                feedbackFilter: [1],
                 result,
                 taskName: 'Bubble Sort',
                 numberOfNotExecutedTests: 0,
@@ -543,8 +543,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
             feedbacks: [
-                { text: 'testMethods[Policy]', positive: true },
-                { text: 'testPolicy()', positive: false },
+                { testCase: { id: 1, testName: 'testMethods[Policy]' }, positive: true },
+                { testCase: { id: 2, testName: 'testPolicy()' }, positive: false },
             ],
         };
         const exercise: ProgrammingExercise = {

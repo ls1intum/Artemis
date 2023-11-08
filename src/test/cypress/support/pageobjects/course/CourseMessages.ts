@@ -1,7 +1,7 @@
 import { BASE_API, DELETE, POST, PUT } from '../../constants';
 
 /**
- * A class which encapsulates UI selectors and actions for the course creation page.
+ * A class which encapsulates UI selectors and actions for the course messages page.
  */
 export class CourseMessagesPage {
     createChannelButton() {
@@ -212,5 +212,9 @@ export class CourseMessagesPage {
         } else {
             cy.get('.conversation-list').should('not.contain.text', name);
         }
+    }
+
+    acceptCodeOfConductButton() {
+        cy.get('#acceptCodeOfConductButton').click();
     }
 }

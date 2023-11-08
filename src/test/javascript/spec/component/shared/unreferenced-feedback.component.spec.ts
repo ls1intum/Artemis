@@ -3,9 +3,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { AssessmentDetailComponent } from 'app/assessment/assessment-detail/assessment-detail.component';
+import { UnreferencedFeedbackDetailComponent } from 'app/assessment/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 describe('UnreferencedFeedbackComponent', () => {
@@ -16,7 +16,7 @@ describe('UnreferencedFeedbackComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [UnreferencedFeedbackComponent, MockPipe(ArtemisTranslatePipe), MockComponent(AssessmentDetailComponent)],
+            declarations: [UnreferencedFeedbackComponent, MockPipe(ArtemisTranslatePipe), MockComponent(UnreferencedFeedbackDetailComponent)],
             providers: [],
         })
             .compileComponents()
@@ -65,16 +65,25 @@ describe('UnreferencedFeedbackComponent', () => {
         comp.unreferencedFeedback = [feedback];
         const newFeedbackText = 'updated text';
         feedback.text = newFeedbackText;
-        comp.updateAssessment(feedback);
+        comp.updateFeedback(feedback);
 
         expect(comp.unreferencedFeedback).toHaveLength(1);
         expect(comp.unreferencedFeedback[0].text).toBe(newFeedbackText);
     });
 
+    it('should add unreferenced feedback if it does not exist when updating', () => {
+        const feedback = { text: 'NewFeedback', credits: 3 } as Feedback;
+        comp.unreferencedFeedback = [];
+        comp.updateFeedback(feedback);
+
+        expect(comp.unreferencedFeedback).toHaveLength(1);
+        expect(comp.unreferencedFeedback[0].text).toBe(feedback.text);
+    });
+
     it('should delete unreferenced feedback', () => {
         const feedback = { text: 'NewFeedback', credits: 3 } as Feedback;
         comp.unreferencedFeedback = [feedback];
-        comp.deleteAssessment(feedback);
+        comp.deleteFeedback(feedback);
 
         expect(comp.unreferencedFeedback).toHaveLength(0);
     });
@@ -91,5 +100,20 @@ describe('UnreferencedFeedbackComponent', () => {
         expect(comp.unreferencedFeedback).toHaveLength(1);
         expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(instruction);
         expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
+    });
+
+    it('should convert an accepted feedback suggestion to a marked manual feedback', () => {
+        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', type: FeedbackType.AUTOMATIC };
+        comp.feedbackSuggestions = [suggestion];
+        comp.acceptSuggestion(suggestion);
+        expect(comp.feedbackSuggestions).toBeEmpty();
+        expect(comp.unreferencedFeedback).toEqual([{ text: 'FeedbackSuggestion:accepted:', detailText: 'test', type: FeedbackType.MANUAL_UNREFERENCED }]);
+    });
+
+    it('should remove discarded suggestions', () => {
+        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', type: FeedbackType.AUTOMATIC };
+        comp.feedbackSuggestions = [suggestion];
+        comp.discardSuggestion(suggestion);
+        expect(comp.feedbackSuggestions).toBeEmpty();
     });
 });

@@ -1,30 +1,32 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
+import dayjs from 'dayjs/esm';
+import { of, throwError } from 'rxjs';
+import { Component } from '@angular/core';
+import cloneDeep from 'lodash-es/cloneDeep';
+import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
+import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { HttpClientModule, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+
+import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/exam-update.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
-import { HttpClientModule, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
-import { RouterTestingModule } from '@angular/router/testing';
-import { FormsModule } from '@angular/forms';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import dayjs from 'dayjs/esm';
-import { Component } from '@angular/core';
+
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Params, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';
@@ -35,7 +37,6 @@ import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import cloneDeep from 'lodash-es/cloneDeep';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
@@ -47,7 +48,7 @@ import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/ti
 })
 class DummyComponent {}
 
-describe('Exam Update Component', () => {
+describe('ExamUpdateComponent', () => {
     let component: ExamUpdateComponent;
     let fixture: ComponentFixture<ExamUpdateComponent>;
     let examManagementService: ExamManagementService;
@@ -101,31 +102,12 @@ describe('Exam Update Component', () => {
                     {
                         provide: ActivatedRoute,
                         useValue: {
-                            data: {
-                                subscribe: (fn: (value: Params) => void) =>
-                                    fn({
-                                        exam: examWithoutExercises,
-                                    }),
-                            },
-                            snapshot: {
-                                paramMap: convertToParamMap({
-                                    courseId: '1',
-                                }),
-                            },
-                            url: of([{ path: '' } as UrlSegment]),
+                            data: of({ exam: examWithoutExercises, course }),
+                            params: of({ courseId: '1' }),
+                            url: of([{ path: '' }] as UrlSegment[]),
                         },
                     },
                     MockProvider(AlertService),
-                    MockProvider(CourseManagementService, {
-                        find: () => {
-                            return of(
-                                new HttpResponse({
-                                    body: course,
-                                    status: 200,
-                                }),
-                            );
-                        },
-                    }),
                     MockProvider(GradingSystemService, {
                         findGradingScaleForExam: () => {
                             return of(
@@ -244,7 +226,16 @@ describe('Exam Update Component', () => {
             const navigateSpy = jest.spyOn(router, 'navigate');
             fixture.detectChanges();
 
-            const updateSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(of(new HttpResponse<Exam>({ body: { ...examWithoutExercises, id: 1 } })));
+            const updateSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(
+                of(
+                    new HttpResponse<Exam>({
+                        body: {
+                            ...examWithoutExercises,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
 
             // trigger save
             component.save();
@@ -255,39 +246,42 @@ describe('Exam Update Component', () => {
         }));
 
         it('should calculate the working time for real exams correctly', () => {
+            fixture.detectChanges();
+
             examWithoutExercises.testExam = false;
 
             examWithoutExercises.startDate = undefined;
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            fixture.detectChanges();
+            component.updateExamWorkingTime();
             // Without a valid startDate, the workingTime should be 0
             // examWithoutExercises.workingTime is stored in seconds
             expect(examWithoutExercises.workingTime).toBe(0);
             // the component returns the workingTime in Minutes
-            expect(component.calculateWorkingTime).toBe(0);
+            expect(component.workingTimeInMinutes).toBe(0);
 
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
-            fixture.detectChanges();
+            component.updateExamWorkingTime();
             expect(examWithoutExercises.workingTime).toBe(7200);
-            expect(component.calculateWorkingTime).toBe(120);
+            expect(component.workingTimeInMinutes).toBe(120);
 
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = undefined;
-            fixture.detectChanges();
+            component.updateExamWorkingTime();
             // Without an endDate, the working time should be 0;
             expect(examWithoutExercises.workingTime).toBe(0);
-            expect(component.calculateWorkingTime).toBe(0);
+            expect(component.workingTimeInMinutes).toBe(0);
         });
 
         it('should not calculate the working time for test exams', () => {
+            fixture.detectChanges();
             examWithoutExercises.testExam = true;
             examWithoutExercises.workingTime = 3600;
             examWithoutExercises.startDate = dayjs().add(0, 'hours');
             examWithoutExercises.endDate = dayjs().add(12, 'hours');
-            fixture.detectChanges();
+            component.updateExamWorkingTime();
             expect(examWithoutExercises.workingTime).toBe(3600);
-            expect(component.calculateWorkingTime).toBe(60);
+            expect(component.workingTimeInMinutes).toBe(60);
         });
 
         it('validates the working time for test exams correctly', () => {
@@ -356,7 +350,16 @@ describe('Exam Update Component', () => {
             examWithoutExercises.id = undefined;
             fixture.detectChanges();
 
-            const createSpy = jest.spyOn(examManagementService, 'create').mockReturnValue(of(new HttpResponse<Exam>({ body: { ...examWithoutExercises, id: 1 } })));
+            const createSpy = jest.spyOn(examManagementService, 'create').mockReturnValue(
+                of(
+                    new HttpResponse<Exam>({
+                        body: {
+                            ...examWithoutExercises,
+                            id: 1,
+                        },
+                    }),
+                ),
+            );
 
             // trigger save
             component.save();
@@ -389,7 +392,7 @@ describe('Exam Update Component', () => {
             component.course = course;
             component.exam = examWithoutExercises;
             examWithoutExercises.id = 1;
-            component.previousState();
+            component.resetToPreviousState();
             expect(spy).toHaveBeenCalledOnce();
             expect(spy).toHaveBeenCalledWith(['course-management', course.id!.toString(), 'exams'], examWithoutExercises.id!.toString());
         });
@@ -476,7 +479,15 @@ describe('Exam Update Component', () => {
         examForImport.course = course2;
         examForImport.numberOfExamUsers = 1;
         examForImport.exerciseGroups = [exerciseGroup1];
-        examForImport.examUsers = [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...new User(5) }];
+        examForImport.examUsers = [
+            {
+                didCheckImage: false,
+                didCheckLogin: false,
+                didCheckName: false,
+                didCheckRegistrationNumber: false,
+                ...new User(5),
+            },
+        ];
         examForImport.studentExams = [new StudentExam()];
 
         beforeEach(() => {
@@ -515,32 +526,12 @@ describe('Exam Update Component', () => {
                     {
                         provide: ActivatedRoute,
                         useValue: {
-                            data: {
-                                subscribe: (fn: (value: Params) => void) =>
-                                    fn({
-                                        exam: examForImport,
-                                    }),
-                            },
-                            snapshot: {
-                                paramMap: convertToParamMap({
-                                    courseId: '1',
-                                    examId: '3',
-                                }),
-                            },
-                            url: of([{ path: 'import' } as UrlSegment]),
+                            data: of({ exam: examForImport, course }),
+                            params: of({ examId: '3', courseId: '1' }),
+                            url: of([{ path: 'import' }] as UrlSegment[]),
                         },
                     },
                     MockProvider(AlertService),
-                    MockProvider(CourseManagementService, {
-                        find: () => {
-                            return of(
-                                new HttpResponse({
-                                    body: course,
-                                    status: 200,
-                                }),
-                            );
-                        },
-                    }),
                     MockProvider(GradingSystemService, {
                         findGradingScaleForExam: () => {
                             return of(
@@ -554,6 +545,7 @@ describe('Exam Update Component', () => {
                 ],
             }).compileComponents();
 
+            router = TestBed.inject(Router);
             fixture = TestBed.createComponent(ExamUpdateComponent);
             component = fixture.componentInstance;
             examManagementService = fixture.debugElement.injector.get(ExamManagementService);
@@ -594,7 +586,11 @@ describe('Exam Update Component', () => {
             expect(component.exam.studentExams).toBeUndefined();
         });
 
-        it('should perform input of an examWithoutExercises with exercises successfully', () => {
+        it('should perform import of an examWithoutExercises with exercises successfully', () => {
+            const expectedExam = prepareExamForImport(examForImport);
+            expectedExam.course = course;
+            const alertSpy = jest.spyOn(alertService, 'error');
+            const navigateSpy = jest.spyOn(router, 'navigate');
             const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
                 of(
                     new HttpResponse({
@@ -603,11 +599,14 @@ describe('Exam Update Component', () => {
                     }),
                 ),
             );
-            const alertSpy = jest.spyOn(alertService, 'error');
+
             fixture.detectChanges();
             component.save();
+
             expect(importSpy).toHaveBeenCalledOnce();
-            expect(importSpy).toHaveBeenCalledWith(1, examForImport);
+            expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
+            expect(navigateSpy).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'exams', examForImport.id]);
             expect(alertSpy).not.toHaveBeenCalled();
         });
 
@@ -646,8 +645,15 @@ describe('Exam Update Component', () => {
         it.each(['duplicatedProgrammingExerciseShortName', 'duplicatedProgrammingExerciseTitle', 'invalidKey'])(
             'should perform import of examWithoutExercises AND correctly process conflict exception from server',
             (errorKey) => {
+                const expectedExam = prepareExamForImport(examForImport);
+                expectedExam.course = course;
+
                 const preCheckError = new HttpErrorResponse({
-                    error: { errorKey: errorKey, numberOfInvalidProgrammingExercises: 2, params: { exerciseGroups: [exerciseGroup1] } },
+                    error: {
+                        errorKey: errorKey,
+                        numberOfInvalidProgrammingExercises: 2,
+                        params: { exerciseGroups: [exerciseGroup1] },
+                    },
                     status: 400,
                 });
                 const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(throwError(() => preCheckError));
@@ -656,7 +662,7 @@ describe('Exam Update Component', () => {
                 fixture.detectChanges();
                 component.save();
 
-                expect(importSpy).toHaveBeenCalledWith(1, examForImport);
+                expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
                 if (errorKey == 'invalidKey') {
                     expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: 2 });
                 } else {
@@ -666,6 +672,9 @@ describe('Exam Update Component', () => {
         );
 
         it('should perform input of exercise groups AND correctly process arbitrary exception from server', () => {
+            const expectedExam = prepareExamForImport(examForImport);
+            expectedExam.course = course;
+
             const error = new HttpErrorResponse({
                 status: 400,
             });
@@ -675,7 +684,7 @@ describe('Exam Update Component', () => {
             fixture.detectChanges();
             component.save();
             expect(importSpy).toHaveBeenCalledOnce();
-            expect(importSpy).toHaveBeenCalledWith(1, examForImport);
+            expect(importSpy).toHaveBeenCalledWith(1, expectedExam);
             expect(alertSpy).toHaveBeenCalledOnce();
         });
     });

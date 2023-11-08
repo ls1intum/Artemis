@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+                   xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.6.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="zbil" id="20230927125606">
+        <createTable tableName="conduct_agreement">
+            <column name="course_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="conduct_agreementPK"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="conduct_agreementPK"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="conduct_agreement"
+                                 constraintName="conduct_agreement_course_idFK" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"
+                                 validate="true" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="conduct_agreement"
+                                 constraintName="conduct_agreement_user_idFK" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"
+                                 validate="true" onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>

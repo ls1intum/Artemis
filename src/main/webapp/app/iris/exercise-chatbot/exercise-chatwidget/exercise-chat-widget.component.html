@@ -13,7 +13,10 @@
                 </h3>
                 <div>
                     <div class="button-container">
-                        <span *ngIf="rateLimit >= 0" class="rate-limit" [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate"
+                        <span
+                            *ngIf="rateLimit >= 0"
+                            class="rate-limit"
+                            [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitTimeframeHours }"
                             >{{ currentMessageCount }}/{{ rateLimit }}</span
                         >
                         <button *ngIf="isClearChatEnabled()" id="clear-chat-session" (click)="onClearSession(clearConfirmModal)" class="header-icon">

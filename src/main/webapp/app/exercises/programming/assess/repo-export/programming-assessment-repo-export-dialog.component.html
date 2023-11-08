@@ -36,7 +36,7 @@
         Only show download all checkbox for instructors & admins.
         -->
         <ng-container *ngIf="isAtLeastInstructor && !singleParticipantMode && !isRepoExportForMultipleExercises">
-            <div *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="checkbox">
+            <div class="checkbox">
                 <label class="control-label">
                     <input class="form-check-input" type="checkbox" name="allStudents" [(ngModel)]="repositoryExportOptions.exportAllParticipants" />
                     <strong [jhiTranslate]="'artemisApp.programmingExercise.export.' + (programmingExercises[0].teamMode ? 'downloadAllTeams' : 'downloadAllStudents')">
@@ -100,7 +100,13 @@
         <ng-container *ngIf="isAtLeastInstructor">
             <div class="checkbox">
                 <label class="control-label">
-                    <input class="form-check-input" type="checkbox" name="anonymizeRepository" [(ngModel)]="this.repositoryExportOptions.anonymizeRepository" checked />
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        name="anonymizeRepository"
+                        [(ngModel)]="this.repositoryExportOptions.anonymizeRepository"
+                        [disabled]="!isAtLeastInstructor"
+                    />
                     <strong jhiTranslate="artemisApp.programmingExercise.export.anonymizeRepository.title">Anonymize repository</strong>
                     <jhi-help-icon text="artemisApp.programmingExercise.export.anonymizeRepository.tooltip"></jhi-help-icon>
                 </label>
@@ -125,20 +131,9 @@
         </button>
         <button
             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [overwriteDisabled]="!this.participationIdList && !this.participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !this.exportInProgress"
             type="submit"
-            [disabled]="!participationIdList && !participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !exportInProgress"
             class="btn btn-default"
-            *ngIf="!isRepoExportForMultipleExercises"
-        >
-            <span *ngIf="this.exportInProgress" class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
-            <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
-        </button>
-        <button
-            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-            type="submit"
-            [disabled]="!participationIdList && !participantIdentifierList && !this.repositoryExportOptions.exportAllParticipants && !exportInProgress"
-            class="btn btn-default"
-            *ngIf="isRepoExportForMultipleExercises"
         >
             <span *ngIf="this.exportInProgress" class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
             <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>

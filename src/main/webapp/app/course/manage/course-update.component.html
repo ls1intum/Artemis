@@ -337,10 +337,8 @@
                         ></fa-icon>
                     </div>
                     <div class="form-group" *ngIf="messagingEnabled">
-                        <label class="form-control-label" jhiTranslate="artemisApp.course.courseCommunicationSetting.messagingEnabled.codeOfConduct.label"
-                            >Messaging Code of Conduct
-                        </label>
-                        <jhi-help-icon text="artemisApp.course.courseCommunicationSetting.messagingEnabled.codeOfConduct.tooltip"></jhi-help-icon>
+                        <label class="form-control-label" jhiTranslate="artemisApp.codeOfConduct.title">Messaging Code of Conduct</label>
+                        <jhi-help-icon text="artemisApp.codeOfConduct.tooltip"></jhi-help-icon>
                         <jhi-markdown-editor
                             class="markdown-editor"
                             [(markdown)]="course.courseInformationSharingMessagingCodeOfConduct"

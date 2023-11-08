@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -12,14 +13,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -103,6 +108,37 @@ public class ConversationService {
         if (!isMember(conversationId, userId)) {
             throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
+    }
+
+    /**
+     * Checks whether the user is a member of the conversation.
+     * <p>
+     * If the user is not a member, but the conversation is course-wide, a participant entry will be created.
+     * If the user is an instructor, they are granted the moderator role.
+     *
+     * @param conversationId the id of the conversation
+     * @param user           the user
+     * @param lastReadDate   Optional date being used for a newly created participant to set the last-read date
+     * @return an optional conversation
+     */
+    public Optional<Conversation> isMemberOrCreateForCourseWideElseThrow(Long conversationId, User user, Optional<ZonedDateTime> lastReadDate) {
+        if (isMember(conversationId, user.getId())) {
+            return Optional.empty();
+        }
+
+        Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+
+        if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
+            ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
+            conversationParticipant.setIsModerator(authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user));
+            lastReadDate.ifPresent(conversationParticipant::setLastRead);
+            conversationParticipantRepository.saveAndFlush(conversationParticipant);
+        }
+        else {
+            throw new AccessForbiddenException("User not allowed to access this conversation!");
+        }
+
+        return Optional.of(conversation);
     }
 
     /**
@@ -236,7 +272,7 @@ public class ConversationService {
         var remainingUsers = existingUsers.stream().filter(user -> !usersToBeDeregistered.contains(user)).collect(Collectors.toSet());
         var participantsToRemove = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(conversation.getId(),
                 usersToBeDeregistered.stream().map(User::getId).collect(Collectors.toSet()));
-        if (participantsToRemove.size() > 0) {
+        if (!participantsToRemove.isEmpty()) {
             conversationParticipantRepository.deleteAll(participantsToRemove);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversation, usersToBeDeregistered);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, remainingUsers);

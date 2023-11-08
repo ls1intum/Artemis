@@ -42,6 +42,7 @@ import { EnlargeSlideImageComponent } from 'app/shared/metis/posting-content/enl
 import { LinkPreviewModule } from 'app/shared/link-preview/link-preview.module';
 import { LinkPreviewComponent } from 'app/shared/link-preview/components/link-preview/link-preview.component';
 import { LinkPreviewContainerComponent } from 'app/shared/link-preview/components/link-preview-container/link-preview-container.component';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @NgModule({
     imports: [
@@ -118,5 +119,6 @@ import { LinkPreviewContainerComponent } from 'app/shared/link-preview/component
         EmojiComponent,
         EmojiPickerComponent,
     ],
+    providers: [MetisConversationService],
 })
 export class MetisModule {}

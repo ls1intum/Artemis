@@ -1,3 +1,5 @@
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -6,6 +8,7 @@ import { GradingInstruction } from 'app/exercises/shared/structured-grading-crit
 
 describe('ProgrammingFeedbackItemService', () => {
     let service: ProgrammingFeedbackItemService;
+    const exercise = new ProgrammingExercise(undefined, undefined);
 
     beforeEach(() => {
         const fake = { instant: (key: string) => key };
@@ -105,6 +108,7 @@ describe('ProgrammingFeedbackItemService', () => {
             id: 1,
             type: FeedbackType.AUTOMATIC,
             positive: undefined,
+            testCase: { testName: 'testCaseName' },
         } as Feedback;
 
         const expected = {
@@ -141,6 +145,7 @@ describe('ProgrammingFeedbackItemService', () => {
             text: 'automaticTestCase1',
             positive: undefined,
             credits: 0.3,
+            testCase: { testName: 'testCaseName' },
         };
 
         const expected = {
@@ -159,6 +164,7 @@ describe('ProgrammingFeedbackItemService', () => {
         const feedback = {
             id: 1,
             type: FeedbackType.AUTOMATIC,
+            testCase: { testName: 'testCaseName' },
         };
 
         const expected = {
@@ -169,6 +175,32 @@ describe('ProgrammingFeedbackItemService', () => {
         };
 
         expect(service.create([feedback], true)).toEqual([expected]);
+    });
+
+    it('should handle not executed tests', () => {
+        const feedbacks: Feedback[] = [{ testCase: { testName: 'test1' }, type: FeedbackType.AUTOMATIC, credits: 0, detailText: 'Test was not executed.' }];
+
+        const items = service.create(feedbacks, false);
+        const groups = service.group(items, exercise) as FeedbackGroup[];
+
+        expect(groups).toBeArrayOfSize(1);
+
+        const wrongGroup = groups.find((group) => group.name === 'wrong');
+        const feedbackInGroup = wrongGroup!.members[0].feedbackReference;
+        expect(feedbackInGroup).toEqual(feedbacks[0]);
+    });
+
+    it('should handle automatic feedback with missing positive attribute', () => {
+        const feedbacks: Feedback[] = [{ testCase: { testName: 'test1' }, type: FeedbackType.AUTOMATIC, credits: 2 }];
+
+        const items = service.create(feedbacks, false);
+        const groups = service.group(items, exercise) as FeedbackGroup[];
+
+        expect(groups).toBeArrayOfSize(1);
+
+        const correctGroup = groups.find((group) => group.name === 'correct');
+        const feedbackInGroup = correctGroup!.members[0].feedbackReference;
+        expect(feedbackInGroup).toEqual(feedbacks[0]);
     });
 
     const createSCAFeedback = (): Feedback => {

@@ -8,7 +8,6 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.CacheManager;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -56,17 +55,14 @@ public class AttachmentResource {
 
     private final FilePathService filePathService;
 
-    private final CacheManager cacheManager;
-
     public AttachmentResource(AttachmentRepository attachmentRepository, GroupNotificationService groupNotificationService, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, FileService fileService, FilePathService filePathService, CacheManager cacheManager) {
+            UserRepository userRepository, FileService fileService, FilePathService filePathService) {
         this.attachmentRepository = attachmentRepository;
         this.groupNotificationService = groupNotificationService;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.fileService = fileService;
         this.filePathService = filePathService;
-        this.cacheManager = cacheManager;
     }
 
     /**
@@ -87,7 +83,7 @@ public class AttachmentResource {
         attachment.setLink(pathString);
 
         Attachment result = attachmentRepository.save(attachment);
-        this.cacheManager.getCache("files").evict(filePathService.actualPathForPublicPath(URI.create(result.getLink())).toString());
+        this.fileService.evictCacheForPath(filePathService.actualPathForPublicPath(URI.create(result.getLink())));
         return ResponseEntity.created(new URI("/api/attachments/" + result.getId())).body(result);
     }
 
@@ -118,7 +114,7 @@ public class AttachmentResource {
         }
 
         Attachment result = attachmentRepository.save(attachment);
-        this.cacheManager.getCache("files").evict(filePathService.actualPathForPublicPath(URI.create(result.getLink())).toString());
+        this.fileService.evictCacheForPath(filePathService.actualPathForPublicPath(URI.create(result.getLink())));
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
@@ -173,7 +169,7 @@ public class AttachmentResource {
             course = attachment.getLecture().getCourse();
             relatedEntity = "lecture " + attachment.getLecture().getTitle();
             try {
-                this.cacheManager.getCache("files").evict(filePathService.actualPathForPublicPath(URI.create(attachment.getLink())).toString());
+                this.fileService.evictCacheForPath(filePathService.actualPathForPublicPath(URI.create(attachment.getLink())));
             }
             catch (RuntimeException exception) {
                 // this catch is required for deleting wrongly formatted attachment database entries

@@ -153,6 +153,7 @@ public class CourseUtilService {
 
     public Course createCourseWithMessagingEnabled() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
+        course.setCourseInformationSharingMessagingCodeOfConduct("Code of Conduct");
         return courseRepo.save(course);
     }
 

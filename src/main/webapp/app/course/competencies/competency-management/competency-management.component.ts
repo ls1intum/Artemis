@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Competency, CompetencyRelation, CompetencyRelationError, CourseCompetencyProgress, getIcon, getIconTooltip } from 'app/entities/competency.model';
@@ -11,9 +11,8 @@ import { faPencilAlt, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
 import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
-import { AccountService } from 'app/core/auth/account.service';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-competency-management',
@@ -26,7 +25,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     competencies: Competency[] = [];
     prerequisites: Competency[] = [];
 
-    showRelations = false;
     tailCompetency?: number;
     headCompetency?: number;
     relationType?: string;
@@ -39,10 +37,11 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    documentationType = DocumentationType.Competencies;
+    update$: Subject<boolean> = new Subject<boolean>();
 
-    getIcon = getIcon;
-    getIconTooltip = getIconTooltip;
+    readonly getIcon = getIcon;
+    readonly getIconTooltip = getIconTooltip;
+    readonly documentationType: DocumentationType = 'Competencies';
 
     // Icons
     faPlus = faPlus;
@@ -51,8 +50,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
 
     constructor(
         private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private accountService: AccountService,
         private competencyService: CompetencyService,
         private alertService: AlertService,
         private modalService: NgbModal,
@@ -63,7 +60,6 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.showRelations = this.accountService.isAdmin(); // beta feature
         this.activatedRoute.parent!.params.subscribe((params) => {
             this.courseId = params['courseId'];
             if (this.courseId) {
@@ -278,8 +274,19 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
                 map((res: HttpResponse<CompetencyRelation>) => res.body),
             )
             .subscribe({
-                next: () => {
-                    this.loadData();
+                next: (relation) => {
+                    if (relation) {
+                        this.edges.push({
+                            id: `edge${relation.id}`,
+                            source: `${relation.tailCompetency?.id}`,
+                            target: `${relation.headCompetency?.id}`,
+                            label: relation.type,
+                            data: {
+                                id: relation.id,
+                            },
+                        });
+                        this.update$.next(true);
+                    }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -288,7 +295,9 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
     removeRelation(edge: Edge) {
         this.competencyService.removeCompetencyRelation(Number(edge.source), Number(edge.data.id), this.courseId).subscribe({
             next: () => {
-                this.loadData();
+                const index = this.edges.findIndex((e) => e.id === edge.id);
+                this.edges.splice(index, 1);
+                this.update$.next(true);
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });

@@ -11,7 +11,7 @@
         </span>
     </div>
 
-    <jhi-feedback-collapse *ngIf="feedbackItem.text" class="d-block mt-3" [feedback]="feedbackItem"></jhi-feedback-collapse>
+    <jhi-feedback-collapse *ngIf="feedbackItem.text" class="d-block mt-3" [feedback]="feedbackItem" />
     <p *ngElse jhiTranslate="artemisApp.result.noFeedback">No feedback available</p>
 </div>
 
@@ -26,6 +26,6 @@
     </div>
 
     <div *ngIf="feedbackItemGroup.open" class="mx-3">
-        <jhi-feedback-node *ngFor="let feedbackItem of feedbackItemGroup.members" [feedbackItemNode]="feedbackItem" [course]="course"></jhi-feedback-node>
+        <jhi-feedback-node *ngFor="let feedbackItem of feedbackItemGroup.members" [feedbackItemNode]="feedbackItem" [course]="course" />
     </div>
 </div>

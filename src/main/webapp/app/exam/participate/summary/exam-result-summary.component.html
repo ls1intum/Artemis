@@ -13,51 +13,31 @@
     *ngIf="studentExam?.exam"
     [exam]="studentExam.exam!"
     [studentExam]="studentExam"
-    [reviewIsOpen]="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart() && !isTestRun"
+    [reviewIsOpen]="studentExam?.exam && isBeforeStudentReviewEnd && isAfterStudentReviewStart && !isTestRun"
 />
-<div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO">
+<div class="mb-4" *ngIf="studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO" id="exam-summary-result-overview">
     <jhi-exam-result-overview
-        [studentExamWithGrade]="studentExamGradeInfoDTO"
+        [studentExamWithGrade]="studentExamGradeInfoDTO!"
         [isGradingKeyCollapsed]="isGradingKeyCollapsed"
         [isBonusGradingKeyCollapsed]="isBonusGradingKeyCollapsed"
+        [exerciseInfos]="exerciseInfos"
     />
 </div>
-<div *ngIf="!resultsPublished" class="mb-0">
+<div *ngIf="!resultsArePublished" class="mb-0">
     <fa-icon [icon]="faInfoCircle" class="info-icon"></fa-icon>
     {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
 </div>
+
+<h3>
+    {{ 'artemisApp.exam.exercises' | artemisTranslate }}
+</h3>
 <div *ngFor="let exercise of studentExam?.exercises; let i = index" [id]="'exercise-' + exercise.id">
     <div class="question card">
-        <div class="question-options card-header question-card-header">
-            <h5>
-                &nbsp;<fa-icon *ngIf="exercise?.type" [icon]="getIcon(exercise.type!)"></fa-icon>&nbsp;
-                <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
-            </h5>
-            <div *ngIf="exercise.studentParticipations?.[0]?.submissions?.[0]?.type === SUBMISSION_TYPE_ILLEGAL">
-                <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
-            </div>
-            <div *ngIf="resultsPublished && exercise.studentParticipations?.length">
-                <jhi-updating-result [participation]="exercise.studentParticipations![0]" [exercise]="exercise" />
-            </div>
-            <button
-                id="{{ 'toggleCollapseExerciseButton-' + i }}"
-                class="btn question-collapse"
-                (click)="toggleCollapseExercise(exercise.id!)"
-                [attr.aria-expanded]="!isCollapsed(exercise.id!)"
-                [attr.aria-controls]="isCollapsed(exercise.id!)"
-            >
-                <fa-icon size="2x" [icon]="isCollapsed(exercise.id!) ? faAngleRight : faAngleDown"></fa-icon>
-            </button>
-        </div>
-        <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id!)">
+        <jhi-result-summary-exercise-card-header [index]="i" [exercise]="exercise" [exerciseInfo]="exerciseInfos[exercise.id!]" [resultsPublished]="resultsArePublished" />
+
+        <div class="card-body question-card-body" [ngbCollapse]="exerciseInfos[exercise.id!].isCollapsed">
             <div class="clearfix">
                 <span class="exercise-buttons">
-                    <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && resultsPublished">
-                        <a *ngIf="exercise.studentParticipations?.length" class="btn btn-primary ms-2 float-end" [routerLink]="generateLink(exercise)">
-                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
-                            <span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
-                        </a>
-                    </div>
                     <a
                         *ngIf="plagiarismCaseInfos[exercise.id!]"
                         class="btn ms-2 float-end"
@@ -69,104 +49,113 @@
                                 'artemisApp.plagiarism.plagiarismCases.' +
                                 (plagiarismCaseInfos[exercise.id!]!.verdict === PlagiarismVerdict.NO_PLAGIARISM ? 'resolvedPlagiarismCase' : 'plagiarismCase')
                             "
-                            >Plagiarism Case</span
                         >
+                            Plagiarism Case
+                        </span>
                     </a>
                     <ng-container *ngIf="exampleSolutionPublished">
-                        <a
-                            *ngIf="exercise.type !== PROGRAMMING"
-                            class="btn btn-primary ms-2 float-end"
-                            [routerLink]="['/courses', courseId, 'exams', studentExam.exam?.id, 'exercises', exercise.id, 'example-solution']"
+                        <span
+                            *ngIf="exerciseInfos[exercise.id!].displayExampleSolution"
+                            class="alert alert-info p-1"
+                            jhiTranslate="artemisApp.exam.examSummary.youAreViewingTheExampleSolution"
                         >
-                            <span jhiTranslate="artemisApp.exam.examSummary.viewExampleSolution">View Example Solution</span>
-                        </a>
+                            You are viewing the example solution.
+                        </span>
+                        <button
+                            [id]="'show-sample-solution-button-' + exercise.id"
+                            *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING"
+                            class="btn float-end"
+                            [class]="exerciseInfos[exercise.id!].displayExampleSolution ? 'btn-primary' : 'btn-outline-primary'"
+                            (click)="toggleShowSampleSolution(exercise.id)"
+                        >
+                            <fa-icon [icon]="!exerciseInfos[exercise.id!].displayExampleSolution ? faEye : faEyeSlash" class="info-icon"></fa-icon>
+                            <span *ngIf="!exerciseInfos[exercise.id!].displayExampleSolution; else hideExampleSolution"
+                                >&nbsp;{{ 'artemisApp.exam.examSummary.showExampleSolution' | artemisTranslate }}&nbsp;</span
+                            >
+                            <ng-template #hideExampleSolution> {{ 'artemisApp.exam.examSummary.hideExampleSolution' | artemisTranslate }} </ng-template>
+                        </button>
+
                         <jhi-programming-exercise-example-solution-repo-download
                             *ngIf="exercise.type === PROGRAMMING"
                             class="ms-2 float-end"
                             [exerciseId]="exercise.id!"
                             [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
-                        ></jhi-programming-exercise-example-solution-repo-download>
+                            [displayedOnExamSummary]="true"
+                        />
                     </ng-container>
                 </span>
-                <!-- prettier-ignore -->
-                <h5 class="exercise-title">{{ exercise?.exerciseGroup?.title ?? '-' }}
-                    [{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
-                        *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
-                    <jhi-included-in-score-badge
-                        *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                        [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
-                </h5>
             </div>
-            <h6 right-body class="markdown-preview" *ngIf="exercise.problemStatement && exercise.type !== PROGRAMMING">
-                <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
-            </h6>
-            <jhi-programming-exercise-instructions
-                *ngIf="exercise.problemStatement && exercise.type === PROGRAMMING"
-                [exercise]="exercise"
-                [participation]="asProgrammingExercise(exercise).templateParticipation!"
-            ></jhi-programming-exercise-instructions>
-            <ng-container *ngIf="exercise.type !== PROGRAMMING">
+            <ng-container *ngIf="exercise.type !== PROGRAMMING" class="pt-2">
+                <div *ngIf="exerciseInfos[exercise.id!].displayExampleSolution; else studentSolution">
+                    <jhi-example-solution *ngIf="exercise.id !== undefined" [exerciseId]="exercise.id" [displayHeader]="false" />
+                </div>
+
                 <!-- Show submission of student - if no submission found -> display that student did not participate -->
-                <ng-container
-                    *ngIf="getParticipationForExercise(exercise) && getSubmissionForExercise(exercise) && getSubmissionForExercise(exercise)?.submitted; else noSubmission"
-                >
-                    <!-- Text Exercise -->
-                    <ng-container *ngIf="exercise.type === TEXT">
-                        <jhi-text-exam-summary [submission]="getSubmissionForExercise(exercise)!"></jhi-text-exam-summary>
-                    </ng-container>
-                    <!-- Modeling Exercise -->
-                    <ng-container *ngIf="exercise.type === MODELING">
-                        <jhi-modeling-exam-summary [exercise]="exercise" [submission]="getSubmissionForExercise(exercise)!"></jhi-modeling-exam-summary>
-                    </ng-container>
-                    <!-- Quiz Exercise -->
-                    <ng-container *ngIf="exercise.type === QUIZ">
-                        <jhi-quiz-exam-summary
+                <ng-template #studentSolution>
+                    <ng-container *ngIf="exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission?.submitted; else noSubmission">
+                        <ng-container [ngSwitch]="exercise.type">
+                            <jhi-text-exam-summary
+                                *ngSwitchCase="TEXT"
+                                [exercise]="exercise"
+                                [submission]="exerciseInfos[exercise.id!]!.submission!"
+                                [expandProblemStatement]="expandProblemStatement"
+                                [isAfterResultsArePublished]="resultsArePublished"
+                            />
+
+                            <jhi-modeling-exam-summary
+                                *ngSwitchCase="MODELING"
+                                [exercise]="exercise"
+                                [submission]="exerciseInfos[exercise.id!]!.submission!"
+                                [isPrinting]="isPrinting"
+                                [expandProblemStatement]="expandProblemStatement"
+                                [isAfterResultsArePublished]="resultsArePublished"
+                            />
+
+                            <jhi-quiz-exam-summary
+                                *ngSwitchCase="QUIZ"
+                                [quizParticipation]="exercise"
+                                [exam]="studentExam.exam!"
+                                [submission]="exerciseInfos[exercise.id!]!.submission!"
+                                [resultsPublished]="resultsArePublished"
+                            />
+
+                            <jhi-file-upload-exam-summary
+                                *ngSwitchCase="FILE_UPLOAD"
+                                [submission]="exerciseInfos[exercise.id!]!.submission!"
+                                [exercise]="exercise"
+                                [expandProblemStatement]="expandProblemStatement"
+                                [isAfterResultsArePublished]="resultsArePublished"
+                            />
+                        </ng-container>
+
+                        <jhi-complaint-student-view
+                            *ngIf="exerciseInfos[exercise.id!]!.submission! && exercise.type !== QUIZ && isAfterStudentReviewStart"
+                            class="mb-2 mt-2 ms-3"
                             [exercise]="exercise"
-                            [exam]="studentExam.exam!"
-                            [submission]="getSubmissionForExercise(exercise)!"
-                            [resultsPublished]="!!resultsPublished"
-                        ></jhi-quiz-exam-summary>
+                            [participation]="exerciseInfos[exercise.id!]!.participation!"
+                            [result]="exerciseInfos[exercise.id!]!.participation!.results?.[0]"
+                            [exam]="examWithOnlyIdAndStudentReviewPeriod"
+                            [testRun]="isTestRun"
+                        >
+                        </jhi-complaint-student-view>
                     </ng-container>
-                    <!-- File Upload Exercise -->
-                    <ng-container *ngIf="exercise.type === FILE_UPLOAD">
-                        <jhi-file-upload-exam-summary [submission]="getSubmissionForExercise(exercise)!"></jhi-file-upload-exam-summary>
-                    </ng-container>
-                    <jhi-complaint-student-view
-                        *ngIf="getSubmissionForExercise(exercise) && exercise.type !== QUIZ && isAfterStudentReviewStart()"
-                        class="mb-2 mt-2 ms-3"
-                        [exercise]="exercise"
-                        [participation]="getParticipationForExercise(exercise)!"
-                        [result]="getParticipationForExercise(exercise)!.results?.[0]"
-                        [exam]="examWithOnlyIdAndStudentReviewPeriod"
-                        [testRun]="isTestRun"
-                    >
-                    </jhi-complaint-student-view>
-                </ng-container>
+                </ng-template>
             </ng-container>
             <ng-container *ngIf="exercise.type === PROGRAMMING">
                 <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
-                <ng-container *ngIf="getParticipationForExercise(exercise) && getSubmissionForExercise(exercise); else noSubmission">
-                    <!-- Programming Exercise -->
+                <ng-container *ngIf="exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission!; else noSubmission">
                     <jhi-programming-exam-summary
                         [exercise]="exercise"
-                        [participation]="getParticipationForExercise(exercise)!"
-                        [submission]="getSubmissionForExercise(exercise)!"
-                    ></jhi-programming-exam-summary>
+                        [participation]="exerciseInfos[exercise.id!]!.participation!"
+                        [submission]="exerciseInfos[exercise.id!]!.submission!"
+                        [isTestRun]="isTestRun"
+                        [exam]="examWithOnlyIdAndStudentReviewPeriod"
+                        [isAfterStudentReviewStart]="isAfterStudentReviewStart"
+                        [resultsPublished]="resultsArePublished"
+                        [isPrinting]="isPrinting"
+                        [isAfterResultsArePublished]="resultsArePublished"
+                    />
                 </ng-container>
-                <jhi-complaint-student-view
-                    *ngIf="
-                        (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.allowComplaintsForAutomaticAssessments) &&
-                        getSubmissionForExercise(exercise) &&
-                        isAfterStudentReviewStart()
-                    "
-                    class="mb-2 mt-2 ms-3"
-                    [exercise]="exercise"
-                    [participation]="getParticipationForExercise(exercise)!"
-                    [result]="getParticipationForExercise(exercise)!.results?.[0]"
-                    [exam]="examWithOnlyIdAndStudentReviewPeriod"
-                    [testRun]="isTestRun"
-                >
-                </jhi-complaint-student-view>
             </ng-container>
             <ng-template #noSubmission>
                 {{ 'artemisApp.exam.examSummary.noSubmissionFound' | artemisTranslate }}
@@ -174,3 +163,8 @@
         </div>
     </div>
 </div>
+
+<button class="btn btn-light mx-auto d-block" (click)="scrollToOverviewOrTop()" id="back-to-overview-button">
+    <fa-icon [icon]="faArrowUp"></fa-icon>
+    <span>&nbsp; {{ 'artemisApp.exam.examSummary.backToOverview' | artemisTranslate }}&nbsp; </span>
+</button>

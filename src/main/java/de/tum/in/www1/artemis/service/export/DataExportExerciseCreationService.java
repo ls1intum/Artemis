@@ -98,7 +98,7 @@ public class DataExportExerciseCreationService {
     public void createExercisesExport(Path workingDirectory, User user) throws IOException {
         // retrieve all exercises as we cannot retrieve the exercises by course because a user might have participated in a course they are no longer a member of (they have
         // unenrolled)
-        var allExerciseParticipations = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByUserId(user.getId());
+        var allExerciseParticipations = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(user.getId());
         var exerciseParticipationsPerCourse = allExerciseParticipations.stream().collect(Collectors.groupingBy(Exercise::getCourseViaExerciseGroupOrCourseMember));
         for (var entry : exerciseParticipationsPerCourse.entrySet()) {
             var course = entry.getKey();
@@ -316,11 +316,16 @@ public class DataExportExerciseCreationService {
                     if (feedback != null) {
                         resultScoreAndFeedbacks.append("- Feedback: ");
 
-                        // null if it's manual feedback
+                        // getTestCase() is null if it's manual feedback or if the test name was filtered out above
+                        if (feedback.getTestCase() != null && feedback.getTestCase().getTestName() != null) {
+                            resultScoreAndFeedbacks.append(feedback.getTestCase().getTestName()).append("\t");
+                        }
+                        // getText() contains, e.g., the file and line number for programming exercises
                         if (feedback.getText() != null) {
                             resultScoreAndFeedbacks.append(feedback.getText()).append("\t");
                         }
-                        // null if the test case passes
+                        // getDetailText() contains the text message produced by the test case or written by the assessor.
+                        // Usually null if the test case passes
                         if (feedback.getDetailText() != null) {
                             resultScoreAndFeedbacks.append(feedback.getDetailText()).append("\t");
                         }

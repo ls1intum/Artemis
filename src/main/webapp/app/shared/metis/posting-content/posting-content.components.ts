@@ -1,10 +1,13 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Subscription } from 'rxjs';
 import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
+import { User } from 'app/core/user/user.model';
+import { Posting } from 'app/entities/metis/posting.model';
+import { isCommunicationEnabled } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-posting-content',
@@ -15,7 +18,12 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() content?: string;
     @Input() previewMode?: boolean;
     @Input() isAnnouncement = false;
+    @Input() author?: User;
     @Input() isEdited = false;
+    @Input() posting?: Posting;
+    @Input() isReply?: boolean;
+    @Output() userReferenceClicked = new EventEmitter<string>();
+
     showContent = false;
     currentlyLoadedPosts: Post[];
     postingContentParts: PostingContentPart[];
@@ -72,7 +80,11 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         // if there are references found in the posting content, we need to create a PostingContentPart per reference match
         if (patternMatches && patternMatches.length > 0) {
             patternMatches.forEach((patternMatch: PatternMatch, index: number) => {
-                const referencedId = this.content!.substring(patternMatch.startIndex + 1, patternMatch.endIndex); // e.g. post id 6
+                if (this.content === undefined) {
+                    return;
+                }
+
+                const referencedId = this.content.substring(patternMatch.startIndex + 1, patternMatch.endIndex); // e.g. post id 6
                 const referenceType = patternMatch.referenceType;
                 let referenceStr; // e.g. '#6', 'Lecture-1.pdf', 'Modeling Exercise'
                 let linkToReference;
@@ -84,9 +96,11 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // by invoking the respective metis service methods for link and query params and passing the post object;
                     // if not, we do not want to fetch the post from the DB and rather always navigate to the course discussion page with the referenceStr as search text
                     const referencedPostInLoadedPosts = this.currentlyLoadedPosts.find((post: Post) => post.id! === +referencedId);
-                    referenceStr = this.content!.substring(patternMatch.startIndex, patternMatch.endIndex);
-                    linkToReference = this.metisService.getLinkForPost(referencedPostInLoadedPosts);
-                    queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
+                    referenceStr = this.content.substring(patternMatch.startIndex, patternMatch.endIndex);
+                    if (isCommunicationEnabled(this.metisService.getCourse())) {
+                        linkToReference = this.metisService.getLinkForPost(referencedPostInLoadedPosts);
+                        queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
+                    }
                 } else if (
                     ReferenceType.LECTURE === referenceType ||
                     ReferenceType.PROGRAMMING === referenceType ||
@@ -100,29 +114,37 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // referenceStr: string to be displayed for the reference
                     // linkToReference: link to be navigated to on reference click
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                    referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
+                    referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                    linkToReference = [this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex))];
+                    linkToReference = [this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex))];
                 } else if (ReferenceType.ATTACHMENT === referenceType || ReferenceType.ATTACHMENT_UNITS === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // attachmentToReference: location of attachment to be opened on reference click
                     // attachmentRefDir: directory of the attachment
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                    referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
+                    referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
                     const attachmentRefDir = this.ATTACHMENT_DIR;
                     attachmentToReference =
                         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                        attachmentRefDir + this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
+                        attachmentRefDir + this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex));
                 } else if (ReferenceType.SLIDE === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // slideToReference: location of attachment to be opened on reference click
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                    referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
+                    referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
                     const attachmentUnitRefDir = this.ATTACHMENT_DIR;
                     slideToReference =
                         attachmentUnitRefDir +
                         // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                        this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
+                        this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex));
+                } else if (ReferenceType.USER === referenceType) {
+                    // referenceStr: string to be displayed for the reference
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                    referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                    queryParams = {
+                        referenceUserLogin: this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex)),
+                    } as Params;
                 }
 
                 // determining the endIndex of the content after the reference
@@ -134,19 +156,19 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // if current match is the only or last one in patternMatches
                 } else {
                     // endIndex of the content after the reference equals the end of the post content
-                    endIndexOfContentAfterReference = this.content!.length;
+                    endIndexOfContentAfterReference = this.content.length;
                 }
 
                 // building the PostingContentPart object
                 const contentPart: PostingContentPart = {
-                    contentBeforeReference: index === 0 ? this.content!.substring(0, patternMatch.startIndex) : undefined, // only defined for the first match
+                    contentBeforeReference: index === 0 ? this.content.substring(0, patternMatch.startIndex) : undefined, // only defined for the first match
                     linkToReference,
                     attachmentToReference,
                     slideToReference,
                     queryParams,
                     referenceStr,
                     referenceType,
-                    contentAfterReference: this.content!.substring(patternMatch.endIndex, endIndexOfContentAfterReference),
+                    contentAfterReference: this.content.substring(patternMatch.endIndex, endIndexOfContentAfterReference),
                 };
                 this.postingContentParts.push(contentPart);
             });
@@ -177,9 +199,10 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         // Group 6: reference pattern for Lectures
         // Group 7: reference pattern for Lecture Attachments
         // Group 8: reference pattern for Lecture Units
+        // Group 9: reference pattern for Users
         // globally searched for, i.e. no return after first match
         const pattern =
-            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])/g;
+            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])/g;
 
         // array with PatternMatch objects per reference found in the posting content
         const patternMatches: PatternMatch[] = [];

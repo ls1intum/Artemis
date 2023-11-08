@@ -181,7 +181,7 @@ public class FileService implements DisposableBean {
             filePath = generateFilePath(filenamePrefix, fileExtension, path);
         }
         try {
-            FileUtils.copyToFile(file.getInputStream(), filePath.toFile());
+            FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
 
             return generateResponsePath(filePath, markdown);
         }
@@ -344,7 +344,7 @@ public class FileService implements DisposableBean {
             return;
         }
 
-        FileUtils.copyToFile(resource.getInputStream(), targetPath.toFile());
+        FileUtils.copyInputStreamToFile(resource.getInputStream(), targetPath.toFile());
 
         if (targetPath.endsWith("gradlew")) {
             targetPath.toFile().setExecutable(true);

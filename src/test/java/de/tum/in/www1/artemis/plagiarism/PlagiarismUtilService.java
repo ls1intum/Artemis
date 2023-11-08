@@ -117,11 +117,11 @@ public class PlagiarismUtilService {
 
     @NotNull
     public LinkedMultiValueMap<String, String> getDefaultPlagiarismOptions() {
-        return getPlagiarismOptions(50D, 0, 0);
+        return getPlagiarismOptions(50, 0, 0);
     }
 
     @NotNull
-    public LinkedMultiValueMap<String, String> getPlagiarismOptions(double similarityThreshold, int minimumScore, int minimumSize) {
+    public LinkedMultiValueMap<String, String> getPlagiarismOptions(int similarityThreshold, int minimumScore, int minimumSize) {
         // Use default options for plagiarism detection
         var params = new LinkedMultiValueMap<String, String>();
         params.add("similarityThreshold", String.valueOf(similarityThreshold));

@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.iris;
 
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -143,16 +145,6 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     }
 
     /**
-     * Verify that nothing was sent through the websocket.
-     *
-     * @param user      the user
-     * @param sessionId the session id
-     */
-    protected void verifyNothingWasSentOverWebsocket(String user, Long sessionId) {
-        verify(websocketMessagingService, times(0)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId), any());
-    }
-
-    /**
      * Verify that nothing else was sent through the websocket.
      *
      * @param user      the user
@@ -160,17 +152,5 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
      */
     protected void verifyNothingElseWasSentOverWebsocket(String user, Long sessionId) {
         verifyNoMoreInteractions(websocketMessagingService);
-    }
-
-    /**
-     * Verify that no error was sent through the websocket.
-     *
-     * @param user      the user
-     * @param sessionId the session id
-     */
-    protected void verifyNoErrorWasSentOverWebsocket(String user, Long sessionId) {
-        verify(websocketMessagingService, times(0)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
-                ArgumentMatchers.argThat(object -> object instanceof IrisWebsocketService.IrisWebsocketDTO websocketDTO
-                        && websocketDTO.getType() == IrisWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.ERROR));
     }
 }

@@ -104,8 +104,8 @@ export class ExamParticipation {
     }
 
     getResultScore() {
-        cy.reloadUntilFound('#result-score');
-        return cy.get('#result-score');
+        cy.reloadUntilFound('#exercise-result-score');
+        return cy.get('#exercise-result-score');
     }
 
     checkExamFinishedTitle(title: string) {
@@ -128,12 +128,12 @@ export class ExamParticipation {
     }
 
     verifyExerciseTitleOnFinalPage(exerciseID: number, exerciseTitle: string) {
-        getExercise(exerciseID).find('.exercise-title').contains(exerciseTitle).should('be.visible');
+        getExercise(exerciseID).find(`#exercise-group-title-${exerciseID}`).contains(exerciseTitle).should('be.visible');
     }
 
     verifyTextExerciseOnFinalPage(textFixture: string) {
         cy.fixture(textFixture).then((submissionText) => {
-            cy.contains(submissionText).should('be.visible');
+            cy.get('textarea').should('have.value', submissionText);
         });
     }
 }

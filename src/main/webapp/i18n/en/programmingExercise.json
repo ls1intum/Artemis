@@ -351,7 +351,8 @@
                     "tooltip": "Standardize line endings and encoding for consistency"
                 },
                 "successMessageRepos": "Export of repos was successful. The exported zip file with all repositories is currently being downloaded.",
-                "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded."
+                "successMessageExercise": "Export of exercise was successful. The exported zip file with all exercise material is currently being downloaded.",
+                "notFoundMessageRepos": "No Repsoitories exported for exercise {{exerciseId}}: There are no submission of the given students."
             },
             "resubmitOnFailedSubmission": "An automatic assessment for this participant's last submission could not be generated. Click the button to submit again. This will trigger a new build run that tests the last submission.",
             "resubmit": "Resubmit the last submission. This will execute a build run on the participant's repository without making a commit.",
@@ -518,12 +519,22 @@
             "diffReport": {
                 "button": "Show",
                 "tooltip": "Shows the detailed git-diff between the template and solution repositories.",
+                "tooltipBetweenSubmissions": "Shows the detailed git-diff between the current and previous submission.",
                 "title": "Template-Solution-Diff",
+                "titleForSubmissions": "Submission-Diff",
                 "template": "Template",
                 "solution": "Solution",
+                "previousSubmission": "Previous Submission",
+                "currentSubmission": "Current Submission",
                 "errorWhileFetchingRepos": "An error occurred while fetching the repositories. Please check your internet connection and reopen the modal.",
                 "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it.",
                 "lineStatLabel": "Lines added/removed between template and solution",
+                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Lines added/removed between the current submission with commit hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
+                "lineStatBetweenSubmissionsPreviousSubmissionLabel": " and the previous submission with commit hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span>",
+                "lineStatBetweenSubmissionsTemplateLabel": "and the template",
+                "lineStatTooltipExamTimeline": "Unfiltered lines that were added and removed when comparing the current and the previous submission.",
+                "lineStatTooltipFullReportExamTimeline": "Filtered lines that were added and removed when comparing the current and the previous submission. This excludes empty lines.",
+                "lineStatTooltipFullEntryExamTimeline": "Filtered lines that were added and removed when comparing the current and the previous submission of this file. This excludes empty lines.",
                 "lineStatTooltipDetailPage": "Unfiltered lines that were added and removed when comparing the template and solution repositories",
                 "lineStatTooltipFullReport": "Filtered lines that were added and removed when comparing the template and solution repositories. This excludes empty lines.",
                 "lineStatTooltipFullEntry": "Filtered lines that were added and removed when comparing the template and solution versions of this file. This excludes empty lines."
@@ -561,11 +572,21 @@
                 "dependenciesDownloadedCount": "Number of downloaded dependencies",
                 "tooltip": "The average build duration is calculated based on all builds (template, solution and student submissions). The number of downloaded dependencies can be reduced by caching dependencies in the Docker image."
             },
+            "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing.",
+            "commitInfo": {
+                "title": "Commit Information",
+                "commitHash": "Commit Hash",
+                "author": "Author",
+                "date": "Date",
+                "message": "Message",
+                "previousSubmission": "Previous Submission",
+                "currentSubmission": "Current Submission",
+                "template": "Template"
+            },
             "sharing": {
                 "import": "Import Programming Exercise from Sharing Platform",
                 "export": "Export to Sharing"
-            },
-            "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing."
+            }
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."

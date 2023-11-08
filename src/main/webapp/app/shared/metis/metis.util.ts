@@ -36,7 +36,6 @@ export enum SortDirection {
 export enum PostSortCriterion {
     CREATION_DATE = 'CREATION_DATE',
     VOTES = 'VOTES',
-    ANSWER_COUNT = 'ANSWER_COUNT',
 }
 
 export enum MetisPostAction {
@@ -52,6 +51,7 @@ export interface PostContextFilter {
     courseWideContexts?: CourseWideContext[];
     exerciseIds?: number[];
     lectureIds?: number[];
+    courseWideChannelIds?: number[];
     plagiarismCaseId?: number;
     searchText?: string;
     conversationId?: number;
@@ -113,6 +113,7 @@ export enum ReferenceType {
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
+    USER = 'USER',
 }
 
 export enum UserRole {
@@ -127,6 +128,7 @@ export enum UserRole {
  */
 export interface ContextInformation {
     routerLinkComponents?: RouteComponents;
+    queryParams?: Params;
     displayName: string;
 }
 

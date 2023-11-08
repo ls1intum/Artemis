@@ -16,8 +16,8 @@
         [ngClass]="{ 'is-invalid': error }"
         [ngModel]="value"
         [disabled]="disabled"
-        [min]="convert(min)"
-        [max]="convert(max)"
+        [min]="minDate"
+        [max]="maxDate"
         (ngModelChange)="updateField($event)"
         [owlDateTime]="dt"
         name="datePicker"
@@ -25,5 +25,5 @@
     <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
         <fa-icon [icon]="faCalendarAlt"></fa-icon>
     </button>
-    <owl-date-time [startAt]="convert(startAt)" #dt></owl-date-time>
+    <owl-date-time [startAt]="startDate" #dt></owl-date-time>
 </div>

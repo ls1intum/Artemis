@@ -1,4 +1,4 @@
-<jhi-header-participation-page class="d-block mb-4" [exercise]="fileUploadExercise" [participation]="participation">
+<jhi-header-participation-page *ngIf="displayHeader" class="d-block mb-4" [exercise]="fileUploadExercise" [participation]="participation">
     <span pagetitle>
         {{ 'artemisApp.fileUploadSubmission.fileUpload' | artemisTranslate }}:
         <span class="font-weight-normal">{{ examMode ? fileUploadExercise?.exerciseGroup?.title : fileUploadExercise?.title }}</span>
@@ -17,7 +17,7 @@
     </jhi-button>
 </jhi-header-participation-page>
 
-<jhi-resizeable-container *ngIf="fileUploadExercise" [isExerciseParticipation]="true">
+<jhi-resizeable-container *ngIf="fileUploadExercise" [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement">
     <!--region Left Panel-->
     <div left-body class="px-2 pb-2 w-100">
         <div class="row">
@@ -40,14 +40,29 @@
         </div>
 
         <div *ngIf="submittedFileName && submission?.filePath" class="card-text">
-            <h6>
+            <h6 *ngIf="!displayedInExamSummary; else examSummarySubmissionDescription">
                 {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName } }}
                 <span> {{ submission!.submissionDate! | artemisTimeAgo }}</span>
             </h6>
-            <a class="text-primary" (click)="downloadFile(submission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download">Download file</a>
-            <span class="ms-2 badge bg-info" *ngIf="submittedFileExtension">
-                {{ submittedFileExtension | uppercase }}
-            </span>
+            <ng-template #examSummarySubmissionDescription>
+                <h5>{{ 'artemisApp.exam.examSummary.yourSubmission' | artemisTranslate }}</h5>
+                <span>{{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName } }}</span>
+            </ng-template>
+
+            <br />
+
+            <div class="mt-2">
+                <button
+                    jhi-exercise-action-button
+                    [smallButton]="true"
+                    [buttonIcon]="faDownload"
+                    [buttonLabel]="'artemisApp.fileUploadSubmission.download' | artemisTranslate"
+                    (click)="downloadFile(submission!.filePath!)"
+                ></button>
+                <span class="ms-2 badge bg-info" *ngIf="submittedFileExtension">
+                    {{ submittedFileExtension | uppercase }}
+                </span>
+            </div>
         </div>
         <div *ngIf="result && result.feedbacks && result.feedbacks.length && result.feedbacks.length > 0">
             <br />

@@ -66,6 +66,9 @@ public class AnswerPostService extends PostingService {
         }
 
         final Course course = preCheckUserAndCourseForCommunication(user, courseId);
+
+        parseUserMentions(course, answerPost.getContent());
+
         Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
 
         // increase answerCount of post needed for sorting
@@ -81,7 +84,7 @@ public class AnswerPostService extends PostingService {
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
         postRepository.save(post);
 
-        this.preparePostAndBroadcast(savedAnswerPost, course);
+        preparePostAndBroadcast(savedAnswerPost, course);
         sendNotification(post, answerPost, course);
 
         return savedAnswerPost;
@@ -106,6 +109,8 @@ public class AnswerPostService extends PostingService {
         }
         AnswerPost existingAnswerPost = this.findById(answerPostId);
         final Course course = preCheckUserAndCourseForCommunication(user, courseId);
+
+        parseUserMentions(course, answerPost.getContent());
 
         AnswerPost updatedAnswerPost;
 
@@ -137,7 +142,8 @@ public class AnswerPostService extends PostingService {
      * @param courseId   id of the course the answer post belongs to
      */
     public void updateWithReaction(AnswerPost answerPost, Reaction reaction, Long courseId) {
-        final Course course = preCheckUserAndCourseForCommunication(reaction.getUser(), courseId);
+        final Course course = preCheckUserAndCourseForCommunicationOrMessaging(reaction.getUser(), courseId);
+
         answerPost.addReaction(reaction);
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
         updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());

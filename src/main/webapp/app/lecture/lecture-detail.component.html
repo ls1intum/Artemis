@@ -30,18 +30,20 @@
                 </dd>
             </dl>
 
-            <a [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'edit']" class="btn btn-primary">
-                <fa-icon [icon]="faPencilAlt"></fa-icon>
-                <span jhiTranslate="entity.action.edit"> Edit</span>
-            </a>
-            <a [routerLink]="['attachments']" class="btn btn-primary">
-                <fa-icon [icon]="faFile"></fa-icon>
-                <span jhiTranslate="entity.action.attachments">Attachment</span>
-            </a>
-            <a [routerLink]="['unit-management']" class="btn btn-primary">
-                <fa-icon [icon]="faPuzzlePiece"></fa-icon>
-                <span jhiTranslate="entity.action.units">Units</span>
-            </a>
+            <ng-container *ngIf="lecture.course?.isAtLeastEditor">
+                <a [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'edit']" class="btn btn-primary">
+                    <fa-icon [icon]="faPencilAlt"></fa-icon>
+                    <span jhiTranslate="entity.action.edit"> Edit</span>
+                </a>
+                <a [routerLink]="['attachments']" class="btn btn-primary">
+                    <fa-icon [icon]="faFile"></fa-icon>
+                    <span jhiTranslate="entity.action.attachments">Attachment</span>
+                </a>
+                <a [routerLink]="['unit-management']" class="btn btn-primary">
+                    <fa-icon [icon]="faPuzzlePiece"></fa-icon>
+                    <span jhiTranslate="entity.action.units">Units</span>
+                </a>
+            </ng-container>
         </div>
     </div>
 </div>

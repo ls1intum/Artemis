@@ -2,14 +2,22 @@ package de.tum.in.www1.artemis.service.metis;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.validation.constraints.NotNull;
+
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -93,10 +101,8 @@ public abstract class PostingService {
             websocketMessagingService.sendMessage(specificTopicName, postDTO);
         }
         else if (postConversation != null) {
-            String conversationTopicName = genericTopicName + "/conversations/" + postConversation.getId();
-
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
-                websocketMessagingService.sendMessage(conversationTopicName, postDTO);
+                websocketMessagingService.sendMessage(genericTopicName, postDTO);
             }
             else {
                 if (recipients == null) {
@@ -104,7 +110,7 @@ public abstract class PostingService {
                     recipients = conversationParticipantRepository.findConversationParticipantByConversationId(postConversation.getId()).stream()
                             .map(ConversationParticipant::getUser).collect(Collectors.toSet());
                 }
-                recipients.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), conversationTopicName, postDTO));
+                recipients.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), genericTopicName + "/conversations/" + postConversation.getId(), postDTO));
             }
 
             return;
@@ -121,11 +127,14 @@ public abstract class PostingService {
      */
     protected Stream<ConversationWebSocketRecipientSummary> getWebSocketRecipients(Conversation conversation) {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
-            return userRepository.findAllWebSocketRecipientsInCourseForConversation(conversation.getCourse().getId(), conversation.getId()).stream();
+            Course course = conversation.getCourse();
+            return userRepository.findAllWebSocketRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
+                    course.getEditorGroupName(), course.getInstructorGroupName()).stream();
         }
 
         return conversationParticipantRepository.findConversationParticipantWithUserGroupsByConversationId(conversation.getId()).stream()
-                .map(participant -> new ConversationWebSocketRecipientSummary(participant.getUser(), participant.getIsHidden() != null && participant.getIsHidden(),
+                .map(participant -> new ConversationWebSocketRecipientSummary(participant.getUser().getId(), participant.getUser().getLogin(),
+                        participant.getIsHidden() != null && participant.getIsHidden(),
                         authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), participant.getUser())));
     }
 
@@ -175,8 +184,22 @@ public abstract class PostingService {
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        if (!courseRepository.isMessagingEnabled(course.getId())) {
-            throw new BadRequestAlertException("Messaging is not enabled for this course", getEntityName(), "400", true);
+        if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
+            throw new BadRequestAlertException("Communication and messaging is disabled for this course", getEntityName(), "400", true);
+        }
+        return course;
+    }
+
+    protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Long courseId) {
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        return preCheckUserAndCourseForCommunicationOrMessaging(user, course);
+    }
+
+    protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
+            throw new BadRequestAlertException("Communication and messaging is disabled for this course", getEntityName(), "400", true);
         }
         return course;
     }
@@ -190,7 +213,10 @@ public abstract class PostingService {
         // prepares a unique set of userIds that authored the current list of postings
         Set<Long> userIds = new HashSet<>();
         postsInCourse.forEach(post -> {
-            userIds.add(post.getAuthor().getId());
+            // needs to handle posts created by SingleUserNotificationService.notifyUserAboutNewPlagiarismCaseBySystem
+            if (post.getAuthor() != null) {
+                userIds.add(post.getAuthor().getId());
+            }
             post.getAnswers().forEach(answerPost -> userIds.add(answerPost.getAuthor().getId()));
         });
 
@@ -199,14 +225,16 @@ public abstract class PostingService {
         Map<Long, User> authors = userRepository.findAllWithGroupsAndAuthoritiesByIdIn(userIds).stream().collect(Collectors.toMap(DomainObject::getId, Function.identity()));
 
         // sets respective author role to display user authority icon on posting headers
-        postsInCourse.forEach(post -> {
-            post.setAuthor(authors.get(post.getAuthor().getId()));
-            setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
-            post.getAnswers().forEach(answerPost -> {
-                answerPost.setAuthor(authors.get(answerPost.getAuthor().getId()));
-                setAuthorRoleForPosting(answerPost, answerPost.getCoursePostingBelongsTo());
-            });
-        });
+        postsInCourse.stream()
+                // needs to handle posts created by SingleUserNotificationService.notifyUserAboutNewPlagiarismCaseBySystem
+                .filter(post -> post.getAuthor() != null).forEach(post -> {
+                    post.setAuthor(authors.get(post.getAuthor().getId()));
+                    setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
+                    post.getAnswers().forEach(answerPost -> {
+                        answerPost.setAuthor(authors.get(answerPost.getAuthor().getId()));
+                        setAuthorRoleForPosting(answerPost, answerPost.getCoursePostingBelongsTo());
+                    });
+                });
     }
 
     /**
@@ -229,4 +257,57 @@ public abstract class PostingService {
     }
 
     protected abstract String getEntityName();
+
+    /**
+     * Gets the list of logins for users mentioned in a posting.
+     * Throws an exception, if a mentioned user is not part of the course.
+     *
+     * @param course         course of the posting
+     * @param postingContent content of the posting
+     * @return set of mentioned users
+     */
+    protected Set<User> parseUserMentions(@NotNull Course course, String postingContent) {
+        // Define a regular expression to match text enclosed in [user]...[/user] tags, along with login inside parentheses () within those tags.
+        // It makes use of the possessive quantifier "*+" to avoid backtracking and increase performance.
+        // Explanation:
+        // - "\\[user\\]" matches the literal string "[user]".
+        // - "([^\\[\\]()]*+)" captures any characters that are not '[', ']', '(', or ')' zero or more times. This captures the full name the user mention.
+        // - "\\(?" matches the literal '(' character.
+        // - "([^\\[\\]()]*+)" captures any characters that are not '[', ']', '(', or ')' zero or more times. This captures the content within parentheses.
+        // - "\\)?" matches the literal ')' character.
+        // - "\\[/user\\]" matches the literal string "[/user]".
+        String regex = "\\[user\\]([^\\[\\]()]*+)\\(?([^\\[\\]()]*+)\\)?\\[/user\\]";
+
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(Optional.ofNullable(postingContent).orElse(""));
+
+        Map<String, String> matches = new HashMap<>();
+
+        // Find and save all matches in the list
+        while (matcher.find()) {
+            String fullName = matcher.group(1);
+            String userLogin = matcher.group(2);
+
+            matches.put(userLogin, fullName);
+        }
+
+        Set<User> mentionedUsers = userRepository.findAllByLogins(matches.keySet());
+
+        if (mentionedUsers.size() != matches.size()) {
+            throw new BadRequestAlertException("At least one of the mentioned users does not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");
+        }
+
+        mentionedUsers.forEach(user -> {
+            if (!user.getName().equals(matches.get(user.getLogin()))) {
+                throw new BadRequestAlertException("The name provided for user " + user.getLogin() + " does not match the user's full name " + user.getName(),
+                        METIS_POST_ENTITY_NAME, "invalidUserMention");
+            }
+
+            if (!authorizationCheckService.isAtLeastStudentInCourse(course, user)) {
+                throw new BadRequestAlertException("The user " + user.getLogin() + " is not a member of the course", METIS_POST_ENTITY_NAME, "invalidUserMention");
+            }
+        });
+
+        return mentionedUsers;
+    }
 }

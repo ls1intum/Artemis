@@ -20,7 +20,7 @@ services:
         expose:
             - "5432"
         healthcheck:
-            test: pg_isready -U postgres -d Artemis
+            test: pg_isready -U Artemis -d Artemis
             interval: 5s
             timeout: 3s
             retries: 30

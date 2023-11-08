@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
@@ -14,14 +13,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.competency.LearningPathUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -39,9 +37,10 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
+import de.tum.in.www1.artemis.web.rest.LearningPathResource;
 import de.tum.in.www1.artemis.web.rest.dto.competency.*;
 
-class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "learningpathintegration";
 
@@ -112,8 +111,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private static final String INSTRUCTOR_OF_COURSE = TEST_PREFIX + "instructor1";
 
-    private User studentNotInCourse;
-
     @BeforeEach
     void enableLearningPathsFeatureToggle() {
         featureToggleService.enableFeature(Feature.LearningPaths);
@@ -129,16 +126,22 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 1, 1);
 
         // Add users that are not in the course
-        studentNotInCourse = userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
+        userUtilService.createAndSaveUser(TEST_PREFIX + "student1337");
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor1337");
 
         course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, 1).get(0);
         competencies = competencyUtilService.createCompetencies(course, 5);
 
+        // set threshold to 60, 70, and 80 respectively
+        for (int i = 0; i < competencies.length; i++) {
+            competencies[i] = competencyUtilService.updateMasteryThreshold(competencies[i], 60 + i * 10);
+        }
+
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, past(1), future(1), future(2));
         List<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(textExercise, STUDENT_OF_COURSE);
+        competencyUtilService.linkExerciseToCompetency(competencies[1], textExercise);
 
         Lecture lecture = new Lecture();
         lecture.setDescription("Test Lecture");
@@ -147,6 +150,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         textUnit = lectureUtilService.createTextUnit();
         lectureUtilService.addLectureUnitsToLecture(lecture, List.of(textUnit));
+        competencyUtilService.linkLectureUnitToCompetency(competencies[2], textUnit);
 
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         lectureUnitService.setLectureUnitCompletion(textUnit, student, true);
@@ -277,8 +281,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course = courseRepository.save(course);
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
 
-        this.setupEnrollmentRequestMocks();
-
         request.postWithResponseBody("/api/courses/" + course.getId() + "/enroll", null, Set.class, HttpStatus.OK);
         final var user = userRepository.findOneWithLearningPathsByLogin(TEST_PREFIX + "student1337").orElseThrow();
 
@@ -286,19 +288,11 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(user.getLearningPaths().size()).as("should create LearningPath for student").isEqualTo(1);
     }
 
-    private void setupEnrollmentRequestMocks() throws JsonProcessingException, URISyntaxException {
-        jiraRequestMockProvider.enableMockingOfRequests();
-        jiraRequestMockProvider.mockAddUserToGroupForMultipleGroups(Set.of(course.getStudentGroupName()));
-        bitbucketRequestMockProvider.enableMockingOfRequests();
-        bitbucketRequestMockProvider.mockUpdateUserDetails(studentNotInCourse.getLogin(), studentNotInCourse.getEmail(), studentNotInCourse.getName());
-        bitbucketRequestMockProvider.mockAddUserToGroups();
-    }
-
     @Test
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetLearningPathsOnPageForCourseLearningPathsDisabled() throws Exception {
         final var search = pageableSearchUtilService.configureSearch("");
-        request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.BAD_REQUEST, LearningPathPageableSearchDTO.class,
+        request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.BAD_REQUEST, LearningPathInformationDTO.class,
                 pageableSearchUtilService.searchMapping(search));
     }
 
@@ -307,7 +301,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetLearningPathsOnPageForCourseEmpty() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var search = pageableSearchUtilService.configureSearch(STUDENT_OF_COURSE + "SuffixThatAllowsTheResultToBeEmpty");
-        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathPageableSearchDTO.class,
+        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathInformationDTO.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
@@ -317,7 +311,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetLearningPathsOnPageForCourseExactlyStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var search = pageableSearchUtilService.configureSearch(STUDENT_OF_COURSE);
-        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathPageableSearchDTO.class,
+        final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathInformationDTO.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
     }
@@ -408,22 +402,42 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void testGetLearningPathNgxGraphForLearningPathsDisabled() throws Exception {
+    void testGetLearningPathWithOwner() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.OK, NgxLearningPathDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathOfOtherUser() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var otherStudent = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), otherStudent.getId());
+        request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(LearningPathResource.NgxRequestType.class)
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetLearningPathNgxForLearningPathsDisabled(LearningPathResource.NgxRequestType type) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         course.setLearningPathsEnabled(false);
         courseRepository.save(course);
-        request.get("/api/learning-path/" + learningPath.getId() + "/graph", HttpStatus.BAD_REQUEST, NgxLearningPathDTO.class);
+        request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.BAD_REQUEST, NgxLearningPathDTO.class);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(LearningPathResource.NgxRequestType.class)
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
-    void testGetLearningPathNgxGraphForOtherStudent() throws Exception {
+    void testGetLearningPathNgxForOtherStudent(LearningPathResource.NgxRequestType type) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        request.get("/api/learning-path/" + learningPath.getId() + "/graph", HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
+        request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
     }
 
     /**
@@ -432,13 +446,14 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      * @throws Exception the request failed
      * @see de.tum.in.www1.artemis.service.LearningPathServiceTest
      */
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(LearningPathResource.NgxRequestType.class)
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void testGetLearningPathNgxGraphAsStudent() throws Exception {
+    void testGetLearningPathNgxAsStudent(LearningPathResource.NgxRequestType type) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        request.get("/api/learning-path/" + learningPath.getId() + "/graph", HttpStatus.OK, NgxLearningPathDTO.class);
+        request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.OK, NgxLearningPathDTO.class);
     }
 
     /**
@@ -447,18 +462,19 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      * @throws Exception the request failed
      * @see de.tum.in.www1.artemis.service.LearningPathServiceTest
      */
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(LearningPathResource.NgxRequestType.class)
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
-    void testGetLearningPathNgxGraphAsInstructor() throws Exception {
+    void testGetLearningPathNgxAsInstructor(LearningPathResource.NgxRequestType type) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-        request.get("/api/learning-path/" + learningPath.getId() + "/graph", HttpStatus.OK, NgxLearningPathDTO.class);
+        request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.OK, NgxLearningPathDTO.class);
     }
 
     @Test
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void getLearningPathId() throws Exception {
+    void testGetLearningPathId() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
@@ -468,7 +484,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-    void getLearningPathIdNotExisting() throws Exception {
+    void testGetLearningPathIdNotExisting() throws Exception {
         course.setLearningPathsEnabled(true);
         course = courseRepository.save(course);
         var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
@@ -477,4 +493,34 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         final var result = request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.OK, Long.class);
         assertThat(result).isNotNull();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetCompetencyProgressForLearningPathByOtherStudent() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        request.get("/api/learning-path/" + learningPath.getId() + "/competency-progress", HttpStatus.FORBIDDEN, Set.class);
+    }
+
+    @Test
+    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    void testGetCompetencyProgressForLearningPathByOwner() throws Exception {
+        testGetCompetencyProgressForLearningPath();
+    }
+
+    @Test
+    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
+    void testGetCompetencyProgressForLearningPathByInstructor() throws Exception {
+        testGetCompetencyProgressForLearningPath();
+    }
+
+    void testGetCompetencyProgressForLearningPath() throws Exception {
+        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        final var student = userRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+        final var result = request.get("/api/learning-path/" + learningPath.getId() + "/competency-progress", HttpStatus.OK, Set.class);
+        assertThat(result).hasSize(5);
+    }
+
 }

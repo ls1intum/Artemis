@@ -146,7 +146,6 @@
                 [domainCommands]="domainCommands"
                 (markdownChange)="prepareForSave()"
                 (textWithDomainCommandsFound)="domainCommandsFound($event)"
-                [enableResize]="true"
             ></jhi-markdown-editor>
         </div>
         <!--- End of Edit Text Mode --->
@@ -164,7 +163,6 @@
                 (markdownChange)="prepareForSave()"
                 (textWithDomainCommandsFound)="setExerciseGradingInstructionText($event)"
                 [enableFileUpload]="false"
-                [enableResize]="true"
                 [showEditButton]="false"
                 [showPreviewButton]="false"
             ></jhi-markdown-editor>

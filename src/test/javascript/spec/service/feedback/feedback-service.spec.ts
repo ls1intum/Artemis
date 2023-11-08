@@ -8,14 +8,14 @@ describe('FeedbackService', () => {
         service = new FeedbackService();
     });
 
-    it('should filter feedbacks by strings', () => {
-        const includedFeedbacks = [
-            { text: 'task1', name: 'first test' },
-            { text: 'task1', name: 'second test' },
+    it('should filter feedbacks by test ids', () => {
+        const includedFeedbacks: Feedback[] = [
+            { testCase: { testName: 'task1test1', id: 25 }, detailText: 'first test' },
+            { testCase: { testName: 'task1test2', id: 26 }, detailText: 'second test' },
         ];
-        const excludedFeedbacks = [{ text: 'filtered out' }];
-        const feedbacks = [...includedFeedbacks, ...excludedFeedbacks] as Feedback[];
+        const excludedFeedbacks: Feedback[] = [{ testCase: { testName: 'task2', id: 42 }, detailText: 'filtered out' }];
+        const feedbacks: Feedback[] = [...includedFeedbacks, ...excludedFeedbacks];
 
-        expect(service.filterFeedback(feedbacks, ['task1'])).toEqual(includedFeedbacks);
+        expect(service.filterFeedback(feedbacks, [25, 26])).toEqual(includedFeedbacks);
     });
 });

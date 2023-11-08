@@ -13,24 +13,15 @@
         <span *ngIf="event.acknowledgeTimestamps?.user">| <fa-icon [icon]="faEye"></fa-icon> {{ event.acknowledgeTimestamps!.user! | artemisDate: 'time' }}</span>
     </div>
     <div class="content" [ngSwitch]="event.eventType">
-        <div *ngSwitchCase="ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT" [innerHTML]="eventAsExamWideAnnouncementEvent().text | htmlForMarkdown"></div>
+        <div *ngSwitchCase="ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT" [innerHTML]="examWideAnnouncementEvent.text | htmlForMarkdown"></div>
         <div *ngSwitchCase="ExamLiveEventType.WORKING_TIME_UPDATE">
-            <div *ngIf="eventAsWorkingTimeUpdateEvent().courseWide" jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.titleEveryone" class="wt-title">
+            <div *ngIf="workingTimeUpdateEvent.courseWide" jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.titleEveryone" class="wt-title">
                 The working time of the exam has been changed.
             </div>
-            <div *ngIf="!eventAsWorkingTimeUpdateEvent().courseWide" jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.titlePersonal" class="wt-title">
+            <div *ngIf="!workingTimeUpdateEvent.courseWide" jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.titlePersonal" class="wt-title">
                 The working time of your exam has been changed.
             </div>
-            <div class="working-times">
-                <div class="previous">
-                    <div class="title" jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.old">Previous working time</div>
-                    <div class="time">{{ eventAsWorkingTimeUpdateEvent().oldWorkingTime | artemisDurationFromSeconds }}</div>
-                </div>
-                <div class="new">
-                    <div class="title" jhiTranslate="artemisApp.exam.events.messages.workingTimeUpdate.new">New working time</div>
-                    <div class="time">{{ eventAsWorkingTimeUpdateEvent().newWorkingTime | artemisDurationFromSeconds }}</div>
-                </div>
-            </div>
+            <jhi-working-time-change [oldWorkingTime]="workingTimeUpdateEvent.oldWorkingTime" [newWorkingTime]="workingTimeUpdateEvent.newWorkingTime" />
         </div>
     </div>
     <button *ngIf="showAcknowledge" class="btn btn-primary w-100 mt-2" (click)="acknowledgeEvent()">

@@ -33,6 +33,7 @@
                     class="linked-context-information"
                     *ngIf="contextInformation.routerLinkComponents"
                     [routerLink]="contextInformation.routerLinkComponents"
+                    [queryParams]="contextInformation.queryParams"
                     (click)="onNavigateToContext($event)"
                     routerLinkActive="active"
                     >{{ contextInformation.displayName }}:</a
@@ -59,8 +60,12 @@
             *ngIf="!displayInlineInput"
             [previewMode]="previewMode"
             [content]="posting.content"
+            [author]="posting.author"
             [isEdited]="!!posting.updatedDate"
+            [posting]="posting"
+            [isReply]="false"
             [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
+            (userReferenceClicked)="onUserReferenceClicked($event)"
         ></jhi-posting-content>
     </div>
 </div>
@@ -76,4 +81,5 @@
     [isThreadSidebar]="isThreadSidebar"
     (openThread)="openThread.emit()"
     [lastReadDate]="lastReadDate"
+    (userReferenceClicked)="onUserReferenceClicked($event)"
 ></jhi-post-footer>

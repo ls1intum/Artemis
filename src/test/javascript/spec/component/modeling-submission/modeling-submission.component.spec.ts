@@ -10,7 +10,7 @@ import { MockParticipationWebsocketService } from '../../helpers/mocks/service/m
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -44,7 +44,7 @@ import { HttpResponse } from '@angular/common/http';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { AlertService } from 'app/core/util/alert.service';
 
-describe('ModelingSubmission Management Component', () => {
+describe('ModelingSubmissionComponent', () => {
     // needed to make sure ace is defined
     ace.acequire('ace/ext/modelist.js');
     let comp: ModelingSubmissionComponent;
@@ -52,7 +52,6 @@ describe('ModelingSubmission Management Component', () => {
     let debugElement: DebugElement;
     let service: ModelingSubmissionService;
     let alertService: AlertService;
-    let router: Router;
 
     const route = { params: of({ courseId: 5, exerciseId: 22, participationId: 123 }) } as any as ActivatedRoute;
     const participation = new StudentParticipation();
@@ -99,7 +98,6 @@ describe('ModelingSubmission Management Component', () => {
                 debugElement = fixture.debugElement;
                 service = debugElement.injector.get(ModelingSubmissionService);
                 alertService = debugElement.injector.get(AlertService);
-                router = debugElement.injector.get(Router);
                 comp.modelingEditor = TestBed.createComponent(MockComponent(ModelingEditorComponent)).componentInstance;
             });
         console.error = jest.fn();
@@ -191,11 +189,12 @@ describe('ModelingSubmission Management Component', () => {
         expect(comp.isActive).toBeFalse();
     });
 
-    it('should navigate to access denied page on 403 error status', () => {
+    it('should catch error on 403 error status', () => {
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(throwError(() => ({ status: 403 })));
-        const routerStub = jest.spyOn(router, 'navigate').mockReturnValue(new Promise(() => true));
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
         fixture.detectChanges();
-        expect(routerStub).toHaveBeenCalledOnce();
+
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should set correct properties on modeling exercise update when saving', () => {
@@ -463,5 +462,34 @@ describe('ModelingSubmission Management Component', () => {
         expect(referencedFeedback).toBeDefined();
         expect(referencedFeedback).toHaveLength(1);
         expect(referencedFeedback![0].isSubsequent).toBeTrue();
+    });
+
+    it('should be set up with input values if present instead of loading new values from server', () => {
+        // @ts-ignore method is private
+        const setUpComponentWithInputValuesSpy = jest.spyOn(comp, 'setupComponentWithInputValues');
+        const getDataForFileUploadEditorSpy = jest.spyOn(service, 'getLatestSubmissionForModelingEditor');
+        const modelingSubmission = submission;
+        modelingSubmission.model = JSON.stringify({
+            elements: [
+                {
+                    content: 'some element',
+                },
+            ],
+        });
+        comp.inputExercise = participation.exercise;
+        comp.inputSubmission = modelingSubmission;
+        comp.inputParticipation = participation;
+
+        fixture.detectChanges();
+
+        expect(setUpComponentWithInputValuesSpy).toHaveBeenCalledOnce();
+        expect(comp.modelingExercise).toEqual(participation.exercise);
+        expect(comp.submission).toEqual(modelingSubmission);
+        expect(comp.participation).toEqual(participation);
+        expect(comp.umlModel).toBeTruthy();
+        expect(comp.hasElements).toBeTrue();
+
+        // should not fetch additional information from server, reason for input values!
+        expect(getDataForFileUploadEditorSpy).not.toHaveBeenCalled();
     });
 });

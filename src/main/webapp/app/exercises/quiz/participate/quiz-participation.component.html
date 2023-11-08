@@ -31,7 +31,7 @@
                 [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
                 [showResult]="showingResult"
                 [submittedResult]="result"
-                [submittedQuizExercise]="quizExercise"
+                [quizQuestions]="quizExercise.quizQuestions"
                 [forceSampleSolution]="mode === 'solution'"
                 [questionIndex]="i + 1"
                 [score]="questionScores[question.id!]"

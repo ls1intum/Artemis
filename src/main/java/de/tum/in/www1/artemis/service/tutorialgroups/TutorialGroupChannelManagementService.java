@@ -249,8 +249,7 @@ public class TutorialGroupChannelManagementService {
     private String determineUniqueTutorialGroupChannelName(TutorialGroup tutorialGroup) {
         Function<TutorialGroup, String> determineInitialTutorialGroupChannelName = (TutorialGroup tg) -> {
             var cleanedTitle = tg.getTitle().replaceAll("\\s", "-").toLowerCase();
-            // we use $ as prefix to make sure that the channel name is unique (users not allowed to start channel names with $)
-            return "$" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 19));
+            return "tutorgroup-" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 18));
         };
 
         var channelName = determineInitialTutorialGroupChannelName.apply(tutorialGroup);
@@ -260,14 +259,14 @@ public class TutorialGroupChannelManagementService {
 
         // try to make it unique by adding a random number to the end of the channel name
         // if already max length remove the last 3 characters to get some space to try to make it unique
-        if (channelName.length() == 20) {
-            channelName = channelName.substring(0, 17);
+        if (channelName.length() == 30) {
+            channelName = channelName.substring(0, 27);
         }
-        while (!channelRepository.findChannelByCourseIdAndName(tutorialGroup.getCourse().getId(), channelName).isEmpty() && channelName.length() <= 20) {
+        while (!channelRepository.findChannelByCourseIdAndName(tutorialGroup.getCourse().getId(), channelName).isEmpty() && channelName.length() <= 30) {
             channelName += ThreadLocalRandom.current().nextInt(0, 10);
         }
 
-        if (channelName.length() > 20) {
+        if (channelName.length() > 30) {
             // very unlikely to happen
             throw new IllegalStateException("Could not create a unique channel name for tutorial group with id " + tutorialGroup.getId());
         }

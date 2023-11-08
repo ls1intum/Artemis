@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.iris;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -19,14 +19,11 @@ public class IrisRateLimitService {
 
     private final IrisMessageRepository irisMessageRepository;
 
-    @Value("${artemis.iris.rate-limit:5}")
-    private int rateLimit;
+    private final IrisSettingsService irisSettingsService;
 
-    @Value("${artemis.iris.rate-limit-timeframe-hours:24}")
-    private int rateLimitTimeframeHours;
-
-    public IrisRateLimitService(IrisMessageRepository irisMessageRepository) {
+    public IrisRateLimitService(IrisMessageRepository irisMessageRepository, IrisSettingsService irisSettingsService) {
         this.irisMessageRepository = irisMessageRepository;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -37,11 +34,15 @@ public class IrisRateLimitService {
      * @return the rate limit information
      */
     public IrisRateLimitInformation getRateLimitInformation(User user) {
+        var globalSettings = irisSettingsService.getGlobalSettings();
+        var irisChatSettings = globalSettings.getIrisChatSettings();
+        var rateLimitTimeframeHours = Objects.requireNonNullElse(irisChatSettings.getRateLimitTimeframeHours(), 0);
         var start = ZonedDateTime.now().minusHours(rateLimitTimeframeHours);
         var end = ZonedDateTime.now();
         var currentMessageCount = irisMessageRepository.countLlmResponsesOfUserWithinTimeframe(user.getId(), start, end);
+        var rateLimit = Objects.requireNonNullElse(irisChatSettings.getRateLimit(), -1);
 
-        return new IrisRateLimitInformation(currentMessageCount, rateLimit);
+        return new IrisRateLimitInformation(currentMessageCount, rateLimit, rateLimitTimeframeHours);
     }
 
     /**
@@ -65,7 +66,7 @@ public class IrisRateLimitService {
      * @param currentMessageCount the current rate limit
      * @param rateLimit           the max rate limit
      */
-    public record IrisRateLimitInformation(int currentMessageCount, int rateLimit) {
+    public record IrisRateLimitInformation(int currentMessageCount, int rateLimit, int rateLimitTimeframeHours) {
 
         /**
          * Checks if the rate limit is exceeded.

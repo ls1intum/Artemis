@@ -1,19 +1,16 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
-import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
-
 import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -39,41 +36,24 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private final LocalCITriggerService localCITriggerService;
-
     private final LocalCIDockerService localCIDockerService;
 
-    @Value("${artemis.continuous-integration.build.images.java.default}")
-    String dockerImage;
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, LocalCITriggerService localCITriggerService,
-            LocalCIDockerService localCIDockerService) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, LocalCIDockerService localCIDockerService,
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
-        this.localCITriggerService = localCITriggerService;
         this.localCIDockerService = localCIDockerService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        // For Bamboo and Jenkins, this method is called for the template and the solution repository and creates and publishes a new build plan
-        // which results in a new build being triggered.
-        // For local CI, a build plan must not be created, because all the information for building a submission and running tests is contained in the participation, so we only
-        // trigger the build here.
-
-        // Check if docker image exists locally, otherwise pull it from Docker Hub.
-
-        localCIDockerService.pullDockerImage(dockerImage);
-
-        // Trigger build for the given participation.
-
-        if (TEMPLATE.getName().equals(planKey)) {
-            localCITriggerService.triggerBuild(programmingExercise.getTemplateParticipation());
-        }
-        else if (SOLUTION.getName().equals(planKey)) {
-            localCITriggerService.triggerBuild(programmingExercise.getSolutionParticipation());
-        }
+        // Only check whether the docker image needed for the build plan exists.
+        localCIDockerService.pullDockerImage(
+                programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType())));
     }
 
     @Override

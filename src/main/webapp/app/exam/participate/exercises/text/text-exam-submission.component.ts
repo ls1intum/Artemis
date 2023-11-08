@@ -3,11 +3,12 @@ import { TextEditorService } from 'app/exercises/text/participate/text-editor.se
 import { Subject } from 'rxjs';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -16,6 +17,8 @@ import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants
     styleUrls: ['./text-exam-submission.component.scss'],
 })
 export class TextExamSubmissionComponent extends ExamSubmissionComponent implements OnInit {
+    exerciseType = ExerciseType.TEXT;
+
     // IMPORTANT: this reference must be contained in this.studentParticipation.submissions[0] otherwise the parent component will not be able to react to changes
     @Input()
     studentSubmission: TextSubmission;
@@ -43,6 +46,10 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     ngOnInit(): void {
         // show submission answers in UI
         this.updateViewFromSubmission();
+    }
+
+    getExerciseId(): number | undefined {
+        return this.exercise.id;
     }
 
     getExercise(): Exercise {
@@ -96,5 +103,19 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     onTextEditorInput(event: Event) {
         this.studentSubmission.isSynced = false;
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
+    }
+
+    private updateViewFromSubmissionVersion() {
+        if (this.submissionVersion?.content) {
+            this.answer = this.submissionVersion.content;
+        } else {
+            // the content of the submission version can be undefined if an empty submission was saved
+            this.answer = '';
+        }
+    }
+
+    setSubmissionVersion(submissionVersion: SubmissionVersion): void {
+        this.submissionVersion = submissionVersion;
+        this.updateViewFromSubmissionVersion();
     }
 }

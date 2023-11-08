@@ -9,17 +9,15 @@ import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
     encapsulation: ViewEncapsulation.None,
 })
 export class GitDiffFilePanelComponent implements OnInit {
-    @Input()
-    diffEntries: ProgrammingExerciseGitDiffEntry[];
+    @Input() diffEntries: ProgrammingExerciseGitDiffEntry[];
 
-    @Input()
-    templateFileContent: string | undefined;
+    @Input() templateFileContent: string | undefined;
 
-    @Input()
-    solutionFileContent: string | undefined;
+    @Input() solutionFileContent: string | undefined;
 
-    @Input()
-    numberOfContextLines = 3;
+    @Input() numberOfContextLines = 3;
+
+    @Input() diffForTemplateAndSolution = true;
 
     previousFilePath: string | undefined;
     filePath: string | undefined;

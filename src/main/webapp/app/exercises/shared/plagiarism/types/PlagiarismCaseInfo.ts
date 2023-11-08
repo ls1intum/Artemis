@@ -6,4 +6,5 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 export class PlagiarismCaseInfo {
     public id: number;
     public verdict?: PlagiarismVerdict;
+    public createdByContinuousPlagiarismControl?: boolean;
 }

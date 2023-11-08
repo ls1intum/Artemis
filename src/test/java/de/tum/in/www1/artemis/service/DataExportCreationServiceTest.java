@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -168,8 +169,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(dataExportFromDb.getCreatedDate()).isNotNull();
         assertThat(dataExportFromDb.getCreationFinishedDate()).isNotNull();
         // extract zip file and check content
-        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
+        Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         Predicate<Path> generalUserInformationCsv = path -> "general_user_information.csv".equals(path.getFileName().toString());
         Predicate<Path> readmeMd = path -> "README.md".equals(path.getFileName().toString());
         Predicate<Path> courseDir = path -> path.getFileName().toString().startsWith("course_short");
@@ -186,6 +186,8 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
             assertCorrectContentForExercise(exercisePath, true, assessmentDueDateInTheFuture);
         }
 
+        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
     }
 
     private void assertCommunicationDataCsvFile(Path courseDirPath) {
@@ -459,8 +461,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(dataExportFromDb.getCreatedBy()).isNotNull();
         assertThat(dataExportFromDb.getCreationFinishedDate()).isNotNull();
         // extract zip file and check content
-        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
+        Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "exam");
         assertCommunicationDataCsvFile(courseDirPath);
         var examsDirPath = courseDirPath.resolve("exams");
@@ -469,6 +470,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         for (var exerciseDirPath : getExerciseDirectoryPaths(examDirPath)) {
             assertCorrectContentForExercise(exerciseDirPath, false, false);
         }
+
+        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
     }
 
     private void addOnlyAnswerPostReactionInCourse(Course course) {
@@ -486,13 +490,15 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var dataExport = initDataExport();
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
-        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
+        Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, "examNoResults");
         assertCommunicationDataCsvFile(courseDirPath);
         assertThat(courseDirPath).isDirectoryContaining(path -> path.getFileName().toString().startsWith("exam"));
         var examDirPath = getCourseOrExamDirectoryPath(courseDirPath, "exam");
         getExerciseDirectoryPaths(examDirPath).forEach(this::assertNoResultsFile);
+
+        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
     }
 
     @Test
@@ -505,8 +511,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         var dataExport = initDataExport();
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
-        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
+        Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, courseShortName);
         assertCommunicationDataCsvFile(courseDirPath);
         var exercisesDirPath = courseDirPath.resolve("exercises");
@@ -514,6 +519,9 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         for (var exerciseDirectory : getExerciseDirectoryPaths(exercisesDirPath)) {
             assertCorrectContentForExercise(exerciseDirectory, true, assessmentDueDateInTheFuture);
         }
+
+        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
     }
 
     private void addOnlyAnswerPostInCourse(Course course) {
@@ -559,14 +567,16 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationBambooBitbu
         courseUtilService.updateCourseGroups("abc", course, "");
         dataExportCreationService.createDataExport(dataExport);
         var dataExportFromDb = dataExportRepository.findByIdElseThrow(dataExport.getId());
-        zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
-        Path extractedZipDirPath = Path.of(dataExportFromDb.getFilePath().substring(0, dataExportFromDb.getFilePath().length() - 4));
+        Path extractedZipDirPath = zipFileTestUtilService.extractZipFileRecursively(dataExportFromDb.getFilePath());
         var courseDirPath = getCourseOrExamDirectoryPath(extractedZipDirPath, courseShortName);
         var exercisesDirPath = courseDirPath.resolve("exercises");
         assertThat(courseDirPath).isDirectoryContaining(exercisesDirPath::equals);
         for (var exerciseDirectory : getExerciseDirectoryPaths(exercisesDirPath)) {
             assertCorrectContentForExercise(exerciseDirectory, true, assessmentDueDateInTheFuture);
         }
+
+        org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
+        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
     }
 
     private DataExport initDataExport() {

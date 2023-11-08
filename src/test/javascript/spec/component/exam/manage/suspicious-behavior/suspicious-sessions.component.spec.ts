@@ -15,7 +15,7 @@ describe('SuspiciousSessionsComponent', () => {
     const suspiciousSessions1 = {
         examSessions: [
             {
-                suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
+                suspiciousReasons: [SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES, SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS],
             },
         ],
     } as SuspiciousExamSessions;
@@ -27,6 +27,14 @@ describe('SuspiciousSessionsComponent', () => {
             },
         ],
     } as SuspiciousExamSessions;
+
+    const suspiciousSessions3 = {
+        examSessions: [
+            {
+                suspiciousReasons: [SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE],
+            },
+        ],
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -52,5 +60,9 @@ describe('SuspiciousSessionsComponent', () => {
         component.ngOnInit();
         expect(component.suspiciousFingerprint).toBeFalse();
         expect(component.suspiciousIpAddress).toBeFalse();
+        component.suspiciousSessions = suspiciousSessions3;
+        component.ngOnInit();
+        expect(component.suspiciousFingerprint).toBeFalse();
+        expect(component.suspiciousIpAddress).toBeTrue();
     });
 });

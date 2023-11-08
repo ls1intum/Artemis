@@ -185,6 +185,14 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "iris_accepted")
     private ZonedDateTime irisAccepted = null;
 
+    public User() {
+    }
+
+    public User(Long id, String login) {
+        this.setId(id);
+        this.login = login;
+    }
+
     public String getLogin() {
         return login;
     }

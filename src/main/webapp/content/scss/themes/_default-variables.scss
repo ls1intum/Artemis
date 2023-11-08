@@ -191,6 +191,8 @@ $metis-light-blue: #e3ecf3;
 $metis-green: #33cd32;
 $metis-course-discussion-select-bg: white;
 
+$metis-pinned-post-highlight-color: lighten($metis-blue, 45%);
+
 $metis-answer-post-background-color: rgba(0, 0, 0, 0.02);
 
 $reaction-button-default-color: rgba(242, 242, 242);
@@ -334,6 +336,8 @@ $code-editor-file-browser-header-border: #ddd;
 $code-editor-file-browser-tree-hover: #f5f5f5;
 $code-editor-file-browser-input-background: white;
 $code-editor-file-browser-input-color: black;
+$code-editor-file-browser-selected-file-background: #428bca;
+$code-editor-file-browser-badge-background: $code-editor-file-browser-tree-hover;
 $code-editor-diff-newline-background: rgba(63, 185, 80, 0.4);
 $code-editor-gutter-newline-background: rgba(63, 185, 80, 0.8);
 
@@ -503,6 +507,11 @@ $apollon-background-variant: $gray-100;
 $apollon-gray: $gray-200;
 $apollon-gray-variant: $gray-700;
 $apollon-grid: rgba(36, 39, 36, 0.1);
+
+// Feedback Suggestions (Athena)
+$feedback-suggestions-primary: rgb(181, 78, 254, 1);
+$feedback-suggestions-background: lighten($feedback-suggestions-primary, 24%);
+$feedback-suggestions-input-background: darken($feedback-suggestions-background, 2%);
 
 // NGX Graph Colors
 $graph-light-grey: rgba(153, 153, 153, 1);

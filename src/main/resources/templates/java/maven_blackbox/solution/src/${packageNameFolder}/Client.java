@@ -38,11 +38,17 @@ public final class Client {
 
     private static CommandRunResult runCommand(final Command command) {
         switch (command) {
-            case Command.AddCommand addCommand -> CONTEXT.addDates(addCommand.dates());
+            case Command.AddCommand addCommand -> {
+                CONTEXT.addDates(addCommand.dates());
+            }
             case Command.SortCommand ignored -> CONTEXT.sort();
             case Command.ClearCommand ignored -> CONTEXT.clearDates();
-            case Command.HelpCommand helpCommand -> System.out.println(helpCommand.helpMessage());
-            case Command.PrintCommand ignored -> System.out.println(CONTEXT.getDates());
+            case Command.HelpCommand helpCommand -> {
+                System.out.println(helpCommand.helpMessage());
+            }
+            case Command.PrintCommand ignored -> {
+                System.out.println(CONTEXT.getDates());
+            }
             case Command.QuitCommand ignored -> {
                 return CommandRunResult.QUIT;
             }

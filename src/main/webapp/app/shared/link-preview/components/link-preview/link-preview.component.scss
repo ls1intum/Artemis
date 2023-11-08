@@ -30,7 +30,7 @@
 
 .loading-container,
 .preview-content {
-    margin-left: 10px;
+    margin-left: 5px;
     max-width: 600px;
 
     /* Add responsive styles */
@@ -59,11 +59,13 @@
 .preview-container {
     margin-top: 20px;
     margin-bottom: 10px;
+    margin-left: 10px;
 }
 
 .preview-card {
     flex-direction: row;
     padding-left: 10px;
+    margin-left: 2px;
     position: relative;
 }
 
@@ -83,4 +85,19 @@
     max-height: 150px;
     margin-right: 10px;
     margin-top: 10px;
+    border-radius: 4px;
+}
+
+.close-button {
+    position: absolute;
+    top: 0;
+    left: -12px;
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0; /* Initially hide the button */
+    transition: opacity 0.3s; /* Add a smooth transition effect */
+}
+
+.preview-card:hover .close-button {
+    opacity: 1; /* Show the button on hover */
 }

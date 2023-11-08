@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.IrisWebsocketService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
@@ -122,6 +123,9 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         Map<String, Object> parameters = new HashMap<>();
         if (!(fullSession instanceof IrisChatSession chatSession)) {
             throw new BadRequestException("Trying to get Iris response for session " + session.getId() + " without exercise");
+        }
+        if (((IrisChatSession) fullSession).getExercise().isExamExercise()) {
+            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
         var exercise = chatSession.getExercise();
         parameters.put("exercise", exercise);

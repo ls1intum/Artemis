@@ -12,7 +12,6 @@ import * as testClassDiagram from '../../../util/modeling/test-models/class-diag
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { addDelay } from '../../../helpers/utils/general.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ApollonQuizExerciseGenerationComponent } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/apollon-quiz-exercise-generation.component';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -103,7 +102,7 @@ describe('ApollonQuizExerciseGeneration Component', () => {
         jest.spyOn(module, 'generateDragAndDropQuizExercise').mockReturnValue(quizExercise);
         const ngbModalSpy = jest.spyOn(ngbModal, 'close');
 
-        await addDelay(500);
+        await fixture.componentInstance.apollonEditor?.nextRender;
         // test
         await fixture.componentInstance.save();
         expect(ngbModalSpy).toHaveBeenCalledOnce();

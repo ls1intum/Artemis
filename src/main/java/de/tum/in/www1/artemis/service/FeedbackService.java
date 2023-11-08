@@ -58,6 +58,7 @@ public class FeedbackService {
         feedback.setReference(originalFeedback.getReference());
         feedback.setVisibility(originalFeedback.getVisibility());
         feedback.setGradingInstruction(originalFeedback.getGradingInstruction());
+        feedback.setTestCase(originalFeedback.getTestCase());
 
         feedback.setHasLongFeedbackText(originalFeedback.getHasLongFeedbackText());
         longFeedbackText.ifPresent(longFeedback -> feedback.setDetailText(longFeedback.getText()));

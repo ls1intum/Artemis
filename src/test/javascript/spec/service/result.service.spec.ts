@@ -48,8 +48,8 @@ describe('ResultService', () => {
     const result2: Result = { id: 2, participation: participation2, completionDate: dayjs().add(2, 'hours'), score: 20 };
     const result3: Result = {
         feedbacks: [
-            { text: 'testBubbleSort', detailText: 'lorem ipsum', positive: false, type: FeedbackType.AUTOMATIC },
-            { text: 'testMergeSort', detailText: 'lorem ipsum', positive: true, type: FeedbackType.AUTOMATIC },
+            { testCase: { testName: 'testBubbleSort' }, detailText: 'lorem ipsum', positive: false, type: FeedbackType.AUTOMATIC },
+            { testCase: { testName: 'testMergeSort' }, detailText: 'lorem ipsum', positive: true, type: FeedbackType.AUTOMATIC },
             { text: SUBMISSION_POLICY_FEEDBACK_IDENTIFIER, detailText: 'should not get counted', positive: true, type: FeedbackType.AUTOMATIC },
         ],
         testCaseCount: 2,
@@ -60,8 +60,8 @@ describe('ResultService', () => {
     };
     const result4: Result = {
         feedbacks: [
-            { text: 'testBubbleSort', detailText: 'lorem ipsum', positive: false, type: FeedbackType.AUTOMATIC },
-            { text: 'testMergeSort', detailText: 'lorem ipsum', positive: true, type: FeedbackType.AUTOMATIC },
+            { testCase: { testName: 'testBubbleSort' }, detailText: 'lorem ipsum', positive: false, type: FeedbackType.AUTOMATIC },
+            { testCase: { testName: 'testMergeSort' }, detailText: 'lorem ipsum', positive: true, type: FeedbackType.AUTOMATIC },
             { text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, detailText: 'should not get counted', positive: false, type: FeedbackType.AUTOMATIC },
         ],
         testCaseCount: 2,

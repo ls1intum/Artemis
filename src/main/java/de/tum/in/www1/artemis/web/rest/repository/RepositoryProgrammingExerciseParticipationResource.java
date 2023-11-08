@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -113,11 +114,23 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     @Override
     VcsRepositoryUrl getRepositoryUrl(Long participationId) throws IllegalArgumentException {
+        return getProgrammingExerciseParticipation(participationId).getVcsRepositoryUrl();
+    }
+
+    /**
+     * Gets a programming exercise participation with the given id from the database.
+     *
+     * @param participationId the id of the participation to retrieve
+     * @throws IllegalArgumentException if the participation is not a programming exercise participation
+     * @return a programming exercise participation with the given id
+     */
+    private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(long participationId) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
+
         if (!(participation instanceof ProgrammingExerciseParticipation)) {
             throw new IllegalArgumentException();
         }
-        return ((ProgrammingExerciseParticipation) participation).getVcsRepositoryUrl();
+        return (ProgrammingExerciseParticipation) participation;
     }
 
     @Override
@@ -154,8 +167,38 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     /**
-     * GET /repository/{participationId}/files-change
+     * GET /repository/{participationId}/files/{commitId} : Gets the files of the repository with the given participationId at the given commitId.
      *
+     * @param participationId the participationId of the repository we want to get the files from
+     * @param commitId        the commitId of the repository we want to get the files from
+     * @return a map with the file path as key and the file content as value
+     */
+    @GetMapping(value = "/repository/{participationId}/files-content/{commitId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Map<String, String>> getFilesAtCommit(@PathVariable long participationId, @PathVariable String commitId) {
+        log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
+        var participation = getProgrammingExerciseParticipation(participationId);
+        var programmingExercise = programmingExerciseRepository.findByParticipationIdOrElseThrow(participationId);
+        try {
+            repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithGroupsAndAuthorities(), programmingExercise, RepositoryActionType.READ);
+        }
+        catch (AccessUnauthorizedException e) {
+            // All methods calling this getRepository method only expect the AccessForbiddenException to determine whether a user has access to the repository.
+            // The local version control system, that also uses checkAccessRepositoryElseThrow, needs a more fine-grained check to return the correct HTTP status and thus expects
+            // both the AccessUnauthorizedException and the AccessForbiddenException.
+            throw new AccessForbiddenException(e);
+        }
+        return executeAndCheckForExceptions(() -> {
+            Repository repository = gitService.checkoutRepositoryAtCommit(getRepositoryUrl(participationId), commitId, true);
+            Map<String, String> filesWithContent = super.repositoryService.getFilesWithContent(repository);
+            gitService.switchBackToDefaultBranchHead(repository);
+            return new ResponseEntity<>(filesWithContent, HttpStatus.OK);
+        });
+    }
+
+    /**
+     * GET /repository/{participationId}/files-change
+     * <p>
      * Gets the files of the repository and checks whether they were changed during a student participation with respect to the initial template
      *
      * @param participationId participation of the student
@@ -184,7 +227,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     /**
      * GET /repository/{participationId}/files-content
-     *
+     * <p>
      * Gets the files of the repository with content
      *
      * @param participationId participation of the student/template/solution

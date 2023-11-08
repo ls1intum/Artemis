@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -16,13 +19,19 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Lists;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
@@ -87,6 +96,8 @@ public class PostService extends PostingService {
         mayInteractWithPostElseThrow(post, user, course);
         preCheckPostValidity(post);
 
+        parseUserMentions(course, post.getContent());
+
         // set author to current user
         post.setAuthor(user);
         setAuthorRoleForPosting(post, course);
@@ -116,6 +127,17 @@ public class PostService extends PostingService {
     }
 
     /**
+     * Persists the continuous plagiarism control plagiarism case post,
+     * and sends a notification to affected user groups
+     *
+     * @param post post to create
+     */
+    public void createContinuousPlagiarismControlPlagiarismCasePost(Post post) {
+        var savedPost = postRepository.save(post);
+        plagiarismCaseService.saveAnonymousPostForPlagiarismCaseAndNotifyStudent(savedPost.getPlagiarismCase().getId(), savedPost);
+    }
+
+    /**
      * Checks course, user and post validity,
      * updates non-restricted field of the post, persists the post,
      * and ensures that sensitive information is filtered out
@@ -137,6 +159,8 @@ public class PostService extends PostingService {
         Post existingPost = postRepository.findPostByIdElseThrow(postId);
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
+
+        parseUserMentions(course, post.getContent());
 
         boolean contextHasChanged = !existingPost.hasSameContext(post);
         // depending on if there is a context change we need to broadcast different information
@@ -209,7 +233,8 @@ public class PostService extends PostingService {
      * @param courseId id of course the post belongs to
      */
     public void addReaction(Post post, Reaction reaction, Long courseId) {
-        final Course course = preCheckUserAndCourseForCommunication(reaction.getUser(), courseId);
+        final Course course = preCheckUserAndCourseForCommunicationOrMessaging(reaction.getUser(), courseId);
+
         post.addReaction(reaction);
         Post updatedPost = postRepository.save(post);
         updatedPost.setConversation(post.getConversation());
@@ -224,7 +249,8 @@ public class PostService extends PostingService {
      * @param courseId id of course the post belongs to
      */
     public void removeReaction(Post post, Reaction reaction, Long courseId) {
-        preCheckUserAndCourseForCommunication(reaction.getUser(), courseId);
+        preCheckUserAndCourseForCommunicationOrMessaging(reaction.getUser(), courseId);
+
         post.removeReaction(reaction);
         postRepository.save(post);
     }
@@ -506,5 +532,4 @@ public class PostService extends PostingService {
             groupNotificationService.notifyAllGroupsAboutNewPostForLecture(postForNotification, course);
         }
     }
-
 }

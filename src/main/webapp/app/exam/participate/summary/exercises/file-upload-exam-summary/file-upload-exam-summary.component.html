@@ -1,9 +1,15 @@
-<div *ngIf="submission && submission.filePath; else noSubmission">
-    <a id="downloadFileButton" (click)="downloadFile(submission.filePath!)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | artemisTranslate }}</a>
-    <span class="ms-2 badge bg-info">
-        {{ attachmentExtension(submission.filePath!) | uppercase }}
-    </span>
+<div>
+    <jhi-file-upload-submission
+        *ngIf="exercise?.studentParticipations?.length && exercise?.studentParticipations?.[0]?.id; else noSubmission"
+        [participationId]="exercise.studentParticipations![0].id"
+        [displayHeader]="false"
+        [expandProblemStatement]="expandProblemStatement"
+        [displayedInExamSummary]="true"
+        [inputExercise]="isAfterResultsArePublished ? undefined : exercise"
+        [inputSubmission]="isAfterResultsArePublished ? undefined : submission"
+        [inputParticipation]="isAfterResultsArePublished ? undefined : exercise.studentParticipations![0]"
+    />
+    <ng-template #noSubmission>
+        <div>No submission</div>
+    </ng-template>
 </div>
-<ng-template #noSubmission>
-    <div>No submission</div>
-</ng-template>

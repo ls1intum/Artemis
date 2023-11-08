@@ -100,7 +100,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
             });
         }
         catch (RestClientException e) {
-            log.error("Could not send " + getDeviceType().toString() + " notifications");
+            log.error("Could not send {} notifications", getDeviceType().toString());
         }
     }
 

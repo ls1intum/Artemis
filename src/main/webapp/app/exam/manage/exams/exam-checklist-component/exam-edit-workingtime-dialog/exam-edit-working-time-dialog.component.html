@@ -11,16 +11,14 @@
                 name="workingTimeSeconds"
                 durationLabelText="artemisApp.examManagement.editWorkingTime.label"
                 [(ngModel)]="workingTimeSeconds"
+                [allowNegative]="true"
                 [showRelative]="false"
                 [disabled]="isLoading"
             />
+        </div>
 
-            <p
-                class="mb-0"
-                *ngIf="absoluteWorkingTimeDuration"
-                jhiTranslate="artemisApp.examManagement.editWorkingTime.duration"
-                [translateValues]="{ duration: absoluteWorkingTimeDuration }"
-            ></p>
+        <div class="bg-light rounded-2 p-3 mt-3">
+            <jhi-working-time-change *ngIf="newWorkingTime && oldWorkingTime" [newWorkingTime]="newWorkingTime" [oldWorkingTime]="oldWorkingTime" />
         </div>
 
         <hr />

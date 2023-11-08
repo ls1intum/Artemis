@@ -354,4 +354,8 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     private filterChannelsOfType(subType: ChannelSubType): ChannelDTO[] {
         return this.displayedChannelConversations.filter((channel) => channel.subType === subType);
     }
+
+    openCodeOfConduct() {
+        this.metisConversationService.setCodeOfConduct();
+    }
 }

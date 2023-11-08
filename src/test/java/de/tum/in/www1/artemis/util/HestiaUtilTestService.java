@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
 import java.io.File;
@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,13 +18,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 
@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
  * - Setting up a template repository
  * - Setting up a solution repository
  * - Setting up a test repository
- *
+ * <p>
  * In the future this service will be extended to make testing of the code hint generation easier.
  */
 @Service
@@ -66,6 +66,12 @@ public class HestiaUtilTestService {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     /**
      * Sets up the template repository of a programming exercise with a single file
@@ -111,6 +117,7 @@ public class HestiaUtilTestService {
                 eq(true), any());
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(templateRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(eq(templateRepoUrl),
                 eq(false), any());
+        doNothing().when(gitService).pullIgnoreConflicts(any(Repository.class));
 
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(templateRepoUrl));
@@ -185,8 +192,48 @@ public class HestiaUtilTestService {
         solutionSubmission.setParticipation(solutionParticipation);
         solutionSubmission.setCommitHash(String.valueOf(files.hashCode()));
         programmingSubmissionRepository.save(solutionSubmission);
-
         return savedExercise;
+    }
+
+    public ProgrammingSubmission setupSubmission(String fileName, String content, ProgrammingExercise exercise, LocalRepository participationRepo, String login) throws Exception {
+        return setupSubmission(Collections.singletonMap(fileName, content), exercise, participationRepo, login);
+    }
+
+    public ProgrammingSubmission setupSubmission(Map<String, String> files, ProgrammingExercise exercise, LocalRepository participationRepo, String login) throws Exception {
+        for (Map.Entry<String, String> entry : files.entrySet()) {
+            String fileName = entry.getKey();
+            String content = entry.getValue();
+            // add file to the repository folder
+            Path filePath = Path.of(participationRepo.localRepoFile + "/" + fileName);
+            Files.createDirectories(filePath.getParent());
+            // write content to the created file
+            FileUtils.write(filePath.toFile(), content, Charset.defaultCharset());
+        }
+        participationRepo.localGit.add().addFilepattern(".").call();
+        GitService.commit(participationRepo.localGit).setMessage("commit").call();
+        var commits = participationRepo.localGit.log().call();
+        var commitsList = StreamSupport.stream(commits.spliterator(), false).toList();
+
+        var participationRepoUrl = new GitUtilService.MockFileRepositoryUrl(participationRepo.localRepoFile);
+
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(participationRepoUrl, true);
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(participationRepoUrl, false);
+
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(participationRepoUrl), eq(true), any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService)
+                .getOrCheckoutRepository(eq(participationRepoUrl), eq(false), any());
+        doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(participationRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(any(),
+                anyBoolean());
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, urlService.getProjectKeyFromRepositoryUrl(participationRepoUrl));
+        var participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo(exercise, login, participationRepo.localRepoFile.toURI());
+        var submission = ParticipationFactory.generateProgrammingSubmission(true, commitsList.get(0).getId().getName(), SubmissionType.MANUAL);
+        participation = programmingExerciseStudentParticipationRepository
+                .findWithSubmissionsByExerciseIdAndParticipationIds(exercise.getId(), Collections.singletonList(participation.getId())).get(0);
+        return (ProgrammingSubmission) participationUtilService.addSubmission(participation, submission);
     }
 
     /**

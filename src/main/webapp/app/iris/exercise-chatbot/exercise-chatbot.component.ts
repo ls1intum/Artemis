@@ -19,7 +19,6 @@ import { IrisHeartbeatService } from 'app/iris/heartbeat.service';
     providers: [IrisStateStore, IrisWebsocketService, IrisSessionService, IrisHeartbeatService],
 })
 export class ExerciseChatbotComponent implements OnInit, OnDestroy {
-    public buttonDisabled = false;
     dialogRef: MatDialogRef<ExerciseChatWidgetComponent> | null = null;
     chatOpen = false;
     closed = true;
@@ -27,8 +26,6 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
     private exerciseId: number;
     private stateSubscription: Subscription;
     private chatOpenSubscription: Subscription;
-    initialWidth = 330;
-    initialHeight = 430;
 
     // Icons
     faCircle = faCircle;
@@ -40,6 +37,7 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
         private overlay: Overlay,
         private readonly sessionService: IrisSessionService,
         private readonly stateStore: IrisStateStore,
+        // Note: These 2 unused services are injected to ensure that they are instantiated
         private readonly websocketService: IrisWebsocketService,
         private readonly heartbeatService: IrisHeartbeatService,
         private route: ActivatedRoute,
@@ -74,6 +72,7 @@ export class ExerciseChatbotComponent implements OnInit, OnDestroy {
         }
         // Unsubscribes from the stateSubscription
         this.stateSubscription.unsubscribe();
+        this.chatOpenSubscription.unsubscribe();
     }
 
     /**

@@ -24,11 +24,11 @@ export class ExamLiveEventComponent {
     faPaperPlane = faPaperPlane;
     faEye = faEye;
 
-    eventAsExamWideAnnouncementEvent(): ExamWideAnnouncementEvent {
+    get examWideAnnouncementEvent(): ExamWideAnnouncementEvent {
         return this.event as ExamWideAnnouncementEvent;
     }
 
-    eventAsWorkingTimeUpdateEvent(): WorkingTimeUpdateEvent {
+    get workingTimeUpdateEvent(): WorkingTimeUpdateEvent {
         return this.event as WorkingTimeUpdateEvent;
     }
 

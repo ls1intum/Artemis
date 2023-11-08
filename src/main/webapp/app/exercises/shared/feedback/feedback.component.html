@@ -1,4 +1,4 @@
-<div class="modal-header feedback-header">
+<div *ngIf="!isExamReviewPage" class="modal-header feedback-header">
     <h3 class="modal-title">
         <ng-container *ngIf="taskName; else noTaskDescription">{{ 'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName } }}</ng-container>
         <ng-template #noTaskDescription>{{ 'artemisApp.result.detail.feedback' | artemisTranslate }}</ng-template>
@@ -24,7 +24,7 @@
     <!-- Feedbacks container -->
     <ng-template #feedbackContainer>
         <div *ngIf="!loadingFailed && feedbackItemNodes?.length; else buildLogsContainer" class="result-detail-container">
-            <div>
+            <div *ngIf="!isExamReviewPage">
                 <div class="d-flex justify-content-between align-items-start">
                     <h4>
                         <span *ngIf="!exercise?.maxPoints; else scoreWithPoints">
@@ -79,7 +79,7 @@
                 </div>
             </div>
 
-            <hr />
+            <hr *ngIf="!isExamReviewPage" />
 
             <!-- Always show failed build logs first -->
             <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null"></ng-container>
@@ -123,7 +123,10 @@
 
     <!-- No content fallback -->
     <ng-template #noFeedbacksContainer>
-        <h4 jhiTranslate="artemisApp.result.noResultDetails">No result details available</h4>
+        <h4 *ngIf="!isExamReviewPage; else noResultsAvailableWithSmallerFont" jhiTranslate="artemisApp.result.noResultDetails">No result details available</h4>
+        <ng-template #noResultsAvailableWithSmallerFont>
+            <span jhiTranslate="artemisApp.result.noResultDetails">No result details available</span>
+        </ng-template>
         <p *ngIf="isOnlyCompilationTested" class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested">
             Your code compiled successfully. There are currently no tests visible.
         </p>

@@ -5,7 +5,7 @@
     <p *ngIf="!isTestExam">
         <span>
             {{ 'artemisApp.examManagement.checklist.introduction' | artemisTranslate }}
-            <a href="https://ls1intum.github.io/Artemis/user/exams/instructors_guide/">{{ 'artemisApp.examManagement.checklist.linkDescription' | artemisTranslate }}</a>
+            <a href="https://docs.artemis.cit.tum.de/user/exams/instructors_guide/">{{ 'artemisApp.examManagement.checklist.linkDescription' | artemisTranslate }}</a>
             {{ 'artemisApp.examManagement.checklist.introductionPart2' | artemisTranslate }}
         </span>
     </p>
@@ -92,7 +92,10 @@
 
                         <hr />
                         <!-- Exercise Group table -->
-                        <jhi-exam-checklist-exercisegroup-table [exerciseGroups]="exam.exerciseGroups || []"></jhi-exam-checklist-exercisegroup-table>
+                        <jhi-exam-checklist-exercisegroup-table
+                            [quizPoolMaxPoints]="quizPool.maxPoints"
+                            [exerciseGroups]="exam.exerciseGroups || []"
+                        ></jhi-exam-checklist-exercisegroup-table>
                     </td>
                     <td>
                         <a type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary" id="exercises-button-groups-table">

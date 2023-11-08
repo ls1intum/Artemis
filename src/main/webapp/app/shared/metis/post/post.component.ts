@@ -7,6 +7,10 @@ import { ContextInformation, CourseWideContext, PageType } from '../metis.util';
 import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
+import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
+import { isMessagingEnabled } from 'app/entities/course.model';
+import { Router } from '@angular/router';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @Component({
     selector: 'jhi-post',
@@ -38,6 +42,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     constructor(
         public metisService: MetisService,
         protected changeDetector: ChangeDetectorRef,
+        private oneToOneChatService: OneToOneChatService,
+        private metisConversationService: MetisConversationService,
+        private router: Router,
     ) {
         super();
     }
@@ -91,5 +98,27 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      */
     openCreateAnswerPostModal() {
         this.postFooterComponent.openCreateAnswerPostModal();
+    }
+
+    /**
+     * Create a or navigate to one-to-one chat with the referenced user
+     *
+     * @param referencedUserLogin login of the referenced user
+     */
+    onUserReferenceClicked(referencedUserLogin: string) {
+        const course = this.metisService.getCourse();
+        if (isMessagingEnabled(course)) {
+            if (this.isCourseMessagesPage) {
+                this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
+            } else {
+                this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
+                    this.router.navigate(['courses', course.id, 'messages'], {
+                        queryParams: {
+                            conversationId: res.body!.id,
+                        },
+                    });
+                });
+            }
+        }
     }
 }

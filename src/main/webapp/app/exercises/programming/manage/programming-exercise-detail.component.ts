@@ -13,7 +13,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseSharingService } from 'app/exercises/programming/manage/services/programming-exercise-sharing.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -72,8 +72,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly ButtonSize = ButtonSize;
     readonly AssessmentType = AssessmentType;
-
-    documentationType = DocumentationType.Programming;
+    readonly documentationType: DocumentationType = 'Programming';
 
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
@@ -194,7 +193,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.supportsAuxiliaryRepositories =
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                        this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                        this.irisEnabled = profileInfo.activeProfiles.includes('iris') && !this.programmingExercise.exerciseGroup;
                     }
                 });
 

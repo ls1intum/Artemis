@@ -120,7 +120,7 @@ We visualized the process in the following diagram.
 
 1. Open the plagiarism cases via:
 
- a. For course exercises: Course Management → Course → Plagiarism Cases.
+ a. For course exercises: Course Management → Course → Assessment → Plagiarism Cases.
  b. For exam exercises: Course Management → Course → Exams → Exam → Plagiarism Cases.
 
  |plagiarism-cases-navigation|
@@ -145,12 +145,15 @@ We visualized the process in the following diagram.
 
 6. Make a final verdict by selecting one of 3 available options. The final verdict must be approved by clicking 'Confirm' in the dialog.
 
- |verdict-dialog|
-
  a. No plagiarism. The instructor can deem the accusation invalid and resolve the plagiarism case.
  b. Warning. The instructor can write a warning message to the student and confirm the verdict in the dialog.
  c. Point deduction in % (minimum value 0, maximum 100). Deduct exercise points and confirm  the verdict in the dialog.
  d. Plagiarism. If a grading key exists, the student receives the :doc:`plagiarism special grade <grading>` for the exam or course that the corresponding exercise belongs to. The next steps must be made manually by contacting responsible persons in the university to mark the student's grade as "Unterschleif".
+
+
+ |verdict-select|
+
+ |verdict-dialog|
 
 Students
 ^^^^^^^^
@@ -178,6 +181,8 @@ The process is visualized in the following diagram.
 .. |confirmed-plagiarism-cases-management| image:: plagiarism-check/instructor/confirmed-plagiarism-cases-management.png
     :width: 1000
 .. |selected-confirmed-case| image:: plagiarism-check/instructor/selected-confirmed-case.png
+    :width: 1000
+.. |verdict-select| image:: plagiarism-check/instructor/verdict-select.png
     :width: 1000
 .. |verdict-dialog| image:: plagiarism-check/instructor/point-deduction-verdict.png
     :width: 500

@@ -53,7 +53,7 @@
         <!-- Root level create file/folder tree element -->
         <ng-container *ngIf="creatingFile && creatingFile[0] === ''">
             <jhi-code-editor-file-browser-create-node
-                [createFileType]="creatingFile[1]"
+                [createFileType]="creatingFile![1]"
                 [folder]="''"
                 (onClearCreatingFile)="clearCreatingFile()"
                 (onCreateFile)="onCreateFile($event)"
@@ -71,7 +71,7 @@
 
 <!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand">
-    <!--file-->
+    <!--folder-->
     <jhi-code-editor-file-browser-folder
         *ngIf="repositoryFiles[item.value] === FileType.FOLDER"
         [item]="item"
@@ -81,6 +81,7 @@
         [onCollapseExpand]="onCollapseExpand"
         [isCompressed]="compressFolders"
         [disableActions]="disableActions || commitState === CommitState.CONFLICT"
+        [badges]="getFolderBadges(item)"
         (onSetRenamingNode)="setRenamingFile(item)"
         (onRenameNode)="onRenameFile($event)"
         (onNodeSelect)="handleNodeSelected(item)"
@@ -88,11 +89,12 @@
         (onClearRenamingNode)="clearRenamingFile()"
         (onSetCreatingNodeInFolder)="setCreatingFile($event)"
     ></jhi-code-editor-file-browser-folder>
-    <!--folder-->
+    <!--file-->
     <jhi-code-editor-file-browser-file
         *ngIf="repositoryFiles[item.value] === FileType.FILE"
         [item]="item"
         [hasChanges]="repositoryFilesWithInformationAboutChange ? repositoryFilesWithInformationAboutChange[item.value] : false"
+        [badges]="fileBadges[item.value] || []"
         [isBeingRenamed]="!!renamingFile && renamingFile![0] === item.value"
         [hasUnsavedChanges]="unsavedFiles && unsavedFiles.includes(item.value)"
         [hasError]="errorFiles && errorFiles.includes(item.value)"
@@ -106,7 +108,7 @@
     <!--new item-->
     <ng-container *ngIf="creatingFile && creatingFile[0] === item.value">
         <jhi-code-editor-file-browser-create-node
-            [createFileType]="creatingFile[1]"
+            [createFileType]="creatingFile![1]"
             [folder]="''"
             (onClearCreatingFile)="clearCreatingFile()"
             (onCreateFile)="onCreateFile($event)"

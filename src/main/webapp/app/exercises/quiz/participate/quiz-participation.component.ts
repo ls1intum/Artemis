@@ -286,7 +286,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.initQuiz();
 
         // randomize order
-        this.quizService.randomizeOrder(this.quizExercise);
+        this.quizService.randomizeOrder(this.quizExercise.quizQuestions, this.quizExercise.randomizeQuestionOrder);
 
         // init empty submission
         this.submission = new QuizSubmission();
@@ -649,7 +649,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                 this.jhiWebsocketService.enableReconnect();
 
                 // apply randomized order where necessary
-                this.quizService.randomizeOrder(this.quizExercise);
+                this.quizService.randomizeOrder(this.quizExercise.quizQuestions, this.quizExercise.randomizeQuestionOrder);
             }
         }
     }

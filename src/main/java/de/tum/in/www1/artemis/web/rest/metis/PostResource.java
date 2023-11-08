@@ -6,6 +6,8 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +22,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.metis.PostService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiParam;
@@ -31,6 +34,8 @@ import tech.jhipster.web.util.PaginationUtil;
 @RestController
 @RequestMapping("/api")
 public class PostResource {
+
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final PostService postService;
 
@@ -52,7 +57,10 @@ public class PostResource {
     @PostMapping("courses/{courseId}/posts")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> createPost(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
+        log.debug("POST createPost invoked for course {} with post {}", courseId, post.getContent());
+        long start = System.nanoTime();
         Post createdPost = postService.createPost(courseId, post);
+        log.info("createPost took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/posts/" + createdPost.getId())).body(createdPost);
     }
 
@@ -68,7 +76,10 @@ public class PostResource {
     @PutMapping("courses/{courseId}/posts/{postId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Post post) {
+        log.debug("PUT updatePost invoked for course {} with post {}", courseId, post.getContent());
+        long start = System.nanoTime();
         Post updatedPost = postService.updatePost(courseId, postId, post);
+        log.info("updatePost took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedPost, null, HttpStatus.OK);
     }
 
@@ -133,7 +144,10 @@ public class PostResource {
     @DeleteMapping("courses/{courseId}/posts/{postId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deletePost(@PathVariable Long courseId, @PathVariable Long postId) {
+        log.debug("DELETE deletePost invoked for course {} on post {}", courseId, postId);
+        long start = System.nanoTime();
         postService.deletePostById(courseId, postId);
+        log.info("deletePost took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, postService.getEntityName(), postId.toString())).build();
     }
 

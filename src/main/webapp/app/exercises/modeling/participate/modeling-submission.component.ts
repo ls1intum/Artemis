@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 import { Selection, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -33,6 +33,7 @@ import { Course } from 'app/entities/course.model';
 import { getNamesForAssessments } from '../assess/modeling-assessment.util';
 import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -46,6 +47,15 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
     ButtonType = ButtonType;
+
+    @Input() participationId?: number;
+    @Input() displayHeader: boolean = true;
+    @Input() isPrinting?: boolean = false;
+    @Input() expandProblemStatement?: boolean = false;
+
+    @Input() inputExercise?: ModelingExercise;
+    @Input() inputSubmission?: ModelingSubmission;
+    @Input() inputParticipation?: StudentParticipation;
 
     private subscription: Subscription;
     private resultUpdateListener: Subscription;
@@ -105,7 +115,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         private alertService: AlertService,
         private route: ActivatedRoute,
         private translateService: TranslateService,
-        private router: Router,
         private participationWebsocketService: ParticipationWebsocketService,
         private guidedTourService: GuidedTourService,
         private accountService: AccountService,
@@ -116,29 +125,66 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     ngOnInit(): void {
-        this.subscription = this.route.params.subscribe((params) => {
-            if (params['participationId']) {
-                this.modelingSubmissionService.getLatestSubmissionForModelingEditor(params['participationId']).subscribe({
-                    next: (modelingSubmission) => {
-                        this.updateModelingSubmission(modelingSubmission);
-                        if (this.modelingExercise.teamMode) {
-                            this.setupSubmissionStreamForTeam();
-                        } else {
-                            this.setAutoSaveTimer();
-                        }
-                    },
-                    error: (error) => {
-                        if (error.status === 403) {
-                            this.router.navigate(['accessdenied']);
-                        }
-                    },
-                });
-            }
-        });
-        window.scroll(0, 0);
+        if (this.inputValuesArePresent()) {
+            this.setupComponentWithInputValues();
+        } else {
+            this.subscription = this.route.params.subscribe((params) => {
+                const participationId = params['participationId'] ?? this.participationId;
+
+                if (participationId) {
+                    this.modelingSubmissionService.getLatestSubmissionForModelingEditor(participationId).subscribe({
+                        next: (modelingSubmission) => {
+                            this.updateModelingSubmission(modelingSubmission);
+                            if (this.modelingExercise.teamMode) {
+                                this.setupSubmissionStreamForTeam();
+                            } else {
+                                this.setAutoSaveTimer();
+                            }
+                        },
+                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                    });
+                }
+            });
+        }
+
+        const isDisplayedOnExamSummaryPage = !this.displayHeader && this.participationId !== undefined;
+        if (!isDisplayedOnExamSummaryPage) {
+            window.scroll(0, 0);
+        }
     }
 
-    // Updates component with the given modeling submission
+    private inputValuesArePresent(): boolean {
+        return !!(this.inputExercise || this.inputSubmission || this.inputParticipation);
+    }
+
+    /**
+     * Uses values directly passed to this component instead of subscribing to a participation to save resources
+     *
+     * <i>e.g. used within {@link ExamResultSummaryComponent} and the respective {@link ModelingExamSummaryComponent}
+     * as directly after the exam no grading is present and only the student solution shall be displayed </i>
+     * @private
+     */
+    private setupComponentWithInputValues() {
+        if (this.inputExercise) {
+            this.modelingExercise = this.inputExercise;
+        }
+        if (this.inputSubmission) {
+            this.submission = this.inputSubmission;
+        }
+        if (this.inputParticipation) {
+            this.participation = this.inputParticipation;
+        }
+
+        if (this.submission.model) {
+            this.umlModel = JSON.parse(this.submission.model);
+            this.hasElements = this.umlModel.elements && this.umlModel.elements.length !== 0;
+        }
+        this.explanation = this.submission.explanationText ?? '';
+    }
+
+    /**
+     * Updates the modeling submission with the given modeling submission.
+     */
     private updateModelingSubmission(modelingSubmission: ModelingSubmission) {
         if (!modelingSubmission) {
             this.alertService.error('artemisApp.apollonDiagram.submission.noSubmission');
@@ -419,7 +465,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
-     * Check whether or not a assessmentResult exists and if, returns the unreferenced feedback of it
+     * Check whether a assessmentResult exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] | undefined {
         if (this.assessmentResult?.feedbacks) {

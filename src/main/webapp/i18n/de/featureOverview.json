@@ -85,6 +85,16 @@
                     "title": "Notenschlüssel Erstellen",
                     "shortDescription": "Erstelle einen Notenschlüssel mit benutzerdefinierten oder vorgegebenen Notenstufen für einen Kurs oder eine Prüfung.",
                     "descriptionTextOne": "Punkte sind hilfreich, um einzelne Übungen zu bewerten, aber am Ende eines Semesters möchten du und die Studierenden eine Note erhalten. Auf der Notenschlüssel-Seite kannst du für jeden Kurs und jede Prüfung einen Notenschlüssel festlegen und die Notenstufen definieren, indem du die Intervalle, die Mindestnote und die untere/obere Grenze angibst. Der Standard-Notenschlüssel kann auch mit einem einzigen Klick erstellt werden. Artemis kümmert sich dann automatisch um die Zuordnung von Noten zu Notenstufen oder Bonuspunkten und um die Berechnung der Ergebnisstatistik auf der Grundlage der Notenstufen."
+                },
+                "submissionPolicy": {
+                    "title": "Abgaberichtlinie Definieren",
+                    "shortDescription": "Entmutige Versuch-und-Irrtum-Ansätze mit Einreichungsstrafen und Repository-Sperrmaßnahmen.",
+                    "descriptionTextOne": "Abhängig von den Aufgaben und deinem Unterrichtsstil kann es sinnvoll sein, eine Abgaberichtlinie zu definieren. Im Allgemeinen bekämpfen die Richtlinien zur Sperrung des Repositories und zur Bestrafung von Einsendungen Lösungsansätze, die auf Versuch und Irrtum beruhen. Wenn Studierende das Einsende-Limit erreichen, verhindert die erste Methode weitere Einsendungen, während die zweite Methode einen Punktabzug zur Folge hat. Die Abgaberichtlinien werden zunächst bei der Erstellung einer Programmierübung festgelegt und können später in der Benotungskonfiguration der jeweiligen Programmierübung angepasst werden."
+                },
+                "examExerciseUpdates": {
+                    "title": "Aufgabenänderungen während einer Klausur",
+                    "shortDescription": "Ändere die Aufgabenstellung während der Klausur und benachrichtige die Studierenden darüber.",
+                    "descriptionTextOne": "Während einer Klausur kann es vorkommen, dass Änderungen an der Aufgabenstellung vorgenommen werden müssen. Artemis bietet die Möglichkeit, die Aufgabenstellung während der Klausur auf der Bearbeitungsseite der Aufgabe zu aktualisieren und die Studierenden darüber zu benachrichtigen. Die Studierenden werden über die Änderungen informiert und können die aktualisierte Aufgabenstellung einsehen."
                 }
             }
         },
@@ -167,6 +177,11 @@
                     "title": "Notenschlüssel Anzeigen",
                     "shortDescription": "Sieh dir deine Endnote und die erreichte Note für einen Kurs oder eine Prüfung an, sobald eine neue Aufgabe benotet wurde.",
                     "descriptionTextOne": "Wenn ein Notenschlüssel für einen Kurs oder eine Prüfung definiert ist, kannst du ihn überprüfen und den Punkteschnitt für jede Bewertungsstufe sowie die zum Bestehen erforderliche Mindestpunktzahl einsehen. Notenschlüssel haben auch einen Bonuspunkte-Modus, der die erreichte Punktzahl in einen Bonus umwandelt. Du musst nicht bis zum Ende des Semesters warten, um den Notenschlüssel zu benutzen, sondern kannst jederzeit deine erreichte Note anhand der bisher durchgeführten und bewerteten Übungen überprüfen."
+                },
+                "exerciseUpdateNotification": {
+                    "title": "Benachrichtigung über Aufgabenänderungen",
+                    "shortDescription": "Wenn Änderungen an der Aufgabenstellung während einer Klausur notwendig sind, wirst du darüber benachrichtigt.",
+                    "descriptionTextOne": "Während einer Klausur kann es vorkommen, dass Änderungen an der Aufgabenstellung vorgenommen werden müssen. Du wirst über die Änderungen informiert und kannst die aktualisierte Aufgabenstellung einsehen. Es ist möglich zwischen der der Ansicht der aktualisierten Aufgabenstellung und einer Ansicht, die die Änderungen hervorhebt, zu wechseln."
                 }
             }
         }

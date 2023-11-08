@@ -80,7 +80,7 @@ export class ExamManagementPage {
         cy.visit(`/course-management/${courseID}/exams/${examID}/student-exams`);
         cy.get('#student-exam').find('.datatable-body-row').filter(`:contains("${username}")`).find('.view-submission').click();
         cy.get('.summery').click();
-        cy.get('#result-score').contains(score);
+        cy.get('#exercise-result-score').contains(score);
     }
 
     clickEdit() {

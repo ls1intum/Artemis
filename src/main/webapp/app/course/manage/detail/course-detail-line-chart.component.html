@@ -20,7 +20,7 @@
             ></fa-icon>
             <div #containerRef class="chart col-md-10 mt-1 justify-content-center align-items-start h-99" [ngClass]="showsCurrentWeek && startDateDisplayed ? 'col-12' : 'col-10'">
                 <ngx-charts-line-chart
-                    [view]="[containerRef.offsetWidth, 500]"
+                    [view]="[containerRef.offsetWidth, 400]"
                     [scheme]="chartColor"
                     [legend]="legend"
                     [showXAxisLabel]="showXAxisLabel"

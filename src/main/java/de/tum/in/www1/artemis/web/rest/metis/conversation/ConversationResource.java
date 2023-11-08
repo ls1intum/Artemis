@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +20,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ConductAgreementService;
+import de.tum.in.www1.artemis.service.dto.ResponsibleUserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService.ConversationMemberSearchFilters;
@@ -46,13 +46,17 @@ public class ConversationResource extends ConversationManagementResource {
 
     private final UserRepository userRepository;
 
+    private final ConductAgreementService conductAgreementService;
+
     public ConversationResource(ConversationService conversationService, ChannelAuthorizationService channelAuthorizationService,
-            AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository) {
+            AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
+            ConductAgreementService conductAgreementService) {
         super(courseRepository);
         this.conversationService = conversationService;
         this.channelAuthorizationService = channelAuthorizationService;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
+        this.conductAgreementService = conductAgreementService;
     }
 
     /**
@@ -64,7 +68,7 @@ public class ConversationResource extends ConversationManagementResource {
     @GetMapping("/{courseId}/conversations")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ConversationDTO>> getConversationsOfUser(@PathVariable Long courseId) {
-        checkMessagingEnabledElseThrow(courseId);
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
@@ -122,6 +126,61 @@ public class ConversationResource extends ConversationManagementResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         return ResponseEntity.ok(conversationService.userHasUnreadMessages(courseId, requestingUser));
+    }
+
+    /**
+     * GET /api/courses/:courseId/code-of-conduct/agreement : Checks if the user agrees to the code of conduct
+     *
+     * @param courseId the course's ID
+     * @return ResponseEntity with status 200 (Ok) and body is true if the user agreed to the course's code of conduct
+     */
+    @GetMapping("/{courseId}/code-of-conduct/agreement")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> isCodeOfConductAccepted(@PathVariable Long courseId) {
+        checkMessagingEnabledElseThrow(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        return ResponseEntity.ok(conductAgreementService.fetchUserAgreesToCodeOfConductInCourse(requestingUser, course));
+    }
+
+    /**
+     * PATCH /api/courses/:courseId/code-of-conduct/agreement : Accept the course's code of conduct
+     *
+     * @param courseId the course's ID
+     * @return ResponseEntity with status 200 (Ok)
+     */
+    @PatchMapping("/{courseId}/code-of-conduct/agreement")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> acceptCodeOfConduct(@PathVariable Long courseId) {
+        checkMessagingEnabledElseThrow(courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        conductAgreementService.setUserAgreesToCodeOfConductInCourse(requestingUser, course);
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET /api/courses/:courseId/code-of-conduct/responsible-users : Users responsible for the course
+     *
+     * @param courseId the course's ID
+     * @return ResponseEntity with the status 200 (Ok) and a list of users responsible for the course
+     */
+    @GetMapping("/{courseId}/code-of-conduct/responsible-users")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<ResponsibleUserDTO>> getResponsibleUsersForCodeOfConduct(@PathVariable Long courseId) {
+        checkMessagingEnabledElseThrow(courseId);
+
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+
+        var responsibleUsers = userRepository.searchAllByLoginOrNameInGroups(Pageable.unpaged(), "", Set.of(course.getInstructorGroupName()))
+                .map((user) -> new ResponsibleUserDTO(user.getName(), user.getEmail())).toList();
+
+        return ResponseEntity.ok(responsibleUsers);
     }
 
     /**

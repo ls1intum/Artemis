@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.competency;
 
+import java.time.ZonedDateTime;
+
+import javax.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -72,6 +76,34 @@ public class CompetencyUtilService {
     }
 
     /**
+     * Creates competency and links it to the course.
+     *
+     * @param course course the competency will be linked to
+     * @param time   the soft due date of the competency
+     * @return the persisted competency
+     */
+    public Competency createCompetencyWithSoftDueDate(Course course, ZonedDateTime time) {
+        final var competency = createCompetency(course);
+        competency.setSoftDueDate(time);
+        return competencyRepo.save(competency);
+    }
+
+    /**
+     * Creates multiple competencies and links them to the course.
+     *
+     * @param course       course the competencies will be linked to
+     * @param softDueDates soft due dates of the competencies
+     * @return array of the persisted competencies
+     */
+    public Competency[] createCompetencies(Course course, ZonedDateTime... softDueDates) {
+        Competency[] competencies = new Competency[softDueDates.length];
+        for (int i = 0; i < competencies.length; i++) {
+            competencies[i] = createCompetencyWithSoftDueDate(course, softDueDates[i]);
+        }
+        return competencies;
+    }
+
+    /**
      * Creates multiple competencies and links them to the course.
      *
      * @param course               course the competencies will be linked to
@@ -102,10 +134,11 @@ public class CompetencyUtilService {
      *
      * @param competency the competency to link the learning unit to
      * @param exercise   the exercise that will be linked to the competency
+     * @return the updated exercise
      */
-    public void linkExerciseToCompetency(Competency competency, Exercise exercise) {
+    public Exercise linkExerciseToCompetency(Competency competency, Exercise exercise) {
         exercise.getCompetencies().add(competency);
-        exerciseRepository.save(exercise);
+        return exerciseRepository.save(exercise);
     }
 
     /**
@@ -121,5 +154,17 @@ public class CompetencyUtilService {
         relation.setHeadCompetency(head);
         relation.setType(type);
         competencyRelationRepository.save(relation);
+    }
+
+    /**
+     * Sets the given mastery threshold for the competency.
+     *
+     * @param competency       the competency for which the threshold should be changed
+     * @param masteryThreshold the new mastery threshold
+     * @return the persisted competency
+     */
+    public Competency updateMasteryThreshold(@NotNull Competency competency, int masteryThreshold) {
+        competency.setMasteryThreshold(masteryThreshold);
+        return competencyRepo.save(competency);
     }
 }

@@ -62,6 +62,14 @@ public class Feedback extends DomainObject {
     private String reference;
 
     /**
+     * Reference to the test case which created this feedback.
+     * null if the feedback was not created by an automatic test case.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({ "tasks", "solutionEntries", "exercise", "coverageEntries" })
+    private ProgrammingExerciseTestCase testCase;
+
+    /**
      * Absolute score for the assessed element (e.g. +0.5, -1.0, +2.0, etc.)
      */
     @Column(name = "credits")
@@ -220,6 +228,19 @@ public class Feedback extends DomainObject {
         this.reference = reference;
     }
 
+    public ProgrammingExerciseTestCase getTestCase() {
+        return testCase;
+    }
+
+    public void setTestCase(ProgrammingExerciseTestCase testCase) {
+        this.testCase = testCase;
+    }
+
+    public Feedback testCase(ProgrammingExerciseTestCase testCase) {
+        setTestCase(testCase);
+        return this;
+    }
+
     public Double getCredits() {
         return credits;
     }
@@ -236,7 +257,7 @@ public class Feedback extends DomainObject {
     /**
      * Returns if this is a positive feedback.
      * <p>
-     * This value can actually be {@code null} for feedbacks that are neither positive nor negative, e.g. when this is a
+     * This value can actually be {@code null} for feedbacks that are neither positive nor negative, e.g., when this is a
      * feedback for a programming exercise test case that has not been executed for the submission.
      *
      * @return true, if this is a positive feedback.

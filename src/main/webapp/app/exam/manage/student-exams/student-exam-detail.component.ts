@@ -12,9 +12,16 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
-import { getRelativeWorkingTimeExtension, normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { examWorkingTime, getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+
+type WorkingTimeFormValues = {
+    hours: number;
+    minutes: number;
+    seconds: number;
+    percent: number;
+};
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -34,7 +41,7 @@ export class StudentExamDetailComponent implements OnInit {
     maxTotalPoints = 0;
     achievedTotalPoints = 0;
     bonusTotalPoints = 0;
-    busy = false;
+    isSaving = false;
 
     examId: number;
 
@@ -44,12 +51,21 @@ export class StudentExamDetailComponent implements OnInit {
     isBonus = false;
     passed = false;
 
-    workingTimeFormValues = {
+    workingTimeFormValues: WorkingTimeFormValues = {
         hours: 0,
         minutes: 0,
         seconds: 0,
         percent: 0,
     };
+
+    lastSavedWorkingTime: WorkingTimeFormValues = {
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+        percent: 0,
+    };
+
+    individualEndDate: dayjs.Dayjs | undefined;
 
     // Icons
     faSave = faSave;
@@ -98,7 +114,7 @@ export class StudentExamDetailComponent implements OnInit {
      */
     saveWorkingTime() {
         this.isSavingWorkingTime = true;
-        const seconds = this.getWorkingTimeSeconds();
+        const seconds = this.getWorkingTimeSeconds(this.workingTimeFormValues);
         this.studentExamService.updateWorkingTime(this.courseId, this.studentExam.exam!.id!, this.studentExam.id!, seconds).subscribe({
             next: (res) => {
                 if (res.body) {
@@ -190,14 +206,16 @@ export class StudentExamDetailComponent implements OnInit {
      */
     private initWorkingTimeForm() {
         this.setWorkingTimeDuration(this.studentExam.workingTime!);
-        this.updateWorkingTimePercent();
+        this.updateVariablesDependingOnWorkingTimeForm();
+
+        this.lastSavedWorkingTime = { ...this.workingTimeFormValues };
     }
 
     /**
      * Updates the working time duration values of the form whenever the percent value has been changed by the user.
      */
     updateWorkingTimeDuration() {
-        const regularWorkingTime = normalWorkingTime(this.studentExam.exam!)!;
+        const regularWorkingTime = examWorkingTime(this.studentExam.exam)!;
         const seconds = round(regularWorkingTime * (1.0 + this.workingTimeFormValues.percent / 100), 0);
         this.setWorkingTimeDuration(seconds);
     }
@@ -211,24 +229,35 @@ export class StudentExamDetailComponent implements OnInit {
         this.workingTimeFormValues.hours = workingTime.days * 24 + workingTime.hours;
         this.workingTimeFormValues.minutes = workingTime.minutes;
         this.workingTimeFormValues.seconds = workingTime.seconds;
+
+        this.updateIndividualEndDate();
+    }
+
+    updateVariablesDependingOnWorkingTimeForm() {
+        this.updateWorkingTimePercent();
+        this.updateIndividualEndDate();
     }
 
     /**
      * Uses the current durations saved in the form to update the extension percent value.
      */
     updateWorkingTimePercent() {
-        this.workingTimeFormValues.percent = getRelativeWorkingTimeExtension(this.studentExam.exam!, this.getWorkingTimeSeconds());
+        this.workingTimeFormValues.percent = getRelativeWorkingTimeExtension(this.studentExam.exam!, this.getWorkingTimeSeconds(this.workingTimeFormValues));
+    }
+
+    updateIndividualEndDate() {
+        this.individualEndDate = dayjs(this.studentExam.exam!.startDate).add(this.getWorkingTimeSeconds(this.workingTimeFormValues), 'seconds');
     }
 
     /**
      * Calculates how many seconds the currently set working time has in total.
      */
-    private getWorkingTimeSeconds(): number {
+    private getWorkingTimeSeconds(workingTimeFormValues: WorkingTimeFormValues): number {
         const duration = {
             days: 0,
-            hours: this.workingTimeFormValues.hours,
-            minutes: this.workingTimeFormValues.minutes,
-            seconds: this.workingTimeFormValues.seconds,
+            hours: workingTimeFormValues.hours,
+            minutes: workingTimeFormValues.minutes,
+            seconds: workingTimeFormValues.seconds,
         };
         return this.artemisDurationFromSecondsPipe.durationToSeconds(duration);
     }
@@ -240,20 +269,26 @@ export class StudentExamDetailComponent implements OnInit {
         return this.isSavingWorkingTime || (this.isTestRun && !!this.studentExam.submitted) || !this.studentExam.exam;
     }
 
-    examIsOver(): boolean {
+    /**
+     * Checks if the exam is over considering the individual working time of the student and the grace period
+     */
+    isExamOver(): boolean {
         if (this.studentExam.exam) {
-            // only show the button when the exam is over
-            return dayjs(this.studentExam.exam.endDate).add(this.studentExam.exam.gracePeriod!, 'seconds').isBefore(dayjs());
-        } else {
-            return false;
+            const individualExamEndDate = dayjs(this.studentExam.exam.startDate)
+                .add(this.getWorkingTimeSeconds(this.lastSavedWorkingTime), 'seconds')
+                .add(this.studentExam.exam.gracePeriod!, 'seconds');
+
+            return individualExamEndDate.isBefore(dayjs());
         }
+
+        return false;
     }
 
     /**
      * switch the 'submitted' state of the studentExam.
      */
     toggle() {
-        this.busy = true;
+        this.isSaving = true;
         if (this.studentExam.exam && this.studentExam.exam.id) {
             this.studentExamService.toggleSubmittedState(this.courseId, this.studentExam.exam.id, this.studentExam.id!, this.studentExam.submitted!).subscribe({
                 next: (res) => {
@@ -262,11 +297,11 @@ export class StudentExamDetailComponent implements OnInit {
                         this.studentExam.submitted = res.body.submitted;
                     }
                     this.alertService.success('artemisApp.studentExamDetail.toggleSuccessful');
-                    this.busy = false;
+                    this.isSaving = false;
                 },
                 error: () => {
                     this.alertService.error('artemisApp.studentExamDetail.togglefailed');
-                    this.busy = false;
+                    this.isSaving = false;
                 },
             });
         }

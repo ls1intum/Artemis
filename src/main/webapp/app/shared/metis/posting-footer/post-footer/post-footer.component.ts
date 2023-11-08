@@ -27,6 +27,7 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     @Input() showAnswers: boolean;
     @Input() isCourseMessagesPage: boolean;
     @Output() openThread = new EventEmitter<void>();
+    @Output() userReferenceClicked = new EventEmitter<string>();
 
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;

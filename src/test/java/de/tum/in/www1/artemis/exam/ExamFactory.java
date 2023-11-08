@@ -205,7 +205,7 @@ public class ExamFactory {
     /**
      * creates exam session DTOs
      *
-     * @param session1 firts exam session
+     * @param session1 first exam session
      * @param session2 second exam session
      * @return set of exam session DTOs
      */

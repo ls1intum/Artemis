@@ -1,6 +1,20 @@
 <ng-template #controls>
     <div class="course-overview-controls" *ngIf="course && course!.exercises && course!.exercises.length > 0">
         <div class="d-flex align-items-center">
+            <div class="btn-group me-2" ngbDropdown role="group">
+                <button class="btn btn-light dropdown-toggle" ngbDropdownToggle type="button">
+                    {{ 'artemisApp.courseOverview.exerciseList.view' | artemisTranslate }}
+                </button>
+                <div class="dropdown-menu" ngbDropdownMenu>
+                    <a (click)="setShowExercisesGroupedByDueDateCategory(true)" class="dropdown-item {{ showExercisesGroupedByTimeframe ? 'active' : '' }}">
+                        {{ 'artemisApp.courseOverview.exerciseList.timeframeView' | artemisTranslate }}
+                    </a>
+                    <a (click)="setShowExercisesGroupedByDueDateCategory(false)" class="dropdown-item {{ !showExercisesGroupedByTimeframe ? 'active' : '' }}">
+                        {{ 'artemisApp.courseOverview.exerciseList.weeklyView' | artemisTranslate }}
+                    </a>
+                </div>
+            </div>
+
             <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
                 <button class="btn" [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }" ngbDropdownToggle id="filter-dropdown-button">
                     <fa-icon [icon]="faFilter"></fa-icon>
@@ -102,65 +116,31 @@
                 </div>
             </div>
 
-            <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise && isVisibleToStudents(nextRelevantExercise.exercise)">
-                <h3 class="text-primary">
-                    <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
-                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeader' | artemisTranslate: { date: nextRelevantExercise.dueDate | artemisDate } }}
-                    </span>
-                    <ng-template #noDueDate>
-                        {{ 'artemisApp.courseOverview.exerciseList.currentExerciseGroupHeaderWithoutDueDate' | artemisTranslate }}
-                    </ng-template>
-                </h3>
-                <jhi-course-exercise-row
-                    class="pb-1"
-                    id="next-course-exercise-row"
-                    [exercise]="nextRelevantExercise.exercise"
+            <ng-container *ngIf="course?.exercises?.length !== 0; else noExercisesAvailableForCourse">
+                <jhi-course-exercises-grouped-by-timeframe
+                    *ngIf="showExercisesGroupedByTimeframe; else exercisesGroupedByWeek"
+                    [filteredAndSortedExercises]="filteredAndSortedExercises"
                     [course]="course"
-                    [hasGuidedTour]="nextRelevantExercise.exercise === exerciseForGuidedTour"
-                ></jhi-course-exercise-row>
-                <div class="collapsed"></div>
-            </div>
-            <div class="guided-tour exercise-row-container mb-3" *ngFor="let weekKey of weeklyIndexKeys">
-                <div
-                    class="control-label"
-                    [ngClass]="{ 'text-primary': weeklyExercisesGrouped[weekKey] ? weeklyExercisesGrouped[weekKey].isCurrentWeek : false }"
-                    (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed"
-                >
-                    <fa-icon class="pe-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
-                    <span *ngIf="weeklyExercisesGrouped[weekKey].start && weeklyExercisesGrouped[weekKey].end">
-                        {{ weeklyExercisesGrouped[weekKey].start | artemisDate: 'short-date' }} -
-                        {{ weeklyExercisesGrouped[weekKey].end | artemisDate: 'short-date' }}
-                    </span>
-                    <span *ngIf="!weeklyExercisesGrouped[weekKey].start || !weeklyExercisesGrouped[weekKey].end">
-                        {{ 'artemisApp.courseOverview.exerciseList.noDateAssociated' | artemisTranslate }}
-                    </span>
-                    <span
-                        class="ms-2"
-                        style="font-weight: 300"
-                        jhiTranslate="artemisApp.courseOverview.exerciseList.exerciseGroupHeader"
-                        [translateValues]="{ total: weeklyExercisesGrouped[weekKey].exercises.length }"
-                    >
-                        (Exercises: {{ weeklyExercisesGrouped[weekKey].exercises.length }})
-                    </span>
-                </div>
-                <div *ngIf="!weeklyExercisesGrouped[weekKey].isCollapsed">
-                    <jhi-course-exercise-row
-                        class="pb-1"
-                        [exercise]="exercise"
-                        [course]="course"
-                        [hasGuidedTour]="exercise === exerciseForGuidedTour"
-                        *ngFor="let exercise of weeklyExercisesGrouped[weekKey].exercises"
-                    ></jhi-course-exercise-row>
-                </div>
-                <div class="collapsed"></div>
-            </div>
-            <div *ngIf="course?.exercises && course!.exercises!.length === 0">
+                    [exerciseForGuidedTour]="exerciseForGuidedTour"
+                    [appliedSearchString]="lastAppliedSearchString"
+                />
+                <ng-template #exercisesGroupedByWeek>
+                    <jhi-course-exercises-grouped-by-week
+                        [filteredAndSortedExercises]="filteredAndSortedExercises"
+                        [course]="course!"
+                        [exerciseForGuidedTour]="exerciseForGuidedTour"
+                        [activeFilters]="activeFilters"
+                        [sortingAttribute]="sortingAttribute"
+                    />
+                </ng-template>
+            </ng-container>
+            <ng-template #noExercisesAvailableForCourse>
                 <div class="row">
                     <div class="col">
                         {{ 'artemisApp.courseOverview.exerciseList.noExercises' | artemisTranslate }}
                     </div>
                 </div>
-            </div>
+            </ng-template>
         </div>
     </div>
     <div class="col-12 col-md-4 guided-tour course-information">

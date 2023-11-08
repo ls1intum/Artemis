@@ -32,7 +32,7 @@ describe('AthenaService', () => {
         const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
 
-        athenaService.getFeedbackSuggestions(1, 2).subscribe((suggestions: TextBlockRef[]) => {
+        athenaService.getFeedbackSuggestionsForText(1, 2).subscribe((suggestions: TextBlockRef[]) => {
             response = suggestions;
         });
 
@@ -51,7 +51,7 @@ describe('AthenaService', () => {
         const mockProfileInfo = { activeProfiles: ['something'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
 
-        athenaService.getFeedbackSuggestions(1, 2).subscribe((suggestions: TextBlockRef[]) => {
+        athenaService.getFeedbackSuggestionsForText(1, 2).subscribe((suggestions: TextBlockRef[]) => {
             response = suggestions;
         });
 

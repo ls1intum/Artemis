@@ -2,16 +2,8 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.Optional;
+import java.util.concurrent.*;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -20,6 +12,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -51,24 +46,24 @@ public class LocalCIBuildJobManagementService {
 
     private final LocalCIDockerService localCIDockerService;
 
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+
     @Value("${artemis.continuous-integration.timeout-seconds:120}")
     private int timeoutSeconds;
 
     @Value("${artemis.continuous-integration.asynchronous:true}")
     private boolean runBuildJobsAsynchronously;
 
-    @Value("${artemis.continuous-integration.build.images.java.default}")
-    private String dockerImage;
-
     public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
             ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,
-            LocalCIDockerService localCIDockerService) {
+            LocalCIDockerService localCIDockerService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.programmingMessagingService = programmingMessagingService;
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.localCIContainerService = localCIContainerService;
         this.localCIDockerService = localCIDockerService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     /**
@@ -80,10 +75,11 @@ public class LocalCIBuildJobManagementService {
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
     public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation, String commitHash) {
-        ProjectType projectType = participation.getProgrammingExercise().getProjectType();
-        if (projectType == null || !projectType.isGradle()) {
-            throw new LocalCIException("Project type must be Gradle.");
-        }
+
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
+        ProjectType projectType = programmingExercise.getProjectType();
+        String dockerImage = programmingLanguageConfiguration.getImage(programmingLanguage, Optional.ofNullable(projectType));
 
         // Check if the Docker image is available. It should be available, because it is pulled during the creation of the programming exercise.
         localCIDockerService.pullDockerImage(dockerImage);
@@ -92,7 +88,7 @@ public class LocalCIBuildJobManagementService {
         String containerName = "artemis-local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
-        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, containerName);
+        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, containerName, dockerImage);
 
         // Wrap the buildJob Callable in a BuildJobTimeoutCallable, so that the build job is cancelled if it takes too long.
         BuildJobTimeoutCallable<LocalCIBuildResult> timedBuildJob = new BuildJobTimeoutCallable<>(buildJob, timeoutSeconds);

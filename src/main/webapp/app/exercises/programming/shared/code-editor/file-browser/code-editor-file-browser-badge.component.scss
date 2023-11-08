@@ -1,0 +1,18 @@
+:host {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    cursor: default;
+}
+
+.badge {
+    user-select: none;
+    background-color: var(--code-editor-file-browser-badge-background);
+    color: var(--bs-body-color);
+}
+
+.badge.on-colored-background {
+    /* Only slightly darken the background and always use white text */
+    background-color: rgba(0, 0, 0, 0.15);
+    color: var(--colored-btn-font);
+}

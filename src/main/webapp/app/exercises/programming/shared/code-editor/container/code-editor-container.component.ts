@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -9,6 +9,8 @@ import {
     CreateFileChange,
     DeleteFileChange,
     EditorState,
+    FileBadge,
+    FileBadgeType,
     FileChange,
     FileType,
     RenameFileChange,
@@ -36,7 +38,7 @@ export enum CollapsableCodeEditorElement {
     templateUrl: './code-editor-container.component.html',
     styleUrls: ['./code-editor-container.component.scss'],
 })
-export class CodeEditorContainerComponent implements ComponentCanDeactivate {
+export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeactivate {
     readonly CommitState = CommitState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
     @ViewChild(CodeEditorGridComponent, { static: false }) grid: CodeEditorGridComponent;
@@ -58,6 +60,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     @Input()
     highlightFileChanges = false;
     @Input()
+    feedbackSuggestions: Feedback[] = [];
+    @Input()
     readOnlyManualFeedback = false;
     @Input()
     highlightDifferences: boolean;
@@ -74,6 +78,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onUpdateFeedback = new EventEmitter<Feedback[]>();
     @Output()
     onFileLoad = new EventEmitter<string>();
+    @Output()
+    onAcceptSuggestion = new EventEmitter<Feedback>();
+    @Output()
+    onDiscardSuggestion = new EventEmitter<Feedback>();
     @Input()
     course?: Course;
 
@@ -86,7 +94,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile?: string;
-    unsavedFilesValue: { [fileName: string]: string } = {}; // {[fileName]: fileContent}
+    unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
+    fileBadges: { [fileName: string]: FileBadge[] };
 
     /** Code Editor State Variables **/
     editorState: EditorState;
@@ -101,6 +110,13 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         private fileService: CodeEditorFileService,
     ) {
         this.initializeProperties();
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        // Update file badges when feedback suggestions change
+        if (changes.feedbackSuggestions) {
+            this.updateFileBadges();
+        }
     }
 
     get unsavedFiles() {
@@ -130,6 +146,23 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     }
 
     /**
+     * Update the file badges for the code editor (currently only feedback suggestions)
+     */
+    updateFileBadges() {
+        this.fileBadges = {};
+        // Create badges for feedback suggestions
+        // Get file paths from feedback suggestions:
+        const filePathsWithSuggestions = this.feedbackSuggestions
+            .map((feedback) => Feedback.getReferenceFilePath(feedback))
+            .filter((filePath) => filePath !== undefined) as string[];
+        for (const filePath of filePathsWithSuggestions) {
+            // Count the number of suggestions for this file
+            const suggestionsCount = this.feedbackSuggestions.filter((feedback) => Feedback.getReferenceFilePath(feedback) === filePath).length;
+            this.fileBadges[filePath] = [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, suggestionsCount)];
+        }
+    }
+
+    /**
      * Resets all variables of this class.
      * When a new variable is added, it needs to be added to this method!
      * Initializing in variable declaration is not allowed.
@@ -137,6 +170,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     initializeProperties = () => {
         this.selectedFile = undefined;
         this.unsavedFiles = {};
+        this.fileBadges = {};
         this.editorState = EditorState.CLEAN;
         this.commitState = CommitState.UNDEFINED;
     };
@@ -200,10 +234,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onFileContentChange({ file, fileContent }: { file: string; fileContent: string }) {
         this.unsavedFiles = { ...this.unsavedFiles, [file]: fileContent };
         this.onFileChanged.emit();
-    }
-
-    updateFeedback(feedbacks: Feedback[]) {
-        this.onUpdateFeedback.emit(feedbacks);
     }
 
     fileLoad(selectedFile: string) {

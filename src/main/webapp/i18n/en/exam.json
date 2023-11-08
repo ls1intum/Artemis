@@ -33,27 +33,21 @@
                 "maxPoints": "Attainable Points: {{points}}",
                 "upcoming": "Upcoming Exam",
                 "imminent": "The Exam starts in",
-                "imminentExplanation": "You can already open the exam by clicking on the tile",
+                "imminentExplanation": "You can already open this exam",
                 "conducting": "Exam in Progress",
-                "conductingExplanation": "You can open the exam by clicking on the tile",
                 "timeExtension": "The normal working time is over",
-                "timeExtensionExplanation": "In case you have a time extension, the exam can be opened by clicking on the tile. Otherwise, you can review your submission.",
+                "timeExtensionExplanation": "In case you have an ongoing time extension, you can continue with the exam",
                 "closed": "Exam Closed",
-                "closedExplanation": "You can review your submission by clicking on the tile",
                 "review": "Exam Review Open",
                 "reviewExplanation": "You can review the assessment until ",
-                "noMoreAttempts": "No More Attempts",
-                "noMoreAttemptsExplanation": "There are currently no further attempts available",
                 "realExamsHeading": "Exams",
                 "testExamsHeading": "Test Exams",
                 "testExam": {
                     "upcoming": "Upcoming Test Exam",
                     "imminent": "The Test Exam will start ",
-                    "imminentExplanation": "You can already open the test exam by clicking on the tile",
+                    "imminentExplanation": "You can already open this test exam",
                     "conducting": "Start New Test Exam",
-                    "conductingExplanation": "You can start a new test exam by clicking on the tile",
                     "closed": "Test Exam Closed",
-                    "closedExplanation": "Starting a new attempt is no longer possible",
                     "notSubmitted": "You have not submitted your Test Exam on time!",
                     "reviewAttempt": "Attempt #{{attempt}}",
                     "resumeAttempt": "Resume Attempt #{{attempt}}",
@@ -62,19 +56,26 @@
                     "submissionDate": "Submitted on: ",
                     "available": "Available from {{startDate}} until {{endDate}}",
                     "showMoreAttempts": "Show all attempts",
-                    "showLessAttempts": "Show latest attempts"
+                    "showLessAttempts": "Show latest attempts",
+                    "noMoreAttempts": "No More Attempts",
+                    "noMoreAttemptsExplanation": "There are currently no further attempts available"
                 }
             },
             "examSummary": {
+                "backToOverview": "Back to overview",
                 "examResults": "Exam Results",
                 "generalInformation": "General Information",
                 "exportPDF": "Export PDF",
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
-                "lastCommitHash": "Last Commit Hash",
+                "submissionLinkedToCommit": "The submission is linked to commit",
                 "noCommitHash": "No commit was made",
                 "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}",
-                "viewResult": " View Result",
-                "viewExampleSolution": " View Example Solution",
+                "showExampleSolution": "Show Example Solution",
+                "hideExampleSolution": "Hide Example Solution",
+                "yourSubmission": "Your Submission",
+                "problemStatement": "Problem Statement",
+                "assessment": "Assessment",
+                "youAreViewingTheExampleSolution": "You are viewing the example solution",
                 "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor.",
                 "points": {
                     "exercise": "Exercise",
@@ -130,7 +131,6 @@
             "updated": "Exam updated",
             "imported": "Exam imported",
             "deleted": "Deleted exam \"{{ param }}\"",
-            "exercise": "Exercise {{nr}}",
             "startConsentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
             "endConsentText": "I hereby confirm with my full name, representing my signature, that this exam is my own work and I have only used the indicated aids.",
             "notConfirmed": "Please tick the checkbox to continue.",
@@ -155,7 +155,9 @@
                 "maxPointsNotSet": "The exam max points are not set."
             },
             "error": {
-                "cannotRegisterInstructor": "You cannot register instructors or administrators for exams."
+                "cannotRegisterInstructor": "You cannot register instructors or administrators for exams.",
+                "cannotShowExampleSolution": "Example solution could not be found",
+                "cannotDisplayExerciseDetails": "Exercise {{ exerciseGroupTitle }} cannot be displayed properly"
             },
             "problemStatementUpdate": {
                 "showDiff": "Show Difference",
@@ -246,7 +248,9 @@
             "totalColumn": "Total",
             "exerciseGroupTitle": "Average scores of exercise group \"{{ groupTitle }}\" in comparison",
             "gradesBeforeBonus": "Grades before bonus",
-            "gradesAfterBonus": "Grades after bonus"
+            "gradesAfterBonus": "Grades after bonus",
+            "noStudentResultAvailable": "No student results available",
+            "noExerciseGroupAvailable": "No exercise groups available"
         },
         "examParticipation": {
             "timer": "Time left: ",
@@ -270,6 +274,8 @@
             "exerciseName": "Name",
             "noStudentExam": "You are not registered for the exam. Please contact your instructor.",
             "noFurtherAttempts": "Currently no further attempts for the Test Exam are possible. To review your submission, navigate back to the Exam page",
+            "atLeastTutorStudentExam": "Since you are not a student, you cannot participate in this exam:",
+            "goToExamManagement": "Go to exam management page",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
@@ -352,6 +358,7 @@
             "assessment": "Assessment",
             "id": "ID",
             "exam": "Exam",
+            "examTimeline": "Exam timeline",
             "studentExamGenerationSuccess": "{{number}} student exams successfully generated!",
             "studentExamGenerationError": "There was an error during student exam generation:\n {{message}}",
             "missingStudentExamGenerationSuccess": "{{number}} missing student exams successfully generated!",
@@ -559,6 +566,7 @@
                 },
                 "importSuccessful": "Exercise Groups successfully imported!"
             },
+            "quizPool": "Quiz Pool",
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the exam to confirm."
@@ -653,7 +661,7 @@
             },
             "editWorkingTime": {
                 "title": "Edit Exam Duration",
-                "label": "Exam duration change",
+                "label": "Change exam duration",
                 "duration": "The new duration of the exam will be <strong>{{ duration }}</strong>.",
                 "question": "This will change the working time for all students. Do you really want to edit the duration of the exam <strong>{{ title }}</strong>?",
                 "typeNameToConfirm": "Please type in the name of the exam to confirm."
@@ -673,14 +681,23 @@
                 "suspiciousSessionDescription": "A session will be flagged as suspicious if it fulfills one of the following criteria:",
                 "suspiciousSessionCriterionIpAddress": "Multiple sessions with the same IP address belong to different students' exams",
                 "suspiciousSessionCriterionBrowserFingerprint": "Multiple sessions with the same browser fingerprint belong to different students' exams",
+                "suspiciousSessionCriterionDifferentIpAddress": "Sessions for the same student exam, that do not have the same IP address",
+                "suspiciousSessionCriterionDifferentBrowserFingerprint": "Sessions for the same student exam, that do not have the same browser fingerprint",
+                "suspiciousSessionCriterionIpOutsideOfRange": "The IP address of a session is outside of the specified IP range",
+                "subnet": "Subnet in CIDR notation",
+                "subnetHelp": "The subnet in CIDR notation, e.g. 127.0.0.1/24. If you enter a IPv4 subnet, only IPv4 addresses will be compared. If you enter a IPv6 subnet, only IPv6 addresses will be compared.",
+                "analyzeSessions": "Analyze Sessions",
                 "suspiciousSessions": {
                     "title": "Suspicious Sessions",
                     "view": "View Suspicious Sessions",
-                    "number": "This exam has {{ numberOfSuspiciousSessions }} cases.",
+                    "number": "This exam has <span class='bold'> {{ numberOfSuspiciousSessions }} </span> cases.",
                     "reasons": "Suspicious because of:",
                     "case": "Case",
-                    "sameIpAddress": "Same IP address",
-                    "sameBrowserFingerprint": "Same browser fingerprint"
+                    "sameBrowserFingerprintDifferentStudentExams": "Different student exams with the same browser fingerprint",
+                    "sameIpAddressDifferentStudentExams": "Different student exams with the same IP address",
+                    "differentIpAddressesSameStudentExam": "Different IP addresses for the same student exam",
+                    "differentBrowserFingerprintsSameStudentExam": "Different browser fingerprints for the same student exam",
+                    "ipOutsideOfRange": "IP address outside of range <span class=\"text-info\">{{ range }}</span>"
                 }
             },
             "plagiarismCasesOverview": {
@@ -691,6 +708,11 @@
                 "actions": "Actions",
                 "viewResultsOrRunDetection": "View Results or Run Detection",
                 "viewCases": "View Cases"
+            },
+            "dateChange": {
+                "title": "Confirm working time change",
+                "message": "The exam conduction is currently in progress. Changing the times of an active exam will notify all active students about the duration change!",
+                "label": "The exam conduction is currently in progress"
             }
         },
         "studentExamDetail": {
@@ -714,6 +736,8 @@
             "cancelAssessment": " Cancel Assessment",
             "workingTimeCouldNotBeSaved": "The working time could not be saved.",
             "saveWorkingTimeSuccessful": "The working time was saved successfully.",
+            "endOfIndividualWorkingTime": "End of individual working time:",
+            "disabledChangeSubmissionStateButtonExplanation": "Cannot be changed before the end of the working time and the respective grace period.",
             "toggleSuccessful": "The submitted status was changed successfully.",
             "togglefailed": "The submitted status could not be changed!",
             "hasComplaint": "Has Complaint",
@@ -723,6 +747,11 @@
             "alreadySubmitted": "You have already submitted.",
             "submissionNotInTime": "You have not submitted your exam on time. It will not be graded!",
             "handInFailed": "Submission of your exam failed. Please try again!"
+        },
+        "examTimeline": {
+            "title": "Exam timeline of {{ username }}",
+            "breadcrumb": "Exam timeline",
+            "disabledTooltip": "You cannot view the exam timeline if the student exam has not been submitted."
         },
         "examStatus": {
             "columnTitle": "Exam status",

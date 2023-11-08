@@ -32,7 +32,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             SELECT p
             FROM ProgrammingExerciseStudentParticipation p
                 LEFT JOIN FETCH p.results pr
-                LEFT JOIN FETCH pr.feedbacks
+                LEFT JOIN FETCH pr.feedbacks f
+                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH pr.submission
             WHERE p.id = :participationId
                 AND (pr.id = (

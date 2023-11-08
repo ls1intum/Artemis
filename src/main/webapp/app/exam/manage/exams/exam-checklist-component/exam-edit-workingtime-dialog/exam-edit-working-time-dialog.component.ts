@@ -1,12 +1,11 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { normalWorkingTime } from 'app/exam/participate/exam.utils';
-import dayjs from 'dayjs/esm';
+import { examWorkingTime } from 'app/exam/participate/exam.utils';
 
 @Component({
     selector: 'jhi-edit-working-time-dialog',
@@ -27,11 +26,12 @@ export class ExamEditWorkingTimeDialogComponent {
 
     workingTimeSeconds = 0;
 
-    get absoluteWorkingTimeDuration() {
-        const currentWorkingTimeSeconds = normalWorkingTime(this.exam);
-        if (!currentWorkingTimeSeconds) return undefined;
-        const duration = dayjs.duration(currentWorkingTimeSeconds + this.workingTimeSeconds, 'seconds');
-        return [duration.asHours() >= 1 ? `${Math.floor(duration.asHours())} h` : null, duration.format('m [min] s [s]')].filter(Boolean).join(' ');
+    get oldWorkingTime() {
+        return examWorkingTime(this.exam);
+    }
+
+    get newWorkingTime() {
+        return this.oldWorkingTime ? this.oldWorkingTime + this.workingTimeSeconds : undefined;
     }
 
     constructor(

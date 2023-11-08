@@ -25,11 +25,11 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.web.rest.open.UserJwtResource;
+import de.tum.in.www1.artemis.web.rest.open.PublicUserJwtResource;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 /**
- * Tests for {@link UserJwtResource} and {@link SAML2Service}.
+ * Tests for {@link PublicUserJwtResource} and {@link SAML2Service}.
  */
 class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 

@@ -292,7 +292,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
         Function<TutorialGroup, String> expectedTutorialGroupName = (TutorialGroup tg) -> {
             var cleanedTitle = tg.getTitle().replaceAll("\\s", "-").toLowerCase();
-            return "$" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 19));
+            return "tutorgroup-" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 18));
         };
         var tutorialGroupFromDb = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroup.getId());
 

@@ -1,5 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,7 +18,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     get feedback(): Feedback {
         return this._feedback;
     }
-    set feedback(feedback: Feedback) {
+    set feedback(feedback: Feedback | undefined) {
         this._feedback = feedback || new Feedback();
         this.oldFeedback = cloneDeep(this.feedback);
         this.viewOnly = !!feedback;
@@ -47,6 +47,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
 
     // Expose the function to the template
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
+    protected readonly Feedback = Feedback;
     readonly ButtonSize = ButtonSize;
     readonly MANUAL = FeedbackType.MANUAL;
 
@@ -79,7 +80,15 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     updateFeedback() {
         this.feedback.type = this.MANUAL;
         this.feedback.reference = `file:${this.selectedFile}_line:${this.codeLine}`;
-        this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine + 1}`;
+        if (Feedback.isFeedbackSuggestion(this.feedback)) {
+            // Mark as modified feedback suggestion
+            this.feedback.text = (this.feedback.text ?? FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(
+                FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+                FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+            );
+        } else {
+            this.feedback.text = `File ${this.selectedFile} at line ${this.codeLine + 1}`;
+        }
         this.viewOnly = true;
         if (this.feedback.credits && this.feedback.credits > 0) {
             this.feedback.positive = true;
@@ -111,6 +120,8 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
      */
     editFeedback(line: number) {
         this.viewOnly = false;
+        // Save the old feedback in case the user cancels later
+        this.oldFeedback = cloneDeep(this.feedback);
         this.onEditFeedback.emit(line);
         setTimeout(() => (this.textareaRef.nativeElement as HTMLTextAreaElement).focus());
     }

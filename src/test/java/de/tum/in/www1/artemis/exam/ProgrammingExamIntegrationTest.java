@@ -2,7 +2,11 @@ package de.tum.in.www1.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,7 +40,10 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFa
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
@@ -153,6 +160,39 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
         verify(instanceMessageSendService).sendProgrammingExerciseSchedule(programmingEx.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_rescheduleProgramming_endDateChanged() throws Exception {
+        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
+
+        ZonedDateTime visibleDate = examWithProgrammingEx.getVisibleDate();
+        ZonedDateTime startDate = examWithProgrammingEx.getStartDate();
+        ZonedDateTime endDate = examWithProgrammingEx.getEndDate();
+        examUtilService.setVisibleStartAndEndDateOfExam(examWithProgrammingEx, visibleDate, startDate, endDate.plusMinutes(1));
+
+        request.put("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams", examWithProgrammingEx, HttpStatus.OK);
+        verify(instanceMessageSendService).sendRescheduleAllStudentExams(examWithProgrammingEx.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_rescheduleProgramming_endDateChanged() throws Exception {
+        var programmingEx = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var examWithProgrammingEx = programmingEx.getExerciseGroup().getExam();
+
+        var workingTimeExtensionSeconds = 60;
+
+        ZonedDateTime visibleDate = examWithProgrammingEx.getVisibleDate();
+        ZonedDateTime startDate = examWithProgrammingEx.getStartDate();
+        ZonedDateTime endDate = examWithProgrammingEx.getEndDate();
+        examUtilService.setVisibleStartAndEndDateOfExam(examWithProgrammingEx, visibleDate, startDate, endDate);
+
+        request.patch("/api/courses/" + examWithProgrammingEx.getCourse().getId() + "/exams/" + examWithProgrammingEx.getId() + "/working-time", workingTimeExtensionSeconds,
+                HttpStatus.OK);
+        verify(instanceMessageSendService).sendRescheduleAllStudentExams(examWithProgrammingEx.getId());
     }
 
     @Test

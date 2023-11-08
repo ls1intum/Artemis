@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.post;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -16,14 +19,20 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.*;
-import de.tum.in.www1.artemis.domain.metis.conversation.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.lecture.LectureFactory;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.metis.*;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
@@ -124,6 +133,7 @@ public class ConversationUtilService {
                 CourseWideContext.ANNOUNCEMENT };
         posts.addAll(createBasicPosts(course1, courseWideContexts, userPrefix));
         posts.addAll(createBasicPosts(createOneToOneChat(course1, userPrefix), userPrefix, "tutor"));
+        posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
         posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
 
         return posts;
@@ -320,8 +330,8 @@ public class ConversationUtilService {
         conversation = conversationRepository.save(conversation);
 
         List<ConversationParticipant> conversationParticipants = new ArrayList<>();
-        conversationParticipants.add(createConversationParticipant(conversation, userPrefix + "tutor1"));
-        conversationParticipants.add(createConversationParticipant(conversation, userPrefix + "tutor2"));
+        conversationParticipants.add(createConversationParticipant(conversation, userPrefix + "tutor1", false));
+        conversationParticipants.add(createConversationParticipant(conversation, userPrefix + "tutor2", false));
 
         conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
         return conversationRepository.save(conversation);
@@ -332,16 +342,25 @@ public class ConversationUtilService {
         return conversationRepository.save(channel);
     }
 
-    public ConversationParticipant addParticipantToConversation(Conversation conversation, String userName) {
-        return createConversationParticipant(conversation, userName);
+    public Channel createPublicChannel(Course course, String channelName) {
+        Channel channel = ConversationFactory.generatePublicChannel(course, channelName, false);
+        return conversationRepository.save(channel);
     }
 
-    private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
+    public ConversationParticipant addParticipantToConversation(Conversation conversation, String userName) {
+        return createConversationParticipant(conversation, userName, false);
+    }
+
+    public ConversationParticipant addParticipantToConversation(Conversation conversation, String userName, boolean isConversationHidden) {
+        return createConversationParticipant(conversation, userName, isConversationHidden);
+    }
+
+    private ConversationParticipant createConversationParticipant(Conversation conversation, String userName, boolean isConversationHidden) {
         ConversationParticipant conversationParticipant = new ConversationParticipant();
         conversationParticipant.setConversation(conversation);
         conversationParticipant.setLastRead(conversation.getLastMessageDate());
         conversationParticipant.setUser(userUtilService.getUserByLogin(userName));
-        conversationParticipant.setIsHidden(false);
+        conversationParticipant.setIsHidden(isConversationHidden);
 
         return conversationParticipantRepository.save(conversationParticipant);
     }

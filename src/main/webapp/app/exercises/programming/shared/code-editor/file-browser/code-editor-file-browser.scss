@@ -65,7 +65,7 @@ File browser tree
         }
 
         .node-selected {
-            background-color: #428bca !important;
+            background-color: var(--code-editor-file-browser-selected-file-background) !important;
         }
 
         .file-icons {

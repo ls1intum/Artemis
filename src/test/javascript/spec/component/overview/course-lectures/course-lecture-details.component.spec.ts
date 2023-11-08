@@ -174,8 +174,16 @@ describe('CourseLectureDetails', () => {
         expect(courseLecturesDetailsComponent.hasPdfLectureUnit).toBeFalse();
     }));
 
-    it('should display manage button when user is at least tutor', fakeAsync(() => {
+    it('should not display manage button when user is only tutor', fakeAsync(() => {
         lecture.course!.isAtLeastTutor = true;
+        fixture.detectChanges();
+
+        const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));
+        expect(manageLectureButton).toBeNull();
+    }));
+
+    it('should display manage button when user is at least editor', fakeAsync(() => {
+        lecture.course!.isAtLeastEditor = true;
         fixture.detectChanges();
 
         const manageLectureButton = debugElement.query(By.css('#manageLectureButton'));

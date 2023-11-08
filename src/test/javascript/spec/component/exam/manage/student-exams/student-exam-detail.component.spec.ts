@@ -261,13 +261,13 @@ describe('StudentExamDetailComponent', () => {
     it('should get examIsOver', () => {
         studentExamDetailComponent.studentExam = studentExam;
         studentExam.exam!.gracePeriod = 100;
-        expect(studentExamDetailComponent.examIsOver()).toBeFalse();
-        studentExam.exam!.endDate = dayjs().add(-20, 'seconds');
-        expect(studentExamDetailComponent.examIsOver()).toBeFalse();
-        studentExam.exam!.endDate = dayjs().add(-200, 'seconds');
-        expect(studentExamDetailComponent.examIsOver()).toBeTrue();
+        expect(studentExamDetailComponent.isExamOver()).toBeFalse();
+        studentExam.exam!.startDate = dayjs().add(-20, 'seconds');
+        expect(studentExamDetailComponent.isExamOver()).toBeFalse();
+        studentExam.exam!.startDate = dayjs().add(-200, 'seconds');
+        expect(studentExamDetailComponent.isExamOver()).toBeTrue();
         studentExam.exam = undefined;
-        expect(studentExamDetailComponent.examIsOver()).toBeFalse();
+        expect(studentExamDetailComponent.isExamOver()).toBeFalse();
     });
 
     it('should toggle to unsubmitted', () => {
@@ -373,4 +373,45 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.grade).toBe(studentExamWithGradeFromServer.studentResult.overallGrade);
         expect(studentExamDetailComponent.gradeAfterBonus).toBe(studentExamWithGradeFromServer.studentResult.gradeWithBonus.finalGrade.toString());
     });
+
+    describe('change student exam to submitted button', () => {
+        beforeEach(() => {
+            setupComponentToDisplayExamSubmittedButton();
+        });
+
+        const ADJUST_SUBMITTED_STATE_BUTTON_ID = '#adjust-submitted-state-button';
+
+        it('should NOT be disabled when individual working time is over', () => {
+            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver').mockReturnValue(true);
+
+            studentExamDetailComponentFixture.detectChanges();
+
+            const buttonElement = studentExamDetailComponentFixture.nativeElement.querySelector(ADJUST_SUBMITTED_STATE_BUTTON_ID);
+            expect(buttonElement).toBeTruthy();
+            expect(examIsOverSpy).toHaveBeenCalled();
+            expect(buttonElement.disabled).toBeFalse();
+        });
+
+        it('should be disabled when individual working time is NOT over', () => {
+            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver').mockReturnValue(false);
+
+            studentExamDetailComponentFixture.detectChanges();
+
+            const buttonElement = studentExamDetailComponentFixture.nativeElement.querySelector(ADJUST_SUBMITTED_STATE_BUTTON_ID);
+            expect(buttonElement).toBeTruthy();
+            expect(examIsOverSpy).toHaveBeenCalled();
+            expect(buttonElement.disabled).toBeTrue();
+        });
+    });
+
+    /**
+     * Sets up the component to be in a state where the button should be displayed when not considering {@link StudentExamDetailComponent#isExamOver}
+     */
+    function setupComponentToDisplayExamSubmittedButton() {
+        studentExamDetailComponent.student = student;
+        studentExamDetailComponent.studentExam = studentExam;
+        studentExamDetailComponent.course = course;
+        studentExamDetailComponent.course.isAtLeastInstructor = true;
+        studentExamDetailComponent.isTestExam = false;
+    }
 });

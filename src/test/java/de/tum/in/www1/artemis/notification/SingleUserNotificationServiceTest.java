@@ -1,19 +1,16 @@
 package de.tum.in.www1.artemis.notification;
 
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_ADD_USER_CHANNEL;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_ADD_USER_GROUP_CHAT;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_CREATE_GROUP_CHAT;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_CREATE_ONE_TO_ONE_CHAT;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_DELETE_CHANNEL;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_REMOVE_USER_CHANNEL;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.CONVERSATION_REMOVE_USER_GROUP_CHAT;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
@@ -315,21 +312,11 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     /**
-     * Test for checkNotificationForAssessmentExerciseSubmission method with an undefined release date
+     * Test for checkNotificationForExerciseRelease method with a past assessment due date
      */
     @Test
-    void testCheckNotificationForAssessmentExerciseSubmission_undefinedAssessmentDueDate() {
-        exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
-        singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
-        verify(singleUserNotificationService).checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
-    }
-
-    /**
-     * Test for checkNotificationForExerciseRelease method with a current or past release date
-     */
-    @Test
-    void testCheckNotificationForAssessmentExerciseSubmission_currentOrPastAssessmentDueDate() {
-        exercise = TextExerciseFactory.generateTextExercise(null, null, ZonedDateTime.now(), course);
+    void testCheckNotificationForAssessmentExerciseSubmission_pastAssessmentDueDate() {
+        exercise = TextExerciseFactory.generateTextExercise(null, null, ZonedDateTime.now().minusMinutes(1), course);
         singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, user, result);
         assertThat(notificationRepository.findAll()).as("One new notification should have been created").hasSize(1);
     }
@@ -377,7 +364,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
      * Test for notifyUserAboutNewPossiblePlagiarismCase method
      */
     @Test
-    void testNotifyUserAboutNewPossiblePlagiarismCase() throws MessagingException {
+    void testNotifyUserAboutNewPossiblePlagiarismCase() throws MessagingException, IOException {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         userUtilService.changeUser(TEST_PREFIX + "student1");
         String exerciseTitle = "Test New Plagiarism";
@@ -389,13 +376,14 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         ArgumentCaptor<MimeMessage> mimeMessageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
         verify(javaMailSender, timeout(1000)).send(mimeMessageCaptor.capture());
         assertThat(mimeMessageCaptor.getValue().getSubject()).isEqualTo("New Plagiarism Case: Exercise \"" + exerciseTitle + "\" in the course \"" + course.getTitle() + "\"");
+        assertThat(mimeMessageCaptor.getValue().getContent()).asString().contains(POST_CONTENT);
     }
 
     /**
      * Test for notifyUserAboutFinalPlagiarismState method
      */
     @Test
-    void testNotifyUserAboutFinalPlagiarismState() throws MessagingException {
+    void testNotifyUserAboutFinalPlagiarismState() throws MessagingException, IOException {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         userUtilService.changeUser(TEST_PREFIX + "student1");
         plagiarismCase.setVerdict(PlagiarismVerdict.NO_PLAGIARISM);
@@ -403,7 +391,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
         ArgumentCaptor<MimeMessage> mimeMessageCaptor = ArgumentCaptor.forClass(MimeMessage.class);
         verify(javaMailSender, timeout(1000)).send(mimeMessageCaptor.capture());
-        assertThat(mimeMessageCaptor.getValue().getSubject()).isEqualTo(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
+        assertThat(mimeMessageCaptor.getValue().getSubject()).isEqualTo("Verdict for your plagiarism case");
+        assertThat(mimeMessageCaptor.getValue().getContent()).asString().contains("Verdict reached in plagiarism case for exercise");
     }
 
     @Test
@@ -464,7 +453,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         answerPost.setCreationDate(ZonedDateTime.now().plusSeconds(5));
         answerPost.setPost(post);
 
-        singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo);
+        singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo, CONVERSATION_NEW_REPLY_MESSAGE);
         verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 

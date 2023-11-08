@@ -5,10 +5,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ParticipationDTO(Long id, boolean testRun, String type) {
+public record ParticipationDTO(Long id, boolean testRun, String type, Integer submissionCount) {
 
     public static ParticipationDTO of(Participation participation) {
-        return new ParticipationDTO(participation.getId(), participation.isTestRun(), participation.getType());
+        return new ParticipationDTO(participation.getId(), participation.isTestRun(), participation.getType(), participation.getSubmissionCount());
     }
 
 }

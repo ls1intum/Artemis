@@ -6,7 +6,7 @@ services:
     artemis-app:
         container_name: artemis-app
         # look in the docs for more information about how to build your Artemis code with Docker
-        # https://ls1intum.github.io/Artemis/dev/setup/#
+        # https://docs.artemis.cit.tum.de/dev/setup/#
         image: ghcr.io/ls1intum/artemis
         build:
             context: ..

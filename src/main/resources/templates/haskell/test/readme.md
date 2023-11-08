@@ -10,7 +10,7 @@ The executables specified in `test.cabal` expect the solution repository checked
 Moreover, `test.cabal` provides an executable to test the template repository locally.
 For this, it expects the template repository in the `template` subdirectory.
 
-You can find a script to conveniently setup this folder structure when checking out a new exercise in the [programming exercise setup documentation](https://ls1intum.github.io/Artemis/user/exercises/programming/#setup).
+You can find a script to conveniently setup this folder structure when checking out a new exercise in the [programming exercise setup documentation](https://docs.artemis.cit.tum.de/user/exercises/programming/#setup).
 
 ## Running Tests
 

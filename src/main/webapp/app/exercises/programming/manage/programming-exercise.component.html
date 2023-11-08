@@ -3,7 +3,7 @@
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                 <th *ngIf="course.isAtLeastEditor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(programmingExercises)" />
+                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(programmingExercises)" [ngModel]="allChecked" />
                 </th>
                 <th class="d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
@@ -32,13 +32,13 @@
                     <input class="form-check-input" type="checkbox" (change)="toggleExercise(programmingExercise)" [ngModel]="isExerciseSelected(programmingExercise)" />
                 </td>
                 <td class="d-md-table-cell">
-                    <a *ngIf="programmingExercise.isAtLeastEditor; else showId" [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]">
+                    <a *ngIf="programmingExercise.isAtLeastTutor; else showId" [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]">
                         {{ programmingExercise.id }}
                     </a>
                     <ng-template #showId>{{ programmingExercise.id }}</ng-template>
                 </td>
                 <td>
-                    <a *ngIf="programmingExercise.isAtLeastEditor; else showTitle" [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]">
+                    <a *ngIf="programmingExercise.isAtLeastTutor; else showTitle" [routerLink]="['/course-management', courseId, 'programming-exercises', programmingExercise.id]">
                         {{ programmingExercise.title }}
                     </a>
                     <ng-template #showTitle>{{ programmingExercise.title }}</ng-template>

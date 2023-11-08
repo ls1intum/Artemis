@@ -1,10 +1,9 @@
 import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subscription, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -39,6 +38,7 @@ import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { AthenaService } from 'app/assessment/athena.service';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -90,6 +90,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     unreferencedFeedback: Feedback[] = [];
     referencedFeedback: Feedback[] = [];
     automaticFeedback: Feedback[] = [];
+    feedbackSuggestions: Feedback[] = []; // all pending Athena feedback suggestions (neither accepted nor rejected yet)
     totalScoreBeforeAssessment: number;
 
     isFirstAssessment = false;
@@ -109,6 +110,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // Icons
     faTimesCircle = faTimesCircle;
 
+    /**
+     * Get all feedback suggestions without a reference. They will be shown in cards below the build output.
+     */
+    get unreferencedFeedbackSuggestions() {
+        return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
+    }
+
     constructor(
         private manualResultService: ProgrammingAssessmentManualResultService,
         private router: Router,
@@ -116,15 +124,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         private accountService: AccountService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private domainService: DomainService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private complaintService: ComplaintService,
-        private translateService: TranslateService,
+        translateService: TranslateService,
         private route: ActivatedRoute,
         private alertService: AlertService,
         private structuredGradingCriterionService: StructuredGradingCriterionService,
         private repositoryFileService: CodeEditorRepositoryFileService,
         private programmingExerciseService: ProgrammingExerciseService,
         private profileService: ProfileService,
+        private athenaService: AthenaService,
     ) {
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
@@ -223,7 +231,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return this.programmingSubmissionService.lockAndGetProgrammingSubmissionParticipation(submissionId, this.correctionRound);
     }
 
-    private handleReceivedSubmission(submission: ProgrammingSubmission) {
+    private handleReceivedSubmission(submission: ProgrammingSubmission): Promise<void> {
         this.loadingInitialSubmission = false;
 
         // Set domain to correctly fetch data
@@ -250,6 +258,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.handleFeedback();
         this.getComplaint();
         this.calculateTotalScore();
+        return this.loadFeedbackSuggestions();
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {
@@ -260,6 +269,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         } else if (error?.error) {
             this.onError(error?.error?.detail || 'Not Found');
         }
+    }
+
+    /**
+     * Load the feedback suggestions for the current submission from Athena.
+     */
+    private async loadFeedbackSuggestions(): Promise<void> {
+        this.feedbackSuggestions = (await firstValueFrom(this.athenaService.getFeedbackSuggestionsForProgramming(this.exerciseId, this.submission!.id!))) ?? [];
+        const allFeedback = [...this.referencedFeedback, ...this.unreferencedFeedback]; // pre-compute to not have to do this in the loop
+        // Don't show feedback suggestions that have the same description and reference - probably it is coming from an earlier suggestion anyway
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((suggestion) =>
+            allFeedback.every((feedback) => feedback.detailText !== suggestion.detailText || feedback.reference !== suggestion.reference),
+        );
     }
 
     /**
@@ -481,6 +502,15 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         // Filter out other feedback than manual feedback
         this.referencedFeedback = feedbacks.filter((feedbackElement) => feedbackElement.reference != undefined && feedbackElement.type === FeedbackType.MANUAL);
         this.validateFeedback();
+    }
+
+    /**
+     * Remove a feedback suggestion because it was accepted or discarded.
+     * The actual feedback creation when accepting happens in code-editor-ace-component/unreferenced-feedback because they have full control over the suggestion cards.
+     * @param feedback Feedback suggestion that is removed
+     */
+    removeSuggestion(feedback: Feedback) {
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => feedbackSuggestion !== feedback);
     }
 
     /**

@@ -78,10 +78,12 @@ abstract class QuizExerciseCache implements Cache {
 
     @Override
     public final boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (!(obj instanceof QuizExerciseCache))
+        }
+        if (!(obj instanceof QuizExerciseCache)) {
             return false;
+        }
         return Objects.equals(exerciseId, ((QuizExerciseCache) obj).exerciseId);
     }
 

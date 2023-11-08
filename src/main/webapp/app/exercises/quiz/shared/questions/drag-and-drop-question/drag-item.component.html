@@ -1,6 +1,10 @@
 <div class="drag-item" ngClass="{'no-click': clickDisabled}" [ngStyle]="{ 'min-width': minWidth }">
     <div class="drag-item-picture" *ngIf="dragItem && dragItem.pictureFilePath" [cdkDragDisabled]="clickDisabled" [cdkDragData]="dragItem" cdkDrag>
-        <jhi-secured-image *ngIf="dragItem.pictureFilePath" [src]="dragItem.pictureFilePath" [mobileDragAndDrop]="isMobile"></jhi-secured-image>
+        <jhi-secured-image
+            *ngIf="dragItem.pictureFilePath"
+            [src]="filePreviewPaths.get(dragItem.pictureFilePath!) || dragItem.pictureFilePath!"
+            [mobileDragAndDrop]="isMobile"
+        ></jhi-secured-image>
         <div *cdkDragPlaceholder></div>
     </div>
     <div class="drag-item-text" *ngIf="dragItem && !dragItem.pictureFilePath">

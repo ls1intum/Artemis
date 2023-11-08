@@ -27,6 +27,14 @@ html {
     .mat-mdc-menu-trigger.mat-mdc-button:hover {
         background-color: $neutral-dark-l-5;
     }
+
+    .mat-mdc-option.mdc-list-item {
+        background-color: $neutral-dark-l-5;
+
+        &:hover {
+            background-color: $neutral-dark-l-10;
+        }
+    }
 }
 
 @import '../global';

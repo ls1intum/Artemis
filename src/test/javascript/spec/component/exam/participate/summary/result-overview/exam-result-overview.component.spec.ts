@@ -271,7 +271,7 @@ describe('ExamResultOverviewComponent', () => {
 
             component.scrollToExercise(INVALID_EXERCISE_ID);
 
-            expect(consoleErrorMock).toHaveBeenCalledWith(expect.stringContaining('Could not find corresponding exercise with id'));
+            expect(consoleErrorMock).toHaveBeenCalledWith(expect.stringContaining('Cannot scroll to exercise, could not find exercise with corresponding id'));
         });
 
         it('should return immediately when exerciseId is undefined', () => {
@@ -280,43 +280,6 @@ describe('ExamResultOverviewComponent', () => {
             component.scrollToExercise(undefined);
 
             expect(consoleErrorSpy).not.toHaveBeenCalled();
-        });
-    });
-
-    describe('getAchievedPercentageByExerciseId', () => {
-        it('should return undefined if exercise result is undefined', () => {
-            component.studentExamWithGrade.studentResult.exerciseGroupIdToExerciseResult = {};
-            const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
-
-            expect(scoreAsPercentage).toBeUndefined();
-        });
-
-        it('should calculate percentage based on achievedScore considering course settings', () => {
-            textExerciseResult.achievedScore = 60.6666;
-
-            const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
-
-            expect(scoreAsPercentage).toBe(60.67);
-        });
-
-        it('should calculate percentage based on maxScore and achievedPoints', () => {
-            textExerciseResult.achievedScore = undefined;
-            textExerciseResult.maxScore = 10;
-            textExerciseResult.achievedPoints = 6.066666;
-            component.studentExamWithGrade.studentExam!.exam!.course!.accuracyOfScores = 3;
-
-            const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
-
-            expect(scoreAsPercentage).toBe(60.667);
-        });
-
-        it('should return undefined if not set and not calculable', () => {
-            textExerciseResult.achievedScore = undefined;
-            textExerciseResult.achievedPoints = undefined;
-
-            const scoreAsPercentage = component.getAchievedPercentageByExerciseId(textExercise.id);
-
-            expect(scoreAsPercentage).toBeUndefined();
         });
     });
 });

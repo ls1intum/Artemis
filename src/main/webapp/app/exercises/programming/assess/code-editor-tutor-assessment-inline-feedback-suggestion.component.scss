@@ -1,0 +1,28 @@
+.inline-feedback-suggestion {
+    max-width: 780px;
+}
+
+.alert {
+    background-color: var(--feedback-suggestions-background);
+}
+
+.flex-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn {
+    width: fit-content;
+}
+
+.suggested-content {
+    opacity: 0.6; /* grey out the suggestion content to indicate that it is not saved yet */
+    transition: opacity 0.2s ease-in-out;
+}
+
+:host:hover .suggested-content {
+    opacity: 1; /* make the suggestion more readable on hover */
+}

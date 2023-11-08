@@ -1,17 +1,39 @@
 <div class="row border-bottom">
-    <div class="col-6"><h4 class="ps-2" jhiTranslate="artemisApp.programmingExercise.diffReport.template">Template</h4></div>
-    <div class="col-2"><h4 class="ps-2" jhiTranslate="artemisApp.programmingExercise.diffReport.solution">Solution</h4></div>
+    <div class="col-6">
+        <h4 class="ps-2">
+            {{
+                (diffForTemplateAndSolution || !report.participationIdForLeftCommit
+                    ? 'artemisApp.programmingExercise.diffReport.template'
+                    : 'artemisApp.programmingExercise.diffReport.previousSubmission'
+                ) | artemisTranslate
+            }}
+        </h4>
+    </div>
+    <div class="col-2">
+        <h4 class="ps-2">
+            {{
+                (diffForTemplateAndSolution ? 'artemisApp.programmingExercise.diffReport.solution' : 'artemisApp.programmingExercise.diffReport.currentSubmission')
+                    | artemisTranslate
+            }}
+        </h4>
+    </div>
     <div class="col-4 text-end fw-bold">
         <jhi-git-diff-line-stat
             [addedLineCount]="addedLineCount"
             [removedLineCount]="removedLineCount"
-            ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport' | artemisTranslate }}"
+            ngbTooltip="{{
+                (diffForTemplateAndSolution
+                    ? 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport'
+                    : 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReportExamTimeline'
+                ) | artemisTranslate
+            }}"
         ></jhi-git-diff-line-stat>
     </div>
 </div>
 <div *ngFor="let filePath of filePaths" class="mt-2">
     <jhi-git-diff-file-panel
         *ngIf="entriesByPath.get(filePath)?.length"
+        [diffForTemplateAndSolution]="diffForTemplateAndSolution"
         [diffEntries]="entriesByPath.get(filePath) ?? []"
         [templateFileContent]="templateFileContentByPath.get(filePath)"
         [solutionFileContent]="solutionFileContentByPath.get(filePath)"

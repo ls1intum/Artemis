@@ -1,6 +1,5 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
 import { ApollonEditor, ApollonMode, UMLDiagramType, UMLElementType, UMLModel, UMLRelationship, UMLRelationshipType } from '@ls1intum/apollon';
-import { AlertService } from 'app/core/util/alert.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -36,8 +35,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     scrollListener: ((this: Document, ev: Event) => any) | undefined;
 
     constructor(
-        private alertService: AlertService,
-        private renderer: Renderer2,
         private modalService: NgbModal,
         private guidedTourService: GuidedTourService,
     ) {

@@ -1,7 +1,7 @@
 <!--resizable container-->
-<jhi-resizeable-container class="col-12" *ngIf="exercise">
+<jhi-resizeable-container class="col-12" *ngIf="exercise" [examTimeline]="examTimeline">
     <!--region Left Panel-->
-    <span class="exercise-title" left-header>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
+    <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : exercise?.exerciseGroup?.title ?? '-' }}</span>
     <!-- prettier-ignore -->
     <span left-header>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
         *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>] <jhi-included-in-score-badge
@@ -25,7 +25,7 @@
                     class="text-editor-textarea"
                     [maxLength]="maxCharacterCount"
                     [(ngModel)]="answer"
-                    [readonly]="!studentSubmission"
+                    [readonly]="readonly || !studentSubmission"
                     [disabled]="!studentSubmission"
                     (keydown.tab)="onTextEditorTab(textEditor, $event)"
                     (input)="onTextEditorInput($event)"

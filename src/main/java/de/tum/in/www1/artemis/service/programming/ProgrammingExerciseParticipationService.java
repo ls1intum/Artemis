@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.programming;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
@@ -27,6 +28,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -455,5 +457,21 @@ public class ProgrammingExerciseParticipationService {
         }
 
         return findStudentParticipationByExerciseAndStudentLoginAndTestRunOrThrow(exercise, repositoryTypeOrUserName, isPracticeRepository, withSubmissions);
+    }
+
+    /**
+     * Get the commits information for the given participation.
+     *
+     * @param participation the participation for which to get the commits.
+     * @return a list of CommitInfo DTOs containing author, timestamp, commit-hash and commit message.
+     */
+    public List<CommitInfoDTO> getCommitInfos(ProgrammingExerciseStudentParticipation participation) {
+        try {
+            return gitService.getCommitInfos(participation.getVcsRepositoryUrl());
+        }
+        catch (GitAPIException e) {
+            log.error("Could not get commit infos for participation " + participation.getId() + " with repository url " + participation.getVcsRepositoryUrl());
+            return List.of();
+        }
     }
 }

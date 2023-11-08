@@ -1,142 +1,224 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import dayjs from 'dayjs/esm';
+import { omit } from 'lodash-es';
+import { combineLatest, takeWhile } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
+
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Observable } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faCheckDouble, faExclamationTriangle, faFont, faSave } from '@fortawesome/free-solid-svg-icons';
-import { tap } from 'rxjs/operators';
-import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { examWorkingTime, normalWorkingTime } from 'app/exam/participate/exam.utils';
 
 @Component({
     selector: 'jhi-exam-update',
     templateUrl: './exam-update.component.html',
 })
-export class ExamUpdateComponent implements OnInit {
+export class ExamUpdateComponent implements OnInit, OnDestroy {
     exam: Exam;
     course: Course;
     isSaving: boolean;
-    // The exam.workingTime is stored in seconds, but the working time should be displayed in minutes to the user
-    workingTimeInMinutes: number;
-    // The maximum working time in Minutes (used as a dynamic max-value for the working time Input)
-    maxWorkingTimeInMinutes: number;
     isImport = false;
     isImportInSameCourse = false;
     hideChannelNameInput = false;
 
-    // Expose enums to the template
-    exerciseType = ExerciseType;
+    private originalStartDate?: dayjs.Dayjs;
+    private originalEndDate?: dayjs.Dayjs;
+
+    private componentActive = true;
+
     // Link to the component enabling the selection of exercise groups and exercises for import
     @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
+    @ViewChild('workingTimeConfirmationContent') public workingTimeConfirmationContent: TemplateRef<any>;
 
-    documentationType = DocumentationType.Exams;
+    readonly documentationType: DocumentationType = 'Exams';
 
     // Icons
     faSave = faSave;
     faBan = faBan;
     faExclamationTriangle = faExclamationTriangle;
-    faCheckDouble = faCheckDouble;
-    faFont = faFont;
-
-    readonly FeatureToggle = FeatureToggle;
 
     constructor(
         private route: ActivatedRoute,
         private examManagementService: ExamManagementService,
         private alertService: AlertService,
-        private courseManagementService: CourseManagementService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private modalService: NgbModal,
         private router: Router,
+        private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {}
 
     ngOnInit(): void {
-        this.route.data.subscribe(({ exam }) => {
-            this.exam = exam;
+        combineLatest([this.route.url, this.route.data])
+            .pipe(takeWhile(() => this.componentActive))
+            .subscribe(([segments, data]) => {
+                const isImport = segments.some(({ path }) => path === 'import');
+                const exam: Exam = isImport ? prepareExamForImport(data.exam) : data.exam;
 
-            // Tap the URL to determine, if the Exam should be imported
-            this.route.url.pipe(tap((segments) => (this.isImport = segments.some((segment) => segment.path === 'import')))).subscribe();
+                if (!exam.gracePeriod) {
+                    exam.gracePeriod = 180;
+                }
 
-            if (this.isImport) {
-                this.resetIdAndDatesForImport();
-                this.isImportInSameCourse = this.exam.course?.id === Number(this.route.snapshot.paramMap.get('courseId'));
-            }
+                // test exam only feature automatic assessment
+                if (exam.testExam) {
+                    exam.numberOfCorrectionRoundsInExam = 0;
+                } else if (!exam.numberOfCorrectionRoundsInExam) {
+                    exam.numberOfCorrectionRoundsInExam = 1;
+                }
 
-            this.courseManagementService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
-                next: (response: HttpResponse<Course>) => {
-                    this.exam.course = response.body!;
-                    this.course = response.body!;
-                    this.hideChannelNameInput = (exam.id !== undefined && exam.channelName === undefined) || !isMessagingEnabled(this.course);
-                },
-                error: (err: HttpErrorResponse) => onError(this.alertService, err),
+                this.exam = exam;
+                this.isImport = isImport;
+                this.isImportInSameCourse = isImport && exam.course?.id === data.course.id;
+                this.originalStartDate = exam.startDate?.clone();
+                this.originalEndDate = exam.endDate?.clone();
+
+                this.course = data.course;
+                this.exam.course = data.course;
+                this.hideChannelNameInput = (!!exam.id && !exam.channelName) || !isMessagingEnabled(this.course);
             });
+    }
 
-            if (!this.exam.gracePeriod) {
-                this.exam.gracePeriod = 180;
-            }
-            // test exam only feature automatic assessment
-            if (this.exam.testExam) {
-                this.exam.numberOfCorrectionRoundsInExam = 0;
-            } else if (!this.exam.numberOfCorrectionRoundsInExam) {
-                this.exam.numberOfCorrectionRoundsInExam = 1;
-            }
-        });
-        // Initialize helper attributes
-        this.workingTimeInMinutes = this.exam.workingTime! / 60;
-        this.calculateMaxWorkingTime();
+    ngOnDestroy() {
+        this.componentActive = false;
+    }
+
+    /**
+     * Sets the exam working time in minutes.
+     * @param minutes
+     */
+    set workingTimeInMinutes(minutes: number) {
+        this.exam.workingTime = minutes * 60;
+    }
+
+    /**
+     * Returns the exam working time in minutes.
+     */
+    get workingTimeInMinutes(): number {
+        return this.exam.workingTime ? this.exam.workingTime / 60 : 0;
+    }
+
+    get oldWorkingTime(): number | undefined {
+        return normalWorkingTime(this.originalStartDate, this.originalEndDate);
+    }
+
+    get newWorkingTime(): number | undefined {
+        return this.exam.workingTime;
     }
 
     /**
      * Revert to the previous state, equivalent with pressing the back button on your browser
-     * Returns to the detail page if there is no previous state and we edited an existing exam
-     * Returns to the overview page if there is no previous state and we created a new exam
+     * Returns to the detail page if there is no previous state, and we edited an existing exam
+     * Returns to the overview page if there is no previous state, and we created a new exam
      */
-    previousState() {
+    resetToPreviousState() {
         this.navigationUtilService.navigateBackWithOptional(['course-management', this.course.id!.toString(), 'exams'], this.exam.id?.toString());
     }
 
-    save() {
-        this.isSaving = true;
+    /**
+     * Updates the working time for real exams based on the start and end dates.
+     */
+    updateExamWorkingTime() {
+        if (this.exam.testExam) return;
 
-        if (this.isImport) {
-            // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
-            if (this.exam?.exerciseGroups) {
-                if (!this.examExerciseImportComponent.validateUserInput()) {
-                    this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
-                    this.isSaving = false;
-                    return;
-                }
-                this.exam.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExerciseGroups();
-            }
-            this.subscribeToSaveResponse(this.examManagementService.import(this.course.id!, this.exam));
-        } else if (this.exam.id !== undefined) {
-            this.subscribeToSaveResponse(this.examManagementService.update(this.course.id!, this.exam));
+        this.exam.workingTime = examWorkingTime(this.exam) ?? 0;
+    }
+
+    /**
+     * Returns the maximum working time in minutes for test exams.
+     */
+    get maxWorkingTimeInMinutes(): number {
+        if (!this.exam.testExam) return 0;
+
+        if (this.exam.startDate && this.exam.endDate) {
+            return dayjs(this.exam.endDate).diff(this.exam.startDate, 'm');
         } else {
-            this.subscribeToSaveResponse(this.examManagementService.create(this.course.id!, this.exam));
+            // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
+            return this.isImport ? this.workingTimeInMinutes : 0;
         }
     }
 
-    subscribeToSaveResponse(result: Observable<HttpResponse<Exam>>) {
-        result.subscribe({
-            next: (response: HttpResponse<Exam>) => this.onSaveSuccess(response.body!),
-            error: (err: HttpErrorResponse) => this.onSaveError(err),
-        });
+    /**
+     * Saves the exam. If the dates have changed and the exam is ongoing, a confirmation modal is shown to the user.
+     * If either the user confirms the modal, the exam is not ongoing or the dates have not changed, the exam is saved.
+     */
+    handleSubmit() {
+        const datesChanged = !(this.exam.startDate?.isSame(this.originalStartDate) && this.exam.endDate?.isSame(this.originalEndDate));
+
+        if (datesChanged && this.isOngoingExam) {
+            const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+            modalRef.componentInstance.title = 'artemisApp.examManagement.dateChange.title';
+            modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.examManagement.dateChange.message');
+            modalRef.componentInstance.contentRef = this.workingTimeConfirmationContent;
+            modalRef.result.then(this.save.bind(this));
+        } else {
+            this.save();
+        }
     }
 
-    private onSaveSuccess(exam: Exam) {
+    /**
+     * Saves the exam and navigates to the detail page of the exam if the save was successful.
+     * If the save was not successful, an error is shown to the user.
+     */
+    save() {
+        this.isSaving = true;
+
+        this.createOrUpdateOrImportExam()
+            ?.pipe(
+                map((response: HttpResponse<Exam>) => response.body!),
+                takeWhile(() => this.componentActive),
+            )
+            .subscribe({
+                next: this.onSaveSuccess.bind(this),
+                error: this.onSaveError.bind(this),
+            });
+    }
+
+    /**
+     * Creates, updates or imports the exam depending on the current state of the component.
+     * @private
+     */
+    private createOrUpdateOrImportExam() {
+        if (this.isImport && this.exam?.exerciseGroups) {
+            // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
+            if (!this.examExerciseImportComponent.validateUserInput()) {
+                this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
+                this.isSaving = false;
+                return;
+            }
+            return this.examManagementService.import(this.course.id!, this.exam);
+        } else if (this.exam.id) {
+            return this.examManagementService.update(this.course.id!, this.exam);
+        } else {
+            return this.examManagementService.create(this.course.id!, this.exam);
+        }
+    }
+
+    /**
+     * Navigates to the detail page of the exam if the save was successful.
+     * @param exam
+     * @private
+     */
+    private async onSaveSuccess(exam: Exam) {
         this.isSaving = false;
-        this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
+        await this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
         window.scrollTo(0, 0);
     }
 
+    /**
+     * Shows an error to the user if the save was not successful.
+     * @param httpErrorResponse
+     * @private
+     */
     private onSaveError(httpErrorResponse: HttpErrorResponse) {
         const errorKey = httpErrorResponse.error?.errorKey;
         if (errorKey === 'invalidKey') {
@@ -159,6 +241,13 @@ export class ExamUpdateComponent implements OnInit {
         this.isSaving = false;
     }
 
+    /**
+     * Returns true if the original exam is currently ongoing before any changes, false otherwise.
+     */
+    get isOngoingExam(): boolean {
+        return !!(this.exam.id && this.originalStartDate && this.originalEndDate && dayjs().isBetween(this.originalStartDate, this.originalEndDate));
+    }
+
     get isValidConfiguration(): boolean {
         const examConductionDatesValid = this.isValidVisibleDate && this.isValidStartDate && this.isValidEndDate;
         const examReviewDatesValid = this.isValidPublishResultsDate && this.isValidExamStudentReviewStart && this.isValidExamStudentReviewEnd;
@@ -177,7 +266,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidVisibleDate(): boolean {
-        return this.exam.visibleDate !== undefined;
+        return !!this.exam.visibleDate;
     }
 
     get isValidNumberOfCorrectionRounds(): boolean {
@@ -190,7 +279,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidMaxPoints(): boolean {
-        return this.exam?.examMaxPoints !== undefined && this.exam?.examMaxPoints > 0;
+        return !!this.exam?.examMaxPoints && this.exam?.examMaxPoints > 0;
     }
 
     /**
@@ -199,9 +288,8 @@ export class ExamUpdateComponent implements OnInit {
      * For test exams, the visibleDate has to be prior or equal to the startDate.
      */
     get isValidStartDate(): boolean {
-        if (this.exam.startDate === undefined) {
-            return false;
-        }
+        if (!this.exam.startDate) return false;
+
         if (this.exam.testExam) {
             return dayjs(this.exam.startDate).isSameOrAfter(this.exam.visibleDate);
         } else {
@@ -213,22 +301,7 @@ export class ExamUpdateComponent implements OnInit {
      * Validates the EndDate inputted by the user.
      */
     get isValidEndDate(): boolean {
-        return this.exam.endDate !== undefined && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
-    }
-
-    /**
-     * Calculates the WorkingTime for real exams based on the start- and end-time.
-     */
-    get calculateWorkingTime(): number {
-        if (!this.exam.testExam) {
-            if (this.exam.startDate && this.exam.endDate) {
-                this.exam.workingTime = dayjs(this.exam.endDate).diff(this.exam.startDate, 's');
-            } else {
-                this.exam.workingTime = 0;
-            }
-            this.workingTimeInMinutes = this.exam.workingTime / 60;
-        }
-        return this.workingTimeInMinutes;
+        return !!this.exam.endDate && dayjs(this.exam.endDate).isAfter(this.exam.startDate);
     }
 
     /**
@@ -252,38 +325,13 @@ export class ExamUpdateComponent implements OnInit {
         return false;
     }
 
-    /**
-     * Used to convert workingTimeInMinutes into exam.workingTime (in seconds) every time, the user inputs a new
-     * working time for a test exam
-     * @param event when the user inputs a new working time
-     */
-    convertWorkingTimeFromMinutesToSeconds(event: any) {
-        this.workingTimeInMinutes = event.target.value;
-        this.exam.workingTime = this.workingTimeInMinutes * 60;
-    }
-
-    /**
-     * Used to determine the maximum working time every time, the user changes the start- or endDate.
-     * Used to show a graphical warning at the working time input field
-     */
-    calculateMaxWorkingTime() {
-        if (this.exam.testExam) {
-            if (this.exam.startDate && this.exam.endDate) {
-                this.maxWorkingTimeInMinutes = dayjs(this.exam.endDate).diff(this.exam.startDate, 's') / 60;
-            } else {
-                // In case of an import, the exam.workingTime is imported, but the start / end date are deleted -> no error should be shown to the user in this case
-                this.maxWorkingTimeInMinutes = this.isImport ? this.workingTimeInMinutes : 0;
-            }
-        }
-    }
-
     get isValidPublishResultsDate(): boolean {
         // allow instructors to set publishResultsDate later
         if (!this.exam.publishResultsDate) {
             return true;
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
-        return this.exam.endDate !== undefined && dayjs(this.exam.publishResultsDate).isAfter(this.exam.endDate);
+        return !!this.exam.endDate && dayjs(this.exam.publishResultsDate).isAfter(this.exam.endDate);
     }
 
     get isValidExamStudentReviewStart(): boolean {
@@ -292,7 +340,7 @@ export class ExamUpdateComponent implements OnInit {
             return true;
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
-        return this.exam.publishResultsDate !== undefined && dayjs(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
+        return !!this.exam.publishResultsDate && dayjs(this.exam.examStudentReviewStart).isAfter(this.exam.publishResultsDate);
     }
 
     get isValidExamStudentReviewEnd(): boolean {
@@ -301,7 +349,7 @@ export class ExamUpdateComponent implements OnInit {
             return !this.exam.examStudentReviewStart || !this.exam.examStudentReviewStart.isValid();
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
-        return this.exam.examStudentReviewStart !== undefined && dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
+        return !!this.exam.examStudentReviewStart && dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
     }
 
     get isValidExampleSolutionPublicationDate(): boolean {
@@ -315,19 +363,12 @@ export class ExamUpdateComponent implements OnInit {
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)
         );
     }
-
-    /**
-     * Helper-Method to reset the Exam Id and Exam dates when importing the Exam
-     */
-    private resetIdAndDatesForImport() {
-        this.exam.id = undefined;
-        this.exam.visibleDate = undefined;
-        this.exam.startDate = undefined;
-        this.exam.endDate = undefined;
-        this.exam.publishResultsDate = undefined;
-        this.exam.examStudentReviewStart = undefined;
-        this.exam.examStudentReviewEnd = undefined;
-        this.exam.examUsers = undefined;
-        this.exam.studentExams = undefined;
-    }
 }
+
+/**
+ * Prepares the exam for import by omitting all properties that should not be imported.
+ */
+export const prepareExamForImport = (exam: Exam): Exam => ({
+    ...omit(exam, ['id', 'visibleDate', 'startDate', 'endDate', 'publishResultsDate', 'examStudentReviewStart', 'examStudentReviewEnd', 'examUsers', 'studentExams']),
+    workingTime: 0,
+});

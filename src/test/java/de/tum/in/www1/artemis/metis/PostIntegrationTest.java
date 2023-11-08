@@ -15,6 +15,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -278,6 +280,33 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         verify(groupNotificationService).notifyAllGroupsAboutNewCoursePost(createdPost, course);
     }
 
+    @ParameterizedTest
+    @MethodSource("userMentionProvider")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateCoursePostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
+        Post postToSave = createPostWithoutContext();
+        postToSave.setCourse(course);
+        postToSave.setCourseWideContext(existingCourseWidePosts.get(0).getCourseWideContext());
+        postToSave.setContent(userMention);
+
+        if (!isUserMentionValid) {
+            request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
+            verify(groupNotificationService, never()).notifyAllGroupsAboutNewCoursePost(any(), any());
+            return;
+        }
+
+        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
+        conversationUtilService.assertSensitiveInformationHidden(createdPost);
+        checkCreatedPost(postToSave, createdPost);
+
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
+        postContextFilter.setCourseId(courseId);
+
+        List<Post> updatedCourseWidePosts = postRepository.findPosts(postContextFilter, null, false, null).stream().filter(post -> post.getCourseWideContext() != null).toList();
+        assertThat(existingCourseWidePosts).hasSize(updatedCourseWidePosts.size() - 1);
+        verify(groupNotificationService).notifyAllGroupsAboutNewCoursePost(createdPost, course);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateAnnouncement() throws Exception {
@@ -446,6 +475,24 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     void testEditPost_asTutor() throws Exception {
         // update post of student1 (index 0)--> OK
         Post postToUpdate = editExistingPost(existingPosts.get(0));
+
+        Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
+        conversationUtilService.assertSensitiveInformationHidden(updatedPost);
+        assertThat(updatedPost).isEqualTo(postToUpdate);
+    }
+
+    @ParameterizedTest
+    @MethodSource("userMentionProvider")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testEditPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
+        // update post of student1 (index 0)--> OK
+        Post postToUpdate = editExistingPost(existingPosts.get(0));
+        postToUpdate.setContent(userMention);
+
+        if (!isUserMentionValid) {
+            request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.BAD_REQUEST);
+            return;
+        }
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.OK);
         conversationUtilService.assertSensitiveInformationHidden(updatedPost);
@@ -994,6 +1041,10 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
         return returnedPosts;
+    }
+
+    protected static List<Arguments> userMentionProvider() {
+        return userMentionProvider(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
     }
 
 }

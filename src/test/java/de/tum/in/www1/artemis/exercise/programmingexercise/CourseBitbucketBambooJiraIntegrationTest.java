@@ -553,6 +553,24 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchMembersForUserMentionsSearchTermFilteringCorrect() throws Exception {
+        courseTestService.testSearchMembersForUserMentionsSearchTermFilteringCorrect();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchMembersForUserMentionsSearchResultLimit() throws Exception {
+        courseTestService.testSearchMembersForUserMentionsSearchResultLimit();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void tearchMembersForUserMentionsNoSearchTerm() throws Exception {
+        courseTestService.testSearchMembersForUserMentionsNoSearchTerm();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllEditorsInCourse() throws Exception {
         courseTestService.testGetAllEditorsInCourse();
@@ -695,7 +713,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         courseTestService.testArchiveCourseWithQuizExerciseCannotExportExerciseDetails();
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("provideFileNameAndErrorMsg")
     void testArchiveCourseWithQuizExerciseCannotExportMCOrSAAnswersSubmission(String dynamicFilenamePart, String dynamicErrorMsgPart) throws Exception {

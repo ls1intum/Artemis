@@ -8,7 +8,7 @@
     border-radius: 3px;
     padding: 3px 10px 10px;
     margin-bottom: 10px;
-    box-shadow: rgba(0, 0, 0, 0.35) 0px 3px 9px;
+    box-shadow: rgba(0, 0, 0, 0.35) 0 3px 9px;
 
     &.examWideAnnouncement {
         background-color: var(--artemis-alert-info-background);
@@ -24,28 +24,6 @@
             font-size: 1.5em;
             text-align: center;
             margin-bottom: 15px;
-        }
-
-        .working-times {
-            text-align: center;
-            display: flex;
-            justify-content: space-evenly;
-
-            .title {
-                font-weight: bold;
-            }
-
-            .time {
-                font-size: 2em;
-            }
-
-            .previous {
-                color: var(--danger);
-            }
-
-            .new {
-                color: var(--success);
-            }
         }
     }
 

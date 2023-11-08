@@ -15,6 +15,8 @@ import java.util.*;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matchers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +48,8 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPer
 @Component
 @Profile("bitbucket")
 public class BitbucketRequestMockProvider {
+
+    private final Logger log = LoggerFactory.getLogger(BitbucketRequestMockProvider.class);
 
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;
@@ -301,7 +305,7 @@ public class BitbucketRequestMockProvider {
                                 return actual.equals(mapper.writeValueAsString(body));
                             }
                             catch (JsonProcessingException e) {
-                                e.printStackTrace();
+                                log.warn("Error while parsing", e);
                                 return false;
                             }
                         }

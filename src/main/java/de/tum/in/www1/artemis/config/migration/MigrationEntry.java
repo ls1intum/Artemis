@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.config.migration;
 
-import java.io.Serializable;
-
-public abstract class MigrationEntry implements Serializable {
+public abstract class MigrationEntry {
 
     public abstract void execute();
 

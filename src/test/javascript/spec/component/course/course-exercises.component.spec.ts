@@ -19,7 +19,6 @@ import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/ser
 import { ActivatedRoute } from '@angular/router';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
@@ -33,12 +32,13 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { CourseExercisesGroupedByWeekComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-week.component';
+import { CourseExercisesGroupedByTimeframeComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-timeframe.component';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
     let component: CourseExercisesComponent;
     let courseStorageService: CourseStorageService;
-    let exerciseService: ExerciseService;
     let localStorageService: LocalStorageService;
 
     let course: Course;
@@ -59,6 +59,8 @@ describe('CourseExercisesComponent', () => {
                 MockDirective(OrionFilterDirective),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(SidePanelComponent),
+                MockComponent(CourseExercisesGroupedByWeekComponent),
+                MockComponent(CourseExercisesGroupedByTimeframeComponent),
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(SortByDirective),
                 TranslatePipeMock,
@@ -84,7 +86,6 @@ describe('CourseExercisesComponent', () => {
                 fixture = TestBed.createComponent(CourseExercisesComponent);
                 component = fixture.componentInstance;
                 courseStorageService = TestBed.inject(CourseStorageService);
-                exerciseService = TestBed.inject(ExerciseService);
                 localStorageService = TestBed.inject(LocalStorageService);
 
                 course = new Course();
@@ -116,16 +117,6 @@ describe('CourseExercisesComponent', () => {
         expect(courseStorageStub.mock.calls[0][0]).toBe(course.id);
     });
 
-    it('should react to changes', () => {
-        jest.spyOn(exerciseService, 'getNextExerciseForHours').mockReturnValue(exercise);
-        component.ngOnChanges();
-        const expectedExercise = {
-            exercise,
-            dueDate: exercise.dueDate,
-        };
-        expect(component.nextRelevantExercise).toEqual(expectedExercise);
-    });
-
     it('should reorder all exercises', () => {
         const oldExercise = {
             diagramType: UMLDiagramType.ClassDiagram,
@@ -149,12 +140,14 @@ describe('CourseExercisesComponent', () => {
         component.flipOrder();
 
         expect(component.sortingOrder).toBe(ExerciseSortingOrder.ASC);
-        expect(component.weeklyIndexKeys).toEqual(['2021-01-03', '2021-01-10']);
+        expect(component.filteredAndSortedExercises![0]).toEqual(evenOlderExercise);
+        expect(component.filteredAndSortedExercises![1]).toEqual(oldExercise);
 
         component.flipOrder();
 
         expect(component.sortingOrder).toBe(ExerciseSortingOrder.DESC);
-        expect(component.weeklyIndexKeys).toEqual(['2021-01-10', '2021-01-03']);
+        expect(component.filteredAndSortedExercises![0]).toEqual(oldExercise);
+        expect(component.filteredAndSortedExercises![1]).toEqual(evenOlderExercise);
     });
 
     it('should filter all exercises with upcoming release date', () => {
@@ -233,8 +226,6 @@ describe('CourseExercisesComponent', () => {
         component.toggleFilters(filters);
 
         expect(component.activeFilters).toEqual(new Set().add(ExerciseFilter.NEEDS_WORK));
-        expect(Object.keys(component.weeklyExercisesGrouped)).toEqual(['2021-01-17', '2021-01-10', 'noDate']);
-        expect(component.weeklyIndexKeys).toEqual(['2021-01-17', '2021-01-10', 'noDate']);
         expect(component.exerciseCountMap.get('modeling')).toBe(9);
 
         // trigger updateUpcomingExercises dynamically with dayjs()
@@ -292,29 +283,7 @@ describe('CourseExercisesComponent', () => {
         expect(component.activeFilters).toEqual(new Set().add(ExerciseFilter.OVERDUE));
         expect(component.exerciseCountMap.get('modeling')).toBe(1);
 
-        // the exercise should be grouped into the week with the individual due date
-        const sundayBeforeDueDate = participation.individualDueDate.day(0).format('YYYY-MM-DD');
-        expect(component.weeklyExercisesGrouped[sundayBeforeDueDate].exercises).toEqual([newExercise]);
-    });
-
-    it('should apply filters to the next relevant exercise', () => {
-        const newExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined) as Exercise;
-        newExercise.releaseDate = dayjs().subtract(3, 'hours');
-        newExercise.dueDate = dayjs().add(3, 'hours');
-        newExercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
-
-        component.course!.exercises = [newExercise];
-
-        component.ngOnChanges();
-
-        expect(component.nextRelevantExercise).toEqual({
-            exercise: newExercise,
-            dueDate: newExercise.dueDate,
-        });
-
-        component.toggleFilters([ExerciseFilter.OPTIONAL]);
-
-        expect(component.nextRelevantExercise).toBeUndefined();
+        expect(component.filteredAndSortedExercises).toContain(newExercise);
     });
 
     it('should sort upcoming exercises by ascending individual due dates', () => {
@@ -324,6 +293,7 @@ describe('CourseExercisesComponent', () => {
         exerciseRegularDueDate.dueDate = dueDate1;
         const participationRegularDueDate = new StudentParticipation(ParticipationType.STUDENT);
         exerciseRegularDueDate.studentParticipations = [participationRegularDueDate];
+        exerciseRegularDueDate.id = 1;
 
         const exerciseIndividualDueDate = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, undefined);
         exerciseIndividualDueDate.releaseDate = dayjs().add(5, 'days');
@@ -334,6 +304,7 @@ describe('CourseExercisesComponent', () => {
         const dueDate2 = dayjs().add(20, 'days');
         participationIndividualDueDate.individualDueDate = dueDate2;
         exerciseIndividualDueDate.studentParticipations = [participationIndividualDueDate];
+        exerciseIndividualDueDate.id = 2;
 
         const checkUpcomingExercises = () => {
             const expectedUpcomingExercises = [
@@ -378,7 +349,9 @@ describe('CourseExercisesComponent', () => {
         exercise3.title = 'Introduction to Software Engineering';
         component.course!.exercises = [exercise1, exercise2, exercise3];
         searchButton.dispatchEvent(event);
-        expect(component.weeklyExercisesGrouped['noDate'].exercises).toContainAllValues([exercise1, exercise2]);
+
+        expect(component.filteredAndSortedExercises).toContainAllValues([exercise1, exercise2]);
+        expect(component.filteredAndSortedExercises).not.toContainAllValues([exercise3]);
     });
 
     it('should open unenrollment modal on button click', () => {
@@ -387,5 +360,22 @@ describe('CourseExercisesComponent', () => {
         searchButton.dispatchEvent(event);
         expect(openModalStub).toHaveBeenCalledOnce();
         expect(openModalStub).toHaveBeenCalledWith(CourseUnenrollmentModalComponent, { size: 'xl' });
+    });
+
+    it('should display timeframe view as default', () => {
+        const exercisesListTimeframeView = fixture.debugElement.query(By.directive(CourseExercisesGroupedByTimeframeComponent))?.componentInstance;
+        const exercisesListWeeklyView = fixture.debugElement.query(By.directive(CourseExercisesGroupedByWeekComponent))?.componentInstance;
+        expect(exercisesListTimeframeView).toBeTruthy();
+        expect(exercisesListWeeklyView).toBeUndefined();
+    });
+
+    it('should display weekly view when selected', () => {
+        component.showExercisesGroupedByTimeframe = false;
+        fixture.detectChanges();
+
+        const exercisesListTimeframeView = fixture.debugElement.query(By.directive(CourseExercisesGroupedByTimeframeComponent))?.componentInstance;
+        const exercisesListWeeklyView = fixture.debugElement.query(By.directive(CourseExercisesGroupedByWeekComponent))?.componentInstance;
+        expect(exercisesListTimeframeView).toBeUndefined();
+        expect(exercisesListWeeklyView).toBeTruthy();
     });
 });

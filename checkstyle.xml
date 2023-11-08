@@ -20,5 +20,6 @@
             <property name="allowedAnnotations" value="Override,Test,ParameterizedTest,BeforeEach,AfterEach,BeforeAll,AfterAll"/>
         </module>
         <module name="ModifierOrder"/>
+        <module name="NeedBracesCheck"/>
     </module>
 </module>

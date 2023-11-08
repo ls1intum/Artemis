@@ -67,7 +67,7 @@ class IrisSessionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "ADMIN")
     void isActive() throws Exception {
         var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisSession.class, HttpStatus.CREATED);
         var settings = irisSettingsService.getGlobalSettings();
@@ -75,6 +75,7 @@ class IrisSessionIntegrationTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockStatusResponse();
         irisRequestMockProvider.mockStatusResponse();
 
+        var previousPreferredModel = settings.getIrisChatSettings().getPreferredModel();
         settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_UP");
         irisSettingsService.saveGlobalIrisSettings(settings);
         assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, IrisHealthDTO.class).active()).isTrue();
@@ -84,5 +85,8 @@ class IrisSessionIntegrationTest extends AbstractIrisIntegrationTest {
         settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_NA");
         irisSettingsService.saveGlobalIrisSettings(settings);
         assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, IrisHealthDTO.class).active()).isFalse();
+
+        settings.getIrisChatSettings().setPreferredModel(previousPreferredModel);
+        irisSettingsService.saveGlobalIrisSettings(settings);
     }
 }

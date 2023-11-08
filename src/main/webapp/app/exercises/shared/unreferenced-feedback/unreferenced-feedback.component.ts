@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 
 @Component({
@@ -13,7 +13,6 @@ export class UnreferencedFeedbackComponent {
     unreferencedFeedback: Feedback[] = [];
     assessmentsAreValid: boolean;
 
-    @Input() busy: boolean;
     @Input() readOnly: boolean;
     @Input() highlightDifferences: boolean;
 
@@ -25,13 +24,16 @@ export class UnreferencedFeedbackComponent {
     @Input() set feedbacks(feedbacks: Feedback[]) {
         this.unreferencedFeedback = [...feedbacks];
     }
+    @Input() feedbackSuggestions: Feedback[] = [];
 
     @Output() feedbacksChange = new EventEmitter<Feedback[]>();
+    @Output() onAcceptSuggestion = new EventEmitter<Feedback>();
+    @Output() onDiscardSuggestion = new EventEmitter<Feedback>();
 
     constructor(private structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
-    public deleteAssessment(assessmentToDelete: Feedback): void {
-        const indexToDelete = this.unreferencedFeedback.indexOf(assessmentToDelete);
+    public deleteFeedback(feedbackToDelete: Feedback): void {
+        const indexToDelete = this.unreferencedFeedback.indexOf(feedbackToDelete);
         this.unreferencedFeedback.splice(indexToDelete, 1);
         this.feedbacksChange.emit(this.unreferencedFeedback);
         this.validateFeedback();
@@ -55,9 +57,17 @@ export class UnreferencedFeedbackComponent {
         this.assessmentsAreValid = true;
     }
 
-    updateAssessment(feedback: Feedback) {
+    /**
+     * Update the feedback in the list of unreferenced feedback, changing or adding it.
+     * @param feedback The feedback to update
+     */
+    updateFeedback(feedback: Feedback) {
         const indexToUpdate = this.unreferencedFeedback.indexOf(feedback);
-        this.unreferencedFeedback[indexToUpdate] = feedback;
+        if (indexToUpdate < 0) {
+            this.unreferencedFeedback.push(feedback);
+        } else {
+            this.unreferencedFeedback[indexToUpdate] = feedback;
+        }
         this.validateFeedback();
         this.feedbacksChange.emit(this.unreferencedFeedback);
     }
@@ -94,12 +104,34 @@ export class UnreferencedFeedbackComponent {
         return Math.max(...references.concat([0])) + 1;
     }
 
+    /**
+     * Accept a feedback suggestion: Make it "real" feedback and remove the suggestion card
+     */
+    acceptSuggestion(feedback: Feedback) {
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback); // Remove the suggestion card
+        // We need to change the feedback type to "manual" because non-manual feedback is never editable in the editor
+        // and will be filtered out in all kinds of places
+        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
+        // Change the prefix "FeedbackSuggestion:" to "FeedbackSuggestion:accepted:"
+        feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
+        this.updateFeedback(feedback); // Make it "real" feedback
+        this.onAcceptSuggestion.emit(feedback);
+    }
+
+    /**
+     * Discard a feedback suggestion: Remove the suggestion card and emit the event
+     */
+    discardSuggestion(feedback: Feedback) {
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback); // Remove the suggestion card
+        this.onDiscardSuggestion.emit(feedback);
+    }
+
     createAssessmentOnDrop(event: Event) {
         this.addUnreferencedFeedback();
         const newFeedback: Feedback | undefined = this.unreferencedFeedback.last();
         if (newFeedback) {
             this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(newFeedback, event);
-            this.updateAssessment(newFeedback);
+            this.updateFeedback(newFeedback);
         }
     }
 }

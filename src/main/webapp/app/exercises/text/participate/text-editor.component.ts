@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -29,6 +29,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 
 @Component({
+    selector: 'jhi-text-editor',
     templateUrl: './text-editor.component.html',
     providers: [ParticipationService],
     styleUrls: ['./text-editor.component.scss'],
@@ -36,6 +37,15 @@ import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly ButtonType = ButtonType;
     readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
+
+    @Input() participationId?: number;
+    @Input() displayHeader: boolean = true;
+    @Input() expandProblemStatement?: boolean = true;
+
+    @Input() inputExercise?: TextExercise;
+    @Input() inputSubmission?: TextSubmission;
+    @Input() inputParticipation?: StudentParticipation;
+
     textExercise: TextExercise;
     participation: StudentParticipation;
     result: Result;
@@ -77,15 +87,46 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     }
 
     ngOnInit() {
-        const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
-        if (Number.isNaN(participationId)) {
-            return this.alertService.error('artemisApp.textExercise.error');
+        if (this.inputValuesArePresent()) {
+            this.setupComponentWithInputValues();
+        } else {
+            const participationId = this.participationId !== undefined ? this.participationId : Number(this.route.snapshot.paramMap.get('participationId'));
+            if (Number.isNaN(participationId)) {
+                return this.alertService.error('artemisApp.textExercise.error');
+            }
+
+            this.textService.get(participationId).subscribe({
+                next: (data: StudentParticipation) => this.updateParticipation(data),
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+        }
+    }
+
+    private inputValuesArePresent(): boolean {
+        return !!(this.inputExercise || this.inputSubmission || this.inputParticipation);
+    }
+
+    /**
+     * Uses values directly passed to this component instead of subscribing to a participation to save resources
+     *
+     * <i>e.g. used within {@link ExamResultSummaryComponent} and the respective {@link ModelingExamSummaryComponent}
+     * as directly after the exam no grading is present and only the student solution shall be displayed </i>
+     * @private
+     */
+    private setupComponentWithInputValues() {
+        if (this.inputExercise) {
+            this.textExercise = this.inputExercise;
+        }
+        if (this.inputSubmission) {
+            this.submission = this.inputSubmission;
+        }
+        if (this.inputParticipation) {
+            this.participation = this.inputParticipation;
         }
 
-        this.textService.get(participationId).subscribe({
-            next: (data: StudentParticipation) => this.updateParticipation(data),
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-        });
+        if (this.submission?.text) {
+            this.answer = this.submission.text;
+        }
     }
 
     private updateParticipation(participation: StudentParticipation) {

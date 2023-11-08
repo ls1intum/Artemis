@@ -362,4 +362,37 @@ public class QuizExerciseUtilService {
         user.setLogin(username);
         quizScheduleService.joinQuizBatch(quizExercise, batch, user);
     }
+
+    @NotNull
+    public QuizGroup createQuizGroup(String name) {
+        QuizGroup quizGroup = new QuizGroup();
+        quizGroup.setName(name);
+        return quizGroup;
+    }
+
+    @NotNull
+    public MultipleChoiceQuestion createMultipleChoiceQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
+        MultipleChoiceQuestion quizQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
+        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
+        return quizQuestion;
+    }
+
+    @NotNull
+    public DragAndDropQuestion createDragAndDropQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
+        DragAndDropQuestion quizQuestion = QuizExerciseFactory.createDragAndDropQuestion();
+        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
+        return quizQuestion;
+    }
+
+    @NotNull
+    public ShortAnswerQuestion createShortAnswerQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
+        ShortAnswerQuestion quizQuestion = QuizExerciseFactory.createShortAnswerQuestion();
+        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
+        return quizQuestion;
+    }
+
+    private <Q extends QuizQuestion> void setQuizQuestionsTitleAndGroup(Q quizQuestion, String title, QuizGroup quizGroup) {
+        quizQuestion.setTitle(title);
+        quizQuestion.setQuizGroup(quizGroup);
+    }
 }

@@ -6,15 +6,41 @@ import { ActivatedRoute } from '@angular/router';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Exam } from 'app/entities/exam.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { SubmissionType } from 'app/entities/submission.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { faAngleDown, faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
+import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
+import { Submission } from 'app/entities/submission.model';
+import { Participation } from 'app/entities/participation/participation.model';
+import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { cloneDeep } from 'lodash-es';
+import { captureException } from '@sentry/angular-ivy';
+import { AlertService } from 'app/core/util/alert.service';
+
+export type ResultSummaryExerciseInfo = {
+    icon: IconProp;
+    isCollapsed: boolean;
+    achievedPoints?: number;
+    achievedPercentage?: number;
+    colorClass?: string;
+    resultIconClass?: IconProp;
+
+    submission?: Submission;
+    participation?: Participation;
+    displayExampleSolution: boolean;
+};
+
+type StateBeforeResetting = {
+    exerciseInfos: Record<number, ResultSummaryExerciseInfo>;
+    isGradingKeyCollapsed: boolean;
+    isBonusGradingKeyCollapsed: boolean;
+};
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -30,13 +56,20 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly AssessmentType = AssessmentType;
     readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
     readonly PlagiarismVerdict = PlagiarismVerdict;
+
+    faFolderOpen = faFolderOpen;
+    faInfoCircle = faInfoCircle;
+    faPrint = faPrint;
+    faEye = faEye;
+    faEyeSlash = faEyeSlash;
+    faArrowUp = faArrowUp;
 
     /**
      * Current student's exam.
      */
     private _studentExam: StudentExam;
+
     plagiarismCaseInfos: { [exerciseId: number]: PlagiarismCaseInfo } = {};
     exampleSolutionPublished = false;
 
@@ -64,8 +97,6 @@ export class ExamResultSummaryComponent implements OnInit {
     @Input()
     instructorView = false;
 
-    collapsedExerciseIds: number[] = [];
-
     courseId: number;
 
     isTestRun = false;
@@ -76,12 +107,26 @@ export class ExamResultSummaryComponent implements OnInit {
 
     examWithOnlyIdAndStudentReviewPeriod: Exam;
 
-    // Icons
-    faFolderOpen = faFolderOpen;
-    faInfoCircle = faInfoCircle;
-    faPrint = faPrint;
-    faAngleRight = faAngleRight;
-    faAngleDown = faAngleDown;
+    isBeforeStudentReviewEnd = false;
+    /**
+     * Used to decide whether to instantiate the ComplaintInteractionComponent. We always instantiate the component if
+     * the review dates are set and the review start date has passed.
+     */
+    isAfterStudentReviewStart = false;
+
+    exerciseInfos: Record<number, ResultSummaryExerciseInfo>;
+
+    /**
+     * Passed to components with overlapping elements to ensure that the overlapping
+     * elements are displayed in a different order for printing.
+     */
+    isPrinting = false;
+
+    /**
+     * Passed to components where the problem statement might be expanded or collapsed to ensure that
+     * the problem statement is expanded while printing
+     */
+    expandProblemStatement = false;
 
     constructor(
         private route: ActivatedRoute,
@@ -89,6 +134,7 @@ export class ExamResultSummaryComponent implements OnInit {
         private themeService: ThemeService,
         private examParticipationService: ExamParticipationService,
         private plagiarismCasesService: PlagiarismCasesService,
+        private alertService: AlertService,
     ) {}
 
     /**
@@ -114,12 +160,34 @@ export class ExamResultSummaryComponent implements OnInit {
                 .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
                     studentExamWithGrade.studentExam = this.studentExam;
                     this.studentExamGradeInfoDTO = studentExamWithGrade;
+                    this.exerciseInfos = this.getExerciseInfos(studentExamWithGrade);
                 });
         }
 
         this.exampleSolutionPublished = !!this.studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(this.studentExam.exam.exampleSolutionPublicationDate);
 
+        this.exerciseInfos = this.getExerciseInfos();
+
         this.setExamWithOnlyIdAndStudentReviewPeriod();
+
+        this.isBeforeStudentReviewEnd = this.getIsBeforeStudentReviewEnd();
+        this.isAfterStudentReviewStart = this.getIsAfterStudentReviewStart();
+    }
+
+    get resultsArePublished(): boolean | any {
+        if (this.isTestRun || this.isTestExam) {
+            return true;
+        }
+
+        if (this.testRunConduction || this.testExamConduction) {
+            return false;
+        }
+
+        if (this.studentExam?.exam?.publishResultsDate) {
+            return dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs());
+        }
+
+        return false;
     }
 
     private tryLoadPlagiarismCaseInfosForStudent() {
@@ -145,31 +213,67 @@ export class ExamResultSummaryComponent implements OnInit {
         return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
 
-    asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
-        return exercise as ProgrammingExercise;
-    }
-
-    get resultsPublished() {
-        if (this.testRunConduction || this.testExamConduction) {
-            return false;
-        } else if (this.isTestRun || this.isTestExam) {
-            return true;
-        }
-        return this.studentExam?.exam?.publishResultsDate && dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs());
-    }
-
     /**
      * called for exportPDF Button
      */
-    printPDF() {
-        this.expandExercisesAndGradingKeysBeforePrinting();
-        setTimeout(() => this.themeService.print());
+    async printPDF() {
+        const stateBeforeResetting = this.expandExercisesAndGradingKeysBeforePrinting();
+
+        this.isPrinting = true;
+        this.expandProblemStatement = true;
+
+        await this.themeService.print();
+
+        this.isPrinting = false;
+        this.expandProblemStatement = false;
+
+        this.resetExpandingExercisesAndGradingKeys(stateBeforeResetting);
+    }
+
+    private scrollToTop() {
+        window.scrollTo(0, 0);
+    }
+
+    scrollToOverviewOrTop() {
+        const searchedId = 'exam-summary-result-overview';
+        const targetElement = document.getElementById(searchedId);
+
+        if (targetElement) {
+            targetElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+                inline: 'nearest',
+            });
+        } else {
+            this.scrollToTop();
+        }
     }
 
     private expandExercisesAndGradingKeysBeforePrinting() {
-        this.collapsedExerciseIds = [];
+        const stateBeforeResetting = {
+            exerciseInfos: cloneDeep(this.exerciseInfos),
+            isGradingKeyCollapsed: cloneDeep(this.isGradingKeyCollapsed),
+            isBonusGradingKeyCollapsed: cloneDeep(this.isBonusGradingKeyCollapsed),
+        };
+
+        this.expandExercises();
+
         this.isGradingKeyCollapsed = false;
         this.isBonusGradingKeyCollapsed = false;
+
+        return stateBeforeResetting;
+    }
+
+    private resetExpandingExercisesAndGradingKeys(stateBeforeResetting: StateBeforeResetting) {
+        this.exerciseInfos = stateBeforeResetting.exerciseInfos;
+        this.isGradingKeyCollapsed = stateBeforeResetting.isGradingKeyCollapsed;
+        this.isBonusGradingKeyCollapsed = stateBeforeResetting.isBonusGradingKeyCollapsed;
+    }
+
+    private expandExercises() {
+        Object.entries(this.exerciseInfos).forEach((exerciseInfo: [string, ResultSummaryExerciseInfo]) => {
+            exerciseInfo[1].isCollapsed = false;
+        });
     }
 
     public generateLink(exercise: Exercise) {
@@ -196,28 +300,6 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     /**
-     * @param exerciseId
-     * checks collapse control of exercise cards depending on exerciseId
-     */
-    isCollapsed(exerciseId: number): boolean {
-        return this.collapsedExerciseIds.includes(exerciseId);
-    }
-
-    /**
-     * @param exerciseId
-     * adds collapse control of exercise cards depending on exerciseId
-     * @param exerciseId the exercise for which the submission should be collapsed
-     */
-    toggleCollapseExercise(exerciseId: number): void {
-        const collapsed = this.isCollapsed(exerciseId);
-        if (collapsed) {
-            this.collapsedExerciseIds = this.collapsedExerciseIds.filter((id) => id !== exerciseId);
-        } else {
-            this.collapsedExerciseIds.push(exerciseId);
-        }
-    }
-
-    /**
      * We only need to pass these values to the ComplaintInteractionComponent
      */
     setExamWithOnlyIdAndStudentReviewPeriod() {
@@ -229,11 +311,7 @@ export class ExamResultSummaryComponent implements OnInit {
         this.examWithOnlyIdAndStudentReviewPeriod = exam;
     }
 
-    /**
-     * Used to decide whether to instantiate the ComplaintInteractionComponent. We always instantiate the component if
-     * the review dates are set and the review start date has passed.
-     */
-    isAfterStudentReviewStart() {
+    private getIsAfterStudentReviewStart() {
         if (this.isTestRun || this.isTestExam) {
             return true;
         }
@@ -243,7 +321,7 @@ export class ExamResultSummaryComponent implements OnInit {
         return false;
     }
 
-    isBeforeStudentReviewEnd() {
+    private getIsBeforeStudentReviewEnd() {
         if (this.isTestRun || this.isTestExam) {
             return true;
         }
@@ -251,6 +329,119 @@ export class ExamResultSummaryComponent implements OnInit {
             return this.serverDateService.now().isBefore(this.studentExam.exam.examStudentReviewEnd);
         }
         return false;
+    }
+
+    private getExerciseInfos(studentExamWithGrade?: StudentExamWithGradeDTO): Record<number, ResultSummaryExerciseInfo> {
+        const exerciseInfos: Record<number, ResultSummaryExerciseInfo> = {};
+        for (const exercise of this.studentExam?.exercises ?? []) {
+            if (exercise.id === undefined) {
+                this.alertService.error('artemisApp.exam.error.cannotDisplayExerciseDetails', { exerciseGroupTitle: exercise.exerciseGroup?.title });
+                const errorMessage = 'Cannot getExerciseInfos as exerciseId is undefined';
+                captureException(new Error(errorMessage), {
+                    extra: {
+                        exercise,
+                    },
+                });
+                continue;
+            }
+
+            const { textColorClass, resultIconClass } = this.getTextColorAndIconClassByExercise(exercise);
+
+            exerciseInfos[exercise.id] = {
+                icon: getIcon(exercise.type),
+                isCollapsed: false,
+                achievedPoints: this.getPointsByExerciseIdFromExam(exercise.id, studentExamWithGrade),
+                achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
+                colorClass: textColorClass,
+                resultIconClass: resultIconClass,
+
+                submission: this.getSubmissionForExercise(exercise),
+                participation: this.getParticipationForExercise(exercise),
+                displayExampleSolution: false,
+            };
+        }
+        return exerciseInfos;
+    }
+
+    private getPointsByExerciseIdFromExam(exerciseId: number, studentExamWithGrade?: StudentExamWithGradeDTO): number | undefined {
+        if (!studentExamWithGrade) {
+            return undefined;
+        }
+
+        for (const achievedPointsPerExerciseKey in this.studentExamGradeInfoDTO?.achievedPointsPerExercise) {
+            if (Number(achievedPointsPerExerciseKey) === exerciseId) {
+                return this.studentExamGradeInfoDTO.achievedPointsPerExercise[achievedPointsPerExerciseKey];
+            }
+        }
+
+        return undefined;
+    }
+
+    private getExerciseResultByExerciseId(exerciseId?: number): ExerciseResult | undefined {
+        if (exerciseId === undefined) {
+            return undefined;
+        }
+
+        const exerciseGroupResultMapping = this.studentExamGradeInfoDTO?.studentResult?.exerciseGroupIdToExerciseResult;
+        let exerciseResult = undefined;
+
+        for (const key in exerciseGroupResultMapping) {
+            if (key in exerciseGroupResultMapping && exerciseGroupResultMapping[key].exerciseId === exerciseId) {
+                exerciseResult = exerciseGroupResultMapping[key];
+                break;
+            }
+        }
+
+        return exerciseResult;
+    }
+
+    toggleShowSampleSolution(exerciseId?: number) {
+        if (exerciseId === undefined) {
+            this.alertService.error('artemisApp.exam.error.cannotShowExampleSolution');
+            const errorMessage = 'Cannot show sample solution because exercise id is undefined';
+            captureException(new Error(errorMessage), {
+                extra: {
+                    exerciseId,
+                },
+            });
+
+            return;
+        }
+
+        this.exerciseInfos[exerciseId].displayExampleSolution = !this.exerciseInfos[exerciseId].displayExampleSolution;
+    }
+
+    getAchievedPercentageByExerciseId(exerciseId?: number): number | undefined {
+        const result = this.getExerciseResultByExerciseId(exerciseId);
+        if (result === undefined) {
+            return undefined;
+        }
+
+        const course = this.studentExamGradeInfoDTO.studentExam?.exam?.course;
+        if (result.achievedScore !== undefined) {
+            return roundScorePercentSpecifiedByCourseSettings(result.achievedScore / 100, course);
+        }
+
+        const canCalculatePercentage = result.maxScore && result.achievedPoints !== undefined;
+        if (canCalculatePercentage) {
+            return roundScorePercentSpecifiedByCourseSettings(result.achievedPoints! / result.maxScore, course);
+        }
+
+        return undefined;
+    }
+
+    getTextColorAndIconClassByExercise(exercise: Exercise) {
+        const participation = exercise.studentParticipations![0];
+        const showUngradedResults = false;
+        const result = getLatestResultOfStudentParticipation(participation, showUngradedResults);
+
+        const isBuilding = false;
+        const templateStatus = evaluateTemplateStatus(exercise, participation, result, isBuilding);
+
+        return {
+            textColorClass: getTextColorClass(result, templateStatus),
+            resultIconClass: getResultIconClass(result, templateStatus),
+        };
     }
 
     protected readonly getIcon = getIcon;

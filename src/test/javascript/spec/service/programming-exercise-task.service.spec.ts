@@ -167,11 +167,13 @@ describe('ProgrammingExerciseTask Service', () => {
                 bonusPoints: 0,
                 taskName: 'weightTask',
                 weight: 2,
+                type: 'MIXED',
             },
             {
                 bonusPoints: 4,
                 taskName: 'bonusTask',
                 weight: 0,
+                type: 'MIXED',
             },
             {
                 bonusMultiplier: 2,

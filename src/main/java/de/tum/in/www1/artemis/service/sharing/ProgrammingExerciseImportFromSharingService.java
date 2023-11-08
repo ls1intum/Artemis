@@ -10,9 +10,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.sharing.SharingMultipartZipFile;
 import de.tum.in.www1.artemis.domain.sharing.SharingSetupInfo;
 import de.tum.in.www1.artemis.exception.SharingException;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportFromFileService;
 
 @Service
@@ -25,10 +27,13 @@ public class ProgrammingExerciseImportFromSharingService {
 
     private final ExerciseSharingService exerciseSharingService;
 
+    private final UserRepository userRepository;
+
     public ProgrammingExerciseImportFromSharingService(ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService,
-            ExerciseSharingService exerciseSharingService) {
+            ExerciseSharingService exerciseSharingService, UserRepository userRepository) {
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
         this.exerciseSharingService = exerciseSharingService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -39,10 +44,11 @@ public class ProgrammingExerciseImportFromSharingService {
      */
     public ProgrammingExercise importProgrammingExerciseFromSharing(SharingSetupInfo sharingSetupInfo) throws SharingException, IOException, GitAPIException, URISyntaxException {
         SharingMultipartZipFile zipFile = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.getSharingInfo());
+        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         if (sharingSetupInfo.getExercise().getCourseViaExerciseGroupOrCourseMember() == null) {
             sharingSetupInfo.getExercise().setCourse(sharingSetupInfo.getCourse());
         }
-        return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.getExercise(), zipFile, sharingSetupInfo.getCourse(), true);
+        return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.getExercise(), zipFile, sharingSetupInfo.getCourse(), user, true);
     }
 }

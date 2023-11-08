@@ -202,6 +202,8 @@ During the exam creation and configuration, you can create your exam and configu
 
         Configure the Grading of a Programming Exercise
 
+    - The *Configure Grading* screen also allows the configuration of :ref:`submission policies <configure_submission_policies>`.
+
 .. _register_students:
 
 1.5 Register Students
@@ -345,9 +347,18 @@ During the exam creation and configuration, you can create your exam and configu
 
 2. **Conduction**
 -----------------
-The exam conduction starts when the exam becomes visible to the students and ends when the latest working time is over. When the exam conduction begins, you cannot make any changes anymore to the :ref:`exam configuration <exam_creation_and_configuration>` or individual :ref:`student exams <student_exams>`. When the conduction starts, the students can access and start their exam. They can submit their solutions to the exercises within the given individual working time. When a student submits the exam, they cannot make any changes anymore to his exercise submissions. For more information, see :ref:`participating in the online exam <participation_guide>`.
+The exam conduction starts when the exam becomes visible to the students and ends when the latest working time is over. When the exam conduction begins, you cannot change the :ref:`exam configuration <exam_creation_and_configuration>` or individual :ref:`student exams <student_exams>`. When the conduction starts, the students can access and start their exam. They can submit their solutions to the exercises within the given individual working time. After a student submits the exam, they cannot change their exercise submissions. For more information, see :ref:`participating in the online exam <participation_guide>`.
 
-    .. _exam_assessment:
+Updating an Exercise during the Exam
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+In case you have to update the exercise during an exam for programming, modeling, text, or file-upload exercises, you can go to the exercise details page and click on |edit| to edit the exercise. At the bottom of the exercise edit page, you can enter a notification text that is shown to the students in the exam mode. The screenshot below shows an example notification. You can see how the updated problem statement looks for the student in :ref:`Updated Problem Statement during the Exam <updated_problem_statement>`.
+
+.. figure:: instructor/exercise-notification.png
+    :alt: Exercise Notification
+
+    Field to enter a notification text
+
+.. _exam_assessment:
 
 3. **Assessment**
 -----------------
@@ -427,13 +438,63 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 - To assess a submission a second time go to the exercise assessment dashboard. When it is enabled, a |start_new_assessment| button will be visible in the second correction round.
 - The new second assessment will have all the feedback copied from the first assessment. Those can be overridden, and new feedback can be added as well. This does not override the original result, but saves a separate second result.
 - Within the second correction round review instructors and tutors can highlight which feedback was created for which correction round. This is displayed as a badge at the bottom of every feedback. This view can be enabled or disabled any time during the second correction round review by pressing the button at the top of the page. The feature is currently available for text, modeling and file-upload exercises.
-- You can access each assessment of both rounds by going to the exam's |exercise_groups| -> |submissions|
+- You can access each assessment of both rounds by going to the exam's |exercise_groups| -> |scores| of the respective exercise.
 
-.. figure:: instructor/submissions.png
-    :alt: Submissions
+.. figure:: instructor/scores_table.png
+    :alt: Scores page
     :align: center
 
-3.3 Plagiarism detection
+3.3 Suspicious Behavior Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+You can check for specific suspicious behavior in the suspicious behavior dashboard. You find the suspicious behavior as the first step in the exam correction on the exam checklist page.
+To open the suspicious behavior dashboard click on the |suspicious_behavior| button.
+
+To get a better understanding of the feature, you can watch the following video:
+
+.. raw:: html
+
+    <iframe src="https://tum.live/w/artemisintro/40566?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
+
+.. figure:: instructor/suspicious_behavior_exam_checklist.png
+    :alt: Suspicious Behavior Exam Checklist
+    :align: center
+
+    Suspicious Behavior Exam Checklist
+
+The dashboard allows to detect exam sessions that fulfill certain criteria and gives an overview of the plagiarism detection.
+An exam session is a unique combination of IP address, user agent, instance id, a session token and the browser fingerprint. It is created whenever a student enters their exam.
+You can see the available analysis options in the first screenshot below. To start the analysis, click the |analyze_sessions| button. When the analysis detects at least one suspicious case, the instructor can click the |view_sessions| button to see the details of the suspicious exam sessions.
+The second screenshot shows an example of analysis results.
+
+.. figure:: instructor/analysis_options.png
+    :alt: Suspicious Behavior Analysis Options
+    :align: center
+
+    Suspicious Behavior Analysis Options
+
+.. figure:: instructor/suspicious_behavior_analysis_results.png
+    :alt: Suspicious Behavior Analysis Results Example
+    :align: center
+
+    Suspicious Behavior Analysis Results Example
+
+
+
+In the lower half of the dashboard the instructor can view the plagiarism detection overview. It only lists exercises that support plagiarism detection. The number of potential plagiarism results are the results returned when running the detection. The number of plagiarism results are the cases a instructor has classified and confirmed as plagiarism.
+To view the current detection results or run a detection click on the |view_plagiarism_results| button. This navigates to the plagiarism detection page of the exercise.
+Once the instructor has confirmed at least one case, the |view_cases| button is visible at the bottom left of the table that navigates to all confirmed plagiarism cases of the exam.
+
+.. figure:: instructor/plagiarism_case_overview.png
+    :alt: Plagiarism Cases Overview
+    :align: center
+
+    Plagiarism Cases Overview
+
+
+3.4 Plagiarism detection
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Artemis also allows you to detect plagiarism attempts.
@@ -451,13 +512,21 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 
 - At the bottom of the page you will find the option |check_plagiarism|.
 
-3.4 Exam Timeline
+3.5 Exam Timeline
 ^^^^^^^^^^^^^^^^^
 - Artemis stores the current state of a submission for text, modeling, and quiz exercises every 30s or whenever the student clicks the save button.
 - As instructor, you have the possibility to view all those states as well as the submissions for file-upload or programming exercises using the exam timeline.
 - The exam timeline is available on the details page of a student exam when the student exam has been submitted by clicking on the button |exam_timeline|. If the exam has not been submitted yet, the exam timeline button is disabled and shows an explanatory tooltip.
 - The exam timeline shows all submissions of the student in chronological order. You can navigate between the different timestamps on the slider or navigate between different exercises using the navigation bar below the timeline
 - For programming exercises, you can view a git diff between the currently selected submission and the previous submission or the template of this exercise.
+
+To get a better understanding of the feature, you can watch the following video:
+
+.. raw:: html
+
+    <iframe src="https://tum.live/w/artemisintro/40565?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
 
 .. figure:: instructor/exam_timeline_example.png
      :alt: Exam timeline
@@ -467,7 +536,7 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 
 .. _exam_grading_key:
 
-3.5 Grading Key
+3.6 Grading Key
 ^^^^^^^^^^^^^^^
 - Optionally, you can create a grading key for your exam by clicking |grade_key| at the top of the exam's detail page.
 - Defining a grading key allows the exam score to be converted to a grade automatically by Artemis, students are then able to see their own grades after the specified `Release Date of Results`.
@@ -600,12 +669,19 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |summary| image:: instructor/buttons/summary.png
 .. |unlock_repo| image:: instructor/buttons/unlock_repo.png
 .. |view| image:: instructor/buttons/view.png
-.. |submissions| image:: instructor/buttons/submissions.png
 .. |import_students| image:: instructor/buttons/import_students.png
 .. |import_students_button| image:: instructor/buttons/import_students_button.png
 .. |verify_attendance| image:: instructor/buttons/verify_attendance.png
     :height: 40
 .. |register_course_students| image:: instructor/buttons/register_course_students.png
+.. |analyze_sessions| image:: instructor/buttons/analyze_sessions.png
+.. |view_cases| image:: instructor/buttons/view_cases.png
+.. |view_plagiarism_results| image:: instructor/buttons/view_plagiarism_results.png
+    :height: 40
+.. |suspicious_behavior| image:: instructor/buttons/suspicious_behavior.png
+    :height: 40
+.. |view_sessions| image:: instructor/buttons/view_sessions.png
+    :height: 40
 .. |configure_grading_button| image:: instructor/buttons/configure_grading.png
 .. |grade_key| image:: instructor/buttons/grade_key.png
 .. |add_grade_step| image:: instructor/buttons/add_grade_step.png

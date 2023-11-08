@@ -55,6 +55,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -375,6 +376,40 @@ public class GitService {
     }
 
     /**
+     * Checkout at the given repository at the given commit hash
+     *
+     * @param repository the repository to check out the commit in
+     * @param commitHash the hash of the commit to check out
+     * @return the repository checked out at the given commit
+     */
+    public Repository checkoutRepositoryAtCommit(Repository repository, String commitHash) {
+        try (Git git = new Git(repository)) {
+            git.checkout().setName(commitHash).call();
+        }
+        catch (GitAPIException e) {
+            throw new GitException("Could not checkout commit " + commitHash + " in repository located at  " + repository.getLocalPath(), e);
+        }
+        return repository;
+    }
+
+    /**
+     * Get the local repository for a given remote repository URL.
+     * <p>
+     * If the local repo does not exist yet, it will be checked out.
+     * After retrieving the repository, the commit for the given hash will be checked out.
+     *
+     * @param vcsRepositoryUrl the url of the remote repository
+     * @param commitHash       the hash of the commit to checkout
+     * @param pullOnGet        pull from the remote on the checked out repository, if it does not need to be cloned
+     * @return the repository if it could be checked out
+     * @throws GitAPIException if the repository could not be checked out
+     */
+    public Repository checkoutRepositoryAtCommit(VcsRepositoryUrl vcsRepositoryUrl, String commitHash, boolean pullOnGet) throws GitAPIException {
+        var repository = getOrCheckoutRepository(vcsRepositoryUrl, pullOnGet);
+        return checkoutRepositoryAtCommit(repository, commitHash);
+    }
+
+    /**
      * Get the local repository for a given remote repository URL. If the local repo does not exist yet, it will be checked out.
      *
      * @param repoUrl       The remote repository.
@@ -601,20 +636,7 @@ public class GitService {
             FileRepositoryBuilder builder = new FileRepositoryBuilder();
             builder.setGitDir(gitPath.toFile()).setInitialBranch(defaultBranch).readEnvironment().findGitDir().setup(); // scan environment GIT_* variables
 
-            // Create the JGit repository object
-            Repository repository = new Repository(builder, localPath, remoteRepositoryUrl);
-            // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
-            // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
-            // and https://git-scm.com/docs/git-gc for an explanation of the parameter
-            StoredConfig gitRepoConfig = repository.getConfig();
-            gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
-            gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
-            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
-            gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
-
-            // disable symlinks to avoid security issues such as remote code execution
-            gitRepoConfig.save();
+            Repository repository = createRepository(localPath, remoteRepositoryUrl, defaultBranch, builder);
 
             RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
             refUpdate.setForceUpdate(true);
@@ -628,6 +650,40 @@ public class GitService {
             log.warn("Cannot get existing checkout out repository by local path: {}", ex.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Creates a new Repository with the given parameters and saves the Repository's StoredConfig.
+     *
+     * @param localPath           The local path of the repository.
+     * @param remoteRepositoryUrl The remote repository url for the git repository.
+     * @param defaultBranch       The default branch of the repository.
+     * @param builder             The FileRepositoryBuilder.
+     * @return The created Repository.
+     * @throws IOException if the configuration file cannot be accessed.
+     */
+    @NotNull
+    private static Repository createRepository(Path localPath, VcsRepositoryUrl remoteRepositoryUrl, String defaultBranch, FileRepositoryBuilder builder) throws IOException {
+        // Create the JGit repository object
+        Repository repository = new Repository(builder, localPath, remoteRepositoryUrl);
+        // disable auto garbage collection because it can lead to problems (especially with deleting local repositories)
+        // see https://stackoverflow.com/questions/45266021/java-jgit-files-delete-fails-to-delete-a-file-but-file-delete-succeeds
+        // and https://git-scm.com/docs/git-gc for an explanation of the parameter
+        // and https://www.eclipse.org/lists/jgit-dev/msg03734.html
+        StoredConfig gitRepoConfig = repository.getConfig();
+        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
+        gitRepoConfig.setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_RECEIVE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOGC, false);
+
+        // disable symlinks to avoid security issues such as remote code execution
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+        gitRepoConfig.setBoolean(ConfigConstants.CONFIG_COMMIT_SECTION, null, ConfigConstants.CONFIG_KEY_GPGSIGN, false);
+        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME);
+        gitRepoConfig.setString(ConfigConstants.CONFIG_BRANCH_SECTION, defaultBranch, ConfigConstants.CONFIG_MERGE_SECTION, "refs/heads/" + defaultBranch);
+
+        gitRepoConfig.save();
+        return repository;
     }
 
     /**
@@ -848,6 +904,18 @@ public class GitService {
         }
         catch (GitAPIException | JGitInternalException ex) {
             log.error("Cannot fetch/hard reset the repo {} with url {} to origin/HEAD due to the following exception", repo.getLocalPath(), repo.getRemoteRepositoryUrl(), ex);
+        }
+    }
+
+    /**
+     * Switch back to the HEAD commit of the default branch.
+     *
+     * @param repository the repository for which we want to switch to the HEAD commit of the default branch
+     * @throws GitAPIException if this operation fails
+     */
+    public void switchBackToDefaultBranchHead(Repository repository) throws GitAPIException {
+        try (Git git = new Git(repository)) {
+            git.checkout().setName(defaultBranch).call();
         }
     }
 
@@ -1335,5 +1403,29 @@ public class GitService {
 
     public <C extends GitCommand<?>> C authenticate(TransportCommand<C, ?> command) {
         return command.setTransportConfigCallback(sshCallback);
+    }
+
+    /**
+     * Checkout a repository and get the git log for a given repository url.
+     *
+     * @param vcsRepositoryUrl the repository url for which the git log should be retrieved
+     * @return a list of commit info DTOs containing author, timestamp, commit message, and hash
+     * @throws GitAPIException if an error occurs while retrieving the git log
+     */
+    public List<CommitInfoDTO> getCommitInfos(VcsRepositoryUrl vcsRepositoryUrl) throws GitAPIException {
+        List<CommitInfoDTO> commitInfos = new ArrayList<>();
+
+        try (var repo = getOrCheckoutRepository(vcsRepositoryUrl, true); var git = new Git(repo)) {
+            var commits = git.log().call();
+            commits.forEach(commit -> {
+                var commitInfo = CommitInfoDTO.of(commit);
+                commitInfos.add(commitInfo);
+            });
+        }
+        return commitInfos;
+    }
+
+    public void clearCachedRepositories() {
+        cachedRepositories.clear();
     }
 }

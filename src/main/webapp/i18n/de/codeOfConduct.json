@@ -1,0 +1,9 @@
+{
+    "artemisApp": {
+        "codeOfConduct": {
+            "accept": "Akzeptieren",
+            "title": "Verhaltenskodex",
+            "tooltip": "Der Verhaltenskodex gibt Nutzer:innen an, wie sie miteinander kommunizieren sollen und welche Konsequenzen bei Fehlverhalten drohen können, sowie einen Kontakt zum Melden von Verstößen."
+        }
+    }
+}

@@ -8,10 +8,10 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 
-class FilePathServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private FilePathService filePathService;

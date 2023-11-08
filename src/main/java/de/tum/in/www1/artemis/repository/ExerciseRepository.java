@@ -240,6 +240,17 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("""
             SELECT e FROM Exercise e
+                LEFT JOIN FETCH e.plagiarismDetectionConfig c
+                LEFT JOIN FETCH e.studentParticipations p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results
+            WHERE e.dueDate >= :time
+                AND c.continuousPlagiarismControlEnabled = TRUE
+            """)
+    Set<Exercise> findAllExercisesWithDueDateOnOrAfterAndContinuousPlagiarismControlEnabledIsTrue(@Param("time") ZonedDateTime time);
+
+    @Query("""
+            SELECT e FROM Exercise e
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :now
             ORDER BY e.dueDate ASC
@@ -459,6 +470,17 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     }
 
     /**
+     * Finds all exercises where the due date is yesterday, today or in the future and continuous plagiarism control is enabled
+     * (does not return exercises belonging to test courses).
+     *
+     * @return set of exercises
+     */
+    default Set<Exercise> findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue() {
+        var yesterday = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS).minusDays(1);
+        return findAllExercisesWithDueDateOnOrAfterAndContinuousPlagiarismControlEnabledIsTrue(yesterday);
+    }
+
+    /**
      * Find exercise by exerciseId and load participations in this exercise.
      *
      * @param exerciseId the exerciseId of the exercise entity
@@ -494,16 +516,17 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
              SELECT e
              FROM Course c
-                 LEFT JOIN  c.exercises e
+                 LEFT JOIN c.exercises e
                  LEFT JOIN FETCH e.studentParticipations p
                  LEFT JOIN p.team.students students
                  LEFT JOIN FETCH p.submissions s
                  LEFT JOIN FETCH s.results r
-                 LEFT JOIN FETCH r.feedbacks
+                 LEFT JOIN FETCH r.feedbacks f
+                 LEFT JOIN FETCH f.testCase
             WHERE p.student.id = :userId
                   OR students.id = :userId
              """)
-    Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksByUserId(long userId);
+    Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(long userId);
 
     /**
      * For an explanation, see {@link de.tum.in.www1.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long,long)}

@@ -62,6 +62,7 @@ import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/m
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
+import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -118,6 +119,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 MockDirective(TranslateDirective),
                 MockComponent(ModePickerComponent),
                 MockComponent(ExerciseUpdateNotificationComponent),
+                MockComponent(ExerciseUpdatePlagiarismComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -401,6 +403,25 @@ describe('ProgrammingExercise Management Update Component', () => {
             route.url = of([{ path: 'import' } as UrlSegment]);
         });
 
+        it('should reset dates, id and project key', fakeAsync(() => {
+            const programmingExercise = getProgrammingExerciseForImport();
+
+            route.data = of({ programmingExercise });
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+            expect(comp.isImportFromFile).toBeFalse();
+            expect(comp.isImportFromExistingExercise).toBeTrue();
+
+            verifyImport();
+
+            // name and short name should not be imported
+            expect(comp.programmingExercise.title).toBeUndefined();
+            expect(comp.programmingExercise.shortName).toBeUndefined();
+        }));
+
         it.each([
             [true, 80, ProjectType.PLAIN_MAVEN],
             [false, undefined, ProjectType.PLAIN_GRADLE],
@@ -460,6 +481,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             }),
         );
     });
+
     describe('import from file', () => {
         let route: ActivatedRoute;
 
@@ -469,28 +491,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             route.url = of([{ path: 'import-from-file' } as UrlSegment]);
         });
-        it('should reset dates, id, project key and store zipFile', fakeAsync(() => {
-            const programmingExercise = new ProgrammingExercise(undefined, undefined);
-            programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
-            programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
-            programmingExercise.dueDate = dayjs();
-            programmingExercise.releaseDate = dayjs();
-            programmingExercise.startDate = dayjs();
-            programmingExercise.projectKey = 'projectKey';
 
-            programmingExercise.assessmentDueDate = dayjs();
-            programmingExercise.exampleSolutionPublicationDate = dayjs();
-            programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
-            programmingExercise.zipFileForImport = new File([''], 'test.zip');
-            programmingExercise.allowOfflineIde = true;
-            programmingExercise.allowOnlineEditor = true;
-            programmingExercise.publishBuildPlanUrl = true;
-            programmingExercise.allowComplaintsForAutomaticAssessments = true;
-            programmingExercise.allowManualFeedbackRequests = true;
-            programmingExercise.publishBuildPlanUrl = false;
-            history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
-            programmingExercise.shortName = 'shortName';
-            programmingExercise.title = 'title';
+        it('should reset dates, id, project key and store zipFile', fakeAsync(() => {
+            const programmingExercise = getProgrammingExerciseForImport();
 
             route.data = of({ programmingExercise });
             const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
@@ -499,28 +502,15 @@ describe('ProgrammingExercise Management Update Component', () => {
             fixture.detectChanges();
             tick();
             expect(comp.isImportFromFile).toBeTrue();
-            expect(comp.programmingExercise.projectKey).toBeUndefined();
-            expect(comp.programmingExercise.id).toBeUndefined();
-            expect(comp.programmingExercise.dueDate).toBeUndefined();
-            expect(comp.programmingExercise.releaseDate).toBeUndefined();
-            expect(comp.programmingExercise.startDate).toBeUndefined();
-            expect(comp.programmingExercise.assessmentDueDate).toBeUndefined();
-            expect(comp.programmingExercise.exampleSolutionPublicationDate).toBeUndefined();
-            expect(comp.programmingExercise.zipFileForImport?.name).toBe('test.zip');
-            expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
-            expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
-            expect(comp.programmingExercise.allowOfflineIde).toBeTrue();
-            expect(comp.programmingExercise.allowOnlineEditor).toBeTrue();
-            expect(comp.programmingExercise.publishBuildPlanUrl).toBeFalse();
-            expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
-            expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
-            // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
-            expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
-            expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+            expect(comp.isImportFromExistingExercise).toBeFalse();
+
+            verifyImport();
+
             // name and short name should be imported
             expect(comp.programmingExercise.title).toBe('title');
             expect(comp.programmingExercise.shortName).toBe('shortName');
         }));
+
         it('should call import-from-file from service on import for entity from file', fakeAsync(() => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
@@ -818,6 +808,8 @@ describe('ProgrammingExercise Management Update Component', () => {
         }));
 
         it('should disable options for java dejagnu project type and re-enable them after changing back to maven or gradle', fakeAsync(() => {
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
             comp.selectedProjectType = ProjectType.MAVEN_BLACKBOX;
             expect(comp.sequentialTestRunsAllowed).toBeFalse();
             expect(comp.testwiseCoverageAnalysisSupported).toBeFalse();
@@ -920,7 +912,56 @@ describe('ProgrammingExercise Management Update Component', () => {
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);
     }));
+
+    function verifyImport() {
+        expect(comp.programmingExercise.projectKey).toBeUndefined();
+        expect(comp.programmingExercise.id).toBeUndefined();
+        expect(comp.programmingExercise.dueDate).toBeUndefined();
+        expect(comp.programmingExercise.releaseDate).toBeUndefined();
+        expect(comp.programmingExercise.startDate).toBeUndefined();
+        expect(comp.programmingExercise.assessmentDueDate).toBeUndefined();
+        expect(comp.programmingExercise.exampleSolutionPublicationDate).toBeUndefined();
+        expect(comp.programmingExercise.zipFileForImport?.name).toBe('test.zip');
+        expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+        expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
+        expect(comp.programmingExercise.allowOfflineIde).toBeTrue();
+        expect(comp.programmingExercise.allowOnlineEditor).toBeTrue();
+        expect(comp.programmingExercise.publishBuildPlanUrl).toBeFalse();
+        expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
+        expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
+        // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
+        expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
+        expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+    }
 });
+
+const getProgrammingExerciseForImport = () => {
+    const programmingExercise = new ProgrammingExercise(undefined, undefined);
+    programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+    programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+    programmingExercise.dueDate = dayjs();
+    programmingExercise.releaseDate = dayjs();
+    programmingExercise.startDate = dayjs();
+    programmingExercise.projectKey = 'projectKey';
+
+    programmingExercise.assessmentDueDate = dayjs();
+    programmingExercise.exampleSolutionPublicationDate = dayjs();
+    programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+    programmingExercise.zipFileForImport = new File([''], 'test.zip');
+    programmingExercise.allowOfflineIde = true;
+    programmingExercise.allowOnlineEditor = true;
+    programmingExercise.publishBuildPlanUrl = true;
+    programmingExercise.allowComplaintsForAutomaticAssessments = true;
+    programmingExercise.allowManualFeedbackRequests = true;
+    programmingExercise.publishBuildPlanUrl = false;
+
+    history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
+
+    programmingExercise.shortName = 'shortName';
+    programmingExercise.title = 'title';
+
+    return programmingExercise;
+};
 
 const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage) => {
     switch (programmingLanguage) {

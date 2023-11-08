@@ -85,6 +85,33 @@ describe('ConversationService', () => {
         tick();
     }));
 
+    it('acceptCodeOfConduct', () => {
+        service
+            .acceptCodeOfConduct(1)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual({}));
+        const req = httpMock.expectOne({ method: 'PATCH' });
+        req.flush({});
+    });
+
+    it('checkIsCodeOfConductAccepted', () => {
+        service
+            .checkIsCodeOfConductAccepted(1)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toBeTrue());
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(true);
+    });
+
+    it('getResponsibleUsersForCodeOfConduct', () => {
+        service
+            .getResponsibleUsersForCodeOfConduct(1)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toBeEmpty());
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush([]);
+    });
+
     it('should return the correct conversation name', () => {
         const requestingUser = { id: 1, login: 'test', isRequestingUser: true } as ConversationUserDTO;
         const otherUser = { isRequestingUser: false, firstName: 'timo', lastName: 'moritz', login: 'login' } as ConversationUserDTO;

@@ -145,9 +145,9 @@ public class IrisSessionResource {
 
         var rateLimitInfo = irisRateLimitService.getRateLimitInformation(user);
 
-        return ResponseEntity.ok(new IrisHealthDTO(specificModelStatus, rateLimitInfo.currentMessageCount(), rateLimitInfo.rateLimit()));
+        return ResponseEntity.ok(new IrisHealthDTO(specificModelStatus, rateLimitInfo));
     }
 
-    public record IrisHealthDTO(boolean active, int currentMessageCount, int rateLimit) {
+    public record IrisHealthDTO(boolean active, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo) {
     }
 }

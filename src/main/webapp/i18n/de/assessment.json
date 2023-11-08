@@ -9,7 +9,16 @@
             "feedbackHint": "Dieses Feedback ist mit einer Bewertungsanweisung verbunden. Du kannst zusätzliches Feedback für dieses Abgabeelement geben. Der/Die Studierende sieht das kombinierte Feedback während der Überprüfung.",
             "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
             "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
-            "automaticGenerated": "Automatisch erstelltes Feedback",
+            "suggestion": {
+                "suggested": "Feedback-Vorschlag (nicht akzeptiert)",
+                "accepted": "Akzeptierter Feedback-Vorschlag",
+                "adapted": "Angepasster Feedback-Vorschlag"
+            },
+            "suggestionTitle": {
+                "suggested": "Dieser automatisch erstellte Feedback-Vorschlag ist nicht in der Gesamtbewertung enthalten, solange er nicht explizit akzeptiert wird.",
+                "accepted": "Automatisch erstellter Feedback-Vorschlag",
+                "adapted": "Automatisch erstellter Feedback-Vorschlag, bearbeitet"
+            },
             "subsequentFeedback": "Dies ist ein zusätzliches Feedback, das nicht in die Gesamtbewertung eingeht.",
             "error": {
                 "assessmentDueDateOver": "Die Einreichungsfrist der Bewertung für diese Aufgabe ist vorbei."
@@ -44,6 +53,9 @@
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",
                 "tutorComment": "Kommentar von Tutor:in:",
+                "feedbackSuggestion": "Feedback-Vorschlag:",
+                "accept": "Annehmen",
+                "discard": "Verwerfen",
                 "points": {
                     "one": "{{points}} Punkt",
                     "many": "{{points}} Punkte"

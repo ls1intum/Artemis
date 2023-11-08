@@ -1,17 +1,16 @@
 import { ChangeDetectorRef, Component, Input, OnChanges, OnInit } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { Exercise, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { BonusStrategy } from 'app/entities/bonus.model';
-import { evaluateTemplateStatus, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { captureException } from '@sentry/angular-ivy';
 
 type ExerciseInfo = {
     icon: IconProp;
@@ -31,6 +30,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     @Input() studentExamWithGrade: StudentExamWithGradeDTO;
     @Input() isGradingKeyCollapsed: boolean = true;
     @Input() isBonusGradingKeyCollapsed: boolean = true;
+    @Input() exerciseInfos: Record<number, ExerciseInfo>;
 
     gradingScaleExists = false;
     isBonus = false;
@@ -50,8 +50,6 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     overallAchievedPoints = 0;
     overallAchievedPercentageRoundedByCourseSettings = 0;
     isBonusGradingKeyDisplayed = false;
-
-    exerciseInfos: Record<number, ExerciseInfo>;
 
     /**
      * The points summary table will only be shown if:
@@ -90,24 +88,6 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
             (this.studentExamWithGrade.studentResult.overallScoreAchieved ?? 0) / 100,
             this.studentExamWithGrade.studentExam?.exam?.course,
         );
-
-        this.exerciseInfos = this.getExerciseInfos();
-    }
-
-    private getExerciseInfos() {
-        const exerciseInfos: Record<number, ExerciseInfo> = {};
-        for (const exercise of this.studentExamWithGrade?.studentExam?.exercises ?? []) {
-            if (exercise.id === undefined) {
-                console.error('Exercise id is undefined', exercise);
-                continue;
-            }
-            exerciseInfos[exercise.id] = {
-                icon: getIcon(exercise.type),
-                achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
-                colorClass: this.getTextColorClassByExercise(exercise),
-            };
-        }
-        return exerciseInfos;
     }
 
     /**
@@ -150,43 +130,6 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         return this.maxPoints + maxAchievableBonusPoints;
     }
 
-    private getExerciseResultByExerciseId(exerciseId?: number): ExerciseResult | undefined {
-        if (exerciseId === undefined) {
-            return undefined;
-        }
-
-        const exerciseGroupResultMapping = this.studentExamWithGrade?.studentResult?.exerciseGroupIdToExerciseResult;
-        let exerciseResult = undefined;
-
-        for (const key in exerciseGroupResultMapping) {
-            if (key in exerciseGroupResultMapping && exerciseGroupResultMapping[key].exerciseId === exerciseId) {
-                exerciseResult = exerciseGroupResultMapping[key];
-                break;
-            }
-        }
-
-        return exerciseResult;
-    }
-
-    getAchievedPercentageByExerciseId(exerciseId?: number): number | undefined {
-        const result = this.getExerciseResultByExerciseId(exerciseId);
-        if (result === undefined) {
-            return undefined;
-        }
-
-        const course = this.studentExamWithGrade.studentExam?.exam?.course;
-        if (result.achievedScore !== undefined) {
-            return roundScorePercentSpecifiedByCourseSettings(result.achievedScore / 100, course);
-        }
-
-        const canCalculatePercentage = result.maxScore && result.achievedPoints !== undefined;
-        if (canCalculatePercentage) {
-            return roundScorePercentSpecifiedByCourseSettings(result.achievedPoints! / result.maxScore, course);
-        }
-
-        return undefined;
-    }
-
     scrollToExercise(exerciseId?: number) {
         if (exerciseId === undefined) {
             return;
@@ -202,7 +145,15 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
                 inline: 'nearest',
             });
         } else {
-            console.error(`Could not find corresponding exercise with id "${searchedId}"`);
+            const errorMessage = 'Cannot scroll to exercise, could not find exercise with corresponding id';
+            console.error(errorMessage);
+            captureException(new Error(errorMessage), {
+                extra: {
+                    exerciseId,
+                    searchedId,
+                    targetElement,
+                },
+            });
         }
     }
 
@@ -216,17 +167,6 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         return false;
     }
 
-    getTextColorClassByExercise(exercise: Exercise) {
-        const participation = exercise.studentParticipations![0];
-        const showUngradedResults = false;
-        const result = getLatestResultOfStudentParticipation(participation, showUngradedResults);
-
-        const isBuilding = false;
-        const templateStatus = evaluateTemplateStatus(exercise, participation, result, isBuilding);
-
-        return getTextColorClass(result, templateStatus);
-    }
-
     toggleGradingKey(): void {
         this.isGradingKeyCollapsed = !this.isGradingKeyCollapsed;
     }
@@ -234,8 +174,4 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     toggleBonusGradingKey(): void {
         this.isBonusGradingKeyCollapsed = !this.isBonusGradingKeyCollapsed;
     }
-
-    protected readonly getIcon = getIcon;
-    protected readonly getTextColorClass = getTextColorClass;
-    protected readonly evaluateTemplateStatus = evaluateTemplateStatus;
 }

@@ -31,5 +31,6 @@ import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-parti
         ArtemisTeamParticipeModule,
     ],
     declarations: [ModelingSubmissionComponent],
+    exports: [ModelingSubmissionComponent],
 })
 export class ArtemisModelingParticipationModule {}

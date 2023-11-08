@@ -149,19 +149,28 @@ export class ThemeService {
     /**
      * Prints the current page.
      * Disables any theme override before doing that to ensure that we print in default theme.
-     * Resets the theme afterwards if needed
+     * Resets the theme afterward if needed
      */
-    public print() {
-        const overrideTag: any = document.getElementById(THEME_OVERRIDE_ID);
-        if (overrideTag) {
-            overrideTag.rel = 'none-tmp';
-        }
-        setTimeout(() => window.print(), 250);
-        setTimeout(() => {
+    public async print(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            const overrideTag: any = document.getElementById(THEME_OVERRIDE_ID);
             if (overrideTag) {
-                overrideTag.rel = 'stylesheet';
+                overrideTag.rel = 'none-tmp';
             }
-        }, 500);
+            setTimeout(() => {
+                const notificationSidebarDisplayAttribute = this.hideNotificationSidebar();
+
+                window.print();
+
+                this.showNotificationSidebar(notificationSidebarDisplayAttribute);
+            }, 250);
+            setTimeout(() => {
+                if (overrideTag) {
+                    overrideTag.rel = 'stylesheet';
+                }
+                resolve();
+            }, 500);
+        });
     }
 
     /**
@@ -234,5 +243,40 @@ export class ThemeService {
         if (this.preferenceSubject.getValue() !== theme) {
             this.preferenceSubject.next(theme);
         }
+    }
+
+    /**
+     * Hides the notification sidebar as there will be an overlay ove the whole page
+     * that covers details of the exam summary (=> exam summary cannot be read).
+     *
+     * @return displayAttribute of the notification sidebar before hiding it
+     */
+    private hideNotificationSidebar(): string {
+        return this.modifyNotificationSidebarDisplayStyling();
+    }
+
+    /**
+     * After printing the notification sidebar shall be displayed again.
+     *
+     * @param displayAttributeBeforeHide to reset the notification sidebar to its previous state
+     * @return displayAttribute of the notification sidebar before hiding it
+     */
+    private showNotificationSidebar(displayAttributeBeforeHide: string): string {
+        return this.modifyNotificationSidebarDisplayStyling(displayAttributeBeforeHide);
+    }
+
+    /**
+     * @param newDisplayAttribute that is set for the {@link NotificationSidebarComponent}
+     * @return displayAttribute of the notification sidebar before hiding it
+     */
+    private modifyNotificationSidebarDisplayStyling(newDisplayAttribute?: string): string {
+        const notificationSidebarElement: any = document.getElementById('notification-sidebar');
+        let displayBefore = '';
+
+        if (notificationSidebarElement) {
+            displayBefore = notificationSidebarElement.style.display;
+            notificationSidebarElement.style.display = newDisplayAttribute !== undefined ? newDisplayAttribute : 'none';
+        }
+        return displayBefore;
     }
 }

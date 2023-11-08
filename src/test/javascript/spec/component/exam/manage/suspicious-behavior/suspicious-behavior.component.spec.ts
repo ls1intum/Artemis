@@ -5,9 +5,9 @@ import { SuspiciousBehaviorComponent } from 'app/exam/manage/suspicious-behavior
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismResultsService } from 'app/course/plagiarism-cases/shared/plagiarism-results.service';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../../test.module';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -16,6 +16,8 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam-session.model';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
+import { FormsModule } from '@angular/forms';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('SuspiciousBehaviorComponent', () => {
     let component: SuspiciousBehaviorComponent;
@@ -57,11 +59,11 @@ describe('SuspiciousBehaviorComponent', () => {
                 id: 1,
                 ipAddress: '192.168.0.0',
                 browserFingerprintHash: 'abc',
-                suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
+                suspiciousReasons: [SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS, SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT],
             },
             {
                 id: 2,
-                suspiciousReasons: [SuspiciousSessionReason.SAME_IP_ADDRESS, SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT],
+                suspiciousReasons: [SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS, SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT],
                 ipAddress: '192.168.0.0',
                 browserFingerprintHash: 'abc',
             },
@@ -70,8 +72,14 @@ describe('SuspiciousBehaviorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockRouterLinkDirective],
-            declarations: [SuspiciousBehaviorComponent, MockPipe(ArtemisTranslatePipe), MockComponent(PlagiarismCasesOverviewComponent), MockComponent(ButtonComponent)],
+            imports: [ArtemisTestModule, MockRouterLinkDirective, MockModule(FormsModule)],
+            declarations: [
+                SuspiciousBehaviorComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(PlagiarismCasesOverviewComponent),
+                MockComponent(ButtonComponent),
+                MockComponent(DocumentationButtonComponent),
+            ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
@@ -94,12 +102,35 @@ describe('SuspiciousBehaviorComponent', () => {
         expect(component.examId).toBe(2);
     });
 
-    it('should retrieve suspicious sessions onInit', () => {
+    it('should not make a request onInit', () => {
         const suspiciousSessionsServiceSpy = jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(of([suspiciousSessions]));
         component.ngOnInit();
+        expect(suspiciousSessionsServiceSpy).not.toHaveBeenCalledOnce();
+    });
+
+    it('should make a request on click', () => {
+        const suspiciousSessionsServiceSpy = jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(of([suspiciousSessions]));
+        component.checkboxCriterionDifferentStudentExamsSameIPAddressChecked = true;
+        component.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked = true;
+        component.analyzeSessions();
         expect(suspiciousSessionsServiceSpy).toHaveBeenCalledOnce();
-        expect(suspiciousSessionsServiceSpy).toHaveBeenCalledWith(1, 2);
+        expect(suspiciousSessionsServiceSpy).toHaveBeenCalledWith(1, 2, {
+            sameIpAddressDifferentStudentExams: true,
+            sameBrowserFingerprintDifferentStudentExams: true,
+            differentIpAddressesSameStudentExam: false,
+            differentBrowserFingerprintsSameStudentExam: false,
+            ipAddressOutsideOfRange: false,
+        });
         expect(component.suspiciousSessions).toEqual([suspiciousSessions]);
+    });
+
+    it('should set analyzed to true and analyzing to false if the request fails', () => {
+        jest.spyOn(suspiciousSessionService, 'getSuspiciousSessions').mockReturnValue(throwError({ status: 500 }));
+        component.checkboxCriterionDifferentStudentExamsSameIPAddressChecked = true;
+        component.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked = true;
+        component.analyzeSessions();
+        expect(component.analyzed).toBeTrue();
+        expect(component.analyzing).toBeFalse();
     });
 
     it('should navigate to suspicious sessions on click', () => {

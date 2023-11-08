@@ -1,4 +1,4 @@
-import { Component, Injector, Input, OnInit, Optional } from '@angular/core';
+import { Component, Injector, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -29,6 +29,8 @@ import { evaluateTemplateStatus, isOnlyCompilationTested, resultIsPreliminary } 
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-data';
 import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedback-chart.service';
+import { isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
+import { cloneDeep } from 'lodash-es';
 
 // Modal -> Result details view
 @Component({
@@ -36,7 +38,7 @@ import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedba
     templateUrl: './feedback.component.html',
     styleUrls: ['./feedback.scss'],
 })
-export class FeedbackComponent implements OnInit {
+export class FeedbackComponent implements OnInit, OnChanges {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
@@ -46,8 +48,12 @@ export class FeedbackComponent implements OnInit {
 
     @Input() exercise?: Exercise;
     @Input() result: Result;
-    // Specify the feedback.text values that should be shown, all other values will not be visible.
-    @Input() feedbackFilter: string[];
+
+    /**
+     * Specify the feedback.testCase.id values that should be shown, all other values will not be visible.
+     * Used to show only feedback related to a specific task.
+     */
+    @Input() feedbackFilter: number[];
     @Input() showScoreChart = false;
     @Input() exerciseType: ExerciseType;
     /**
@@ -65,6 +71,9 @@ export class FeedbackComponent implements OnInit {
     @Input() latestDueDate?: dayjs.Dayjs;
     @Input() taskName?: string;
     @Input() numberOfNotExecutedTests?: number;
+
+    @Input() isExamReviewPage?: boolean = false;
+    @Input() isPrinting?: boolean = false;
 
     // Icons
     faXmark = faXmark;
@@ -100,6 +109,11 @@ export class FeedbackComponent implements OnInit {
 
     feedbackItemService: FeedbackItemService;
     feedbackItemNodes: FeedbackNode[];
+    /**
+     * Used to reset the feedbackItemNodes to the state before printing if {@link isPrinting} changes
+     * from true to false
+     */
+    private feedbackItemNodesBeforePrinting: FeedbackNode[];
 
     constructor(
         private resultService: ResultService,
@@ -136,8 +150,23 @@ export class FeedbackComponent implements OnInit {
         // Get active profiles, to distinguish between Bitbucket and GitLab for the commit link of the result
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
-            this.commitUrl = this.getCommitUrl();
+            this.commitUrl = this.getCommitUrl(this.result, this.exercise as ProgrammingExercise, this.commitHashURLTemplate);
         });
+    }
+
+    /**
+     * Expand the feedback items groups while the exam summary is printed and
+     * collapse them again (if collapsed before) when the printing is done
+     */
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.isPrinting) {
+            if (changes.isPrinting.currentValue) {
+                this.feedbackItemNodesBeforePrinting = cloneDeep(this.feedbackItemNodes);
+                this.expandFeedbackItemGroups();
+            } else {
+                this.feedbackItemNodes = this.feedbackItemNodesBeforePrinting;
+            }
+        }
     }
 
     /**
@@ -187,6 +216,9 @@ export class FeedbackComponent implements OnInit {
 
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
                         this.feedbackItemNodes = this.feedbackItemService.group(feedbackItems, this.exercise!);
+                        if (this.isExamReviewPage) {
+                            this.expandFeedbackItemGroups();
+                        }
                     }
 
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
@@ -253,9 +285,17 @@ export class FeedbackComponent implements OnInit {
         return (this.result?.submission as ProgrammingSubmission)?.commitHash ?? 'n.a.';
     }
 
-    getCommitUrl(): string | undefined {
-        const projectKey = (this.exercise as ProgrammingExercise)?.projectKey;
-        const programmingSubmission = this.result.submission as ProgrammingSubmission;
-        return createCommitUrl(this.commitHashURLTemplate, projectKey, this.result.participation, programmingSubmission);
+    private expandFeedbackItemGroups() {
+        this.feedbackItemNodes.forEach((feedbackNode) => {
+            if (isFeedbackGroup(feedbackNode)) {
+                feedbackNode.open = true;
+            }
+        });
+    }
+
+    private getCommitUrl(result: Result, programmingExercise: ProgrammingExercise | undefined, commitHashURLTemplate: string | undefined) {
+        const projectKey = programmingExercise?.projectKey;
+        const programmingSubmission = result.submission as ProgrammingSubmission;
+        return createCommitUrl(commitHashURLTemplate, projectKey, result.participation, programmingSubmission);
     }
 }

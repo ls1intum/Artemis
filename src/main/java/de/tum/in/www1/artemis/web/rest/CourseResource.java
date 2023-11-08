@@ -17,11 +17,13 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,7 +38,10 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.*;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
@@ -45,17 +50,15 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
+import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
+import de.tum.in.www1.artemis.web.rest.errors.*;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -75,9 +78,9 @@ public class CourseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
+    private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
 
-    private final OAuth2JWKSService oAuth2JWKSService;
+    private final Optional<OAuth2JWKSService> oAuth2JWKSService;
 
     private final CourseRepository courseRepository;
 
@@ -105,17 +108,20 @@ public class CourseResource {
 
     private final GradingScaleRepository gradingScaleRepository;
 
+    private final ConductAgreementService conductAgreementService;
+
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
     private final LearningPathService learningPathService;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
+            Optional<OAuth2JWKSService> oAuth2JWKSService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
-            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService) {
+            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
+            ConductAgreementService conductAgreementService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -135,6 +141,7 @@ public class CourseResource {
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathService = learningPathService;
+        this.conductAgreementService = conductAgreementService;
     }
 
     /**
@@ -225,12 +232,16 @@ public class CourseResource {
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
-            if (courseUpdate.isOnlineCourse()) {
-                onlineCourseConfigurationService.createOnlineCourseConfiguration(courseUpdate);
+            if (courseUpdate.isOnlineCourse() && onlineCourseConfigurationService.isPresent()) {
+                onlineCourseConfigurationService.get().createOnlineCourseConfiguration(courseUpdate);
             }
             else {
                 courseUpdate.setOnlineCourseConfiguration(null);
             }
+        }
+
+        if (!Objects.equals(courseUpdate.getCourseInformationSharingMessagingCodeOfConduct(), existingCourse.getCourseInformationSharingMessagingCodeOfConduct())) {
+            conductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
         }
 
         courseUpdate.setId(courseId); // Don't persist a wrong ID
@@ -268,6 +279,7 @@ public class CourseResource {
      */
     @PutMapping("courses/{courseId}/onlineCourseConfiguration")
     @EnforceAtLeastInstructor
+    @Profile("lti")
     public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
             @RequestBody OnlineCourseConfiguration onlineCourseConfiguration) {
         log.debug("REST request to update the online course configuration for Course : {}", courseId);
@@ -284,12 +296,14 @@ public class CourseResource {
                     OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
         }
 
-        onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        if (onlineCourseConfigurationService.isPresent()) {
+            onlineCourseConfigurationService.get().validateOnlineCourseConfiguration(onlineCourseConfiguration);
+            course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        }
 
         courseRepository.save(course);
 
-        oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
+        oAuth2JWKSService.ifPresent(auth2JWKSService -> auth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId()));
 
         return ResponseEntity.ok(onlineCourseConfiguration);
     }
@@ -949,6 +963,28 @@ public class CourseResource {
         }
 
         return ResponseEntity.ok().body(courseService.searchOtherUsersNameInCourse(course, nameOfUser));
+    }
+
+    /**
+     * GET /api/courses/:courseId/members/search: Searches for members of a course
+     *
+     * @param courseId    id of the course
+     * @param loginOrName the search term to search login and names by
+     * @return the ResponseEntity with status 200 (OK) and with body containing the list of found members matching the criteria
+     */
+    @GetMapping("courses/{courseId}/members/search")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<UserNameAndLoginDTO>> searchMembersOfCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName) {
+        log.debug("REST request to get members with login or name : {} in course: {}", loginOrName, courseId);
+
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+
+        var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
+        List<UserNameAndLoginDTO> searchResults = userRepository.searchAllByLoginOrNameInCourse(Pageable.ofSize(10), searchTerm, course.getId()).stream()
+                .map(user -> new UserNameAndLoginDTO(user.getName(), user.getLogin())).toList();
+
+        return ResponseEntity.ok().body(searchResults);
     }
 
     /**

@@ -1,0 +1,9 @@
+<div #dropdown ngbDropdown class="d-inline-block" (openChange)="$event ? handleMenuOpen() : handleMenuClosed()" autoClose="inside" [placement]="['top-start']">
+    <button type="button" class="btn btn-sm py-0" (click)="handleToggle()">
+        <fa-icon [icon]="command.buttonIcon"></fa-icon>
+    </button>
+    <div ngbDropdownAnchor id="anchor" class="invisible-anchor" [style.top]="offsetY" [style.left]="offsetX"></div>
+    <div ngbDropdownMenu>
+        <button ngbDropdownItem type="button" *ngFor="let value of values" (click)="setSelection(value)">{{ value.name }}</button>
+    </div>
+</div>

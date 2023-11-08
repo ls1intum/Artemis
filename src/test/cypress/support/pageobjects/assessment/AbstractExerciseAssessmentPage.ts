@@ -4,10 +4,10 @@ import { BASE_API, ExerciseType, PUT } from '../../constants';
  * Parent class for all exercise assessment pages.
  */
 export abstract class AbstractExerciseAssessmentPage {
-    readonly unreferencedFeedbackSelector = '#assessment-detail';
+    readonly unreferencedFeedbackSelector = '.unreferenced-feedback-detail';
 
     addNewFeedback(points: number, feedback?: string) {
-        cy.get('#add-unreferenced-feedback').click();
+        cy.get('.add-unreferenced-feedback').click();
         cy.get(this.unreferencedFeedbackSelector).find('#feedback-points').clear().type(points.toString());
         if (feedback) {
             cy.get(this.unreferencedFeedbackSelector).find('#feedback-textarea').clear().type(feedback);

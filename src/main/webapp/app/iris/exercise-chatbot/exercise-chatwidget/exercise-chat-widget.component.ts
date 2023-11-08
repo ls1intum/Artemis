@@ -42,7 +42,7 @@ import { Subscription } from 'rxjs';
 import { SharedService } from 'app/iris/shared.service';
 import { IrisSessionService } from 'app/iris/session.service';
 import { IrisErrorMessageKey, IrisErrorType } from 'app/entities/iris/iris-errors.model';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { AnimationEvent, animate, state, style, transition, trigger } from '@angular/animations';
 import { UserService } from 'app/core/user/user.service';
 import { IrisLogoSize } from '../../iris-logo/iris-logo.component';
@@ -117,6 +117,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
     shouldShowEmptyMessageError = false;
     currentMessageCount: number;
     rateLimit: number;
+    rateLimitTimeframeHours: number;
 
     // User preferences
     userAccepted: boolean;
@@ -179,6 +180,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
             }
             this.currentMessageCount = state.currentMessageCount;
             this.rateLimit = state.rateLimit;
+            this.rateLimitTimeframeHours = state.rateLimitTimeframeHours;
         });
 
         // Focus on message textarea
@@ -633,7 +635,9 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
         if (error.status === 403) {
             this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_DISABLED));
         } else if (error.status === 429) {
-            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED));
+            const map = new Map<string, any>();
+            map.set('hours', this.rateLimitTimeframeHours);
+            this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.RATE_LIMIT_EXCEEDED, map));
         } else {
             this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.SEND_MESSAGE_FAILED));
         }
@@ -670,7 +674,7 @@ export class ExerciseChatWidgetComponent implements OnInit, OnDestroy, AfterView
 
     getConvertedErrorMap() {
         if (this.error?.paramsMap) {
-            return Object.fromEntries(Object.entries(this.error.paramsMap as Map<string, any>));
+            return Object.fromEntries(this.error.paramsMap);
         }
         return null;
     }

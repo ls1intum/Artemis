@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.exam.*;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 
 /**
  * Service Implementation for managing ExamSession.
@@ -80,45 +82,223 @@ public class ExamSessionService {
 
     /**
      * Retrieves all suspicious exam sessions for given exam id
-     * An exam session is suspicious if it has the same browser fingerprint or ip address and belongs to a different student exam
+     * For a detailed description of the criteria, see {@link SuspiciousSessionsAnalysisOptions}
      *
-     * @param examId id of the exam for which suspicious exam sessions shall be retrieved
+     * @param examId          id of the exam for which suspicious exam sessions shall be retrieved
+     * @param analysisOptions options for the analysis of suspicious sessions
+     * @param ipSubnet        subnet for the analysis of suspicious sessions
      * @return set of suspicious exam sessions
      */
-    public Set<SuspiciousExamSessionsDTO> retrieveAllSuspiciousExamSessionsByExamId(long examId) {
+    public Set<SuspiciousExamSessionsDTO> retrieveAllSuspiciousExamSessionsByExamId(long examId, SuspiciousSessionsAnalysisOptions analysisOptions, Optional<String> ipSubnet) {
         Set<SuspiciousExamSessions> suspiciousExamSessions = new HashSet<>();
         Set<ExamSession> examSessions = examSessionRepository.findAllExamSessionsByExamId(examId);
-        examSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
-        // first step find all sessions that have matching browser fingerprint and ip address
-        findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession,
-                suspiciousExamSessions);
-        // second step find all sessions that have only matching browser fingerprint
-        findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession,
-                suspiciousExamSessions);
-        // third step find all sessions that have only matching ip address
-        findSuspiciousSessionsForGivenCriteria(examSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession, suspiciousExamSessions);
-
+        Set<ExamSession> filteredSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
+        Set<StudentExam> studentExams = new HashSet<>();
+        boolean studentExamsFetched = false;    // flag to avoid fetching student exams twice
+        analyzeSessionsOfDifferentStudentExams(examId, analysisOptions, suspiciousExamSessions, filteredSessions);
+        analyzeSessionsOfTheSameStudentExam(examId, analysisOptions, suspiciousExamSessions, studentExams, studentExamsFetched);
+        analyzeIpAddressesOutsideOfRange(analysisOptions, ipSubnet, suspiciousExamSessions, examSessions);
         return convertSuspiciousSessionsToDTO(suspiciousExamSessions);
+    }
+
+    /**
+     * Finds all exam sessions that have a IP address outside a given subnet
+     *
+     * @param analysisOptions        options for the analysis of suspicious sessions
+     * @param ipSubnet               subnet for the analysis of suspicious sessions
+     * @param suspiciousExamSessions set of suspicious exam sessions
+     * @param examSessions           set of exam sessions to analyze
+     */
+    private void analyzeIpAddressesOutsideOfRange(SuspiciousSessionsAnalysisOptions analysisOptions, Optional<String> ipSubnet, Set<SuspiciousExamSessions> suspiciousExamSessions,
+            Set<ExamSession> examSessions) {
+        Set<ExamSession> filteredSessions;
+        if (analysisOptions.ipAddressOutsideOfRange()) {
+            // seventh step find all sessions that have ip address outside of range
+            filteredSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
+            findSessionsWithIPAddressOutsideOfRange(filteredSessions, ipSubnet.orElseThrow(), suspiciousExamSessions);
+        }
+    }
+
+    /**
+     * Finds all suspicious exam sessions that belong to the same student exam
+     *
+     * @param examId                 id of the exam for which suspicious exam sessions shall be retrieved
+     * @param analysisOptions        options for the analysis of suspicious sessions
+     * @param suspiciousExamSessions set of suspicious exam sessions
+     * @param studentExams           set of student exams
+     * @param studentExamsFetched    flag to avoid fetching student exams twice
+     */
+    private void analyzeSessionsOfTheSameStudentExam(long examId, SuspiciousSessionsAnalysisOptions analysisOptions, Set<SuspiciousExamSessions> suspiciousExamSessions,
+            Set<StudentExam> studentExams, boolean studentExamsFetched) {
+        if (analysisOptions.differentIpAddressesSameStudentExam() && analysisOptions.differentBrowserFingerprintsSameStudentExam()) {
+            studentExams = studentExamRepository.findByExamIdWithSessions(examId);
+            studentExamsFetched = true;
+            // fourth step find all sessions that belong to the same student exam but have different browser fingerprints and ip addresses
+            analyzeSessionOfStudentExamsForGivenCriteria(studentExams, true, true, suspiciousExamSessions);
+        }
+        if (analysisOptions.differentBrowserFingerprintsSameStudentExam()) {
+            if (!studentExamsFetched) {
+                studentExams = studentExamRepository.findByExamIdWithSessions(examId);
+                studentExamsFetched = true;
+            }
+            // fifth step find all sessions that belong to the same student exam but have different browser fingerprints
+            analyzeSessionOfStudentExamsForGivenCriteria(studentExams, false, true, suspiciousExamSessions);
+        }
+        if (analysisOptions.differentIpAddressesSameStudentExam()) {
+            if (!studentExamsFetched) {
+                studentExams = studentExamRepository.findByExamIdWithSessions(examId);
+            }
+            // sixth step find all sessions that belong to the same student exam but have different ip addresses
+            analyzeSessionOfStudentExamsForGivenCriteria(studentExams, true, false, suspiciousExamSessions);
+        }
+    }
+
+    /**
+     * Finds all suspicious exam sessions that belong to different student exams
+     *
+     * @param examId                 id of the exam for which suspicious exam sessions shall be retrieved
+     * @param analysisOptions        options for the analysis of suspicious sessions
+     * @param suspiciousExamSessions set of suspicious exam sessions
+     * @param filteredSessions       set of exam sessions to analyze
+     */
+    private void analyzeSessionsOfDifferentStudentExams(long examId, SuspiciousSessionsAnalysisOptions analysisOptions, Set<SuspiciousExamSessions> suspiciousExamSessions,
+            Set<ExamSession> filteredSessions) {
+        if (analysisOptions.sameIpAddressDifferentStudentExams() && analysisOptions.sameBrowserFingerprintDifferentStudentExams()) {
+            // first step find all sessions that have matching browser fingerprint and ip address
+            findSuspiciousSessionsForGivenCriteria(filteredSessions, examId,
+                    examSessionRepository::findAllExamSessionsWithTheSameIpAddressAndBrowserFingerprintByExamIdAndExamSession, suspiciousExamSessions, true, true);
+        }
+        if (analysisOptions.sameBrowserFingerprintDifferentStudentExams()) {
+            // second step find all sessions that have only matching browser fingerprint
+            findSuspiciousSessionsForGivenCriteria(filteredSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameBrowserFingerprintByExamIdAndExamSession,
+                    suspiciousExamSessions, false, true);
+        }
+        if (analysisOptions.sameIpAddressDifferentStudentExams()) {
+            // third step find all sessions that have only matching ip address
+            findSuspiciousSessionsForGivenCriteria(filteredSessions, examId, examSessionRepository::findAllExamSessionsWithTheSameIpAddressByExamIdAndExamSession,
+                    suspiciousExamSessions, true, false);
+        }
+    }
+
+    /**
+     * Finds all suspicious exam sessions that belong to the same student exam
+     *
+     * @param studentExams                set of student exams
+     * @param analyzeDifferentIp          true if the ip addresses shall be compared, otherwise false
+     * @param analyzeDifferentFingerprint true if the browser fingerprints shall be compared, otherwise false
+     * @param suspiciousExamSessions      set of suspicious exam sessions
+     */
+    private static void analyzeSessionOfStudentExamsForGivenCriteria(Set<StudentExam> studentExams, boolean analyzeDifferentIp, boolean analyzeDifferentFingerprint,
+            Set<SuspiciousExamSessions> suspiciousExamSessions) {
+        for (var studentExam : studentExams) {
+            analyzeSessionsOfStudentExam(analyzeDifferentIp, analyzeDifferentFingerprint, suspiciousExamSessions, studentExam);
+        }
+    }
+
+    /**
+     * Finds all suspicious exam sessions that belong to the same student exam
+     *
+     * @param analyzeDifferentIp          true if the ip addresses shall be compared, otherwise false
+     * @param analyzeDifferentFingerprint true if the browser fingerprints shall be compared, otherwise false
+     * @param suspiciousExamSessions      set of suspicious exam sessions
+     * @param studentExam                 student exam for which the exam sessions shall be analyzed
+     */
+    private static void analyzeSessionsOfStudentExam(boolean analyzeDifferentIp, boolean analyzeDifferentFingerprint, Set<SuspiciousExamSessions> suspiciousExamSessions,
+            StudentExam studentExam) {
+        var relatedSuspiciousExamSessions = new HashSet<ExamSession>();
+        Set<ExamSession> examSessions = studentExam.getExamSessions();
+        Set<ExamSession> filteredSessions = filterEqualExamSessionsForSameStudentExam(examSessions);
+        for (var examSession : filteredSessions) {
+            for (var examSession2 : filteredSessions) {
+                compareStudentExamSessions(analyzeDifferentIp, analyzeDifferentFingerprint, relatedSuspiciousExamSessions, examSession, examSession2);
+            }
+        }
+        if (!relatedSuspiciousExamSessions.isEmpty() && !isSubsetOfFoundSuspiciousSessions(relatedSuspiciousExamSessions, suspiciousExamSessions)) {
+            suspiciousExamSessions.add(new SuspiciousExamSessions(relatedSuspiciousExamSessions));
+        }
+    }
+
+    /**
+     * Compares two exam sessions of the same student exam and adds the suspicious reasons to the exam sessions if they are suspicious
+     *
+     * @param analyzeDifferentIp            true if the ip addresses shall be compared, otherwise false
+     * @param analyzeDifferentFingerprint   true if the browser fingerprints shall be compared, otherwise false
+     * @param relatedSuspiciousExamSessions set of related suspicious exam sessions
+     * @param examSession                   first exam session to compare
+     * @param examSession2                  second exam session to compare
+     */
+    private static void compareStudentExamSessions(boolean analyzeDifferentIp, boolean analyzeDifferentFingerprint, HashSet<ExamSession> relatedSuspiciousExamSessions,
+            ExamSession examSession, ExamSession examSession2) {
+        if (Objects.equals(examSession.getId(), examSession2.getId())) {
+            return;
+        }
+        if (analyzeDifferentIp && !Objects.equals(examSession.getIpAddress(), examSession2.getIpAddress())) {
+            examSession.addSuspiciousReason(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES);
+            examSession2.addSuspiciousReason(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES);
+            relatedSuspiciousExamSessions.add(examSession);
+            relatedSuspiciousExamSessions.add(examSession2);
+
+        }
+        if (analyzeDifferentFingerprint && !Objects.equals(examSession.getBrowserFingerprintHash(), examSession2.getBrowserFingerprintHash())) {
+            examSession.addSuspiciousReason(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS);
+            examSession2.addSuspiciousReason(SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS);
+            relatedSuspiciousExamSessions.add(examSession);
+            relatedSuspiciousExamSessions.add(examSession2);
+        }
+    }
+
+    private void findSessionsWithIPAddressOutsideOfRange(Set<ExamSession> examSessions, String ipSubnet, Set<SuspiciousExamSessions> suspiciousExamSessions) {
+        var examSessionsWithIPAddressOutsideOfRange = new HashSet<ExamSession>();
+        for (var examSession : examSessions) {
+            if (!checkIPIsInGivenRange(ipSubnet, examSession.getIpAddress())) {
+                examSession.setSuspiciousReasons(new HashSet<>());
+                examSession.addSuspiciousReason(SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE);
+                examSessionsWithIPAddressOutsideOfRange.add(examSession);
+            }
+        }
+        if (!examSessionsWithIPAddressOutsideOfRange.isEmpty()) {
+            suspiciousExamSessions.add(new SuspiciousExamSessions(examSessionsWithIPAddressOutsideOfRange));
+        }
+    }
+
+    private boolean checkIPIsInGivenRange(String ipSubnet, String ipAddress) {
+        IpAddressMatcher ipAddressMatcher = new IpAddressMatcher(ipSubnet);
+        // if they are not both IPv4 or IPv6, we cannot check if the address is in the subnet and return true
+        if (!checkIfSubnetAndAddressHaveTheSameVersion(ipSubnet, ipAddress, IPAddress.IPVersion.IPV4)
+                && !checkIfSubnetAndAddressHaveTheSameVersion(ipSubnet, ipAddress, IPAddress.IPVersion.IPV6)) {
+            log.debug("IP address {} and subnet {} have different versions", ipAddress, ipSubnet);
+            return true;
+        }
+        return ipAddressMatcher.matches(ipAddress);
+
+    }
+
+    private static boolean checkIfSubnetAndAddressHaveTheSameVersion(String ipSubnet, String ipAddress, IPAddress.IPVersion version) {
+        var address = new IPAddressString(ipAddress).getAddress(version);
+        var ipSubnetAddress = new IPAddressString(ipSubnet).getAddress(version);
+        // return false if one of the addresses is null, not the expected version (IPv4 or IPv6)
+        return address != null && ipSubnetAddress != null;
     }
 
     /**
      * Finds suspicious exam sessions according to the criteria given and adds them to the set of suspicious exam sessions
      *
-     * @param examSessions           set of exam sessions to be processed
-     * @param examId                 id of the exam for which suspicious exam sessions shall be retrieved
-     * @param criteriaFilter         function that returns a set of exam sessions that match the given criteria
-     * @param suspiciousExamSessions set of suspicious exam sessions to which the found suspicious exam sessions shall be added
+     * @param examSessions                                       set of exam sessions to be processed
+     * @param examId                                             id of the exam for which suspicious exam sessions shall be retrieved
+     * @param criteriaFilter                                     function that returns a set of exam sessions that match the given criteria
+     * @param suspiciousExamSessions                             set of suspicious exam sessions to which the found suspicious exam sessions shall be added
+     * @param analyzeDifferentStudentExamsSameIp                 true if the ip addresses shall be compared, otherwise false
+     * @param analyzeDifferentStudentExamsSameBrowserFingerprint true if the browser fingerprints shall be compared, otherwise false
      */
-    private void findSuspiciousSessionsForGivenCriteria(Set<ExamSession> examSessions, long examId, BiFunction<Long, ExamSession, Set<ExamSession>> criteriaFilter,
-            Set<SuspiciousExamSessions> suspiciousExamSessions) {
-
+    private static void findSuspiciousSessionsForGivenCriteria(Set<ExamSession> examSessions, long examId, BiFunction<Long, ExamSession, Set<ExamSession>> criteriaFilter,
+            Set<SuspiciousExamSessions> suspiciousExamSessions, boolean analyzeDifferentStudentExamsSameIp, boolean analyzeDifferentStudentExamsSameBrowserFingerprint) {
         for (var examSession : examSessions) {
             Set<ExamSession> relatedExamSessions = criteriaFilter.apply(examId, examSession);
             relatedExamSessions = filterEqualRelatedExamSessionsOfSameStudentExam(relatedExamSessions);
 
             if (!relatedExamSessions.isEmpty() && !isSubsetOfFoundSuspiciousSessions(relatedExamSessions, suspiciousExamSessions)) {
-                addSuspiciousReasons(examSession, relatedExamSessions);
-                relatedExamSessions.add(examSession);
+                var session = addSuspiciousReasons(examSession, relatedExamSessions, analyzeDifferentStudentExamsSameIp, analyzeDifferentStudentExamsSameBrowserFingerprint);
+                relatedExamSessions.add(session);
                 suspiciousExamSessions.add(new SuspiciousExamSessions(relatedExamSessions));
             }
         }
@@ -134,7 +314,7 @@ public class ExamSessionService {
      * @param suspiciousExamSessions a set of suspicious exam sessions that have already been found
      * @return true if the given set of exam sessions is a subset of suspicious exam sessions that have already been found, otherwise false.
      */
-    private boolean isSubsetOfFoundSuspiciousSessions(Set<ExamSession> relatedExamSessions, Set<SuspiciousExamSessions> suspiciousExamSessions) {
+    private static boolean isSubsetOfFoundSuspiciousSessions(Set<ExamSession> relatedExamSessions, Set<SuspiciousExamSessions> suspiciousExamSessions) {
         for (var suspiciousExamSession : suspiciousExamSessions) {
             if (suspiciousExamSession.examSessions().containsAll(relatedExamSessions)) {
                 return true;
@@ -151,7 +331,7 @@ public class ExamSessionService {
      * @param examSessions exam sessions to filter
      * @return filtered exam sessions
      */
-    private Set<ExamSession> filterEqualExamSessionsForSameStudentExam(Set<ExamSession> examSessions) {
+    private static Set<ExamSession> filterEqualExamSessionsForSameStudentExam(Set<ExamSession> examSessions) {
         Set<ExamSession> filteredSessions = new HashSet<>();
         Set<String> processedSessionKeys = new HashSet<>();
 
@@ -174,7 +354,7 @@ public class ExamSessionService {
      * @param examSessions exam sessions to filter
      * @return filtered exam sessions
      */
-    private Set<ExamSession> filterEqualRelatedExamSessionsOfSameStudentExam(Set<ExamSession> examSessions) {
+    private static Set<ExamSession> filterEqualRelatedExamSessionsOfSameStudentExam(Set<ExamSession> examSessions) {
         Set<ExamSession> filteredSessions = new HashSet<>();
         Set<Long> processedSessionsStudentExamIds = new HashSet<>();
 
@@ -191,7 +371,7 @@ public class ExamSessionService {
         return filteredSessions;
     }
 
-    private Set<SuspiciousExamSessionsDTO> convertSuspiciousSessionsToDTO(Set<SuspiciousExamSessions> suspiciousExamSessions) {
+    private static Set<SuspiciousExamSessionsDTO> convertSuspiciousSessionsToDTO(Set<SuspiciousExamSessions> suspiciousExamSessions) {
         Set<SuspiciousExamSessionsDTO> suspiciousExamSessionsDTO = new HashSet<>();
         for (var suspiciousExamSession : suspiciousExamSessions) {
             Set<ExamSessionDTO> examSessionDTOs = new HashSet<>();
@@ -212,21 +392,39 @@ public class ExamSessionService {
      * Adds suspicious reasons to exam session we compare with and the related exam sessions.
      * We already know that the exam sessions are suspicious, but we still have to determine what's the reason for that.
      *
-     * @param session             exam session we compare with
-     * @param relatedExamSessions related exam sessions
+     * @param session                                            exam session we compare with
+     * @param relatedExamSessions                                related exam sessions
+     * @param analyzeDifferentStudentExamsSameIp                 true if the ip addresses shall be compared, otherwise false
+     * @param analyzeDifferentStudentExamsSameBrowserFingerprint true if the browser fingerprints shall be compared, otherwise false
+     * @return exam session we compare with suspicious reasons added
      */
-    private void addSuspiciousReasons(ExamSession session, Set<ExamSession> relatedExamSessions) {
+    private static ExamSession addSuspiciousReasons(ExamSession session, Set<ExamSession> relatedExamSessions, boolean analyzeDifferentStudentExamsSameIp,
+            boolean analyzeDifferentStudentExamsSameBrowserFingerprint) {
+        ExamSession sessionCopy = new ExamSession();
+        sessionCopy.setId(session.getId());
+        sessionCopy.setSuspiciousReasons(new HashSet<>());
+        sessionCopy.setBrowserFingerprintHash(session.getBrowserFingerprintHash());
+        sessionCopy.setIpAddress(session.getIpAddress());
+        sessionCopy.setUserAgent(session.getUserAgent());
+        sessionCopy.setStudentExam(session.getStudentExam());
+        sessionCopy.setCreatedDate(session.getCreatedDate());
+        sessionCopy.setInstanceId(session.getInstanceId());
+        sessionCopy.setSessionToken(session.getSessionToken());
+
         for (var relatedExamSession : relatedExamSessions) {
-            if (relatedExamSession.hasSameBrowserFingerprint(session)) {
-                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
-                session.addSuspiciousReason(SuspiciousSessionReason.SAME_BROWSER_FINGERPRINT);
+            relatedExamSession.setSuspiciousReasons(new HashSet<>());
+            // if we do not check the analysis criteria, we might add reasons that should not be analyzed
+            if (relatedExamSession.hasSameBrowserFingerprint(session) && analyzeDifferentStudentExamsSameBrowserFingerprint) {
+                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT);
+                sessionCopy.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT);
             }
-            if (relatedExamSession.hasSameIpAddress(session)) {
-                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);
-                session.addSuspiciousReason(SuspiciousSessionReason.SAME_IP_ADDRESS);
+            if (relatedExamSession.hasSameIpAddress(session) && analyzeDifferentStudentExamsSameIp) {
+                relatedExamSession.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS);
+                sessionCopy.addSuspiciousReason(SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS);
             }
 
         }
+        return sessionCopy;
     }
 
 }

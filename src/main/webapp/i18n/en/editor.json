@@ -73,7 +73,10 @@
                 "renameFolderDisabledTooltip": "To rename this folder, deactivate the combining of folders in the toolbar above.",
                 "deleteFolder": "Delete folder",
                 "deleteFile": "Delete file",
-                "compressTree": "Combine empty folders"
+                "compressTree": "Combine empty folders",
+                "fileBadgeTooltips": {
+                    "feedbackSuggestions": "Number of feedback suggestions in this file/folder"
+                }
             },
             "errors": {
                 "participationNotFound": "Your participation could not be found.",

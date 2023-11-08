@@ -37,6 +37,7 @@ import { By } from '@angular/platform-browser';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { cloneDeep } from 'lodash-es';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -354,6 +355,17 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.controls['onlineCourse'].value).toBeFalse();
             expect(comp.courseForm.controls['registrationEnabled'].value).toBeTrue();
             expect(comp.course.enrollmentEnabled).toBeTrue();
+        });
+    });
+
+    describe('updateCourseInformationSharingMessagingCodeOfConduct', () => {
+        it('should update course information sharing code of conduct', () => {
+            comp.course = new Course();
+            comp.courseForm = new FormGroup({
+                courseInformationSharingMessagingCodeOfConduct: new FormControl(),
+            });
+            comp.updateCourseInformationSharingMessagingCodeOfConduct('# Code of Conduct');
+            expect(comp.courseForm.controls['courseInformationSharingMessagingCodeOfConduct'].value).toBe('# Code of Conduct');
         });
     });
 
@@ -675,5 +687,66 @@ describe('Course Management Update Component', () => {
             expect(addButton).toBeNull();
             expect(removeButton).toBeNull();
         });
+    });
+});
+
+describe('Course Management Update Component Create', () => {
+    const validTimeZone = 'Europe/Berlin';
+    let component: CourseUpdateComponent;
+    let fixture: ComponentFixture<CourseUpdateComponent>;
+    let httpMock: HttpTestingController;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [
+                ArtemisTestModule,
+                HttpClientTestingModule,
+                MockModule(ReactiveFormsModule),
+                MockModule(FormsModule),
+                ImageCropperModule,
+                MockDirective(NgbTypeahead),
+                MockModule(NgbTooltipModule),
+            ],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(TranslateService),
+                MockProvider(LoadImageService),
+            ],
+            declarations: [
+                CourseUpdateComponent,
+                MarkdownEditorStubComponent,
+                MockComponent(ColorSelectorComponent),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(HelpIconComponent),
+                MockComponent(SecuredImageComponent),
+                MockDirective(FeatureToggleHideDirective),
+                MockDirective(HasAnyAuthorityDirective),
+                MockDirective(TranslateDirective),
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(RemoveKeysPipe),
+            ],
+        })
+            .compileComponents()
+            .then(() => {
+                (Intl as any).supportedValuesOf = () => [validTimeZone];
+                fixture = TestBed.createComponent(CourseUpdateComponent);
+                component = fixture.componentInstance;
+                httpMock = TestBed.inject(HttpTestingController);
+            });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
+        (Intl as any).supportedValuesOf = undefined;
+    });
+
+    it('should get code of conduct template if a new course is created', () => {
+        fixture.detectChanges();
+        const req = httpMock.expectOne({ method: 'GET' });
+        const codeOfConduct = 'Code of Conduct';
+        req.flush(codeOfConduct);
+        expect(component.course.courseInformationSharingMessagingCodeOfConduct).toEqual(codeOfConduct);
     });
 });

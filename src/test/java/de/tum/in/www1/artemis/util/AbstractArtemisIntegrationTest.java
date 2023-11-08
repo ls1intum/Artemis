@@ -4,16 +4,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
+import java.util.List;
+
 import javax.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.mail.javamail.JavaMailSender;
 
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.*;
@@ -31,6 +35,7 @@ import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.user.UserFactory;
 
 /**
  * this test should be completely independent of any profiles or configurations (e.g. VCS, CIS)
@@ -177,5 +182,34 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
      */
     protected <T, E extends Exception> QueryCountAssert<T, E> assertThatDb(ThrowingProducer<T, E> call) {
         return QueryCountAssert.assertThatDb(queryInterceptor, call);
+    }
+
+    /**
+     * Provides a list of various user mentions flagged with in indicator whether the user mention is valid
+     *
+     * @param courseMemberLogin1 login of one course member
+     * @param courseMemberLogin2 login of another course member
+     *
+     * @return list of user mentions and validity flags
+     */
+    protected static List<Arguments> userMentionProvider(String courseMemberLogin1, String courseMemberLogin2) {
+        User courseMember1 = UserFactory.generateActivatedUser(courseMemberLogin1);
+        User courseMember2 = UserFactory.generateActivatedUser(courseMemberLogin2);
+        User noCourseMember = UserFactory.generateActivatedUser("noCourseMember");
+
+        // First argument is a string containing a user mention
+        // Second argument indicates whether the user mention is valid
+        return List.of(Arguments.of("no mention", true), // no user mention
+                Arguments.of("[user]" + courseMember1.getName() + "(" + courseMember1.getLogin() + ")[/user]", true), // valid mention
+                Arguments.of("[user](" + courseMember1.getLogin() + ")[/user]", false), // missing full name
+                Arguments.of("[user]" + courseMember1.getName() + "()[/user]", false), // missing login
+                Arguments.of("[user]" + courseMember1.getName() + "[/user]", false), // missing login and parentheses
+                Arguments.of("[user]" + courseMember2.getName() + "(" + courseMember2.getLogin() + ")[/user][user]" + courseMember1.getName() + "(" + courseMember1.getLogin()
+                        + ")[/user]", true), // multiple valid user mentions
+                Arguments.of("[user]invalidName(" + courseMember1.getLogin() + ")[/user]", false), // invalid full name
+                Arguments.of("[user]" + noCourseMember.getName() + "(" + noCourseMember.getLogin() + ")[/user]", false), // not a course member
+                Arguments.of("[user]invalidName[user]" + courseMember1.getName() + "(" + courseMember1.getLogin() + ")[/user](invalid)[/user]", true) // matching only inner
+
+        );
     }
 }

@@ -208,7 +208,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void testGetStudentExamForTestExamForStart_notRegisteredInCourse() throws Exception {
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start", HttpStatus.FORBIDDEN, String.class);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -217,7 +217,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         testExam1.setVisibleDate(now().plusMinutes(60));
         testExam1 = examRepository.save(testExam1);
 
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/own-student-exam", HttpStatus.FORBIDDEN, StudentExam.class);
     }
 
     @Test
@@ -225,7 +225,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testGetStudentExamForTestExamForStart_ExamDoesNotBelongToCourse() throws Exception {
         Exam testExam = examUtilService.addTestExam(course2);
 
-        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/start", HttpStatus.CONFLICT, StudentExam.class);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.CONFLICT, StudentExam.class);
     }
 
     @Test
@@ -240,7 +240,7 @@ class TestExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         testExam.addExamUser(examUser);
         examRepository.save(testExam);
         var studentExam5 = examUtilService.addStudentExamForTestExam(testExam, student1);
-        StudentExam studentExamReceived = request.get("/api/courses/" + course2.getId() + "/exams/" + testExam.getId() + "/start", HttpStatus.OK, StudentExam.class);
+        StudentExam studentExamReceived = request.get("/api/courses/" + course2.getId() + "/exams/" + testExam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamReceived).isEqualTo(studentExam5);
     }
 }
