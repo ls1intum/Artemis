@@ -35,6 +35,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -190,6 +191,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post postToSave = new Post();
         postToSave.setAuthor(author.getUser());
         postToSave.setConversation(channel);
+        postToSave.setContent("message");
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedMessagePost(postToSave, createdPost);
@@ -460,6 +462,20 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // both conversation participants should be notified about the update
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testPinPost_asTutor() throws Exception {
+        Post postToPin = existingConversationPosts.get(0);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("displayPriority", DisplayPriority.PINNED.toString());
+
+        // change display priority to PINNED
+        Post updatedPost = request.putWithResponseBodyAndParams("/api/courses/" + courseId + "/messages/" + postToPin.getId() + "/display-priority", null, Post.class,
+                HttpStatus.OK, params);
+        conversationUtilService.assertSensitiveInformationHidden(updatedPost);
+        assertThat(updatedPost).isEqualTo(postToPin);
     }
 
     @ParameterizedTest
