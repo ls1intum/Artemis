@@ -91,7 +91,9 @@ public class ConversationNotificationService {
 
         Post notificationSubject = new Post();
         notificationSubject.setId(createdMessage.getId());
+        notificationSubject.setConversation(createdMessage.getConversation());
         notificationSubject.setContent(createdMessage.getContent());
+        notificationSubject.setTitle(createdMessage.getTitle());
         notificationSubject.setCourse(course);
         generalInstantNotificationService.sendNotification(notification, recipients, notificationSubject);
     }

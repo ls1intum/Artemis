@@ -356,14 +356,21 @@ public class NotificationTargetFactory {
     }
 
     /**
-     * Extracts a viable URL from the provided notification that is based on a Post and baseUrl
+     * Extracts a viable URL from the provided post and baseUrl
+     * <p>
+     * By default, this method returns a URL leading to the messaging page of a course.
+     * If the post is not associated with a conversation or messaging is disabled in the course, the URL leads to the communication page.
      *
      * @param post    which information will be needed to create the URL
      * @param baseUrl the prefix (depends on current set up (e.g. "http://localhost:9000/courses"))
      * @return viable URL to the notification related page
      */
     public static String extractNotificationUrl(Post post, String baseUrl) {
-        // e.g. http://localhost:8080/courses/1/discussion?searchText=%2382 for announcement post
-        return baseUrl + "/courses/" + post.getCourse().getId() + "/discussion?searchText=%23" + post.getId();
+        if (!post.getCourse().getCourseInformationSharingConfiguration().isMessagingEnabled() || post.getConversation() == null) {
+            // e.g. http://localhost:8080/courses/1/discussion?searchText=%2382
+            return baseUrl + "/courses/" + post.getCourse().getId() + "/discussion?searchText=%23" + post.getId();
+        }
+        // e.g. http://localhost:8080/courses/1/messages?conversationId=123
+        return baseUrl + "/courses/" + post.getCourse().getId() + "/messages?conversationId=" + post.getConversation().getId();
     }
 }
