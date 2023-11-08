@@ -73,13 +73,22 @@
                 >
                 </jhi-posting-thread>
             </div>
-            <jhi-message-inline-input
-                class="message-input"
-                *ngIf="_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation)"
-                [posting]="newPost"
-                (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"
-            >
-            </jhi-message-inline-input>
+            <div *ngIf="_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation)">
+                <div class="pt-2" *ngIf="getAsChannel(_activeConversation)?.isAnnouncementChannel; else inlineInput">
+                    <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
+                        {{ 'artemisApp.metis.newAnnouncement' | artemisTranslate }}
+                    </button>
+                    <jhi-post-create-edit-modal
+                        #createEditModal
+                        [posting]="newPost!"
+                        [isCourseMessagesPage]="true"
+                        (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"
+                    ></jhi-post-create-edit-modal>
+                </div>
+                <ng-template #inlineInput>
+                    <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"> </jhi-message-inline-input>
+                </ng-template>
+            </div>
         </div>
     </div>
 </div>

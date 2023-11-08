@@ -56,8 +56,12 @@
                     {{ 'artemisApp.metis.post.announcementHint' | artemisTranslate }}
                 </div>
             </div>
+            <!-- info if announcement is created-->
+            <div class="alert alert-warning" *ngIf="isCourseMessagesPage && getAsChannel(posting.conversation)?.isAnnouncementChannel">
+                {{ 'artemisApp.metis.post.announcementHint' | artemisTranslate }}
+            </div>
             <!-- title -->
-            <div class="position-relative mb-3" *ngIf="!isCourseMessagesPage">
+            <div class="position-relative mb-3">
                 <div>
                     <label for="title" class="mb-1" jhiTranslate="artemisApp.metis.post.title">Title</label>
                     <jhi-help-icon text="artemisApp.metis.post.titleTooltip"></jhi-help-icon>
