@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { BuildAction, ProgrammingExercise, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
+import { BuildAction, ProgrammingExercise, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-custom-build-plan.component';
@@ -10,6 +10,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ProgrammingLanguage } from '../../../../cypress/support/constants';
 
 describe('ProgrammingExercise Custom Build Plan', () => {
     let mockThemeService: ThemeService;
@@ -116,7 +117,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         expect(comp.isScriptAction(new BuildAction())).toBeFalse();
     });
 
-    it('should do nothing without a windfile', () => {
+    it('should do nothing without a Windfile', () => {
         comp.programmingExercise.windFile = undefined;
         comp.code = 'this should not change';
         comp.changeActiveAction('');
@@ -151,5 +152,54 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.changeActiveAction('gradle');
         // make a spy on the editor
         expect(comp.editor.text).toBe(gradleBuildAction.script);
+    });
+
+    it('should return false to reload template', () => {
+        comp.programmingLanguage = programmingExercise.programmingLanguage;
+        comp.projectType = programmingExercise.projectType;
+        comp.sequentialTestRuns = programmingExercise.sequentialTestRuns;
+        comp.staticCodeAnalysisEnabled = programmingExercise.staticCodeAnalysisEnabled;
+        comp.testwiseCoverageEnabled = programmingExercise.testwiseCoverageEnabled;
+        expect(comp.shouldReloadTemplate()).toBeFalse();
+    });
+
+    it('should return true to reload template', () => {
+        comp.programmingLanguage = ProgrammingLanguage.JAVA;
+        comp.projectType = ProjectType.PLAIN_GRADLE;
+        comp.sequentialTestRuns = programmingExercise.sequentialTestRuns;
+        comp.staticCodeAnalysisEnabled = true;
+        comp.testwiseCoverageEnabled = true;
+        expect(comp.shouldReloadTemplate()).toBeTrue();
+    });
+
+    it('should reset buildplan', () => {
+        programmingExercise.windFile = windFile;
+        programmingExercise.buildPlanConfiguration = 'some build plan';
+        expect(programmingExercise.windFile).toBeDefined();
+        expect(programmingExercise.buildPlanConfiguration).toBeDefined();
+        comp.resetCustomBuildPlan();
+        expect(programmingExercise.windFile).toBeUndefined();
+        expect(programmingExercise.buildPlanConfiguration).toBeUndefined();
+    });
+
+    it('should do nothing without a programming language', () => {
+        comp.programmingLanguage = ProgrammingLanguage.JAVA;
+        programmingExercise.programmingLanguage = undefined;
+        comp.loadAeolusTemplate();
+        expect(comp.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
+    });
+
+    it('should update component properties', () => {
+        comp.programmingLanguage = undefined;
+        comp.projectType = undefined;
+        comp.sequentialTestRuns = undefined;
+        comp.staticCodeAnalysisEnabled = undefined;
+        comp.testwiseCoverageEnabled = undefined;
+        comp.loadAeolusTemplate();
+        expect(comp.programmingLanguage).toBe(programmingExercise.programmingLanguage);
+        expect(comp.projectType).toBe(programmingExercise.projectType);
+        expect(comp.sequentialTestRuns).toBe(programmingExercise.sequentialTestRuns);
+        expect(comp.staticCodeAnalysisEnabled).toBe(programmingExercise.staticCodeAnalysisEnabled);
+        expect(comp.testwiseCoverageEnabled).toBe(programmingExercise.testwiseCoverageEnabled);
     });
 });

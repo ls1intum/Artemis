@@ -48,13 +48,21 @@ export class FileService {
      */
     getAeolusTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentalRuns?: boolean, coverage?: boolean): Observable<string> {
         const urlParts: string[] = [language];
+        const params: string[] = [];
         if (projectType) {
             urlParts.push(projectType);
         }
-        urlParts.push(Boolean(staticAnalysis).toString());
-        urlParts.push(Boolean(sequentalRuns).toString());
-        urlParts.push(Boolean(coverage).toString());
-        return this.http.get<string>(`${this.resourceUrl}/aeolus/templates/` + urlParts.join('/'), { responseType: 'text' as 'json' });
+        if (staticAnalysis) {
+            params.push('staticAnalysis');
+        }
+        if (sequentalRuns) {
+            params.push('sequentialRuns');
+        }
+        if (coverage) {
+            params.push('testCoverage');
+        }
+        console.log('getAeolusTemplateFile', urlParts, params);
+        return this.http.get<string>(`${this.resourceUrl}/aeolus/templates/` + urlParts.join('/') + '?' + params.join('&'), { responseType: 'text' as 'json' });
     }
 
     /**

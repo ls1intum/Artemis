@@ -177,18 +177,18 @@ public class FileResource {
      * @param testCoverage   Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "files/aeolus/templates/{language}/{projectType}/{staticAnalysis}/{sequentialRuns}/{testCoverage}",
-            "files/aeolus/templates/{language}/{staticAnalysis}/{sequentialRuns}/{testCoverage}" })
+    @GetMapping({ "files/aeolus/templates/{language}/{projectType}", "files/aeolus/templates/{language}" })
     @EnforceAtLeastEditor
     public ResponseEntity<String> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
-            @PathVariable Optional<Boolean> staticAnalysis, @PathVariable Optional<Boolean> sequentialRuns, @PathVariable Optional<Boolean> testCoverage) {
+            @RequestParam(value = "staticAnalysis", required = false) String staticAnalysis, @RequestParam(value = "sequentialRuns", required = false) String sequentialRuns,
+            @RequestParam(value = "testCoverage", required = false) String testCoverage) {
         log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
                 projectType, staticAnalysis, sequentialRuns, testCoverage);
 
         String languagePrefix = language.name().toLowerCase();
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
-        return getAeolusTemplateFileContentWithResponse(languagePrefix, projectTypePrefix, staticAnalysis.orElse(false), sequentialRuns.orElse(false), testCoverage.orElse(false));
+        return getAeolusTemplateFileContentWithResponse(languagePrefix, projectTypePrefix, staticAnalysis != null, sequentialRuns != null, testCoverage != null);
     }
 
     /**
@@ -201,8 +201,8 @@ public class FileResource {
      * @param testCoverage      Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
-    private ResponseEntity<String> getAeolusTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix, Boolean staticAnalysis, Boolean sequentialRuns,
-            Boolean testCoverage) {
+    private ResponseEntity<String> getAeolusTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix, boolean staticAnalysis, boolean sequentialRuns,
+            boolean testCoverage) {
         try {
             String fileName = buildAeolusTemplateName(projectTypePrefix, staticAnalysis, sequentialRuns, testCoverage);
             Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", languagePrefix, fileName));
