@@ -1,6 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 
-//TODO remove
 export class ExamUserAttendanceCheckDTO implements BaseEntity {
     id?: number;
     studentImagePath: string;
