@@ -37,7 +37,7 @@ public class PlagiarismResultResponseBuilder {
         }
 
         int numberOfDetectedSubmissions = (int) plagiarismResult.getComparisons().stream()
-                .flatMap(comparison -> Stream.of(comparison.getSubmissionA().getId(), comparison.getSubmissionB().getId())).distinct().count();
+                .flatMap(comparison -> Stream.of(comparison.getSubmissionA().getSubmissionId(), comparison.getSubmissionB().getSubmissionId())).distinct().count();
         double averageSimilarity = getSimilarities(plagiarismResult).average().orElse(0.0);
         double maximalSimilarity = getSimilarities(plagiarismResult).max().orElse(0.0);
         var createdBy = getCreatedBy(plagiarismResult);

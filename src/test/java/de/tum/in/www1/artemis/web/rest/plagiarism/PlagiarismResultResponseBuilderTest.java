@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.plagiarism;
 
-import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -37,7 +38,7 @@ class PlagiarismResultResponseBuilderTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().plagiarismResult()).isSameAs(plagiarismResult);
-        assertThat(response.getBody().plagiarismResultStats().numberOfDetectedSubmissions()).isEqualTo(2);
+        assertThat(response.getBody().plagiarismResultStats().numberOfDetectedSubmissions()).isEqualTo(3);
         assertThat(response.getBody().plagiarismResultStats().averageSimilarity()).isEqualTo(0.78);
         assertThat(response.getBody().plagiarismResultStats().maximalSimilarity()).isEqualTo(0.78);
         assertThat(response.getBody().plagiarismResultStats().createdBy()).isEqualTo("user abc");
@@ -56,7 +57,7 @@ class PlagiarismResultResponseBuilderTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().plagiarismResult()).isSameAs(plagiarismResult);
-        assertThat(response.getBody().plagiarismResultStats().numberOfDetectedSubmissions()).isEqualTo(2);
+        assertThat(response.getBody().plagiarismResultStats().numberOfDetectedSubmissions()).isEqualTo(3);
         assertThat(response.getBody().plagiarismResultStats().averageSimilarity()).isEqualTo(0.78);
         assertThat(response.getBody().plagiarismResultStats().maximalSimilarity()).isEqualTo(0.78);
         assertThat(response.getBody().plagiarismResultStats().createdBy()).isEqualTo("CPC");
@@ -64,17 +65,24 @@ class PlagiarismResultResponseBuilderTest {
 
     private static TextPlagiarismResult createPlagiarismResult(String system) {
         var submissionA = new PlagiarismSubmission<>();
-        submissionA.setId(1L);
+        submissionA.setSubmissionId(1L);
         var submissionB = new PlagiarismSubmission<>();
-        submissionB.setId(2L);
+        submissionB.setSubmissionId(2L);
+        var submissionC = new PlagiarismSubmission<>();
+        submissionC.setSubmissionId(3L);
 
-        var comparison = new PlagiarismComparison<TextSubmissionElement>();
-        comparison.setSimilarity(0.78);
-        comparison.setSubmissionA(submissionA);
-        comparison.setSubmissionB(submissionB);
+        var comparison1 = new PlagiarismComparison<TextSubmissionElement>();
+        comparison1.setSimilarity(0.78);
+        comparison1.setSubmissionA(submissionA);
+        comparison1.setSubmissionB(submissionB);
+
+        var comparison2 = new PlagiarismComparison<TextSubmissionElement>();
+        comparison2.setSimilarity(0.78);
+        comparison2.setSubmissionA(submissionA);
+        comparison2.setSubmissionB(submissionC);
 
         var plagiarismResult = new TextPlagiarismResult();
-        plagiarismResult.setComparisons(singleton(comparison));
+        plagiarismResult.setComparisons(Set.of(comparison1, comparison2));
         plagiarismResult.setCreatedBy(system);
         return plagiarismResult;
     }
