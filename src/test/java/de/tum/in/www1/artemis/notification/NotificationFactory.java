@@ -14,6 +14,13 @@ import de.tum.in.www1.artemis.domain.notification.SystemNotification;
  */
 public class NotificationFactory {
 
+    /**
+     * Generates a SingleUserNotification with the given arguments.
+     *
+     * @param notificationDate The notification date of the SingleUserNotification
+     * @param recipient        The recipient of the SingleUserNotification
+     * @return The generated SingleUserNotification
+     */
     public static SingleUserNotification generateSingleUserNotification(ZonedDateTime notificationDate, User recipient) {
         SingleUserNotification singleUserNotification = new SingleUserNotification();
         singleUserNotification.setNotificationDate(notificationDate);
@@ -21,6 +28,14 @@ public class NotificationFactory {
         return singleUserNotification;
     }
 
+    /**
+     * Generates a GroupNotification with the given arguments.
+     *
+     * @param notificationDate The notification date of the GroupNotification
+     * @param course           The Course of the GroupNotification's recipients
+     * @param type             The type of the GroupNotification
+     * @return The generated GroupNotification
+     */
     public static GroupNotification generateGroupNotification(ZonedDateTime notificationDate, Course course, GroupNotificationType type) {
         GroupNotification groupNotification = new GroupNotification();
         groupNotification.setNotificationDate(notificationDate);
@@ -29,6 +44,13 @@ public class NotificationFactory {
         return groupNotification;
     }
 
+    /**
+     * Generates a SystemNotification with the given arguments.
+     *
+     * @param notificationDate The notification date of the SystemNotification
+     * @param expireDate       The expiry date of the SystemNotification
+     * @return The generated SystemNotification
+     */
     public static SystemNotification generateSystemNotification(ZonedDateTime notificationDate, ZonedDateTime expireDate) {
         SystemNotification systemNotification = new SystemNotification();
         systemNotification.setNotificationDate(notificationDate);
