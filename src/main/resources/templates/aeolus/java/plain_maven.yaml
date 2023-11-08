@@ -22,5 +22,5 @@ metadata:
             - '"1000"'
 actions:
     - name: maven
-      script: maven clean test
+      script: mvn clean test
       run_always: false
