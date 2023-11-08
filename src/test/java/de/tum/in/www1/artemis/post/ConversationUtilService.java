@@ -86,12 +86,24 @@ public class ConversationUtilService {
     @Autowired
     private UserUtilService userUtilService;
 
+    /**
+     * Creates and saves a Course with disabled posts.
+     *
+     * @return The created Course
+     */
     public Course createCourseWithPostsDisabled() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
         return courseRepo.save(course);
     }
 
+    /**
+     * Creates and saves a Course. Also creates and saves two TextExercises and two Lectures for the Course. Also creates and saves a PlagiarismCase for the first TextExercise.
+     * Creates and saves Posts for each of the created entities.
+     *
+     * @param userPrefix The prefix of the author's login
+     * @return A List of the created Posts
+     */
     public List<Post> createPostsWithinCourse(String userPrefix) {
 
         List<Exercise> testExercises = new ArrayList<>();
@@ -139,6 +151,17 @@ public class ConversationUtilService {
         return posts;
     }
 
+    /**
+     * Creates and saves a OneToOneChat for the given Course. Also creates and saves two ConversationParticipants for the OneToOneChat. Also creates and saves the given number
+     * of Posts with AnswerPosts and Reactions.
+     *
+     * @param course        The Course the OneToOneChat belongs to
+     * @param student1      The first User to create a ConversationParticipant for
+     * @param student2      The second User to create a ConversationParticipant for
+     * @param numberOfPosts The number of Posts to create
+     * @param userPrefix    The prefix of the author's login (the login is appended with "student1")
+     * @return A List of the created Posts
+     */
     public List<Post> createPostsWithAnswersAndReactionsAndConversation(Course course, User student1, User student2, int numberOfPosts, String userPrefix) {
         var chat = new OneToOneChat();
         chat.setCourse(course);
@@ -189,6 +212,13 @@ public class ConversationUtilService {
         return posts;
     }
 
+    /**
+     * Creates and saves a Course. Also creates and saves two TextExercises and two Lectures for the Course. Also creates and saves a PlagiarismCase for the first TextExercise.
+     * Creates and saves a Post and an AnswerPost for each of the created entities.
+     *
+     * @param userPrefix The prefix of the author's login (the login is appended with "student1")
+     * @return A List of the created Posts
+     */
     public List<Post> createPostsWithAnswerPostsWithinCourse(String userPrefix) {
         List<Post> posts = createPostsWithinCourse(userPrefix);
 
@@ -219,6 +249,13 @@ public class ConversationUtilService {
         return posts;
     }
 
+    /**
+     * Creates and saves a Post for each of the given ExerciseContexts.
+     *
+     * @param exerciseContexts The ExerciseContexts the Posts belong to
+     * @param userPrefix       The prefix of the authors' logins (the logins are appended with ["student" + (index of ExerciseContext + 1)])
+     * @return A List of the created Posts
+     */
     private List<Post> createBasicPosts(Exercise[] exerciseContexts, String userPrefix) {
         List<Post> posts = new ArrayList<>();
         for (Exercise exerciseContext : exerciseContexts) {
@@ -233,6 +270,13 @@ public class ConversationUtilService {
         return posts;
     }
 
+    /**
+     * Creates and saves a Post for each of the given LectureContexts.
+     *
+     * @param lectureContexts The LectureContexts the Posts belong to
+     * @param userPrefix      The prefix of the authors' logins (the logins are appended with "tutor" + (index of LectureContext + 1))
+     * @return A List of the created Posts
+     */
     private List<Post> createBasicPosts(Lecture[] lectureContexts, String userPrefix) {
         List<Post> posts = new ArrayList<>();
         for (Lecture lectureContext : lectureContexts) {
@@ -246,6 +290,14 @@ public class ConversationUtilService {
         return posts;
     }
 
+    /**
+     * Creates and saves a Post for each of the given CourseWideContexts.
+     *
+     * @param courseContext      The Course the Posts belong to
+     * @param courseWideContexts The CourseWideContexts the Posts belong to
+     * @param userPrefix         The prefix of the authors' logins (the logins are appended with "editor" + (index of CourseWideContext + 1))
+     * @return A List of the created Posts
+     */
     private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts, String userPrefix) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < courseWideContexts.length; i++) {
@@ -258,6 +310,13 @@ public class ConversationUtilService {
         return posts;
     }
 
+    /**
+     * Creates and saves a Post for the given PlagiarismCase.
+     *
+     * @param plagiarismCase The PlagiarismCase the Post belongs to
+     * @param userPrefix     The prefix of the author's login the Post belongs to (the login is appended with "instructor1")
+     * @return The created Post
+     */
     public Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
         Post postToAdd = ConversationFactory.createBasicPost(0, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "instructor", 1)));
         postToAdd.setPlagiarismCase(plagiarismCase);
@@ -265,6 +324,14 @@ public class ConversationUtilService {
         return postRepository.save(postToAdd);
     }
 
+    /**
+     * Creates and saves 3 Posts for the given Conversation.
+     *
+     * @param conversation The Conversation the Posts belong to
+     * @param userPrefix   The prefix of the authors' logins (the logins are appended with userRole + (index of created Post + 1))
+     * @param userRole     The role of the Users the Posts belong to
+     * @return A List of the created Posts
+     */
     private List<Post> createBasicPosts(Conversation conversation, String userPrefix, String userRole) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
@@ -276,6 +343,13 @@ public class ConversationUtilService {
         return posts;
     }
 
+    /**
+     * Creates and saves an AnswerPost for the given Post.
+     *
+     * @param post       The Post the AnswerPost belongs to
+     * @param userPrefix The prefix of the author's login (the login is appended with "student1")
+     * @return A Set of the created AnswerPost
+     */
     private Set<AnswerPost> createBasicAnswers(Post post, String userPrefix) {
         Set<AnswerPost> answerPosts = new HashSet<>();
         AnswerPost answerPost = new AnswerPost();
@@ -288,6 +362,13 @@ public class ConversationUtilService {
         return answerPosts;
     }
 
+    /**
+     * Creates and saves an AnswerPost for the given Post. The AnswerPost is marked as resolving the Post and the Post is marked as resolved.
+     *
+     * @param post       The Post the AnswerPost resolves
+     * @param userPrefix The prefix of the author's login (the login is appended with "student1")
+     * @return A Set of the created AnswerPost
+     */
     private Set<AnswerPost> createBasicAnswersThatResolves(Post post, String userPrefix) {
         Set<AnswerPost> answerPosts = new HashSet<>();
         AnswerPost answerPost = new AnswerPost();
@@ -302,12 +383,22 @@ public class ConversationUtilService {
         return answerPosts;
     }
 
+    /**
+     * Asserts that the sensitive information of the Users is hidden in the given Postings.
+     *
+     * @param postings The list of Postings to check
+     */
     public <T extends Posting> void assertSensitiveInformationHidden(@NotNull List<T> postings) {
         for (Posting posting : postings) {
             assertSensitiveInformationHidden(posting);
         }
     }
 
+    /**
+     * Asserts that the sensitive information of the User is hidden in a Posting.
+     *
+     * @param posting The Posting to check
+     */
     public void assertSensitiveInformationHidden(@NotNull Posting posting) {
         if (posting.getAuthor() != null) {
             assertThat(posting.getAuthor().getEmail()).isNull();
@@ -316,6 +407,11 @@ public class ConversationUtilService {
         }
     }
 
+    /**
+     * Asserts that the sensitive information of the User is hidden in a Reaction.
+     *
+     * @param reaction The Reaction to check
+     */
     public void assertSensitiveInformationHidden(@NotNull Reaction reaction) {
         if (reaction.getUser() != null) {
             assertThat(reaction.getUser().getEmail()).isNull();
@@ -324,6 +420,13 @@ public class ConversationUtilService {
         }
     }
 
+    /**
+     * Creates and saves a OneToOneChat for the given Course. Also creates and saves two ConversationParticipants for the OneToOneChat.
+     *
+     * @param course     The Course the OneToOneChat belongs to
+     * @param userPrefix The prefix of the Users' logins (the logins are appended with "tutor1" and "tutor2")
+     * @return The created OneToOneChat
+     */
     public Conversation createOneToOneChat(Course course, String userPrefix) {
         Conversation conversation = new OneToOneChat();
         conversation.setCourse(course);
@@ -337,24 +440,61 @@ public class ConversationUtilService {
         return conversationRepository.save(conversation);
     }
 
+    /**
+     * Creates and saves a Channel for the given Course. The Channel is course wide.
+     *
+     * @param course      The Course the Channel belongs to
+     * @param channelName The name of the Channel
+     * @return The created Channel
+     */
     public Channel createCourseWideChannel(Course course, String channelName) {
         Channel channel = ConversationFactory.generatePublicChannel(course, channelName, true);
         return conversationRepository.save(channel);
     }
 
+    /**
+     * Creates and saves a Channel for the given Course. The Channel is not course wide.
+     *
+     * @param course      The Course the Channel belongs to
+     * @param channelName The name of the Channel
+     * @return The created Channel
+     */
     public Channel createPublicChannel(Course course, String channelName) {
         Channel channel = ConversationFactory.generatePublicChannel(course, channelName, false);
         return conversationRepository.save(channel);
     }
 
+    /**
+     * Creates and saves a ConversationParticipant for the given Conversation.
+     *
+     * @param conversation The Conversation the ConversationParticipant belongs to
+     * @param userName     The login of the User the ConversationParticipant belongs to
+     * @return The created ConversationParticipant
+     */
     public ConversationParticipant addParticipantToConversation(Conversation conversation, String userName) {
         return createConversationParticipant(conversation, userName, false);
     }
 
+    /**
+     * Creates and saves a ConversationParticipant for the given Conversation.
+     *
+     * @param conversation         The Conversation the ConversationParticipant belongs to
+     * @param userName             The login of the User the ConversationParticipant belongs to
+     * @param isConversationHidden True if the Conversation is hidden
+     * @return The created ConversationParticipant
+     */
     public ConversationParticipant addParticipantToConversation(Conversation conversation, String userName, boolean isConversationHidden) {
         return createConversationParticipant(conversation, userName, isConversationHidden);
     }
 
+    /**
+     * Creates and saves a ConversationParticipant for the given Conversation.
+     *
+     * @param conversation         The Conversation the ConversationParticipant belongs to
+     * @param userName             The login of the User the ConversationParticipant belongs to
+     * @param isConversationHidden True if the Conversation is hidden
+     * @return The created ConversationParticipant
+     */
     private ConversationParticipant createConversationParticipant(Conversation conversation, String userName, boolean isConversationHidden) {
         ConversationParticipant conversationParticipant = new ConversationParticipant();
         conversationParticipant.setConversation(conversation);
@@ -365,6 +505,14 @@ public class ConversationUtilService {
         return conversationParticipantRepository.save(conversationParticipant);
     }
 
+    /**
+     * Creates and saves a GroupChat. Also creates and saves a Post with a Reaction and an AnswerPost with a Reaction.
+     *
+     * @param login       The login of the User the Post and AnswerPost belong to
+     * @param course      The Course the GroupChat belongs to
+     * @param messageText The content of the Post
+     * @return The created GroupChat as a Conversation
+     */
     public Conversation addMessageWithReplyAndReactionInGroupChatOfCourseForUser(String login, Course course, String messageText) {
         Conversation groupChat = new GroupChat();
         groupChat.setCourse(course);
@@ -373,10 +521,25 @@ public class ConversationUtilService {
         return conversationRepository.save(groupChat);
     }
 
+    /**
+     * Creates and saves a Post with a Reaction.
+     *
+     * @param login        The login of the User the Post and Reaction belong to
+     * @param conversation The Conversation the Post belongs to
+     * @return The created Post
+     */
     public Post addMessageToConversation(String login, Conversation conversation) {
         return createMessageWithReactionForUser(login, "test", conversation);
     }
 
+    /**
+     * Creates and saves a OneToOneChat. Also creates and saves a Post with a Reaction and an AnswerPost with a Reaction.
+     *
+     * @param login       The login of the User the Post and AnswerPost belong to
+     * @param course      The Course the OneToOneChat belongs to
+     * @param messageText The content of the Post
+     * @return The created OneToOneChat as a Conversation
+     */
     public Conversation addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(String login, Course course, String messageText) {
         Conversation oneToOneChat = new OneToOneChat();
         oneToOneChat.setCourse(course);
@@ -385,6 +548,12 @@ public class ConversationUtilService {
         return conversationRepository.save(oneToOneChat);
     }
 
+    /**
+     * Creates and saves an AnswerPost with a Reaction for the given Post.
+     *
+     * @param login               The login of the User the AnswerPost and Reaction belong to
+     * @param answerPostBelongsTo The Post the AnswerPost belongs to
+     */
     public void addThreadReplyWithReactionForUserToPost(String login, Post answerPostBelongsTo) {
         AnswerPost answerPost = new AnswerPost();
         answerPost.setAuthor(userUtilService.getUserByLogin(login));
@@ -396,6 +565,12 @@ public class ConversationUtilService {
         answerPostRepository.save(answerPost);
     }
 
+    /**
+     * Creates and saves a Reaction for the given Post.
+     *
+     * @param login The login of the User the Reaction belongs to
+     * @param post  The Post the Reaction belongs to
+     */
     public void addReactionForUserToPost(String login, Post post) {
         Reaction reaction = ConversationFactory.createReactionForUser(userUtilService.getUserByLogin(login));
         reaction.setPost(post);
@@ -404,6 +579,12 @@ public class ConversationUtilService {
         reactionRepository.save(reaction);
     }
 
+    /**
+     * Creates and saves a Reaction for the given AnswerPost.
+     *
+     * @param login      The login of the User the Reaction belongs to
+     * @param answerPost The AnswerPost the Reaction belongs to
+     */
     public void addReactionForUserToAnswerPost(String login, AnswerPost answerPost) {
         Reaction reaction = ConversationFactory.createReactionForUser(userUtilService.getUserByLogin(login));
         reaction.setAnswerPost(answerPost);
@@ -411,6 +592,14 @@ public class ConversationUtilService {
         reactionRepository.save(reaction);
     }
 
+    /**
+     * Creates and saves a Channel, a Post and a Reaction. Also creates and saves an AnswerPost with a Reaction.
+     *
+     * @param login       The login of the User the Post, AnswerPost and Reaction belong to
+     * @param course      The Course the Channel belongs to
+     * @param messageText The content of the Post
+     * @return The created Channel as a Conversation
+     */
     public Conversation addMessageInChannelOfCourseForUser(String login, Course course, String messageText) {
         Channel channel = new Channel();
         channel.setIsPublic(true);
@@ -423,6 +612,14 @@ public class ConversationUtilService {
         return conversationRepository.save(channel);
     }
 
+    /**
+     * Creates and saves a Channel, a Post and a Reaction.
+     *
+     * @param login       The login of the User the Post and Reaction belong to
+     * @param course      The Course the Channel belongs to
+     * @param messageText The content of the Post
+     * @return The created Channel as a Conversation
+     */
     public Conversation addOneMessageForUserInCourse(String login, Course course, String messageText) {
         Post message = new Post();
         Channel channel = new Channel();
@@ -442,6 +639,14 @@ public class ConversationUtilService {
         return conversationRepository.save(channel);
     }
 
+    /**
+     * Creates and saves a Post with a Reaction.
+     *
+     * @param login        The login of the User the Post and Reaction belong to
+     * @param messageText  The content of the Post
+     * @param conversation The Conversation the Post belongs to
+     * @return The created Post
+     */
     private Post createMessageWithReactionForUser(String login, String messageText, Conversation conversation) {
         Post message = new Post();
         message.setConversation(conversation);

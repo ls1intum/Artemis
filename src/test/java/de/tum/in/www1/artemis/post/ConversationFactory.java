@@ -19,6 +19,12 @@ public class ConversationFactory {
 
     private static int dayCount = 1;
 
+    /**
+     * Generates a Reaction for the given User.
+     *
+     * @param user The User to generate the Reaction for
+     * @return The generated Reaction
+     */
     public static Reaction createReactionForUser(User user) {
         Reaction reaction = new Reaction();
         reaction.setEmojiId("heart");
@@ -26,15 +32,22 @@ public class ConversationFactory {
         return reaction;
     }
 
-    public static Post createBasicPost(Integer i, User author) {
+    /**
+     * Generates a Post for the given User. This Method is used in a loop to generate multiple Posts.
+     *
+     * @param index  The index of the currently generated Post
+     * @param author The User that is the author of the Post
+     * @return The generated Post
+     */
+    public static Post createBasicPost(int index, User author) {
         Post post = new Post();
-        post.setTitle(String.format("Title Post %s", (i + 1)));
-        post.setContent(String.format("Content Post %s", (i + 1)));
+        post.setTitle(String.format("Title Post %s", (index + 1)));
+        post.setContent(String.format("Content Post %s", (index + 1)));
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
         post.setAuthor(author);
         post.setCreationDate(ZonedDateTime.of(2015, 11, dayCount, 23, 45, 59, 1234, ZoneId.of("UTC")));
-        String tag = String.format("Tag %s", (i + 1));
+        String tag = String.format("Tag %s", (index + 1));
         Set<String> tags = new HashSet<>();
         tags.add(tag);
         post.setTags(tags);
@@ -43,10 +56,24 @@ public class ConversationFactory {
         return post;
     }
 
+    /**
+     * Generates a Channel for the given Course.
+     *
+     * @param course The Course to generate the Channel for
+     * @return The generated Channel
+     */
     public static Channel generateCourseWideChannel(Course course) {
         return generatePublicChannel(course, "test", true);
     }
 
+    /**
+     * Generates a Channel for the given Course.
+     *
+     * @param course       The Course to generate the Channel for
+     * @param channelName  The name of the Channel
+     * @param isCourseWide True, if the Channel is course wide
+     * @return The generated Channel
+     */
     public static Channel generatePublicChannel(Course course, String channelName, boolean isCourseWide) {
         Channel channel = new Channel();
         channel.setCourse(course);
