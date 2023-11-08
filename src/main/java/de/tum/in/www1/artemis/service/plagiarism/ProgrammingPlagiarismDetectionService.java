@@ -126,7 +126,6 @@ class ProgrammingPlagiarismDetectionService {
 
                 log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", textPlagiarismResult.getComparisons().size(),
                         TimeLogUtil.formatDurationFrom(start));
-                limitAndSavePlagiarismResult(textPlagiarismResult);
                 log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
                 return textPlagiarismResult;
             }
@@ -137,7 +136,6 @@ class ProgrammingPlagiarismDetectionService {
 
             log.info("JPlag programming comparison done in {}", TimeLogUtil.formatDurationFrom(start));
             plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
-            limitAndSavePlagiarismResult(textPlagiarismResult);
             return textPlagiarismResult;
         }
         finally {
@@ -227,19 +225,6 @@ class ProgrammingPlagiarismDetectionService {
         }
 
         return result;
-    }
-
-    /**
-     * Sorts and limits the text plagiarism result amount to 500 and saves it into the database.
-     * Removes the previously saved result.
-     *
-     * @param textPlagiarismResult the plagiarism result to save
-     */
-    private void limitAndSavePlagiarismResult(TextPlagiarismResult textPlagiarismResult) {
-        // TODO: limit the amount temporarily because of database issues
-        textPlagiarismResult.sortAndLimit(100);
-        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", textPlagiarismResult.getComparisons().size());
-        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(textPlagiarismResult);
     }
 
     /**
