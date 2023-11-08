@@ -27,6 +27,7 @@ services:
             SORRY_CYPRESS_RERUN_COUNT: "${bamboo_RerunBuildTriggerReason_noOfRetries}"
             SORRY_CYPRESS_PROJECT_ID: "artemis-mysql"
             NO_COLOR: "1"
+            CYPRESS_DOWNLOAD_MIRROR: "https://cy-cdn.currents.dev"
         command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:run"
         volumes:
             - ..:/app/artemis
