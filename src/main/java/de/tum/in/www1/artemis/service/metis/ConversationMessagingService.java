@@ -18,10 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.ConversationWebSocketRecipientSummary;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -137,12 +134,14 @@ public class ConversationMessagingService extends PostingService {
     }
 
     private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage, Set<User> mentionedUsers) {
-        Set<ConversationWebSocketRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+        Set<ConversationNotificationRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
         log.debug("      getWebSocketRecipients DONE");
-        Set<User> broadcastRecipients = webSocketRecipients.stream().map(summary -> new User(summary.userId(), summary.userLogin(), summary.userLangKey(), summary.userEmail()))
+        Set<User> broadcastRecipients = webSocketRecipients.stream()
+                .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
                 .collect(Collectors.toSet());
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
-        mentionedUsers = mentionedUsers.stream().map(user -> new User(user.getId(), user.getLogin(), user.getLangKey(), user.getEmail())).collect(Collectors.toSet());
+        mentionedUsers = mentionedUsers.stream().map(user -> new User(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getLangKey(), user.getEmail()))
+                .collect(Collectors.toSet());
         broadcastRecipients.addAll(mentionedUsers);
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
@@ -190,28 +189,29 @@ public class ConversationMessagingService extends PostingService {
      * @param mentionedUsers      users mentioend within the message
      * @return filtered list of users that are supposed to receive a notification
      */
-    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationWebSocketRecipientSummary> webSocketRecipients,
+    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationNotificationRecipientSummary> webSocketRecipients,
             Set<User> mentionedUsers) {
         // Initialize filter with check for author
-        Predicate<ConversationWebSocketRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.userId(), author.getId());
+        Predicate<ConversationNotificationRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.userId(), author.getId());
 
         if (conversation instanceof Channel channel) {
             // If a channel is not an announcement channel, filter out users, that hid the conversation
             if (!channel.getIsAnnouncementChannel()) {
-                filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden() || mentionedUsers
-                        .contains(new User(recipientSummary.userId(), recipientSummary.userLogin(), recipientSummary.userLangKey(), recipientSummary.userEmail())));
+                filter = filter.and(summary -> !summary.isConversationHidden() || mentionedUsers
+                        .contains(new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail())));
             }
 
             // If a channel is not visible to students, filter out participants that are only students
             if (!conversationService.isChannelVisibleToStudents(channel)) {
-                filter = filter.and(ConversationWebSocketRecipientSummary::isAtLeastTutorInCourse);
+                filter = filter.and(ConversationNotificationRecipientSummary::isAtLeastTutorInCourse);
             }
         }
         else {
             filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden());
         }
 
-        return webSocketRecipients.stream().filter(filter).map(summary -> new User(summary.userId(), summary.userLogin(), summary.userLangKey(), summary.userEmail()))
+        return webSocketRecipients.stream().filter(filter)
+                .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
                 .collect(Collectors.toSet());
     }
 
