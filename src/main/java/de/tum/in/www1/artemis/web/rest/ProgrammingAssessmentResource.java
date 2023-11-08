@@ -197,6 +197,10 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
                 singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(programmingExercise, optionalStudent.get(), newManualResult);
             }
         }
+
+        // Re-load result to fetch the test cases
+        newManualResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(newManualResult.getId());
+
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
             newManualResult.getParticipation().filterSensitiveInformation();
