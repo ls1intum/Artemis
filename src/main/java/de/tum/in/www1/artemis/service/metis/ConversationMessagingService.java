@@ -367,7 +367,7 @@ public class ConversationMessagingService extends PostingService {
     }
 
     /**
-     * Sends notification to affected groups
+     * Saves announcement notifications for each course group
      *
      * @param message message that triggered the notification
      * @param channel announcement channel the message belongs to

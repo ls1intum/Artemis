@@ -41,6 +41,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
@@ -48,6 +49,7 @@ import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
@@ -177,11 +179,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateConversationPostInCourseWideChannel() throws Exception {
-        Channel channel = conversationUtilService.createCourseWideChannel(course, "test");
-        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateConversationPostInCourseWideChannel(boolean isAnnouncement) throws Exception {
+        Channel channel = conversationUtilService.createCourseWideChannel(course, "test", isAnnouncement);
+        ConversationParticipant otherParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
 
         Post postToSave = new Post();
@@ -194,6 +197,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation participants should be notified via one broadcast
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostDTO.class));
+
+        if (isAnnouncement) {
+            verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(otherParticipant.getUser()), any(Post.class));
+            verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(author.getUser()), any(Post.class));
+        }
+        else {
+            verify(mailService, never()).sendNotification(any(Notification.class), any(User.class), any(Post.class));
+        }
     }
 
     @ParameterizedTest

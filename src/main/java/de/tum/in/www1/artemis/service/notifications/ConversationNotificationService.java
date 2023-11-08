@@ -62,7 +62,9 @@ public class ConversationNotificationService {
             notificationText = NEW_MESSAGE_CHANNEL_TEXT;
             placeholders = new String[] { course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(), channel.getName(),
                     createdMessage.getAuthor().getName(), "channel" };
-            notificationType = NotificationType.NEW_ANNOUNCEMENT_POST;
+            if (channel.getIsAnnouncementChannel()) {
+                notificationType = NotificationType.NEW_ANNOUNCEMENT_POST;
+            }
         }
         else if (createdMessage.getConversation() instanceof GroupChat groupChat) {
             notificationText = NEW_MESSAGE_GROUP_CHAT_TEXT;
@@ -95,6 +97,7 @@ public class ConversationNotificationService {
         notificationSubject.setContent(createdMessage.getContent());
         notificationSubject.setTitle(createdMessage.getTitle());
         notificationSubject.setCourse(course);
+        notificationSubject.setAuthor(createdMessage.getAuthor());
         generalInstantNotificationService.sendNotification(notification, recipients, notificationSubject);
     }
 
