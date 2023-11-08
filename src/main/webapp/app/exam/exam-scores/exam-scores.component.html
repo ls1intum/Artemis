@@ -4,6 +4,15 @@
             <span class="sr-only">Loading...</span>
         </div>
     </div>
+    <div *ngIf="!isLoading && (!studentResults || !exerciseGroups)">
+        <div class="alert alert-warning" *ngIf="!exerciseGroups">
+            <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+            <span>{{ 'artemisApp.examScores.noExerciseGroupAvailable' | artemisTranslate }}</span>
+        </div>
+        <div class="alert alert-info" *ngIf="!studentResults">
+            <span>{{ 'artemisApp.examScores.noStudentResultAvailable' | artemisTranslate }}</span>
+        </div>
+    </div>
 
     <div *ngIf="!isLoading && studentResults && exerciseGroups">
         <div class="d-flex">
