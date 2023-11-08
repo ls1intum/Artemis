@@ -74,4 +74,14 @@ describe('FeedbackSuggestionBadgeComponent', () => {
         expect(component.text).toBe('artemisApp.assessment.suggestion.default');
         expect(component.tooltip).toBe('artemisApp.assessment.suggestionTitle.default');
     });
+
+    it('should ignore the useDefaultText setting for ADAPTED feedback', () => {
+        component.useDefaultText = true;
+        component.feedback = new Feedback();
+        jest.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.ADAPTED);
+        jest.spyOn(translateService, 'instant').mockReturnValue('Mocked Tooltip');
+
+        expect(component.text).toBe('artemisApp.assessment.suggestion.adapted');
+        expect(component.tooltip).toBe('Mocked Tooltip');
+    });
 });

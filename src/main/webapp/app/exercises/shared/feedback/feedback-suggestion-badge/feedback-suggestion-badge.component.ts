@@ -21,17 +21,19 @@ export class FeedbackSuggestionBadgeComponent {
     constructor(private translateService: TranslateService) {}
 
     get text(): string {
+        const feedbackSuggestionType = Feedback.getFeedbackSuggestionType(this.feedback);
+        if (feedbackSuggestionType === FeedbackSuggestionType.ADAPTED) {
+            // Always mark adapted feedback suggestions as such, even with the default badge in text mode
+            return 'artemisApp.assessment.suggestion.adapted';
+        }
         if (this.useDefaultText) {
             return 'artemisApp.assessment.suggestion.default';
         }
-        const feedbackSuggestionType = Feedback.getFeedbackSuggestionType(this.feedback);
         switch (feedbackSuggestionType) {
             case FeedbackSuggestionType.SUGGESTED:
                 return 'artemisApp.assessment.suggestion.suggested';
             case FeedbackSuggestionType.ACCEPTED:
                 return 'artemisApp.assessment.suggestion.accepted';
-            case FeedbackSuggestionType.ADAPTED:
-                return 'artemisApp.assessment.suggestion.adapted';
             default:
                 return '';
         }
