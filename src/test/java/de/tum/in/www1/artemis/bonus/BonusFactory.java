@@ -10,13 +10,13 @@ import de.tum.in.www1.artemis.domain.GradingScale;
 public class BonusFactory {
 
     /**
-     * Generates a Bonus instance with given arguments.
+     * Generates a Bonus with the given arguments.
      *
-     * @param bonusStrategy         of bonus
-     * @param weight                of bonus
-     * @param sourceGradingScaleId  of sourceGradingScale of bonus
-     * @param bonusToGradingScaleId of bonusToGradingScale bonus
-     * @return a new Bonus instance associated with the grading scales corresponding to ids bonusToGradingScaleId and bonusToGradingScaleId.
+     * @param bonusStrategy         The bonus strategy of the bonus
+     * @param weight                The weight of the bonus
+     * @param sourceGradingScaleId  The id of the grading scale that is used as the source for the bonus
+     * @param bonusToGradingScaleId The id of the grading scale that is used as the target for the bonus
+     * @return The generated Bonus
      */
     public static Bonus generateBonus(BonusStrategy bonusStrategy, Double weight, long sourceGradingScaleId, long bonusToGradingScaleId) {
         Bonus bonus = new Bonus();
