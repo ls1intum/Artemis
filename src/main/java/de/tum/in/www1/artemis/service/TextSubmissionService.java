@@ -124,7 +124,8 @@ public class TextSubmissionService extends SubmissionService {
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound) {
-        return super.getRandomAssessableSubmission(textExercise, skipAssessmentQueue, examMode, correctionRound, textSubmissionRepository::findById);
+        return super.getRandomAssessableSubmission(textExercise, skipAssessmentQueue, examMode, correctionRound,
+                textSubmissionRepository::findByIdWithEagerParticipationExerciseResultAssessor);
     }
 
     /**
