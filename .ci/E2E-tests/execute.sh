@@ -18,9 +18,6 @@ mv ./*.war build/libs/
 # pass current host's hostname to the docker container for server.url (see docker compose config file)
 export HOST_HOSTNAME=$(hostname)
 
-# use alternative cypress version to avoid blocking sorry cypress (see https://currents.dev/readme/integration-with-cypress/alternative-cypress-binaries)
-export CYPRESS_DOWNLOAD_MIRROR=https://cy-cdn.currents.dev
-
 cd docker
 #just pull everything else than artemis-app as we build it later either way
 docker compose -f $COMPOSE_FILE pull artemis-cypress $DB nginx
