@@ -89,8 +89,11 @@ public class ConversationNotificationService {
 
         sendNotificationViaWebSocket(notification, recipients.stream().filter(recipient -> !mentionedUsers.contains(recipient)).collect(Collectors.toSet()));
 
-        createdMessage.setCourse(course);
-        generalInstantNotificationService.sendNotification(notification, recipients, createdMessage);
+        Post notificationSubject = new Post();
+        notificationSubject.setId(createdMessage.getId());
+        notificationSubject.setContent(createdMessage.getContent());
+        notificationSubject.setCourse(course);
+        generalInstantNotificationService.sendNotification(notification, recipients, notificationSubject);
     }
 
     private void sendNotificationViaWebSocket(ConversationNotification notification, Set<User> recipients) {
