@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,13 +38,13 @@ public class LongFeedbackTextResource {
      */
     @GetMapping("results/{resultId}/feedbacks/{feedbackId}/long-feedback")
     @EnforceAtLeastStudent
-    public ResponseEntity<LongFeedbackText> getLongFeedback(@PathVariable Long resultId, @PathVariable Long feedbackId) {
+    public ResponseEntity<String> getLongFeedback(@PathVariable Long resultId, @PathVariable Long feedbackId) {
         log.debug("REST request to get long feedback: {} (result: {})", feedbackId, resultId);
 
         final LongFeedbackText longFeedbackText = longFeedbackTextRepository.findByFeedbackIdWithFeedbackAndResultAndParticipationElseThrow(feedbackId);
         checkCanAccessResultElseThrow(resultId, longFeedbackText);
 
-        return ResponseEntity.ok(longFeedbackText);
+        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(longFeedbackText.getText());
     }
 
     private void checkCanAccessResultElseThrow(final Long resultId, final LongFeedbackText longFeedbackText) {
