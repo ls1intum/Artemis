@@ -220,10 +220,6 @@ public class LocalCIConnectorService {
         // Remove unnecessary information from the new submission.
         submission.getParticipation().setSubmissions(null);
         programmingMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
-
-        // Trigger the build for the new submission on the local CI system.
-        // TODO: this is already invoked in the service method processNewProgrammingSubmission above, however without the commit hash, we should probably unify the methods
-        localCITriggerService.triggerBuild(participation, commit.getCommitHash());
     }
 
     private Commit extractCommitInfo(String commitHash, Repository repository) throws IOException, GitAPIException {
