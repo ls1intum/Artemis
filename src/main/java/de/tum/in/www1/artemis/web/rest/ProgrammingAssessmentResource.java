@@ -199,7 +199,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
 
         // Re-load result to fetch the test cases
-        newManualResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(newManualResult.getId());
+        newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(newManualResult.getId());
 
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {

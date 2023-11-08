@@ -143,6 +143,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
     Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
+    Optional<Result> findWithEagerSubmissionAndFeedbackAndTestCasesById(long resultId);
+
     /**
      * Gets the number of assessments with a rated result set by an assessor for an exercise
      *
@@ -679,6 +682,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default Result findByIdWithEagerSubmissionAndFeedbackElseThrow(long resultId) {
         return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+    }
+
+    default Result findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(long resultId) {
+        return findWithEagerSubmissionAndFeedbackAndTestCasesById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
     /**
