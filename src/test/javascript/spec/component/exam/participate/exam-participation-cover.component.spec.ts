@@ -352,7 +352,7 @@ describe('ExamParticipationCoverComponent', () => {
 
         fixture.detectChanges();
 
-        const examTimerDebugElement = fixture.debugElement.query(By.directive(ExamTimerComponent)); // Replace with the actual component class name
+        const examTimerDebugElement = fixture.debugElement.query(By.directive(ExamTimerComponent));
         expect(examTimerDebugElement).toBeTruthy();
     });
 });
