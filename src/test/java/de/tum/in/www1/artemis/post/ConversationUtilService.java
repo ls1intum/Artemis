@@ -134,6 +134,7 @@ public class ConversationUtilService {
         posts.addAll(createBasicPosts(course1, courseWideContexts, userPrefix));
         posts.addAll(createBasicPosts(createOneToOneChat(course1, userPrefix), userPrefix, "tutor"));
         posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
+        posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
 
         return posts;
     }
