@@ -34,7 +34,7 @@ export class AttachmentUnitService {
     update(lectureId: number, attachmentUnitId: number, formData: FormData, notificationText?: string): Observable<EntityResponseType> {
         return this.httpClient
             .put<AttachmentUnit>(
-                `${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}?keepFilename=true` +
+                `${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}?keepFilename=false` +
                     (notificationText ? `&notificationText=${notificationText}` : ''),
                 formData,
                 { observe: 'response' },
