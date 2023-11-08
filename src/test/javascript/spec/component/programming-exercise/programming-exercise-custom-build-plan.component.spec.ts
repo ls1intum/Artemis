@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { BuildAction, ProgrammingExercise, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
+import { BuildAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-custom-build-plan.component';
@@ -10,7 +10,6 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ProgrammingLanguage } from '../../../../cypress/support/constants';
 
 describe('ProgrammingExercise Custom Build Plan', () => {
     let mockThemeService: ThemeService;
