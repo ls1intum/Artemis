@@ -340,4 +340,12 @@ describe('QuizExercise Management Component', () => {
             expect(comp.filteredQuizExercises).toHaveLength(0);
         });
     });
+    it('should have working selection', () => {
+        // WHEN
+        comp.toggleExercise(quizExercise);
+
+        // THEN
+        expect(comp.selectedExercises[0]).toContainEntry(['id', quizExercise.id]);
+        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.quizExercises.length);
+    });
 });
