@@ -312,6 +312,8 @@ public final class Constants {
      */
     public static final String STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC = "/topic/studentExams/%s/working-time-change-during-conduction";
 
+    public static final int PUSH_NOTIFICATION_VERSION = 1;
+
     private Constants() {
     }
 }
