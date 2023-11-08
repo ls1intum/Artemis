@@ -11,7 +11,7 @@ import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v2.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v2.UMLModelV2Parser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v3.UMLModelV3Parser;
 
 public class UMLModelParser {
