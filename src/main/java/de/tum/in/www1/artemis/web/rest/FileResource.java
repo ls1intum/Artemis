@@ -217,7 +217,7 @@ public class FileResource {
             return new ResponseEntity<>(json, responseHeaders, HttpStatus.OK);
         }
         catch (IOException ex) {
-            log.debug("Error when retrieving aeolus template file : {}", ex.getMessage());
+            log.warn("Error when retrieving aeolus template file", ex);
             HttpHeaders responseHeaders = new HttpHeaders();
             return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
         }
