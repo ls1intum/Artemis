@@ -312,6 +312,9 @@ public final class Constants {
      */
     public static final String STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC = "/topic/studentExams/%s/working-time-change-during-conduction";
 
+    /**
+     * The value of the version field we send with each push notification to the native clients (Android & iOS).
+     */
     public static final int PUSH_NOTIFICATION_VERSION = 1;
 
     private Constants() {
