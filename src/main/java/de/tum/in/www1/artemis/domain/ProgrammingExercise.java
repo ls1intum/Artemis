@@ -923,7 +923,7 @@ public class ProgrammingExercise extends Exercise {
             return Windfile.toWindfile(aeolusDefinition);
         }
         catch (JsonSyntaxException e) {
-            log.error("Could not parse build plan configuration for programming exercise " + this.getId() + " with exception: " + e.getMessage());
+            log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
         }
         return null;
     }
