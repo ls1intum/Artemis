@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 public class ParticipantScoreService {
@@ -116,7 +117,8 @@ public class ParticipantScoreService {
         Set<Exercise> individualExercises = exercises.stream().filter(exercise -> !exercise.isTeamMode()).collect(Collectors.toSet());
         Set<Exercise> teamExercises = exercises.stream().filter(Exercise::isTeamMode).collect(Collectors.toSet());
 
-        Course course = exercises.stream().findAny().orElseThrow().getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercises.stream().findAny().orElseThrow(() -> new EntityNotFoundException("The result you are referring to does not exist"))
+                .getCourseViaExerciseGroupOrCourseMember();
 
         // For every student we want to calculate the score
         Map<Long, ScoreDTO> userIdToScores = users.stream().collect(Collectors.toMap(User::getId, user -> new ScoreDTO(user.getId(), user.getLogin(), 0.0, 0.0, 0.0)));
