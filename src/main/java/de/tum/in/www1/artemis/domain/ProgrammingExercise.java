@@ -880,19 +880,40 @@ public class ProgrammingExercise extends Exercise {
         this.irisSettings = irisSettings;
     }
 
+    /**
+     * Returns the JSON encoded custom build plan configuration
+     *
+     * @return the JSON encoded custom build plan configuration or null if the default one should be used
+     */
     public String getBuildPlanConfiguration() {
         return buildPlanConfiguration;
     }
 
+    /**
+     * Sets the JSON encoded custom build plan configuration
+     *
+     * @param buildPlanConfiguration the JSON encoded custom build plan configuration
+     */
     public void setBuildPlanConfiguration(String buildPlanConfiguration) {
         this.buildPlanConfiguration = buildPlanConfiguration;
     }
 
+    /**
+     * Returns the build plan definition as a {@link AeolusDefinition} object.
+     *
+     * @return the {@link AeolusDefinition} object or null if the JSON string could not be parsed
+     */
     private AeolusDefinition getBuildPlanDefinition() {
         Gson g = new Gson();
         return g.fromJson(this.buildPlanConfiguration, AeolusDefinition.class);
     }
 
+    /**
+     * We store the build plan configuration as a JSON string in the database, as it is easier to handle than a complex object structure.
+     * This method parses the JSON string and returns a {@link Windfile} object.
+     *
+     * @return the {@link Windfile} object or null if the JSON string could not be parsed
+     */
     public Windfile getWindfile() {
         try {
             AeolusDefinition aeolusDefinition = getBuildPlanDefinition();

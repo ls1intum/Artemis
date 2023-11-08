@@ -49,9 +49,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("/api")
 public class FileResource {
 
-    private static final int DAYS_TO_CACHE = 1;
-
     private final Logger log = LoggerFactory.getLogger(FileResource.class);
+
+    private static final int DAYS_TO_CACHE = 1;
 
     private final FileService fileService;
 
@@ -106,19 +106,6 @@ public class FileResource {
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
         this.filePathService = filePathService;
-    }
-
-    /**
-     * removes illegal characters and compares the resulting with the original file name
-     * If both are not equal, it throws an exception
-     *
-     * @param filename the filename which is validated
-     */
-    private static void sanitizeFilenameElseThrow(String filename) {
-        String sanitizedFileName = FileService.sanitizeFilename(filename);
-        if (!sanitizedFileName.equals(filename)) {
-            throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
-        }
     }
 
     /**
@@ -637,4 +624,16 @@ public class FileResource {
         }
     }
 
+    /**
+     * removes illegal characters and compares the resulting with the original file name
+     * If both are not equal, it throws an exception
+     *
+     * @param filename the filename which is validated
+     */
+    private static void sanitizeFilenameElseThrow(String filename) {
+        String sanitizedFileName = FileService.sanitizeFilename(filename);
+        if (!sanitizedFileName.equals(filename)) {
+            throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
+        }
+    }
 }

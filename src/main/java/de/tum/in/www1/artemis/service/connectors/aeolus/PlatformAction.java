@@ -25,6 +25,13 @@ public class PlatformAction extends Action {
         this.type = type;
     }
 
+    /**
+     * Converts a serialized action to a platform action. Gson can't know the type of the action during deserialization,
+     * so we have to do it manually.
+     *
+     * @param serializedAction the serialized action
+     * @return the platform action
+     */
     public static PlatformAction deserialize(SerializedAction serializedAction) {
         PlatformAction platformAction = new PlatformAction();
         platformAction.setName(serializedAction.getName());

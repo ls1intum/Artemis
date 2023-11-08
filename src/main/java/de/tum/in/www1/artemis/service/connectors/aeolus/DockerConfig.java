@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
-import java.util.*;
+import java.util.List;
 
 /**
  * Represents a Docker action that can be defined in a {@link Windfile}
@@ -19,7 +19,7 @@ public class DockerConfig {
         return image;
     }
 
-    private void setImage(String image) {
+    public void setImage(String image) {
         this.image = image;
     }
 
@@ -27,7 +27,7 @@ public class DockerConfig {
         return tag;
     }
 
-    private void setTag(String tag) {
+    public void setTag(String tag) {
         this.tag = tag;
     }
 
@@ -35,7 +35,7 @@ public class DockerConfig {
         return volumes;
     }
 
-    private void setVolumes(List<String> volumes) {
+    public void setVolumes(List<String> volumes) {
         this.volumes = volumes;
     }
 
@@ -43,7 +43,7 @@ public class DockerConfig {
         return parameters;
     }
 
-    private void setParameters(List<String> parameters) {
+    public void setParameters(List<String> parameters) {
         this.parameters = parameters;
     }
 }

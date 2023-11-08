@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents a windfile, the definition file for an aeolus build plan that
@@ -64,6 +65,12 @@ public class Windfile {
         this.actions = actions;
     }
 
+    /**
+     * Sets the id of the windfile. If no metadata is present, also sets the metadata.
+     *
+     * @param id the id of the windfile, which corresponds to the id of the build plan or Jenkinsfile
+     *               that is generated from this windfile
+     */
     public void setId(String id) {
         if (this.metadata == null) {
             this.metadata = new Metadata();

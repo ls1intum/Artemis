@@ -22,7 +22,12 @@ class AeolusTest {
         metadata.setAuthor("author");
         metadata.setId("id");
         metadata.setDescription("description");
-        metadata.setDocker(new DockerConfig());
+        DockerConfig dockerConfig = new DockerConfig();
+        dockerConfig.setImage("image");
+        dockerConfig.setVolumes(List.of("host:container"));
+        dockerConfig.setParameters(List.of("--param1", "--param2"));
+        dockerConfig.setTag("tag");
+        metadata.setDocker(dockerConfig);
         metadata.setName("name");
         metadata.setGitCredentials("gitCredentials");
         aeolusDefinition.setMetadata(metadata);
@@ -58,5 +63,8 @@ class AeolusTest {
             assertThat(windfile.getActions().get(i).getParameters()).isEqualTo(aeolusDefinition.getActions().get(i).getParameters());
             assertThat(windfile.getActions().get(i).isRunAlways()).isEqualTo(aeolusDefinition.getActions().get(i).isRunAlways());
         }
+        assertThat(windfile.getActions().stream().filter(action -> action instanceof ScriptAction)).hasSize(1);
+        assertThat(windfile.getActions().stream().filter(action -> action instanceof PlatformAction)).hasSize(1);
+        assertThat(windfile.getMetadata().getDocker()).isEqualTo(aeolusDefinition.getMetadata().getDocker());
     }
 }

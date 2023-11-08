@@ -15,6 +15,13 @@ public class ScriptAction extends Action {
         this.script = script;
     }
 
+    /**
+     * Converts a serialized action to a platform action. Gson can't know the type of the action during deserialization,
+     * so we have to do it manually.
+     *
+     * @param serializedAction the serialized action
+     * @return the script action
+     */
     public static ScriptAction deserialize(SerializedAction serializedAction) {
         ScriptAction scriptAction = new ScriptAction();
         scriptAction.setName(serializedAction.getName());
