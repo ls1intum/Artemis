@@ -216,7 +216,7 @@ public class ExerciseSharingService {
             }
 
             // remove the 'repoDownloadClonePath' part and 'zip' extension
-            String token = zipFilePath.subpath(1, zipFilePath.getNameCount()).toString().replace(".zip", "");
+            String token = Path.of(repoDownloadClonePath).relativize(zipFilePath).toString().replace(".zip", "");
             String tokenInB64 = Base64.getEncoder().encodeToString(token.getBytes()).replaceAll("=+$", "");
 
             URIBuilder builder = new URIBuilder();
