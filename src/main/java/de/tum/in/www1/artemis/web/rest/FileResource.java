@@ -196,26 +196,15 @@ public class FileResource {
      *
      * @param languagePrefix    The programming language for which the template file should be returned
      * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
+     * @param staticAnalysis    Whether the static analysis template should be used
+     * @param sequentialRuns    Whether the sequential runs template should be used
+     * @param testCoverage      Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
     private ResponseEntity<String> getAeolusTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix, Boolean staticAnalysis, Boolean sequentialRuns,
             Boolean testCoverage) {
         try {
-            List<String> fileNameComponents = new ArrayList<>();
-            if (staticAnalysis) {
-                fileNameComponents.add("static");
-            }
-            if (sequentialRuns) {
-                fileNameComponents.add("sequential");
-            }
-            if (testCoverage) {
-                fileNameComponents.add("coverage");
-            }
-            String accumulator = "default";
-            if (!projectTypePrefix.isEmpty()) {
-                accumulator = projectTypePrefix;
-            }
-            String fileName = fileNameComponents.stream().reduce(accumulator, (a, b) -> a + "_" + b) + ".yaml";
+            String fileName = buildAeolusTemplateName(projectTypePrefix, staticAnalysis, sequentialRuns, testCoverage);
             Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", languagePrefix, fileName));
             if (!fileResource.exists()) {
                 throw new IOException("File " + fileName + " not found");
@@ -235,11 +224,37 @@ public class FileResource {
     }
 
     /**
+     * Returns the file content of the template file for the given language and project type with the different options
+     *
+     * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
+     * @param staticAnalysis    whether the static analysis template should be used
+     * @param sequentialRuns    whether the sequential runs template should be used
+     * @param testCoverage      whether the test coverage template should be used
+     * @return The requested file, or 404 if the file doesn't exist
+     */
+    private String buildAeolusTemplateName(String projectTypePrefix, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage) {
+        List<String> fileNameComponents = new ArrayList<>();
+        if (staticAnalysis) {
+            fileNameComponents.add("static");
+        }
+        if (sequentialRuns) {
+            fileNameComponents.add("sequential");
+        }
+        if (testCoverage) {
+            fileNameComponents.add("coverage");
+        }
+        String accumulator = "default";
+        if (!projectTypePrefix.isEmpty()) {
+            accumulator = projectTypePrefix;
+        }
+        return fileNameComponents.stream().reduce(accumulator, (a, b) -> a + "_" + b) + ".yaml";
+    }
+
+    /**
      * Converts a YAML string to a JSON string for easier communication with the client
      *
      * @param yaml YAML string
      * @return JSON string
-     * @throws JsonProcessingException
      */
     private String convertYamlToJson(String yaml) throws JsonProcessingException {
         ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
