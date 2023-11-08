@@ -19,6 +19,17 @@ A red indicator shows the number of new messages.
 
 |notification-side-bar|
 
+Notifications About Incoming Messages and Replies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This video shows how web notifications works for incoming messages and replies:
+
+.. raw:: html
+
+    <iframe src="https://live.rbg.tum.de/w/artemisintro/40578?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
 Email Notifications
 ^^^^^^^^^^^^^^^^^^^
 

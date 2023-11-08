@@ -22,7 +22,7 @@ import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants'
     styleUrls: ['./lecture-update.component.scss'],
 })
 export class LectureUpdateComponent implements OnInit {
-    documentationType = DocumentationType.Lecture;
+    readonly documentationType: DocumentationType = 'Lecture';
 
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
 

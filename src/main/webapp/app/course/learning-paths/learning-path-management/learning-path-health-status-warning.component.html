@@ -2,7 +2,7 @@
     <div>
         <h5 class="alert-heading">{{ getWarningTitle(status) | artemisTranslate }}</h5>
         <p>{{ getWarningBody(status) | artemisTranslate }}</p>
-        <button *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']" type="button" class="btn btn-primary" (click)="onButtonClicked.emit()">
+        <button type="button" class="btn btn-primary" (click)="onButtonClicked.emit()">
             <span ngbTooltip="{{ getWarningHint(status) | artemisTranslate }}">{{ getWarningAction(status) | artemisTranslate }}</span>
         </button>
     </div>
