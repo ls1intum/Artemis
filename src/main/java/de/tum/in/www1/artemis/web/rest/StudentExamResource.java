@@ -232,7 +232,7 @@ public class StudentExamResource {
     }
 
     /**
-     * PATCH /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/attendance-check : Throw attandance Check Event in the student exam
+     * POST /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/attendance-check : Throw attandance Check Event in the student exam
      *
      * @param courseId     the course to which the student exams belong to
      * @param examId       the exam to which the student exams belong to
@@ -250,6 +250,12 @@ public class StudentExamResource {
 
         StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), examId).orElseThrow();
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExam.getId());
+
+        var exam = studentExam.getExam();
+        if (!exam.isVisibleToStudents()) {
+            throw new BadRequestAlertException("Exam is not visible to students", "exam", "examNotVisible");
+        }
+
         User currentUser = userRepository.getUser();
         var event = examLiveEventsService.createAndSendExamAttendanceCheckEvent(studentExam, message, currentUser);
 

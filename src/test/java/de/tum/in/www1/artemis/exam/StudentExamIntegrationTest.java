@@ -802,6 +802,17 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExamsCanNotBeSentBeforeVisibleDate() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(1));
+        exam1 = examRepository.save(exam1);
+
+        var testMessage = "Test message";
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/announcements", testMessage, ExamWideAnnouncementEventDTO.class,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExamAttendanceCheck() throws Exception {
         exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
         exam1 = examRepository.save(exam1);
@@ -820,13 +831,27 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testExamsCanNotBeSentBeforeVisibleDate() throws Exception {
+    void testExamsCanNotBeSentBeforeVisibleDateForAttendance() throws Exception {
         exam1.setVisibleDate(ZonedDateTime.now().plusMinutes(1));
         exam1 = examRepository.save(exam1);
 
         var testMessage = "Test message";
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/announcements", testMessage, ExamWideAnnouncementEventDTO.class,
-                HttpStatus.BAD_REQUEST);
+        request.postWithPlainStringResponseBody(
+                "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + studentExam1.getUser().getLogin() + "/attendance-check", testMessage,
+                ExamAttendanceCheckEventDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testExamAttendanceCheckForbidden() throws Exception {
+        exam1.setVisibleDate(ZonedDateTime.now().minusMinutes(1));
+        exam1 = examRepository.save(exam1);
+
+        var testMessage = "Test message";
+        request.postWithPlainStringResponseBody(
+                "/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + studentExam1.getUser().getLogin() + "/attendance-check", testMessage,
+                ExamAttendanceCheckEventDTO.class, HttpStatus.FORBIDDEN);
+
     }
 
     @Test
