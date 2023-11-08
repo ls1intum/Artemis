@@ -67,6 +67,11 @@ public class UserUtilService {
     @Autowired
     private UserTestRepository userTestRepository;
 
+    /**
+     * Changes the currently authorized User to the User with the given username.
+     *
+     * @param username The username of the User to change to
+     */
     public void changeUser(String username) {
         User user = getUserByLogin(username);
         List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
@@ -82,14 +87,14 @@ public class UserUtilService {
     }
 
     /**
-     * Generate users that have registration numbers
+     * Creates and saves the given amount of Users with the given arguments.
      *
-     * @param loginPrefix              prefix that will be added in front of every user's login
-     * @param groups                   groups that the users will be added
-     * @param authorities              authorities that the users will have
-     * @param amount                   amount of users to generate
-     * @param registrationNumberPrefix prefix that will be added in front of every user
-     * @return users that were generated
+     * @param loginPrefix              The prefix that will be added in front of every user's login
+     * @param groups                   The groups that the users will be added to
+     * @param authorities              The authorities that the users will have
+     * @param amount                   The amount of users to generate
+     * @param registrationNumberPrefix The prefix that will be added in front of every user's registration number
+     * @return The List of generated Users
      */
     public List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, String[] groups, Set<Authority> authorities, int amount, String registrationNumberPrefix) {
         List<User> generatedUsers = generateAndSaveActivatedUsers(loginPrefix, groups, authorities, amount);
@@ -99,10 +104,29 @@ public class UserUtilService {
         return generatedUsers;
     }
 
+    /**
+     * Creates and saves the given amount of Users with the given arguments.
+     *
+     * @param loginPrefix The prefix that will be added in front of every user's login
+     * @param groups      The groups that the users will be added to
+     * @param authorities The authorities that the users will have
+     * @param amount      The amount of users to generate
+     * @return The List of generated Users
+     */
     public List<User> generateAndSaveActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
         return generateAndSaveActivatedUsers(loginPrefix, USER_PASSWORD, groups, authorities, amount);
     }
 
+    /**
+     * Creates and saves the given amount of Users with the given arguments.
+     *
+     * @param loginPrefix        The prefix that will be added in front of every user's login
+     * @param commonPasswordHash The password hash that will be set for every user
+     * @param groups             The groups that the users will be added to
+     * @param authorities        The authorities that the users will have
+     * @param amount             The amount of users to generate
+     * @return The List of generated Users
+     */
     public List<User> generateAndSaveActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = 1; i <= amount; i++) {
@@ -120,12 +144,12 @@ public class UserUtilService {
     }
 
     /**
-     * Updates students starting with suffix 1 with the respective registration numbers
-     * Users have to exist to be updated otherwise an IllegalArgumentException is thrown
+     * Updates and saves the Users' registration numbers. The login of the updated Users is a concatenation of the testPrefix + "student" + a number counting from 1 to the size of
+     * the registrationNumbers list. Throws an IllegalArgumentException if the Users do not exist.
      *
-     * @param registrationNumbers registration numbers of users. Size controls the number of students getting updated.
-     * @param testPrefix          the prefix used for the student login
-     * @return the updated students
+     * @param registrationNumbers The registration numbers to set
+     * @param testPrefix          The prefix to use for the login
+     * @return A List of the updated Users
      */
     public List<User> setRegistrationNumberOfStudents(List<String> registrationNumbers, String testPrefix) {
         List<User> students = new ArrayList<>();
@@ -136,11 +160,11 @@ public class UserUtilService {
     }
 
     /**
-     * set the registration number of the user with the given login and saves the user in the repository
+     * Updates and saves the User's registration number.
      *
-     * @param login              login of the user, whose registration number will be changed
-     * @param registrationNumber new registration number to use
-     * @return the user
+     * @param login              The login of the User to update
+     * @param registrationNumber The registration number to set
+     * @return The updated User
      */
     public User setRegistrationNumberOfUserAndSave(String login, String registrationNumber) {
         User user = getUserByLogin(login);
@@ -148,21 +172,42 @@ public class UserUtilService {
     }
 
     /**
-     * set the registration number of the user and saves the user in the repository
+     * Updates and saves the User's registration number.
      *
-     * @param user               the user, whose registration number will be changed
-     * @param registrationNumber new registration number to use
-     * @return the user
+     * @param user               The User to update
+     * @param registrationNumber The registration number to set
+     * @return The updated User
      */
     public User setRegistrationNumberOfUserAndSave(User user, String registrationNumber) {
         user.setRegistrationNumber(registrationNumber);
         return userRepo.save(user);
     }
 
+    /**
+     * Creates and saves the given amount of Users with the given arguments.
+     *
+     * @param loginPrefix        The prefix that will be added in front of every user's login
+     * @param commonPasswordHash The password hash that will be set for every user
+     * @param groups             The groups that the users will be added to
+     * @param authorities        The authorities that the users will have
+     * @param amount             The amount of users to generate
+     * @return The List of generated Users
+     */
     public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
         return generateActivatedUsers(loginPrefix, commonPasswordHash, groups, authorities, 1, amount);
     }
 
+    /**
+     * Creates and saves Users with the given arguments. Creates [to - from + 1] Users.
+     *
+     * @param loginPrefix        The prefix that will be added in front of every user's login
+     * @param commonPasswordHash The password hash that will be set for every user
+     * @param groups             The groups that the users will be added to
+     * @param authorities        The authorities that the users will have
+     * @param from               The first number to append to the loginPrefix
+     * @param to                 The last number to append to the loginPrefix
+     * @return The List of generated Users
+     */
     public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int from, int to) {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = from; i <= to; i++) {
@@ -178,6 +223,13 @@ public class UserUtilService {
         return generatedUsers;
     }
 
+    /**
+     * Creates and saves a User. If a User with the given login already exists, the existing User is updated and saved.
+     *
+     * @param login          The login of the User
+     * @param hashedPassword The password hash of the User
+     * @return The created User
+     */
     public User createAndSaveUser(String login, String hashedPassword) {
         User user = UserFactory.generateActivatedUser(login, hashedPassword);
         if (userExistsWithLogin(login)) {
@@ -187,6 +239,13 @@ public class UserUtilService {
         return userRepo.save(user);
     }
 
+    /**
+     * Creates a User. If a User with the given login already exists, the newly created User's ID is set to the existing User's ID.
+     *
+     * @param login          The login of the User
+     * @param hashedPassword The password hash of the User
+     * @return The created User
+     */
     public User createOrReuseExistingUser(String login, String hashedPassword) {
         User user = UserFactory.generateActivatedUser(login, hashedPassword);
         if (userExistsWithLogin(login)) {
@@ -196,6 +255,12 @@ public class UserUtilService {
         return user;
     }
 
+    /**
+     * Creates and saves a User. If a User with the given login already exists, the existing User is updated and saved.
+     *
+     * @param login The login of the User
+     * @return The created User
+     */
     public User createAndSaveUser(String login) {
         User user = UserFactory.generateActivatedUser(login);
         if (userExistsWithLogin(login)) {
@@ -205,21 +270,31 @@ public class UserUtilService {
         return userRepo.save(user);
     }
 
+    /**
+     * Creates and saves multiple Users given the amounts for each role.
+     *
+     * @param numberOfStudents    The number of students to create
+     * @param numberOfTutors      The number of tutors to create
+     * @param numberOfEditors     The number of editors to create
+     * @param numberOfInstructors The number of instructors to create
+     * @return The List of created Users
+     */
     public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
         return addUsers("", numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
     }
 
     /**
-     * Adds the provided number of students and tutors into the user repository. Students login is a concatenation of the prefix "student" and a number counting from 1 to
-     * numberOfStudents Tutors login is a concatenation of the prefix "tutor" and a number counting from 1 to numberOfStudents Tutors are all in the "tutor" group and students in
-     * the "tumuser" group.
-     * To avoid accumulating a high number of users per course, this method also removes existing users from courses before adding new users.
+     * Creates and saves the provided number of students, tutors, editors and instructors. Also creates and saves an admin User if it does not exist.
+     * The login of the Users is a concatenation of the prefix, the role (student|tutor|editor|instructor) and a number counting from 1 to the number of Users with the
+     * corresponding role. The admin User's login is "admin". To avoid accumulating a high number of Users per Course, this method also removes existing users from Courses before
+     * adding new Users.
      *
-     * @param prefix              the prefix for the user login
-     * @param numberOfStudents    the number of students that will be added to the database
-     * @param numberOfTutors      the number of tutors that will be added to the database
-     * @param numberOfEditors     the number of editors that will be added to the database
-     * @param numberOfInstructors the number of instructors that will be added to the database
+     * @param prefix              The prefix for the User login
+     * @param numberOfStudents    The number of students to create
+     * @param numberOfTutors      The number of tutors to create
+     * @param numberOfEditors     The number of editors to create
+     * @param numberOfInstructors The number of instructors to create
+     * @return The List of created Users
      */
     public List<User> addUsers(String prefix, int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
         if (authorityRepository.count() == 0) {
@@ -272,11 +347,11 @@ public class UserUtilService {
     }
 
     /**
-     * generates and adds students to the repo, starting with student with the index to
+     * Creates and saves Users with student authorities. Creates [to - from + 1] Users.
      *
-     * @param prefix the test prefix
-     * @param from   first student to be added (inclusive)
-     * @param to     last student to be added (inclusive)
+     * @param prefix The prefix that will be added in front of every user's login
+     * @param from   The first number to append to the loginPrefix
+     * @param to     The last number to append to the loginPrefix
      */
     public void addStudents(String prefix, int from, int to) {
         var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(USER_PASSWORD), new String[] { "tumuser", "testgroup", prefix + "tumuser" },
@@ -284,6 +359,11 @@ public class UserUtilService {
         userRepo.saveAll(students);
     }
 
+    /**
+     * Updates and saves the User's registration number setting it to null.
+     *
+     * @param user The User to update
+     */
     public void cleanUpRegistrationNumberForUser(User user) {
         if (user.getRegistrationNumber() == null) {
             return;
@@ -296,6 +376,12 @@ public class UserUtilService {
         }
     }
 
+    /**
+     * Creates and saves a User with instructor authorities, if no User with the given login exists.
+     *
+     * @param instructorGroup The group that the instructor will be added to
+     * @param instructorName  The login of the instructor
+     */
     public void addInstructor(final String instructorGroup, final String instructorName) {
         if (!userExistsWithLogin(instructorName)) {
             var newUsers = generateAndSaveActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1);
@@ -306,6 +392,12 @@ public class UserUtilService {
         }
     }
 
+    /**
+     * Creates and saves a User with editor authorities, if no User with the given login exists.
+     *
+     * @param editorGroup The group that the editor will be added to
+     * @param editorName  The login of the editor
+     */
     public void addEditor(final String editorGroup, final String editorName) {
         if (!userExistsWithLogin(editorName)) {
             var newUsers = generateAndSaveActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1);
@@ -316,6 +408,12 @@ public class UserUtilService {
         }
     }
 
+    /**
+     * Creates and saves a User with tutor authorities, if no User with the given login exists.
+     *
+     * @param taGroup The group that the tutor will be added to
+     * @param taName  The login of the tutor
+     */
     public void addTeachingAssistant(final String taGroup, final String taName) {
         if (!userExistsWithLogin(taName)) {
             var newUsers = generateAndSaveActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1);
@@ -326,6 +424,12 @@ public class UserUtilService {
         }
     }
 
+    /**
+     * Creates and saves a User with student authorities, if no User with the given login exists.
+     *
+     * @param studentGroup The group that the student will be added to
+     * @param studentName  The login of the student
+     */
     public void addStudent(final String studentGroup, final String studentName) {
         if (!userExistsWithLogin(studentName)) {
             var newUsers = generateAndSaveActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1);
@@ -349,20 +453,32 @@ public class UserUtilService {
         return userRepo.findOneByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 
+    /**
+     * Gets the User with the given login from the database. Throws an IllegalArgumentException if the User does not exist.
+     *
+     * @param login The login of the User
+     * @return The User with eagerly loaded groups and authorities
+     */
     public User getUserByLogin(String login) {
         // we convert to lowercase for convenience, because logins have to be lower case
         return userRepo.findOneWithGroupsAndAuthoritiesByLogin(login.toLowerCase())
                 .orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 
+    /**
+     * Checks if a User with the given login exists.
+     *
+     * @param login The login of the User
+     * @return True, if a User with the given login exists, false otherwise
+     */
     public boolean userExistsWithLogin(String login) {
         return userRepo.findOneByLogin(login).isPresent();
     }
 
     /**
-     * Removes a user from all courses they are currently in.
+     * Removes the User with the given login from all Courses and saves the updated User.
      *
-     * @param login login to find user with
+     * @param login The login of the User
      */
     public void removeUserFromAllCourses(String login) {
         User user = getUserByLogin(login);
@@ -370,6 +486,16 @@ public class UserUtilService {
         userRepo.save(user);
     }
 
+    /**
+     * Updates and saves the User's groups.
+     *
+     * @param userPrefix          The prefix of the User's login
+     * @param userSuffix          The suffix of the custom group
+     * @param numberOfStudents    The number of students to update
+     * @param numberOfTutors      The number of tutors to update
+     * @param numberOfEditors     The number of editors to update
+     * @param numberOfInstructors The number of instructors to update
+     */
     public void adjustUserGroupsToCustomGroups(String userPrefix, String userSuffix, int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
         for (int i = 1; i <= numberOfStudents; i++) {
             var user = getUserByLogin(userPrefix + "student" + i);
