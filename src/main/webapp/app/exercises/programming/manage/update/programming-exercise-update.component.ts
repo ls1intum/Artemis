@@ -4,16 +4,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, Subject } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import {
-    BuildAction,
-    PlatformAction,
-    ProgrammingExercise,
-    ProgrammingLanguage,
-    ProjectType,
-    ScriptAction,
-    WindFile,
-    resetProgrammingDates,
-} from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingDates } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -274,7 +265,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.programmingExercise.projectType = this.projectTypes[0];
             this.selectedProjectTypeValue = this.projectTypes[0]!;
             this.withDependenciesValue = false;
-            this.resetCustomBuildPlan();
+            this.buildPlanLoaded = false;
+            this.programmingExercise.windFile = undefined;
+            this.programmingExercise.buildPlanConfiguration = undefined;
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -307,7 +300,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         // update the (selected) project type
         this.updateProjectTypeSettings(type);
 
-        console.log('Selected project type: ' + this.programmingExercise.projectType);
         // Only load problem statement template when creating a new exercise and not when importing an existing exercise
         if (this.programmingExercise.id === undefined && !this.isImportFromFile) {
             this.loadProgrammingLanguageTemplate(this.programmingExercise.programmingLanguage!);
@@ -764,7 +756,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.hasUnsavedChanges = false;
         this.problemStatementLoaded = false;
         this.programmingExercise.programmingLanguage = language;
-        this.loadAeolusTemplate();
         this.fileService.getTemplateFile(this.programmingExercise.programmingLanguage, this.programmingExercise.projectType).subscribe({
             next: (file) => {
                 this.programmingExercise.problemStatement = file;
@@ -1034,65 +1025,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         // we need to get it from the history object as setting the programming language
         // sets the project type of the programming exercise to the default value for the programming language.
         this.selectedProjectType = history.state.programmingExerciseForImportFromFile.projectType;
-    }
-
-    /**
-     * In case the programming language or project type changes, we need to reset the template and the build plan
-     * @private
-     */
-    private resetCustomBuildPlan() {
-        this.programmingExercise.windFile = undefined;
-        this.programmingExercise.buildPlanConfiguration = undefined;
-        this.buildPlanLoaded = false;
-    }
-
-    /**
-     * Loads the predefined template for the selected programming language and project type
-     * if there is one available.
-     * @private
-     */
-    private loadAeolusTemplate() {
-        this.resetCustomBuildPlan();
-        if (!this.programmingExercise.programmingLanguage) {
-            return;
-        }
-        this.fileService
-            .getAeolusTemplateFile(
-                this.programmingExercise.programmingLanguage,
-                this.programmingExercise.projectType,
-                this.programmingExercise.staticCodeAnalysisEnabled,
-                this.programmingExercise.sequentialTestRuns,
-                this.programmingExercise.testwiseCoverageEnabled,
-            )
-            .subscribe({
-                next: (file) => {
-                    if (file && !this.buildPlanLoaded) {
-                        this.buildPlanLoaded = true;
-                        const templateFile: WindFile = JSON.parse(file);
-                        const actions: BuildAction[] = [];
-                        templateFile.actions.forEach((anyAction: any) => {
-                            let action: BuildAction | undefined;
-                            if (anyAction.script) {
-                                action = new ScriptAction();
-                                (action as ScriptAction).script = anyAction.script;
-                            } else {
-                                action = new PlatformAction();
-                                (action as PlatformAction).kind = anyAction.kind;
-                                (action as PlatformAction).parameters = anyAction.parameters;
-                            }
-                            action.name = anyAction.name;
-                            action.run_always = anyAction.run_always;
-                            actions.push(action);
-                        });
-                        templateFile.actions = actions;
-                        this.programmingExercise.windFile = templateFile;
-                    }
-                },
-                error: () => {
-                    this.programmingExercise.windFile = undefined;
-                    this.buildPlanLoaded = true;
-                },
-            });
     }
 
     getProgrammingExerciseCreationConfig(): ProgrammingExerciseCreationConfig {
