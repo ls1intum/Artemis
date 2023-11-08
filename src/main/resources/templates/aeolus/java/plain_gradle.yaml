@@ -22,5 +22,7 @@ metadata:
             - '"1000"'
 actions:
     - name: gradle
-      script: ./gradlew clean test
+      script: |
+         chmod +x gradlew
+         ./gradlew clean test
       run_always: false
