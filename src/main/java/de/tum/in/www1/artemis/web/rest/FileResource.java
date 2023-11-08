@@ -170,8 +170,11 @@ public class FileResource {
      * <p>
      * The windfile contains the default build plan configuration for new programming exercises.
      *
-     * @param language    The programming language for which the aeolus template file should be returned
-     * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
+     * @param language       The programming language for which the aeolus template file should be returned
+     * @param projectType    The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
+     * @param staticAnalysis Whether the static analysis template should be used
+     * @param sequentialRuns Whether the sequential runs template should be used
+     * @param testCoverage   Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
     @GetMapping({ "files/aeolus/templates/{language}/{projectType}/{staticAnalysis}/{sequentialRuns}/{testCoverage}",
@@ -208,7 +211,11 @@ public class FileResource {
             if (testCoverage) {
                 fileNameComponents.add("coverage");
             }
-            String fileName = fileNameComponents.stream().reduce(projectTypePrefix.isEmpty() ? "default" : projectTypePrefix, (a, b) -> a + "_" + b) + ".yaml";
+            String accumulator = "default";
+            if (!projectTypePrefix.isEmpty()) {
+                accumulator = projectTypePrefix;
+            }
+            String fileName = fileNameComponents.stream().reduce(accumulator, (a, b) -> a + "_" + b) + ".yaml";
             Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", languagePrefix, fileName));
             if (!fileResource.exists()) {
                 throw new IOException("File " + fileName + " not found");
