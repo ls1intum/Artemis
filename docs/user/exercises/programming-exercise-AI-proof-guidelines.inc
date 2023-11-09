@@ -296,8 +296,8 @@ Problem statement and exercise instructions
     - **Template Code**
   * - ::
 
-       Implement the `reverseString` method in the `StringUtil` class.
-       Ensure the returned string is the reverse of the input string.
+       Implement the `reverseString` method in the `StringUtil` class.|
+       Ensure the returned string is the reverse of the input string.|
        Follow the TODOs in the code for more information.
     -
       .. code-block:: java
