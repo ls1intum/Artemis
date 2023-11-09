@@ -34,7 +34,7 @@ public class LongFeedbackTextResource {
      *
      * @param resultId   The result the feedback belongs to.
      * @param feedbackId The feedback for which the long feedback should be fetched.
-     * @return The long feedback belonging to the feedback with id {@code feedbackId}.
+     * @return The long feedback text belonging to the feedback with id {@code feedbackId}.
      */
     @GetMapping("results/{resultId}/feedbacks/{feedbackId}/long-feedback")
     @EnforceAtLeastStudent

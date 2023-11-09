@@ -513,8 +513,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
 
     /**
-     * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date.
-     * It saves the updated result in the database again.
+     * This function is used for submitting a manual assessment/result.
+     * It updates the completion date and saves the updated result in the database.
      *
      * @param result the result that should be submitted
      * @return the updated result
