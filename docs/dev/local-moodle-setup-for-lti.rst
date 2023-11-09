@@ -6,7 +6,7 @@ This guide is designed to help developers quickly establish a consistent and rel
 .. caution::
 
     The docker-compose file utilized in this setup is derived from configurations originally made available by Bitnami under the Apache License, Version 2.0.
-    The original configuration can be found at the `Bitnami GitHub repository <https://github.com/bitnami/containers/tree/main/bitnami/moodle>`.
+    The original configuration can be found at the `Bitnami GitHub repository <https://github.com/bitnami/containers/tree/main/bitnami/moodle>`_.
     Usage of the Moodle™ trademark within this guide does not imply affiliation with or endorsement by Moodle HQ, which maintains the Moodle LMS independently.
 
 Prerequisites
