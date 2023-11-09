@@ -10,7 +10,7 @@ import { QuizQuestionEdit } from 'app/exercises/quiz/manage/quiz-question-edit.i
 import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
 import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 import { ShortAnswerQuestionEditComponent } from 'app/exercises/quiz/manage/short-answer-question/short-answer-question-edit.component';
-import { ApollonDiagramListComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-list.component';
+import { ApollonDiagramImportDialogComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-import-dialog.component';
 
 @Component({
     selector: 'jhi-quiz-question-list-edit',
@@ -149,9 +149,14 @@ export class QuizQuestionListEditComponent {
         this.addQuestion(dndQuestion);
     }
 
-    importApollonDragAndDropQuestion() {
-        const modalRef: NgbModalRef = this.modalService.open(ApollonDiagramListComponent as Component, { size: 'xl', backdrop: 'static' });
+    async importApollonDragAndDropQuestion() {
+        const modalRef: NgbModalRef = this.modalService.open(ApollonDiagramImportDialogComponent as Component, { size: 'xl', backdrop: 'static' });
         modalRef.componentInstance.courseId = this.courseId;
+
+        const question = await modalRef.result;
+        if (question) {
+            this.addQuestion(question);
+        }
     }
 
     /**

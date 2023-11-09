@@ -1,46 +1,46 @@
-<h2>
-    <span jhiTranslate="artemisApp.apollonDiagram.home.title">Apollon Diagrams</span>
-</h2>
+<div class="mx-5 my-4">
+    <h2>
+        <span jhiTranslate="artemisApp.apollonDiagram.home.title">Apollon Diagrams</span>
+    </h2>
 
-<div class="row">
-    <div class="col">
-        <button (click)="openCreateDiagramDialog(courseId)" id="create-apollon-diagram" class="btn btn-primary">
-            <fa-icon [icon]="faPlus"></fa-icon>
-            <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel">Create a New Apollon Diagram</span>
-        </button>
+    <div class="row">
+        <div class="col">
+            <button (click)="openCreateDiagramDialog(courseId)" id="create-apollon-diagram" class="btn btn-primary">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span jhiTranslate="artemisApp.apollonDiagram.home.createLabel">Create a New Apollon Diagram</span>
+            </button>
+        </div>
     </div>
-</div>
 
-<div class="table-responsive" *ngIf="apollonDiagrams && apollonDiagrams.length > 0">
-    <table class="table table-striped">
-        <thead>
-            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                <th jhiSortBy="courseId"><span jhiTranslate="artemisApp.apollonDiagram.courseId">Course ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                <th jhiSortBy="diagramType"><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                <th jhiTranslate="artemisApp.exercise.actions">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let apollonDiagram of apollonDiagrams; trackBy: trackId">
-                <td>
-                    <a [routerLink]="['/course-management', courseId, 'apollon-diagrams', apollonDiagram.id]">{{ apollonDiagram.id }}</a>
-                </td>
-                <td>
-                    <span>{{ apollonDiagram.courseId }}</span>
-                </td>
-                <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
-                <td jhiTranslate="{{ 'artemisApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>
-                <td>
-                    <a class="btn btn-primary me-1" [routerLink]="['/course-management', courseId, 'apollon-diagrams', apollonDiagram.id]" jhiTranslate="entity.action.open">
-                        Open
-                    </a>
-                    <ng-container *ngIf="course && course.isAtLeastInstructor">
-                        <button class="btn btn-danger me-1" (click)="delete(apollonDiagram)" jhiTranslate="entity.action.delete">Delete</button>
-                    </ng-container>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="table-responsive" *ngIf="apollonDiagrams && apollonDiagrams.length > 0">
+        <table class="table table-striped">
+            <thead>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="courseId"><span jhiTranslate="artemisApp.apollonDiagram.courseId">Course ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="diagramType"><span jhiTranslate="artemisApp.modelingExercise.diagramType">Diagram Type</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiTranslate="artemisApp.exercise.actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let apollonDiagram of apollonDiagrams; trackBy: trackId">
+                    <td>
+                        <span>{{ apollonDiagram.id }}</span>
+                    </td>
+                    <td>
+                        <span>{{ apollonDiagram.courseId }}</span>
+                    </td>
+                    <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
+                    <td jhiTranslate="{{ 'artemisApp.DiagramType.' + apollonDiagram.diagramType }}">{{ apollonDiagram.diagramType }}</td>
+                    <td>
+                        <button class="btn btn-primary me-1" (click)="handleOpenDialogClick(apollonDiagram.id!)" jhiTranslate="entity.action.open">Open</button>
+                        <ng-container *ngIf="course && course.isAtLeastInstructor">
+                            <button class="btn btn-danger me-1" (click)="delete(apollonDiagram)" jhiTranslate="entity.action.delete">Delete</button>
+                        </ng-container>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>

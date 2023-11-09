@@ -1,9 +1,8 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ApollonEditor, ApollonMode, Locale, UMLModel } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
 import { convertRenderedSVGToPNG } from './exercise-generation/svg-renderer';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
@@ -11,6 +10,10 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { TranslateService } from '@ngx-translate/core';
 import { faDownload, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 
 @Component({
     selector: 'jhi-apollon-diagram-detail',
@@ -19,6 +22,15 @@ import { faDownload, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer', { static: false }) editorContainer: ElementRef;
+
+    @Input()
+    private courseId: number;
+    @Input()
+    private apollonDiagramId: number;
+
+    @Output() closeEdit = new EventEmitter<DragAndDropQuestion | void>();
+
+    course: Course;
 
     apollonDiagram?: ApollonDiagram;
     apollonEditor?: ApollonEditor;
@@ -29,7 +41,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
     /** Whether to crop the downloaded image to the selection. */
     crop = true;
-    private courseId: number;
 
     /** Whether some elements are interactive in the apollon editor. */
     get hasInteractive(): boolean {
@@ -47,6 +58,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
     constructor(
         private apollonDiagramService: ApollonDiagramService,
+        private courseService: CourseManagementService,
         private alertService: AlertService,
         private translateService: TranslateService,
         private languageHelper: JhiLanguageHelper,
@@ -60,10 +72,23 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
      */
     ngOnInit() {
         this.route.params.subscribe((params) => {
-            const id = Number(params['id']);
-            this.courseId = Number(params['courseId']);
+            if (!this.apollonDiagramId) {
+                this.apollonDiagramId = Number(params['id']);
+            }
+            if (!this.courseId) {
+                this.courseId = Number(params['courseId']);
+            }
 
-            this.apollonDiagramService.find(id, this.courseId).subscribe({
+            this.courseService.find(this.courseId).subscribe({
+                next: (response) => {
+                    this.course = response.body!;
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.apollonDiagram.detail.error.loading');
+                },
+            });
+
+            this.apollonDiagramService.find(this.apollonDiagramId, this.courseId).subscribe({
                 next: (response) => {
                     const diagram = response.body!;
 
@@ -158,21 +183,23 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const modalRef = this.modalService.open(ApollonQuizExerciseGenerationComponent, { backdrop: 'static' });
-        const modalComponentInstance = modalRef.componentInstance as ApollonQuizExerciseGenerationComponent;
-        modalComponentInstance.apollonEditor = this.apollonEditor!;
-        modalComponentInstance.diagramTitle = this.apollonDiagram!.title!;
+        const question = await generateDragAndDropQuizExercise(this.course, this.apollonDiagram?.title!, this.apollonEditor?.model!);
+        this.closeEdit.emit(question);
+        //const modalRef = this.modalService.open(ApollonQuizExerciseGenerationComponent, { backdrop: 'static' });
+        //const modalComponentInstance = modalRef.componentInstance as ApollonQuizExerciseGenerationComponent;
+        //modalComponentInstance.apollonEditor = this.apollonEditor!;
+        //modalComponentInstance.diagramTitle = this.apollonDiagram!.title!;
 
-        try {
-            const result = await modalRef.result;
-            if (result) {
-                this.alertService.success('artemisApp.apollonDiagram.create.success', { title: result.title });
-                this.router.navigate(['course-management', this.courseId, 'quiz-exercises', result.id, 'edit']);
-            }
-        } catch (error) {
-            this.alertService.error('artemisApp.apollonDiagram.create.error');
-            throw error;
-        }
+        //try {
+        //    const result = await modalRef.result;
+        //    if (result) {
+        //        this.alertService.success('artemisApp.apollonDiagram.create.success', { title: result.title });
+        //        this.router.navigate(['course-management', this.courseId, 'quiz-exercises', result.id, 'edit']);
+        //    }
+        //} catch (error) {
+        //    this.alertService.error('artemisApp.apollonDiagram.create.error');
+        //    throw error;
+        //}
     }
 
     /**

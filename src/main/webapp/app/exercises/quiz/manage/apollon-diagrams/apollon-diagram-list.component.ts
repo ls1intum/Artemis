@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -24,6 +24,9 @@ export class ApollonDiagramListComponent implements OnInit {
     reverse: boolean;
     @Input()
     courseId: number;
+
+    @Output() openDiagram = new EventEmitter<number>();
+
     course: Course;
 
     // Icons
@@ -97,6 +100,10 @@ export class ApollonDiagramListComponent implements OnInit {
         const formComponentInstance = modalRef.componentInstance as ApollonDiagramCreateFormComponent;
         // class diagram is the default value and can be changed by the user in the creation dialog
         formComponentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId);
+    }
+
+    handleOpenDialogClick(apollonDiagramId: number) {
+        this.openDiagram.emit(apollonDiagramId);
     }
 
     /**

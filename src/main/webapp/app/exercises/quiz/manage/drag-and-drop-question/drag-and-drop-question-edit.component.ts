@@ -151,6 +151,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.currentDropLocation = new DropLocation();
         this.mouse = new DragAndDropMouseEvent();
         this.questionEditorText = generateExerciseHintExplanation(this.question);
+        if (this.question.importedApollonBackground) {
+            this.setBackgroundFile({ target: { files: [this.question.importedApollonBackground] } });
+        }
     }
 
     /**
