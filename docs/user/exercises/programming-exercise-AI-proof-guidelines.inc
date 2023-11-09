@@ -17,8 +17,8 @@ beautiful as with real text.
 
    -  Give diagram in picture format
 
-   -  Use associations/aggregation between classes since there's no chance
-      of copying those from the UML diagrams
+   -  Use associations/aggregation between classes since it is harder to copy these 
+      from the UML diagrams
 
    .. note::
       Giving the UML diagrams in picture format might be more suitable for the exam mode and not in the regular exercise operation
@@ -105,15 +105,6 @@ beautiful as with real text.
 
       Figure shows what a list should look like after the add functionality was called. Picture from the Problem statement
 
--  **Text in picture format:** Giving the text exercise instructions in
-   a picture format that can not be copied. Rather than writing long
-   inquiries into the AI, the students will be promoted to asking
-   reasonable questions and solve exercises on their own.
-
-   .. note::
-      Since there are already possibilities to copy text from pictures, the effect of
-      this measure are limited. More suitable for exam mode.
-
 -  **Java frameworks:** Using Java frameworks, such as JavaFX, is challenging for AI
    and helps to visualize projects in a more interactive way
    for students through gamification. How can we incorporate that for
@@ -159,82 +150,10 @@ Problem statement and exercise instructions
       constraints and the problem statement only focused on the most
       relevant implementation parts.
 
-
--  **Uncommon data types:** Using types that aren't commonly used in Java
-   programming can confuse the AI.
-   Most times, it tries to solve the instructions by finding a way
-   around using these types and only later converts them without using
-   the appropriate methods that including these data types. Complex data
-   types, such as custom classes and data structures, often involve
-   additional levels of complexity and variation in their
-   implementation.
-
-   Here are some of the complex data types that can improve the AI
-   security of the exercises:
-
-   -  Duration
-
-   -  BigInteger, BigDecimal
-
-   -  LocalDate
-
-   -  LocalTime
-
-   -  Locale
-
-   -  StringBuilder
-
-   -  Currency
-
-   -  Custom classes implemented in the template repository
-
-   In the following example you can see how ChatGPT tries to work around
-   using BigInteger. In the exercise the students needed to
-   validate the IBAN that was given as a parameter with a checkSum by using methods from the
-   BigInteger library. ChatGPT on the other hand first converted the BIGInteger into a String
-   to perform the required operations.
-
-   Generated solution:
-
-   .. code:: java
-
-      public static boolean validateIBAN(BigInteger iban) {
-          String rearranged = iban.toString().substring(4) +
-               iban.toString().substring(0, 4);
-
-          StringBuilder numericString = new StringBuilder();
-          for (int i = 0; i < rearranged.length(); i++) {
-            char c = rearranged.charAt(i);
-            if (Character.isLetter(c)) {
-              numericString.append((int)c - 55);
-            } else {
-              numericString.append(c);
-            }
-          }
-
-           BigInteger numeric = new BigInteger(numericString.toString());
-          return numeric.mod(BigInteger.valueOf(97)).equals(BigInteger.ONE);
-      }
-
-   Example solution:
-
-   .. code:: java
-
-      public static boolean validateIBAN(BigInteger iban) {
-
-          BigInteger checkSum = iban.divide(BigInteger.TEN.pow(18));
-          BigInteger accountNumber = iban.mod(BigInteger.TEN.pow(18));
-          BigInteger shifted = accountNumber.multiply(BigInteger.TEN.pow(6));
-          BigInteger deInserted = shifted.add(new BigInteger("131400"));
-          BigInteger deCheckSumInserted = deInserted.add(checkSum);
-          BigInteger remainder = deCheckSumInserted.mod(new BigInteger("97"));
-          return remainder.intValue() == 1;
-      }
-
    .. note::
-      Give information to the students on which datatypes they should use. You can either do that
-      by stating it in the test cases or directly in the problem statement.
-      Do not overstate it in the problem statement, since ChatGPT will then also have that information.
+   Apply this with more complex exercises at a later stage of the semester. In the first exercises 
+   it does not make sense to give more text just to make the exercise more complicated. 
+
 
 -  **Standard Java methods:** Make use of letting students implement
    specific parts of methods on their own instead of using standard
@@ -306,6 +225,10 @@ Problem statement and exercise instructions
       tasks need to be excluded in the test cases and feedback has to be provided to the student.
       e.g. The method Arrays.sort is not allowed to be used.
 
+   .. note::
+   Apply this when students are at the current stage of covering these topics in the lecture. 
+   For more complex exercises, where they need to implement different content, they can use standard methods.
+
 
 -  **Continuous feedback:** Exercise instructions should not be there to just give a
    thorough step by step guide of the task. Have students deduce, using specific test cases,
@@ -365,15 +288,15 @@ Problem statement and exercise instructions
    The following table shows with a simple example, how that might look like in practice.
 
 .. list-table::
-   :widths: 50 50
+   :widths: 30 70  # Adjust the widths as needed
    :header-rows: 1
-
    * - **Problem Statement**
      - **Template Code**
-   * - Implement the `reverseString` method in the `StringUtil` class. Ensure the returned string is the reverse of the input string. Follow the TODOs in the code for more information.
+   * - Implement the `reverseString` method in the `StringUtil` class. 
+      Ensure the returned string is the reverse of the input string. 
+      Follow the TODOs in the code for more information.
      -
        .. code-block:: java
-
           public class StringUtil {
               public static String reverseString(String input) {
                   // TODO: Return the reversed version of the input string.
@@ -381,6 +304,7 @@ Problem statement and exercise instructions
                   return "";
               }
           }
+
 
 
 
