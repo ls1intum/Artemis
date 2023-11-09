@@ -297,6 +297,7 @@ Problem statement and exercise instructions
   * - Implement the `reverseString` method in the `StringUtil` class. Ensure the returned string is the reverse of the input string. Follow the TODOs in the code for more information.
     -
       .. code-block:: java
+
          public class StringUtil {
              public static String reverseString(String input) {
                  // TODO: Return the reversed version of the input string.
