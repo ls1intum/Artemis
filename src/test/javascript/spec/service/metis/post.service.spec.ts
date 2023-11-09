@@ -169,6 +169,36 @@ describe('Post Service', () => {
             req.flush(returnedFromService);
             tick();
         }));
+
+        it('should use /posts endpoints if plagiarismCaseId is provided in the postContextFilter', fakeAsync(() => {
+            const plagiarismCaseId = 123;
+            const expectedUrl = `${service.resourceUrl}${metisCourse.id}/posts?plagiarismCaseId=${plagiarismCaseId}`;
+            const mockResponse: Post[] = [];
+
+            service
+                .getPosts(metisCourse.id!, { plagiarismCaseId })
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(mockResponse));
+            const req = httpMock.expectOne({ method: 'GET', url: expectedUrl });
+
+            req.flush(mockResponse);
+            tick();
+        }));
+
+        it('should use /messages endpoints if course-wide channel ids are provided', fakeAsync(() => {
+            const courseWideChannelIds = [123];
+            const expectedUrl = `${service.resourceUrl}${metisCourse.id}/messages?courseWideChannelIds=${courseWideChannelIds}`;
+            const mockResponse: Post[] = [];
+
+            service
+                .getPosts(metisCourse.id!, { courseWideChannelIds })
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(mockResponse));
+            const req = httpMock.expectOne({ method: 'GET', url: expectedUrl });
+
+            req.flush(mockResponse);
+            tick();
+        }));
     });
 
     afterEach(() => {
