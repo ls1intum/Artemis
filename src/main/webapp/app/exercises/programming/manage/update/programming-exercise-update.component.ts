@@ -30,7 +30,7 @@ import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.c
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
-import { PROFILE_LOCALCI } from 'app/app.constants';
+import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -467,7 +467,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.customBuildPlansSupported = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
+            this.customBuildPlansSupported = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI) || profileInfo?.activeProfiles.includes(PROFILE_AEOLUS);
         });
         this.defineSupportedProgrammingLanguages();
     }
