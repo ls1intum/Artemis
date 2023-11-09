@@ -294,7 +294,11 @@ Problem statement and exercise instructions
 
   * - **Problem Statement**
     - **Template Code**
-  * - Implement the `reverseString` method in the `StringUtil` class. |Ensure the returned string is the reverse of the input string. |Follow the TODOs in the code for more information.
+  * - ::
+
+       Implement the `reverseString` method in the `StringUtil` class.
+       Ensure the returned string is the reverse of the input string.
+       Follow the TODOs in the code for more information.
     -
       .. code-block:: java
 
