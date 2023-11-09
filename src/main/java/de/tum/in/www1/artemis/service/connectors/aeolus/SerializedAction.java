@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Represents an action that can be defined in a {@link Windfile}
@@ -12,6 +13,7 @@ public class SerializedAction {
     private String name;
 
     @JsonProperty("run_always")
+    @SerializedName("run_always")
     private boolean runAlways;
 
     private String script;
