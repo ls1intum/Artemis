@@ -28,8 +28,6 @@ public class AttachmentUnitService {
 
     private final FilePathService filePathService;
 
-    private final CacheManager cacheManager;
-
     private final SlideSplitterService slideSplitterService;
 
     private final SlideRepository slideRepository;
@@ -40,7 +38,6 @@ public class AttachmentUnitService {
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.filePathService = filePathService;
-        this.cacheManager = cacheManager;
         this.slideSplitterService = slideSplitterService;
         this.slideRepository = slideRepository;
     }
