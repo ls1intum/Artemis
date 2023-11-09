@@ -292,10 +292,10 @@ Problem statement and exercise instructions
 | Problem Statement                                               | Template Code                                                                          |
 +-----------------------------------------------------------------+----------------------------------------------------------------------------------------+
 | ::                                                              | .. code-block:: java                                                                   |
-|                                                                 |                                                                                        |
-| Implement the `reverseString` method in the `StringUtil` class. |    public class StringUtil {                                                           |
-| Ensure the returned string is the reverse of the input string.  |        public static String reverseString(String input) {                              |
-| Follow the TODOs in the code for more information.              |            // TODO: Return the reversed version of the input string.                   |
+| Implement the `reverseString` method in the `StringUtil` class. |                                                                                        |
+| Ensure the returned string is the reverse of the input string.  |    public class StringUtil {                                                           |
+| Follow the TODOs in the code for more information.              |        public static String reverseString(String input) {                              |
+|                                                                 |            // TODO: Return the reversed version of the input string.                   |
 |                                                                 |                                                                                        |
 |                                                                 |            // Do not use built-in methods or libraries to reverse the string directly. |
 |                                                                 |            return "";                                                                  |
