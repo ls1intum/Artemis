@@ -180,15 +180,16 @@ public class FileResource {
     @GetMapping({ "files/aeolus/templates/{language}/{projectType}", "files/aeolus/templates/{language}" })
     @EnforceAtLeastEditor
     public ResponseEntity<String> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
-            @RequestParam(value = "staticAnalysis", required = false) String staticAnalysis, @RequestParam(value = "sequentialRuns", required = false) String sequentialRuns,
-            @RequestParam(value = "testCoverage", required = false) String testCoverage) {
+            @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
+            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns,
+            @RequestParam(value = "testCoverage", defaultValue = "false") boolean testCoverage) {
         log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
                 projectType, staticAnalysis, sequentialRuns, testCoverage);
 
         String languagePrefix = language.name().toLowerCase();
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
-        return getAeolusTemplateFileContentWithResponse(languagePrefix, projectTypePrefix, staticAnalysis != null, sequentialRuns != null, testCoverage != null);
+        return getAeolusTemplateFileContentWithResponse(languagePrefix, projectTypePrefix, staticAnalysis, sequentialRuns, testCoverage);
     }
 
     /**
