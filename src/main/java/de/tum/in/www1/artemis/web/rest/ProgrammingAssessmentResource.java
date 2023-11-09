@@ -182,7 +182,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
         newManualResult.setSubmission(submission);
         newManualResult.setHasComplaint(existingManualResult.getHasComplaint().isPresent() && existingManualResult.getHasComplaint().get());
-        newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
+        newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult, user);
 
         if (submission.getParticipation() == null) {
             newManualResult.setParticipation(submission.getParticipation());
@@ -218,6 +218,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (isManualFeedbackRequest && isBeforeDueDate) {
             participation.setIndividualDueDate(null);
             studentParticipationRepository.save(participation);
+            newManualResult.setParticipation(participation);
 
             programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation);
         }
