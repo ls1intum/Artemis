@@ -17,7 +17,7 @@ beautiful as with real text.
 
    -  Give diagram in picture format
 
-   -  Use associations/aggregation between classes since it is harder to copy these 
+   -  Use associations/aggregation between classes since it is harder to copy these
       from the UML diagrams
 
    .. note::
@@ -151,8 +151,8 @@ Problem statement and exercise instructions
       relevant implementation parts.
 
    .. note::
-   Apply this with more complex exercises at a later stage of the semester. In the first exercises 
-   it does not make sense to give more text just to make the exercise more complicated. 
+   Apply this with more complex exercises at a later stage of the semester. In the first exercises
+   it does not make sense to give more text just to make the exercise more complicated.
 
 
 -  **Standard Java methods:** Make use of letting students implement
@@ -226,7 +226,7 @@ Problem statement and exercise instructions
       e.g. The method Arrays.sort is not allowed to be used.
 
    .. note::
-   Apply this when students are at the current stage of covering these topics in the lecture. 
+   Apply this when students are at the current stage of covering these topics in the lecture.
    For more complex exercises, where they need to implement different content, they can use standard methods.
 
 
@@ -288,15 +288,14 @@ Problem statement and exercise instructions
    The following table shows with a simple example, how that might look like in practice.
 
 .. list-table::
-   :widths: 30 70  # Adjust the widths as needed
+   :widths: 30 70
    :header-rows: 1
    * - **Problem Statement**
      - **Template Code**
-   * - Implement the `reverseString` method in the `StringUtil` class. 
-      Ensure the returned string is the reverse of the input string. 
-      Follow the TODOs in the code for more information.
+   * - Implement the `reverseString` method in the `StringUtil` class. Ensure the returned string is the reverse of the input string. Follow the TODOs in the code for more information.
      -
        .. code-block:: java
+
           public class StringUtil {
               public static String reverseString(String input) {
                   // TODO: Return the reversed version of the input string.
@@ -304,6 +303,7 @@ Problem statement and exercise instructions
                   return "";
               }
           }
+
 
 
 
