@@ -287,14 +287,14 @@ Problem statement and exercise instructions
 
    The following table shows with a simple example, how that might look like in practice.
 
-.. list-table:: Problem Statement vs. Template Code
+.. list-table::
+   :widths: 30 70
    :header-rows: 1
    * - **Problem Statement**
      - **Template Code**
    * - Implement the `reverseString` method in the `StringUtil` class. Ensure the returned string is the reverse of the input string. Follow the TODOs in the code for more information.
      -
        .. code-block:: java
-
           public class StringUtil {
               public static String reverseString(String input) {
                   // TODO: Return the reversed version of the input string.
@@ -302,7 +302,6 @@ Problem statement and exercise instructions
                   return "";
               }
           }
-
 
 -  **Already implemented code:** Give exercises that require students
    to work with code that is already in the template repository. Two approaches:
