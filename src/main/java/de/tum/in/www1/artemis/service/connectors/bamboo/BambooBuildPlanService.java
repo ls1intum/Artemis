@@ -121,8 +121,10 @@ public class BambooBuildPlanService {
         final String projectName = programmingExercise.getProjectName();
         final boolean recordTestwiseCoverage = Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && "SOLUTION".equals(planKey);
 
-        String assignedKey;
-        if (aeolusBuildPlanService.isPresent() && programmingExercise.getBuildPlanConfiguration() != null) {
+        String assignedKey = null;
+
+        boolean couldCreateCustomBuildPlan = false;
+        try {
             Windfile windfile = programmingExercise.getWindfile();
             Map<String, AeolusRepository> repositoryMap = new HashMap<>();
             repositoryMap.put(ASSIGNMENT_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(repositoryUrl).toString(), programmingExercise.getBranch(),
@@ -138,9 +140,14 @@ public class BambooBuildPlanService {
             windfile.setId(projectKey + "-" + planKey);
             Gson gson = new Gson();
             assignedKey = aeolusBuildPlanService.get().publishBuildPlan(gson.toJson(windfile), "bamboo");
+            couldCreateCustomBuildPlan = true;
             assignedKey = planKey;
         }
-        else {
+        catch (Exception e) {
+            couldCreateCustomBuildPlan = false;
+        }
+
+        if (!couldCreateCustomBuildPlan) {
             Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryUrl, testRepositoryUrl,
                     programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryUrl, auxiliaryRepositories)
                             .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
