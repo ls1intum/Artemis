@@ -158,7 +158,7 @@ public class AttachmentUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentUnit attachmentUnit) {
         if (file != null && !file.isEmpty()) {
-            this.cacheManager.getCache("files").evict(filePathService.actualPathForPublicPathOrThrow(URI.create(attachmentUnit.getAttachment().getLink())).toString());
+            this.fileService.evictCacheForPath(filePathService.actualPathForPublicPathOrThrow(URI.create(attachmentUnit.getAttachment().getLink())));
         }
     }
 
