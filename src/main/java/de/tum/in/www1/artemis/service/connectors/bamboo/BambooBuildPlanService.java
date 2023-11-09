@@ -139,7 +139,7 @@ public class BambooBuildPlanService {
             windfile.setGitCredentials(this.gitUser);
             windfile.setId(projectKey + "-" + planKey);
             Gson gson = new Gson();
-            assignedKey = aeolusBuildPlanService.get().publishBuildPlan(gson.toJson(windfile), "bamboo");
+            assignedKey = aeolusBuildPlanService.get().publishBuildPlan(gson.toJson(windfile), "bamboo").split("-")[1];
             couldCreateCustomBuildPlan = true;
             assignedKey = planKey;
         }
