@@ -137,6 +137,7 @@ public class BambooBuildPlanService {
                     ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
             windfile.setRepositories(repositoryMap);
             windfile.setGitCredentials(this.gitUser);
+            windfile.setName(projectName);
             windfile.setId(projectKey + "-" + planKey);
             Gson gson = new Gson();
             assignedKey = aeolusBuildPlanService.get().publishBuildPlan(gson.toJson(windfile), "bamboo").split("-")[1];
