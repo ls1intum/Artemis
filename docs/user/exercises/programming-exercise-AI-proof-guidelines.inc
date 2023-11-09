@@ -288,7 +288,7 @@ Problem statement and exercise instructions
    The following table shows with a simple example, how that might look like in practice.
 
 
-.. list-table:: Table Title
+.. list-table::
   :widths: 30 70
   :header-rows: 1
   * - **Problem Statement**
