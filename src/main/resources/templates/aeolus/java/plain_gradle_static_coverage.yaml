@@ -1,6 +1,6 @@
 api: v0.0.1
 metadata:
-    name: java-gradle
+    name: java-gradle-static
     id: java-windfile
     description: Build Plan for a java Exercise
     author: Andreas Resch
@@ -21,10 +21,11 @@ metadata:
             - '"1000"'
 actions:
     - name: tests
-      script: |
-          chmod +x gradlew
-          ./gradlew clean test
+      script: ./gradlew clean test tiaTests --run-all-tests
       run_always: false
+    - name: static_code_analysis
+      script: ./gradlew check -x test
+      run_always: true
     - name: junit
       parameters:
           ignore_time: false

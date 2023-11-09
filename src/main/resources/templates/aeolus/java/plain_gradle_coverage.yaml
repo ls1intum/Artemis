@@ -21,9 +21,7 @@ metadata:
             - '"1000"'
 actions:
     - name: tests
-      script: |
-          chmod +x gradlew
-          ./gradlew clean test
+      script: ./gradlew clean test tiaTests --run-all-tests
       run_always: false
     - name: junit
       parameters:
