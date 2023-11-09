@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a windfile, the definition file for an aeolus build plan that
@@ -14,6 +15,8 @@ public class Windfile {
     private WindfileMetadata metadata;
 
     private List<Action> actions;
+
+    private Map<String, AeolusRepository> repositories;
 
     public String getApi() {
         return api;
@@ -69,5 +72,9 @@ public class Windfile {
 
     public void setGitCredentials(String credentials) {
         this.metadata.setGitCredentials(credentials);
+    }
+
+    public void setRepositories(Map<String, AeolusRepository> repositories) {
+        this.repositories = repositories;
     }
 }
