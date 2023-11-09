@@ -5,7 +5,6 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,7 +32,7 @@ public class AttachmentUnitService {
     private final SlideRepository slideRepository;
 
     public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, FilePathService filePathService, CacheManager cacheManager) {
+            AttachmentRepository attachmentRepository, FileService fileService, FilePathService filePathService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
