@@ -417,9 +417,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             verifyImport();
 
-            // name and short name should not be imported
-            expect(comp.programmingExercise.title).toBeUndefined();
-            expect(comp.programmingExercise.shortName).toBeUndefined();
+            // name and short name should also be imported
+            expect(comp.programmingExercise.title).toEqual(programmingExercise.title);
+            expect(comp.programmingExercise.shortName).toEqual(programmingExercise.shortName);
         }));
 
         it.each([
