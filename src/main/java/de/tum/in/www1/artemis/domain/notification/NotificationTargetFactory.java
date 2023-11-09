@@ -230,8 +230,9 @@ public class NotificationTargetFactory {
      */
     public static NotificationTarget createCoursePostTarget(Post post, Course course) {
         NotificationTarget target = new NotificationTarget(post.getId(), course.getId());
-        if (post.getConversation() != null)
+        if (post.getConversation() != null) {
             target.setConversationId(post.getConversation().getId());
+        }
         return target;
     }
 

@@ -90,10 +90,12 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
         firebasePushNotificationService.sendNotification(notification, pushRecipients, notificationSubject);
 
         NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
-        if (notificationSubject instanceof Post post) {
-            emailRecipients.add(post.getAuthor());
-        }
         if (notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
+            // Add the author of the post to the email recipients, if they have email notifications enabled for the notification type
+            if (notificationSubject instanceof Post post && post.getConversation() != null && !filterRecipients(notification, Set.of(post.getAuthor()), EMAIL).isEmpty()) {
+                emailRecipients.add(post.getAuthor());
+            }
+
             mailService.sendNotification(notification, emailRecipients, notificationSubject);
         }
     }

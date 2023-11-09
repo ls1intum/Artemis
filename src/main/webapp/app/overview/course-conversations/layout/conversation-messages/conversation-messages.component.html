@@ -86,7 +86,7 @@
                     ></jhi-post-create-edit-modal>
                 </div>
                 <ng-template #inlineInput>
-                    <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"> </jhi-message-inline-input>
+                    <jhi-message-inline-input class="message-input" [posting]="newPost!" (onCreate)="createEmptyPost(); scrollToBottomOfMessages()" />
                 </ng-template>
             </div>
         </div>
