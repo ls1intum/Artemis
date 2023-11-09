@@ -194,7 +194,8 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
 
         String fileName = Path.of(attachmentUnit.getAttachment().getLink()).getFileName().toString();
         MockMultipartHttpServletRequestBuilder attachmentUnitBuilder = buildUpdateAttachmentUnit(attachmentUnit, attachmentUnit.getAttachment(), null);
-        attachmentUnitBuilder.file(fileName, "test".getBytes()).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        MockMultipartFile file = new MockMultipartFile("file", fileName, "application/json", "test".getBytes());
+        attachmentUnitBuilder.file(file).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
         AttachmentUnit updatedAttachmentUnit = request.getObjectMapper()
                 .readValue(request.getMvc().perform(attachmentUnitBuilder).andExpect(status().isOk()).andReturn().getResponse().getContentAsString(), AttachmentUnit.class);
         request.getFile(updatedAttachmentUnit.getAttachment().getLink(), HttpStatus.OK);
