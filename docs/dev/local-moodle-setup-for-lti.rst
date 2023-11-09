@@ -3,18 +3,21 @@ Local Moodle Environment Setup for LTI Development
 
 This guide is designed to help developers quickly establish a consistent and reliable Moodle environment for development purposes.
 
+.. caution::
+The docker-compose file utilized in this setup is derived from configurations originally made available by Bitnami under the Apache License, Version 2.0.
+The original configuration can be found at the `Bitnami GitHub repository <https://github.com/bitnami/containers/tree/main/bitnami/moodle>`.
+Usage of the Moodle™ trademark within this guide does not imply affiliation with or endorsement by Moodle HQ, which maintains the Moodle LMS independently.
+
 Prerequisites
 -------------
-Ensure your system meets the minimum requirements for running Docker and Docker Compose. Refer to the `official Docker documentation <https://docs.docker.com/engine/install/>`_ for system requirements.
-
-If Docker is not installed on your system, follow the installation instructions for your specific platform on the `Docker website <https://docs.docker.com/get-docker/>`_.
-
-Docker Compose is a separate tool bundled with Docker on some platforms, but you might need to install it separately on others. Refer to the `Docker Compose installation guide <https://docs.docker.com/compose/install/>`_ for details.
+- Ensure your system meets the minimum requirements for running Docker and Docker Compose. Refer to the `official Docker documentation <https://docs.docker.com/engine/install/>`_ for system requirements.
+- If Docker is not installed on your system, follow the installation instructions for your specific platform on the `Docker website <https://docs.docker.com/get-docker/>`_.
+- Docker Compose is a separate tool bundled with Docker on some platforms, but you might need to install it separately on others. Refer to the `Docker Compose installation guide <https://docs.docker.com/compose/install/>`_ for details.
 
 Setup Instructions
 ------------------
-The setup process utilizes `Bitnami's Docker images for Moodle <https://github.com/bitnami/containers/tree/main/bitnami/moodle>`_ to ensure a streamlined and consistent deployment.
-Bitnami offers several compelling advantages:
+The setup leverages `Bitnami's Docker images for Moodle <https://github.com/bitnami/containers/tree/main/bitnami/moodle>`_, which are included in this repository's docker-compose file, to ensure a streamlined and reliable deployment.
+Bitnami offer several advantages:
 
 - Bitnami ensures timely updates with the latest bug fixes and features.
 - Their consistent configuration allows seamless format transitions between containers, virtual machines, and cloud setups.
@@ -22,25 +25,16 @@ Bitnami offers several compelling advantages:
 - All Bitnami images on Docker Hub are signed for image integrity verification.
 - Regular releases keep images up-to-date with the latest distribution packages.
 
-How to use Bitnami images
-^^^^^^^^^^^^^^^^^^^^^^^^^
 Moodle requires access to a MySQL or MariaDB database to store information. Bitnami uses the Bitnami Docker Image for MariaDB for the database requirements.
 
-Downloading the Docker Compose File
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-For Windows operating system:
-Download the `docker-compose file <https://github.com/bitnami/containers/blob/main/bitnami/moodle/docker-compose.yml>`_ and run it using the below command.
+To initialize your Moodle environment, navigate to the `docker/moodle/` directory containing the `moodle.yml` docker-compose file in this repository and execute the following command:
 
 .. code-block:: bash
 
-     docker compose -f docker-compose.yml up
+   docker compose -f moodle.yml up
 
-For other operating systems:
+Running this command will download the necessary Docker images and initialize the Moodle instance with the specified environment and configurations.
 
-.. code-block:: bash
-
-    curl -sSL https://raw.githubusercontent.com/bitnami/containers/main/bitnami/moodle/docker-compose.yml > docker-compose.yml
-    docker-compose up -d
 
 Configuration
 --------------
@@ -67,18 +61,18 @@ You can customize Moodle port number over the docker-compose.yml file.
     moodle:
         image: bitnami/moodle:latest
         ports:
-          - '80:8080'
+          - '8085:8080'
           - '443:8443'
 
 Accessing Moodle
 ------------------
-You can be access your local Moodle instance over `localhost:port` in the browser.
+You can access your local Moodle instance over `localhost:port` in the browser. By default it is configured as `http://localhost:8085/`.
 
 Troubleshooting
 ----------------
 Configuring Time Zone
 ^^^^^^^^^^^^^^^^^^^^^
-For LTI 1.3 integration, accurate timing for tokens is crucial. To ensure correct local time, set the time zone in the `docker-compose.yml` file.
+For LTI 1.3 integration, accurate timing for tokens is crucial. To ensure correct local time, set the time zone in the `moodle.yml` file.
 
 For example, for Central European Time zone:
 
