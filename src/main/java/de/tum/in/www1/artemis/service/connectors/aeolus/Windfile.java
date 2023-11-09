@@ -71,7 +71,17 @@ public class Windfile {
     }
 
     public void setGitCredentials(String credentials) {
+        if (this.metadata == null) {
+            this.metadata = new Metadata();
+        }
         this.metadata.setGitCredentials(credentials);
+    }
+
+    public void setName(String name) {
+        if (this.metadata == null) {
+            this.metadata = new Metadata();
+        }
+        this.metadata.setName(name);
     }
 
     public void setRepositories(Map<String, AeolusRepository> repositories) {
