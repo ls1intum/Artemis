@@ -151,8 +151,8 @@ Problem statement and exercise instructions
       relevant implementation parts.
 
    .. note::
-   Apply this with more complex exercises at a later stage of the semester. In the first exercises
-   it does not make sense to give more text just to make the exercise more complicated.
+       Apply this with more complex exercises at a later stage of the semester. In the first exercises
+       it does not make sense to give more text just to make the exercise more complicated.
 
 
 -  **Standard Java methods:** Make use of letting students implement
@@ -226,8 +226,8 @@ Problem statement and exercise instructions
       e.g. The method Arrays.sort is not allowed to be used.
 
    .. note::
-   Apply this when students are at the current stage of covering these topics in the lecture.
-   For more complex exercises, where they need to implement different content, they can use standard methods.
+       Apply this when students are at the current stage of covering these topics in the lecture.
+       For more complex exercises, where they need to implement different content, they can use standard methods.
 
 
 -  **Continuous feedback:** Exercise instructions should not be there to just give a
@@ -287,26 +287,21 @@ Problem statement and exercise instructions
 
    The following table shows with a simple example, how that might look like in practice.
 
-.. raw:: html
-
-    <table>
-        <tr>
-            <th style="width:30%;">Problem Statement</th>
-            <th style="width:70%;">Template Code</th>
-        </tr>
-        <tr>
-            <td>Implement the `reverseString` method in the `StringUtil` class. Ensure the returned string is the reverse of the input string. Follow the TODOs in the code for more information.</td>
-            <td>
-                <pre><code class="java">public class StringUtil {
-    public static String reverseString(String input) {
-        // TODO: Return the reversed version of the input string.
-        // Do not use built-in methods or libraries to reverse the string directly.
-        return "";
-    }
-}</code></pre>
-            </td>
-        </tr>
-    </table>
+.. list-table::
+   :widths: 30 70
+   :header-rows: 1
+   * - **Problem Statement**
+     - **Template Code**
+   * - Implement the `reverseString` method in the `StringUtil` class. Ensure the returned string is the reverse of the input string. Follow the TODOs in the code for more information.
+     -
+       .. code-block:: java
+          public class StringUtil {
+              public static String reverseString(String input) {
+                  // TODO: Return the reversed version of the input string.
+                  // Do not use built-in methods or libraries to reverse the string directly.
+                  return "";
+              }
+          }
 
 
 -  **Already implemented code:** Give exercises that require students
