@@ -15,6 +15,7 @@ import {
     ActiveConversationMessageLoadedAction,
     ConversationErrorOccurredAction,
     NumNewMessagesResetAction,
+    RateMessageSuccessAction,
     SessionReceivedAction,
     StudentMessageSentAction,
 } from 'app/iris/state-store.model';
@@ -69,15 +70,23 @@ describe('IrisChatbotWidgetComponent', () => {
             resendMessage: jest.fn(),
             rateMessage: jest.fn(),
             executePlanStep: jest.fn(),
-        } as any;
+        } as IrisHttpCodeEditorMessageService;
 
         mockCodeEditorSessionService = {
             createNewSession: jest.fn(),
-            sendMessage: jest.fn(),
-            resendMessage: jest.fn(),
-            rateMessage: jest.fn(),
-            executePlanStep: jest.fn(),
-        } as any;
+            sendMessage: jest.fn().mockImplementation(async () => {
+                return mockHttpCodeEditorMessageService.createMessage();
+            }),
+            resendMessage: jest.fn().mockImplementation(async () => {
+                return mockHttpCodeEditorMessageService.resendMessage();
+            }),
+            rateMessage: jest.fn().mockImplementation(async () => {
+                return mockHttpCodeEditorMessageService.rateMessage();
+            }),
+            executePlanStep: jest.fn().mockImplementation(async () => {
+                return mockHttpCodeEditorMessageService.executePlanStep();
+            }),
+        } as IrisCodeEditorSessionService;
 
         mockUserService = {
             acceptIris: jest.fn().mockReturnValue({
@@ -97,7 +106,7 @@ describe('IrisChatbotWidgetComponent', () => {
             imports: [FormsModule, FontAwesomeModule, MatDialogModule],
             declarations: [IrisChatbotWidgetComponent, MockPipe(ArtemisTranslatePipe), MockPipe(HtmlForMarkdownPipe)],
             providers: [
-                { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore, sessionService: mockCodeEditorSessionService } },
+                { provide: MAT_DIALOG_DATA, useValue: { stateStore: stateStore, courseId: 1, exerciseId: 1, sessionService: mockCodeEditorSessionService } },
                 { provide: IrisHttpMessageService, useValue: mockHttpCodeEditorMessageService },
                 { provide: NgbModal, useValue: mockModalService },
                 { provide: MatDialog, useValue: mockDialog },
@@ -150,9 +159,10 @@ describe('IrisChatbotWidgetComponent', () => {
 
     it('should add user message on send', waitForAsync(async () => {
         // given
+        stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage]));
         jest.spyOn(stateStore, 'dispatchAndThen');
         component.newMessageTextContent = 'Hello';
-        const createMessage = { sender: IrisSender.USER, content: [new IrisTextMessageContent('Hello')] };
+        const createMessage = { sender: IrisSender.USER, content: [new IrisTextMessageContent('Hello')] } as IrisUserMessage;
         const sessionMock = jest.spyOn(mockCodeEditorSessionService, 'sendMessage');
 
         // when
@@ -168,8 +178,9 @@ describe('IrisChatbotWidgetComponent', () => {
 
     it('should resend message', waitForAsync(async () => {
         // given
+        stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage]));
         jest.spyOn(stateStore, 'dispatchAndThen');
-        const resendMessage = { ...mockClientMessage, id: 1 };
+        const resendMessage = { ...mockClientMessage, id: 2 };
         const sessionMock = jest.spyOn(mockCodeEditorSessionService, 'resendMessage');
 
         // when
@@ -181,6 +192,22 @@ describe('IrisChatbotWidgetComponent', () => {
         expect(component.messages).toContain('Hello, world!');
         expect(sessionMock).toHaveBeenCalledWith(component.sessionId, resendMessage);
         expect(stateStore.dispatchAndThen).toHaveBeenCalledWith(new StudentMessageSentAction(resendMessage, null));
+    }));
+
+    it('should rate message', waitForAsync(async () => {
+        // given
+        stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage]));
+        jest.spyOn(stateStore, 'dispatch');
+        const sessionMock = jest.spyOn(mockCodeEditorSessionService, 'rateMessage');
+
+        // when
+        component.rateMessage(mockServerMessage.id, 1, true);
+
+        await fixture.whenStable();
+
+        // then
+        expect(sessionMock).toHaveBeenCalledWith(component.sessionId, mockServerMessage.id, true);
+        expect(stateStore.dispatch).toHaveBeenCalledWith(new RateMessageSuccessAction(1, true));
     }));
 
     it('should execute plan step', waitForAsync(async () => {
@@ -790,12 +817,12 @@ describe('IrisChatbotWidgetComponent', () => {
 
     describe('clear chat session', () => {
         it('should call service to clear old session and create a new one', () => {
-            jest.spyOn(mockSessionService, 'createNewSession');
+            jest.spyOn(mockCodeEditorSessionService, 'createNewSession');
             component.exerciseId = 18;
 
             component.createNewSession();
 
-            expect(mockSessionService.createNewSession).toHaveBeenCalledWith(18);
+            expect(mockCodeEditorSessionService.createNewSession).toHaveBeenCalledWith(18);
         });
 
         it('should open confirm modal when click on the clear button', () => {
