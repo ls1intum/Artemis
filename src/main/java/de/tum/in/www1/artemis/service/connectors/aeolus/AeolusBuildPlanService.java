@@ -6,6 +6,7 @@ import java.util.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -84,7 +85,11 @@ public class AeolusBuildPlanService {
         jsonObject.put("windfile", buildPlan);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(jsonObject, null);
-        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, Map.class);
-        return Objects.requireNonNull(response.getBody()).get("key").toString();
+        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, new ParameterizedTypeReference<Map<String, String>>() {
+        });
+        if (response.getBody() != null) {
+            return response.getBody().get("key");
+        }
+        return null;
     }
 }

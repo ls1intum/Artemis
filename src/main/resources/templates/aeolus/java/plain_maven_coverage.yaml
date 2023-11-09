@@ -1,8 +1,8 @@
 api: v0.0.1
 metadata:
-    name: java-gradle
+    name: java-maven
     id: java-windfile
-    description: Build Plan for a java Exercise
+    description: Build Plan for a java Exercise with maven
     author: Andreas Resch
     docker:
         image: ls1tum/artemis-maven-template
@@ -20,18 +20,18 @@ metadata:
             - --pids-limit
             - '"1000"'
 actions:
-    - name: tests
-      script: |
-          chmod +x gradlew
-          ./gradlew clean test
+    - name: maven
+      script: mvn clean test -Pcoverage
+      run_always: false
+    - name: move_report_file
+      script: mv target/tia/reports/*/testwise-coverage-*.json target/tia/reports/tiaTests.json
       run_always: false
     - name: junit
       parameters:
           ignore_time: false
-          test_results: '**/test-results/test/*.xml'
+          test_results:
+              - '**/target/surefire-reports/*.xml'
+              - 'target/tia/reports/tiaTests.json'
       platform: bamboo
       kind: junit
-      run_always: true
-    - name: setup_working_directory_for_cleanup
-      script: chmod -R 777 ${WORKDIR}
       run_always: true

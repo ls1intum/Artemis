@@ -3,12 +3,39 @@ metadata:
     name: java-gradle-sequential
     id: java-windfile
     description: Build Plan for a java Exercise
+    author: Andreas Resch
+    gitCredentials: artemis_admin
+    docker:
+        image: ls1tum/artemis-maven-template
+        tag: java17-20
+        volumes:
+            - ${WORKDIR}:${WORKDIR}
+            - ${TMPDIR}:${TMPDIR}
+        parameters:
+            - --cpus
+            - '"2"'
+            - --memory
+            - '"2g"'
+            - --memory-swap
+            - '"2g"'
+            - --pids-limit
+            - '"1000"'
 actions:
-    - name: gradle
-      script: |
-          chmod +x gradlew
-          ./gradlew clean structuralTests
-          if [ $? -eq 0 ]; then
-              ./gradlew behaviorTests
-          fi
-      runAlways: false
+    - name: structural_tests
+      script: ./gradlew clean structuralTests
+      run_always: false
+    - name: behavior_tests
+      script: ./gradlew behaviorTests
+      run_always: false
+    - name: junit
+      parameters:
+          ignore_time: false
+          test_results:
+              - '**/test-results/structuralTests/*.xml'
+              - '**/test-results/behaviorTests/*.xml'
+      platform: bamboo
+      kind: junit
+      run_always: true
+    - name: setup_working_directory_for_cleanup
+      script: chmod -R 777 ${WORKDIR}
+      run_always: true

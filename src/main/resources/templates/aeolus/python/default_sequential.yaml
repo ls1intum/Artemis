@@ -1,6 +1,6 @@
 api: v0.0.1
 metadata:
-    name: python regular runs
+    name: python sequential runs
     id: python-windfile
     description: This is a windfile for python exercises
     author: Andreas Resch
@@ -19,16 +19,16 @@ metadata:
             - '"2g"'
             - --pids-limit
             - '"1000"'
+
 actions:
-    - name: build_and_test_the_code
-      script: |
-          python3 -m compileall . -q || error=true
-          if [ ! $error ]
-          then
-            pytest --junitxml=test-reports/results.xml
-          else
-            exit 1
-          fi
+    - name: compile_the_code
+      script: python3 -m compileall . -q
+      run_always: false
+    - name: run_structural_tests
+      script: pytest structural/* --junitxml=test-reports/structural-results.xml
+      run_always: false
+    - name: run_behavior_tests
+      script: pytest behavior/* --junitxml=test-reports/behavior-results.xml
       run_always: false
     - name: junit
       parameters:
