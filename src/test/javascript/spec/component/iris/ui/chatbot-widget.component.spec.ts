@@ -70,23 +70,23 @@ describe('IrisChatbotWidgetComponent', () => {
             resendMessage: jest.fn(),
             rateMessage: jest.fn(),
             executePlanStep: jest.fn(),
-        } as IrisHttpCodeEditorMessageService;
+        } as any;
 
         mockCodeEditorSessionService = {
             createNewSession: jest.fn(),
-            sendMessage: jest.fn().mockImplementation(async () => {
-                return mockHttpCodeEditorMessageService.createMessage();
+            sendMessage: jest.fn().mockImplementation(async (sessionId, message) => {
+                return mockHttpCodeEditorMessageService.createMessage(sessionId, message);
             }),
-            resendMessage: jest.fn().mockImplementation(async () => {
-                return mockHttpCodeEditorMessageService.resendMessage();
+            resendMessage: jest.fn().mockImplementation(async (sessionId, message) => {
+                return mockHttpCodeEditorMessageService.resendMessage(sessionId, message);
             }),
-            rateMessage: jest.fn().mockImplementation(async () => {
-                return mockHttpCodeEditorMessageService.rateMessage();
+            rateMessage: jest.fn().mockImplementation(async (sessionId, messageId, helpful) => {
+                return mockHttpCodeEditorMessageService.rateMessage(sessionId, messageId, helpful);
             }),
-            executePlanStep: jest.fn().mockImplementation(async () => {
-                return mockHttpCodeEditorMessageService.executePlanStep();
+            executePlanStep: jest.fn().mockImplementation(async (sessionId, messageId, planId, stepId) => {
+                return mockHttpCodeEditorMessageService.executePlanStep(sessionId, messageId, planId, stepId);
             }),
-        } as IrisCodeEditorSessionService;
+        } as any;
 
         mockUserService = {
             acceptIris: jest.fn().mockReturnValue({
