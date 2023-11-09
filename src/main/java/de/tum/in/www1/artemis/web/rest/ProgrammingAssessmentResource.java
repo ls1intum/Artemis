@@ -190,17 +190,16 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         Result savedResult = resultRepository.save(newManualResult);
         savedResult.setSubmission(submission);
 
-        if (submit) {
-            newManualResult = resultRepository.submitManualAssessment(existingManualResult.getId());
-            Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
-            if (optionalStudent.isPresent()) {
-                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(programmingExercise, optionalStudent.get(), newManualResult);
-            }
-        }
-
         // Re-load result to fetch the test cases
         newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(newManualResult.getId());
 
+        if (submit) {
+            newManualResult = resultRepository.submitManualAssessment(newManualResult);
+
+            if (submission.getParticipation() instanceof StudentParticipation studentParticipation && studentParticipation.getStudent().isPresent()) {
+                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(programmingExercise, studentParticipation.getStudent().get(), newManualResult);
+            }
+        }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
             newManualResult.getParticipation().filterSensitiveInformation();
