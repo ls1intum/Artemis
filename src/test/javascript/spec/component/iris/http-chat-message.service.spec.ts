@@ -25,7 +25,25 @@ describe('Iris Http Chat Message Service', () => {
             service
                 .createMessage(2, new IrisUserMessage())
                 .pipe(take(1))
-                .subscribe((resp) => expect(resp.body).toEqual(expected));
+                .subscribe((resp) => {
+                    expect(resp.body).toEqual(expected);
+                    expect(resp.body!.id).toEqual(expected.id);
+                });
+            const req = httpMock.expectOne({ method: 'POST' });
+            req.flush(returnedFromService);
+            tick();
+        }));
+
+        it('should resend a message', fakeAsync(() => {
+            const returnedFromService = { ...mockClientMessage, id: 0 };
+            const expected = returnedFromService;
+            service
+                .resendMessage(mockConversation.id, returnedFromService)
+                .pipe(take(1))
+                .subscribe((resp) => {
+                    expect(resp.body).toEqual(expected);
+                    expect(resp.body!.id).toEqual(expected.id);
+                });
             const req = httpMock.expectOne({ method: 'POST' });
             req.flush(returnedFromService);
             tick();
