@@ -287,27 +287,26 @@ Problem statement and exercise instructions
 
    The following table shows with a simple example, how that might look like in practice.
 
-.. raw:: html
+.. container:: centered
 
-    <table>
-        <tr>
-            <th style="width:30%;">Problem Statement</th>
-            <th style="width:70%;">Template Code</th>
-        </tr>
-        <tr>
-            <td>Implement the `reverseString` method in the `StringUtil` class. Ensure the returned string is the reverse of the input string. Follow the TODOs in the code for more information.</td>
-            <td>
-                <pre><code class="java">public class StringUtil {
-    public static String reverseString(String input) {
-        // TODO: Return the reversed version of the input string.
-        // Do not use built-in methods or libraries to reverse the string directly.
-        return "";
-    }
-}</code></pre>
-            </td>
-        </tr>
-    </table>
+   .. list-table:: Table Title
+      :widths: 30 70
+      :header-rows: 1
 
+      * - **Problem Statement**
+        - **Template Code**
+
+      * - Implement the `reverseString` method in the `StringUtil` class. Ensure the returned string is the reverse of the input string. Follow the TODOs in the code for more information.
+        -
+          .. code-block:: java
+
+             public class StringUtil {
+                 public static String reverseString(String input) {
+                     // TODO: Return the reversed version of the input string.
+                     // Do not use built-in methods or libraries to reverse the string directly.
+                     return "";
+                 }
+             }
 
 -  **Already implemented code:** Give exercises that require students
    to work with code that is already in the template repository. Two approaches:
