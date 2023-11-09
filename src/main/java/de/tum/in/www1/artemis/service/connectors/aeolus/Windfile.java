@@ -84,6 +84,20 @@ public class Windfile {
         this.metadata.setName(name);
     }
 
+    public void setDescription(String name) {
+        if (this.metadata == null) {
+            this.metadata = new Metadata();
+        }
+        this.metadata.setDescription(name);
+    }
+
+    public void setResultHook(String resultHook) {
+        if (this.metadata == null) {
+            this.metadata = new Metadata();
+        }
+        this.metadata.setResultHook(resultHook);
+    }
+
     public void setRepositories(Map<String, AeolusRepository> repositories) {
         this.repositories = repositories;
     }

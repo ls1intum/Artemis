@@ -11,6 +11,8 @@ import java.util.*;
 import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
@@ -88,6 +90,8 @@ public class BambooBuildPlanService {
 
     private final Optional<AeolusBuildPlanService> aeolusBuildPlanService;
 
+    private static final Logger log = LoggerFactory.getLogger(BambooBuildPlanService.class);
+
     private final UrlService urlService;
 
     public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Optional<VersionControlService> versionControlService,
@@ -124,30 +128,40 @@ public class BambooBuildPlanService {
         String assignedKey = null;
 
         boolean couldCreateCustomBuildPlan = false;
-        try {
-            Windfile windfile = programmingExercise.getWindfile();
-            Map<String, AeolusRepository> repositoryMap = new HashMap<>();
-            repositoryMap.put(ASSIGNMENT_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(repositoryUrl).toString(), programmingExercise.getBranch(),
-                    RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
-            if (programmingExercise.getCheckoutSolutionRepository()) {
-                repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(solutionRepositoryUrl).toString(),
-                        programmingExercise.getBranch(), RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
+        if (aeolusBuildPlanService.isPresent() && programmingExercise.getBuildPlanConfiguration() != null) {
+            try {
+                Windfile windfile = programmingExercise.getWindfile();
+                Map<String, AeolusRepository> repositoryMap = new HashMap<>();
+                repositoryMap.put(ASSIGNMENT_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(repositoryUrl).toString(), programmingExercise.getBranch(),
+                        RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
+                if (programmingExercise.getCheckoutSolutionRepository()) {
+                    repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(solutionRepositoryUrl).toString(),
+                            programmingExercise.getBranch(), RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
+                }
+                repositoryMap.put(TEST_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(testRepositoryUrl).toString(), programmingExercise.getBranch(),
+                        ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
+                // TODO add auxiliary repositories
+                windfile.setRepositories(repositoryMap);
+                windfile.setGitCredentials(this.gitUser);
+                windfile.setResultHook(artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH);
+                windfile.setName(projectName);
+                windfile.setId(projectKey + "-" + planKey);
+                windfile.setDescription(planDescription);
+                String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(new Gson().toJson(windfile), "bamboo");
+                if (generatedKey != null) {
+                    assignedKey = generatedKey.split("-")[1];
+                    couldCreateCustomBuildPlan = true;
+                }
+                else {
+                    throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id "
+                            + programmingExercise.getId() + ", will create default build plan");
+                }
             }
-            repositoryMap.put(TEST_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(testRepositoryUrl).toString(), programmingExercise.getBranch(),
-                    ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
-            windfile.setRepositories(repositoryMap);
-            windfile.setGitCredentials(this.gitUser);
-            windfile.setName(projectName);
-            windfile.setId(projectKey + "-" + planKey);
-            Gson gson = new Gson();
-            assignedKey = aeolusBuildPlanService.get().publishBuildPlan(gson.toJson(windfile), "bamboo").split("-")[1];
-            couldCreateCustomBuildPlan = true;
-            assignedKey = planKey;
+            catch (Exception e) {
+                log.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
+                        + ", will create default build plan", e);
+            }
         }
-        catch (Exception e) {
-            couldCreateCustomBuildPlan = false;
-        }
-
         if (!couldCreateCustomBuildPlan) {
             Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryUrl, testRepositoryUrl,
                     programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryUrl, auxiliaryRepositories)
