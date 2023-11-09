@@ -524,8 +524,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         resetProgrammingDates(this.programmingExercise);
 
         this.programmingExercise.projectKey = undefined;
-        this.programmingExercise.shortName = undefined;
-        this.programmingExercise.title = undefined;
         if (this.programmingExercise.submissionPolicy) {
             this.programmingExercise.submissionPolicy.id = undefined;
         }
