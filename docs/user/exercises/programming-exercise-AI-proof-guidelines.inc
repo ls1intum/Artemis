@@ -287,7 +287,7 @@ Problem statement and exercise instructions
 
    The following table shows with a simple example, how that might look like in practice.
 
-.. list-table::
+.. list-table:: todoincode
    :widths: 30 70
    :header-rows: 1
 
@@ -306,7 +306,6 @@ Problem statement and exercise instructions
                 // Do not use built-in methods or libraries to reverse the string directly.
                 return "";
             }
-        }
 
 
 -  **Already implemented code:** Give exercises that require students
