@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jgit.api.Git;
@@ -19,8 +20,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -63,18 +63,22 @@ public class LocalCIConnectorService {
 
     private final LocalCITriggerService localCITriggerService;
 
+    private final LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService;
+
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
     public LocalCIConnectorService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, LocalCITriggerService localCITriggerService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, LocalCITriggerService localCITriggerService,
+            LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.localCITriggerService = localCITriggerService;
+        this.localCIProgrammingLanguageFeatureService = localCIProgrammingLanguageFeatureService;
     }
 
     /**
@@ -102,6 +106,15 @@ public class LocalCIConnectorService {
         }
         catch (EntityNotFoundException e) {
             throw new LocalCIException("Could not find programming exercise for project key " + projectKey, e);
+        }
+
+        ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
+        ProjectType projectType = exercise.getProjectType();
+
+        List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
+
+        if (projectType != null && !supportedProjectTypes.contains(exercise.getProjectType())) {
+            throw new LocalCIException("The project type " + exercise.getProjectType() + " is not supported by the local CI.");
         }
 
         ProgrammingExerciseParticipation participation;
