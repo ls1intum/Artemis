@@ -288,8 +288,8 @@ Problem statement and exercise instructions
    The following table shows with a simple example, how that might look like in practice.
 
 
-.. list-table:: Table Title
-  :widths: 30 70
+.. list-table::
+  :widths: 50 50
   :header-rows: 1
   * - **Problem Statement**
     - **Template Code**
