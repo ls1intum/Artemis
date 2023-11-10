@@ -20,19 +20,12 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
-import { AccountService } from 'app/core/auth/account.service';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { faBan, faCodeBranch, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faCodeBranch, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
-import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
-import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
-import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
-import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 
@@ -95,14 +88,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     afterDueDate = false;
 
-    cancelConfirmationText: string;
-
     correctionRoundIndices: number[] = [];
 
     localVCEnabled = false;
 
     // Icons
-    faBan = faBan;
     faDownload = faDownload;
     faSync = faSync;
     faFolderOpen = faFolderOpen;
@@ -115,19 +105,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
-        private accountService: AccountService,
         private resultService: ResultService,
         private profileService: ProfileService,
         private programmingSubmissionService: ProgrammingSubmissionService,
         private participationService: ParticipationService,
-        private translateService: TranslateService,
-        private programmingAssessmentManualResultService: ProgrammingAssessmentManualResultService,
-        private modelingAssessmentService: ModelingAssessmentService,
-        private textAssessmentService: TextAssessmentService,
-        private fileUploadAssessmentService: FileUploadAssessmentService,
-    ) {
-        translateService.get('artemisApp.programmingAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
-    }
+    ) {}
 
     /**
      * Fetches the course and exercise from the server
@@ -396,65 +378,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.rangeFilter = undefined;
         this.filteredParticipations = this.participations;
         this.resultCriteria.filterProp = FilterProp.ALL;
-    }
-
-    /**
-     * Cancel the current assessment and reload the submissions to reflect the change.
-     */
-    cancelAssessment(result: Result, participation: Participation) {
-        const confirmCancel = window.confirm(this.cancelConfirmationText);
-
-        if (confirmCancel && result.submission?.id) {
-            let cancelSubscription;
-            switch (this.exercise.type) {
-                case ExerciseType.PROGRAMMING:
-                    cancelSubscription = this.programmingAssessmentManualResultService.cancelAssessment(result.submission.id);
-                    break;
-                case ExerciseType.MODELING:
-                    cancelSubscription = this.modelingAssessmentService.cancelAssessment(result.submission.id);
-                    break;
-                case ExerciseType.TEXT:
-                    cancelSubscription = this.textAssessmentService.cancelAssessment(participation.id!, result.submission.id);
-                    break;
-                case ExerciseType.FILE_UPLOAD:
-                    cancelSubscription = this.fileUploadAssessmentService.cancelAssessment(result.submission.id);
-                    break;
-            }
-            cancelSubscription?.subscribe(() => {
-                this.refresh();
-            });
-        }
-    }
-
-    getAssessmentLink(participation: Participation, correctionRound = 0) {
-        if (!this.exercise.type || !this.exercise.id || !this.course.id || !participation.submissions?.[0]?.id) {
-            return;
-        }
-        correctionRound = this.getCorrectionRoundForAssessmentLink(participation, correctionRound);
-
-        return getLinkToSubmissionAssessment(
-            this.exercise.type,
-            this.course.id,
-            this.exercise.id,
-            participation.id,
-            participation.submissions?.[0]?.id,
-            this.exercise.exerciseGroup?.exam?.id,
-            this.exercise.exerciseGroup?.id,
-            participation.results?.[correctionRound]?.id,
-        );
-    }
-
-    getCorrectionRoundForAssessmentLink(participation: Participation, correctionRound = 0): number {
-        const result = participation.results?.[correctionRound];
-        if (!result) {
-            return correctionRound;
-        }
-        if (result.hasComplaint && !!participation.results?.[correctionRound + 1]) {
-            // If there is a complaint and the complaint got accepted (additional result)
-            // open this next result.
-            return correctionRound + 1;
-        }
-        return correctionRound;
     }
 
     /**
