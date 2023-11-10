@@ -150,9 +150,8 @@ public class AnswerMessageService extends PostingService {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
             mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
             existingAnswerMessage.setContent(answerMessage.getContent());
+            existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
         }
-
-        existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
 
         updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
         updatedAnswerMessage.getPost().setConversation(conversation);

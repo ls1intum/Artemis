@@ -3,8 +3,7 @@ package de.tum.in.www1.artemis.exam;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.exam.*;
@@ -136,7 +135,6 @@ public class ExamFactory {
      *
      * @param mandatory if the exercise group is mandatory
      * @param exam      the exam that this exercise group should be added to
-     *
      * @return the newly created exercise
      */
     public static ExerciseGroup generateExerciseGroup(boolean mandatory, Exam exam) {
@@ -149,7 +147,6 @@ public class ExamFactory {
      * @param mandatory if the exercise group is mandatory
      * @param exam      the exam that this exercise group should be added to
      * @param title     title of the exercise group
-     *
      * @return the newly created exercise
      */
     public static ExerciseGroup generateExerciseGroupWithTitle(boolean mandatory, Exam exam, String title) {
