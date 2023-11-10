@@ -428,6 +428,7 @@ public class ExamUtilService {
 
     public StudentExam addStudentExam(Exam exam) {
         StudentExam studentExam = ExamFactory.generateStudentExam(exam);
+        studentExam.setWorkingTime(exam.getDuration());
         studentExam = studentExamRepository.save(studentExam);
         return studentExam;
     }
