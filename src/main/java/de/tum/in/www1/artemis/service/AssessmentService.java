@@ -13,9 +13,10 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 @Service
 public class AssessmentService {
@@ -28,7 +29,7 @@ public class AssessmentService {
 
     protected final ResultRepository resultRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
+    protected final StudentParticipationRepository studentParticipationRepository;
 
     protected final ResultService resultService;
 
@@ -42,12 +43,16 @@ public class AssessmentService {
 
     private final SubmissionService submissionService;
 
-    private final Optional<LtiNewResultService> ltiNewResultService;
+    protected final Optional<LtiNewResultService> ltiNewResultService;
+
+    protected final SingleUserNotificationService singleUserNotificationService;
+
+    protected final ResultWebsocketService resultWebsocketService;
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, ExamDateService examDateService, GradingCriterionRepository gradingCriterionRepository, UserRepository userRepository,
-            Optional<LtiNewResultService> ltiNewResultService) {
+            Optional<LtiNewResultService> ltiNewResultService, SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
         this.feedbackRepository = feedbackRepository;
@@ -60,6 +65,8 @@ public class AssessmentService {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.userRepository = userRepository;
         this.ltiNewResultService = ltiNewResultService;
+        this.singleUserNotificationService = singleUserNotificationService;
+        this.resultWebsocketService = resultWebsocketService;
     }
 
     /**
@@ -94,7 +101,7 @@ public class AssessmentService {
             return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).orElseThrow(); // to eagerly load assessor
         }
         else {
-            return resultRepository.submitResult(newResult, exercise, ExerciseDateService.getDueDate(newResult.getParticipation()));
+            return resultRepository.submitResult(newResult, exercise);
         }
     }
 
@@ -205,17 +212,17 @@ public class AssessmentService {
      * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date, sets the assessment type
      * to MANUAL and sets the assessor attribute. Afterwards, it saves the update result in the database again.
      * <p>
-     * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment(long)})}
+     * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment(Result)}.
      *
      * @param resultId the id of the result that should be submitted
      * @param exercise the exercise the assessment belongs to
      * @return the ResponseEntity with result as body
      */
-    public Result submitManualAssessment(long resultId, Exercise exercise) {
+    private Result submitManualAssessment(long resultId, Exercise exercise) {
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(resultId);
         result.setRatedIfNotAfterDueDate();
         result.setCompletionDate(ZonedDateTime.now());
-        result = resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
+        result = resultRepository.submitResult(result, exercise);
 
         if (ltiNewResultService.isPresent()) {
             // Note: we always need to report the result (independent of the assessment due date) over LTI, if LTI is configured.
@@ -229,7 +236,7 @@ public class AssessmentService {
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
      * database. If a result with the given id exists, it will be overridden. if not, a new result will be created.
      * <p>
-     * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result)}
+     * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment(Result)}.
      *
      * @param submission   the file upload submission to which the feedback belongs to
      * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
@@ -265,6 +272,22 @@ public class AssessmentService {
         var assessor = result.getAssessor();
         result = resultRepository.save(result);
         result.setAssessor(assessor);
+        return result;
+    }
+
+    public Result saveAndSubmitManualAssessment(final Exercise exercise, final Submission submission, final List<Feedback> feedbackList, Long resultId, boolean submit) {
+        Result result = saveManualAssessment(submission, feedbackList, resultId);
+        if (submit) {
+            result = submitManualAssessment(result.getId(), exercise);
+            Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
+            if (optionalStudent.isPresent()) {
+                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, optionalStudent.get(), result);
+            }
+
+            if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
+                resultWebsocketService.broadcastNewResult(result.getParticipation(), result);
+            }
+        }
         return result;
     }
 

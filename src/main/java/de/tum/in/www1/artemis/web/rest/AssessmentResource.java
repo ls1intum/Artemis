@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,13 +15,10 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AssessmentService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 public abstract class AssessmentResource {
 
@@ -40,27 +36,20 @@ public abstract class AssessmentResource {
 
     protected final ExamService examService;
 
-    protected final ResultWebsocketService resultWebsocketService;
-
     protected final ExampleSubmissionRepository exampleSubmissionRepository;
 
     protected final SubmissionRepository submissionRepository;
 
-    protected final SingleUserNotificationService singleUserNotificationService;
-
     public AssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository, AssessmentService assessmentService,
-            ResultRepository resultRepository, ExamService examService, ResultWebsocketService resultWebsocketService, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService) {
+            ResultRepository resultRepository, ExamService examService, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.assessmentService = assessmentService;
         this.resultRepository = resultRepository;
         this.examService = examService;
-        this.resultWebsocketService = resultWebsocketService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
-        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     abstract String getEntityName();
@@ -119,21 +108,12 @@ public abstract class AssessmentResource {
             throw new AccessForbiddenException("The user is not allowed to override the assessment");
         }
 
-        Result result = assessmentService.saveManualAssessment(submission, feedbackList, resultId);
-        if (submit) {
-            result = assessmentService.submitManualAssessment(result.getId(), exercise);
-            Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
-            if (optionalStudent.isPresent()) {
-                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, optionalStudent.get(), result);
-            }
-        }
+        Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbackList, resultId, submit);
+
         var participation = result.getParticipation();
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
             participation.filterSensitiveInformation();
-        }
-        if (submit && ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
-            resultWebsocketService.broadcastNewResult(result.getParticipation(), result);
         }
         return ResponseEntity.ok(result);
     }
@@ -152,12 +132,12 @@ public abstract class AssessmentResource {
         // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
         Result result;
         if (submission.getLatestResult() == null) {
-            result = assessmentService.saveManualAssessment(submission, feedbacks, null);
+            result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbacks, null, true);
         }
         else {
-            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId());
+            result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbacks, submission.getLatestResult().getId(), true);
         }
-        result = resultRepository.submitResult(result, exercise, Optional.empty());
+        result = resultRepository.submitResult(result, exercise);
         return ResponseEntity.ok(result);
     }
 

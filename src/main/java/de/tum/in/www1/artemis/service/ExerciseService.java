@@ -700,7 +700,7 @@ public class ExerciseService {
                 else {
                     dueDate = ExerciseDateService.getDueDate(result.getParticipation());
                 }
-                resultRepository.submitResult(result, exercise, dueDate);
+                resultRepository.submitResult(result, exercise);
             }
             else {
                 result.calculateScoreForProgrammingExercise(programmingExercise);
