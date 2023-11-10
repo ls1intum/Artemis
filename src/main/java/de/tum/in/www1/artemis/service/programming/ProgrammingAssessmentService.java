@@ -53,7 +53,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
     }
 
     /**
-     * Saves a new manual assessment. Also submits the result if the submit-parameter is set to true.
+     * Saves a new manual assessment. Submits the result if the submit-parameter is set to true.
      * Also notifies the student about the assessment if it is visible (after the assessment due date).
      *
      * @param participation        the participation to add a new result

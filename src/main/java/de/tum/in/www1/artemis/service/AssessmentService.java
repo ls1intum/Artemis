@@ -216,7 +216,7 @@ public class AssessmentService {
      *
      * @param resultId the id of the result that should be submitted
      * @param exercise the exercise the assessment belongs to
-     * @return the ResponseEntity with result as body
+     * @return the saved result
      */
     private Result submitManualAssessment(long resultId, Exercise exercise) {
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(resultId);
@@ -236,12 +236,12 @@ public class AssessmentService {
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
      * database. If a result with the given id exists, it will be overridden. if not, a new result will be created.
      * <p>
-     * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment(Result)}.
+     * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result, User)}.
      *
-     * @param submission   the file upload submission to which the feedback belongs to
+     * @param submission   the submission to which the feedback belongs to
      * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
-     * @param resultId     resultId of the submission we what to save the @feedbackList to, null if no result exists
-     * @return result that was saved in the database
+     * @param resultId     if of the result we what to save the feedbackList to, null if no result exists
+     * @return the saved result
      */
     public Result saveManualAssessment(final Submission submission, final List<Feedback> feedbackList, Long resultId) {
         Result result = submission.getResults().stream().filter(res -> res.getId().equals(resultId)).findAny().orElse(null);
@@ -275,6 +275,17 @@ public class AssessmentService {
         return result;
     }
 
+    /**
+     * Saves a new manual assessment. Submits the result if the submit-parameter is set to true.
+     * Also notifies the student about the assessment if it is visible (after the assessment due date).
+     *
+     * @param exercise     the exercise this assessment belongs to
+     * @param submission   the assessed submission
+     * @param feedbackList the assessment as a feedback list that should be added to the result of the corresponding submission
+     * @param resultId     if of the result we what to save the feedbackList to, null if no result exists
+     * @param submit       true if the result should also be submitted
+     * @return the saved result
+     */
     public Result saveAndSubmitManualAssessment(final Exercise exercise, final Submission submission, final List<Feedback> feedbackList, Long resultId, boolean submit) {
         Result result = saveManualAssessment(submission, feedbackList, resultId);
         if (submit) {

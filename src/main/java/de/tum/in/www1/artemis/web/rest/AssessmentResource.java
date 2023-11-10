@@ -121,7 +121,7 @@ public abstract class AssessmentResource {
     /**
      * @param exampleSubmissionId id of the example submission
      * @param feedbacks           list of feedbacks
-     * @return result after saving example assessment
+     * @return the ResponseEntity with result as body
      */
     protected ResponseEntity<Result> saveExampleAssessment(long exampleSubmissionId, List<Feedback> feedbacks) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -132,10 +132,10 @@ public abstract class AssessmentResource {
         // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
         Result result;
         if (submission.getLatestResult() == null) {
-            result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbacks, null, true);
+            result = assessmentService.saveManualAssessment(submission, feedbacks, null);
         }
         else {
-            result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbacks, submission.getLatestResult().getId(), true);
+            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId());
         }
         result = resultRepository.submitResult(result, exercise);
         return ResponseEntity.ok(result);

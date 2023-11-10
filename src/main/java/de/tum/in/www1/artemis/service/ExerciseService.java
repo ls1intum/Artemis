@@ -692,14 +692,6 @@ public class ExerciseService {
             }
 
             if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
-                final Optional<ZonedDateTime> dueDate;
-                if (result.getParticipation() == null) {
-                    // this is only the case for example submissions, due date does not matter then
-                    dueDate = Optional.empty();
-                }
-                else {
-                    dueDate = ExerciseDateService.getDueDate(result.getParticipation());
-                }
                 resultRepository.submitResult(result, exercise);
             }
             else {
