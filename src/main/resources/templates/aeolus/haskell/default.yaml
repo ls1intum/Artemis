@@ -1,0 +1,36 @@
+api: v0.0.1
+metadata:
+    name: haskell regular runs
+    id: haskell-windfile
+    description: This is a windfile for haskell exercises
+    author: Andreas Resch
+    docker:
+        image: ghcr.io/uni-passau-artemis/artemis-haskell
+        tag: v19.33.0
+        volumes:
+            - ${WORKDIR}:${WORKDIR}
+            - ${TMPDIR}:${TMPDIR}
+        parameters:
+            - --cpus
+            - '"2"'
+            - --memory
+            - '"2g"'
+            - --memory-swap
+            - '"2g"'
+            - --pids-limit
+            - '"1000"'
+actions:
+    - name: build_and_test_the_code
+      script: |
+        # the build process is specified in `run.sh` in the test repository
+        # -s enables the safe testing mode
+        chmod +x run.sh
+        ./run.sh -s
+      run_always: false
+    - name: junit
+      parameters:
+          ignore_time: false
+          test_results: '**/test-reports/*.xml'
+      platform: bamboo
+      kind: junit
+      run_always: true
