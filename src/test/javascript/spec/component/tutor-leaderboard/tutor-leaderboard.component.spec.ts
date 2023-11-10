@@ -12,6 +12,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
+import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 describe('TutorLeaderboardComponent', () => {
     let comp: TutorLeaderboardComponent;
@@ -57,6 +58,18 @@ describe('TutorLeaderboardComponent', () => {
         it('sets variables correctly if exercise.course is set', () => {
             const course = { isAtLeastInstructor: true } as Course;
             const exercise = { course } as Exercise;
+            comp.exercise = exercise;
+            comp.ngOnInit();
+            expect(comp.isExerciseDashboard).toBeTrue();
+            expect(comp.course).toBe(course);
+            expect(comp.exercise).toBe(exercise);
+        });
+
+        it('sets variables correctly if exercise.exerciseGroup.exam.course is set', () => {
+            const course = {} as Course;
+            const exam = { course: course } as Exam;
+            const exerciseGroup = { exam: exam } as ExerciseGroup;
+            const exercise = { exerciseGroup: exerciseGroup } as Exercise;
             comp.exercise = exercise;
             comp.ngOnInit();
             expect(comp.isExerciseDashboard).toBeTrue();

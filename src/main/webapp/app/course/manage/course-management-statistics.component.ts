@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { CourseManagementStatisticsDTO } from './course-management-statistics-dto';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-course-management-statistics',
@@ -12,28 +13,16 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     styleUrls: ['./course-management-statistics.component.scss'],
 })
 export class CourseManagementStatisticsComponent implements OnInit {
-    documentationType = DocumentationType.Statistics;
+    readonly documentationType: DocumentationType = 'Statistics';
     // html properties
     SpanType = SpanType;
     graph = Graphs;
-    graphTypes = [
-        Graphs.SUBMISSIONS,
-        Graphs.ACTIVE_USERS,
-        Graphs.RELEASED_EXERCISES,
-        Graphs.EXERCISES_DUE,
-        Graphs.ACTIVE_TUTORS,
-        Graphs.CREATED_RESULTS,
-        Graphs.CREATED_FEEDBACKS,
-        Graphs.POSTS,
-        Graphs.RESOLVED_POSTS,
-        Graphs.CONDUCTED_EXAMS,
-        Graphs.EXAM_PARTICIPATIONS,
-        Graphs.EXAM_REGISTRATIONS,
-    ];
+    graphTypes: Graphs[];
     currentSpan: SpanType = SpanType.WEEK;
     statisticsView: StatisticsView = StatisticsView.COURSE;
     paramSub: Subscription;
     courseId: number;
+    course: Course;
 
     defaultTitle = 'Course';
     // Average Score
@@ -60,9 +49,30 @@ export class CourseManagementStatisticsComponent implements OnInit {
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseId = params['courseId'];
         });
+        this.route.data.subscribe(({ course }) => {
+            this.course = course;
+            this.initializeGraphTypes();
+        });
         this.service.getCourseStatistics(this.courseId).subscribe((res: CourseManagementStatisticsDTO) => {
             this.courseStatistics = res;
         });
+    }
+
+    initializeGraphTypes(): void {
+        this.graphTypes = [
+            Graphs.SUBMISSIONS,
+            Graphs.ACTIVE_USERS,
+            Graphs.RELEASED_EXERCISES,
+            Graphs.EXERCISES_DUE,
+            Graphs.ACTIVE_TUTORS,
+            Graphs.CREATED_RESULTS,
+            Graphs.CREATED_FEEDBACKS,
+            isCommunicationEnabled(this.course) && Graphs.POSTS,
+            isCommunicationEnabled(this.course) && Graphs.RESOLVED_POSTS,
+            Graphs.CONDUCTED_EXAMS,
+            Graphs.EXAM_PARTICIPATIONS,
+            Graphs.EXAM_REGISTRATIONS,
+        ].filter(Boolean) as Graphs[];
     }
 
     onTabChanged(span: SpanType): void {
