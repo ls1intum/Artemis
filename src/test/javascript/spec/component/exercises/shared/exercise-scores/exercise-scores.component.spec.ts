@@ -33,15 +33,15 @@ import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { Subscription, of } from 'rxjs';
-import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
-import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
-import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
-import { MockParticipationService } from '../../../helpers/mocks/service/mock-participation.service';
-import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
-import { MockProgrammingSubmissionService } from '../../../helpers/mocks/service/mock-programming-submission.service';
-import { MockResultService } from '../../../helpers/mocks/service/mock-result.service';
-import { ArtemisTestModule } from '../../../test.module';
+import { MockHasAnyAuthorityDirective } from '../../../../helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
+import { MockCourseManagementService } from '../../../../helpers/mocks/service/mock-course-management.service';
+import { MockExerciseService } from '../../../../helpers/mocks/service/mock-exercise.service';
+import { MockParticipationService } from '../../../../helpers/mocks/service/mock-participation.service';
+import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
+import { MockProgrammingSubmissionService } from '../../../../helpers/mocks/service/mock-programming-submission.service';
+import { MockResultService } from '../../../../helpers/mocks/service/mock-result.service';
+import { ArtemisTestModule } from '../../../../test.module';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;

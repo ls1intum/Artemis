@@ -54,30 +54,30 @@ export class ManageAssessmentButtonsComponent implements OnInit {
         }
     }
 
-    getAssessmentLink(participation: Participation, correctionRound = 0) {
-        if (!this.exercise.type || !this.exercise.id || !this.course.id || !participation.submissions?.[0]?.id) {
+    getAssessmentLink(correctionRound = 0) {
+        if (!this.exercise.type || !this.exercise.id || !this.course.id || !this.participation.submissions?.[0]?.id) {
             return;
         }
-        correctionRound = this.getCorrectionRoundForAssessmentLink(participation, correctionRound);
+        correctionRound = this.getCorrectionRoundForAssessmentLink(correctionRound);
 
         return getLinkToSubmissionAssessment(
             this.exercise.type,
             this.course.id,
             this.exercise.id,
-            participation.id,
-            participation.submissions?.[0]?.id,
+            this.participation.id,
+            this.participation.submissions?.[0]?.id,
             this.exercise.exerciseGroup?.exam?.id,
             this.exercise.exerciseGroup?.id,
-            participation.results?.[correctionRound]?.id,
+            this.participation.results?.[correctionRound]?.id,
         );
     }
 
-    getCorrectionRoundForAssessmentLink(participation: Participation, correctionRound = 0): number {
-        const result = participation.results?.[correctionRound];
+    getCorrectionRoundForAssessmentLink(correctionRound = 0): number {
+        const result = this.participation.results?.[correctionRound];
         if (!result) {
             return correctionRound;
         }
-        if (result.hasComplaint && !!participation.results?.[correctionRound + 1]) {
+        if (result.hasComplaint && !!this.participation.results?.[correctionRound + 1]) {
             // If there is a complaint and the complaint got accepted (additional result)
             // open this next result.
             return correctionRound + 1;

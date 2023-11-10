@@ -8,8 +8,8 @@
             "
         >
             <a
-                [routerLink]="getAssessmentLink(participation, correctionRound)"
-                [queryParams]="{ 'correction-round': getCorrectionRoundForAssessmentLink(participation, correctionRound) }"
+                [routerLink]="getAssessmentLink(correctionRound)"
+                [queryParams]="{ 'correction-round': getCorrectionRoundForAssessmentLink(correctionRound) }"
                 class="btn btn-sm me-1 mb-2"
                 [class.btn-success]="
                     (!participation.results?.[correctionRound]?.assessmentType || participation.results?.[correctionRound]?.assessmentType === AssessmentType.AUTOMATIC) &&
