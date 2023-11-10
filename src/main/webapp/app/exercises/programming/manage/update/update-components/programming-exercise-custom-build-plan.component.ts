@@ -95,7 +95,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                                 (action as PlatformAction).parameters = anyAction.parameters;
                             }
                             action.name = anyAction.name;
-                            action.run_always = anyAction.run_always;
+                            action.runAlways = anyAction.runAlways;
                             actions.push(action);
                         });
                         templateFile.actions = actions;
@@ -158,7 +158,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             const newAction = new ScriptAction();
             newAction.script = '#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0';
             newAction.name = action;
-            newAction.run_always = false;
+            newAction.runAlways = false;
             this.programmingExercise.windFile.actions.push(newAction);
             this.changeActiveAction(action);
         }

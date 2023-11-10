@@ -4,7 +4,6 @@ metadata:
     id: java-windfile
     description: Build Plan for a java Exercise with maven
     author: Andreas Resch
-    gitCredentials: artemis_admin
     docker:
         image: ls1tum/artemis-maven-template
         tag: java17-20
@@ -31,4 +30,3 @@ actions:
             mvn clean test
           fi
           cd ..
-      run_always: false

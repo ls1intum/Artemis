@@ -4,7 +4,6 @@ metadata:
     id: java-windfile
     description: Build Plan for a java Exercise
     author: Andreas Resch
-    gitCredentials: artemis_admin
     docker:
         image: ls1tum/artemis-maven-template
         tag: java17-20
@@ -28,4 +27,4 @@ actions:
           if [ $? -eq 0 ]; then
               ./gradlew behaviorTests
           fi
-      run_always: false
+      runAlways: false

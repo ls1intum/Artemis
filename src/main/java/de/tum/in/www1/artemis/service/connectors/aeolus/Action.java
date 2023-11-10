@@ -2,9 +2,6 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.gson.annotations.SerializedName;
-
 /**
  * Base class for the actions that can be defined in a {@link Windfile}
  */
@@ -16,8 +13,6 @@ public abstract class Action {
 
     private Map<String, Object> environment;
 
-    @JsonProperty("run_always")
-    @SerializedName("run_always")
     private boolean runAlways;
 
     public Map<String, Object> getParameters() {

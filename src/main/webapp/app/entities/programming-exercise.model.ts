@@ -12,7 +12,7 @@ import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-lo
 
 export class BuildAction {
     name: string;
-    run_always: boolean;
+    runAlways: boolean;
 }
 
 export class ScriptAction extends BuildAction {

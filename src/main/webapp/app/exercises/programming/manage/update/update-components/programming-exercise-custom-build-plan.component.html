@@ -5,6 +5,7 @@
             >Customize Build Plan with Aeolus
         </label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeBuildPlansWithAeolusTooltip"></jhi-help-icon>
+        <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
     </div>
     <div class="row" *ngIf="programmingExercise.customizeBuildPlanWithAeolus">
         <div class="col-2 col-md-3">
@@ -33,7 +34,7 @@
                 <input required type="text" class="form-control" name="actionName" id="field_actionName" [(ngModel)]="active.name" />
                 <div class="form-check">
                     <label class="form-check-label" for="field_alwaysrun" *ngIf="active">
-                        <input class="form-check-input" type="checkbox" name="runAlways" id="field_alwaysrun" [(ngModel)]="active.run_always" />
+                        <input class="form-check-input" type="checkbox" name="runAlways" id="field_alwaysrun" [(ngModel)]="active.runAlways" />
                         <label class="form-check-label custom-control-label" for="field_alwaysrun" jhiTranslate="artemisApp.programmingExercise.runActionAlways">
                             Always run, even if other actions fail
                         </label>
