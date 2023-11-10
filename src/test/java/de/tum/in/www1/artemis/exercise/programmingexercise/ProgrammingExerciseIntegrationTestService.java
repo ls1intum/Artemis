@@ -1781,12 +1781,12 @@ class ProgrammingExerciseIntegrationTestService {
 
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
             assertThat(zipFile.getEntry("overview.json")).isNotNull();
-            assertThat(zipFile.getEntry(Path.of("files/Submission-1.java/Submission-1.java").toString())).isNotNull();
-            assertThat(zipFile.getEntry(Path.of("files/Submission-2.java/Submission-2.java").toString())).isNotNull();
+            assertThat(zipFile.getEntry(Path.of("files/1-Submission1.java/1-Submission1.java").toString())).isNotNull();
+            assertThat(zipFile.getEntry(Path.of("files/2-Submission2.java/2-Submission2.java").toString())).isNotNull();
 
             // it is random which of the following two exists, but one of them must be part of the zip file
-            var json1 = zipFile.getEntry("Submission-2.java-Submission-1.java.json");
-            var json2 = zipFile.getEntry("Submission-1.java-Submission-2.java.json");
+            var json1 = zipFile.getEntry("1-Submission1.java-2-Submission2.java.json");
+            var json2 = zipFile.getEntry("2-Submission2.java-1-Submission1.java.json");
             assertThat(json1 != null || json2 != null).isTrue();
         }
     }
@@ -1853,9 +1853,9 @@ class ProgrammingExerciseIntegrationTestService {
                 """;
 
         Files.createDirectories(jPlagReposDir.resolve(projectKey));
-        Path file1 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-1.java"));
+        Path file1 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("1-Submission1.java"));
         FileUtils.writeStringToFile(file1.toFile(), exampleProgram, StandardCharsets.UTF_8);
-        Path file2 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("Submission-2.java"));
+        Path file2 = Files.createFile(jPlagReposDir.resolve(projectKey).resolve("2-Submission2.java"));
         FileUtils.writeStringToFile(file2.toFile(), exampleProgram, StandardCharsets.UTF_8);
 
         doReturn(jPlagReposDir).when(fileService).getTemporaryUniqueSubfolderPath(any(Path.class), eq(60L));

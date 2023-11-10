@@ -85,7 +85,7 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
 
         // verify plagiarism result stats
         var stats = result.plagiarismResultStats();
-        assertThat(stats.numberOfDetectedSubmissions()).isEqualTo(20);
+        assertThat(stats.numberOfDetectedSubmissions()).isEqualTo(5);
         assertThat(stats.averageSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
         assertThat(stats.maximalSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
     }
