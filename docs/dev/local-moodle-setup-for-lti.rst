@@ -5,9 +5,9 @@ This guide will help developers quickly establish a consistent and reliable Mood
 
 .. caution::
 
-    The setup uses a docker-compose file based on configurations that Bitnami provided under the Apache License, Version 2.0.
-You can find the original configuration at the `Bitnami GitHub repository <https://github.com/bitnami/containers/tree/main/bitnami/moodle>`_.
-Usage of the Moodle™ trademark within this guide does not imply affiliation with or endorsement by Moodle HQ, which maintains the Moodle LMS independently.
+   The setup uses a docker-compose file based on configurations that Bitnami provided under the Apache License, Version 2.0.
+   You can find the original configuration at the `Bitnami GitHub repository <https://github.com/bitnami/containers/tree/main/bitnami/moodle>`_.
+   Usage of the Moodle™ trademark within this guide does not imply affiliation with or endorsement by Moodle HQ, which maintains the Moodle LMS independently.
 
 Prerequisites
 -------------
