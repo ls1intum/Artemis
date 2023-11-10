@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -66,8 +65,6 @@ class ProgrammingPlagiarismDetectionService {
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
-    private final PlagiarismResultRepository plagiarismResultRepository;
-
     private final PlagiarismWebsocketService plagiarismWebsocketService;
 
     private final PlagiarismCacheService plagiarismCacheService;
@@ -77,15 +74,14 @@ class ProgrammingPlagiarismDetectionService {
     private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
 
     public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, PlagiarismResultRepository plagiarismResultRepository,
-            ProgrammingExerciseExportService programmingExerciseExportService, PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService,
-            UrlService urlService, ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
+            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
+            PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, UrlService urlService,
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
-        this.plagiarismResultRepository = plagiarismResultRepository;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
         this.urlService = urlService;
