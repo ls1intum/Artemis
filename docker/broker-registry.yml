@@ -37,10 +37,7 @@ services:
             # "--nio" is apparently required to make it work on ARM CPUs
             EXTRA_ARGS: --http-host 0.0.0.0 --relax-jolokia --nio
         ports:
-            - "61616:61616"
-        # expose the port to make it reachable docker internally even if the external port mapping changes
-        expose:
-            - "61616"
+            - "61613:61616"
         healthcheck:
             test: wget -nv -t1 --spider http://localhost:8161/ || exit 1
             start_period: 600s

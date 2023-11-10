@@ -23,7 +23,7 @@ services:
         group_add:
             - ${DOCKER_GROUP_ID:-0}
         env_file:
-            - ${ARTEMIS_COMMON_ENV_FILE:-./artemis/config/prod-multinode.env}
+            - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_1_ENV_FILE:-./artemis/config/node1.env}
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
@@ -51,7 +51,7 @@ services:
         group_add:
             - ${DOCKER_GROUP_ID:-0}
         env_file:
-            - ${ARTEMIS_COMMON_ENV_FILE:-./artemis/config/prod-multinode.env}
+            - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_2_ENV_FILE:-./artemis/config/node2.env}
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
@@ -79,7 +79,7 @@ services:
         group_add:
             - ${DOCKER_GROUP_ID:-0}
         env_file:
-            - ${ARTEMIS_COMMON_ENV_FILE:-./artemis/config/prod-multinode.env}
+            - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_3_ENV_FILE:-./artemis/config/node3.env}
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
