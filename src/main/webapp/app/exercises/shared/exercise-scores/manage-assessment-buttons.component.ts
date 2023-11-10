@@ -5,6 +5,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
+import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
@@ -28,6 +29,7 @@ export class ManageAssessmentButtonsComponent implements OnInit {
 
     cancelConfirmationText: string;
     newManualResultAllowed: boolean = false;
+    examMode = false;
 
     readonly faBan = faBan;
     readonly faFolderOpen = faFolderOpen;
@@ -45,6 +47,11 @@ export class ManageAssessmentButtonsComponent implements OnInit {
 
     ngOnInit(): void {
         this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
+        this.examMode = !!this.exercise.exerciseGroup;
+        if (isPracticeMode(this.participation) && !this.examMode) {
+            // don't allow manual results for practice mode participations
+            this.newManualResultAllowed = false;
+        }
     }
 
     getAssessmentLink(participation: Participation, correctionRound = 0) {

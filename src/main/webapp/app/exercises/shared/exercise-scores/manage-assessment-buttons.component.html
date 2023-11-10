@@ -1,48 +1,60 @@
 <ng-container *ngIf="participation.submissionCount">
     <ng-container *ngFor="let correctionRound of correctionRoundIndices">
-        <ng-container *ngVar="participation.results?.[correctionRound] as result">
-            <div
-                *ngIf="
-                    (correctionRound == 0 || participation.results?.[correctionRound - 1]?.completionDate) &&
-                    (newManualResultAllowed || (result?.assessmentType && result.assessmentType !== AssessmentType.AUTOMATIC))
+        <div
+            *ngIf="
+                (correctionRound == 0 || participation.results?.[correctionRound - 1]?.completionDate) &&
+                (newManualResultAllowed ||
+                    (participation.results?.[correctionRound]?.assessmentType && participation.results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC))
+            "
+        >
+            <a
+                [routerLink]="getAssessmentLink(participation, correctionRound)"
+                [queryParams]="{ 'correction-round': getCorrectionRoundForAssessmentLink(participation, correctionRound) }"
+                class="btn btn-sm me-1 mb-2"
+                [class.btn-success]="
+                    (!participation.results?.[correctionRound]?.assessmentType || participation.results?.[correctionRound]?.assessmentType === AssessmentType.AUTOMATIC) &&
+                    !participation.results?.[correctionRound]?.hasComplaint
+                "
+                [class.btn-primary]="participation.results?.[correctionRound]?.completionDate || participation.results?.[correctionRound]?.hasComplaint"
+                [class.btn-warning]="
+                    participation.results?.[correctionRound] && !participation.results?.[correctionRound]?.completionDate && !participation.results?.[correctionRound]?.hasComplaint
                 "
             >
-                <a
-                    [routerLink]="getAssessmentLink(participation, correctionRound)"
-                    [queryParams]="{ 'correction-round': getCorrectionRoundForAssessmentLink(participation, correctionRound) }"
-                    class="btn btn-sm me-1 mb-2"
-                    [class.btn-success]="(!result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC) && !result?.hasComplaint"
-                    [class.btn-primary]="result?.completionDate || result?.hasComplaint"
-                    [class.btn-warning]="result && !result.completionDate && !result.hasComplaint"
-                >
-                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
-                    <ng-container *ngIf="!result?.hasComplaint; else complaint">
-                        {{
-                            'artemisApp.assessment.dashboard.actions.' +
-                                (this.exercise.exerciseGroup ? 'examCorrectionRound.' : '') +
-                                (!result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC ? 'assess' : result?.completionDate ? 'open' : 'continue')
-                                | artemisTranslate: { correctionRound: correctionRound + 1 }
-                        }}
-                    </ng-container>
-                    <ng-template #complaint>
-                        {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
-                    </ng-template>
-                </a>
-                <button
-                    *ngIf="newManualResultAllowed && result?.assessmentType && !result.completionDate && result.assessmentType !== AssessmentType.AUTOMATIC"
-                    (click)="cancelAssessment(result, participation)"
-                    [disabled]="isLoading"
-                    class="btn btn-danger btn-sm mb-1"
-                >
-                    <fa-icon [fixedWidth]="true" [icon]="faBan"></fa-icon>
-                    <span>
-                        {{
-                            'artemisApp.assessment.dashboard.actions.' + (this.exercise.exerciseGroup ? 'examCorrectionRound.' : '') + 'cancel'
-                                | artemisTranslate: { correctionRound: correctionRound + 1 }
-                        }}
-                    </span>
-                </button>
-            </div>
-        </ng-container>
+                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                <ng-container *ngIf="!participation.results?.[correctionRound]?.hasComplaint; else complaint">
+                    {{
+                        'artemisApp.assessment.dashboard.actions.' +
+                            (this.examMode ? 'examCorrectionRound.' : '') +
+                            (!participation.results?.[correctionRound]?.assessmentType || participation.results?.[correctionRound]?.assessmentType === AssessmentType.AUTOMATIC
+                                ? 'assess'
+                                : participation.results?.[correctionRound]?.completionDate
+                                ? 'open'
+                                : 'continue') | artemisTranslate: { correctionRound: correctionRound + 1 }
+                    }}
+                </ng-container>
+                <ng-template #complaint>
+                    {{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}
+                </ng-template>
+            </a>
+            <button
+                *ngIf="
+                    newManualResultAllowed &&
+                    participation.results?.[correctionRound]?.assessmentType &&
+                    !participation.results?.[correctionRound]?.completionDate &&
+                    participation.results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC
+                "
+                (click)="cancelAssessment(participation.results?.[correctionRound]!, participation)"
+                [disabled]="isLoading"
+                class="btn btn-danger btn-sm mb-1"
+            >
+                <fa-icon [fixedWidth]="true" [icon]="faBan"></fa-icon>
+                <span>
+                    {{
+                        'artemisApp.assessment.dashboard.actions.' + (this.examMode ? 'examCorrectionRound.' : '') + 'cancel'
+                            | artemisTranslate: { correctionRound: correctionRound + 1 }
+                    }}
+                </span>
+            </button>
+        </div>
     </ng-container>
 </ng-container>
