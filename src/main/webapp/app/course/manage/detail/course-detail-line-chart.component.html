@@ -1,5 +1,5 @@
 <div class="course-detail-parent-container col">
-    <div class="row justify-content-center chart-title-line">
+    <div class="row justify-content-center mt-3">
         <div class="d-inline-flex flex-nowrap justify-content-center">
             <a [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
                 <h5>{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h5>
@@ -20,7 +20,7 @@
             ></fa-icon>
             <div #containerRef class="chart col-md-10 mt-1 justify-content-center align-items-start h-99" [ngClass]="showsCurrentWeek && startDateDisplayed ? 'col-12' : 'col-10'">
                 <ngx-charts-line-chart
-                    [view]="[containerRef.offsetWidth, 400]"
+                    [view]="[containerRef.offsetWidth, 320]"
                     [scheme]="chartColor"
                     [legend]="legend"
                     [showXAxisLabel]="showXAxisLabel"

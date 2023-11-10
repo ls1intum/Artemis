@@ -1,16 +1,16 @@
 <div class="doughnut mx-3">
     <a *ngIf="titleLink" [routerLink]="['/course-management', course.id, titleLink]">
-        <h5 class="text-center">{{ 'artemisApp.course.detail.' + doughnutChartTitle + 'Title' | artemisTranslate }}</h5>
+        <div class="text-center h5 m-0">{{ 'artemisApp.course.detail.' + doughnutChartTitle + 'Title' | artemisTranslate }}</div>
     </a>
     <h5 *ngIf="!titleLink" class="text-center">{{ 'artemisApp.course.detail.' + doughnutChartTitle + 'Title' | artemisTranslate }}</h5>
     <div class="doughnut-chart-container" [ngClass]="titleLink ? 'clickable' : ''" (click)="openCorrespondingPage()">
         <div class="doughnut-chart-text">
-            <h2 *ngIf="receivedStats" class="text-center">{{ currentPercentage }}%</h2>
-            <h4 *ngIf="receivedStats" class="text-center">{{ currentAbsolute }} / {{ currentMax }}</h4>
-            <h1 *ngIf="!receivedStats" class="text-center" style="z-index: 1">
+            <div *ngIf="receivedStats" class="h4">{{ currentPercentage }}%</div>
+            <div *ngIf="receivedStats" class="h6">{{ currentAbsolute }} / {{ currentMax }}</div>
+            <div *ngIf="!receivedStats" class="h3">
                 <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
-            </h1>
+            </div>
         </div>
-        <ngx-charts-pie-chart [view]="[200, 200]" [results]="ngxData" [scheme]="ngxColor" [doughnut]="true" [tooltipText]="bindFormatting"> </ngx-charts-pie-chart>
+        <ngx-charts-pie-chart [view]="[160, 160]" [results]="ngxData" [scheme]="ngxColor" [doughnut]="true" [tooltipText]="bindFormatting"> </ngx-charts-pie-chart>
     </div>
 </div>
