@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledExecutorService;
@@ -77,8 +76,12 @@ public class LocalCIConfiguration {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
         };
 
-        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory,
-                customRejectedExecutionHandler);
+        ExecutorService es = Executors.newFixedThreadPool(threadPoolSize, customThreadFactory);
+
+        return es;
+
+        // return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory,
+        // customRejectedExecutionHandler);
     }
 
     /**

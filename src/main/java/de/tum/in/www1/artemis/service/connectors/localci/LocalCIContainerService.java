@@ -59,6 +59,15 @@ public class LocalCIContainerService {
         this.dockerClient = dockerClient;
     }
 
+    public HostConfig createHostConfig() {
+        // Todo: Use values from artemis.continuous-integration.build.default-docker-flags
+        // Limits the ressources of the docker container
+        // For some reason .withCpuCount (--cpus) does not limit the cpu usage of the container.
+        // We use .withCpuQuota and .withCpuPeriod instead.
+        return HostConfig.newHostConfig().withCpuQuota(200000L).withCpuPeriod(100000L).withMemory(2L * 1024 * 1024 * 1024).withMemorySwap(2L * 1024 * 1024 * 1024)
+                .withPidsLimit(1000L).withAutoRemove(true);
+    }
+
     /**
      * Configure a container with the Docker image, the container name, the binds, and the branch to checkout, and set the command that runs when the container starts.
      *
@@ -68,15 +77,15 @@ public class LocalCIContainerService {
      * @param image         the Docker image to use for the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash, String image) {
-        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(HostConfig.newHostConfig().withAutoRemove(true))
+    public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash, String image, HostConfig hostConfig) {
+        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig)
                 .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
                 // by the creation of a file "stop_container.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f /stop_container.txt ]; do sleep 0.5; done")
-                // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
+                // .withCmd("sh", "-c", "while [ ! -f /stop_container.txt ]; do sleep 0.5; done")
+                .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
     }
