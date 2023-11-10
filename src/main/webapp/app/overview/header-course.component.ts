@@ -3,6 +3,7 @@ import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { Router } from '@angular/router';
+import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-header-course',
@@ -19,6 +20,7 @@ export class HeaderCourseComponent implements OnChanges {
     public enableShowMore = false;
     public longDescriptionShown = false;
 
+    faArrowDown = faArrowDown;
     constructor(private router: Router) {}
 
     ngOnChanges() {

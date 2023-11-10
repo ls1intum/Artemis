@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -24,6 +25,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -94,10 +96,20 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     private MockHttpServletRequestBuilder buildUpdateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment) throws Exception {
-        return buildUpdateAttachmentUnit(attachmentUnit, attachment, null);
+        return buildUpdateAttachmentUnit(attachmentUnit, attachment, null, true);
     }
 
-    private MockHttpServletRequestBuilder buildUpdateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment, String fileContent) throws Exception {
+    private MockHttpServletRequestBuilder buildUpdateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment, String fileContent, boolean contentType)
+            throws Exception {
+        MockMultipartHttpServletRequestBuilder builder = buildUpdateAttachmentUnit(attachmentUnit, attachment, fileContent);
+        if (contentType) {
+            builder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        }
+        return builder;
+    }
+
+    private MockMultipartHttpServletRequestBuilder buildUpdateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment, String fileContent)
+            throws Exception {
         var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentUnit).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
 
@@ -107,7 +119,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
             builder.file(filePart);
         }
 
-        return builder.file(attachmentUnitPart).file(attachmentPart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        return builder.file(attachmentUnitPart).file(attachmentPart);
     }
 
     private MockHttpServletRequestBuilder buildCreateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment) throws Exception {
@@ -176,6 +188,21 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateLectureAttachmentUnitWithSameFileName() throws Exception {
+        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(attachmentUnit));
+
+        String fileName = Path.of(attachmentUnit.getAttachment().getLink()).getFileName().toString();
+        MockMultipartHttpServletRequestBuilder attachmentUnitBuilder = buildUpdateAttachmentUnit(attachmentUnit, attachmentUnit.getAttachment(), null);
+        MockMultipartFile file = new MockMultipartFile("file", fileName, "application/json", "test".getBytes());
+        attachmentUnitBuilder.file(file).contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("keepFilename", "true");
+        AttachmentUnit updatedAttachmentUnit = request.getObjectMapper()
+                .readValue(request.getMvc().perform(attachmentUnitBuilder).andExpect(status().isOk()).andReturn().getResponse().getContentAsString(), AttachmentUnit.class);
+        request.getFile(updatedAttachmentUnit.getAttachment().getLink(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentUnit_asInstructor_shouldCreateAttachmentUnit() throws Exception {
         var result = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
         var persistedAttachmentUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
@@ -219,7 +246,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         // Wait for async operation to complete (after attachment unit is saved, the file gets split into slides)
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId())).hasSize(SLIDE_COUNT));
         List<Slide> oldSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
-        var updateResult = request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment, "new File")).andExpect(status().isOk()).andReturn();
+        var updateResult = request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment, "new File", true)).andExpect(status().isOk()).andReturn();
         AttachmentUnit attachmentUnit1 = mapper.readValue(updateResult.getResponse().getContentAsString(), AttachmentUnit.class);
         assertThat(attachmentUnit1.getDescription()).isEqualTo("Changed");
         // Wait for async operation to complete (after attachment unit is updated, the new file gets split into slides)
