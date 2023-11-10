@@ -35,6 +35,7 @@ import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 
 /**
@@ -312,11 +313,11 @@ public class LocalCIContainerService {
      * The build script is stored in a file in the local-ci-scripts directory.
      * The build script is used to build the programming exercise in a Docker container.
      *
-     * @param programmingExercise the programming exercise for which to create the build script
+     * @param participation the participation for which to create the build script
      * @return the path to the build script file
      */
-    public Path createBuildScript(ProgrammingExercise programmingExercise) {
-        Long programmingExerciseId = programmingExercise.getId();
+    public Path createBuildScript(ProgrammingExerciseParticipation participation) {
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
@@ -330,7 +331,7 @@ public class LocalCIContainerService {
             }
         }
 
-        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(programmingExerciseId.toString() + "-build.sh");
+        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(participation.getId().toString() + "-build.sh");
 
         StringBuilder buildScript = new StringBuilder("""
                 #!/bin/bash
@@ -411,11 +412,11 @@ public class LocalCIContainerService {
      * Deletes the build script for a given programming exercise.
      * The build script is stored in a file in the local-ci-scripts directory.
      *
-     * @param exerciseID the ID of the programming exercise for which to delete the build script
+     * @param participationID the ID of the participation for which to delete the build script
      */
-    public void deleteScriptFile(String exerciseID) {
+    public void deleteScriptFile(String participationID) {
         Path scriptsPath = Path.of("local-ci-scripts");
-        Path buildScriptPath = scriptsPath.resolve(exerciseID + "-build.sh").toAbsolutePath();
+        Path buildScriptPath = scriptsPath.resolve(participationID + "-build.sh").toAbsolutePath();
         try {
             Files.deleteIfExists(buildScriptPath);
         }
