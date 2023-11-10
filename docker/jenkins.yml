@@ -15,7 +15,7 @@ services:
             - ./jenkins/master-key-only-for-testing.key:/var/jenkins_home/master.key # Preset master key to use pre-generated secrets
             - ./jenkins/jenkins-casc-config.yml:/usr/share/jenkins/ref/jenkins-casc-config.yml:ro
             - /var/run/docker.sock:/var/run/docker.sock
-            - /usr/bin/docker:/usr/bin/docker:ro
+            #- /usr/bin/docker:/usr/bin/docker:ro
         ports:
             - "8082:8080"
         # expose the port to make it reachable docker internally even if the external port mapping changes
