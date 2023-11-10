@@ -4,7 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
-import java.util.List;
+import java.util.*;
 
 import javax.mail.internet.MimeMessage;
 
@@ -189,7 +189,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
      *
      * @param courseMemberLogin1 login of one course member
      * @param courseMemberLogin2 login of another course member
-     *
      * @return list of user mentions and validity flags
      */
     protected static List<Arguments> userMentionProvider(String courseMemberLogin1, String courseMemberLogin2) {
