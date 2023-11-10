@@ -430,6 +430,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         if (!this.exercise.type || !this.exercise.id || !this.course.id || !participation.submissions?.[0]?.id) {
             return;
         }
+        correctionRound = this.getCorrectionRoundForAssessmentLink(participation, correctionRound);
+
         return getLinkToSubmissionAssessment(
             this.exercise.type,
             this.course.id,
@@ -440,6 +442,19 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             this.exercise.exerciseGroup?.id,
             participation.results?.[correctionRound]?.id,
         );
+    }
+
+    getCorrectionRoundForAssessmentLink(participation: Participation, correctionRound = 0): number {
+        const result = participation.results?.[correctionRound];
+        if (!result) {
+            return correctionRound;
+        }
+        if (result.hasComplaint && !!participation.results?.[correctionRound + 1]) {
+            // If there is a complaint and the complaint got accepted (additional result)
+            // open this next result.
+            return correctionRound + 1;
+        }
+        return correctionRound;
     }
 
     /**

@@ -312,7 +312,7 @@
                                     >
                                         <a
                                             [routerLink]="getAssessmentLink(value, correctionRound)"
-                                            [queryParams]="correctionRoundIndices?.length && correctionRoundIndices.length > 1 ? { 'correction-round': correctionRound } : {}"
+                                            [queryParams]="{ 'correction-round': getCorrectionRoundForAssessmentLink(value, correctionRound) }"
                                             class="btn btn-sm me-1 mb-2"
                                             [class.btn-success]="
                                                 (!value.results?.[correctionRound]?.assessmentType ||
