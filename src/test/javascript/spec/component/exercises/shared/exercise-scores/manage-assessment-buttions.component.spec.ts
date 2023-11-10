@@ -3,9 +3,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/file-upload-assessment.service';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
@@ -20,6 +19,8 @@ import { MockTranslateService } from '../../../../helpers/mocks/service/mock-tra
 describe('ManageAssessmentButtonsComponent', () => {
     let fixture: ComponentFixture<ManageAssessmentButtonsComponent>;
     let component: ManageAssessmentButtonsComponent;
+
+    const programmingExercise = { type: ExerciseType.PROGRAMMING, assessmentType: AssessmentType.SEMI_AUTOMATIC } as Exercise;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -45,7 +46,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
     describe('newManualResultAllowed', () => {
         it('should not allow new manual results for quiz exercises', () => {
-            component.exercise = new QuizExercise();
+            component.exercise = { type: ExerciseType.QUIZ } as Exercise;
             component.participation = {} as Participation;
 
             fixture.detectChanges();
@@ -54,9 +55,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         it('should not allow new manual results for practice mode exercise', () => {
-            const exercise = new ProgrammingExercise();
-            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            component.exercise = exercise;
+            component.exercise = programmingExercise;
             component.participation = { testRun: true } as Participation;
 
             fixture.detectChanges();
@@ -65,10 +64,8 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         it('should allow new manual results for exam test runs', () => {
-            const exercise = new ProgrammingExercise();
-            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            exercise.exerciseGroup = { exam: {} } as ExerciseGroup;
-            component.exercise = exercise;
+            programmingExercise.exerciseGroup = { exam: {} } as ExerciseGroup;
+            component.exercise = programmingExercise;
             component.participation = { testRun: true } as Participation;
 
             fixture.detectChanges();
@@ -77,9 +74,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         it('should allow new manual results for programming exercises with manual assessment', () => {
-            const exercise = new ProgrammingExercise();
-            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            component.exercise = exercise;
+            component.exercise = programmingExercise;
             component.participation = { testRun: false } as Participation;
 
             fixture.detectChanges();
@@ -90,7 +85,7 @@ describe('ManageAssessmentButtonsComponent', () => {
 
     describe('getCorrectionRoundForAssessmentLink', () => {
         it('should increment the correction round if an accepted complaint is present', () => {
-            component.exercise = new ProgrammingExercise();
+            component.exercise = programmingExercise;
             component.participation = { results: [{ id: 1, hasComplaint: true }, { id: 2 }] };
 
             fixture.detectChanges();
@@ -100,7 +95,7 @@ describe('ManageAssessmentButtonsComponent', () => {
         });
 
         it('should not increment the correction round if the complaint did not get answered', () => {
-            component.exercise = new ProgrammingExercise();
+            component.exercise = programmingExercise;
             component.participation = { results: [{ id: 1, hasComplaint: true }] }; // no second result
 
             fixture.detectChanges();
