@@ -189,7 +189,11 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             participation.results?.forEach((result, index) => {
                 participation.results![index].durationInMinutes = dayjs(result.completionDate).diff(participation.initializationDate, 'seconds');
             });
+            // sort the results from old to new.
+            // the result of the first correction round will be at index 0,
+            // the result of a complaints or the second correction at index 1.
             participation.results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
+            participation.results?.last();
             if (participation.results?.[0].submission) {
                 participation.submissions = [participation.results?.[0].submission];
             }
@@ -232,19 +236,20 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param filterProp the filter that should be used to determine if the participation should be included or excluded
      */
     filterParticipationsByProp = (participation: Participation, filterProp = this.resultCriteria.filterProp): boolean => {
+        const latestResult = participation.results?.last();
         switch (filterProp) {
             case FilterProp.SUCCESSFUL:
-                return !!participation.results?.[0]?.successful;
+                return !!latestResult?.successful;
             case FilterProp.UNSUCCESSFUL:
-                return !participation.results?.[0]?.successful;
+                return !latestResult?.successful;
             case FilterProp.BUILD_FAILED:
                 return !!(participation.submissions?.[0] && (participation.submissions?.[0] as ProgrammingSubmission).buildFailed);
             case FilterProp.MANUAL:
-                return !!participation.results?.[0] && Result.isManualResult(participation.results[0]!);
+                return !!latestResult && Result.isManualResult(latestResult);
             case FilterProp.AUTOMATIC:
-                return participation.results?.[0]?.assessmentType === AssessmentType.AUTOMATIC;
+                return latestResult?.assessmentType === AssessmentType.AUTOMATIC;
             case FilterProp.LOCKED:
-                return !!participation.results?.[0] && !participation.results?.[0]?.completionDate;
+                return !!latestResult && !latestResult.completionDate;
             case FilterProp.ALL:
             default:
                 return true;
@@ -370,13 +375,13 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         // If the range to filter against is [90%, 100%], a score of 100% also satisfies this range
         if (this.rangeFilter.upperBound === 100) {
             filterFunction = (participation: Participation) => {
-                const result = participation.results?.[0];
+                const result = participation.results?.last();
                 return !!result?.score && result?.score >= this.rangeFilter!.lowerBound && result.score <= this.rangeFilter!.upperBound;
             };
         } else {
             // For any other range, the score must be strictly below the upper bound
             filterFunction = (participation: Participation) => {
-                const result = participation.results?.[0];
+                const result = participation.results?.last();
                 return result?.score !== undefined && result.score >= this.rangeFilter!.lowerBound && result.score < this.rangeFilter!.upperBound;
             };
         }
