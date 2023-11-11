@@ -3,7 +3,6 @@ metadata:
     name: python regular runs
     id: python-windfile
     description: This is a windfile for python exercises
-    author: Andreas Resch
 actions:
     - name: build-and-run-tests
       script: |

@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 import java.util.List;
 
 /**
- * Represents a Docker action that can be defined in a {@link Windfile}
+ * Represents a Docker configuration that can be defined in a {@link Windfile}
  */
 public class DockerConfig {
 

@@ -17,7 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.*;
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -30,7 +31,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
-import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusDefinition;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
@@ -899,16 +899,6 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Returns the build plan definition as a {@link AeolusDefinition} object.
-     *
-     * @return the {@link AeolusDefinition} object or null if the JSON string could not be parsed
-     */
-    private AeolusDefinition getBuildPlanDefinition() {
-        Gson g = new Gson();
-        return g.fromJson(this.buildPlanConfiguration, AeolusDefinition.class);
-    }
-
-    /**
      * We store the build plan configuration as a JSON string in the database, as it is easier to handle than a complex object structure.
      * This method parses the JSON string and returns a {@link Windfile} object.
      *
@@ -916,13 +906,13 @@ public class ProgrammingExercise extends Exercise {
      */
     public Windfile getWindfile() {
         try {
-            AeolusDefinition aeolusDefinition = getBuildPlanDefinition();
-            if (aeolusDefinition == null) {
+            if (buildPlanConfiguration == null) {
                 return null;
             }
-            return Windfile.toWindfile(aeolusDefinition);
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(buildPlanConfiguration, Windfile.class);
         }
-        catch (JsonSyntaxException e) {
+        catch (JsonSyntaxException | JsonProcessingException e) {
             log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
         }
         return null;

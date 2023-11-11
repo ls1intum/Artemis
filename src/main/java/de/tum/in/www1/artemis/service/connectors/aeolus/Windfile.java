@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -11,35 +10,9 @@ public class Windfile {
 
     private String api;
 
-    private Metadata metadata;
+    private WindfileMetadata metadata;
 
     private List<Action> actions;
-
-    /**
-     * Converts the serialized form of a windfile ({@link AeolusDefinition}) to a
-     * windfile object that can be used to generate a Bamboo build plan or a Jenkinsfile.
-     *
-     * @param aeolusDefinition the serialized form of a windfile
-     * @return the windfile object
-     */
-    public static Windfile toWindfile(AeolusDefinition aeolusDefinition) {
-        Windfile windfile = new Windfile();
-        windfile.setApi(aeolusDefinition.getApi());
-        windfile.setMetadata(aeolusDefinition.getMetadata());
-        windfile.setId(aeolusDefinition.getMetadata().getId());
-        List<Action> actions = new ArrayList<>();
-        for (SerializedAction action : aeolusDefinition.getActions()) {
-            if (action.getScript() != null) {
-                actions.add(ScriptAction.deserialize(action));
-            }
-            else {
-                actions.add(PlatformAction.deserialize(action));
-            }
-        }
-
-        windfile.setActions(actions);
-        return windfile;
-    }
 
     public String getApi() {
         return api;
@@ -49,11 +22,11 @@ public class Windfile {
         this.api = api;
     }
 
-    public Metadata getMetadata() {
+    public WindfileMetadata getMetadata() {
         return metadata;
     }
 
-    public void setMetadata(Metadata metadata) {
+    public void setMetadata(WindfileMetadata metadata) {
         this.metadata = metadata;
     }
 
@@ -73,7 +46,7 @@ public class Windfile {
      */
     public void setId(String id) {
         if (this.metadata == null) {
-            this.metadata = new Metadata();
+            this.metadata = new WindfileMetadata();
         }
         this.metadata.setId(id);
     }

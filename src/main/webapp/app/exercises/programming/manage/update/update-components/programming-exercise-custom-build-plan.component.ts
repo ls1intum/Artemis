@@ -86,7 +86,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                         const actions: BuildAction[] = [];
                         templateFile.actions.forEach((anyAction: any) => {
                             let action: BuildAction | undefined;
-                            if (anyAction.script) {
+                            if (anyAction.class === 'script-action') {
                                 action = new ScriptAction();
                                 (action as ScriptAction).script = anyAction.script;
                             } else {

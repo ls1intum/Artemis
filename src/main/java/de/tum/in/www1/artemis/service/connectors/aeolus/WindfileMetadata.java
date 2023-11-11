@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 /**
  * Represents the metadata of a {@link Windfile}
  */
-public class Metadata {
+public class WindfileMetadata {
 
     private String name;
 

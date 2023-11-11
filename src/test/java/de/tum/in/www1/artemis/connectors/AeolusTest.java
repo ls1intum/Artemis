@@ -12,14 +12,14 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.*;
 
 class AeolusTest {
 
-    private AeolusDefinition aeolusDefinition;
+    private Windfile windfile;
 
     @BeforeEach
     void setup() {
-        aeolusDefinition = new AeolusDefinition();
-        aeolusDefinition.setApi("v.0.0.1");
-        Metadata metadata = new Metadata();
+        windfile = new Windfile();
+        WindfileMetadata metadata = new WindfileMetadata();
         metadata.setAuthor("author");
+        windfile.setApi("v0.0.1");
         metadata.setId("id");
         metadata.setDescription("description");
         DockerConfig dockerConfig = new DockerConfig();
@@ -30,41 +30,54 @@ class AeolusTest {
         metadata.setDocker(dockerConfig);
         metadata.setName("name");
         metadata.setGitCredentials("gitCredentials");
-        aeolusDefinition.setMetadata(metadata);
-        SerializedAction scriptAction = new SerializedAction();
-        scriptAction.setName("name");
+        windfile.setMetadata(metadata);
+
+        ScriptAction scriptAction = new ScriptAction();
+        scriptAction.setName("scriptAction");
+        scriptAction.setRunAlways(true);
         scriptAction.setScript("script");
         scriptAction.setEnvironment(Map.of("key", "value"));
         scriptAction.setParameters(Map.of("key", "value"));
-        scriptAction.setRunAlways(true);
 
-        SerializedAction platformAction = new SerializedAction();
-        platformAction.setName("name");
-        platformAction.setKind("junit");
-        platformAction.setType("platform");
-        platformAction.setEnvironment(Map.of("key", "value"));
-        platformAction.setParameters(Map.of("key", "value"));
+        PlatformAction platformAction = new PlatformAction();
+        platformAction.setName("platformAction");
         platformAction.setRunAlways(true);
+        platformAction.setPlatform("bamboo");
 
-        List<SerializedAction> actions = List.of(scriptAction, platformAction);
-        aeolusDefinition.setActions(actions);
+        windfile.setActions(List.of(scriptAction, platformAction));
     }
 
     @Test
-    void testToWindfile() {
-        Windfile windfile = Windfile.toWindfile(aeolusDefinition);
-        assertThat(windfile).isNotNull();
-        assertThat(windfile.getActions()).hasSize(2);
-        assertThat(windfile.getMetadata()).isEqualTo(aeolusDefinition.getMetadata());
-        assertThat(windfile.getApi()).isEqualTo(aeolusDefinition.getApi());
-        for (int i = 0; i < windfile.getActions().size(); i++) {
-            assertThat(windfile.getActions().get(i).getName()).isEqualTo(aeolusDefinition.getActions().get(i).getName());
-            assertThat(windfile.getActions().get(i).getEnvironment()).isEqualTo(aeolusDefinition.getActions().get(i).getEnvironment());
-            assertThat(windfile.getActions().get(i).getParameters()).isEqualTo(aeolusDefinition.getActions().get(i).getParameters());
-            assertThat(windfile.getActions().get(i).isRunAlways()).isEqualTo(aeolusDefinition.getActions().get(i).isRunAlways());
-        }
-        assertThat(windfile.getActions().stream().filter(action -> action instanceof ScriptAction)).hasSize(1);
-        assertThat(windfile.getActions().stream().filter(action -> action instanceof PlatformAction)).hasSize(1);
-        assertThat(windfile.getMetadata().getDocker()).isEqualTo(aeolusDefinition.getMetadata().getDocker());
+    void testWindfileGetterAndSetter() {
+        assertThat(windfile.getApi()).isEqualTo("v0.0.1");
+        assertThat(windfile.getMetadata().getAuthor()).isEqualTo("author");
+        assertThat(windfile.getMetadata().getId()).isEqualTo("id");
+        assertThat(windfile.getMetadata().getDescription()).isEqualTo("description");
+        assertThat(windfile.getMetadata().getDocker().getImage()).isEqualTo("image");
+        assertThat(windfile.getMetadata().getDocker().getVolumes()).isEqualTo(List.of("host:container"));
+        assertThat(windfile.getMetadata().getDocker().getParameters()).isEqualTo(List.of("--param1", "--param2"));
+        assertThat(windfile.getMetadata().getDocker().getTag()).isEqualTo("tag");
+        assertThat(windfile.getMetadata().getName()).isEqualTo("name");
+        assertThat(windfile.getMetadata().getGitCredentials()).isEqualTo("gitCredentials");
+        assertThat(windfile.getActions().get(0).getName()).isEqualTo("scriptAction");
+        assertThat(windfile.getActions().get(0).isRunAlways()).isEqualTo(true);
+        ScriptAction scriptAction = (ScriptAction) windfile.getActions().get(0);
+        assertThat(scriptAction.getScript()).isEqualTo("script");
+        assertThat(scriptAction.getEnvironment()).isEqualTo(Map.of("key", "value"));
+        assertThat(scriptAction.getParameters()).isEqualTo(Map.of("key", "value"));
+        PlatformAction platformAction = (PlatformAction) windfile.getActions().get(1);
+        assertThat(platformAction.getName()).isEqualTo("platformAction");
+        assertThat(platformAction.isRunAlways()).isEqualTo(true);
+        assertThat(platformAction.getPlatform()).isEqualTo("bamboo");
+    }
+
+    @Test
+    void testSettersWithoutMetadata() {
+        windfile.setMetadata(null);
+        windfile.setApi("v0.0.1");
+        assertThat(windfile.getApi()).isEqualTo("v0.0.1");
+        windfile.setMetadata(null);
+        windfile.setId("id");
+        assertThat(windfile.getMetadata().getId()).isEqualTo("id");
     }
 }
