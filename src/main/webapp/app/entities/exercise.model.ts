@@ -272,4 +272,8 @@ export function resetDates(exercise: Exercise) {
     exercise.dueDate = undefined;
     exercise.assessmentDueDate = undefined;
     exercise.exampleSolutionPublicationDate = undefined;
+
+    // without dates set, they can only be false
+    exercise.allowComplaintsForAutomaticAssessments = false;
+    exercise.allowManualFeedbackRequests = false;
 }

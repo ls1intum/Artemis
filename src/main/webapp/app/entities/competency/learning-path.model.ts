@@ -2,7 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/entities/course.model';
 import { User, UserNameAndLoginDTO } from 'app/core/user/user.model';
 import { Competency } from 'app/entities/competency.model';
-import { Edge, Node } from '@swimlane/ngx-graph';
+import { Edge, Node, NodeDimension } from '@swimlane/ngx-graph';
 import { faCheckCircle, faCircle, faFlag, faFlagCheckered, faPlayCircle, faSignsPost } from '@fortawesome/free-solid-svg-icons';
 
 export class LearningPath implements BaseEntity {
@@ -33,6 +33,7 @@ export class NgxLearningPathNode implements Node {
     public linkedResourceParent?: number;
     public completed?: boolean;
     public label?: string;
+    dimension?: NodeDimension;
 }
 
 export function getIcon(node: NgxLearningPathNode) {
@@ -72,4 +73,11 @@ export enum NodeType {
     MATCH_END = 'MATCH_END',
     EXERCISE = 'EXERCISE',
     LECTURE_UNIT = 'LECTURE_UNIT',
+}
+
+export class CompetencyProgressForLearningPathDTO {
+    public competencyId?: number;
+    public masteryThreshold?: number;
+    public progress?: number;
+    public confidence?: number;
 }

@@ -20,7 +20,7 @@
     </div>
 
     <jhi-course-management-exercises-search *ngIf="showSearch" (exerciseFilter)="exerciseFilter = $event"></jhi-course-management-exercises-search>
-    <div *ngIf="showSearch && getFilteredExerciseCount() == 0 && !exerciseFilter.isEmpty()" class="alert alert-secondary" role="alert">
+    <div *ngIf="showSearch && getFilteredExerciseCount() === 0 && !exerciseFilter.isEmpty()" class="alert alert-secondary" role="alert">
         {{ 'artemisApp.course.exercise.search.noResults' | artemisTranslate }}
     </div>
 

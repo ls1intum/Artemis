@@ -1,12 +1,11 @@
 import { Component, Input } from '@angular/core';
-import { AttachmentUnitsComponent } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-units/attachment-units.component';
+import { AttachmentUnitsComponent, LectureUnitInformationDTO } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-units/attachment-units.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { objectToJsonBlob } from 'app/utils/blob-util';
 import { of } from 'rxjs';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
@@ -65,7 +64,6 @@ describe('AttachmentUnitsComponent', () => {
     };
     const units = [unit1, unit2, unit3];
     const numberOfPages = 60;
-    const removeBreakSlides = true;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -135,15 +133,13 @@ describe('AttachmentUnitsComponent', () => {
     });
 
     it('should initialize with remove slides key phrases empty', () => {
-        expect(attachmentUnitsComponent.removeSlidesCommaSeparatedKeyPhrases).toMatch('');
+        expect(attachmentUnitsComponent.keyphrases).toMatch('');
     });
 
     it('should create attachment units', fakeAsync(() => {
-        const lectureUnitInformationDTOObj = { units: units, numberOfPages: numberOfPages, removeBreakSlides: removeBreakSlides };
-        const file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
-        const formData: FormData = new FormData();
-        formData.append('file', file);
-        formData.append('lectureUnitInformationDTO', objectToJsonBlob(lectureUnitInformationDTOObj));
+        const lectureUnitInformation: LectureUnitInformationDTO = { units: units, numberOfPages: numberOfPages, removeSlidesCommaSeparatedKeyPhrases: '' };
+        const filename = 'filename-on-server';
+        attachmentUnitsComponent.filename = filename;
 
         const responseBody: AttachmentUnitsResponseType = {
             units,
@@ -159,8 +155,7 @@ describe('AttachmentUnitsComponent', () => {
 
         attachmentUnitsComponent.createAttachmentUnits();
         attachmentUnitsComponentFixture.detectChanges();
-
-        expect(createAttachmentUnitStub).toHaveBeenCalledWith(1, formData);
+        expect(createAttachmentUnitStub).toHaveBeenCalledWith(1, filename, lectureUnitInformation);
         expect(createAttachmentUnitStub).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledOnce();
     }));
@@ -223,7 +218,55 @@ describe('AttachmentUnitsComponent', () => {
         const previousState = jest.spyOn(attachmentUnitsComponent, 'cancelSplit');
         attachmentUnitsComponent.cancelSplit();
         expect(previousState).toHaveBeenCalledOnce();
-
         expect(navigateSpy).toHaveBeenCalledOnce();
+    }));
+
+    it('should get slides to remove', fakeAsync(() => {
+        const expectedSlideIndexes = [1, 2, 3];
+        // slide indexes are increased by 1 for display in the frontend
+        const expectedSlideNumbers = expectedSlideIndexes.map((n) => n + 1);
+        const expectedResponse: HttpResponse<Array<number>> = new HttpResponse({
+            body: expectedSlideIndexes,
+            status: 200,
+        });
+        attachmentUnitsComponent.searchTerm = 'key, phrases';
+        const getSlidesToRemoveSpy = jest.spyOn(attachmentUnitService, 'getSlidesToRemove').mockReturnValue(of(expectedResponse));
+        tick(1000);
+        expect(getSlidesToRemoveSpy).toHaveBeenCalledOnce();
+        expect(attachmentUnitsComponent.removedSlidesNumbers).toEqual(expectedSlideNumbers);
+    }));
+
+    it('should not get slides to remove if query is empty', fakeAsync(() => {
+        attachmentUnitsComponent.removedSlidesNumbers = [1, 2, 3];
+        attachmentUnitsComponent.searchTerm = '';
+        const getSlidesToRemoveSpy = jest.spyOn(attachmentUnitService, 'getSlidesToRemove');
+        tick(1000);
+        expect(getSlidesToRemoveSpy).not.toHaveBeenCalled();
+        expect(attachmentUnitsComponent.removedSlidesNumbers).toBeEmpty();
+    }));
+
+    it('should start uploading file again after timeout', fakeAsync(() => {
+        const response1: HttpResponse<string> = new HttpResponse({
+            body: 'filename-on-server',
+            status: 200,
+        });
+        const response2: HttpResponse<LectureUnitInformationDTO> = new HttpResponse({
+            body: {
+                units: [],
+                numberOfPages: 1,
+                removeSlidesCommaSeparatedKeyPhrases: '',
+            },
+            status: 200,
+        });
+
+        const uploadSlidesSpy = jest.spyOn(attachmentUnitService, 'uploadSlidesForProcessing').mockReturnValue(of(response1));
+        attachmentUnitService.getSplitUnitsData = jest.fn().mockReturnValue(of(response2));
+        attachmentUnitsComponent.ngOnInit();
+        attachmentUnitsComponentFixture.detectChanges();
+
+        expect(uploadSlidesSpy).toHaveBeenCalledOnce();
+        tick(1000 * 60 * attachmentUnitsComponent.MINUTES_UNTIL_DELETION);
+        expect(uploadSlidesSpy).toHaveBeenCalledTimes(2);
+        discardPeriodicTasks();
     }));
 });
