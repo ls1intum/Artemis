@@ -72,6 +72,7 @@ public class ExamLiveEventsService {
      * @param studentExam The student exam the where the popup should be shown
      * @param message     The message to send.
      * @param sentBy      The user who sent the message.
+     * @return The created event.
      */
     public ExamAttendanceCheckEvent createAndSendExamAttendanceCheckEvent(StudentExam studentExam, String message, User sentBy) {
         var event = new ExamAttendanceCheckEvent();

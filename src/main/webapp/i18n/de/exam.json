@@ -185,7 +185,7 @@
                         "new": "Neue Bearbeitungszeit"
                     },
                     "examAttendanceCheck": {
-                        "description": "Eine Klausur-Aufsicht hat die Anwesenheitskontrolle für Dich ausgelöst. Bitte folge den Anweisungen der Aufsicht.",
+                        "description": "Eine Klausur-Aufsicht hat die Anwesenheitskontrolle für dich ausgelöst. Bitte folge den Anweisungen der Aufsicht.",
                         "comment": "Kommentar der Aufsicht:"
                     }
                 }

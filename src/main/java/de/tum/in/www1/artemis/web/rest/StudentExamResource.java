@@ -245,10 +245,11 @@ public class StudentExamResource {
             @RequestBody(required = false) String message) {
         log.debug("REST request for attendance-check for student : {}", studentLogin);
 
-        var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
-                .orElseThrow(() -> new EntityNotFoundException("User with login: \"" + studentLogin + "\" does not exist"));
+        var student = userRepository.getUserByLoginElseThrow(studentLogin);
 
         StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), examId).orElseThrow();
+        studentExam.getUser().setVisibleRegistrationNumber();
+
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExam.getId());
 
         var exam = studentExam.getExam();
