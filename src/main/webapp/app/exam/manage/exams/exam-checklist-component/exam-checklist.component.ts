@@ -18,7 +18,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     @Input() exam: Exam;
     @Input() getExamRoutesByIdentifier: any;
 
-    quizPool: QuizPool;
+    quizPool: QuizPool = new QuizPool();
     examChecklist: ExamChecklist;
     isLoading = false;
     pointsExercisesEqual = false;
@@ -62,11 +62,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                     this.quizPool = response.body!;
                 },
                 error: (error: HttpErrorResponse) => {
-                    if (error.status === 404) {
-                        this.quizPool = new QuizPool();
-                        this.quizPool.quizGroups = [];
-                        this.quizPool.quizQuestions = [];
-                    } else {
+                    // do nothing on 404 error (the exam just has no quiz pool=
+                    if (error.status !== 404) {
                         onError(this.alertService, error);
                     }
                 },
