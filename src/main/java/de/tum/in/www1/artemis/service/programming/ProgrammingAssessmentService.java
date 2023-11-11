@@ -69,7 +69,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
         var exercise = participation.getExercise();
 
         newManualResult.setSubmission(submission);
-        newManualResult.setHasComplaint(existingManualResult.getHasComplaint().isPresent() && existingManualResult.getHasComplaint().get());
+        newManualResult.setHasComplaint(existingManualResult.getHasComplaint().orElse(false));
         newManualResult = saveManualAssessment(newManualResult, assessor);
 
         if (submission.getParticipation() == null) {

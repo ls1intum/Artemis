@@ -288,16 +288,18 @@ public class AssessmentService {
      */
     public Result saveAndSubmitManualAssessment(final Exercise exercise, final Submission submission, final List<Feedback> feedbackList, Long resultId, boolean submit) {
         Result result = saveManualAssessment(submission, feedbackList, resultId);
-        if (submit) {
-            result = submitManualAssessment(result.getId(), exercise);
-            Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
-            if (optionalStudent.isPresent()) {
-                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, optionalStudent.get(), result);
-            }
+        if (!submit) {
+            return result;
+        }
 
-            if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
-                resultWebsocketService.broadcastNewResult(result.getParticipation(), result);
-            }
+        result = submitManualAssessment(result.getId(), exercise);
+        Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
+        if (optionalStudent.isPresent()) {
+            singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, optionalStudent.get(), result);
+        }
+
+        if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
+            resultWebsocketService.broadcastNewResult(result.getParticipation(), result);
         }
         return result;
     }
