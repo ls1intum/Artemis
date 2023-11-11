@@ -237,7 +237,7 @@
         "webapp:dev": "npm run prebuild -- --develop && ng serve",
         "webapp:dev-verbose": "npm run prebuild -- --develop && ng serve --verbose",
         "webapp:dev-ssl": "npm run prebuild -- --develop && ng serve --ssl",
-        "webapp:prod": "npm run clean-www && npm run webapp:build:prod && npm run bundle-analyze",
+        "webapp:prod": "npm run clean-www && npm run webapp:build:prod",
         "webapp:test": "npm run test --",
         "bundle-analyze": "webpack-bundle-analyzer 'build/resources/main/static/stats.json' --mode static --no-open --report 'build/resources/main/stats.html'",
         "prepare": "husky install",
