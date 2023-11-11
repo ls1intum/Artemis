@@ -75,11 +75,15 @@ public class ConversationFactory {
      * @return The generated Channel
      */
     public static Channel generatePublicChannel(Course course, String channelName, boolean isCourseWide) {
+        return generatePublicChannel(course, channelName, isCourseWide, false);
+    }
+
+    public static Channel generatePublicChannel(Course course, String channelName, boolean isCourseWide, boolean isAnnouncement) {
         Channel channel = new Channel();
         channel.setCourse(course);
         channel.setName(channelName);
         channel.setIsPublic(true);
-        channel.setIsAnnouncementChannel(false);
+        channel.setIsAnnouncementChannel(isAnnouncement);
         channel.setIsArchived(false);
         channel.setIsCourseWide(isCourseWide);
         channel.setDescription("Test channel");

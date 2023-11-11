@@ -452,6 +452,11 @@ public class ConversationUtilService {
         return conversationRepository.save(channel);
     }
 
+    public Channel createCourseWideChannel(Course course, String channelName, boolean isAnnouncement) {
+        Channel channel = ConversationFactory.generatePublicChannel(course, channelName, true, isAnnouncement);
+        return conversationRepository.save(channel);
+    }
+
     /**
      * Creates and saves a Channel for the given Course. The Channel is not course wide.
      *
