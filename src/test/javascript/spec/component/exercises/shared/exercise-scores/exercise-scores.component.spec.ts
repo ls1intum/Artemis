@@ -182,7 +182,6 @@ describe('Exercise Scores Component', () => {
         expect(getParticipationsMock).toHaveBeenCalledOnce();
         expect(getParticipationsMock).toHaveBeenCalledWith(2, true);
         expect(component.filteredParticipations).toEqual(participationsToFilter);
-        expect(component.correctionRoundIndices).toEqual([0]);
         expect(component.participationsPerFilter).toEqual(
             new Map([
                 ['All', 10],

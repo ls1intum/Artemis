@@ -22,11 +22,11 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() course: Course;
     @Input() participation: Participation;
-    @Input() correctionRoundIndices: number[];
     @Input() isLoading: boolean;
 
     @Output() refresh = new EventEmitter<void>();
 
+    correctionRoundIndices: number[];
     cancelConfirmationText: string;
     newManualResultAllowed: boolean = false;
     examMode = false;
@@ -52,6 +52,8 @@ export class ManageAssessmentButtonsComponent implements OnInit {
             // don't allow manual results for practice mode participations
             this.newManualResultAllowed = false;
         }
+        // ngFor needs an array to iterate over. This creates an array in the form of [0, 1, ...] up to the correction rounds exclusively (normally 1 or 2)
+        this.correctionRoundIndices = [...Array(this.exercise.exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()];
     }
 
     getAssessmentLink(correctionRound = 0) {

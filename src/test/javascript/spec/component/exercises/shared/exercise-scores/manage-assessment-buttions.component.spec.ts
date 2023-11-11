@@ -44,6 +44,19 @@ describe('ManageAssessmentButtonsComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it.each([
+        [programmingExercise, [0]],
+        [{ ...programmingExercise, exerciseGroup: { exam: { numberOfCorrectionRoundsInExam: 1 } } }, [0]],
+        [{ ...programmingExercise, exerciseGroup: { exam: { numberOfCorrectionRoundsInExam: 2 } } }, [0, 1]],
+    ])('should correctly initialize correctionRoundIndices', (exercise: Exercise, expectedIndices: number[]) => {
+        component.exercise = exercise;
+        component.participation = {} as Participation;
+
+        fixture.detectChanges();
+
+        expect(component.correctionRoundIndices).toEqual(expectedIndices);
+    });
+
     describe('newManualResultAllowed', () => {
         it('should not allow new manual results for quiz exercises', () => {
             component.exercise = { type: ExerciseType.QUIZ } as Exercise;
