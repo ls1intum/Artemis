@@ -4,6 +4,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 import {
     LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE,
     MENTIONED_IN_MESSAGE_TITLE,
+    NEW_ANNOUNCEMENT_POST_TITLE,
     NEW_MESSAGE_TITLE,
     NEW_REPLY_MESSAGE_TITLE,
     Notification,
@@ -153,7 +154,12 @@ export class NotificationPopupComponent implements OnInit {
             if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
                 this.checkIfNotificationAffectsCurrentStudentExamExercises(notification);
             }
-            if (notification.title === NEW_MESSAGE_TITLE || notification.title === NEW_REPLY_MESSAGE_TITLE || notification.title === MENTIONED_IN_MESSAGE_TITLE) {
+            if (
+                notification.title === NEW_MESSAGE_TITLE ||
+                notification.title === NEW_REPLY_MESSAGE_TITLE ||
+                notification.title === MENTIONED_IN_MESSAGE_TITLE ||
+                notification.title === NEW_ANNOUNCEMENT_POST_TITLE
+            ) {
                 if (this.notificationSettingsService.isNotificationAllowedBySettings(notification)) {
                     this.addMessageNotification(notification);
                     this.setRemovalTimeout(notification);

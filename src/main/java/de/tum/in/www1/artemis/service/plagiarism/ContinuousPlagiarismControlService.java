@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
-import static java.lang.String.format;
-
 import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -29,6 +27,7 @@ import de.tum.in.www1.artemis.exception.ArtemisMailException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.metis.PostService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
@@ -57,15 +56,18 @@ public class ContinuousPlagiarismControlService {
 
     private final PostService postService;
 
+    private final PlagiarismResultRepository plagiarismResultRepository;
+
     public ContinuousPlagiarismControlService(ExerciseRepository exerciseRepository, PlagiarismDetectionService plagiarismDetectionService,
             PlagiarismComparisonRepository plagiarismComparisonRepository, PlagiarismCaseService plagiarismCaseService, PlagiarismCaseRepository plagiarismCaseRepository,
-            PostService postService) {
+            PostService postService, PlagiarismResultRepository plagiarismResultRepository) {
         this.exerciseRepository = exerciseRepository;
         this.plagiarismDetectionService = plagiarismDetectionService;
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.plagiarismCaseService = plagiarismCaseService;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.postService = postService;
+        this.plagiarismResultRepository = plagiarismResultRepository;
     }
 
     /**
@@ -82,17 +84,8 @@ public class ContinuousPlagiarismControlService {
 
             PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(exercise, exerciseRepository);
 
-            try {
-                var result = executeChecksForExercise(exercise);
-                updatePlagiarismCases(result, exercise);
-            }
-            catch (ExitException e) {
-                log.error("Cannot check plagiarism due to Jplag error: exerciseId={}, type={}, error={}.", exercise.getId(), exercise.getExerciseType(), e.getMessage(), e);
-            }
-            catch (Exception e) {
-                // Catch all exception to keep cpc going
-                log.error("Cannot check plagiarism due to unknown error: exerciseId={}, type={}, error={}.", exercise.getId(), exercise.getExerciseType(), e.getMessage(), e);
-            }
+            var result = executeChecksForExerciseSilencingExceptions(exercise);
+            updatePlagiarismCases(result, exercise);
 
             log.info("Finished continuous plagiarism control for exercise: exerciseId={}, elapsed={}.", exercise.getId(), TimeLogUtil.formatDurationFrom(startTime));
         });
@@ -100,18 +93,47 @@ public class ContinuousPlagiarismControlService {
         log.debug("Continuous plagiarism control done.");
     }
 
+    /**
+     * Performs plagiarism checks on the given exercise.
+     * In case any exception is thrown, the method catches it, logs it and removes any plagiarism results associated with the exercise.
+     *
+     * @param exercise the exercise to perform plagiarism checks on
+     * @return result of plagiarism checks or null if any exception was thrown
+     */
+    private PlagiarismResult<?> executeChecksForExerciseSilencingExceptions(Exercise exercise) {
+        try {
+            return executeChecksForExercise(exercise);
+        }
+        catch (Exception e) {
+            // Catch all exception to keep cpc going for other exercises
+            if (e instanceof ExitException) {
+                log.error("Cannot check plagiarism due to a Jplag error: exerciseId={}, type={}, error={}.", exercise.getId(), exercise.getExerciseType(), e.getMessage(), e);
+
+            }
+            else {
+                log.error("Cannot check plagiarism due to an unknown error: exerciseId={}, type={}, error={}.", exercise.getId(), exercise.getExerciseType(), e.getMessage(), e);
+            }
+
+            // Clean up partial or stale plagiarism results
+            plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
+
+            return null;
+        }
+    }
+
     private PlagiarismResult<?> executeChecksForExercise(Exercise exercise) throws Exception {
         return switch (exercise.getExerciseType()) {
             case TEXT -> plagiarismDetectionService.checkTextExercise((TextExercise) exercise);
             case PROGRAMMING -> plagiarismDetectionService.checkProgrammingExercise((ProgrammingExercise) exercise);
             case MODELING -> plagiarismDetectionService.checkModelingExercise((ModelingExercise) exercise);
-            case FILE_UPLOAD, QUIZ -> throw new IllegalStateException(
-                    format("Cannot check plagiarism for exercise: type=%s, id=%s.", exercise.getExerciseType(), exercise.getId()));
+            case FILE_UPLOAD, QUIZ -> null;
         };
     }
 
     private void updatePlagiarismCases(PlagiarismResult<?> result, Exercise exercise) {
-        addCurrentComparisonsToPlagiarismCases(result);
+        if (result != null) {
+            addCurrentComparisonsToPlagiarismCases(result);
+        }
         removeStalePlagiarismCases(exercise.getId());
     }
 
@@ -127,15 +149,16 @@ public class ContinuousPlagiarismControlService {
         var plagiarismCases = Set.of(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionA(), true),
                 plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(comparison, comparison.getSubmissionB(), true));
 
-        plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getPost() == null).map(ContinuousPlagiarismControlService::buildCpcPost).forEach(post -> {
-            try {
-                postService.createContinuousPlagiarismControlPlagiarismCasePost(post);
-            }
-            catch (ArtemisMailException e) {
-                // Catch mail exceptions to so that notification for the second student will be delivered
-                log.error("Cannot send a cpc email: postId={}, plagiarismCaseId={}.", post.getId(), post.getPlagiarismCase().getId());
-            }
-        });
+        plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getPost() == null && plagiarismCase.getStudent() != null)
+                .map(ContinuousPlagiarismControlService::buildCpcPost).forEach(post -> {
+                    try {
+                        postService.createContinuousPlagiarismControlPlagiarismCasePost(post);
+                    }
+                    catch (ArtemisMailException e) {
+                        // Catch mail exceptions to so that notification for the second student will be delivered
+                        log.error("Cannot send a cpc email: postId={}, plagiarismCaseId={}.", post.getId(), post.getPlagiarismCase().getId());
+                    }
+                });
     }
 
     private static Post buildCpcPost(PlagiarismCase plagiarismCase) {

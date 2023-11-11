@@ -3,8 +3,7 @@ package de.tum.in.www1.artemis.exam;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.exam.*;
