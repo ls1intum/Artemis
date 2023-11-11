@@ -458,7 +458,7 @@ public class ConversationUtilService {
      * @param course         The Course the Channel belongs to
      * @param channelName    The name of the Channel
      * @param isAnnouncement True if the Channel is an announcement channel
-     * @return
+     * @return The created Channel
      */
     public Channel createCourseWideChannel(Course course, String channelName, boolean isAnnouncement) {
         Channel channel = ConversationFactory.generatePublicChannel(course, channelName, true, isAnnouncement);
