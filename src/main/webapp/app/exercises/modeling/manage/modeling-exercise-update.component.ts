@@ -36,6 +36,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     modelingEditor?: ModelingEditorComponent;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly documentationType: DocumentationType = 'Model';
 
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
@@ -55,8 +56,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     isExamMode: boolean;
     semiAutomaticAssessmentAvailable = true;
     goBackAfterSaving = false;
-
-    documentationType = DocumentationType.Model;
 
     // Icons
     faSave = faSave;

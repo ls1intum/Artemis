@@ -43,7 +43,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     isImport: boolean;
     examCourseId?: number;
 
-    documentationType = DocumentationType.FileUpload;
+    saveCommand: SaveExerciseCommand<FileUploadExercise>;
+
+    readonly documentationType: DocumentationType = 'FileUpload';
 
     // Icons
     faQuestionCircle = faQuestionCircle;

@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { CourseWideContext, PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 const TITLE_MAX_LENGTH = 200;
 const DEBOUNCE_TIME_BEFORE_SIMILARITY_CHECK = 800;
@@ -44,6 +45,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly EditType = PostingEditType;
+    protected readonly getAsChannel = getAsChannelDto;
 
     // Icons
     faAngleUp = faAngleUp;
@@ -105,7 +107,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         this.similarPosts = [];
         this.posting.title = this.posting.title ?? '';
         this.resetCurrentContextSelectorOption();
-        this.formGroup = this.formBuilder.group(!this.isCourseMessagesPage ? this.postValidator() : this.messageValidator());
+        this.formGroup = this.formBuilder.group(this.postValidator());
         this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
             this.currentContextSelectorOption = context;
             // announcements should not show similar posts
@@ -114,7 +116,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
             }
         });
         // we only want to search for similar posts (and show the result of the duplication check) if a post is created, not on updates
-        if (this.editType === this.EditType.CREATE) {
+        if (this.editType === this.EditType.CREATE && !this.isCourseMessagesPage) {
             this.triggerPostSimilarityCheck();
         }
     }
@@ -184,7 +186,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         if (this.editType === this.EditType.UPDATE) {
             this.modalTitle = 'artemisApp.metis.editPosting';
         } else if (this.editType === this.EditType.CREATE) {
-            this.modalTitle = 'artemisApp.metis.createModalTitlePost';
+            this.modalTitle = 'artemisApp.metis.' + (getAsChannelDto(this.posting.conversation)?.isAnnouncementChannel ? 'createModalTitleAnnouncement' : 'createModalTitlePost');
         }
     }
 
@@ -238,14 +240,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         return {
             // the pattern ensures that the title and content must include at least one non-whitespace character
             title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), PostTitleValidationPattern]],
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
-            context: [this.currentContextSelectorOption, [Validators.required]],
-        };
-    }
-
-    private messageValidator() {
-        return {
-            // the pattern ensures that content must include at least one non-whitespace character
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
             context: [this.currentContextSelectorOption, [Validators.required]],
         };

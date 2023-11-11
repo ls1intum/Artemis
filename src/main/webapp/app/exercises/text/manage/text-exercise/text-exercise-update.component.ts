@@ -32,6 +32,7 @@ import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exerci
 })
 export class TextExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly documentationType: DocumentationType = 'Text';
 
     @ViewChild('editForm') editForm: NgForm;
 
@@ -51,8 +52,6 @@ export class TextExerciseUpdateComponent implements OnInit {
 
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
-
-    documentationType = DocumentationType.Text;
 
     // Icons
     faSave = faSave;

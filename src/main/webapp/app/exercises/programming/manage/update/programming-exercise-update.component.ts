@@ -41,6 +41,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly ProjectType = ProjectType;
+    readonly documentationType: DocumentationType = 'Programming';
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
@@ -130,8 +131,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public withDependenciesValue = false;
 
     public modePickerOptions: ModePickerOption<ProjectType>[] = [];
-
-    documentationType = DocumentationType.Programming;
 
     // Icons
     faSave = faSave;

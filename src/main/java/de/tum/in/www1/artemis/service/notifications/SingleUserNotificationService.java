@@ -94,7 +94,7 @@ public class SingleUserNotificationService {
             case CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_DELETE_CHANNEL -> createNotification(
                     ((ConversationNotificationSubject) notificationSubject).conversation, notificationType, ((ConversationNotificationSubject) notificationSubject).user,
                     ((ConversationNotificationSubject) notificationSubject).responsibleUser);
-            case CONVERSATION_NEW_REPLY_MESSAGE -> createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType,
+            case CONVERSATION_NEW_REPLY_MESSAGE, CONVERSATION_USER_MENTIONED -> createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType,
                     ((NewReplyNotificationSubject) notificationSubject).user, ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, (User) typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
@@ -378,12 +378,13 @@ public class SingleUserNotificationService {
     /**
      * Notify a user about new message reply in a conversation.
      *
-     * @param answerPost      the answerPost of the user involved
-     * @param user            the user that is involved in the message reply
-     * @param responsibleUser the responsibleUser sending the message reply
+     * @param answerPost       the answerPost of the user involved
+     * @param user             the user that is involved in the message reply
+     * @param responsibleUser  the responsibleUser sending the message reply
+     * @param notificationType the type for the conversation
      */
-    public void notifyUserAboutNewMessageReply(AnswerPost answerPost, User user, User responsibleUser) {
-        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), CONVERSATION_NEW_REPLY_MESSAGE, null, responsibleUser);
+    public void notifyUserAboutNewMessageReply(AnswerPost answerPost, User user, User responsibleUser, NotificationType notificationType) {
+        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), notificationType, null, responsibleUser);
     }
 
     /**
@@ -403,7 +404,7 @@ public class SingleUserNotificationService {
             usersInvolved.add(post.getAuthor());
         }
 
-        mentionedUsers.forEach(user -> {
+        mentionedUsers.stream().filter(user -> {
             boolean isChannelAndCourseWide = post.getConversation() instanceof Channel channel && channel.getIsCourseWide();
             boolean isChannelVisibleToStudents = !(post.getConversation() instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
             boolean isChannelVisibleToMentionedUser = isChannelVisibleToStudents || authorizationCheckService.isAtLeastTeachingAssistantInCourse(post.getCourse(), user);
@@ -411,12 +412,11 @@ public class SingleUserNotificationService {
             // Only send a notification to the mentioned user if...
             // (for course-wide channels) ...the course-wide channel is visible
             // (for all other cases) ...the user is a member of the conversation
-            if ((isChannelAndCourseWide && isChannelVisibleToMentionedUser) || conversationService.isMember(post.getConversation().getId(), user.getId())) {
-                usersInvolved.add(user);
-            }
-        });
+            return (isChannelAndCourseWide && isChannelVisibleToMentionedUser) || conversationService.isMember(post.getConversation().getId(), user.getId());
+        }).forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, mentionedUser, author, CONVERSATION_USER_MENTIONED));
 
-        usersInvolved.forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author));
+        usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved))
+                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author, CONVERSATION_NEW_REPLY_MESSAGE));
     }
 
     /**
@@ -449,7 +449,7 @@ public class SingleUserNotificationService {
                 || Objects.equals(notification.getTitle(), CONVERSATION_ADD_USER_CHANNEL_TITLE) || Objects.equals(notification.getTitle(), CONVERSATION_ADD_USER_GROUP_CHAT_TITLE)
                 || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_CHANNEL_TITLE)
                 || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE)
-                || Objects.equals(notification.getTitle(), MESSAGE_REPLY_IN_CONVERSATION_TITLE)) {
+                || Objects.equals(notification.getTitle(), MESSAGE_REPLY_IN_CONVERSATION_TITLE) || Objects.equals(notification.getTitle(), MENTIONED_IN_MESSAGE_TITLE)) {
             return (!Objects.equals(notification.getAuthor().getLogin(), notification.getRecipient().getLogin()));
         }
         return true;
