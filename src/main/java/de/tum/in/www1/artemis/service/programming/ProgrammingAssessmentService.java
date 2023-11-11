@@ -81,24 +81,28 @@ public class ProgrammingAssessmentService extends AssessmentService {
         // Re-load result to fetch the test cases
         newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(newManualResult.getId());
 
-        if (submit) {
-            newManualResult = resultRepository.submitManualAssessment(newManualResult);
-
-            if (submission.getParticipation() instanceof StudentParticipation studentParticipation && studentParticipation.getStudent().isPresent()) {
-                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, studentParticipation.getStudent().get(), newManualResult);
-            }
+        if (!submit) {
+            return newManualResult;
         }
 
-        // Note: we always need to report the result over LTI, otherwise it might never become visible in the external system
+        newManualResult = resultRepository.submitManualAssessment(newManualResult);
+
+        if (submission.getParticipation() instanceof StudentParticipation studentParticipation && studentParticipation.getStudent().isPresent()) {
+            singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, studentParticipation.getStudent().get(), newManualResult);
+        }
+
+        // Note: we always need to report the result over LTI, even if the assessment due date is not over yet.
+        // Otherwise it might never become visible in the external system
         if (ltiNewResultService.isPresent()) {
             ltiNewResultService.get().onNewResult((StudentParticipation) newManualResult.getParticipation());
         }
-        if (submit && ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
+        if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             resultWebsocketService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
         }
 
         handleResolvedFeedbackRequest(participation);
         newManualResult.setParticipation(participation);
+
         return newManualResult;
     }
 
