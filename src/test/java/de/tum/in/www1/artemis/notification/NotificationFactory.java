@@ -48,13 +48,13 @@ public class NotificationFactory {
      * Generates a SystemNotification with the given arguments.
      *
      * @param notificationDate The notification date of the SystemNotification
-     * @param expireDate       The expiry date of the SystemNotification
+     * @param expiryDate       The expiry date of the SystemNotification
      * @return The generated SystemNotification
      */
-    public static SystemNotification generateSystemNotification(ZonedDateTime notificationDate, ZonedDateTime expireDate) {
+    public static SystemNotification generateSystemNotification(ZonedDateTime notificationDate, ZonedDateTime expiryDate) {
         SystemNotification systemNotification = new SystemNotification();
         systemNotification.setNotificationDate(notificationDate);
-        systemNotification.setExpireDate(expireDate);
+        systemNotification.setExpireDate(expiryDate);
         return systemNotification;
     }
 }
