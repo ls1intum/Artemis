@@ -81,14 +81,17 @@ public class ProgrammingAssessmentService extends AssessmentService {
         // Re-load result to fetch the test cases
         newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(newManualResult.getId());
 
-        if (!submit) {
-            return newManualResult;
+        if (submit) {
+            return submitManualAssessment(newManualResult, participation, exercise);
         }
+        return newManualResult;
+    }
 
+    private Result submitManualAssessment(Result newManualResult, StudentParticipation participation, Exercise exercise) {
         newManualResult = resultRepository.submitManualAssessment(newManualResult);
 
-        if (submission.getParticipation() instanceof StudentParticipation studentParticipation && studentParticipation.getStudent().isPresent()) {
-            singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, studentParticipation.getStudent().get(), newManualResult);
+        if (participation.getStudent().isPresent()) {
+            singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(exercise, participation.getStudent().get(), newManualResult);
         }
 
         // Note: we always need to report the result over LTI, even if the assessment due date is not over yet.
