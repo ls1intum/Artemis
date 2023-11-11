@@ -62,7 +62,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                     this.quizPool = response.body!;
                 },
                 error: (error: HttpErrorResponse) => {
-                    // do nothing on 404 error (the exam just has no quiz pool=
+                    // do nothing on 404 error (the exam just has no quiz pool, continue)
                     if (error.status !== 404) {
                         onError(this.alertService, error);
                     }
