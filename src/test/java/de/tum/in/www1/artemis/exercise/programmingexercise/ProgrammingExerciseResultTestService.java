@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
@@ -443,6 +444,15 @@ public class ProgrammingExerciseResultTestService {
                 argThat(arg -> arg instanceof ResultDTO resultDTO && resultDTO.feedbacks().size() == 1 && resultDTO.feedbacks().get(0).testCase().testName() == null));
     }
 
+    // Test
+    public void shouldUpdateParticipantScoresOnlyOnce(Object resultNotification, InstanceMessageSendService instanceMessageSendService) {
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+
+        // check that exactly one update is scheduled
+        verify(instanceMessageSendService, times(1)).sendParticipantScoreSchedule(programmingExercise.getId(), programmingExerciseStudentParticipation.getParticipant().getId(),
+                null);
+    }
+
     private int getNumberOfBuildLogs(Object resultNotification) {
         if (resultNotification instanceof BambooBuildResultNotificationDTO) {
             return ((BambooBuildResultNotificationDTO) resultNotification).getBuild().jobs().iterator().next().logs().size();
@@ -460,5 +470,9 @@ public class ProgrammingExerciseResultTestService {
 
     public ProgrammingExerciseParticipation getSolutionParticipation() {
         return solutionParticipation;
+    }
+
+    public ProgrammingExerciseStudentParticipation getProgrammingExerciseStudentParticipation() {
+        return programmingExerciseStudentParticipation;
     }
 }
