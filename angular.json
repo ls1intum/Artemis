@@ -175,16 +175,16 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "artemis:build:development",
+            "buildTarget": "artemis:build:development",
             "proxyConfig": "proxy.conf.mjs",
             "port": 9000
           },
           "configurations": {
             "production": {
-              "browserTarget": "artemis:build:production"
+              "buildTarget": "artemis:build:production"
             },
             "development": {
-              "browserTarget": "artemis:build:development"
+              "buildTarget": "artemis:build:development"
             }
           },
           "defaultConfiguration": "development"
