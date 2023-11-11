@@ -78,6 +78,15 @@ public class ConversationFactory {
         return generatePublicChannel(course, channelName, isCourseWide, false);
     }
 
+    /**
+     * Generates a Channel for the given Course.
+     *
+     * @param course         The Course to generate the Channel for
+     * @param channelName    The name of the Channel
+     * @param isCourseWide   True, if the Channel is course wide
+     * @param isAnnouncement True, if the Channel is an announcement channel
+     * @return
+     */
     public static Channel generatePublicChannel(Course course, String channelName, boolean isCourseWide, boolean isAnnouncement) {
         Channel channel = new Channel();
         channel.setCourse(course);
