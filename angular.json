@@ -18,7 +18,7 @@
       "prefix": "jhi",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:browser",
+          "builder": "@angular-devkit/build-angular:browser-esbuild",
           "options": {
             "allowedCommonJsDependencies": [
               "sockjs-client",
@@ -129,7 +129,6 @@
               "namedChunks": true,
               "aot": true,
               "extractLicenses": true,
-              "vendorChunk": false,
               "buildOptimizer": true,
               "serviceWorker": true,
               "ngswConfigPath": "src/main/webapp/ngsw-config.json",
@@ -155,7 +154,6 @@
             "development": {
               "buildOptimizer": false,
               "optimization": false,
-              "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true,
