@@ -175,7 +175,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             // the result of the first correction round will be at index 0,
             // the result of a complaints or the second correction at index 1.
             participation.results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
-            participation.results?.last();
             if (participation.results?.[0].submission) {
                 participation.submissions = [participation.results?.[0].submission];
             }
