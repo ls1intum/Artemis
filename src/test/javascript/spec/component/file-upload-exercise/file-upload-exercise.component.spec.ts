@@ -114,4 +114,13 @@ describe('FileUploadExercise Management Component', () => {
             expect(comp.filteredFileUploadExercises).toHaveLength(0);
         });
     });
+
+    it('should have working selection', () => {
+        // WHEN
+        comp.toggleExercise(fileUploadExercise);
+
+        // THEN
+        expect(comp.selectedExercises[0]).toContainEntry(['id', fileUploadExercise.id]);
+        expect(comp.allChecked).toEqual(comp.selectedExercises.length === comp.fileUploadExercises.length);
+    });
 });

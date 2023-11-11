@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { faBell, faBoxArchive, faLock } from '@fortawesome/free-solid-svg-icons';
-import { faHashtag } from '@fortawesome/free-solid-svg-icons';
+import { faBoxArchive, faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-channel-icon',
@@ -19,5 +18,5 @@ export class ChannelIconComponent {
     faHashtag = faHashtag;
     faLock = faLock;
     faBoxArchive = faBoxArchive;
-    faBell = faBell;
+    faBullhorn = faBullhorn;
 }
