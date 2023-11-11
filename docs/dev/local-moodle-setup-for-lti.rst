@@ -6,7 +6,7 @@ This guide will help developers quickly establish a consistent and reliable Mood
 .. caution::
 
    The setup uses a docker-compose file based on configurations that Bitnami provided under the Apache License, Version 2.0.
-   You can find the original configuration at the `Bitnami GitHub repository <https://github.com/bitnami/containers/tree/main/bitnami/moodle>`_.
+   You can find the original configuration in the `Bitnami GitHub repository <https://github.com/bitnami/containers/tree/main/bitnami/moodle>`_.
    Usage of the Moodle™ trademark within this guide does not imply affiliation with or endorsement by Moodle HQ, which maintains the Moodle LMS independently.
 
 Prerequisites
@@ -22,9 +22,9 @@ Bitnami offers several advantages:
 
 - Bitnami ensures timely updates with the latest bug fixes and features.
 - Their consistent configuration allows seamless format transitions between containers, virtual machines, and cloud setups.
-- Bitnami's images are based on a minimalist Debian container, providing a small image size while maintaining the familiarity of Debian.
-- All Bitnami images on Docker Hub are signed for image integrity verification.
-- Regular releases keep images up-to-date with the latest distribution packages.
+- Bitnami bases its images on a minimalist Debian container, which ensures a small image size and retains the familiarity of Debian.
+- Bitnami signs all of its images on Docker Hub to verify image integrity.
+- Bitnami's regular releases update images with the latest distribution packages.
 
 Moodle requires access to a MySQL or MariaDB database to store information. Bitnami uses the Bitnami Docker Image for MariaDB for the database requirements.
 
