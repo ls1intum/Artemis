@@ -12,10 +12,10 @@ public class BonusFactory {
     /**
      * Generates a Bonus with the given arguments.
      *
-     * @param bonusStrategy         The bonus strategy of the bonus
-     * @param weight                The weight of the bonus
-     * @param sourceGradingScaleId  The id of the grading scale that is used as the source for the bonus
-     * @param bonusToGradingScaleId The id of the grading scale that is used as the target for the bonus
+     * @param bonusStrategy         The strategy for the Bonus
+     * @param weight                The weight of the Bonus
+     * @param sourceGradingScaleId  The id of the source GradingScale for the Bonus
+     * @param bonusToGradingScaleId The id of the target GradingScale for the Bonus
      * @return The generated Bonus
      */
     public static Bonus generateBonus(BonusStrategy bonusStrategy, Double weight, long sourceGradingScaleId, long bonusToGradingScaleId) {
