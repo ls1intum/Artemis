@@ -1,26 +1,38 @@
 <div class="plagiarism-split-view">
     <div class="plagiarism-split-pane" jhiPane>
         <ng-container *ngIf="plagiarismComparison">
-            <jhi-modeling-submission-viewer *ngIf="isModelingExercise" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()"></jhi-modeling-submission-viewer>
+            <jhi-modeling-submission-viewer
+                *ngIf="isModelingExercise"
+                [exercise]="exercise"
+                [plagiarismSubmission]="getModelingSubmissionA()"
+                [hideContent]="false"
+            ></jhi-modeling-submission-viewer>
 
             <jhi-text-submission-viewer
                 *ngIf="isProgrammingOrTextExercise"
                 [exercise]="exercise"
                 [matches]="matchesA"
                 [plagiarismSubmission]="getTextSubmissionA()"
+                [hideContent]="false"
             ></jhi-text-submission-viewer>
         </ng-container>
     </div>
 
     <div class="plagiarism-split-pane" jhiPane>
         <ng-container *ngIf="plagiarismComparison">
-            <jhi-modeling-submission-viewer *ngIf="isModelingExercise" [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionB()"></jhi-modeling-submission-viewer>
+            <jhi-modeling-submission-viewer
+                *ngIf="isModelingExercise"
+                [exercise]="exercise"
+                [plagiarismSubmission]="getModelingSubmissionB()"
+                [hideContent]="forStudent && dayjs(exercise.dueDate).isAfter(dayjs())"
+            ></jhi-modeling-submission-viewer>
 
             <jhi-text-submission-viewer
                 *ngIf="isProgrammingOrTextExercise"
                 [exercise]="exercise"
                 [matches]="matchesB"
                 [plagiarismSubmission]="getTextSubmissionB()"
+                [hideContent]="forStudent && dayjs(exercise.dueDate).isAfter(dayjs())"
             ></jhi-text-submission-viewer>
         </ng-container>
     </div>
