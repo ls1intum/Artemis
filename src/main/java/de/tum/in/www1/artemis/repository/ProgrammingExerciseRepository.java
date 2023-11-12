@@ -451,7 +451,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @param exerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      */
-    @NotNull
     @Query("""
             SELECT DISTINCT e FROM ProgrammingExercise e
             LEFT JOIN FETCH e.gradingCriteria
