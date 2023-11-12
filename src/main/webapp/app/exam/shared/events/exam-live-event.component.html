@@ -40,7 +40,7 @@
                         <td>{{ event.user?.email }}</td>
                     </tr>
                     <tr *ngIf="event.user?.visibleRegistrationNumber">
-                        <th>{{ 'artemisApp.studentExamDetail.registrationNumber' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.studentExamDetail.matriculationNumber' | artemisTranslate }}</th>
                         <td>{{ event.user?.visibleRegistrationNumber }}</td>
                     </tr>
                     <tr *ngIf="examAttendanceCheckEvent.text && examAttendanceCheckEvent.text.length > 0">
