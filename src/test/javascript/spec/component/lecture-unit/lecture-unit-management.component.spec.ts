@@ -140,8 +140,10 @@ describe('LectureUnitManagementComponent', () => {
         expect(lectureUnitManagementComponent.lectureUnits[1].id).toEqual(originalOrder[0].id);
     });
 
-    it('should navigate to edit attachment unit page', () => {
-        const editButtonClickedSpy = jest.spyOn(lectureUnitManagementComponent, 'editButtonRouterLink');
+    it('should emit edit button event', () => {
+        const editButtonClickedSpy = jest.spyOn(lectureUnitManagementComponent, 'onEditButtonClicked');
+        lectureUnitManagementComponent.emitEditEvents = true;
+        lectureUnitManagementComponentFixture.detectChanges();
         const buttons = lectureUnitManagementComponentFixture.debugElement.queryAll(By.css(`.edit`));
         for (const button of buttons) {
             button.nativeElement.click();
