@@ -97,6 +97,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 componentRef.instance.latestResult = this.latestResult;
                 componentRef.instance.testIds = testIds;
 
+                componentRef.changeDetectorRef.detectChanges();
                 const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
                 const taskHtmlContainer = taskHtmlContainers[i];
                 taskHtmlContainer.replaceChildren(domElem);
