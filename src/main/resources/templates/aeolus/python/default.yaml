@@ -3,7 +3,6 @@ metadata:
     name: python regular runs
     id: python-windfile
     description: This is a windfile for python exercises
-    author: Andreas Resch
     docker:
         image: ls1tum/artemis-python-docker
         tag: latest
@@ -29,11 +28,11 @@ actions:
           else
             exit 1
           fi
-      run_always: false
+      runAlways: false
     - name: junit
       parameters:
           ignore_time: false
           test_results: test-reports/*results.xml
       platform: bamboo
       kind: junit
-      run_always: true
+      runAlways: true

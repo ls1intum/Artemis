@@ -3,7 +3,6 @@ metadata:
     name: java-maven
     id: java-windfile
     description: Build Plan for a java Exercise with maven
-    author: Andreas Resch
     docker:
         image: ls1tum/artemis-maven-template
         tag: java17-20
@@ -22,10 +21,10 @@ metadata:
 actions:
     - name: maven
       script: mvn clean test -Pcoverage
-      run_always: false
+      runAlways: false
     - name: move_report_file
       script: mv target/tia/reports/*/testwise-coverage-*.json target/tia/reports/tiaTests.json
-      run_always: false
+      runAlways: false
     - name: junit
       parameters:
           ignore_time: false
@@ -34,4 +33,4 @@ actions:
               - 'target/tia/reports/tiaTests.json'
       platform: bamboo
       kind: junit
-      run_always: true
+      runAlways: true

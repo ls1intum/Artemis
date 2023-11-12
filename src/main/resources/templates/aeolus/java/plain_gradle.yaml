@@ -3,7 +3,6 @@ metadata:
     name: java-gradle
     id: java-windfile
     description: Build Plan for a java Exercise
-    author: Andreas Resch
     docker:
         image: ls1tum/artemis-maven-template
         tag: java17-20
@@ -24,14 +23,14 @@ actions:
       script: |
           chmod +x gradlew
           ./gradlew clean test
-      run_always: false
+      runAlways: false
     - name: junit
       parameters:
           ignore_time: false
           test_results: '**/test-results/test/*.xml'
       platform: bamboo
       kind: junit
-      run_always: true
+      runAlways: true
     - name: setup_working_directory_for_cleanup
       script: chmod -R 777 ${WORKDIR}
-      run_always: true
+      runAlways: true
