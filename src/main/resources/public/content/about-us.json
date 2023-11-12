@@ -30,13 +30,13 @@
             "fullName": "Dr. Stephan Krusche",
             "sortBy": "Krusche",
             "photoDirectory": "public/images/about/Stephan_Krusche.jpg",
-            "website": "https://ase.cit.tum.de/people/people/krusche"
+            "website": "https://ase.cit.tum.de/people/krusche"
         },
         {
             "fullName": "Dr. Jan Philip Bernius",
             "sortBy": "Bernius",
             "photoDirectory": "public/images/about/Jan_Philip_Bernius.jpg",
-            "website": "https://ase.cit.tum.de/people/people/bernius"
+            "website": "https://ase.cit.tum.de/people/alumni/bernius/"
         },
         {
             "fullName": "Dr. Nadine von Frankenberg",
@@ -418,9 +418,44 @@
             "photoDirectory": "public/images/about/Rizky_Riyaldhi.jpg"
         },
         {
-            "fullName": "Santiago Berrezueta, PhD.",
-            "sortBy": "Berrezueta, PhD.",
+            "fullName": "Santiago Berrezueta, Ph.D.",
+            "sortBy": "Berrezueta",
             "photoDirectory": "public/images/about/Santiago_Berrezueta.jpg"
+        },
+        {
+            "fullName": "Maximilian Anzinger",
+            "sortBy": "Anzinger",
+            "photoDirectory": "public/images/about/Maximilian_Anzinger.jpg"
+        },
+        {
+            "fullName": "Valentin Böhm",
+            "sortBy": "Böhm",
+            "photoDirectory": "public/images/about/Valentin_Boehm.jpg"
+        },
+        {
+            "fullName": "Dominik Remo",
+            "sortBy": "Remo",
+            "photoDirectory": "public/images/about/Dominik_Remo.jpg"
+        },
+        {
+            "fullName": "Nityananda Zbil",
+            "photoDirectory": "public/images/about/Nityananda_Zbil.jpg"
+        },
+        {
+            "fullName": "Laurenz Blumentritt",
+            "photoDirectory": "public/images/about/Laurenz_Blumentritt.jpg"
+        },
+        {
+            "fullName": "Lennart Keller",
+            "photoDirectory": "public/images/about/Lennart_Keller.jpg"
+        },
+        {
+            "fullName": "Andreas Resch",
+            "photoDirectory": "public/images/about/Andreas_Resch.jpg"
+        },
+        {
+            "fullName": "Xinyao Liu",
+            "photoDirectory": "public/images/about/Xinyao_Liu.jpg"
         }
     ]
 }
