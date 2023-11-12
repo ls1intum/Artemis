@@ -117,7 +117,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
 
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 
-        verify(generalInstantNotificationService).sendNotification(sentNotification, Set.of(user2), null);
+        verify(generalInstantNotificationService).sendNotification(sentNotification, Set.of(user2), post);
 
         var participants = conversationParticipantRepository.findConversationParticipantByConversationId(oneToOneChat.getId());
         // make sure that objects can be deleted after notification is saved

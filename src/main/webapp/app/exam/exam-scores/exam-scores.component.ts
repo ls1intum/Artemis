@@ -28,7 +28,7 @@ import { declareExerciseType } from 'app/entities/exercise.model';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { faCheckCircle, faDownload, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faDownload, faExclamationTriangle, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
 import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
 import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
@@ -127,6 +127,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     faDownload = faDownload;
     faTimes = faTimes;
     faCheckCircle = faCheckCircle;
+    faExclamationTriangle = faExclamationTriangle;
 
     private languageChangeSubscription?: Subscription;
     constructor(
@@ -146,7 +147,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         this.route.params.subscribe((params) => {
             const getExamScoresObservable = this.examService.getExamScores(params['courseId'], params['examId']);
             // alternative exam scores calculation using participant scores table
-            const findExamScoresObservable = this.participantScoresService.findExamScores(params['examId']);
+            const findExamScoresObservable = this.participantScoresService.findExamScores(params['examId']).pipe(catchError(() => of(new HttpResponse<ScoresDTO[]>())));
 
             // find grading scale if one exists and handle case when it doesn't
             const gradingScaleObservable = this.gradingSystemService
