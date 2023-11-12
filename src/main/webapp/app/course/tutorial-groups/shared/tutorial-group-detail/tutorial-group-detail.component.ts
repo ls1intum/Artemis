@@ -23,9 +23,6 @@ export class TutorialGroupDetailComponent implements OnChanges {
     tutorialGroup: TutorialGroup;
 
     @Input()
-    registrationClickHandler: () => void;
-
-    @Input()
     course: Course;
     formattedAdditionalInformation?: SafeHtml;
     getDayTranslationKey = getDayTranslationKey;
