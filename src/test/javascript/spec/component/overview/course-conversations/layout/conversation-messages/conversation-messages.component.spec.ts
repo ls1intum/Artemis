@@ -17,8 +17,15 @@ import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOn
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 
-const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
+const examples: ConversationDto[] = [
+    generateOneToOneChatDTO({}),
+    generateExampleGroupChatDTO({}),
+    generateExampleChannelDTO({}),
+    generateExampleChannelDTO({ isAnnouncementChannel: true }),
+];
 
 @Directive({
     // eslint-disable-next-line @angular-eslint/directive-selector
@@ -40,7 +47,7 @@ class InfiniteScrollStubDirective {
     @Input() fromRoot = false;
 }
 examples.forEach((activeConversation) => {
-    describe('ConversationMessagesComponent with ' + activeConversation.type, () => {
+    describe('ConversationMessagesComponent with ' + (getAsChannelDto(activeConversation)?.isAnnouncementChannel ? 'announcement ' : '') + activeConversation.type, () => {
         let component: ConversationMessagesComponent;
         let fixture: ComponentFixture<ConversationMessagesComponent>;
         let metisService: MetisService;
@@ -59,6 +66,7 @@ examples.forEach((activeConversation) => {
                     MockComponent(FaIconComponent),
                     MockComponent(PostingThreadComponent),
                     MockComponent(MessageInlineInputComponent),
+                    MockComponent(PostCreateEditModalComponent),
                 ],
                 providers: [MockProvider(MetisConversationService), MockProvider(MetisService), MockProvider(NgbModal)],
             }).compileComponents();
@@ -130,5 +138,20 @@ examples.forEach((activeConversation) => {
             expect(conversation!.type).toEqual(activeConversation.type);
             expect(conversation!.id).toEqual(activeConversation.id);
         }));
+
+        if (getAsChannelDto(activeConversation)?.isAnnouncementChannel) {
+            it('should display the "new announcement" button when the conversation is an announcement channel', fakeAsync(() => {
+                const announcementButton = fixture.debugElement.query(By.css('.btn.btn-md.btn-primary'));
+                expect(announcementButton).toBeTruthy(); // Check if the button is present
+
+                const modal = fixture.debugElement.query(By.directive(PostCreateEditModalComponent));
+                expect(modal).toBeTruthy(); // Check if the modal is present
+            }));
+        } else {
+            it('should display the inline input when the conversation is not an announcement channel', fakeAsync(() => {
+                const inlineInput = fixture.debugElement.query(By.directive(MessageInlineInputComponent));
+                expect(inlineInput).toBeTruthy(); // Check if the inline input component is present
+            }));
+        }
     });
 });
