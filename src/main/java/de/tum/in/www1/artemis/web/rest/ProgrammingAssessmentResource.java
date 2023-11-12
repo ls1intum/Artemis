@@ -187,7 +187,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
         newManualResult.setSubmission(submission);
         newManualResult.setHasComplaint(existingManualResult.getHasComplaint().isPresent() && existingManualResult.getHasComplaint().get());
-        newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult);
+        newManualResult = programmingAssessmentService.saveManualAssessment(newManualResult, user);
 
         if (submission.getParticipation() == null) {
             newManualResult.setParticipation(submission.getParticipation());
@@ -195,11 +195,14 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         Result savedResult = resultRepository.save(newManualResult);
         savedResult.setSubmission(submission);
 
+        // Re-load result to fetch the test cases
+        newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(newManualResult.getId());
+
         if (submit) {
-            newManualResult = resultRepository.submitManualAssessment(existingManualResult.getId());
-            Optional<User> optionalStudent = ((StudentParticipation) submission.getParticipation()).getStudent();
-            if (optionalStudent.isPresent()) {
-                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(programmingExercise, optionalStudent.get(), newManualResult);
+            newManualResult = resultRepository.submitManualAssessment(newManualResult);
+
+            if (submission.getParticipation() instanceof StudentParticipation studentParticipation && studentParticipation.getStudent().isPresent()) {
+                singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(programmingExercise, studentParticipation.getStudent().get(), newManualResult);
             }
             sendFeedbackToAthena(programmingExercise, submission, newManualResult.getFeedbacks());
         }
@@ -221,6 +224,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         if (isManualFeedbackRequest && isBeforeDueDate) {
             participation.setIndividualDueDate(null);
             studentParticipationRepository.save(participation);
+            newManualResult.setParticipation(participation);
 
             programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation);
         }
