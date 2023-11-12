@@ -54,6 +54,7 @@
                     }
                 },
                 "title": {
+                    "breadcrumb": "Iris Einstellungen",
                     "global": "Globale Iris Einstellungen",
                     "course": "Kurs Iris Einstellungen",
                     "programmingExercise": "Programmieraufgabe Iris Einstellungen"

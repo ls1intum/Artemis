@@ -1,5 +1,12 @@
 <div>
-    <jhi-button id="reload" [btnType]="PRIMARY" [isLoading]="isLoading" [icon]="faRotate" [title]="'artemisApp.iris.settings.button.reload'" (onClick)="loadIrisSettings()">
+    <jhi-button
+        id="reload"
+        [btnType]="isDirty ? WARNING : PRIMARY"
+        [isLoading]="isLoading"
+        [icon]="faRotate"
+        [title]="'artemisApp.iris.settings.button.reload'"
+        (onClick)="loadIrisSettings()"
+    >
     </jhi-button>
     <jhi-button id="save" [btnType]="SUCCESS" [isLoading]="isSaving" [icon]="faSave" [title]="'artemisApp.iris.settings.button.save'" (onClick)="saveIrisSettings()"></jhi-button>
 </div>

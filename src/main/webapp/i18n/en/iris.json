@@ -54,6 +54,7 @@
                     }
                 },
                 "title": {
+                    "breadcrumb": "Iris Settings",
                     "global": "Global Iris Settings",
                     "course": "Course Iris Settings",
                     "exercise": "Exercise Iris Settings"
