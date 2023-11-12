@@ -23,9 +23,6 @@ export class TutorialGroupDetailComponent implements OnChanges {
     tutorialGroup: TutorialGroup;
 
     @Input()
-    courseClickHandler: () => void;
-
-    @Input()
     registrationClickHandler: () => void;
 
     @Input()
