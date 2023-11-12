@@ -20,6 +20,8 @@ services:
             CYPRESS_editorGroupName: "artemis-e2etest-editors"
             CYPRESS_instructorGroupName: "artemis-e2etest-instructors"
             CYPRESS_createUsers: "${bamboo_cypress_create_users}"
+            # use alternative cypress version to avoid blocking sorry cypress (see https://currents.dev/readme/integration-with-cypress/alternative-cypress-binaries)
+            CYPRESS_DOWNLOAD_MIRROR: "https://cy-cdn.currents.dev"
             SORRY_CYPRESS_KEY: "${bamboo_sorry_cypress_record_secret}"
             SORRY_CYPRESS_URL: "${bamboo_sorry_cypress_url}"
             SORRY_CYPRESS_BUILD_ID: "${bamboo_buildNumber}"
