@@ -24,7 +24,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     styleUrls: ['./exam-management.component.scss'],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
-    documentationType = DocumentationType.Exams;
+    readonly documentationType: DocumentationType = 'Exams';
 
     course: Course;
     exams: Exam[];
