@@ -287,6 +287,14 @@ public class IrisSubSettingsService {
                 .filter(rateLimit -> rateLimit != null && rateLimit >= 0).min(Comparator.comparingInt(Integer::intValue)).orElse(null);
     }
 
+    /**
+     * Combines the allowedModels field of multiple {@link IrisSettings} objects.
+     * Simply takes the last allowedModels.
+     *
+     * @param settingsList        List of {@link IrisSettings} objects to combine.
+     * @param subSettingsFunction Function to get the sub settings from an IrisSettings object.
+     * @return Combined allowedModels field.
+     */
     private Set<String> getCombinedAllowedModels(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
         return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisSubSettings::getAllowedModels).filter(Objects::nonNull)
                 .filter(models -> !models.isEmpty()).reduce((first, second) -> second).orElse(new TreeSet<>());

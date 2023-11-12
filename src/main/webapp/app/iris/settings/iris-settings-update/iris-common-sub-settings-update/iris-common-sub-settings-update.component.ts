@@ -48,7 +48,7 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     ngOnInit() {
         this.enabled = this.subSettings?.enabled ?? false;
         this.allowedIrisModels = this.getAvailableModels();
-        this.inheritAllowedModels = (!this.subSettings?.allowedModels && this.parentSubSettings) as boolean;
+        this.inheritAllowedModels = !!(!this.subSettings?.allowedModels && this.parentSubSettings);
     }
 
     ngOnChanges(changes: SimpleChanges): void {
