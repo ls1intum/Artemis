@@ -3,8 +3,6 @@ metadata:
     name: java-gradle-sequential
     id: java-windfile
     description: Build Plan for a java Exercise
-    author: Andreas Resch
-    gitCredentials: artemis_admin
     docker:
         image: ls1tum/artemis-maven-template
         tag: java17-20
@@ -26,7 +24,7 @@ actions:
       run_always: false
     - name: behavior_tests
       script: ./gradlew behaviorTests
-      run_always: false
+      runAlways: false
     - name: junit
       parameters:
           ignore_time: false
@@ -35,7 +33,7 @@ actions:
               - '**/test-results/behaviorTests/*.xml'
       platform: bamboo
       kind: junit
-      run_always: true
+      runAlways: true
     - name: setup_working_directory_for_cleanup
       script: chmod -R 777 ${WORKDIR}
-      run_always: true
+      runAlways: true
