@@ -249,8 +249,6 @@ public class StudentExamResource {
 
         StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), examId).orElseThrow();
 
-        studentExam.getUser().setVisibleRegistrationNumber();
-
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExam.getId());
 
         var exam = studentExam.getExam();
