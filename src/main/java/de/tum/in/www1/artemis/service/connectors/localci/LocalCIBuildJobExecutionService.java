@@ -123,7 +123,7 @@ public class LocalCIBuildJobExecutionService {
         }
 
         // Prepare script
-        Path buildScriptPath = localCIContainerService.createBuildScript(participation.getProgrammingExercise());
+        Path buildScriptPath = localCIContainerService.createBuildScript(participation);
 
         // Retrieve the paths to the repositories that the build job needs.
         // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
