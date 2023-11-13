@@ -124,7 +124,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetTextFeedbackSuggestionsNotFound() throws Exception {
-        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
         request.get("/api/athena/text-exercises/9999/submissions/9999/feedback-suggestions", HttpStatus.NOT_FOUND, List.class);
     }
 
