@@ -1,7 +1,8 @@
 import { Page, expect } from '@playwright/test';
+import { UserCredentials } from '../users';
 
 export class LoginPage {
-    private page: Page;
+    private readonly page: Page;
 
     constructor(page: Page) {
         this.page = page;
@@ -53,9 +54,4 @@ export class LoginPage {
         expect(await this.page.isVisible('#imprint')).toBe(true);
         expect(await this.page.getAttribute('#imprint', 'href')).toBe('/imprint');
     }
-}
-
-export interface UserCredentials {
-    username: string;
-    password: string;
 }

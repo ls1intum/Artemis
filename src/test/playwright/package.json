@@ -1,0 +1,17 @@
+{
+    "name": "artemis_playwright",
+    "description": "Playwright tests for Artemis",
+    "private": true,
+    "license": "MIT",
+    "devDependencies": {
+        "playwright": "1.39.0"
+    },
+    "scripts": {
+        "playwright:test": "npx playwright test",
+        "playwright:open": "npx playwright test --ui"
+    },
+    "dependencies": {
+        "@playwright/test": "1.39.0",
+        "dotenv": "^16.3.1"
+    }
+}
