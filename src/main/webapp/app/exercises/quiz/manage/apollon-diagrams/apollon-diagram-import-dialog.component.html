@@ -1,4 +1,8 @@
 <div>
+    <div class="m-4 d-flex text-secondary">
+        <button *ngIf="isInEditView" class="btn" (click)="isInEditView = false"><fa-icon [icon]="faArrow" size="lg" /></button>
+        <button type="button" class="btn" (click)="handleDetailClose()" style="margin-left: auto"><fa-icon [icon]="faX" size="lg" /></button>
+    </div>
     <jhi-apollon-diagram-list *ngIf="!this.isInEditView; else editView" [courseId]="this.courseId" (openDiagram)="handleDetailOpen($event)"></jhi-apollon-diagram-list>
 </div>
 <ng-template #editView>

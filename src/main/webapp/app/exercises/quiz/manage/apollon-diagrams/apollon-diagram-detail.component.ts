@@ -28,7 +28,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @Input()
     private apollonDiagramId: number;
 
-    @Output() closeEdit = new EventEmitter<DragAndDropQuestion | void>();
+    @Output() closeEdit = new EventEmitter<DragAndDropQuestion | undefined>();
 
     course: Course;
 
