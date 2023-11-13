@@ -105,10 +105,11 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         userUtilService.addUsers(TEST_PREFIX, 3, 2, 0, 2);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
-
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
+
         exerciseUtilService.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",
@@ -445,8 +446,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createManualProgrammingExerciseResult_resultHasAutomaticFeedback() throws Exception {
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testCase");
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.AUTOMATIC).testCase(testCase));
         feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         feedbacks.add(new Feedback().credits(1.00).detailText("nice submission 2"));
         feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.MANUAL).detailText("nice submission 1").text("manual feedback"));
@@ -460,7 +462,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
                 Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(4);
-        assertThat(response.getFeedbacks()).anyMatch(feedback -> feedback.getType().equals(FeedbackType.AUTOMATIC));
+        assertThat(response.getFeedbacks()).anySatisfy(feedback -> {
+            assertThat(feedback.getType()).isEqualTo(FeedbackType.AUTOMATIC);
+            assertThat(feedback.getTestCase().getId()).isEqualTo(testCase.getId());
+        });
     }
 
     @Test
