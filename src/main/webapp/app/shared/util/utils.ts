@@ -146,3 +146,12 @@ export class Range {
 export function getAsMutableObject(object: any) {
     return { ...object };
 }
+
+/**
+ * Usages:
+ * - when the router keeps the position from the previous page for the new page
+ * - to make sure that a message from the {@link AlertService} is recognized by the user
+ */
+export function scrollToTopOfPage() {
+    window.scroll(0, 0);
+}
