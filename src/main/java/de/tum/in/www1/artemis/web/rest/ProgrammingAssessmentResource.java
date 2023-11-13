@@ -198,7 +198,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         savedResult.setSubmission(submission);
 
         // Re-load result to fetch the test cases
-        newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(newManualResult.getId());
+        newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesAndAssessmentNoteElseThrow(newManualResult.getId());
 
         if (submit) {
             newManualResult = resultRepository.submitManualAssessment(newManualResult);
