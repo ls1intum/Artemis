@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -25,6 +25,8 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { AthenaService } from 'app/assessment/athena.service';
 import { Observable } from 'rxjs';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -57,6 +59,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
+
     constructor(
         private alertService: AlertService,
         private textExerciseService: TextExerciseService,
@@ -83,9 +86,7 @@ export class TextExerciseUpdateComponent implements OnInit {
      * Initializes all relevant data for creating or editing text exercise
      */
     ngOnInit() {
-        // This is used to scroll page to the top of the page, because the routing keeps the position for the
-        // new page from previous page.
-        window.scroll(0, 0);
+        scrollToTopOfPage();
 
         // Get the textExercise
         this.activatedRoute.data.subscribe(({ textExercise }) => {
@@ -106,12 +107,7 @@ export class TextExerciseUpdateComponent implements OnInit {
                     if (!this.isExamMode) {
                         this.exerciseCategories = this.textExercise.categories || [];
                         if (this.examCourseId) {
-                            this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe({
-                                next: (categoryRes: HttpResponse<string[]>) => {
-                                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                                },
-                                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                            });
+                            this.loadCourseExerciseCategories(this.examCourseId);
                         }
                     } else {
                         // Lock individual mode for exam exercises
@@ -124,10 +120,11 @@ export class TextExerciseUpdateComponent implements OnInit {
                         }
                     }
                     if (this.isImport) {
+                        const courseId = params['courseId'];
+
                         if (this.isExamMode) {
                             // The target exerciseId where we want to import into
                             const exerciseGroupId = params['exerciseGroupId'];
-                            const courseId = params['courseId'];
                             const examId = params['examId'];
 
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.textExercise.exerciseGroup = res.body!));
@@ -135,11 +132,12 @@ export class TextExerciseUpdateComponent implements OnInit {
                             this.textExercise.course = undefined;
                         } else {
                             // The target course where we want to import into
-                            const targetCourseId = params['courseId'];
-                            this.courseService.find(targetCourseId).subscribe((res) => (this.textExercise.course = res.body!));
+                            this.courseService.find(courseId).subscribe((res) => (this.textExercise.course = res.body!));
                             // We reference normal exercises by their course, having both would lead to conflicts on the server
                             this.textExercise.exerciseGroup = undefined;
                         }
+
+                        this.loadCourseExerciseCategories(courseId);
                         resetDates(this.textExercise);
                     }
                 }),
@@ -178,6 +176,7 @@ export class TextExerciseUpdateComponent implements OnInit {
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.textExercise.categories = categories;
+        this.exerciseCategories = categories;
     }
 
     save() {
@@ -192,6 +191,12 @@ export class TextExerciseUpdateComponent implements OnInit {
                     this.isSaving = false;
                 },
             });
+    }
+
+    private loadCourseExerciseCategories(courseId: number) {
+        loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
+            this.existingCategories = existingCategories;
+        });
     }
 
     private onSaveSuccess(exercise: TextExercise) {
