@@ -681,6 +681,10 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result) {
+        if (isAtLeastEditorForExercise(exercise) && participation.isTestRun()) {
+            return true;
+        }
+
         return isAtLeastStudentForExercise(exercise) && (isOwnerOfParticipation(participation) || isAtLeastInstructorForExercise(exercise))
                 && ExerciseDateService.isAfterAssessmentDueDate(exercise) && result.getAssessor() != null && result.getCompletionDate() != null;
     }
