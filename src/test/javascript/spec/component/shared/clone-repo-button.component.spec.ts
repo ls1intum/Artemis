@@ -347,14 +347,14 @@ describe('CloneRepoButtonComponent', () => {
     });
 
     it('should retrieve user from the server when VCS access token is missing', fakeAsync(() => {
-        component.user.vcsAccessToken = null;
+        component.user.vcsAccessToken = undefined;
         component.versionControlAccessTokenRequired = true;
         component.onClick();
         expect(accountServiceIdentityStub).toHaveBeenCalledWith(true);
     }));
 
     it('should display error when user could not be retrieved', fakeAsync(() => {
-        component.user.vcsAccessToken = null;
+        component.user.vcsAccessToken = undefined;
         component.versionControlAccessTokenRequired = true;
         accountServiceIdentityStub.mockReturnValue(Promise.resolve(undefined));
         component.onClick();
@@ -364,7 +364,7 @@ describe('CloneRepoButtonComponent', () => {
     }));
 
     it('should display error when user token is still not present in the updated user', fakeAsync(() => {
-        component.user.vcsAccessToken = null;
+        component.user.vcsAccessToken = undefined;
         component.versionControlAccessTokenRequired = true;
 
         // new User() doesn't contain access token
@@ -376,7 +376,7 @@ describe('CloneRepoButtonComponent', () => {
     }));
 
     it('should not display the error more than once', fakeAsync(() => {
-        component.user.vcsAccessToken = null;
+        component.user.vcsAccessToken = undefined;
         component.versionControlAccessTokenRequired = true;
 
         accountServiceIdentityStub.mockReturnValue(Promise.resolve(undefined));
