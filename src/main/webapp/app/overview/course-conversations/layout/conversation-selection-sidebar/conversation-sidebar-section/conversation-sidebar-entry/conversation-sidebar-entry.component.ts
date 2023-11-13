@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsul
 import { ConversationDto, Muted } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { faBellSlash, faEllipsis } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -59,8 +59,6 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     channelSubTypeReferenceRouterLink?: string;
 
     faEllipsis = faEllipsis;
-    faBellSlash = faBellSlash;
-    //
 
     constructor(
         public conversationService: ConversationService,
@@ -94,6 +92,18 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     onFavoriteClicked($event: MouseEvent) {
         $event.stopPropagation();
         this.favorite$.next(!this.conversation.isFavorite);
+    }
+
+    onMuteClicked($event: MouseEvent) {
+        $event.stopPropagation();
+        switch (this.conversation.muted) {
+            case Muted.MUTED:
+                this.muted$.next(Muted.UNMUTED);
+                break;
+            case Muted.UNMUTED:
+                this.muted$.next(Muted.MUTED);
+                break;
+        }
     }
 
     openConversationDetailDialog(event: MouseEvent) {
