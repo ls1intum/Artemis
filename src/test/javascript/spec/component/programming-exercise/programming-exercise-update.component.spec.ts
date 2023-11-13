@@ -63,8 +63,9 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 
-describe('ProgrammingExercise Management Update Component', () => {
+describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
     const course = { id: courseId } as Course;
 
@@ -480,6 +481,16 @@ describe('ProgrammingExercise Management Update Component', () => {
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             }),
         );
+
+        it('should load exercise categories on import', () => {
+            const programmingExercise = getProgrammingExerciseForImport();
+            route.data = of({ programmingExercise });
+            const loadExerciseCategoriesSpy = jest.spyOn(Utils, 'loadCourseExerciseCategories');
+
+            comp.ngOnInit();
+
+            expect(loadExerciseCategoriesSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('import from file', () => {
