@@ -7,7 +7,7 @@ import javax.persistence.Entity;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;
 
 /**
- * An event indicating an updated working time for a specific student exam.
+ * An event indicating an attendance check trigger during an exam.
  */
 @Entity
 @DiscriminatorValue(value = "C")
