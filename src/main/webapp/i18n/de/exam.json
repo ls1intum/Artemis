@@ -102,7 +102,8 @@
                 "intervalPoints": "Intervall (Punkte)",
                 "gradeKeyButton": "Notenschlüssel ansehen",
                 "gradeKeyButtonBonus": "Bonusregeln ansehen",
-                "bonusGradeKeyButton": "Bonusnotenschlüssel ansehen"
+                "bonusGradeKeyButton": "Bonusnotenschlüssel ansehen",
+                "disabledTooltip": "Die Zusammenfassung ist nur verfügbar, wenn die Klausur abgegeben wurde."
             },
             "title": "Klausur",
             "startExam": "Starten",
