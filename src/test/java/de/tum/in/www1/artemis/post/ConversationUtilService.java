@@ -134,6 +134,7 @@ public class ConversationUtilService {
         posts.addAll(createBasicPosts(course1, courseWideContexts, userPrefix));
         posts.addAll(createBasicPosts(createOneToOneChat(course1, userPrefix), userPrefix, "tutor"));
         posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
+        posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
 
         return posts;
     }
@@ -338,6 +339,11 @@ public class ConversationUtilService {
 
     public Channel createCourseWideChannel(Course course, String channelName) {
         Channel channel = ConversationFactory.generatePublicChannel(course, channelName, true);
+        return conversationRepository.save(channel);
+    }
+
+    public Channel createCourseWideChannel(Course course, String channelName, boolean isAnnouncement) {
+        Channel channel = ConversationFactory.generatePublicChannel(course, channelName, true, isAnnouncement);
         return conversationRepository.save(channel);
     }
 

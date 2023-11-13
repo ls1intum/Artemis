@@ -1094,7 +1094,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"), shortText);
 
         var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, plagiarismUtilService.getPlagiarismOptions(50D, 0, 5));
+        request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, plagiarismUtilService.getPlagiarismOptions(50, 0, 5));
     }
 
     @Test

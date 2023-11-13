@@ -51,6 +51,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
 
     private connections: { [exerciseId: string]: string } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | undefined> } = {};
+    private testCases: Map<number, ProgrammingExerciseTestCase[]> = new Map();
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -76,13 +77,17 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
     subscribeForTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[] | undefined> {
         if (this.subjects[exerciseId]) {
             return this.subjects[exerciseId] as Observable<ProgrammingExerciseTestCase[] | undefined>;
-        } else {
-            return this.getTestCases(exerciseId).pipe(
-                map((testCases) => (testCases.length ? testCases : undefined)),
-                catchError(() => of(undefined)),
-                switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => this.initTestCaseSubscription(exerciseId, testCases)),
-            );
         }
+        return this.getTestCases(exerciseId).pipe(
+            map((testCases) => (testCases.length ? testCases : undefined)),
+            catchError(() => of(undefined)),
+            switchMap((testCases: ProgrammingExerciseTestCase[] | undefined) => {
+                if (testCases) {
+                    this.testCases.set(exerciseId, testCases);
+                }
+                return this.initTestCaseSubscription(exerciseId, testCases);
+            }),
+        );
     }
 
     /**
@@ -100,8 +105,15 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * Executes a REST request to the test case endpoint.
      * @param exerciseId
      */
-    private getTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.get<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/test-cases`);
+    public getTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+        if (this.testCases.has(exerciseId)) {
+            return of(this.testCases.get(exerciseId)!);
+        }
+        return this.http.get<ProgrammingExerciseTestCase[]>(`${this.resourceUrl}/${exerciseId}/test-cases`).pipe(
+            tap((testCases) => {
+                this.testCases.set(exerciseId, testCases);
+            }),
+        );
     }
 
     /**
@@ -152,7 +164,12 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
             .receive(testCaseTopic)
             .pipe(
                 map((testCases) => (testCases.length ? testCases : undefined)),
-                tap((testCases) => this.notifySubscribers(exerciseId, testCases)),
+                tap((testCases) => {
+                    if (testCases) {
+                        this.testCases.set(exerciseId, testCases);
+                    }
+                    this.notifySubscribers(exerciseId, testCases);
+                }),
             )
             .subscribe();
         return this.subjects[exerciseId];

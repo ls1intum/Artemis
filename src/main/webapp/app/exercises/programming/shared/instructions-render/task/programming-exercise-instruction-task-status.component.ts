@@ -1,4 +1,4 @@
-import { ApplicationRef, Component, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -17,19 +17,26 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     translationBasePath = 'artemisApp.editor.testStatusLabels.';
 
     @Input() taskName: string;
+
+    /**
+     * array of test ids
+     */
     @Input()
-    get tests() {
-        return this.testsValue;
+    get testIds() {
+        return this.testIdsValue;
     }
     @Input() exercise: Exercise;
     @Input() latestResult?: Result;
 
-    testsValue: string[];
+    testIdsValue: number[];
     testCaseState: TestCaseState;
 
-    successfulTests: string[];
-    notExecutedTests: string[];
-    failedTests: string[];
+    /**
+     * Arrays of test case ids, grouped by their status in the given result.
+     */
+    successfulTests: number[];
+    notExecutedTests: number[];
+    failedTests: number[];
 
     hasMessage: boolean;
 
@@ -40,33 +47,32 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
 
     constructor(
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
-        private appRef: ApplicationRef,
         private modalService: NgbModal,
     ) {}
 
-    set tests(tests: string[]) {
-        this.testsValue = tests;
+    set testIds(testIds: number[]) {
+        this.testIdsValue = testIds;
         const {
             testCaseState,
             detailed: { successfulTests, notExecutedTests, failedTests },
-        } = this.programmingExerciseInstructionService.testStatusForTask(this.tests, this.latestResult);
+        } = this.programmingExerciseInstructionService.testStatusForTask(this.testIds, this.latestResult);
         this.testCaseState = testCaseState;
         this.successfulTests = successfulTests;
         this.notExecutedTests = notExecutedTests;
         this.failedTests = failedTests;
-        this.hasMessage = this.hasTestMessage(tests);
+        this.hasMessage = this.hasTestMessage(testIds);
     }
 
     /**
      * Checks if any of the feedbacks have a detailText associated to them.
-     * @param tests the feedback names this should be checked for
+     * @param testIds the test case ids that should be checked for
      */
-    private hasTestMessage(tests: string[]): boolean {
-        if (!this.latestResult || !this.latestResult.feedbacks) {
+    private hasTestMessage(testIds: number[]): boolean {
+        if (!this.latestResult?.feedbacks) {
             return false;
         }
         const feedbacks = this.latestResult.feedbacks;
-        return tests.some((test) => feedbacks.find((feedback) => feedback.text === test && feedback.detailText));
+        return testIds.some((testId: number) => feedbacks.find((feedback) => feedback.testCase?.id === testId && feedback.detailText));
     }
 
     /**
@@ -80,7 +86,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         const componentInstance = modalRef.componentInstance as FeedbackComponent;
         componentInstance.exercise = this.exercise;
         componentInstance.result = this.latestResult;
-        componentInstance.feedbackFilter = this.tests;
+        componentInstance.feedbackFilter = this.testIds;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         componentInstance.taskName = this.taskName;
         componentInstance.numberOfNotExecutedTests = this.notExecutedTests.length;

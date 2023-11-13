@@ -519,6 +519,12 @@ public class ProgrammingExerciseUtilService {
         testCaseRepository.saveAll(testCases);
     }
 
+    public ProgrammingExerciseTestCase addTestCaseToProgrammingExercise(ProgrammingExercise programmingExercise, String testName) {
+        var testCase = new ProgrammingExerciseTestCase().testName(testName).weight(1.).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1.)
+                .bonusPoints(0.);
+        return testCaseRepository.save(testCase);
+    }
+
     /**
      * Adds build plan and build plan access secret to the given programming exercise.
      *

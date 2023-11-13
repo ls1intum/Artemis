@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.exam;
 
 import static java.time.ZonedDateTime.now;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpStatus.CREATED;
 
 import java.net.URI;
@@ -16,8 +19,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -57,27 +59,31 @@ import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "examintegration";
+    private static final String TEST_PREFIX = "examint";
 
     @Autowired
     private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
-    private CourseRepository courseRepo;
+    private CourseRepository courseRepository;
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    private UserRepository userRepo;
+    private UserRepository userRepository;
 
     @Autowired
     private ExamRepository examRepository;
 
     @Autowired
     private ExamService examService;
+
+    @Autowired
+    private ExamLiveEventRepository examLiveEventRepository;
 
     @Autowired
     private ExamDateService examDateService;
@@ -145,37 +151,45 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private User instructor;
 
-    @BeforeEach
-    void initTestCase() {
+    @BeforeAll
+    void setup() {
+        // setup users
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, 0, 1);
+
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42", passwordService.hashPassword(UserFactory.USER_PASSWORD));
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor6", passwordService.hashPassword(UserFactory.USER_PASSWORD));
         userUtilService.createAndSaveUser(TEST_PREFIX + "instructor10", passwordService.hashPassword(UserFactory.USER_PASSWORD));
 
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+
+        // reset courses
         course1 = courseUtilService.addEmptyCourse();
         course2 = courseUtilService.addEmptyCourse();
 
         course10 = courseUtilService.createCourse();
         course10.setInstructorGroupName("instructor10-test-group");
-        course10 = courseRepo.save(course10);
+        course10 = courseRepository.save(course10);
 
         User instructor10 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor10");
         instructor10.setGroups(Set.of(course10.getInstructorGroupName()));
-        userRepo.save(instructor10);
+        userRepository.save(instructor10);
 
-        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
+        participantScoreScheduleService.activate();
+    }
 
+    @BeforeEach
+    void initTestCase() {
+        // reset exams
         exam1 = examUtilService.addExam(course1);
         examUtilService.addExamChannel(exam1, "exam1 channel");
+
         exam2 = examUtilService.addExamWithExerciseGroup(course1, true);
         examUtilService.addExamChannel(exam2, "exam2 channel");
 
         bitbucketRequestMockProvider.enableMockingOfRequests();
-
-        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
-        participantScoreScheduleService.activate();
     }
 
     @Test
@@ -294,105 +308,160 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
     }
 
+    private void testAllPreAuthorize(Course course, Exam exam) throws Exception {
+        Exam newExam = ExamFactory.generateExam(course1);
+        request.post("/api/courses/" + course.getId() + "/exams", newExam, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course.getId() + "/exams", newExam, HttpStatus.FORBIDDEN);
+        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.FORBIDDEN, Exam.class);
+        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/reset", HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/students", Collections.singletonList(new StudentDTO(null, null, null, null, null)),
+                HttpStatus.FORBIDDEN);
+        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.FORBIDDEN);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testAll_asStudent() throws Exception {
-        this.testAllPreAuthorize();
+    void testAll_asStudent_shouldNotBeAuthorized() throws Exception {
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExam(course);
+
+        testAllPreAuthorize(course, exam);
         ExamFactory.generateExam(course1);
+
         request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.FORBIDDEN, Exam.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAll_asTutor() throws Exception {
-        this.testAllPreAuthorize();
-    }
+    void testAll_asTutor_shouldNotBeAuthorized() throws Exception {
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExam(course);
 
-    private void testAllPreAuthorize() throws Exception {
-        Exam exam = ExamFactory.generateExam(course1);
-        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
-        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN, Exam.class);
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.FORBIDDEN);
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/reset", HttpStatus.FORBIDDEN);
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student1", null, HttpStatus.FORBIDDEN);
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", Collections.singletonList(new StudentDTO(null, null, null, null, null)),
-                HttpStatus.FORBIDDEN);
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students/" + TEST_PREFIX + "student1", HttpStatus.FORBIDDEN);
+        testAllPreAuthorize(course, exam);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "INSTRUCTOR")
-    void testCreateExam_checkCourseAccess_InstructorNotInCourse_forbidden() throws Exception {
+    void testCreateExam_checkCourseAccess_instructorNotInCourse_failsWithForbidden() throws Exception {
         Exam exam = ExamFactory.generateExam(course1);
+
         request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExam_asInstructor() throws Exception {
-        // Test for bad request when exam id is already set.
-        Exam examA = ExamFactory.generateExam(course1, "examA");
-        examA.setId(55L);
-        request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.BAD_REQUEST);
-        // Test for bad request when course is null.
-        Exam examB = ExamFactory.generateExam(course1, "examB");
-        examB.setCourse(null);
-        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
-        // Test for bad request when course deviates from course specified in route.
-        Exam examC = ExamFactory.generateExam(course1, "examC");
-        request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
-        // Test invalid dates
-        List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
-        for (var exam : examsWithInvalidDate) {
-            request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
-        }
-        // Test for conflict when user tries to create an exam with exercise groups.
-        Exam examD = ExamFactory.generateExam(course1, "examD");
-        examD.addExerciseGroup(ExamFactory.generateExerciseGroup(true, exam1));
-        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
+    void testCreateExam_asInstructor_returnsLocationHeader() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examE");
+        exam.setTitle("          Exam 123              ");
 
-        courseUtilService.enableMessagingForCourse(course1);
-        // Test examAccessService.
-        Exam examE = ExamFactory.generateExam(course1, "examE");
-        examE.setTitle("          Exam 123              ");
-        URI examUri = request.post("/api/courses/" + course1.getId() + "/exams", examE, HttpStatus.CREATED);
-        Exam savedExam = request.get(String.valueOf(examUri), HttpStatus.OK, Exam.class);
+        URI savedExamUri = request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.CREATED);
+        Exam savedExam = request.get(String.valueOf(savedExamUri), HttpStatus.OK, Exam.class);
+
         assertThat(savedExam.getTitle()).isEqualTo("Exam 123");
         verify(examAccessService).checkCourseAccessForInstructorElseThrow(course1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_asInstructor_returnsBody() throws Exception {
+        Exam exam = ExamFactory.generateExam(course1, "examF");
+
+        Exam savedExam = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
+
+        assertThat(savedExam.getTitle()).isEqualTo(exam.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_asInstructor_createsCourseMessagingChannel() throws Exception {
+        Course course = courseUtilService.createCourseWithMessagingEnabled();
+        Exam exam = ExamFactory.generateExam(course, "examG");
+
+        Exam savedExam = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams", exam, Exam.class, HttpStatus.CREATED);
 
         Channel channelFromDB = channelRepository.findChannelByExamId(savedExam.getId());
         assertThat(channelFromDB).isNotNull();
     }
 
-    private List<Exam> createExamsWithInvalidDates(Course course) {
-        // Test for bad request, visible date not set
-        Exam examA = ExamFactory.generateExam(course);
-        examA.setVisibleDate(null);
-        // Test for bad request, start date not set
-        Exam examB = ExamFactory.generateExam(course);
-        examB.setStartDate(null);
-        // Test for bad request, end date not set
-        Exam examC = ExamFactory.generateExam(course);
-        examC.setEndDate(null);
-        // Test for bad request, start date not after visible date
-        Exam examD = ExamFactory.generateExam(course);
-        examD.setStartDate(examD.getVisibleDate());
-        // Test for bad request, end date not after start date
-        Exam examE = ExamFactory.generateExam(course);
-        examE.setEndDate(examE.getStartDate());
-        // Test for bad request, when visibleDate equals the startDate
-        Exam examF = ExamFactory.generateExam(course);
-        examF.setVisibleDate(examF.getStartDate());
-        // Test for bad request, when exampleSolutionPublicationDate is before the visibleDate
-        Exam examG = ExamFactory.generateExam(course);
-        examG.setExampleSolutionPublicationDate(examG.getVisibleDate().minusHours(1));
-        return List.of(examA, examB, examC, examD, examE, examF, examG);
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithId() throws Exception {
+        // Test for bad request when exam id is already set.
+        Exam examA = ExamFactory.generateExam(course1, "examA");
+
+        examA.setId(55L);
+
+        request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_asInstructor() throws Exception {
+    void testCreateExam_failsWithCourseIdMismatch() throws Exception {
+        // Test for bad request when course id deviates from course specified in route.
+        Exam examC = ExamFactory.generateExam(course1, "examC");
+
+        request.post("/api/courses/" + course2.getId() + "/exams", examC, HttpStatus.BAD_REQUEST);
+    }
+
+    private List<Exam> provideExamsWithInvalidDates() {
+        // Test for bad request, visible date not set
+        Exam examA = ExamFactory.generateExam(course1);
+        examA.setVisibleDate(null);
+        // Test for bad request, start date not set
+        Exam examB = ExamFactory.generateExam(course1);
+        examB.setStartDate(null);
+        // Test for bad request, end date not set
+        Exam examC = ExamFactory.generateExam(course1);
+        examC.setEndDate(null);
+        // Test for bad request, start date not after visible date
+        Exam examD = ExamFactory.generateExam(course1);
+        examD.setStartDate(examD.getVisibleDate());
+        // Test for bad request, end date not after start date
+        Exam examE = ExamFactory.generateExam(course1);
+        examE.setEndDate(examE.getStartDate());
+        // Test for bad request, when visibleDate equals the startDate
+        Exam examF = ExamFactory.generateExam(course1);
+        examF.setVisibleDate(examF.getStartDate());
+        // Test for bad request, when exampleSolutionPublicationDate is before the visibleDate
+        Exam examG = ExamFactory.generateExam(course1);
+        examG.setExampleSolutionPublicationDate(examG.getVisibleDate().minusHours(1));
+        return List.of(examA, examB, examC, examD, examE, examF, examG);
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideExamsWithInvalidDates")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithInvalidDates(Exam exam) throws Exception {
+        request.post("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithExerciseGroups() throws Exception {
+        // Test for conflict when user tries to create an exam with exercise groups.
+        Exam examD = ExamFactory.generateExam(course1, "examD");
+
+        examD.addExerciseGroup(ExamFactory.generateExerciseGroup(true, exam1));
+
+        request.post("/api/courses/" + course1.getId() + "/exams", examD, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateExam_failsWithoutCourse() throws Exception {
+        Exam examB = ExamFactory.generateExam(course1, "examB");
+
+        examB.setCourse(null);
+
+        // Test for bad request when course is null.
+        request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_createsExamWithoutId() throws Exception {
         // Create instead of update if no id was set
         Exam exam = ExamFactory.generateExam(course1, "exam1");
         exam.setTitle("Over 9000!");
@@ -405,26 +474,76 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Note: ZonedDateTime has problems with comparison due to time zone differences for values saved in the database and values not saved in the database
         assertThat(exam).usingRecursiveComparison().ignoringFields("id", "course", "endDate", "startDate", "visibleDate").isEqualTo(createdExam);
         assertThat(examCountBefore + 1).isEqualTo(examRepository.count());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithoutCourse() throws Exception {
         // No course is set -> bad request
-        exam = ExamFactory.generateExam(course1);
+        Exam exam = ExamFactory.generateExam(course1);
         exam.setId(1L);
         exam.setCourse(null);
         request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsWithExamIdMismatch() throws Exception {
         // Course id in the updated exam and in the REST resource url do not match -> bad request
-        exam = ExamFactory.generateExam(course1);
+        Exam exam = ExamFactory.generateExam(course1);
         exam.setId(1L);
         request.put("/api/courses/" + course2.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideExamsWithInvalidDates")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_failsForInvalidDates(Exam exam) throws Exception {
         // Dates in the updated exam are not valid -> bad request
-        List<Exam> examsWithInvalidDate = createExamsWithInvalidDates(course1);
-        for (var examWithInvDate : examsWithInvalidDate) {
-            examWithInvDate.setId(1L);
-            request.put("/api/courses/" + course1.getId() + "/exams", examWithInvDate, HttpStatus.BAD_REQUEST);
-        }
+        exam.setId(1L);
+        request.put("/api/courses/" + course1.getId() + "/exams", exam, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_updatesExamTitle() throws Exception {
         // Update the exam -> ok
         exam1.setTitle("Best exam ever");
         var returnedExam = request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
         assertThat(returnedExam).isEqualTo(exam1);
-        verify(instanceMessageSendService, never()).sendProgrammingExerciseSchedule(any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_changeTitleDuringConduction_shouldNotNotifyStudents() throws Exception {
+        StudentExam studentExam = examUtilService.addStudentExam(exam1);
+        exam1.setTitle("Best exam ever");
+
+        request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
+
+        assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_changeEndDateSubSecondPrecision_shouldNotNotifyStudents() throws Exception {
+        StudentExam studentExam = examUtilService.addStudentExam(exam1);
+        exam1.setEndDate(exam1.getEndDate().plusNanos(1));
+
+        request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
+
+        assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_changeEndDateDuringConduction_shouldNotifyStudents() throws Exception {
+        StudentExam studentExam = examUtilService.addStudentExam(exam1);
+        exam1.setEndDate(exam1.getEndDate().plusHours(1));
+
+        request.put("/api/courses/" + course1.getId() + "/exams", exam1, HttpStatus.OK);
+
+        assertThat(examLiveEventRepository.findAllByStudentExamId(studentExam.getId())).isNotEmpty();
     }
 
     @Test
@@ -439,6 +558,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         examUtilService.setVisibleStartAndEndDateOfExam(examWithModelingEx, visibleDate, startDate, endDate.plusSeconds(2));
 
         request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
+
         verify(instanceMessageSendService).sendModelingExerciseSchedule(modelingExercise.getId());
     }
 
@@ -495,14 +615,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(examRepository.findAllExercisesByExamId(Long.MAX_VALUE)).isEmpty();
 
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId(), HttpStatus.OK, Exam.class);
+
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExam_asInstructor_WithTestRunQuizExerciseSubmissions() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
-        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+        Exam exam = examUtilService.addExamWithExerciseGroup(course1, true);
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().get(0);
 
         StudentParticipation studentParticipation = new StudentParticipation();
@@ -512,13 +632,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         quizExercise.setStudentParticipations(Set.of(studentParticipation));
         studentParticipation.setExercise(quizExercise);
 
-        exerciseRepo.save(quizExercise);
+        exerciseRepository.save(quizExercise);
         studentParticipationRepository.save(studentParticipation);
 
-        Exam returnedExam = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
+        Exam returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
 
         assertThat(returnedExam.getExerciseGroups()).anyMatch(groups -> groups.getExercises().stream().anyMatch(Exercise::getTestRunParticipationsExist));
-        verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course.getId(), exam.getId());
+        verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam.getId());
     }
 
     @Test
@@ -586,11 +706,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithChannel() throws Exception {
-        Course course = courseUtilService.createCourse();
-        Exam exam = examUtilService.addExam(course);
+        Exam exam = examUtilService.addExam(course1);
         Channel examChannel = examUtilService.addExamChannel(exam, "test");
 
-        request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
 
         Optional<Channel> examChannelAfterDelete = channelRepository.findById(examChannel.getId());
         assertThat(examChannelAfterDelete).isEmpty();
@@ -600,7 +719,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
     }
@@ -622,7 +741,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
-        exerciseRepo.save(textExercise);
+        exerciseRepository.save(textExercise);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
     }
@@ -640,7 +759,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         quizExerciseRepository.save(quizExercise);
 
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
-        quizExercise = (QuizExercise) exerciseRepo.findByIdElseThrow(quizExercise.getId());
+        quizExercise = (QuizExercise) exerciseRepository.findByIdElseThrow(quizExercise.getId());
         assertThat(quizExercise.getReleaseDate()).isNull();
         assertThat(quizExercise.getDueDate()).isNull();
     }
@@ -727,13 +846,17 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteCourseWithMultipleTestRuns() throws Exception {
-        var exam = examUtilService.addExam(course1);
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExam(course);
+
         exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam, false, false);
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+
         assertThat(studentExamRepository.findAllTestRunsByExamId(exam.getId())).hasSize(3);
-        request.delete("/api/courses/" + exam.getCourse().getId(), HttpStatus.OK);
+
+        request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
     }
 
     @Test
@@ -749,7 +872,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForStart() throws Exception {
-        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student1);
         exam.setVisibleDate(ZonedDateTime.now().minusHours(1).minusMinutes(5));
         StudentExam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/own-student-exam", HttpStatus.OK, StudentExam.class);
         assertThat(response.getExam()).isEqualTo(exam);
@@ -972,14 +1095,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testArchiveCourseWithExam() throws Exception {
         Course course = courseUtilService.createCourseWithExamAndExercises(TEST_PREFIX);
         course.setEndDate(now().minusMinutes(5));
-        course = courseRepo.save(course);
+        course = courseRepository.save(course);
 
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
 
         final var courseId = course.getId();
-        await().until(() -> courseRepo.findById(courseId).orElseThrow().getCourseArchivePath() != null);
+        await().until(() -> courseRepository.findById(courseId).orElseThrow().getCourseArchivePath() != null);
 
-        var updatedCourse = courseRepo.findById(courseId).orElseThrow();
+        var updatedCourse = courseRepository.findById(courseId).orElseThrow();
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
     }
 
@@ -1006,14 +1129,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testArchiveExamAsStudent_forbidden() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
-        course.setEndDate(now().minusMinutes(5));
-        course = courseRepo.save(course);
+        Exam exam = examUtilService.addExam(course1);
 
-        Exam exam = examUtilService.addExam(course);
-        exam = examRepository.save(exam);
-
-        request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -1021,7 +1139,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testArchiveExamBeforeEndDate_badRequest() throws Exception {
         Course course = courseUtilService.addEmptyCourse();
         course.setEndDate(now().plusMinutes(5));
-        course = courseRepo.save(course);
+        course = courseRepository.save(course);
 
         Exam exam = examUtilService.addExam(course);
         exam = examRepository.save(exam);
@@ -1044,17 +1162,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDownloadExamArchiveAsInstructor_not_found() throws Exception {
-        // Create an exam with no archive
-        Course course = courseUtilService.createCourse();
-        course = courseRepo.save(course);
-
         // Return not found if the exam doesn't exist
-        var downloadedArchive = request.get("/api/courses/" + course.getId() + "/exams/-1/download-archive", HttpStatus.NOT_FOUND, String.class);
+        var downloadedArchive = request.get("/api/courses/" + course1.getId() + "/exams/-1/download-archive", HttpStatus.NOT_FOUND, String.class);
         assertThat(downloadedArchive).isNull();
 
         // Returns not found if there is no archive
-        var exam = examUtilService.addExam(course);
-        downloadedArchive = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.NOT_FOUND, String.class);
+        downloadedArchive = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/download-archive", HttpStatus.NOT_FOUND, String.class);
         assertThat(downloadedArchive).isNull();
     }
 
@@ -1064,7 +1177,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Create an exam with no archive
         Course course = courseUtilService.createCourse();
         course.setInstructorGroupName("some-group");
-        course = courseRepo.save(course);
+        course = courseRepository.save(course);
         var exam = examUtilService.addExam(course);
 
         request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.FORBIDDEN, String.class);
@@ -1137,14 +1250,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private void testGetExamTitle() throws Exception {
-        Course course = courseUtilService.createCourse();
-        Exam exam = ExamFactory.generateExam(course);
+        Exam exam = ExamFactory.generateExam(course1);
         exam.setTitle("Test Exam");
         exam = examRepository.save(exam);
-        course.addExam(exam);
-        courseRepo.save(course);
 
         final var title = request.get("/api/exams/" + exam.getId() + "/title", HttpStatus.OK, String.class);
+
         assertThat(title).isEqualTo(exam.getTitle());
     }
 
@@ -1157,7 +1268,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRetrieveOwnStudentExam_noInformationLeaked() throws Exception {
-        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         Exam exam = examUtilService.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         ExamUser examUser = new ExamUser();
         examUser.setUser(student1);
@@ -1178,7 +1288,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRetrieveOwnStudentExam_noStudentExam() throws Exception {
         Exam exam = examUtilService.addExam(course1);
-        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
         var examUser1 = new ExamUser();
         examUser1.setExam(exam);
         examUser1.setUser(student1);
@@ -1219,9 +1329,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.get("/api/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
     }
 
+    // <editor-fold desc="Get All On Page">
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAllExamsOnPage_WithoutExercises_instructor_successful() throws Exception {
+    void testGetAllExamsOnPage_withoutExercises_asInstructor_returnsExams() throws Exception {
         var title = "My fancy search title for the exam which is not used somewhere else";
         var exam = ExamFactory.generateExam(course1);
         exam.setTitle(title);
@@ -1233,7 +1344,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAllExamsOnPage_WithExercises_instructor_successful() throws Exception {
+    void testGetAllExamsOnPage_withExercises_asInstructor_returnsExams() throws Exception {
         var newExam = examUtilService.addTestExamWithExerciseGroup(course1, true);
         var searchTerm = "A very distinct title that should only ever exist once in the database";
         newExam.setTitle(searchTerm);
@@ -1246,12 +1357,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAllExamsOnPage_WithoutExercisesAndExamsNotLinkedToCourse_instructor_successful() throws Exception {
+    void testGetAllExamsOnPage_withoutExercisesAndExamsNotLinkedToCourse_asInstructor_returnsNoExams() throws Exception {
         var title = "Another fancy exam search title for the exam which is not used somewhere else";
-        Course course3 = courseUtilService.addEmptyCourse();
-        course3.setInstructorGroupName("non-instructors");
-        courseRepo.save(course3);
-        var exam = examUtilService.addExamWithExerciseGroup(course3, true);
+        Course course = courseUtilService.addEmptyCourse();
+        course.setInstructorGroupName("non-instructors");
+        courseRepository.save(course);
+        var exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setTitle(title);
         examRepository.save(exam);
         final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
@@ -1261,57 +1372,60 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testGetAllExamsOnPage_WithoutExercisesAndExamsNotLinkedToCourse_admin_successful() throws Exception {
+    void testGetAllExamsOnPage_withoutExercisesAndExamsNotLinkedToCourse_asAdmin_returnsExams() throws Exception {
         var title = "Yet another 3rd exam search title for the exam which is not used somewhere else";
-        Course course3 = courseUtilService.addEmptyCourse();
-        course3.setInstructorGroupName("non-instructors");
-        courseRepo.save(course3);
-        var exam = examUtilService.addExamWithExerciseGroup(course3, true);
+        Course course = courseUtilService.addEmptyCourse();
+        course.setInstructorGroupName("non-instructors");
+        courseRepository.save(course);
+        var exam = examUtilService.addExamWithExerciseGroup(course, true);
         exam.setTitle(title);
         examRepository.save(exam);
         final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch(title);
         final var result = request.getSearchResult("/api/exams", HttpStatus.OK, Exam.class, pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1).contains(exam);
-
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
-    void testGetAllExamsOnPage_tutor() throws Exception {
+    void testGetAllExamsOnPage_asTutor_failsWithForbidden() throws Exception {
         final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAllExamsOnPage_student() throws Exception {
+    void testGetAllExamsOnPage_asStudent_failsWithForbidden() throws Exception {
         final PageableSearchDTO<String> search = pageableSearchUtilService.configureSearch("");
         request.getSearchResult("/api/exams", HttpStatus.FORBIDDEN, Exam.class, pageableSearchUtilService.searchMapping(search));
     }
+    // </editor-fold>
 
+    // <editor-fold desc="Import">
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testImportExamWithExercises_student() throws Exception {
+    void testImportExamWithExercises_asStudent_failsWithForbidden() throws Exception {
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam1, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
-    void testImportExamWithExercises_tutor() throws Exception {
+    void testImportExamWithExercises_asTutor_failsWithForbidden() throws Exception {
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam1, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_idExists() throws Exception {
+    void testImportExamWithExercises_failsWithIdExists() throws Exception {
         final Exam exam = ExamFactory.generateExam(course1);
+
         exam.setId(2L);
+
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_courseMismatch() throws Exception {
+    void testImportExamWithExercises_failsWithCourseMismatch() throws Exception {
         // No Course
         final Exam examA = ExamFactory.generateExam(course1);
         examA.setCourse(null);
@@ -1325,7 +1439,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_dateConflict() throws Exception {
+    void testImportExamWithExercises_failsWithDateConflict() throws Exception {
         // Visible Date after Started Date
         final Exam examA = ExamFactory.generateExam(course1);
         examA.setVisibleDate(ZonedDateTime.now().plusHours(2));
@@ -1349,7 +1463,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_dateConflictTestExam() throws Exception {
+    void testImportExamWithExercises_failsWithDateConflictTestExam() throws Exception {
         // Working Time larger than Working window
         final Exam examA = ExamFactory.generateTestExam(course1);
         examA.setWorkingTime(3 * 60 * 60);
@@ -1363,7 +1477,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_pointConflict() throws Exception {
+    void testImportExamWithExercises_failsWithPointConflict() throws Exception {
         final Exam examA = ExamFactory.generateExam(course1);
         examA.setExamMaxPoints(-5);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
@@ -1371,7 +1485,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExamWithExercises_correctionRoundConflict() throws Exception {
+    void testImportExamWithExercises_failsWithCorrectionRoundConflict() throws Exception {
         // Correction round <= 0
         final Exam examA = ExamFactory.generateExam(course1);
         examA.setNumberOfCorrectionRoundsInExam(0);
@@ -1453,7 +1567,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             assertThat(exerciseReceived.getId()).isNotEqualTo(expected.getId());
         }
     }
+    // </editor-fold>
 
+    // <editor-fold desc="Plagiarism">
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExercisesWithPotentialPlagiarismAsTutor_forbidden() throws Exception {
@@ -1475,23 +1591,28 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExercisesWithPotentialPlagiarismAsInstructorNotInCourse_forbidden() throws Exception {
-        courseUtilService.updateCourseGroups("abc", course1, "");
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercises-with-potential-plagiarism", HttpStatus.FORBIDDEN, List.class);
-        courseUtilService.updateCourseGroups(TEST_PREFIX, course1, "");
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExam(course);
+        courseUtilService.updateCourseGroups("abc", course, "");
+
+        request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/exercises-with-potential-plagiarism", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSuspiciousSessionsAsInstructorNotInCourse_forbidden() throws Exception {
-        courseUtilService.updateCourseGroups("abc", course1, "");
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExam(course);
+        courseUtilService.updateCourseGroups("abc", course, "");
+
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("differentStudentExamsSameIPAddress", "true");
         params.add("differentStudentExamsSameBrowserFingerprint", "true");
         params.add("sameStudentExamDifferentIPAddresses", "false");
         params.add("sameStudentExamDifferentBrowserFingerprints", "false");
         params.add("ipOutsideOfRange", "false");
-        request.getSet("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/suspicious-sessions", HttpStatus.FORBIDDEN, SuspiciousExamSessionsDTO.class, params);
-        courseUtilService.updateCourseGroups(TEST_PREFIX, course1, "");
+
+        request.getSet("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/suspicious-sessions", HttpStatus.FORBIDDEN, SuspiciousExamSessionsDTO.class, params);
     }
 
     @Test
@@ -1569,7 +1690,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         final String ipAddress2 = "172.168.0.0";
         final String browserFingerprint2 = "5b2cc274f6eaf3a71647e1f85358ce31";
 
-        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam1, student1);
         StudentExam studentExam2 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         StudentExam studentExam3 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
         StudentExam studentExam4 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student4"));
@@ -1627,7 +1748,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @MethodSource("provideIpAddressesAndSubnets")
     void testGetSuspiciousSessionsIpOutsideOfRange(String ipAddress1, String ipAddress2, String subnetIncludingFirstAddress, String subnetIncludingNeitherAddress,
             String subnetIncludingBothAddresses) throws Exception {
-        var studentExam1 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var studentExam1 = examUtilService.addStudentExamWithUser(exam1, student1);
         var studentExam2 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         examUtilService.addExamSessionToStudentExam(studentExam1, "abc", ipAddress1, "5b2cc274f6eaf3a71647e1f85358ce32", "instanceId", "user-agent");
         examUtilService.addExamSessionToStudentExam(studentExam2, "abc", ipAddress2, "5b2cc274f6eaf3a71647e1f85358ce32", "instanceId", "user-agent");
@@ -1678,7 +1799,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("provideMixedIpAddressesAndSubnets")
     void testIpOutsideOfRangeMixedIPv4AndIPv6(String ipAddress1, String ipAddress2, String subnet) throws Exception {
-        var studentExam1 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var studentExam1 = examUtilService.addStudentExamWithUser(exam1, student1);
         var studentExam2 = examUtilService.addStudentExamWithUser(exam1, userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
         examUtilService.addExamSessionToStudentExam(studentExam1, "abc", ipAddress1, "5b2cc274f6eaf3a71647e1f85358ce32", "instanceId", "user-agent");
         examUtilService.addExamSessionToStudentExam(studentExam2, "abc", ipAddress2, "5b2cc274f6eaf3a71647e1f85358ce32", "instanceId", "user-agent");
@@ -1765,4 +1886,5 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 .toList();
         assertThat(sameStudentExamDifferentIpAndFingerprint).hasSize(2);
     }
+    // </editor-fold>
 }

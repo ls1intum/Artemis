@@ -1,22 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
-import { LearningPathGraphComponent, LearningPathViewMode } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
+import { LearningPathGraphComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-graph.component';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
-import { NgxLearningPathDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
+import { CompetencyProgressForLearningPathDTO, NgxLearningPathDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
-import { ExerciseEntry, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { LearningPathLegendComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-legend.component';
 
 describe('LearningPathGraphComponent', () => {
     let fixture: ComponentFixture<LearningPathGraphComponent>;
     let comp: LearningPathGraphComponent;
     let learningPathService: LearningPathService;
+    let getCompetencyProgressForLearningPathStub: jest.SpyInstance;
     let getLearningPathNgxGraphStub: jest.SpyInstance;
     let getLearningPathNgxPathStub: jest.SpyInstance;
+    const progressDTO = { competencyId: 1 } as CompetencyProgressForLearningPathDTO;
     const ngxGraph = {
         nodes: [
             { id: '1', linkedResource: 1, type: NodeType.EXERCISE } as NgxLearningPathNode,
@@ -24,17 +26,10 @@ describe('LearningPathGraphComponent', () => {
         ],
         edges: [],
     } as NgxLearningPathDTO;
-    const ngxPath = {
-        nodes: [
-            { id: '3', linkedResource: 1, type: NodeType.EXERCISE } as NgxLearningPathNode,
-            { id: '4', linkedResource: 2, linkedResourceParent: 3, type: NodeType.LECTURE_UNIT } as NgxLearningPathNode,
-        ],
-        edges: [],
-    } as NgxLearningPathDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxGraphModule), MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip)],
+            imports: [ArtemisTestModule, MockModule(NgxGraphModule), MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip), MockComponent(LearningPathLegendComponent)],
             declarations: [LearningPathGraphComponent],
         })
             .compileComponents()
@@ -42,16 +37,17 @@ describe('LearningPathGraphComponent', () => {
                 fixture = TestBed.createComponent(LearningPathGraphComponent);
                 comp = fixture.componentInstance;
                 learningPathService = TestBed.inject(LearningPathService);
+                const competencyProgressResponse: HttpResponse<CompetencyProgressForLearningPathDTO[]> = new HttpResponse({
+                    body: [progressDTO],
+                    status: 200,
+                });
+                getCompetencyProgressForLearningPathStub = jest.spyOn(learningPathService, 'getCompetencyProgressForLearningPath').mockReturnValue(of(competencyProgressResponse));
                 const ngxGraphResponse: HttpResponse<NgxLearningPathDTO> = new HttpResponse({
                     body: ngxGraph,
                     status: 200,
                 });
                 getLearningPathNgxGraphStub = jest.spyOn(learningPathService, 'getLearningPathNgxGraph').mockReturnValue(of(ngxGraphResponse));
-                const ngxPathResponse: HttpResponse<NgxLearningPathDTO> = new HttpResponse({
-                    body: ngxPath,
-                    status: 200,
-                });
-                getLearningPathNgxPathStub = jest.spyOn(learningPathService, 'getLearningPathNgxPath').mockReturnValue(of(ngxPathResponse));
+                getLearningPathNgxPathStub = jest.spyOn(learningPathService, 'getLearningPathNgxPath').mockImplementation();
             });
     });
 
@@ -59,17 +55,14 @@ describe('LearningPathGraphComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it.each([LearningPathViewMode.GRAPH, LearningPathViewMode.PATH])('should load learning path from service', (viewMode: LearningPathViewMode) => {
-        comp.viewMode = viewMode;
+    it('should load progress and learning path from service', () => {
         comp.learningPathId = 1;
         fixture.detectChanges();
-        if (viewMode === LearningPathViewMode.GRAPH) {
-            expect(getLearningPathNgxGraphStub).toHaveBeenCalledExactlyOnceWith(1);
-            expect(getLearningPathNgxPathStub).not.toHaveBeenCalled();
-        } else {
-            expect(getLearningPathNgxGraphStub).not.toHaveBeenCalledOnce();
-            expect(getLearningPathNgxPathStub).toHaveBeenCalledExactlyOnceWith(1);
-        }
+        expect(getCompetencyProgressForLearningPathStub).toHaveBeenCalledExactlyOnceWith(1);
+        expect(getLearningPathNgxGraphStub).toHaveBeenCalledExactlyOnceWith(1);
+        expect(getLearningPathNgxPathStub).not.toHaveBeenCalled();
+
+        expect(comp.competencyProgress.get(1)).toEqual(progressDTO);
     });
 
     it('should update, center, and zoom to fit on resize', () => {
@@ -90,48 +83,5 @@ describe('LearningPathGraphComponent', () => {
         comp.onCenterView();
         expect(zoomToFitStub).toHaveBeenCalledExactlyOnceWith(true);
         expect(centerStub).toHaveBeenCalledExactlyOnceWith(true);
-    });
-
-    it('should change view mode and load data if necessary', () => {
-        comp.viewMode = LearningPathViewMode.GRAPH;
-        comp.learningPathId = 1;
-        fixture.detectChanges();
-        expect(getLearningPathNgxGraphStub).toHaveBeenCalledExactlyOnceWith(1);
-        expect(getLearningPathNgxPathStub).not.toHaveBeenCalled();
-        comp.changeViewMode();
-        expect(comp.viewMode).toEqual(LearningPathViewMode.PATH);
-        expect(getLearningPathNgxPathStub).toHaveBeenCalledExactlyOnceWith(1);
-        comp.changeViewMode();
-        expect(comp.viewMode).toEqual(LearningPathViewMode.GRAPH);
-        // make sure stub was not called again
-        expect(getLearningPathNgxGraphStub).toHaveBeenCalledOnce();
-    });
-
-    it.each([
-        [LearningPathViewMode.GRAPH, new ExerciseEntry(1), '1'],
-        [LearningPathViewMode.GRAPH, new LectureUnitEntry(3, 2), '2'],
-        [LearningPathViewMode.PATH, new ExerciseEntry(1), '3'],
-        [LearningPathViewMode.PATH, new LectureUnitEntry(3, 2), '4'],
-    ])('should set highlighted node on call', (viewMode, entry, expectedNodeId) => {
-        const updateStub = jest.spyOn(comp.update$, 'next');
-        comp.viewMode = viewMode;
-        comp.learningPathId = 1;
-        fixture.detectChanges();
-        expect(comp.highlightedNode).toBeUndefined();
-        comp.highlightNode(entry);
-        expect(comp.highlightedNode).toBeTruthy();
-        expect(comp.highlightedNode!.id).toBe(expectedNodeId);
-        expect(updateStub).toHaveBeenCalledTimes(2);
-    });
-
-    it('should clear highlighting', () => {
-        const updateStub = jest.spyOn(comp.update$, 'next');
-        comp.viewMode = LearningPathViewMode.GRAPH;
-        comp.learningPathId = 1;
-        fixture.detectChanges();
-        comp.highlightedNode = { id: '1337' } as NgxLearningPathNode;
-        comp.clearHighlighting();
-        expect(comp.highlightedNode).toBeUndefined();
-        expect(updateStub).toHaveBeenCalledTimes(2);
     });
 });

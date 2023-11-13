@@ -1,5 +1,5 @@
 <div class="modal-header">
-    <h4 class="modal-title">{{ title | artemisTranslate }}</h4>
+    <h4 class="modal-title">{{ title | artemisTranslate: titleTranslationParams }}</h4>
     <button type="button" class="btn-close" aria-label="Close button" aria-describedby="modal-title" (click)="modal.dismiss('Cross click')"></button>
 </div>
 <div class="modal-body">

@@ -174,6 +174,7 @@ public class ProgrammingExerciseFactory {
         toBeImported.setSequentialTestRuns(template.hasSequentialTestRuns());
         toBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(template.getBuildAndTestStudentSubmissionsAfterDueDate());
         toBeImported.generateAndSetProjectKey();
+        toBeImported.setPlagiarismDetectionConfig(template.getPlagiarismDetectionConfig());
 
         return toBeImported;
     }

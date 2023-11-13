@@ -12,12 +12,13 @@
             #learningPathGraphComponent
             class="graph"
             *ngIf="courseId && learningPath"
-            [viewMode]="GRAPH"
             [courseId]="courseId"
             [learningPathId]="learningPath.id!"
             [panningEnabled]="true"
             [zoomEnabled]="true"
             [panOnZoom]="true"
+            [showMiniMap]="true"
+            (nodeClicked)="onNodeClicked($event)"
         ></jhi-learning-path-graph>
     </div>
 </div>

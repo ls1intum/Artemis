@@ -96,7 +96,7 @@ describe('FeedbackComponent', () => {
     const generateTestCaseFeedbackPair = (showDetails: boolean, name: string, message: string | undefined, credits: number) => {
         return {
             fb: makeFeedback({
-                text: name,
+                testCase: { testName: name },
                 detailText: message,
                 credits,
                 positive: credits > 0,

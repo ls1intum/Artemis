@@ -28,6 +28,7 @@ import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/m
 import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
+import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
 
 @NgModule({
     imports: [
@@ -48,6 +49,7 @@ import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-
         ArtemisModePickerModule,
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,
+        ExerciseUpdatePlagiarismModule,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,

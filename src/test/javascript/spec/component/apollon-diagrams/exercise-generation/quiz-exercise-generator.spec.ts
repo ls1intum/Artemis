@@ -19,7 +19,6 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
-import { addDelay } from '../../../helpers/utils/general.utils';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -64,15 +63,12 @@ describe('QuizExercise Generator', () => {
     it('generateDragAndDropExercise for Class Diagram', async () => {
         const svgRenderer = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         configureServices();
-        const examplePath = '/path/to/file';
-        jest.spyOn(fileUploaderService, 'uploadFile').mockReturnValue(Promise.resolve({ path: examplePath }));
         jest.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
         jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());
         // @ts-ignore
         const classDiagram: UMLModel = testClassDiagram as UMLModel;
         const interactiveElements: Selection = classDiagram.interactive;
         const exerciseTitle = 'GenerateDragAndDropExerciseTest';
-        await addDelay(300);
         const generatedExercise = await generateDragAndDropQuizExercise(course, exerciseTitle, classDiagram, fileUploaderService, quizExerciseService);
         expect(generatedExercise).toBeTruthy();
         expect(generatedExercise.title).toEqual(exerciseTitle);

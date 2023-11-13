@@ -4,6 +4,7 @@
     title="artemisApp.studentDashboard.enroll.enrollInCourse"
     confirmationText="{{ course.enrollmentConfirmationMessage! }}"
     confirmationTitle="artemisApp.studentDashboard.enroll.courseEnrollmentConfirmationTitle"
+    [confirmationTitleTranslationParams]="{ courseName: course.title! }"
     [disabled]="loading"
     [translateText]="false"
     [textIsMarkdown]="true"

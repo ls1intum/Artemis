@@ -31,7 +31,7 @@ export class TextExerciseResolver implements Resolve<TextExercise> {
      */
     resolve(route: ActivatedRouteSnapshot) {
         if (route.params['exerciseId']) {
-            return this.textExerciseService.find(route.params['exerciseId']).pipe(
+            return this.textExerciseService.find(route.params['exerciseId'], true).pipe(
                 filter((res) => !!res.body),
                 map((textExercise: HttpResponse<TextExercise>) => textExercise.body!),
             );
