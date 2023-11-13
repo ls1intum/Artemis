@@ -13,8 +13,8 @@ export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
     @Input() quizPoolMaxPoints: number;
     @Input() exerciseGroups: ExerciseGroup[];
     exerciseGroupVariantColumns: ExerciseGroupVariantColumn[] = [];
-    getIcon = getIcon;
-    getIconTooltip = getIconTooltip;
+    readonly getIcon = getIcon;
+    readonly getIconTooltip = getIconTooltip;
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
