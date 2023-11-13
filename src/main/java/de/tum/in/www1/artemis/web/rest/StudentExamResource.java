@@ -237,6 +237,7 @@ public class StudentExamResource {
      * @param courseId     the course to which the student exams belong to
      * @param examId       the exam to which the student exams belong to
      * @param studentLogin the id of the student exam to find
+     * @param message      the optional instructor message to be sent to the student
      * @return the ResponseEntity with status 200 (OK) and with the updated student exam as body
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/students/{studentLogin:" + Constants.LOGIN_REGEX + "}/attendance-check")
