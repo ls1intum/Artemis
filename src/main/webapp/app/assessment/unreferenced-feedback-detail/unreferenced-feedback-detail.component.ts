@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faCheck, faExclamation, faExclamationTriangle, faQuestionCircle, faTrash, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject } from 'rxjs';
@@ -46,13 +46,7 @@ export class UnreferencedFeedbackDetailComponent {
         if (this.feedback.type === FeedbackType.AUTOMATIC) {
             this.feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
         }
-        if (Feedback.isFeedbackSuggestion(this.feedback)) {
-            // Change feedback suggestion type to adapted
-            this.feedback.text = (this.feedback.text ?? FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(
-                FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
-                FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
-            );
-        }
+        Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.onFeedbackChange.emit(this.feedback);
     }
 
