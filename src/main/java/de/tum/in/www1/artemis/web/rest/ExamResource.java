@@ -1140,6 +1140,7 @@ public class ExamResource {
     public ResponseEntity<StudentExam> getOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
         StudentExam exam = examAccessService.getExamInCourseElseThrow(courseId, examId);
+        exam.getUser().setVisibleRegistrationNumber();
         return ResponseEntity.ok(exam);
     }
 

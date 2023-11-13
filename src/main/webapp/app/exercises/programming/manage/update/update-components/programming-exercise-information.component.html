@@ -179,7 +179,7 @@
         </div>
     </div>
 
-    <div *ngIf="!programmingExerciseCreationConfig.isExamMode">
+    <div *ngIf="!programmingExerciseCreationConfig.isExamMode" id="creation-config-selector">
         <div>
             <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
@@ -188,6 +188,6 @@
             [categories]="programmingExerciseCreationConfig.exerciseCategories"
             [existingCategories]="programmingExerciseCreationConfig.existingCategories"
             (selectedCategories)="programmingExerciseCreationConfig.updateCategories($event)"
-        ></jhi-category-selector>
+        />
     </div>
 </section>

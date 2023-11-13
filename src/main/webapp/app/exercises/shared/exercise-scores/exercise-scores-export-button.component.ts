@@ -1,5 +1,5 @@
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/shared/util/utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
@@ -59,7 +59,7 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
             const results: ResultWithPointsPerGradingCriterion[] = data.body || [];
             if (results.length === 0) {
                 this.alertService.warning(`artemisApp.exercise.export.results.emptyError`, { exercise: exercise.title });
-                window.scroll(0, 0);
+                scrollToTopOfPage();
                 return;
             }
             const isTeamExercise = !!(results[0].result.participation! as StudentParticipation).team;
