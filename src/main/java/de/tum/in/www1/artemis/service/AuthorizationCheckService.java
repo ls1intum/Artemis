@@ -673,6 +673,7 @@ public class AuthorizationCheckService {
      * Checks if the currently logged-in user is allowed to retrieve the given result.
      * The user is allowed to retrieve the result if (s)he is an instructor of the course, or (s)he is at least a student in the corresponding course, the
      * submission is his/her submission, the assessment due date of the corresponding exercise is in the past (or not set) and the result is finished.
+     * Instructors are allowed to retrieve the results for test-runs.
      *
      * @param exercise      the corresponding exercise
      * @param participation the participation the result belongs to
@@ -681,7 +682,7 @@ public class AuthorizationCheckService {
      */
     @CheckReturnValue
     public boolean isUserAllowedToGetResult(Exercise exercise, StudentParticipation participation, Result result) {
-        if (isAtLeastEditorForExercise(exercise) && participation.isTestRun()) {
+        if (isAtLeastInstructorForExercise(exercise) && participation.isTestRun()) {
             return true;
         }
 
