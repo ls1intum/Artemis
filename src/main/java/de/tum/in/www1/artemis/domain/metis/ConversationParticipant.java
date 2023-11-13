@@ -39,8 +39,7 @@ public class ConversationParticipant extends DomainObject {
     @Column(name = "is_hidden")
     private Boolean isHidden;
 
-    // TODO: @Column(name = "muted")
-    @Transient
+    @Column(name = "muted")
     private Muted muted;
 
     @Column(name = "last_read")
@@ -137,6 +136,6 @@ public class ConversationParticipant extends DomainObject {
     }
 
     public void setMuted(Muted muted) {
-        //
+        this.muted = muted;
     }
 }
