@@ -52,7 +52,7 @@
                 "programmingTestCasesChanged": "Testfälle für Programmieraufgaben geändert",
                 "newManualFeedbackRequest": "Eine neue Anfrage zu manuellem Feedback wurde eingereicht",
                 "duplicateTestCase": "Doppelte Testfälle wurden gefunden.",
-                "repositoryLocks": "Zugriffsrechte aktualisiert",
+                "repositoryLocks": "Repository-Berechtigungen aktualisiert",
                 "buildRun": "Neubewertung der Einreichungen",
                 "illegalSubmission": "Unzulässige Einreichung eines Studenten",
                 "newExercisePost": "Neuer Aufgabenbeitrag",
