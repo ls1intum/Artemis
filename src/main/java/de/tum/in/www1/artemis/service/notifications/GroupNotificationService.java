@@ -77,6 +77,21 @@ public class GroupNotificationService {
      */
     private void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
             User author) {
+        notifyGroupsWithNotificationType(groups, notificationType, notificationSubject, typeSpecificInformation, author, false);
+    }
+
+    /**
+     * Auxiliary method to call the correct factory method and start the process to save & sent the notification
+     *
+     * @param groups                  is an array of GroupNotificationTypes that should be notified (e.g. STUDENTS, INSTRUCTORS)
+     * @param notificationType        is the discriminator for the factory
+     * @param notificationSubject     is the subject of the notification (e.g. exercise, attachment)
+     * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, ARCHIVE -> List<String> archiveErrors)
+     * @param author                  is the user who initiated the process of the notifications. Can be null if not specified
+     * @param onlySave                whether the notification should only be saved and not sent to users
+     */
+    private void notifyGroupsWithNotificationType(GroupNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
+            User author, boolean onlySave) {
         for (GroupNotificationType group : groups) {
             GroupNotification resultingGroupNotification = switch (notificationType) {
                 // Post Types
@@ -103,7 +118,7 @@ public class GroupNotificationService {
                         (String) typeSpecificInformation);
                 default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
             };
-            saveAndSend(resultingGroupNotification, notificationSubject, author);
+            saveAndSend(resultingGroupNotification, notificationSubject, author, onlySave);
         }
     }
 
@@ -271,7 +286,8 @@ public class GroupNotificationService {
      * @param course that the post belongs to
      */
     public void notifyAllGroupsAboutNewAnnouncement(Post post, Course course) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, TA, EDITOR, INSTRUCTOR }, NEW_ANNOUNCEMENT_POST, post, course, post.getAuthor());
+        notifyGroupsWithNotificationType(new GroupNotificationType[] { STUDENT, TA, EDITOR, INSTRUCTOR }, NEW_ANNOUNCEMENT_POST, post, course, post.getAuthor(),
+                post.getConversation() != null);
     }
 
     /**
@@ -315,8 +331,9 @@ public class GroupNotificationService {
      * @param notification        that should be saved and sent
      * @param notificationSubject which information will be extracted to create the email
      * @param author              the author, if set, will not be notified via instant notification.
+     * @param onlySave            whether the notification should only be saved and no
      */
-    private void saveAndSend(GroupNotification notification, Object notificationSubject, User author) {
+    private void saveAndSend(GroupNotification notification, Object notificationSubject, User author, boolean onlySave) {
         if (LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE.equals(notification.getTitle())) {
             saveExamNotification(notification);
             websocketMessagingService.sendMessage(notification.getTopic(), notification);
@@ -324,6 +341,11 @@ public class GroupNotificationService {
         }
 
         groupNotificationRepository.save(notification);
+
+        if (onlySave) {
+            return;
+        }
+
         websocketMessagingService.sendMessage(notification.getTopic(), notification);
 
         NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
