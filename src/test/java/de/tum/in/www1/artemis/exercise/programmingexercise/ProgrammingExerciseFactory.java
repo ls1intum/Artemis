@@ -27,7 +27,7 @@ public class ProgrammingExerciseFactory {
     public static final String DEFAULT_BRANCH = "main";
 
     /**
-     * Generates a programming exercise with the given release and due date. This exercise is added to the passed course.
+     * Generates a programming exercise with the given release and due date. This exercise is added to the provided course.
      *
      * @param releaseDate The release date of the exercise.
      * @param dueDate     The due date of the exercise.
@@ -39,7 +39,7 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Generates a programming exercise with the given release, due date, and programming language. This exercise is added to the passed course.
+     * Generates a programming exercise with the given release, due date, and programming language. This exercise is added to the provided course.
      *
      * @param releaseDate         The release date of the exercise.
      * @param dueDate             The due date of the exercise.
@@ -54,7 +54,7 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Generates a programming exercise for an exam and adds it to the passed exercise group.
+     * Generates a programming exercise for an exam and adds it to the provided exercise group.
      *
      * @param exerciseGroup The exercise group of an exam the exercise should be added to.
      * @return The newly generated programming exercise.
@@ -64,7 +64,7 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Generates a programming exercise with the given title for an exam and adds it to the passed exercise group.
+     * Generates a programming exercise with the given title for an exam and adds it to the provided exercise group.
      *
      * @param exerciseGroup The exercise group of an exam the exercise should be added to.
      * @param title         The title of the exercise.
@@ -77,7 +77,7 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Generates a programming exercise with the given programming language for an exam and adds it to the passed exercise group.
+     * Generates a programming exercise with the given programming language for an exam and adds it to the provided exercise group.
      *
      * @param exerciseGroup       The exercise group of an exam the exercise should be added to.
      * @param programmingLanguage The programming language of the exercise.
@@ -92,7 +92,7 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Populates the passed programming exercise with the given programming language and default values. The assessment type is set to semi-automatic.
+     * Populates the provided programming exercise with the given programming language and default values. The assessment type is set to semi-automatic.
      *
      * @param programmingExercise The exercise which should be populated.
      * @param programmingLanguage The programming language which should be used in the exercise.
@@ -215,7 +215,7 @@ public class ProgrammingExerciseFactory {
      * Creates a dummy DTO with custom feedbacks used by Jenkins, which notifies about new programming exercise results.
      * Uses {@link #generateTestResultDTO(String, String, ZonedDateTime, ProgrammingLanguage, boolean, List, List, List, List, TestSuiteDTO)} as basis.
      * Then adds a new {@link TestSuiteDTO} with name "CustomFeedbacks" to it.
-     * This Testsuite has four {@link TestCaseDTO TestCaseDTOs}:
+     * This Testsuite has 4 {@link TestCaseDTO TestCaseDTOs}:
      * <ul>
      * <li>CustomSuccessMessage: successful test with a message</li>
      * <li>CustomSuccessNoMessage: successful test without message</li>
@@ -267,7 +267,7 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Generates a Bamboo build result notification DTO using the passed values. The successful boolean value is se to true if there are no failed test names.
+     * Generates a Bamboo build result notification DTO using the provided values. The successful boolean value is se to true if there are no failed test names.
      * It first creates a BambooTestSummaryDTO, BambooJobDTO, BambooVCSDTO and BambooBuildDTO which are used to create the BambooBuildResultNotificationDTO.
      *
      * @param repoName               The repository name.
@@ -285,7 +285,7 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Generates a Bamboo build result notification DTO using the passed values.
+     * Generates a Bamboo build result notification DTO using the provided values.
      * It first creates a BambooTestSummaryDTO, BambooJobDTO, BambooVCSDTO and BambooBuildDTO which are used to create the BambooBuildResultNotificationDTO.
      *
      * @param repoName               The repository name.
@@ -317,7 +317,7 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Generate a Bamboo result notification DTO with build logs of various sizes. The successful boolean value is set to true if there are no failed test names.
+     * Generate a Bamboo result notification DTO with 10 build logs of various sizes. The successful boolean value is set to true if there are no failed test names.
      *
      * @param buildPlanKey        The key of the build plan
      * @param repoName            The repository name.
@@ -333,7 +333,7 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Generate a Bamboo result notification DTO with ten build logs of various sizes.
+     * Generate a Bamboo result notification DTO with 10 build logs of various sizes.
      *
      * @param buildPlanKey        The key of the build plan
      * @param repoName            The repository name.
@@ -367,7 +367,7 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Generate a Bamboo result notification DTO with nine analytics logs.
+     * Generate a Bamboo result notification DTO with 9 analytics logs.
      *
      * @param buildPlanKey        The key of the build plan
      * @param repoName            The repository name.
@@ -515,10 +515,10 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Generates a Bamboo test job DTO with the given name, "SpringTestClass" class name and errors based on the successful value.
+     * Generates a Bamboo test job DTO with the given name, <code>SpringTestClass</code> class name and errors based on the successful value.
      *
      * @param name       The name and method name of the DTO.
-     * @param successful If true, an empty list of errors is added to the DTO. Otherwise, the error "bad solution, did not work" is added.
+     * @param successful If true, an empty list of errors is added to the DTO. Otherwise, the error <code>bad solution, did not work</code> is added.
      * @return The created Bamboo test job DTO.
      */
     private static BambooBuildResultNotificationDTO.BambooTestJobDTO generateBambooTestJob(String name, boolean successful) {
@@ -526,7 +526,7 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Populates the passed programming exercise with the given short name, title, and other values. The release date of the exercise is set in the future.
+     * Populates the provided programming exercise with the given short name, title, and other values. The release date of the exercise is set in the future.
      * The programming language is set to java and test wise coverage analysis is disabled.
      *
      * @param programmingExercise      The exercise to be populated.
@@ -539,7 +539,7 @@ public class ProgrammingExerciseFactory {
     }
 
     /**
-     * Populates the passed programming exercise with the given short name, title, and other values. The release date of the exercise is set in the future.
+     * Populates the provided programming exercise with the given short name, title, and other values. The release date of the exercise is set in the future.
      *
      * @param programmingExercise            The exercise to be populated.
      * @param shortName                      The short name of the exercise.

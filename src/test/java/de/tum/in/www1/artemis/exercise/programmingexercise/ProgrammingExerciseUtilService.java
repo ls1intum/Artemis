@@ -106,7 +106,7 @@ public class ProgrammingExerciseUtilService {
     private UserUtilService userUtilService;
 
     /**
-     * Adds template participation to the passed programming exercise.
+     * Adds template participation to the provided programming exercise.
      *
      * @param exercise The exercise to which the template participation should be added.
      * @return The programming exercise to which a participation was added.
@@ -124,7 +124,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Adds a solution participation to the passed programming exercise.
+     * Adds a solution participation to the provided programming exercise.
      *
      * @param exercise The exercise to which the solution participation should be added.
      * @return The programming exercise to which a participation was added.
@@ -142,7 +142,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Creates and saves a course with an exam and an exercise group with one programming exercise. Test cases are added to this programming exercise.
+     * Creates and saves a course with an exam and an exercise group with a programming exercise. Test cases are added to this programming exercise.
      *
      * @return The newly created programming exercise with test cases.
      */
@@ -153,7 +153,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Creates and saves a course with an exam and an exercise group with one programming exercise. The passed title and short name are used for the exercise and test cases are
+     * Creates and saves a course with an exam and an exercise group with a programming exercise. The provided title and short name are used for the exercise and test cases are
      * added.
      *
      * @param title     The title of the exercise.
@@ -174,7 +174,8 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Creates and saves course with an exam and an exercise group with one programming exercise. "Testtitle" is the title and "TESTEXFOREXAM" the short name of the exercise.
+     * Creates and saves course with an exam and an exercise group with a programming exercise. <code>Testtitle</code> is the title and <code>TESTEXFOREXAM</code> the short name of
+     * the exercise.
      *
      * @return The newly created exam programming exercise.
      */
@@ -183,7 +184,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Adds a programming exercise into the exerciseGroupNumber-th exercise group of the passed exam.
+     * Adds a programming exercise into the exerciseGroupNumber-th exercise group of the provided exam.
      * exerciseGroupNumber must be smaller than the number of exercise groups!
      *
      * @param exam                The exam to which the exercise should be added.
@@ -224,7 +225,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Creates and saves an already submitted programming submission done manually. "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d" is used as the commit hash.
+     * Creates and saves an already submitted programming submission done manually. <code>9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d</code> is used as the commit hash.
      *
      * @param participation The exercise participation.
      * @param buildFailed   True, if the submission resulted in a build failed.
@@ -235,8 +236,8 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Creates and saves a course with one programming exercise with static code analysis and test wise coverage disabled, java as the programming language.
-     * Uses "Programming" as the title and "TSTEXC" as the short name of the exercise.
+     * Creates and saves a course with a programming exercise with static code analysis and test wise coverage disabled, java as the programming language.
+     * Uses <code>Programming</code> as the title and <code>TSTEXC</code> as the short name of the exercise.
      *
      * @return The created course with a programming exercise.
      */
@@ -245,8 +246,8 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Creates and saves a course with one programming exercise with test wise coverage disabled and java as the programming language.
-     * Uses "Programming" as the title and "TSTEXC" as the short name of the exercise.
+     * Creates and saves a course with a programming exercise with test wise coverage disabled and java as the programming language.
+     * Uses <code>Programming</code> as the title and <code>TSTEXC</code> as the short name of the exercise.
      *
      * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
      * @return The created course with a programming exercise.
@@ -256,7 +257,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Creates and saves a course with one programming exercise with test wise coverage disabled and java as the programming language.
+     * Creates and saves a course with a programming exercise with test wise coverage disabled and java as the programming language.
      *
      * @param enableStaticCodeAnalysis True, if the static code analysis should be enabled for the exercise.
      * @param title                    The title of the exercise.
@@ -268,7 +269,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Creates and saves a course with one programming exercise. Uses "Programming" as the title and "TSTEXC" as the short name of the exercise.
+     * Creates and saves a course with a programming exercise. Uses <code>Programming</code> as the title and <code>TSTEXC</code> as the short name of the exercise.
      *
      * @param enableStaticCodeAnalysis       True, if the static code analysis should be enabled for the exercise.
      * @param enableTestwiseCoverageAnalysis True, if test wise coverage analysis should be enabled for the exercise.
@@ -280,7 +281,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Creates and saves a course with one programming exercise.
+     * Creates and saves a course with a programming exercise.
      *
      * @param enableStaticCodeAnalysis       True, if the static code analysis should be enabled for the exercise.
      * @param enableTestwiseCoverageAnalysis True, if test wise coverage analysis should be enabled for the exercise.
@@ -321,8 +322,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Adds a programming exercise to the given course.
-     * Uses "Programming" as the title and "TSTEXC" as the short name of the exercise.
+     * Adds a programming exercise to the given course. Uses <code>Programming</code> as the title and <code>TSTEXC</code> as the short name of the exercise.
      *
      * @param course                         The course to which the exercise should be added.
      * @param enableStaticCodeAnalysis       True, if the static code analysis should be enabled for the exercise.
@@ -337,8 +337,8 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Adds a programming exercise without an assessment due date to the given course.
-     * Uses "Programming" as the title and "TSTEXC" as the short name of the exercise.
+     * Adds a programming exercise without an assessment due date to the given course. Uses <code>Programming</code> as the title and <code>TSTEXC</code> as the short name of the
+     * exercise.
      *
      * @param course                         The course to which the exercise should be added.
      * @param enableStaticCodeAnalysis       True, if the static code analysis should be enabled for the exercise.
@@ -352,7 +352,6 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     *
      * Adds a programming exercise to the given course.
      *
      * @param course                         The course to which the exercise should be added.
@@ -403,7 +402,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Creates and saves a course with a programming exercise and three active, always visible test cases with different weigth.
+     * Creates and saves a course with a programming exercise and 3 active, always visible test cases with different weights.
      *
      * @return The newly created course with a programming exercise.
      */
@@ -449,7 +448,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Adds four static code analysis categories to the given programming exercise. Two are graded, one is inactive and the last one is feedback.
+     * Adds 4 static code analysis categories to the given programming exercise. 2 are graded, 1 is inactive and 1 is feedback.
      *
      * @param programmingExercise The programming exercise to which static code analysis categories should be added.
      */
@@ -501,7 +500,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Adds 3 test cases to the given programming exercise. Two are always visible and last one is visible after due date. The test cases are weighted differently.
+     * Adds 3 test cases to the given programming exercise. 2 are always visible and 1 is visible after due date. The test cases are weighted differently.
      *
      * @param programmingExercise The programming exercise to which test cases should be added.
      * @return The created programming exercise test cases.
@@ -555,8 +554,8 @@ public class ProgrammingExerciseUtilService {
     /**
      * Creates, saves and adds an auxiliary repository to the given programming exercise.
      *
-     * @param programmingExercise The exercsie to which the auxilary repository should be added.
-     * @return The newly created auxilary repository.
+     * @param programmingExercise The exercise to which the auxiliary repository should be added.
+     * @return The newly created auxiliary repository.
      */
     public AuxiliaryRepository addAuxiliaryRepositoryToExercise(ProgrammingExercise programmingExercise) {
         AuxiliaryRepository repository = new AuxiliaryRepository();
@@ -583,7 +582,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Adds programming submission to passed programming exercise. The passed login is used to access or create a participation.
+     * Adds programming submission to provided programming exercise. The provided login is used to access or create a participation.
      *
      * @param exercise   The exercise to which the submission should be added.
      * @param submission The submission which should be added to the programming exercise.
@@ -679,7 +678,7 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Adds three hints to the given programming exercise. Each hint has a unique content and title. All have a display threshold of 3.
+     * Adds 3 hints to the given programming exercise. Each hint has a unique content and title. All have a display threshold of 3.
      *
      * @param exercise The exercise to which hints should be added.
      */
