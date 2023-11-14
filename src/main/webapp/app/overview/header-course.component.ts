@@ -63,4 +63,12 @@ export class HeaderCourseComponent implements OnChanges {
     redirectToCourseManagement() {
         this.router.navigate(['course-management', this.course.id]);
     }
+
+    shouldShowGoToStudentViewButton() {
+        return this.router.url.startsWith('/course-management');
+    }
+
+    redirectToStudentView() {
+        this.router.navigate(['courses', this.course.id]);
+    }
 }

@@ -118,4 +118,13 @@ describe('Header Course Component', () => {
         component.redirectToCourseManagement();
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', 234]);
     });
+
+    it('should redirect to course student view', () => {
+        component.course = courseWithShortDescription;
+        const router = TestBed.inject(Router);
+        const navigateSpy = jest.spyOn(router, 'navigate');
+
+        component.redirectToStudentView();
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', 234]);
+    });
 });

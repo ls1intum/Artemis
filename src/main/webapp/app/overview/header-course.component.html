@@ -19,6 +19,12 @@
                         {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
                     </button>
                 </div>
+
+                <div class="d-flex align-items-center justify-content-center manage-button-container" *ngIf="shouldShowGoToStudentViewButton()">
+                    <button class="btn btn-secondary manage-button" (click)="redirectToStudentView()">
+                        {{ 'artemisApp.courseOverview.studentView' | artemisTranslate }}
+                    </button>
+                </div>
             </div>
         </div>
         <div class="col-auto d-none d-lg-flex justify-content-end course-icon" *ngIf="course.courseIcon">
