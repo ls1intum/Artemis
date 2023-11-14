@@ -69,8 +69,7 @@ public class LocalCIConfiguration {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
         };
 
-        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory,
-                customRejectedExecutionHandler);
+        return new ThreadPoolExecutor(8, 8, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory, customRejectedExecutionHandler);
     }
 
     /**
@@ -86,7 +85,9 @@ public class LocalCIConfiguration {
             ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) localCIBuildExecutorService;
             // Report on the current state of the local CI ExecutorService queue every 30 seconds.
             log.info("Current queue size of local CI ExecutorService: {}", threadPoolExecutor.getQueue().size());
-        }, 0, 30, TimeUnit.SECONDS);
+            log.info("Current active threads in local CI ExecutorService: {}", threadPoolExecutor.getActiveCount());
+            log.info("Current pool size of local CI ExecutorService: {}", threadPoolExecutor.getPoolSize());
+        }, 0, 5, TimeUnit.SECONDS);
         return buildQueueLogger;
     }
 
