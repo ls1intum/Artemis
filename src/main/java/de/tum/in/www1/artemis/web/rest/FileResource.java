@@ -250,7 +250,6 @@ public class FileResource {
         if (testCoverage) {
             fileNameComponents.add("coverage");
         }
-        var fileName = String.join("_", fileNameComponents) + ".yaml";
         return String.join("_", fileNameComponents) + ".yaml";
     }
 
