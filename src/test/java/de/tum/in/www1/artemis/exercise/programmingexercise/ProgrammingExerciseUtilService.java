@@ -501,11 +501,12 @@ public class ProgrammingExerciseUtilService {
     }
 
     /**
-     * Adds three test cases to the given programming exercise. Two are always visible and last one is visible after due date. The test cases are weighted differently.
+     * Adds 3 test cases to the given programming exercise. Two are always visible and last one is visible after due date. The test cases are weighted differently.
      *
      * @param programmingExercise The programming exercise to which test cases should be added.
+     * @return The created programming exercise test cases.
      */
-    public void addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
+    public List<ProgrammingExerciseTestCase> addTestCasesToProgrammingExercise(ProgrammingExercise programmingExercise) {
         // Clean up existing test cases
         testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
@@ -517,8 +518,17 @@ public class ProgrammingExerciseUtilService {
         testCases.add(new ProgrammingExerciseTestCase().testName("test3").weight(3.0).active(true).exercise(programmingExercise).visibility(Visibility.AFTER_DUE_DATE)
                 .bonusMultiplier(1D).bonusPoints(0D));
         testCaseRepository.saveAll(testCases);
+
+        return testCases;
     }
 
+    /**
+     * Adds an active test case to the given programming exercise. The test case is always visible.
+     *
+     * @param programmingExercise The programming exercise to which a test case should be added.
+     * @param testName            The name of the test case.
+     * @return The created programming exercise test case.
+     */
     public ProgrammingExerciseTestCase addTestCaseToProgrammingExercise(ProgrammingExercise programmingExercise, String testName) {
         var testCase = new ProgrammingExerciseTestCase().testName(testName).weight(1.).active(true).exercise(programmingExercise).visibility(Visibility.ALWAYS).bonusMultiplier(1.)
                 .bonusPoints(0.);
