@@ -50,7 +50,7 @@ public class Windfile {
      */
     public void setId(String id) {
         if (this.metadata == null) {
-            this.metadata = new WindfileMetadata();
+            setMetadata(new WindfileMetadata());
         }
         this.metadata.setId(id);
     }
@@ -72,28 +72,28 @@ public class Windfile {
 
     public void setGitCredentials(String credentials) {
         if (this.metadata == null) {
-            this.metadata = new Metadata();
+            setMetadata(new WindfileMetadata());
         }
         this.metadata.setGitCredentials(credentials);
     }
 
     public void setName(String name) {
         if (this.metadata == null) {
-            this.metadata = new Metadata();
+            setMetadata(new WindfileMetadata());
         }
         this.metadata.setName(name);
     }
 
     public void setDescription(String name) {
         if (this.metadata == null) {
-            this.metadata = new Metadata();
+            setMetadata(new WindfileMetadata());
         }
         this.metadata.setDescription(name);
     }
 
     public void setResultHook(String resultHook) {
         if (this.metadata == null) {
-            this.metadata = new Metadata();
+            setMetadata(new WindfileMetadata());
         }
         this.metadata.setResultHook(resultHook);
     }
