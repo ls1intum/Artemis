@@ -13,6 +13,7 @@ import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
+import { ltiConfigurationRoute } from 'app/admin/lti-configuration/lti-configuration.route';
 
 export const adminState: Routes = [
     {
@@ -95,6 +96,7 @@ export const adminState: Routes = [
             ...userManagementRoute,
             ...systemNotificationManagementRoute,
             upcomingExamsAndExercisesRoute,
+            ltiConfigurationRoute,
         ],
     },
 ];

@@ -15,9 +15,11 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.lti.Lti13ClientRegistration;
 import de.tum.in.www1.artemis.domain.lti.Lti13PlatformConfiguration;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -33,14 +35,18 @@ public class LtiDynamicRegistrationService {
 
     private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
 
+    private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
     private final OAuth2JWKSService oAuth2JWKSService;
 
     private final RestTemplate restTemplate;
 
-    public LtiDynamicRegistrationService(OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, OAuth2JWKSService oAuth2JWKSService, RestTemplate restTemplate) {
+    public LtiDynamicRegistrationService(OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, OAuth2JWKSService oAuth2JWKSService, RestTemplate restTemplate,
+            LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
         this.oAuth2JWKSService = oAuth2JWKSService;
         this.restTemplate = restTemplate;
+        this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
     }
 
     /**
@@ -71,6 +77,33 @@ public class LtiDynamicRegistrationService {
         OnlineCourseConfiguration onlineCourseConfiguration = updateOnlineCourseConfiguration(course.getOnlineCourseConfiguration(), clientRegistrationId, platformConfiguration,
                 clientRegistrationResponse);
         onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
+
+        oAuth2JWKSService.updateKey(clientRegistrationId);
+    }
+
+    /**
+     * Performs dynamic registration.
+     *
+     * @param openIdConfigurationUrl the url to get the configuration from
+     * @param registrationToken      the token to be used to authenticate the POST request
+     */
+    public void performDynamicRegistration(String openIdConfigurationUrl, String registrationToken) {
+
+        // Get platform's configuration
+        Lti13PlatformConfiguration platformConfiguration = getLti13PlatformConfiguration(openIdConfigurationUrl);
+
+        String clientRegistrationId = "artemis" + UUID.randomUUID().toString();
+
+        if (platformConfiguration.getAuthorizationEndpoint() == null || platformConfiguration.getTokenEndpoint() == null || platformConfiguration.getJwksUri() == null
+                || platformConfiguration.getRegistrationEndpoint() == null) {
+            throw new BadRequestAlertException("Invalid platform configuration", "LTI", "invalidPlatformConfiguration");
+        }
+
+        Lti13ClientRegistration clientRegistrationResponse = postClientRegistrationToPlatform(platformConfiguration.getRegistrationEndpoint(), clientRegistrationId,
+                registrationToken);
+
+        LtiPlatformConfiguration ltiPlatformConfiguration = updateLtiPlatformConfiguration(clientRegistrationId, platformConfiguration, clientRegistrationResponse);
+        ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
 
         oAuth2JWKSService.updateKey(clientRegistrationId);
     }
@@ -118,6 +151,32 @@ public class LtiDynamicRegistrationService {
         return registrationResponse;
     }
 
+    private Lti13ClientRegistration postClientRegistrationToPlatform(String registrationEndpoint, String clientRegistrationId, String registrationToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        if (registrationToken != null) {
+            headers.setBearerAuth(registrationToken);
+        }
+
+        Lti13ClientRegistration lti13ClientRegistration = new Lti13ClientRegistration(artemisServerUrl, clientRegistrationId);
+        Lti13ClientRegistration registrationResponse = null;
+        try {
+            ResponseEntity<Lti13ClientRegistration> response = restTemplate.postForEntity(registrationEndpoint, new HttpEntity<>(lti13ClientRegistration, headers),
+                    Lti13ClientRegistration.class);
+            log.info("Registered {} as LTI1.3 tool at {}", artemisServerUrl, registrationEndpoint);
+            registrationResponse = response.getBody();
+        }
+        catch (HttpClientErrorException e) {
+            String message = "Could not register new client in external LMS at " + registrationEndpoint;
+            log.error(message);
+        }
+
+        if (registrationResponse == null) {
+            throw new BadRequestAlertException("Could not register configuration in external LMS", "LTI", "postConfigurationFailed");
+        }
+        return registrationResponse;
+    }
+
     private OnlineCourseConfiguration updateOnlineCourseConfiguration(OnlineCourseConfiguration ocConfiguration, String registrationId,
             Lti13PlatformConfiguration platformConfiguration, Lti13ClientRegistration clientRegistrationResponse) {
         ocConfiguration.setRegistrationId(registrationId);
@@ -126,5 +185,17 @@ public class LtiDynamicRegistrationService {
         ocConfiguration.setJwkSetUri(platformConfiguration.getJwksUri());
         ocConfiguration.setTokenUri(platformConfiguration.getTokenEndpoint());
         return ocConfiguration;
+    }
+
+    private LtiPlatformConfiguration updateLtiPlatformConfiguration(String registrationId, Lti13PlatformConfiguration platformConfiguration,
+            Lti13ClientRegistration clientRegistrationResponse) {
+        LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
+        ltiPlatformConfiguration.setRegistrationId(registrationId);
+        ltiPlatformConfiguration.setClientId(clientRegistrationResponse.getClientId());
+        ltiPlatformConfiguration.setAuthorizationUri(platformConfiguration.getAuthorizationEndpoint());
+        ltiPlatformConfiguration.setJwkSetUri(platformConfiguration.getJwksUri());
+        ltiPlatformConfiguration.setTokenUri(platformConfiguration.getTokenEndpoint());
+        ltiPlatformConfiguration.setIssuer(platformConfiguration.getIssuer());
+        return ltiPlatformConfiguration;
     }
 }

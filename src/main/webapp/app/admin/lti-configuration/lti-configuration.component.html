@@ -1,0 +1,87 @@
+<form name="editForm" role="form" novalidate>
+    <div class="modal-header" style="margin-bottom: 20px">
+        <h4 class="modal-title" jhiTranslate="global.menu.admin.lti">LTI 1.3 Configuration</h4>
+    </div>
+    <ng-container>
+        <dt></dt>
+        <dt>
+            <span>{{ 'artemisApp.lti.dynamicRegistrationUrl' | artemisTranslate }}</span>
+            <jhi-help-icon text="artemisApp.lti.dynamicRegistrationTooltip"></jhi-help-icon>
+        </dt>
+        <dd>
+            <span>{{ getDynamicRegistrationUrl() }}</span>
+            <jhi-copy-icon-button [copyText]="getDynamicRegistrationUrl()"></jhi-copy-icon-button>
+        </dd>
+
+        <dt>
+            <span>{{ 'artemisApp.lti.deepLinkingUrl' | artemisTranslate }}</span>
+        </dt>
+        <dd>
+            <span>{{ getDeepLinkingUrl() }}</span>
+            <jhi-copy-icon-button [copyText]="getDeepLinkingUrl()"></jhi-copy-icon-button>
+        </dd>
+
+        <dt>
+            <span>{{ 'artemisApp.lti.toolUrl' | artemisTranslate }}</span>
+        </dt>
+        <dd>
+            <span>{{ getToolUrl() }}</span>
+            <jhi-copy-icon-button [copyText]="getToolUrl()"></jhi-copy-icon-button>
+        </dd>
+
+        <dt>
+            <span>{{ 'artemisApp.lti.keysetUrl' | artemisTranslate }}</span>
+        </dt>
+        <dd>
+            <span>{{ getKeysetUrl() }}</span>
+            <jhi-copy-icon-button [copyText]="getKeysetUrl()"></jhi-copy-icon-button>
+        </dd>
+
+        <dt>
+            <span>{{ 'artemisApp.lti.initiateLoginUrl' | artemisTranslate }}</span>
+        </dt>
+        <dd>
+            <span>{{ getInitiateLoginUrl() }}</span>
+            <jhi-copy-icon-button [copyText]="getInitiateLoginUrl()"></jhi-copy-icon-button>
+        </dd>
+
+        <dt>
+            <span>{{ 'artemisApp.lti.redirectUri' | artemisTranslate }}</span>
+        </dt>
+        <dd>
+            <span>{{ getRedirectUri() }}</span>
+            <jhi-copy-icon-button [copyText]="getRedirectUri()"></jhi-copy-icon-button>
+        </dd>
+        <dd>
+            <div class="modal-header" style="margin-bottom: 20px">
+                <h4 class="modal-title" jhiTranslate="artemisApp.lti.configuredPlatforms">Configured Platforms</h4>
+            </div>
+        </dd>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th><span jhiTranslate="global.field.id">ID</span></th>
+                        <th><span jhiTranslate="artemisApp.lti.registrationId">Registration ID</span></th>
+                        <th><span jhiTranslate="artemisApp.lti.clientId">Client ID</span></th>
+                        <th><span jhiTranslate="artemisApp.lti.issuer">Issuer</span></th>
+                        <th><span jhiTranslate="artemisApp.lti.authorizationUri">Authorization URI</span></th>
+                        <th><span jhiTranslate="artemisApp.lti.jwkSetUri">JWK Set URI</span></th>
+                        <th><span jhiTranslate="artemisApp.lti.tokenUri">Token URI</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let platform of platforms">
+                        <td>{{ platform.id }}</td>
+                        <td>{{ platform.registrationId }}</td>
+                        <td>{{ platform.clientId }}</td>
+                        <td>{{ platform.issuer }}</td>
+                        <td>{{ platform.authorizationUri }}</td>
+                        <td>{{ platform.jwkSetUri }}</td>
+                        <td>{{ platform.tokenUri }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </ng-container>
+</form>

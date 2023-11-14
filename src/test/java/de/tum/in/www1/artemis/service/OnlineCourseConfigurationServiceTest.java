@@ -11,12 +11,16 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 
 class OnlineCourseConfigurationServiceTest {
 
     @Mock
     private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
+    @Mock
+    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
     private OnlineCourseConfigurationService onlineCourseConfigurationService;
 
@@ -25,7 +29,7 @@ class OnlineCourseConfigurationServiceTest {
 
     @BeforeEach
     void init() {
-        onlineCourseConfigurationService = new OnlineCourseConfigurationService(onlineCourseConfigurationRepository);
+        onlineCourseConfigurationService = new OnlineCourseConfigurationService(onlineCourseConfigurationRepository, ltiPlatformConfigurationRepository);
     }
 
     @Test

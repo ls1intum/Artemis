@@ -111,7 +111,8 @@
                 "imprint": "Imprint",
                 "database": "Database",
                 "iris": "Iris Settings",
-                "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
+                "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
+                "lti": "LTI Configuration"
             },
             "language": "Language",
             "settings": "Settings",

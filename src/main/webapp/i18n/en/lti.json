@@ -28,6 +28,7 @@
             "userPrefix": "User Prefix",
             "registrationId": "Registration ID",
             "clientId": "Client ID",
+            "issuer": "Issuer",
             "authorizationUri": "Authorization URI",
             "tokenUri": "Token URI",
             "jwkSetUri": "JWKSet URI",
@@ -61,7 +62,8 @@
                         "forbidden": "User prefix cannot contain special characters."
                     }
                 }
-            }
+            },
+            "configuredPlatforms": "Configured Platforms"
         },
         "lti13": {
             "launch": {

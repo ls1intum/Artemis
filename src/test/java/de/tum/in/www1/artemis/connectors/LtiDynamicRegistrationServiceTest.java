@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.lti.Lti13ClientRegistration;
 import de.tum.in.www1.artemis.domain.lti.Lti13PlatformConfiguration;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
@@ -30,6 +31,9 @@ class LtiDynamicRegistrationServiceTest {
 
     @Mock
     private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
+    @Mock
+    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
     @Mock
     private RestTemplate restTemplate;
@@ -52,7 +56,7 @@ class LtiDynamicRegistrationServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiDynamicRegistrationService = new LtiDynamicRegistrationService(onlineCourseConfigurationRepository, oAuth2JWKSService, restTemplate);
+        ltiDynamicRegistrationService = new LtiDynamicRegistrationService(onlineCourseConfigurationRepository, oAuth2JWKSService, restTemplate, ltiPlatformConfigurationRepository);
         ReflectionTestUtils.setField(ltiDynamicRegistrationService, "artemisServerUrl", "http://artemis.com");
 
         course = new Course();

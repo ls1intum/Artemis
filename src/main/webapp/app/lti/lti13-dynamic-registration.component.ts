@@ -38,8 +38,10 @@ export class Lti13DynamicRegistrationComponent implements OnInit {
             httpParams = httpParams.set('registration_token', registrationToken);
         }
 
+        const postUrl = Number.isNaN(this.courseId) ? `api/lti13/dynamic-registration` : `api/lti13/dynamic-registration/${this.courseId}`;
+
         this.http
-            .post(`api/lti13/dynamic-registration/${this.courseId}`, null, { observe: 'response', params: httpParams })
+            .post(postUrl, null, { observe: 'response', params: httpParams })
             .subscribe({
                 next: () => {
                     this.registeredSuccessfully = true;

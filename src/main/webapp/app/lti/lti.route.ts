@@ -17,6 +17,13 @@ export const ltiLaunchRoutes: Routes = [
             pageTitle: 'artemisApp.lti13.dynamicRegistration.title',
         },
     },
+    {
+        path: 'dynamic-registration',
+        component: Lti13DynamicRegistrationComponent,
+        data: {
+            pageTitle: 'artemisApp.lti13.dynamicRegistration.title',
+        },
+    },
 ];
 
 const LTI_LAUNCH_ROUTES = [...ltiLaunchRoutes];

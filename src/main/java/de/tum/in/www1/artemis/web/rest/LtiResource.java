@@ -41,4 +41,13 @@ public class LtiResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         ltiDynamicRegistrationService.performDynamicRegistration(course, openIdConfiguration, registrationToken);
     }
+
+    @PostMapping("/lti13/dynamic-registration")
+    @EnforceAtLeastInstructor
+    public void lti13DynamicRegistration(@RequestParam(name = "openid_configuration") String openIdConfiguration,
+            @RequestParam(name = "registration_token", required = false) String registrationToken) {
+
+        // TODO: check if user is admin? or no checks are needed?
+        ltiDynamicRegistrationService.performDynamicRegistration(openIdConfiguration, registrationToken);
+    }
 }

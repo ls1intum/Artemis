@@ -240,6 +240,12 @@
                             <span jhiTranslate="global.menu.admin.iris">Iris Settings</span>
                         </a>
                     </li>
+                    <li *ngIf="ltiEnabled">
+                        <a class="dropdown-item" routerLink="/admin/lti-configuration" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="faList" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.lti">LTI Configuration</span>
+                        </a>
+                    </li>
                     <!-- jhipster-needle-add-element-to-admin-menu - JHipster will add entities to the admin menu here -->
                 </ul>
             </li>

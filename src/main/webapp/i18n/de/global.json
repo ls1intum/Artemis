@@ -111,7 +111,8 @@
                 "apidocs": "API",
                 "database": "Datenbank",
                 "iris": "Iris Einstellungen",
-                "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
+                "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
+                "lti": "LTI Konfiguration"
             },
             "language": "Sprache",
             "settings": "Einstellungen",

@@ -64,6 +64,26 @@ public class Lti13ClientRegistration {
         this.setLti13ToolConfiguration(toolConfiguration);
     }
 
+    public Lti13ClientRegistration(String serverUrl, String clientRegistrationId) {
+        this.setGrantTypes(Arrays.asList(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue(), AuthorizationGrantType.IMPLICIT.getValue()));
+        this.setResponseTypes(List.of("id_token"));
+        this.setClientName("Artemis - " + serverUrl);
+        this.setTokenEndpointAuthMethod("private_key_jwt");
+        this.setScope(String.join(" ", List.of(Scopes.AGS_SCORE, Scopes.AGS_RESULT)));
+        this.setRedirectUris(List.of(serverUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH));
+        this.setInitiateLoginUri(serverUrl + CustomLti13Configurer.LTI13_LOGIN_INITIATION_PATH + "/" + clientRegistrationId);
+        this.setJwksUri(serverUrl + "/.well-known/jwks.json");
+
+        Lti13ToolConfiguration toolConfiguration = new Lti13ToolConfiguration();
+        String domain = serverUrl.split("://").length >= 1 ? serverUrl.split("://")[1] : ""; // Domain cannot include protocol
+        toolConfiguration.setDomain(domain);
+        toolConfiguration.setTargetLinkUri(serverUrl + "/courses");
+        toolConfiguration.setClaims(Arrays.asList("iss", "email", "sub", "name", "given_name", "family_name"));
+        Message deepLinkingMessage = new Message("LtiDeepLinkingRequest", serverUrl + CustomLti13Configurer.LTI13_BASE_PATH + "/deep-linking");
+        toolConfiguration.setMessages(List.of(deepLinkingMessage));
+        this.setLti13ToolConfiguration(toolConfiguration);
+    }
+
     public String getClientId() {
         return clientId;
     }

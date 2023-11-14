@@ -20,7 +20,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -35,11 +37,15 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
 
     private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
 
+    private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    public OnlineCourseConfigurationService(OnlineCourseConfigurationRepository onlineCourseConfigurationRepository) {
+    public OnlineCourseConfigurationService(OnlineCourseConfigurationRepository onlineCourseConfigurationRepository,
+            LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
+        this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
     }
 
     public List<ClientRegistration> getAllClientRegistrations() {
@@ -50,6 +56,10 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
     @Override
     public ClientRegistration findByRegistrationId(String registrationId) {
         Optional<OnlineCourseConfiguration> onlineCourseConfiguration = onlineCourseConfigurationRepository.findByRegistrationId(registrationId);
+        if (onlineCourseConfiguration.map(this::getClientRegistration).orElse(null) == null) {
+            Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(registrationId);
+            return ltiPlatformConfiguration.map(this::getClientRegistrationForLtiPlatform).orElse(null);
+        }
         return onlineCourseConfiguration.map(this::getClientRegistration).orElse(null);
     }
 
@@ -116,6 +126,34 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
             log.warn("Could not build Client Registration from onlineCourseConfiguration for course with ID: {} and title: {}. Reason: {}",
                     Optional.of(onlineCourseConfiguration).map(OnlineCourseConfiguration::getCourse).map(Course::getId).orElse(null),
                     Optional.of(onlineCourseConfiguration).map(OnlineCourseConfiguration::getCourse).map(Course::getTitle).orElse(""), e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Converts the onlineCourseConfiguration to a ClientRegistration if the necessary fields are filled
+     *
+     * @param ltiPlatformConfiguration the online course configuration
+     * @return the clientRegistration from the converted online course configuration
+     */
+    public ClientRegistration getClientRegistrationForLtiPlatform(LtiPlatformConfiguration ltiPlatformConfiguration) {
+        if (ltiPlatformConfiguration == null) {
+            return null;
+        }
+        try {
+            return ClientRegistration.withRegistrationId(ltiPlatformConfiguration.getRegistrationId()) // formatting
+                    .clientId(ltiPlatformConfiguration.getClientId()) //
+                    .authorizationUri(ltiPlatformConfiguration.getAuthorizationUri()) //
+                    .jwkSetUri(ltiPlatformConfiguration.getJwkSetUri()) //
+                    .tokenUri(ltiPlatformConfiguration.getTokenUri()) //
+                    .redirectUri(artemisServerUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH) //
+                    .scope("openid") //
+                    .authorizationGrantType(AuthorizationGrantType.IMPLICIT) //
+                    .build();
+        }
+        catch (IllegalArgumentException e) {
+            // Log a warning for rare scenarios i.e. ClientId is empty. This can occur when online courses lack an external LMS connection or use LTI v1.0.
+            log.warn("Could not build Client Registration from ltiPlatformConfiguration. Reason: {}", e.getMessage());
             return null;
         }
     }

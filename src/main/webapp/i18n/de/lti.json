@@ -28,6 +28,7 @@
             "userPrefix": "Nutzer-Präfix",
             "registrationId": "Registrierung ID",
             "clientId": "Client ID",
+            "issuer": "Issuer",
             "authorizationUri": "Authorization URI",
             "tokenUri": "Token URI",
             "jwkSetUri": "JWKSet URI",
@@ -61,7 +62,8 @@
                         "forbidden": "Nutzer-Präfix darf keine Sonderzeichen beinhalten."
                     }
                 }
-            }
+            },
+            "configuredPlatforms": "Konfigurierte Plattformen"
         },
         "lti13": {
             "launch": {
