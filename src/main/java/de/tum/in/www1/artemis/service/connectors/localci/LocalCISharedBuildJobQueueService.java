@@ -204,7 +204,7 @@ public class LocalCISharedBuildJobQueueService {
     // Checks whether the node has at least one thread available for a new build job
     private Boolean nodeIsAvailable() {
         log.info("Current active threads: " + localCIBuildExecutorService.getActiveCount());
-        return localCIBuildExecutorService.getActiveCount() < threadPoolSize;
+        return localCIBuildExecutorService.getActiveCount() < 8;
     }
 
     private class BuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
