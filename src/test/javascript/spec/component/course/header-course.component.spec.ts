@@ -88,7 +88,7 @@ describe('Header Course Component', () => {
         expect(showManageLectureButton).toBeTrue();
     });
 
-    it('should not display manage button in course management', () => {
+    it('should not display manage button but go to student view button in course management', () => {
         component.course = courseWithShortDescription;
         component.course!.isAtLeastTutor = true;
         const router = TestBed.inject(Router);
@@ -97,6 +97,9 @@ describe('Header Course Component', () => {
 
         const showManageLectureButton = component.shouldShowGoToCourseManagementButton();
         expect(showManageLectureButton).toBeFalse();
+
+        const showStudentViewButton = component.shouldShowGoToStudentViewButton();
+        expect(showStudentViewButton).toBeTrue();
     });
 
     it('should not display manage button to student', () => {
@@ -110,21 +113,14 @@ describe('Header Course Component', () => {
         expect(showManageLectureButton).toBeFalse();
     });
 
-    it('should redirect to course management', () => {
+    it('should not display student view button in student view', () => {
         component.course = courseWithShortDescription;
+        component.course!.isAtLeastTutor = false;
         const router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const urlSpy = jest.spyOn(router, 'url', 'get');
+        urlSpy.mockReturnValue('/courses');
 
-        component.redirectToCourseManagement();
-        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 234]);
-    });
-
-    it('should redirect to course student view', () => {
-        component.course = courseWithShortDescription;
-        const router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
-
-        component.redirectToStudentView();
-        expect(navigateSpy).toHaveBeenCalledWith(['courses', 234]);
+        const showManageLectureButton = component.shouldShowGoToStudentViewButton();
+        expect(showManageLectureButton).toBeFalse();
     });
 });
