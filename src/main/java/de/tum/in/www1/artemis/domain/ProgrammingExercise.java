@@ -905,10 +905,10 @@ public class ProgrammingExercise extends Exercise {
      * @return the {@link Windfile} object or null if the JSON string could not be parsed
      */
     public Windfile getWindfile() {
+        if (buildPlanConfiguration == null) {
+            return null;
+        }
         try {
-            if (buildPlanConfiguration == null) {
-                return null;
-            }
             ObjectMapper mapper = new ObjectMapper();
             return mapper.readValue(buildPlanConfiguration, Windfile.class);
         }

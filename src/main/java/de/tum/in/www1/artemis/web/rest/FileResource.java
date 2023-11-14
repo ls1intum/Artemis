@@ -235,6 +235,12 @@ public class FileResource {
      */
     private String buildAeolusTemplateName(String projectTypePrefix, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage) {
         List<String> fileNameComponents = new ArrayList<>();
+        if (!projectTypePrefix.isEmpty()) {
+            fileNameComponents.add(projectTypePrefix);
+        }
+        else {
+            fileNameComponents.add("default");
+        }
         if (staticAnalysis) {
             fileNameComponents.add("static");
         }
@@ -244,11 +250,8 @@ public class FileResource {
         if (testCoverage) {
             fileNameComponents.add("coverage");
         }
-        String accumulator = "default";
-        if (!projectTypePrefix.isEmpty()) {
-            accumulator = projectTypePrefix;
-        }
-        return fileNameComponents.stream().reduce(accumulator, (a, b) -> a + "_" + b) + ".yaml";
+        var fileName = String.join("_", fileNameComponents) + ".yaml";
+        return String.join("_", fileNameComponents) + ".yaml";
     }
 
     /**

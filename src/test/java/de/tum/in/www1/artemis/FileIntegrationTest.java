@@ -100,13 +100,11 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetAeolusTemplateFile() throws Exception {
         String javaDefaultAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_GRADLE", HttpStatus.OK, String.class);
         assertThat(javaDefaultAeolusTemplate).isNotEmpty();
-        String javaNormalAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_GRADLE?staticAnalysis", HttpStatus.OK, String.class);
-        assertThat(javaNormalAeolusTemplate).isNotEmpty();
-        String javaSequentialAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_GRADLE?sequentialRuns", HttpStatus.OK, String.class);
+        String javaSequentialAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_GRADLE?sequentialRuns=true", HttpStatus.OK, String.class);
         assertThat(javaSequentialAeolusTemplate).isNotEmpty();
-        javaNormalAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_MAVEN", HttpStatus.OK, String.class);
+        String javaNormalAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_MAVEN", HttpStatus.OK, String.class);
         assertThat(javaNormalAeolusTemplate).isNotEmpty();
-        javaSequentialAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_MAVEN?sequentialRuns", HttpStatus.OK, String.class);
+        javaSequentialAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_MAVEN?sequentialRuns=true", HttpStatus.OK, String.class);
         assertThat(javaSequentialAeolusTemplate).isNotEmpty();
         String pythonTemplate = request.get("/api/files/aeolus/templates/PYTHON/", HttpStatus.OK, String.class);
         assertThat(pythonTemplate).isNotEmpty();
