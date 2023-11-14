@@ -45,7 +45,7 @@
             "cloneRatedRepository": "Klone dein bewertetes Repository für diese Übung:",
             "clonePracticeRepository": "Klone dein Übungs-Repository für diese Übung:",
             "cloneExerciseRepository": "Klone ein Repository für diese Übung",
-            "waitForData": "Es werden noch Daten nachgeladen. Bitte warte einen Moment.",
+            "waitForData": "Es werden noch Daten geladen. Bitte warte einen Moment.",
             "fetchVCSAccessTokenError": "Daten konnten nicht geladen werden. Bitte lade die Seite neu und versuche es erneut. Wenn dieses Problem länger andauert, wende dich bitte an einen Administrator.",
             "repositoryPassword": "Dein Passwort lautet:",
             "hoverToShow": "(hover, um es anzuzeigen)",
