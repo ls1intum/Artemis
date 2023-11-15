@@ -278,7 +278,12 @@
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-center">
-                            <fa-icon [ngbPopover]="'Servus'" [triggers]="'hover'" [icon]="faComment"></fa-icon>
+                            <fa-icon
+                                *ngIf="value.results?.[0]?.assessmentNote"
+                                [ngbPopover]="(value.results?.[0]?.assessmentNote)!.note"
+                                [triggers]="'hover'"
+                                [icon]="faComment"
+                            ></fa-icon>
                         </div>
                     </ng-template>
                 </ngx-datatable-column>
