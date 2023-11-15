@@ -303,7 +303,7 @@ public class LocalCIBuildJobExecutionService {
         String result = (lastIndexOfSlash != -1 && lastIndexOfSlash + 1 < name.length()) ? name.substring(lastIndexOfSlash + 1) : name;
 
         // Java test result files are named "TEST-*.xml", Python test result files are named "*results.xml".
-        return !tarArchiveEntry.isDirectory() && ((result.endsWith(".xml") && result.startsWith("TEST-")) || result.endsWith("results.xml"));
+        return !tarArchiveEntry.isDirectory() && result.endsWith("results.xml");
     }
 
     private String readTarEntryContent(TarArchiveInputStream tarArchiveInputStream) throws IOException {
