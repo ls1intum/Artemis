@@ -22,7 +22,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { faBan, faCodeBranch, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCodeBranch, faComment, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
@@ -110,6 +110,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     faCodeBranch = faCodeBranch;
     farFileCode = faFileCode;
     faFilter = faFilter;
+    faComment = faComment;
 
     constructor(
         private route: ActivatedRoute,
