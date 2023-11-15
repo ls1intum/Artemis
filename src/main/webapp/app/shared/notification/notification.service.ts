@@ -219,9 +219,15 @@ export class NotificationService {
                 notification.title === NEW_REPLY_FOR_COURSE_POST_TITLE ||
                 notification.title === 'New reply for course-wide post'
             ) {
-                const queryParams: Params = MetisService.getQueryParamsForCoursePost(target.id);
-                const routeComponents: RouteComponents = MetisService.getLinkForCoursePost(targetCourseId);
-                this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
+                if (targetConversationId) {
+                    const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
+                    const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
+                    this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
+                } else {
+                    const queryParams: Params = MetisService.getQueryParamsForCoursePost(target.id);
+                    const routeComponents: RouteComponents = MetisService.getLinkForCoursePost(targetCourseId);
+                    this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
+                }
             } else if (
                 notification.title === NEW_EXERCISE_POST_TITLE ||
                 notification.title === 'New exercise post' ||

@@ -4,7 +4,7 @@
             <div class="col-xxl-4">
                 <div class="row">
                     <jhi-course-detail-doughnut-chart
-                        class="doughnut-container col-md-6 my-3"
+                        class="doughnut-container col-sm-6 my-3"
                         [course]="course"
                         [contentType]="DoughnutChartType.ASSESSMENT"
                         [currentPercentage]="courseDTO?.currentPercentageAssessments"
@@ -12,17 +12,17 @@
                         [currentMax]="courseDTO?.currentMaxAssessments"
                     ></jhi-course-detail-doughnut-chart>
                     <jhi-course-detail-doughnut-chart
-                        class="doughnut-container col-md-6 my-3"
+                        *ngIf="course.complaintsEnabled"
+                        class="doughnut-container col-sm-6 my-3"
                         [course]="course"
                         [contentType]="DoughnutChartType.COMPLAINTS"
                         [currentPercentage]="courseDTO?.currentPercentageComplaints"
                         [currentAbsolute]="courseDTO?.currentAbsoluteComplaints"
                         [currentMax]="courseDTO?.currentMaxComplaints"
                     ></jhi-course-detail-doughnut-chart>
-                </div>
-                <div class="row">
                     <jhi-course-detail-doughnut-chart
-                        class="doughnut-container col-md-6 my-3"
+                        *ngIf="course.requestMoreFeedbackEnabled"
+                        class="doughnut-container col-sm-6 my-3"
                         [course]="course"
                         [contentType]="DoughnutChartType.FEEDBACK"
                         [currentPercentage]="courseDTO?.currentPercentageMoreFeedbacks"
@@ -30,7 +30,7 @@
                         [currentMax]="courseDTO?.currentMaxMoreFeedbacks"
                     ></jhi-course-detail-doughnut-chart>
                     <jhi-course-detail-doughnut-chart
-                        class="doughnut-container col-md-6 my-3"
+                        class="doughnut-container col-sm-6 my-3"
                         [course]="course"
                         [contentType]="DoughnutChartType.AVERAGE_COURSE_SCORE"
                         [currentPercentage]="courseDTO?.currentPercentageAverageScore"
