@@ -14,13 +14,21 @@
                     </div>
                 </div>
 
-                <div class="d-flex align-items-center justify-content-center manage-button-container" *ngIf="shouldShowGoToCourseManagementButton()">
+                <div
+                    class="d-flex align-items-center justify-content-center manage-button-container"
+                    id="manage-button"
+                    *ngIf="!this.router.url.startsWith('/course-management') && this.course.isAtLeastTutor"
+                >
                     <a class="btn btn-secondary manage-button" [routerLink]="['/course-management', this.course.id]">
                         {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
                     </a>
                 </div>
 
-                <div class="d-flex align-items-center justify-content-center manage-button-container" *ngIf="shouldShowGoToStudentViewButton()">
+                <div
+                    class="d-flex align-items-center justify-content-center manage-button-container"
+                    id="student-view-button"
+                    *ngIf="this.router.url.startsWith('/course-management')"
+                >
                     <a class="btn btn-secondary manage-button" [routerLink]="['/courses', this.course.id]">
                         {{ 'artemisApp.courseOverview.studentView' | artemisTranslate }}
                     </a>

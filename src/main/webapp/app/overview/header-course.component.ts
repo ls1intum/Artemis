@@ -21,7 +21,7 @@ export class HeaderCourseComponent implements OnChanges {
     public longDescriptionShown = false;
 
     faArrowDown = faArrowDown;
-    constructor(private router: Router) {}
+    constructor(protected router: Router) {}
 
     ngOnChanges() {
         this.adjustCourseDescription();
@@ -53,18 +53,5 @@ export class HeaderCourseComponent implements OnChanges {
                 this.courseDescription = this.course.description;
             }
         }
-    }
-
-    shouldShowGoToCourseManagementButton() {
-        const courseManagementPage = this.router.url.startsWith('/course-management');
-        return !courseManagementPage && this.course.isAtLeastTutor;
-    }
-
-    redirectToCourseManagement() {
-        this.router.navigate(['course-management', this.course.id]);
-    }
-
-    shouldShowGoToStudentViewButton() {
-        return this.router.url.startsWith('/course-management');
     }
 }
