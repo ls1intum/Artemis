@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -51,9 +50,6 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @Autowired
     private ParticipationUtilService participationUtilService;
 
-    @Autowired
-    private IrisRateLimitService irisRateLimitService;
-
     private ProgrammingExercise exercise;
 
     private LocalRepository repository;
@@ -64,6 +60,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        activateIrisGlobally();
         activateIrisFor(course);
         activateIrisFor(exercise);
         repository = new LocalRepository("main");
@@ -288,7 +285,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var globalSettings = irisSettingsService.getGlobalSettings();
         globalSettings.getIrisChatSettings().setRateLimit(1);
         globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(10);
-        irisSettingsService.saveGlobalIrisSettings(globalSettings);
+        irisSettingsService.saveIrisSettings(globalSettings);
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, IrisMessage.class, HttpStatus.CREATED);
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
@@ -303,14 +300,13 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         // Reset to not interfere with other tests
         globalSettings.getIrisChatSettings().setRateLimit(null);
         globalSettings.getIrisChatSettings().setRateLimitTimeframeHours(null);
-        irisSettingsService.saveGlobalIrisSettings(globalSettings);
+        irisSettingsService.saveIrisSettings(globalSettings);
     }
 
     private void setupExercise() throws Exception {
         var savedExercise = irisUtilTestService.setupTemplate(exercise, repository);
         var exerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(savedExercise, TEST_PREFIX + "student1");
         irisUtilTestService.setupStudentParticipation(exerciseParticipation, repository);
-        activateIrisFor(savedExercise);
     }
 
     private IrisMessage createDefaultMockMessage(IrisSession irisSession) {

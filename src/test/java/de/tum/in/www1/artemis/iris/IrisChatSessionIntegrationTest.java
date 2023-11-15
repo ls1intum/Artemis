@@ -77,16 +77,16 @@ class IrisChatSessionIntegrationTest extends AbstractIrisIntegrationTest {
 
         var previousPreferredModel = settings.getIrisChatSettings().getPreferredModel();
         settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_UP");
-        irisSettingsService.saveGlobalIrisSettings(settings);
+        irisSettingsService.saveIrisSettings(settings);
         assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, IrisHealthDTO.class).active()).isTrue();
         settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_DOWN");
-        irisSettingsService.saveGlobalIrisSettings(settings);
+        irisSettingsService.saveIrisSettings(settings);
         assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, IrisHealthDTO.class).active()).isFalse();
         settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_NA");
-        irisSettingsService.saveGlobalIrisSettings(settings);
+        irisSettingsService.saveIrisSettings(settings);
         assertThat(request.get("/api/iris/sessions/" + irisSession.getId() + "/active", HttpStatus.OK, IrisHealthDTO.class).active()).isFalse();
 
         settings.getIrisChatSettings().setPreferredModel(previousPreferredModel);
-        irisSettingsService.saveGlobalIrisSettings(settings);
+        irisSettingsService.saveIrisSettings(settings);
     }
 }

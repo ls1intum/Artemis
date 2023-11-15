@@ -30,6 +30,7 @@ class IrisHestiaIntegrationTest extends AbstractIrisIntegrationTest {
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        activateIrisGlobally();
         activateIrisFor(course);
         activateIrisFor(exercise);
     }

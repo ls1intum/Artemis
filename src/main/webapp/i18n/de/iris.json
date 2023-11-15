@@ -22,22 +22,49 @@
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
                     "hestiaSettings": "Hestia Einstellungen",
-                    "inheritChatSettings": "Vererbe Chat Einstellungen",
-                    "inheritHestiaSettings": "Vererbe Hestia Einstellungen",
+                    "codeEditorSettings": "Code Editor Einstellungen",
                     "enabled-disabled": "Aktiviert/Deaktiviert",
-                    "preferredModel": "Präferiertes Modell",
-                    "inheritModel": "Vererbe Modell",
+                    "models": {
+                        "title": "Modelle",
+                        "allowedModels": {
+                            "title": "Erlaubte Modelle",
+                            "inheritSwitch": "Erbe erlaubte Modelle"
+                        },
+                        "preferredModel": {
+                            "title": "Präferiertes Modell",
+                            "inherit": "Erben"
+                        }
+                    },
                     "rateLimit": "Rate Limit",
                     "rateLimitTooltip": "Die maximale Anzahl an Antworten, die ein Benutzer vom LLM in einem bestimmten Zeitraum erhalten kann.",
+                    "rateLimitTimeframeHours": "Rate Limit Zeitrahmen (Stunden)",
+                    "rateLimitTimeframeHoursTooltip": "Der Zeitraum, in welchem das Rate Limit angewendet wird, in Stunden.",
                     "template": {
                         "title": "Template",
-                        "inherit": "Inherit Template"
+                        "inherit": "Template erben"
+                    },
+                    "codeEditor": {
+                        "templates": "Templates",
+                        "templatesInheritSwitch": "Templates erben",
+                        "chatTemplate": "Chat Template",
+                        "problemStatementTemplate": "Problem Statement Generations Template",
+                        "templateRepoTemplate": "Vorlagen Repository Generations Template",
+                        "solutionRepoTemplate": "Lösungs Repository Generations Template",
+                        "testRepoTemplate": "Test Repository Generations Template"
                     }
                 },
                 "title": {
+                    "breadcrumb": "Iris Einstellungen",
                     "global": "Globale Iris Einstellungen",
                     "course": "Kurs Iris Einstellungen",
                     "programmingExercise": "Programmieraufgabe Iris Einstellungen"
+                },
+                "autoUpdate": {
+                    "title": "Auto Update Einstellungen",
+                    "tooltip": "Wenn aktiviert, werden die spezifischen globalen Iris Einstellungen automatisch aktualisiert, wenn eine neue Version von Artemis neue Iris Einstellungen bereitstellt.",
+                    "chatLabel": "Auto Update der Chat Einstellungen",
+                    "hestiaLabel": "Auto Update der Hestia Einstellungen",
+                    "codeEditorLabel": "Auto Update der Code Editor Einstellungen"
                 }
             },
             "error": {

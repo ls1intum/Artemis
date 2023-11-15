@@ -31,7 +31,8 @@ html {
     .mat-mdc-option.mdc-list-item {
         background-color: $gray-100;
 
-        &:hover {
+        &:hover,
+        &.mat-mdc-option-active {
             background-color: $white;
         }
     }
