@@ -11,7 +11,8 @@ import { SortService } from 'app/shared/service/sort.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSort, faX } from '@fortawesome/free-solid-svg-icons';
+import { ButtonSize } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
@@ -26,12 +27,15 @@ export class ApollonDiagramListComponent implements OnInit {
     courseId: number;
 
     @Output() openDiagram = new EventEmitter<number>();
+    @Output() closeDialog = new EventEmitter();
 
     course: Course;
 
     // Icons
     faSort = faSort;
     faPlus = faPlus;
+    faX = faX;
+    ButtonSize = ButtonSize;
 
     constructor(
         private apollonDiagramsService: ApollonDiagramService,
@@ -50,9 +54,8 @@ export class ApollonDiagramListComponent implements OnInit {
      * Initializes Apollon diagrams from the server
      */
     ngOnInit() {
-        if (!this.courseId) {
-            this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        }
+        this.courseId ??= Number(this.route.snapshot.paramMap.get('courseId'));
+
         this.courseService.find(this.courseId).subscribe((courseResponse: HttpResponse<Course>) => {
             this.course = courseResponse.body!;
         });
@@ -104,6 +107,10 @@ export class ApollonDiagramListComponent implements OnInit {
 
     handleOpenDialogClick(apollonDiagramId: number) {
         this.openDiagram.emit(apollonDiagramId);
+    }
+
+    handleCloseDiagramClick() {
+        this.closeDialog.emit();
     }
 
     /**

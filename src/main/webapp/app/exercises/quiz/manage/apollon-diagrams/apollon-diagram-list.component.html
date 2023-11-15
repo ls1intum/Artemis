@@ -1,8 +1,8 @@
-<div class="m-4">
-    <h2>
-        <span jhiTranslate="artemisApp.apollonDiagram.home.title">Apollon Diagrams</span>
-    </h2>
-
+<div class="modal-header">
+    <h4 class="modal-title">{{ 'artemisApp.apollonDiagram.home.title' | artemisTranslate }}</h4>
+    <button type="button ms-auto" class="btn" (click)="handleCloseDiagramClick()"><fa-icon [icon]="faX" size="lg" /></button>
+</div>
+<div class="modal-body">
     <div class="row">
         <div class="col">
             <button (click)="openCreateDiagramDialog(courseId)" id="create-apollon-diagram" class="btn btn-primary">
@@ -36,11 +36,21 @@
                     <td>
                         <button class="btn btn-primary me-1" (click)="handleOpenDialogClick(apollonDiagram.id!)" jhiTranslate="entity.action.open">Open</button>
                         <ng-container *ngIf="course && course.isAtLeastInstructor">
-                            <button class="btn btn-danger me-1" (click)="delete(apollonDiagram)" jhiTranslate="entity.action.delete">Delete</button>
+                            <button
+                                class="me-1"
+                                (delete)="delete(apollonDiagram)"
+                                [buttonSize]="ButtonSize.MEDIUM"
+                                [deleteQuestion]="'artemisApp.apollonDiagram.delete.question'"
+                                [entityTitle]="apollonDiagram.title"
+                                jhiDeleteButton
+                            ></button>
                         </ng-container>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-outline-primary me-auto" (click)="handleCloseDiagramClick()">Close</button>
 </div>

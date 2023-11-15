@@ -24,7 +24,7 @@ export class DeleteDialogData {
     dialogError: Observable<string>;
 
     // title of the entity we want to delete
-    entityTitle: string;
+    entityTitle?: string;
 
     // i18n key, that will be translated
     deleteQuestion: string;
