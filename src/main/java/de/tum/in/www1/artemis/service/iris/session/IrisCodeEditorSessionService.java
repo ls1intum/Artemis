@@ -1,13 +1,9 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +16,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -32,12 +29,12 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 import de.tum.in.www1.artemis.service.iris.session.codeeditor.IrisChangeException;
 import de.tum.in.www1.artemis.service.iris.session.codeeditor.file.*;
 import de.tum.in.www1.artemis.service.iris.session.codeeditor.problemstatement.*;
+import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisCodeEditorWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -54,7 +51,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private final IrisMessageService irisMessageService;
 
-    private final IrisSettingsService irisSettingsService; // Will need this when we have settings to consider
+    private final IrisSettingsService irisSettingsService;
 
     private final IrisCodeEditorWebsocketService irisCodeEditorWebsocketService;
 
@@ -129,31 +126,13 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         checkIsIrisActivated(castToSessionType(session, IrisCodeEditorSession.class));
     }
 
-    private void checkIsIrisActivated(IrisCodeEditorSession ignored) {
-        // Code editor sessions should probably be available for every programming exercise, especially brand-new ones
-        // Might want to check something here in the future. For now, do nothing.
+    private void checkIsIrisActivated(IrisCodeEditorSession session) {
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CODE_EDITOR, session.getExercise());
     }
 
     @Override
     public void sendOverWebsocket(IrisMessage message) {
         irisCodeEditorWebsocketService.sendMessage(message);
-    }
-
-    /**
-     * Loads the content of the file from the file system in the src/main/resources/iris directory.
-     * ONLY FOR TESTING PURPOSES!
-     *
-     * @param fileName The name of the file to load
-     * @return The content of the file
-     */
-    private static String load(String fileName) {
-        Path path = Path.of("src", "main", "resources", "iris", fileName);
-        try {
-            return FileUtils.readFileToString(path.toFile(), StandardCharsets.UTF_8).trim();
-        }
-        catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     /**
@@ -165,11 +144,12 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     @Override
     public void requestAndHandleResponse(IrisSession irisSession) {
         IrisCodeEditorSession session = castToSessionType(irisSession, IrisCodeEditorSession.class);
-        var params = initializeParams(session.getExercise());
+        var exercise = session.getExercise();
+        var params = initializeParams(exercise);
         params.put("chatHistory", session.getMessages()); // Additionally add the chat history to the request
 
-        // The template and model are hard-coded for now, but will be configurable in the future
-        irisConnectorService.sendRequestV2(load("conversation.hbs"), load("model.txt"), params).handleAsync((response, err) -> {
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisCodeEditorSettings();
+        irisConnectorService.sendRequestV2(settings.getChatTemplate().getContent(), settings.getPreferredModel(), params).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
                 irisCodeEditorWebsocketService.sendException(session, err.getCause());
@@ -280,20 +260,22 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      */
     public void requestChangesToExerciseComponent(IrisCodeEditorSession session, IrisExercisePlanStep exerciseStep) {
         irisExercisePlanStepRepository.setInProgress(exerciseStep);
+        var exercise = session.getExercise();
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisCodeEditorSettings();
         var component = exerciseStep.getComponent();
+
         String template = switch (component) {
-            case PROBLEM_STATEMENT -> load("problem_statement.hbs");
-            case SOLUTION_REPOSITORY -> load("solution_repository.hbs");
-            case TEMPLATE_REPOSITORY -> load("template_repository.hbs");
-            case TEST_REPOSITORY -> load("test_repository.hbs");
+            case PROBLEM_STATEMENT -> settings.getProblemStatementGenerationTemplate().getContent();
+            case SOLUTION_REPOSITORY -> settings.getSolutionRepoGenerationTemplate().getContent();
+            case TEMPLATE_REPOSITORY -> settings.getTemplateRepoGenerationTemplate().getContent();
+            case TEST_REPOSITORY -> settings.getTestRepoGenerationTemplate().getContent();
         };
 
-        var exercise = session.getExercise();
         var params = initializeParams(exercise);
         // Add the instructions previously generated by Iris for this step of the plan
         params.put("instructions", exerciseStep.getInstructions());
 
-        irisConnectorService.sendRequestV2(template, load("model.txt"), params).handleAsync((response, err) -> {
+        irisConnectorService.sendRequestV2(template, settings.getPreferredModel(), params).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
                 irisExercisePlanStepRepository.setFailed(exerciseStep);
@@ -301,7 +283,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 return null;
             }
             if (response == null) {
-                log.error("No response from Iris model: " + response);
+                log.error("No response from Iris model");
                 irisExercisePlanStepRepository.setFailed(exerciseStep);
                 irisCodeEditorWebsocketService.notifyStepException(session, exerciseStep, new IrisNoResponseException());
                 return null;

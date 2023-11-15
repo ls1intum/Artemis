@@ -18,7 +18,12 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @DiscriminatorColumn(name = "discriminator")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = IrisTextMessageContent.class, name = "text"), @JsonSubTypes.Type(value = IrisExercisePlan.class, name = "exercise_plan") })
+// @formatter:off
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = IrisTextMessageContent.class, name = "text"),
+        @JsonSubTypes.Type(value = IrisExercisePlan.class, name = "exercise_plan")
+})
+// @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisMessageContent extends DomainObject {
 
