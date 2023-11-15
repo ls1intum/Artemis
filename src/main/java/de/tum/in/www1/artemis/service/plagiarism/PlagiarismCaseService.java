@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismSubmissionRepository;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
-import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismVerdictDTO;
 
 @Service
 public class PlagiarismCaseService {
