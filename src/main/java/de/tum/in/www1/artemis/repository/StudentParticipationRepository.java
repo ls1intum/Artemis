@@ -239,6 +239,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.results r
                 LEFT JOIN FETCH r.submission s
                 LEFT JOIN FETCH p.submissions
+                LEFT JOIN FETCH r.assessmentNote
             WHERE p.exercise.id = :exerciseId
                 AND (
                     r.id = (SELECT MAX(p_r.id) FROM p.results p_r)
@@ -279,6 +280,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN FETCH p.results r
                 LEFT JOIN FETCH r.submission s
                 LEFT JOIN FETCH p.submissions
+                LEFT JOIN FETCH r.assessmentNote
             WHERE p.exercise.id = :exerciseId
                 AND (
                     r.id = (SELECT MAX(p_r.id) FROM p.results p_r WHERE p_r.rated = TRUE)
