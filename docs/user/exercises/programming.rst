@@ -45,12 +45,22 @@ The following activity diagram shows this exercise workflow.
 
    Exercise Workflow
 
-Setup
-------
+Features
+--------
 
-The following sections describe the supported features and the process of creating a new programming exercise.
+The subsequent sections describes the programming-related features that Artemis supports.
+
+.. include:: programming-exercise-features.inc
+
+Exercise Creation
+-----------------
 
 .. include:: programming-exercise-setup.inc
+
+Exercise Import
+---------------
+
+.. include:: programming-exercise-import.inc
 
 Static Code Analysis Default Configuration
 ------------------------------------------
