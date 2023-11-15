@@ -16,11 +16,11 @@ public class UserFactory {
     /**
      * Generates the given amount of Users with the given arguments.
      *
-     * @param loginPrefix        The prefix that will be added in front of every user's login
-     * @param commonPasswordHash The password hash that will be set for every user
-     * @param groups             The groups that the users will be added to
-     * @param authorities        The authorities that the users will have
-     * @param amount             The amount of users to generate
+     * @param loginPrefix        The prefix that will be added in front of every User's username
+     * @param commonPasswordHash The password hash that will be set for every User
+     * @param groups             The groups that the Users will be added to
+     * @param authorities        The authorities that the Users will have
+     * @param amount             The amount of Users to generate
      * @return The List of generated Users
      */
     public static List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
@@ -39,10 +39,10 @@ public class UserFactory {
     /**
      * Generates the given amount of Users with the given arguments.
      *
-     * @param loginPrefix The prefix that will be added in front of every user's login
-     * @param groups      The groups that the users will be added to
-     * @param authorities The authorities that the users will have
-     * @param amount      The amount of users to generate
+     * @param loginPrefix The prefix that will be added in front of every User's username
+     * @param groups      The groups that the Users will be added to
+     * @param authorities The authorities that the Users will have
+     * @param amount      The amount of Users to generate
      * @return The List of generated Users
      */
     public static List<User> generateActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
@@ -52,11 +52,11 @@ public class UserFactory {
     /**
      * Generates the given amount of Users with the given arguments.
      *
-     * @param loginPrefix              The prefix that will be added in front of every user's login
-     * @param groups                   The groups that the users will be added to
-     * @param authorities              The authorities that the users will have
-     * @param amount                   The amount of users to generate
-     * @param registrationNumberPrefix The prefix that will be added in front of every user's registration number
+     * @param loginPrefix              The prefix that will be added in front of every User's username
+     * @param groups                   The groups that the Users will be added to
+     * @param authorities              The authorities that the Users will have
+     * @param amount                   The amount of Users to generate
+     * @param registrationNumberPrefix The prefix that will be added in front of every User's registration number
      * @return The List of generated Users
      */
     public static List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, String[] groups, Set<Authority> authorities, int amount,
@@ -71,7 +71,7 @@ public class UserFactory {
     /**
      * Generates a User with the given arguments.
      *
-     * @param login    The login of the User
+     * @param login    The username of the User
      * @param password The password of the User
      * @return The generated User
      */
@@ -90,9 +90,9 @@ public class UserFactory {
     }
 
     /**
-     * Generates a User with the given login.
+     * Generates a User with the given username.
      *
-     * @param login The login of the User
+     * @param login The username of the User
      * @return The generated User
      */
     public static User generateActivatedUser(String login) {
@@ -102,7 +102,7 @@ public class UserFactory {
     /**
      * Generates a StudentDTO with the given registration number.
      *
-     * @param registrationNumber The registration number of the user.
+     * @param registrationNumber The registration number of the User.
      * @return The generated StudentDTO
      */
     public static StudentDTO generateStudentDTOWithRegistrationNumber(String registrationNumber) {

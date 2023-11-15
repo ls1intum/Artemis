@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
 /**
- * Service responsible for initializing the database with specific testdata related to users for use in integration tests.
+ * Service responsible for initializing the database with specific testdata related to Users for use in integration tests.
  */
 @Service
 public class UserUtilService {
@@ -89,11 +89,11 @@ public class UserUtilService {
     /**
      * Creates and saves the given amount of Users with the given arguments.
      *
-     * @param loginPrefix              The prefix that will be added in front of every user's login
-     * @param groups                   The groups that the users will be added to
-     * @param authorities              The authorities that the users will have
-     * @param amount                   The amount of users to generate
-     * @param registrationNumberPrefix The prefix that will be added in front of every user's registration number
+     * @param loginPrefix              The prefix that will be added in front of every User's username
+     * @param groups                   The groups that the Users will be added to
+     * @param authorities              The authorities that the Users will have
+     * @param amount                   The amount of Users to generate
+     * @param registrationNumberPrefix The prefix that will be added in front of every User's registration number
      * @return The List of generated Users
      */
     public List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, String[] groups, Set<Authority> authorities, int amount, String registrationNumberPrefix) {
@@ -107,10 +107,10 @@ public class UserUtilService {
     /**
      * Creates and saves the given amount of Users with the given arguments.
      *
-     * @param loginPrefix The prefix that will be added in front of every user's login
-     * @param groups      The groups that the users will be added to
-     * @param authorities The authorities that the users will have
-     * @param amount      The amount of users to generate
+     * @param loginPrefix The prefix that will be added in front of every User's username
+     * @param groups      The groups that the Users will be added to
+     * @param authorities The authorities that the Users will have
+     * @param amount      The amount of Users to generate
      * @return The List of generated Users
      */
     public List<User> generateAndSaveActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
@@ -120,11 +120,11 @@ public class UserUtilService {
     /**
      * Creates and saves the given amount of Users with the given arguments.
      *
-     * @param loginPrefix        The prefix that will be added in front of every user's login
-     * @param commonPasswordHash The password hash that will be set for every user
-     * @param groups             The groups that the users will be added to
-     * @param authorities        The authorities that the users will have
-     * @param amount             The amount of users to generate
+     * @param loginPrefix        The prefix that will be added in front of every User's username
+     * @param commonPasswordHash The password hash that will be set for every User
+     * @param groups             The groups that the Users will be added to
+     * @param authorities        The authorities that the Users will have
+     * @param amount             The amount of Users to generate
      * @return The List of generated Users
      */
     public List<User> generateAndSaveActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
@@ -144,11 +144,12 @@ public class UserUtilService {
     }
 
     /**
-     * Updates and saves the Users' registration numbers. The login of the updated Users is a concatenation of the testPrefix + "student" + a number counting from 1 to the size of
+     * Updates and saves the Users' registration numbers. The username of the updated Users is a concatenation of the testPrefix + "student" + a number counting from 1 to the size
+     * of
      * the registrationNumbers list. Throws an IllegalArgumentException if the Users do not exist.
      *
      * @param registrationNumbers The registration numbers to set
-     * @param testPrefix          The prefix to use for the login
+     * @param testPrefix          The prefix to use for the username
      * @return A List of the updated Users
      */
     public List<User> setRegistrationNumberOfStudents(List<String> registrationNumbers, String testPrefix) {
@@ -162,7 +163,7 @@ public class UserUtilService {
     /**
      * Updates and saves the User's registration number.
      *
-     * @param login              The login of the User to update
+     * @param login              The username of the User to update
      * @param registrationNumber The registration number to set
      * @return The updated User
      */
@@ -186,11 +187,11 @@ public class UserUtilService {
     /**
      * Creates and saves the given amount of Users with the given arguments.
      *
-     * @param loginPrefix        The prefix that will be added in front of every user's login
-     * @param commonPasswordHash The password hash that will be set for every user
-     * @param groups             The groups that the users will be added to
-     * @param authorities        The authorities that the users will have
-     * @param amount             The amount of users to generate
+     * @param loginPrefix        The prefix that will be added in front of every User's username
+     * @param commonPasswordHash The password hash that will be set for every User
+     * @param groups             The groups that the Users will be added to
+     * @param authorities        The authorities that the Users will have
+     * @param amount             The amount of Users to generate
      * @return The List of generated Users
      */
     public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
@@ -200,10 +201,10 @@ public class UserUtilService {
     /**
      * Creates and saves Users with the given arguments. Creates [to - from + 1] Users.
      *
-     * @param loginPrefix        The prefix that will be added in front of every user's login
-     * @param commonPasswordHash The password hash that will be set for every user
-     * @param groups             The groups that the users will be added to
-     * @param authorities        The authorities that the users will have
+     * @param loginPrefix        The prefix that will be added in front of every User's username
+     * @param commonPasswordHash The password hash that will be set for every User
+     * @param groups             The groups that the Users will be added to
+     * @param authorities        The authorities that the Users will have
      * @param from               The first number to append to the loginPrefix
      * @param to                 The last number to append to the loginPrefix
      * @return The List of generated Users
@@ -224,9 +225,9 @@ public class UserUtilService {
     }
 
     /**
-     * Creates and saves a User. If a User with the given login already exists, the existing User is updated and saved.
+     * Creates and saves a User. If a User with the given username already exists, the existing User is updated and saved.
      *
-     * @param login          The login of the User
+     * @param login          The username of the User
      * @param hashedPassword The password hash of the User
      * @return The created User
      */
@@ -240,9 +241,9 @@ public class UserUtilService {
     }
 
     /**
-     * Creates a User. If a User with the given login already exists, the newly created User's ID is set to the existing User's ID.
+     * Creates a User. If a User with the given username already exists, the newly created User's ID is set to the existing User's ID.
      *
-     * @param login          The login of the User
+     * @param login          The username of the User
      * @param hashedPassword The password hash of the User
      * @return The created User
      */
@@ -256,9 +257,9 @@ public class UserUtilService {
     }
 
     /**
-     * Creates and saves a User. If a User with the given login already exists, the existing User is updated and saved.
+     * Creates and saves a User. If a User with the given username already exists, the existing User is updated and saved.
      *
-     * @param login The login of the User
+     * @param login The username of the User
      * @return The created User
      */
     public User createAndSaveUser(String login) {
@@ -284,12 +285,11 @@ public class UserUtilService {
     }
 
     /**
-     * Creates and saves the provided number of students, tutors, editors and instructors. Also creates and saves an admin User if it does not exist.
-     * The login of the Users is a concatenation of the prefix, the role (student|tutor|editor|instructor) and a number counting from 1 to the number of Users with the
-     * corresponding role. The admin User's login is "admin". To avoid accumulating a high number of Users per Course, this method also removes existing users from Courses before
-     * adding new Users.
+     * Creates and saves multiple students, tutors, editors, and instructors given the corresponding numbers. It also creates and saves an admin User if it does not exist.
+     * The username of the Users is a concatenation of the prefix, the role (student|tutor|editor|instructor) and a number counting from 1 to the number of Users with the
+     * corresponding role. The admin User's username is "admin". This method avoids the accumulation of many Users per Course by removing existing Users before adding new ones.
      *
-     * @param prefix              The prefix for the User login
+     * @param prefix              The prefix for the User username
      * @param numberOfStudents    The number of students to create
      * @param numberOfTutors      The number of tutors to create
      * @param numberOfEditors     The number of editors to create
@@ -349,7 +349,7 @@ public class UserUtilService {
     /**
      * Creates and saves Users with student authorities. Creates [to - from + 1] Users.
      *
-     * @param prefix The prefix that will be added in front of every user's login
+     * @param prefix The prefix that will be added in front of every User's username
      * @param from   The first number to append to the loginPrefix
      * @param to     The last number to append to the loginPrefix
      */
@@ -377,7 +377,7 @@ public class UserUtilService {
     }
 
     /**
-     * Creates and saves a User with instructor authorities, if no User with the given login exists.
+     * Creates and saves a User with instructor authorities, if no User with the given username exists.
      *
      * @param instructorGroup The group that the instructor will be added to
      * @param instructorName  The login of the instructor
@@ -393,7 +393,7 @@ public class UserUtilService {
     }
 
     /**
-     * Creates and saves a User with editor authorities, if no User with the given login exists.
+     * Creates and saves a User with editor authorities, if no User with the given username exists.
      *
      * @param editorGroup The group that the editor will be added to
      * @param editorName  The login of the editor
@@ -409,7 +409,7 @@ public class UserUtilService {
     }
 
     /**
-     * Creates and saves a User with tutor authorities, if no User with the given login exists.
+     * Creates and saves a User with tutor authorities, if no User with the given username exists.
      *
      * @param taGroup The group that the tutor will be added to
      * @param taName  The login of the tutor
@@ -425,7 +425,7 @@ public class UserUtilService {
     }
 
     /**
-     * Creates and saves a User with student authorities, if no User with the given login exists.
+     * Creates and saves a User with student authorities, if no User with the given username exists.
      *
      * @param studentGroup The group that the student will be added to
      * @param studentName  The login of the student
@@ -454,9 +454,9 @@ public class UserUtilService {
     }
 
     /**
-     * Gets the User with the given login from the database. Throws an IllegalArgumentException if the User does not exist.
+     * Gets the User with the given username from the database. Throws an IllegalArgumentException if the User does not exist.
      *
-     * @param login The login of the User
+     * @param login The username of the User
      * @return The User with eagerly loaded groups and authorities
      */
     public User getUserByLogin(String login) {
@@ -466,9 +466,9 @@ public class UserUtilService {
     }
 
     /**
-     * Checks if a User with the given login exists.
+     * Checks if a User with the given username exists.
      *
-     * @param login The login of the User
+     * @param login The username of the User
      * @return True, if a User with the given login exists, false otherwise
      */
     public boolean userExistsWithLogin(String login) {
@@ -476,7 +476,7 @@ public class UserUtilService {
     }
 
     /**
-     * Removes the User with the given login from all Courses and saves the updated User.
+     * Removes the User with the given username from all Courses and saves the updated User.
      *
      * @param login The login of the User
      */
@@ -489,7 +489,7 @@ public class UserUtilService {
     /**
      * Updates and saves the User's groups.
      *
-     * @param userPrefix          The prefix of the User's login
+     * @param userPrefix          The prefix of the User's username
      * @param userSuffix          The suffix of the custom group
      * @param numberOfStudents    The number of students to update
      * @param numberOfTutors      The number of tutors to update
