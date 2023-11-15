@@ -50,17 +50,13 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
 
     public List<ClientRegistration> getAllClientRegistrations() {
         // TODO: we should avoid findAll() and instead try to retrieve the correct object directly from the database, potentially in a batch
-        return onlineCourseConfigurationRepository.findAll().stream().map(this::getClientRegistration).filter(Objects::nonNull).toList();
+        return ltiPlatformConfigurationRepository.findAll().stream().map(this::getClientRegistration).filter(Objects::nonNull).toList();
     }
 
     @Override
     public ClientRegistration findByRegistrationId(String registrationId) {
-        Optional<OnlineCourseConfiguration> onlineCourseConfiguration = onlineCourseConfigurationRepository.findByRegistrationId(registrationId);
-        if (onlineCourseConfiguration.map(this::getClientRegistration).orElse(null) == null) {
-            Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(registrationId);
-            return ltiPlatformConfiguration.map(this::getClientRegistrationForLtiPlatform).orElse(null);
-        }
-        return onlineCourseConfiguration.map(this::getClientRegistration).orElse(null);
+        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(registrationId);
+        return ltiPlatformConfiguration.map(this::getClientRegistration).orElse(null);
     }
 
     /**
@@ -75,7 +71,6 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
         ocConfiguration.setLtiKey(RandomStringUtils.random(12, true, true));
         ocConfiguration.setLtiSecret(RandomStringUtils.random(12, true, true));
         ocConfiguration.setUserPrefix(course.getShortName());
-        ocConfiguration.setRegistrationId(RandomStringUtils.random(24, true, true));
         course.setOnlineCourseConfiguration(ocConfiguration);
         return ocConfiguration;
     }
@@ -84,7 +79,6 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
      * Validates the online course configuration
      *
      * @param ocConfiguration the online course configuration being validated
-     * @throws BadRequestAlertException 400 (Bad Request) if the online course configuration is invalid
      */
     public void validateOnlineCourseConfiguration(OnlineCourseConfiguration ocConfiguration) {
         if (StringUtils.isBlank(ocConfiguration.getLtiKey()) || StringUtils.isBlank(ocConfiguration.getLtiSecret())) {
@@ -93,50 +87,15 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
         if (StringUtils.isBlank(ocConfiguration.getUserPrefix()) || !ocConfiguration.getUserPrefix().matches(LOGIN_REGEX)) {
             throw new BadRequestAlertException("Invalid user prefix, must match login regex defined in Constants.java", ENTITY_NAME, "invalidUserPrefix");
         }
-
-        Optional<OnlineCourseConfiguration> existingOnlineCourseConfiguration = onlineCourseConfigurationRepository.findByRegistrationId(ocConfiguration.getRegistrationId());
-        if (existingOnlineCourseConfiguration.isPresent() && !Objects.equals(existingOnlineCourseConfiguration.get().getId(), ocConfiguration.getId())) {
-            throw new BadRequestAlertException("Registration ID must be unique", ENTITY_NAME, "invalidRegistrationId");
-        }
     }
 
     /**
-     * Converts the onlineCourseConfiguration to a ClientRegistration if the necessary fields are filled
+     * Converts the ltiPlatformConfiguration to a ClientRegistration if the necessary fields are filled
      *
-     * @param onlineCourseConfiguration the online course configuration
-     * @return the clientRegistration from the converted online course configuration
+     * @param ltiPlatformConfiguration the lti platform configuration
+     * @return the clientRegistration from the converted lti platform configuration
      */
-    public ClientRegistration getClientRegistration(OnlineCourseConfiguration onlineCourseConfiguration) {
-        if (onlineCourseConfiguration == null) {
-            return null;
-        }
-        try {
-            return ClientRegistration.withRegistrationId(onlineCourseConfiguration.getRegistrationId()) // formatting
-                    .clientId(onlineCourseConfiguration.getClientId()) //
-                    .authorizationUri(onlineCourseConfiguration.getAuthorizationUri()) //
-                    .jwkSetUri(onlineCourseConfiguration.getJwkSetUri()) //
-                    .tokenUri(onlineCourseConfiguration.getTokenUri()) //
-                    .redirectUri(artemisServerUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH) //
-                    .scope("openid") //
-                    .authorizationGrantType(AuthorizationGrantType.IMPLICIT) //
-                    .build();
-        }
-        catch (IllegalArgumentException e) {
-            // Log a warning for rare scenarios i.e. ClientId is empty. This can occur when online courses lack an external LMS connection or use LTI v1.0.
-            log.warn("Could not build Client Registration from onlineCourseConfiguration for course with ID: {} and title: {}. Reason: {}",
-                    Optional.of(onlineCourseConfiguration).map(OnlineCourseConfiguration::getCourse).map(Course::getId).orElse(null),
-                    Optional.of(onlineCourseConfiguration).map(OnlineCourseConfiguration::getCourse).map(Course::getTitle).orElse(""), e.getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Converts the onlineCourseConfiguration to a ClientRegistration if the necessary fields are filled
-     *
-     * @param ltiPlatformConfiguration the online course configuration
-     * @return the clientRegistration from the converted online course configuration
-     */
-    public ClientRegistration getClientRegistrationForLtiPlatform(LtiPlatformConfiguration ltiPlatformConfiguration) {
+    public ClientRegistration getClientRegistration(LtiPlatformConfiguration ltiPlatformConfiguration) {
         if (ltiPlatformConfiguration == null) {
             return null;
         }

@@ -13,8 +13,10 @@ import com.google.gson.JsonParser;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 
@@ -28,6 +30,9 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Autowired
     private OAuth2JWKSService oAuth2JWKSService;
+
+    @Autowired
+    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
     @Test
     @WithAnonymousUser
@@ -46,11 +51,15 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest
         course.setId(1L);
         courseRepository.save(course);
         OnlineCourseConfiguration onlineCourseConfiguration = CourseFactory.generateOnlineCourseConfiguration(course, "key", "secret", "prefix", "url");
-        onlineCourseConfiguration.setRegistrationId("registrationId");
-        onlineCourseConfiguration.setClientId("clientId");
-        onlineCourseConfiguration.setAuthorizationUri("authUri");
-        onlineCourseConfiguration.setTokenUri("tokenUri");
+        LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
+        ltiPlatformConfiguration.setRegistrationId("registrationId");
+        ltiPlatformConfiguration.setClientId("clientId");
+        ltiPlatformConfiguration.setAuthorizationUri("authUri");
+        ltiPlatformConfiguration.setTokenUri("tokenUri");
+        onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
+        ltiPlatformConfiguration.addOnlineCourseConfiguration(onlineCourseConfiguration);
 
+        ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
         onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
         oAuth2JWKSService.updateKey("registrationId");
 

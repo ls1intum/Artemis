@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="basak-akan" id="20231115133000-1">
+        <!-- Create lti_platform_configuration table -->
+        <createTable tableName="lti_platform_configuration">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="registration_id" type="varchar(255)"/>
+            <column name="client_id" type="varchar(255)"/>
+            <column name="issuer" type="varchar(255)"/>
+            <column name="authorization_uri" type="varchar(255)"/>
+            <column name="jkw_set_uri" type="varchar(255)"/>
+            <column name="token_uri" type="varchar(255)"/>
+        </createTable>
+        <!-- Add a new column for the foreign key in online_course_configuration table -->
+        <addColumn tableName="online_course_configuration">
+            <column name="lti_platform_id" type="bigint">
+                <constraints nullable="true" referencedTableName="lti_platform_configuration"
+                             referencedColumnNames="id" foreignKeyName="fk_online_course_config_lti_platform"/>
+            </column>
+        </addColumn>
+        <!-- Remove the columns that are no longer present in the entity -->
+        <dropColumn tableName="online_course_configuration" columnName="original_url"/>
+        <dropColumn tableName="online_course_configuration" columnName="registration_id"/>
+        <dropColumn tableName="online_course_configuration" columnName="client_id"/>
+        <dropColumn tableName="online_course_configuration" columnName="authorization_uri"/>
+        <dropColumn tableName="online_course_configuration" columnName="jkw_set_uri"/>
+        <dropColumn tableName="online_course_configuration" columnName="token_uri"/>
+    </changeSet>
+</databaseChangeLog>

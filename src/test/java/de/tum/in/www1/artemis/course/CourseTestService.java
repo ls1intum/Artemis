@@ -3023,7 +3023,6 @@ public class CourseTestService {
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
-        assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getRegistrationId()).isNotNull();
         assertThat(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(courseWithOnlineConfiguration.getShortName());
     }
 
@@ -3039,7 +3038,6 @@ public class CourseTestService {
         assertThat(updatedCourse.getOnlineCourseConfiguration()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiSecret()).isNotNull();
-        assertThat(updatedCourse.getOnlineCourseConfiguration().getRegistrationId()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getUserPrefix()).isEqualTo(updatedCourse.getShortName());
     }
 
@@ -3074,7 +3072,6 @@ public class CourseTestService {
         assertThat(ocConfiguration).isNotNull();
         assertThat(ocConfiguration.getLtiKey()).isNotNull();
         assertThat(ocConfiguration.getLtiSecret()).isNotNull();
-        assertThat(ocConfiguration.getRegistrationId()).isNotNull();
         assertThat(ocConfiguration.getUserPrefix()).isEqualTo(actualCourse.getShortName());
     }
 
@@ -3149,7 +3146,6 @@ public class CourseTestService {
         String courseId = createdCourse2.getId().toString();
 
         OnlineCourseConfiguration ocConfiguration = createdCourse2WithOcConfiguration.getOnlineCourseConfiguration();
-        ocConfiguration.setRegistrationId(createdCourse1WithOcConfiguration.getOnlineCourseConfiguration().getRegistrationId());
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), ocConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -3200,10 +3196,6 @@ public class CourseTestService {
         ocConfiguration.setLtiKey("key");
         ocConfiguration.setLtiSecret("secret");
         ocConfiguration.setUserPrefix("prefix");
-        ocConfiguration.setRegistrationId("random");
-        ocConfiguration.setAuthorizationUri("authUri");
-        ocConfiguration.setTokenUri("tokenUri");
-        ocConfiguration.setJwkSetUri("jwksUri");
 
         String courseId = course.getId().toString();
 

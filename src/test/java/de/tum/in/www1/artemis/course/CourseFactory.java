@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 
@@ -97,7 +98,10 @@ public class CourseFactory {
         onlineCourseConfiguration.setLtiKey(key);
         onlineCourseConfiguration.setLtiSecret(secret);
         onlineCourseConfiguration.setUserPrefix(userPrefix);
-        onlineCourseConfiguration.setOriginalUrl(originalUrl);
-        onlineCourseConfiguration.setRegistrationId(registrationId);
+
+        LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
+        ltiPlatformConfiguration.setTokenUri(originalUrl);
+        ltiPlatformConfiguration.setRegistrationId(registrationId);
+        onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
     }
 }

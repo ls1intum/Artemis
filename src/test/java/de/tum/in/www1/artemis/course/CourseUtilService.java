@@ -142,6 +142,9 @@ public class CourseUtilService {
     @Autowired
     private GradingScaleUtilService gradingScaleUtilService;
 
+    @Autowired
+    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
     public Course createCourse() {
         return createCourse(null);
     }
@@ -529,9 +532,14 @@ public class CourseUtilService {
         onlineCourseConfiguration.setLtiKey("artemis_lti_key");
         onlineCourseConfiguration.setLtiSecret("fake-secret");
         onlineCourseConfiguration.setUserPrefix("prefix");
-        onlineCourseConfiguration.setRegistrationId(course.getId().toString());
+
+        LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
+        ltiPlatformConfiguration.setRegistrationId(course.getId().toString());
+        onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
+
         onlineCourseConfiguration.setCourse(course);
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
         courseRepo.save(course);
         return onlineCourseConfiguration;
     }

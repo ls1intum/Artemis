@@ -323,26 +323,13 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         var params = new LinkedMultiValueMap<String, String>();
         params.add("openid_configuration", "configurationUrl");
 
-        request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.FORBIDDEN, params);
+        request.postWithoutResponseBody("/api/lti13/dynamic-registration/", HttpStatus.FORBIDDEN, params);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "admin1", roles = "ADMIN")
     void dynamicRegistrationFailsWithoutOpenIdConfiguration() throws Exception {
-        request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void dynamicRegistrationFailsForNonOnlineCourse() throws Exception {
-        course.setOnlineCourse(false);
-        course.setOnlineCourseConfiguration(null);
-        courseRepository.save(course);
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("openid_configuration", "configurationUrl");
-
-        request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.BAD_REQUEST, params);
+        request.postWithoutResponseBody("/api/lti13/dynamic-registration/", HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
     }
 
     private void assertParametersExistingStudent(MultiValueMap<String, String> parameters) {
