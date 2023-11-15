@@ -98,7 +98,8 @@ public class ConversationUtilService {
     }
 
     /**
-     * Creates and saves a Course. Also creates and saves two TextExercises and two Lectures for the Course. Also creates and saves a PlagiarismCase for the first TextExercise.
+     * Creates and saves a Course. It also creates and saves two TextExercises and two Lectures for the Course. It also creates and saves a PlagiarismCase for the first
+     * TextExercise.
      * Creates and saves Posts for each of the created entities.
      *
      * @param userPrefix The prefix of the author's login
@@ -152,7 +153,8 @@ public class ConversationUtilService {
     }
 
     /**
-     * Creates and saves a OneToOneChat for the given Course. Also creates and saves two ConversationParticipants for the OneToOneChat. Also creates and saves the given number
+     * Creates and saves a OneToOneChat for the given Course. It also creates and saves two ConversationParticipants for the OneToOneChat. It also creates and saves the given
+     * number
      * of Posts with AnswerPosts and Reactions.
      *
      * @param course        The Course the OneToOneChat belongs to
@@ -213,8 +215,8 @@ public class ConversationUtilService {
     }
 
     /**
-     * Creates and saves a Course. Also creates and saves two TextExercises and two Lectures for the Course. Also creates and saves a PlagiarismCase for the first TextExercise.
-     * Creates and saves a Post and an AnswerPost for each of the created entities.
+     * Creates and saves a Course. It also creates and saves two TextExercises and two Lectures. It also creates and saves a PlagiarismCase for the first TextExercise.
+     * Creates and saves a Post with an AnswerPost for each of the created entities.
      *
      * @param userPrefix The prefix of the author's login (the login is appended with "student1")
      * @return A List of the created Posts
@@ -325,7 +327,7 @@ public class ConversationUtilService {
     }
 
     /**
-     * Creates and saves 3 Posts for the given Conversation.
+     * Creates and saves 3 Posts. These Posts are part of the given Conversation and each Post has a different author.
      *
      * @param conversation The Conversation the Posts belong to
      * @param userPrefix   The prefix of the authors' logins (the logins are appended with userRole + (index of created Post + 1))
@@ -421,7 +423,7 @@ public class ConversationUtilService {
     }
 
     /**
-     * Creates and saves a OneToOneChat for the given Course. Also creates and saves two ConversationParticipants for the OneToOneChat.
+     * Creates and saves a OneToOneChat for the given Course. It also creates and saves two ConversationParticipants for the OneToOneChat.
      *
      * @param course     The Course the OneToOneChat belongs to
      * @param userPrefix The prefix of the Users' logins (the logins are appended with "tutor1" and "tutor2")
@@ -519,7 +521,7 @@ public class ConversationUtilService {
     }
 
     /**
-     * Creates and saves a GroupChat. Also creates and saves a Post with a Reaction and an AnswerPost with a Reaction.
+     * Creates and saves a GroupChat. It also creates and saves a Post with a Reaction and an AnswerPost with a Reaction.
      *
      * @param login       The login of the User the Post and AnswerPost belong to
      * @param course      The Course the GroupChat belongs to
@@ -546,7 +548,7 @@ public class ConversationUtilService {
     }
 
     /**
-     * Creates and saves a OneToOneChat. Also creates and saves a Post with a Reaction and an AnswerPost with a Reaction.
+     * Creates and saves a OneToOneChat. It also creates and saves a Post with a Reaction and an AnswerPost with a Reaction.
      *
      * @param login       The login of the User the Post and AnswerPost belong to
      * @param course      The Course the OneToOneChat belongs to
@@ -606,7 +608,7 @@ public class ConversationUtilService {
     }
 
     /**
-     * Creates and saves a Channel, a Post and a Reaction. Also creates and saves an AnswerPost with a Reaction.
+     * Creates and saves a Channel, a Post and a Reaction. It also creates and saves an AnswerPost with a Reaction.
      *
      * @param login       The login of the User the Post, AnswerPost and Reaction belong to
      * @param course      The Course the Channel belongs to

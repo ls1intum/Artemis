@@ -33,7 +33,7 @@ public class ConversationFactory {
     }
 
     /**
-     * Generates a Post for the given User. This Method is used in a loop to generate multiple Posts.
+     * Generates a Post for the given User. This method is used in a loop to generate multiple Posts.
      *
      * @param index  The index of the currently generated Post
      * @param author The User that is the author of the Post
@@ -71,7 +71,7 @@ public class ConversationFactory {
      *
      * @param course       The Course to generate the Channel for
      * @param channelName  The name of the Channel
-     * @param isCourseWide True, if the Channel is course wide
+     * @param isCourseWide True, if the Channel is course-wide
      * @return The generated Channel
      */
     public static Channel generatePublicChannel(Course course, String channelName, boolean isCourseWide) {
@@ -83,7 +83,7 @@ public class ConversationFactory {
      *
      * @param course         The Course to generate the Channel for
      * @param channelName    The name of the Channel
-     * @param isCourseWide   True, if the Channel is course wide
+     * @param isCourseWide   True, if the Channel is course-wide
      * @param isAnnouncement True, if the Channel is an announcement channel
      * @return The generated Channel
      */
