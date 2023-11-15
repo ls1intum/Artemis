@@ -3,6 +3,7 @@
         "assessment": {
             "assessment": "Bewertung",
             "assessmentIllegalSubmission": "Achtung: Es handelt sich um eine illegale Einreichung.",
+            "assessmentNote": "Interne Notiz",
             "testRunAssessment": "Bewertungstestlauf",
             "additionalFeedback": "Zusätzliches Feedback",
             "feedback": "Feedback",
