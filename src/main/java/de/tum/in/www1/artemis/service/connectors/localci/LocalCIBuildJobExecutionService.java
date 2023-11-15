@@ -269,47 +269,6 @@ public class LocalCIBuildJobExecutionService {
 
     // --- Helper methods ----
 
-    /*
-     * private List<String> getTestResultPaths(ProgrammingExercise programmingExercise) {
-     * switch (programmingExercise.getProgrammingLanguage()) {
-     * case JAVA, KOTLIN -> {
-     * return getJavaKotlinTestResultPaths(programmingExercise);
-     * }
-     * case PYTHON -> {
-     * return getPythonTestResultPaths();
-     * }
-     * default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
-     * }
-     * }
-     * private List<String> getJavaKotlinTestResultPaths(ProgrammingExercise programmingExercise) {
-     * List<String> testResultPaths = new ArrayList<>();
-     * if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
-     * if (programmingExercise.hasSequentialTestRuns()) {
-     * testResultPaths.add("/repositories/test-repository/structural/target/surefire-reports");
-     * testResultPaths.add("/repositories/test-repository/behavior/target/surefire-reports");
-     * }
-     * else {
-     * testResultPaths.add("/repositories/test-repository/target/surefire-reports");
-     * }
-     * }
-     * else {
-     * if (programmingExercise.hasSequentialTestRuns()) {
-     * testResultPaths.add("/repositories/test-repository/build/test-results/behaviorTests");
-     * testResultPaths.add("/repositories/test-repository/build/test-results/structuralTests");
-     * }
-     * else {
-     * testResultPaths.add("/repositories/test-repository/build/test-results/test");
-     * }
-     * }
-     * return testResultPaths;
-     * }
-     * private List<String> getPythonTestResultPaths() {
-     * List<String> testResultPaths = new ArrayList<>();
-     * testResultPaths.add("/repositories/test-repository/test-reports");
-     * return testResultPaths;
-     * }
-     */
-
     private LocalCIBuildResult parseTestResults(List<TarArchiveInputStream> testResultsTarInputStreams, String assignmentRepoBranchName, String assignmentRepoCommitHash,
             String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException, XMLStreamException {
 
