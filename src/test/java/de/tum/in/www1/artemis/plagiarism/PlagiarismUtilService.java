@@ -52,10 +52,10 @@ public class PlagiarismUtilService {
     private UserUtilService userUtilService;
 
     /**
-     * Creates and saves a Course and a TextExercise. Also creates and saves StudentParticipations with similar Submissions.
+     * Creates and saves a Course and a TextExercise. It also creates and saves StudentParticipations with similar Submissions.
      *
      * @param userPrefix            The prefix for the user logins
-     * @param similarSubmissionText The text that is submitted by each student
+     * @param similarSubmissionText The text that each student submits
      * @param studentsAmount        The number of students that submitted the text
      * @return The created Course
      */
@@ -93,10 +93,10 @@ public class PlagiarismUtilService {
     }
 
     /**
-     * Creates and saves a ModellingExercise. Also creates and saves StudentParticipations with similar Submissions.
+     * Creates and saves a ModellingExercise. It also creates and saves StudentParticipations with similar Submissions.
      *
      * @param userPrefix             The prefix for the user logins
-     * @param similarSubmissionModel The model that is submitted by each student
+     * @param similarSubmissionModel The model that each student submits
      * @param studentsAmount         The number of students that submitted the model
      * @param course                 The Course to which the ModellingExercise is added
      * @return The updated Course
