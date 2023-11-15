@@ -6,7 +6,9 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -27,8 +29,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
@@ -226,7 +226,7 @@ public class LocalCIBuildJobExecutionService {
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
-        List<String> testResultsPaths = new LinkedList<>();
+        List<String> testResultsPaths = new ArrayList<>();
         testResultsPaths.add("/repositories/test-repository/");
 
         // Get an input stream of the test result files.
@@ -269,46 +269,46 @@ public class LocalCIBuildJobExecutionService {
 
     // --- Helper methods ----
 
-    private List<String> getTestResultPaths(ProgrammingExercise programmingExercise) {
-        switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA, KOTLIN -> {
-                return getJavaKotlinTestResultPaths(programmingExercise);
-            }
-            case PYTHON -> {
-                return getPythonTestResultPaths();
-            }
-            default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
-        }
-    }
-
-    private List<String> getJavaKotlinTestResultPaths(ProgrammingExercise programmingExercise) {
-        List<String> testResultPaths = new ArrayList<>();
-        if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
-            if (programmingExercise.hasSequentialTestRuns()) {
-                testResultPaths.add("/repositories/test-repository/structural/target/surefire-reports");
-                testResultPaths.add("/repositories/test-repository/behavior/target/surefire-reports");
-            }
-            else {
-                testResultPaths.add("/repositories/test-repository/target/surefire-reports");
-            }
-        }
-        else {
-            if (programmingExercise.hasSequentialTestRuns()) {
-                testResultPaths.add("/repositories/test-repository/build/test-results/behaviorTests");
-                testResultPaths.add("/repositories/test-repository/build/test-results/structuralTests");
-            }
-            else {
-                testResultPaths.add("/repositories/test-repository/build/test-results/test");
-            }
-        }
-        return testResultPaths;
-    }
-
-    private List<String> getPythonTestResultPaths() {
-        List<String> testResultPaths = new ArrayList<>();
-        testResultPaths.add("/repositories/test-repository/test-reports");
-        return testResultPaths;
-    }
+    /*
+     * private List<String> getTestResultPaths(ProgrammingExercise programmingExercise) {
+     * switch (programmingExercise.getProgrammingLanguage()) {
+     * case JAVA, KOTLIN -> {
+     * return getJavaKotlinTestResultPaths(programmingExercise);
+     * }
+     * case PYTHON -> {
+     * return getPythonTestResultPaths();
+     * }
+     * default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
+     * }
+     * }
+     * private List<String> getJavaKotlinTestResultPaths(ProgrammingExercise programmingExercise) {
+     * List<String> testResultPaths = new ArrayList<>();
+     * if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
+     * if (programmingExercise.hasSequentialTestRuns()) {
+     * testResultPaths.add("/repositories/test-repository/structural/target/surefire-reports");
+     * testResultPaths.add("/repositories/test-repository/behavior/target/surefire-reports");
+     * }
+     * else {
+     * testResultPaths.add("/repositories/test-repository/target/surefire-reports");
+     * }
+     * }
+     * else {
+     * if (programmingExercise.hasSequentialTestRuns()) {
+     * testResultPaths.add("/repositories/test-repository/build/test-results/behaviorTests");
+     * testResultPaths.add("/repositories/test-repository/build/test-results/structuralTests");
+     * }
+     * else {
+     * testResultPaths.add("/repositories/test-repository/build/test-results/test");
+     * }
+     * }
+     * return testResultPaths;
+     * }
+     * private List<String> getPythonTestResultPaths() {
+     * List<String> testResultPaths = new ArrayList<>();
+     * testResultPaths.add("/repositories/test-repository/test-reports");
+     * return testResultPaths;
+     * }
+     */
 
     private LocalCIBuildResult parseTestResults(List<TarArchiveInputStream> testResultsTarInputStreams, String assignmentRepoBranchName, String assignmentRepoCommitHash,
             String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException, XMLStreamException {
