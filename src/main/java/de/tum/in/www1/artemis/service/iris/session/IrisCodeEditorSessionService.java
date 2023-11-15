@@ -566,6 +566,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             }
             catch (IllegalArgumentException e) {
                 log.error("Missing fields, could not parse FileChange: " + node.toPrettyString(), e);
+                throw new IrisParseResponseException("Parsing failed");
             }
         }
         if (changes.isEmpty()) {

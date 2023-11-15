@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.iris.message.IrisExercisePlanStep;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisExercisePlanStepRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
@@ -28,9 +29,13 @@ public class IrisCodeEditorMessageResource {
 
     private final IrisExercisePlanStepRepository irisExercisePlanStepRepository;
 
-    public IrisCodeEditorMessageResource(IrisCodeEditorSessionService irisCodeEditorSessionService, IrisExercisePlanStepRepository irisExercisePlanStepRepository) {
+    private final UserRepository userRepository;
+
+    public IrisCodeEditorMessageResource(IrisCodeEditorSessionService irisCodeEditorSessionService, IrisExercisePlanStepRepository irisExercisePlanStepRepository,
+            UserRepository userRepository) {
         this.irisCodeEditorSessionService = irisCodeEditorSessionService;
         this.irisExercisePlanStepRepository = irisExercisePlanStepRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -48,9 +53,10 @@ public class IrisCodeEditorMessageResource {
     public ResponseEntity<Void> executeExercisePlanStep(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long planId, @PathVariable Long stepId) {
         var step = irisExercisePlanStepRepository.findByIdElseThrow(stepId);
         var session = checkIdsAndGetSession(sessionId, messageId, planId, step);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
 
         irisCodeEditorSessionService.checkIsIrisActivated(session);
-        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, null);
+        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, user);
         irisCodeEditorSessionService.requestChangesToExerciseComponent(session, step);
         // Return with empty body now, the changes will be sent over the websocket when they are ready
         return ResponseEntity.ok(null);
@@ -74,9 +80,10 @@ public class IrisCodeEditorMessageResource {
             @PathVariable Long stepId, @RequestBody IrisExercisePlanStep updatedStep) {
         var step = irisExercisePlanStepRepository.findByIdElseThrow(stepId);
         var session = checkIdsAndGetSession(sessionId, messageId, planId, step);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
 
         irisCodeEditorSessionService.checkIsIrisActivated(session);
-        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, null);
+        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, user);
 
         step.setInstructions(updatedStep.getInstructions());
 
