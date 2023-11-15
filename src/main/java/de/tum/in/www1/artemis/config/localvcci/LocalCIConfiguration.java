@@ -42,6 +42,12 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
 
+    @Value("${artemis.continuous-integration.thread-pool-size}")
+    int fixedThreadPoolSize;
+
+    @Value("${artemis.continuous-integration.specify-thread-pool-size}")
+    boolean specifyThreadPoolSize;
+
     public LocalCIConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
@@ -52,7 +58,7 @@ public class LocalCIConfiguration {
      * @return The thread pool size bean.
      */
     @Bean
-    public int threadPoolSize() {
+    public int calculatedThreadPoolSize() {
         int availableProcessors = Runtime.getRuntime().availableProcessors();
         return Math.max(1, (availableProcessors - 2) / 2);
     }
@@ -95,11 +101,20 @@ public class LocalCIConfiguration {
     /**
      * Creates an executor service that manages the queue of build jobs.
      *
-     * @param threadPoolSize The thread pool size bean.
+     * @param calculatedThreadPoolSize The calculatedThreadPoolSize bean.
      * @return The executor service bean.
      */
     @Bean
-    public ExecutorService localCIBuildExecutorService(int threadPoolSize) {
+    public ExecutorService localCIBuildExecutorService(int calculatedThreadPoolSize) {
+
+        int threadPoolSize;
+
+        if (specifyThreadPoolSize) {
+            threadPoolSize = fixedThreadPoolSize;
+        }
+        else {
+            threadPoolSize = calculatedThreadPoolSize;
+        }
 
         log.info("Using ExecutorService with thread pool size {} and a queue size limit of {}.", threadPoolSize, queueSizeLimit);
 
