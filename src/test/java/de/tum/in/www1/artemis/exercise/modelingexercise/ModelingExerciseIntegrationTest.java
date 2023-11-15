@@ -720,7 +720,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     private void testCourseAndExamFilters(String title) throws Exception {
-        modelingExerciseUtilService.addCourseWithOneReleasedModelExerciseWithKnowledge(title);
+        modelingExerciseUtilService.addCourseWithOneModelingExercise(title);
         modelingExerciseUtilService.addCourseExamExerciseGroupWithOneModelingExercise(title + "-Morpork");
         exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/", title);
     }

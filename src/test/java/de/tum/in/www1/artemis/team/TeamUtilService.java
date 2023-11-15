@@ -27,17 +27,17 @@ public class TeamUtilService {
     private TeamRepository teamRepo;
 
     /**
-     * Generate a team
+     * Generates a Team for the given Exercise without saving it. Also creates and saves the specified number Users for the Team.
      *
-     * @param exercise           exercise of the team
-     * @param name               name of the team
-     * @param shortName          short name of the team
-     * @param loginPrefix        prefix that will be added in front of every user's login
-     * @param numberOfStudents   amount of users to generate for team as students
-     * @param owner              owner of the team generally a tutor
-     * @param creatorLogin       login of user that creates the teams
-     * @param registrationPrefix prefix that will be added in front of every student's registration number
-     * @return team that was generated
+     * @param exercise           The Exercise the Team belongs to
+     * @param name               The name of the Team
+     * @param shortName          The short name of the Team
+     * @param loginPrefix        The prefix that will be added in front of every user's login together with the shortName
+     * @param numberOfStudents   The number of students to generate for the Team
+     * @param owner              The owner of the Team
+     * @param creatorLogin       The login of the user that creates the Teams
+     * @param registrationPrefix The prefix that will be added in front of every student's registration number together with the shortName
+     * @return The generated Team
      */
     public Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String creatorLogin,
             String registrationPrefix) {
@@ -60,68 +60,68 @@ public class TeamUtilService {
     }
 
     /**
-     * Generate a team
+     * Generates a Team for the given Exercise without saving it. Also creates and saves the specified number Users for the Team.
      *
-     * @param exercise         exercise of the team
-     * @param name             name of the team
-     * @param shortName        short name of the team
-     * @param numberOfStudents amount of users to generate for team as students
-     * @param owner            owner of the team generally a tutor
-     * @return team that was generated
+     * @param exercise         The Exercise the Team belongs to
+     * @param name             The name of the Team
+     * @param shortName        The short name of the Team
+     * @param numberOfStudents The number of students to generate for the Team
+     * @param owner            The owner of the Team
+     * @return The generated Team
      */
     public Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
         return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner, null, "R");
     }
 
     /**
-     * Generate teams
+     * Generates a List of Teams with the given arguments without saving the Teams. Also creates and saves between 1 and 4 Users for each Team.
      *
-     * @param exercise        exercise of the teams
-     * @param shortNamePrefix prefix that will be added in front of every team's short name
-     * @param loginPrefix     prefix that will be added in front of every student's login
-     * @param numberOfTeams   amount of teams to generate
-     * @param owner           owner of the teams generally a tutor
-     * @param creatorLogin    login of user that created the teams
-     * @return teams that were generated
+     * @param exercise        The Exercise the Teams belong to
+     * @param shortNamePrefix The prefix that will be added in front of every Team's short name
+     * @param loginPrefix     The prefix that will be added in front of every user's login together with the shortName
+     * @param numberOfTeams   The number of Teams to generate
+     * @param owner           The owner of the Teams
+     * @param creatorLogin    The login of the user that creates the Teams
+     * @return The List of generated Teams
      */
     public List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin) {
         return generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner, creatorLogin, "R");
     }
 
     /**
-     * Generate teams
+     * Generates a List of Teams with the given arguments without saving the Teams. Also creates and saves between 1 and 4 Users for each Team.
      *
-     * @param exercise           exercise of the teams
-     * @param shortNamePrefix    prefix that will be added in front of every team's short name
-     * @param loginPrefix        prefix that will be added in front of every student's login
-     * @param numberOfTeams      amount of teams to generate
-     * @param owner              owner of the teams generally a tutor
-     * @param creatorLogin       login of user that created the teams
-     * @param registrationPrefix prefix that will be added in front of every student's registration number
-     * @return teams that were generated
+     * @param exercise           The Exercise the Teams belong to
+     * @param shortNamePrefix    The prefix that will be added in front of every Team's short name
+     * @param loginPrefix        The prefix that will be added in front of every user's login together with the shortName
+     * @param numberOfTeams      The number of Teams to generate
+     * @param owner              The owner of the Teams
+     * @param creatorLogin       The login of the user that creates the Teams
+     * @param registrationPrefix The prefix that will be added in front of every student's registration number together with the shortName
+     * @return The List of generated Teams
      */
     public List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin,
             String registrationPrefix) {
         List<Team> teams = new ArrayList<>();
         for (int i = 1; i <= numberOfTeams; i++) {
-            int numberOfStudents = new Random().nextInt(4) + 1; // range: 1-4 students
+            int numberOfStudents = (i % 4) + 1; // range: 1-4 students
             teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner, creatorLogin, registrationPrefix + i));
         }
         return teams;
     }
 
     /**
-     * Generate teams
+     * Generates a List of Teams with the given arguments without saving the Teams. Also creates and saves the specified number Users for each Team.
      *
-     * @param exercise           exercise of the teams
-     * @param shortNamePrefix    prefix that will be added in front of every team's short name
-     * @param loginPrefix        prefix that will be added in front of every student's login
-     * @param numberOfTeams      amount of teams to generate
-     * @param owner              owner of the teams generally a tutor
-     * @param creatorLogin       login of user that created the teams
-     * @param registrationPrefix prefix that will be added in front of every student's registration number
-     * @param teamSize           size of each individual team
-     * @return teams that were generated
+     * @param exercise           The Exercise the Teams belong to
+     * @param shortNamePrefix    The prefix that will be added in front of every Team's short name
+     * @param loginPrefix        The prefix that will be added in front of every user's login together with the shortName
+     * @param numberOfTeams      The number of Teams to generate
+     * @param owner              The owner of the Teams
+     * @param creatorLogin       The login of the user that creates the Teams
+     * @param registrationPrefix The prefix that will be added in front of every student's registration number together with the shortName
+     * @param teamSize           The number of students to generate for each Team
+     * @return The List of generated Teams
      */
     public List<Team> generateTeamsForExerciseFixedTeamSize(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin,
             String registrationPrefix, int teamSize) {
@@ -132,6 +132,16 @@ public class TeamUtilService {
         return teams;
     }
 
+    /**
+     * Creates and saves the given number of Teams. Also creates and saves 1-4 Users for each Team.
+     *
+     * @param exercise        The Exercise the Teams belong to
+     * @param shortNamePrefix The prefix that will be added in front of every Team's short name
+     * @param loginPrefix     The prefix that will be added in front of every user's login together with the shortName
+     * @param numberOfTeams   The number of Teams to generate
+     * @param owner           The owner of the Teams
+     * @return The List of created Teams
+     */
     public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
         List<Team> teams = generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner, null);
         var users = teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList();
@@ -140,14 +150,42 @@ public class TeamUtilService {
         return teamRepo.saveAll(teams);
     }
 
+    /**
+     * Creates and saves the given number of Teams. Also creates and saves 1-4 Users for each Team.
+     *
+     * @param exercise        The Exercise the Teams belong to
+     * @param shortNamePrefix The prefix that will be added in front of every Team's short name
+     * @param numberOfTeams   The number of Teams to generate
+     * @param owner           The owner of the Teams
+     * @return The List of created Teams
+     */
     public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, int numberOfTeams, User owner) {
         return addTeamsForExercise(exercise, shortNamePrefix, "student", numberOfTeams, owner);
     }
 
+    /**
+     * Creates and saves the given number of Teams. Also creates and saves 1-4 Users for each Team.
+     *
+     * @param exercise      The Exercise the Teams belong to
+     * @param numberOfTeams The number of Teams to generate
+     * @param owner         The owner of the Teams
+     * @return The List of created Teams
+     */
     public List<Team> addTeamsForExercise(Exercise exercise, int numberOfTeams, User owner) {
         return addTeamsForExercise(exercise, "team", numberOfTeams, owner);
     }
 
+    /**
+     * Creates and saves the given number of Teams. Also creates and saves the specified number Users for each Team.
+     *
+     * @param userPrefix          The prefix that will be added in front of every user's login together with the shortName
+     * @param regNumberPrefix     The prefix that will be added in front of every student's registration number together with the shortName
+     * @param exercise            The Exercise the Teams belong to
+     * @param numberOfTeams       The number of Teams to generate
+     * @param owner               The owner of the Teams
+     * @param noOfStudentsPerTeam The number of students to generate for each Team
+     * @return The List of created Teams
+     */
     public List<Team> addTeamsForExerciseFixedTeamSize(String userPrefix, String regNumberPrefix, Exercise exercise, int numberOfTeams, User owner, int noOfStudentsPerTeam) {
         List<Team> teams = generateTeamsForExerciseFixedTeamSize(exercise, userPrefix + "team", "student", numberOfTeams, owner, null, regNumberPrefix, noOfStudentsPerTeam);
         var users = teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList();
@@ -156,14 +194,38 @@ public class TeamUtilService {
         return teamRepo.saveAll(teams);
     }
 
+    /**
+     * Creates and saves a Team for the given Exercise. Also creates and saves 1 User for the Team.
+     *
+     * @param exercise The Exercise the Team belongs to
+     * @param owner    The owner of the Team
+     * @return The created Team
+     */
     public Team addTeamForExercise(Exercise exercise, User owner) {
         return addTeamsForExercise(exercise, 1, owner).get(0);
     }
 
+    /**
+     * Creates and saves a Team for the given Exercise. Also creates and saves 1 User for the Team.
+     *
+     * @param exercise    The Exercise the Team belongs to
+     * @param owner       The owner of the Team
+     * @param loginPrefix The prefix that will be added in front of every user's login together with the shortName
+     * @return The created Team
+     */
     public Team addTeamForExercise(Exercise exercise, User owner, String loginPrefix) {
         return addTeamsForExercise(exercise, "team", loginPrefix, 1, owner).get(0);
     }
 
+    /**
+     * Creates and saves a Team for the given Exercise. Also adds the given Users to the Team.
+     *
+     * @param students The Users to add to the Team
+     * @param owner    The owner of the Team
+     * @param exercise The Exercise the Team belongs to
+     * @param teamName The name of the Team
+     * @return The created Team
+     */
     public Team createTeam(Set<User> students, User owner, Exercise exercise, String teamName) {
         Team team = new Team();
         for (User student : students) {
