@@ -50,19 +50,17 @@ public class LocalCIContainerService {
 
     private final DockerClient dockerClient;
 
+    private final HostConfig hostConfig;
+
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
     String localCIBuildScriptBasePath;
 
-    public LocalCIContainerService(DockerClient dockerClient) {
+    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig) {
         this.dockerClient = dockerClient;
-    }
-
-    public HostConfig createHostConfig() {
-        return HostConfig.newHostConfig().withCpuQuota(200000L).withCpuPeriod(100000L).withMemory(2L * 1024 * 1024 * 1024).withMemorySwap(2L * 1024 * 1024 * 1024)
-                .withPidsLimit(1000L).withAutoRemove(true);
+        this.hostConfig = hostConfig;
     }
 
     /**
@@ -74,7 +72,7 @@ public class LocalCIContainerService {
      * @param image         the Docker image to use for the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash, String image, HostConfig hostConfig) {
+    public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash, String image) {
         return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig)
                 .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.config.localvcci;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.*;
 
 import javax.xml.stream.XMLInputFactory;
@@ -15,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.DockerClientImpl;
@@ -22,6 +24,7 @@ import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
 import com.github.dockerjava.transport.DockerHttpClient;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 
@@ -35,10 +38,9 @@ public class LocalCIConfiguration {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    private final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    @Value("${artemis.continuous-integration.thread-pool-size:1}")
-    int threadPoolSize;
+    private final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
 
     @Value("${artemis.continuous-integration.queue-size-limit:30}")
     int queueSizeLimit;
@@ -49,8 +51,55 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
 
-    public LocalCIConfiguration(ResourceLoaderService resourceLoaderService) {
+    public LocalCIConfiguration(ResourceLoaderService resourceLoaderService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.resourceLoaderService = resourceLoaderService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+    }
+
+    /**
+     * Defines the thread pool size for the local CI ExecutorService based on system resources.
+     *
+     * @return The thread pool size bean.
+     */
+    @Bean
+    public int threadPoolSize() {
+        int availableProcessors = Runtime.getRuntime().availableProcessors();
+        return Math.max(1, (availableProcessors - 2) / 2);
+    }
+
+    /**
+     * Creates a HostConfig object that is used to configure the Docker container for build jobs.
+     * The configuration is based on the default Docker flags for build jobs as specified in artemis.continuous-integration.build.
+     *
+     * @return The HostConfig bean.
+     */
+    @Bean
+    public HostConfig hostConfig() {
+        long cpuCount = 0;
+        long cpuPeriod = 100000L;
+        long memory = 0;
+        long memorySwap = 0;
+        long pidsLimit = 0;
+
+        List<String> defaultDockerFlags = programmingLanguageConfiguration.getDefaultDockerFlags();
+
+        for (int i = 0; i < defaultDockerFlags.size(); i += 2) {
+            String flag = defaultDockerFlags.get(i);
+            String value = defaultDockerFlags.get(i + 1);
+
+            switch (flag) {
+                case "--cpus" -> cpuCount = Long.parseLong(value.replaceAll("[^0-9]", ""));
+                case "--memory" -> memory = parseMemoryString(value);
+                case "--memory-swap" -> memorySwap = parseMemoryString(value);
+                case "--pids-limit" -> pidsLimit = Long.parseLong(value.replaceAll("[^0-9]", ""));
+                default -> throw new LocalCIException("Unknown docker flag: " + flag);
+            }
+        }
+
+        log.info("Using Build Job Container HostConfig with cpus {}, memory {}, memorySwap {}, pidsLimit {}.", cpuCount, memory, memorySwap, pidsLimit);
+
+        return HostConfig.newHostConfig().withCpuQuota(cpuCount * cpuPeriod).withCpuPeriod(cpuPeriod).withMemory(memory).withMemorySwap(memorySwap).withPidsLimit(pidsLimit)
+                .withAutoRemove(true);
     }
 
     /**
@@ -59,7 +108,8 @@ public class LocalCIConfiguration {
      * @return The executor service bean.
      */
     @Bean
-    public ExecutorService localCIBuildExecutorService() {
+    public ExecutorService localCIBuildExecutorService(int threadPoolSize) {
+
         log.info("Using ExecutorService with thread pool size {} and a queue size limit of {}.", threadPoolSize, queueSizeLimit);
 
         ThreadFactory customThreadFactory = new ThreadFactoryBuilder().setNameFormat("local-ci-build-%d")
@@ -69,7 +119,8 @@ public class LocalCIConfiguration {
             throw new RejectedExecutionException("Task " + runnable.toString() + " rejected from " + executor.toString());
         };
 
-        return new ThreadPoolExecutor(8, 8, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory, customRejectedExecutionHandler);
+        return new ThreadPoolExecutor(threadPoolSize, threadPoolSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(queueSizeLimit), customThreadFactory,
+                customRejectedExecutionHandler);
     }
 
     /**
@@ -85,9 +136,8 @@ public class LocalCIConfiguration {
             ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) localCIBuildExecutorService;
             // Report on the current state of the local CI ExecutorService queue every 30 seconds.
             log.info("Current queue size of local CI ExecutorService: {}", threadPoolExecutor.getQueue().size());
-            log.info("Current active threads in local CI ExecutorService: {}", threadPoolExecutor.getActiveCount());
-            log.info("Current pool size of local CI ExecutorService: {}", threadPoolExecutor.getPoolSize());
-        }, 0, 5, TimeUnit.SECONDS);
+            log.info("Number of jobs currently building on this node: {}", threadPoolExecutor.getActiveCount());
+        }, 0, 30, TimeUnit.SECONDS);
         return buildQueueLogger;
     }
 
@@ -143,5 +193,22 @@ public class LocalCIConfiguration {
         }
 
         return scriptPath;
+    }
+
+    /*-------------Helper methods-----------------*/
+
+    private static long parseMemoryString(String memoryString) {
+        if (memoryString.endsWith("g\"")) {
+            return Long.parseLong(memoryString.replaceAll("[^0-9]", "")) * 1024L * 1024L * 1024L;
+        }
+        else if (memoryString.endsWith("m\"")) {
+            return Long.parseLong(memoryString.replaceAll("[^0-9]", "")) * 1024L * 1024L;
+        }
+        else if (memoryString.endsWith("k\"")) {
+            return Long.parseLong(memoryString.replaceAll("[^0-9]", "")) * 1024L;
+        }
+        else {
+            return Long.parseLong(memoryString);
+        }
     }
 }
