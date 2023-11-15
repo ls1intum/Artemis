@@ -64,6 +64,16 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         this.irisSessionRepository = irisSessionRepository;
     }
 
+    @Override
+    public void sendOverWebsocket(IrisMessage message) {
+        throw new UnsupportedOperationException("Sending messages over websocket is not supported for Iris Hestia sessions");
+    }
+
+    @Override
+    public void requestAndHandleResponse(IrisSession irisSession) {
+        throw new UnsupportedOperationException("Requesting and handling responses is not supported for Iris Hestia sessions");
+    }
+
     /**
      * Generates the description and content for a code hint.
      * It does not directly save the code hint, but instead returns it with the generated description and content.

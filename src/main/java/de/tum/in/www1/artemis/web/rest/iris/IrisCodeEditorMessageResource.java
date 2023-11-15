@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.iris;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
 import java.util.Objects;
 
 import javax.ws.rs.BadRequestException;
@@ -11,15 +8,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.iris.message.*;
+import de.tum.in.www1.artemis.domain.iris.message.IrisExercisePlanStep;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.iris.*;
+import de.tum.in.www1.artemis.repository.iris.IrisExercisePlanStepRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
-import de.tum.in.www1.artemis.service.iris.websocket.IrisCodeEditorWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
@@ -28,103 +22,26 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 @RestController
 @Profile("iris")
 @RequestMapping("api/iris/")
-public class IrisCodeEditorMessageResource extends IrisMessageResource {
-
-    private final IrisCodeEditorWebsocketService irisCodeEditorWebsocketService;
+public class IrisCodeEditorMessageResource {
 
     private final IrisCodeEditorSessionService irisCodeEditorSessionService;
 
     private final IrisExercisePlanStepRepository irisExercisePlanStepRepository;
 
-    public IrisCodeEditorMessageResource(IrisSessionRepository irisSessionRepository, IrisCodeEditorSessionService irisSessionService, IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository, IrisRateLimitService rateLimitService, UserRepository userRepository,
-            IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, IrisCodeEditorSessionService irisCodeEditorSessionService,
-            IrisExercisePlanStepRepository irisExercisePlanStepRepository) {
-        super(irisSessionRepository, irisSessionService, irisMessageService, irisMessageRepository, rateLimitService, userRepository);
-        this.irisCodeEditorWebsocketService = irisCodeEditorWebsocketService;
+    public IrisCodeEditorMessageResource(IrisCodeEditorSessionService irisCodeEditorSessionService, IrisExercisePlanStepRepository irisExercisePlanStepRepository) {
         this.irisCodeEditorSessionService = irisCodeEditorSessionService;
         this.irisExercisePlanStepRepository = irisExercisePlanStepRepository;
     }
 
     /**
-     * GET code-editor-session/{sessionId}/message: Retrieve the messages for the iris session.
-     *
-     * @param sessionId of the session
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the list of messages, or with status {@code 404 (Not Found)} if the session could not be found.
-     */
-    @GetMapping("code-editor-sessions/{sessionId}/messages")
-    @EnforceAtLeastEditor
-    public ResponseEntity<List<IrisMessage>> getMessages(@PathVariable Long sessionId) {
-        return super.getMessages(sessionId);
-    }
-
-    /**
-     * POST code-editor-sessions/{sessionId}/messages: Send a new message from the user to the LLM
-     *
-     * @param sessionId of the session
-     * @param message   message from the user
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
-     */
-    @PostMapping("code-editor-sessions/{sessionId}/messages")
-    @EnforceAtLeastEditor
-    public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
-        var fromDB = irisSessionRepository.findByIdWithMessagesAndContentsElseThrow(sessionId);
-        if (!(fromDB instanceof IrisCodeEditorSession session)) {
-            throw new BadRequestException("Session is not a code editor session");
-        }
-        var savedMessage = super.postMessage(session, message);
-        session.getMessages().add(savedMessage); // By adding this here we can avoid a second DB call here later
-
-        irisCodeEditorSessionService.converseWithModel(session);
-        irisCodeEditorWebsocketService.sendMessage(savedMessage);
-        String uriString = "/api/iris/code-editor-sessions/" + sessionId + "/messages/" + savedMessage.getId();
-        return ResponseEntity.created(new URI(uriString)).body(savedMessage);
-    }
-
-    /**
-     * POST code-editor-sessions/{sessionId}/messages/{messageId}/resend: Resend a message if there was previously an error when sending it to the LLM
-     *
-     * @param sessionId of the session
-     * @param messageId of the message
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with status {@code 404 (Not Found)} if the session or message could
-     *         not be found.
-     */
-    @PostMapping("code-editor-sessions/{sessionId}/messages/{messageId}/resend")
-    @EnforceAtLeastEditor
-    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
-        var fromDB = irisSessionRepository.findByIdWithMessagesAndContentsElseThrow(sessionId);
-        if (!(fromDB instanceof IrisCodeEditorSession session)) {
-            throw new BadRequestException("Session is not a code editor session");
-        }
-        var message = super.getMessageToResend(session, messageId);
-        irisCodeEditorSessionService.converseWithModel(session);
-        return ResponseEntity.ok(message);
-    }
-
-    /**
-     * PUT code-editor-sessions/{sessionId}/messages/{messageId}/helpful/{helpful}: Set the helpful attribute of the message
-     *
-     * @param sessionId of the session
-     * @param messageId of the message
-     * @param helpful   true if the message was helpful, false otherwise, null as default
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated message, or with status {@code 404 (Not Found)} if the session or message could not
-     *         be found.
-     */
-    @PutMapping(value = { "code-editor-sessions/{sessionId}/messages/{messageId}/helpful/null", "code-editor-sessions/{sessionId}/messages/{messageId}/helpful/undefined",
-            "code-editor-sessions/{sessionId}/messages/{messageId}/helpful/{helpful}" })
-    @EnforceAtLeastEditor
-    public ResponseEntity<IrisMessage> rateMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable(required = false) Boolean helpful) {
-        return super.rateMessage(sessionId, messageId, helpful);
-    }
-
-    /**
-     * Put code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}/execute:
-     * Execute a step of an exercise plan
+     * Put code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}/execute: Execute a
+     * step of an exercise plan
      *
      * @param sessionId of the session
      * @param messageId of the message
      * @param planId    of the content
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status
+     *         {@code 404 (Not Found)} if the session could not be found.
      */
     @PostMapping("code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}/execute")
     @EnforceAtLeastEditor
@@ -140,16 +57,16 @@ public class IrisCodeEditorMessageResource extends IrisMessageResource {
     }
 
     /**
-     * PUT code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}:
-     * Update the instructions of an exercise plan step
+     * PUT code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}: Update the
+     * instructions of an exercise plan step
      *
      * @param sessionId   of the session
      * @param messageId   of the message
      * @param planId      of the exercise plan
      * @param stepId      of the plan step
      * @param updatedStep the plan step with updated instructions
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated component, or with status {@code 404 (Not Found)} if the component could not
-     *         be found.
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated component, or with
+     *         status {@code 404 (Not Found)} if the component could not be found.
      */
     @PutMapping("code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/steps/{stepId}")
     @EnforceAtLeastEditor

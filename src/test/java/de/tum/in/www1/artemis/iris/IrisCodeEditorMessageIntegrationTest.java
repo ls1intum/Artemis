@@ -15,7 +15,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.message.*;
-import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.*;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
@@ -73,12 +72,12 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         setupExercise();
         irisRequestMockProvider.mockMessageResponse("Hello World");
 
-        var irisMessage = request.postWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
-        assertThat(irisSession instanceof IrisCodeEditorSession).isEqualTo(true);
+        var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
         assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.USER);
         assertThat(irisMessage.getMessageDifferentiator()).isEqualTo(1453);
-        // Compare contents of messages by only comparing the textContent field
-        assertThat(irisMessage.getContent()).hasSize(3).map(IrisMessageContent::getContentAsString)
+        assertThat(irisMessage.getContent()).hasSize(3);
+        // Compare contents of messages by only comparing the string content
+        assertThat(irisMessage.getContent().stream().map(IrisMessageContent::getContentAsString).toList())
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(2).contains(irisMessage));
 
@@ -94,7 +93,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession1 = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var irisSession2 = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor2"));
         IrisMessage messageToSend = createDefaultMockMessage(irisSession1);
-        request.postWithResponseBody("/api/iris/code-editor-sessions/" + irisSession2.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession2.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -103,7 +102,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var messageToSend = new IrisMessage();
         messageToSend.setSession(irisSession);
-        request.postWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -120,7 +119,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         message3 = irisMessageService.saveMessage(message3, irisSession, IrisMessageSender.USER);
         message4 = irisMessageService.saveMessage(message4, irisSession, IrisMessageSender.LLM);
 
-        var messages = request.getList("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
+        var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
         assertThat(messages).hasSize(3).usingElementComparator((o1, o2) -> {
             return o1.getContent().size() == o2.getContent().size() && o1.getContent().stream().map(IrisMessageContent::getContentAsString).toList()
                     .equals(o2.getContent().stream().map(IrisMessageContent::getContentAsString).toList()) ? 0 : -1;
@@ -138,9 +137,8 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var exercisePlanContent = irisMessage.getContent().get(0);
         setupExercise();
 
-        request.postWithResponseBody(
-                "/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages" + irisMessage.getId() + "/contents/" + exercisePlanContent.getId() + "/execute", null,
-                Void.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages" + irisMessage.getId() + "/contents/" + exercisePlanContent.getId() + "/execute",
+                null, Void.class, HttpStatus.OK);
 
         // TODO: wait for requestExerciseChanges() complete
         assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.LLM);
@@ -155,13 +153,14 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         message.setSession(irisSession);
         message.addContent(createMockExercisePlanContent(message));
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
-        var exercisePlanContent = irisMessage.getContent().get(0);
+        var content = irisMessage.getContent().get(0);
         setupExercise();
-        assertThat(exercisePlanContent instanceof IrisExercisePlan).isEqualTo(true);
-        var component = ((IrisExercisePlan) exercisePlanContent).getSteps().get(0);
+        assertThat(content).isInstanceOf(IrisExercisePlan.class);
+        var component = ((IrisExercisePlan) content).getSteps().get(0);
 
-        request.putWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/contents/" + exercisePlanContent.getId()
-                + "/components/" + component.getId(), updateProblemStatement(component), IrisExercisePlanStep.class, HttpStatus.OK);
+        request.putWithResponseBody(
+                "/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/contents/" + content.getId() + "/components/" + component.getId(),
+                updateProblemStatement(component), IrisExercisePlanStep.class, HttpStatus.OK);
         var irisMessageFromDB = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
         var componentFromDB = irisExercisePlanStepRepository.findByIdElseThrow(component.getId());
         assertThat(irisMessageFromDB.getContent()).hasSize(1);
@@ -177,7 +176,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockMessageError();
         setupExercise();
 
-        request.postWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
         // TODO: update AbstractIrisIntegrationTest.java later
         // verifyMessageWasSentOverWebsocket(TEST_PREFIX + "editor1", irisSession.getId(), messageToSend);
@@ -194,7 +193,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockMessageResponse(null);
         setupExercise();
 
-        request.postWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
         // TODO: update AbstractIrisIntegrationTest.java later
         // verifyMessageWasSentOverWebsocket(TEST_PREFIX + "editor1", irisSession.getId(), messageToSend);

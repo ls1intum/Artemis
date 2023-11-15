@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { IrisExercisePlanStep } from 'app/entities/iris/iris-content-type.model';
 import { IrisHttpMessageService, Response } from 'app/iris/http-message.service';
 
@@ -8,9 +7,7 @@ import { IrisHttpMessageService, Response } from 'app/iris/http-message.service'
  */
 @Injectable({ providedIn: 'root' })
 export class IrisHttpCodeEditorMessageService extends IrisHttpMessageService {
-    constructor(httpClient: HttpClient) {
-        super(httpClient, 'code-editor-sessions');
-    }
+    private readonly sessionType = 'code-editor-sessions';
 
     /**
      * Execute the exercise plan, i.e. request the changes to be applied to the code editor.

@@ -114,7 +114,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      */
     @Override
     public void checkHasAccessToIrisSession(IrisSession session, User user) {
-        // checkHasAccessToIrisSession(castToSessionType(session, IrisCodeEditorSession.class), user);
+        checkHasAccessToIrisSession(castToSessionType(session, IrisCodeEditorSession.class), user);
     }
 
     private void checkHasAccessToIrisSession(IrisCodeEditorSession session, User user) {
@@ -132,6 +132,11 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     private void checkIsIrisActivated(IrisCodeEditorSession ignored) {
         // Code editor sessions should probably be available for every programming exercise, especially brand-new ones
         // Might want to check something here in the future. For now, do nothing.
+    }
+
+    @Override
+    public void sendOverWebsocket(IrisMessage message) {
+        irisCodeEditorWebsocketService.sendMessage(message);
     }
 
     /**
@@ -155,9 +160,11 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * Sends a request containing the current state of the exercise repositories in the code editor and the entire
      * conversation history to the LLM, and handles the response.
      *
-     * @param session The code editor session to send the request for with all messages and message contents loaded
+     * @param irisSession The code editor session to send the request for with all messages and message contents loaded
      */
-    public void converseWithModel(IrisCodeEditorSession session) {
+    @Override
+    public void requestAndHandleResponse(IrisSession irisSession) {
+        IrisCodeEditorSession session = castToSessionType(irisSession, IrisCodeEditorSession.class);
         var params = initializeParams(session.getExercise());
         params.put("chatHistory", session.getMessages()); // Additionally add the chat history to the request
 

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
@@ -80,6 +81,21 @@ public class IrisSessionService {
             user = userRepository.getUserWithGroupsAndAuthorities();
         }
         getIrisSessionSubService(session).checkHasAccessToIrisSession(session, user);
+    }
+
+    /**
+     * Sends a request to Iris to get a message for the given session.
+     * It decides which Iris subsystem should handle it based on the session type.
+     * Currently, only the chat subsystem exists.
+     *
+     * @param session The session to get a message for
+     */
+    public void requestMessageFromIris(IrisSession session) {
+        getIrisSessionSubService(session).requestAndHandleResponse(session);
+    }
+
+    public void sendOverWebsocket(IrisMessage message) {
+        getIrisSessionSubService(message.getSession()).sendOverWebsocket(message);
     }
 
     private IrisSessionSubServiceInterface getIrisSessionSubService(IrisSession session) {

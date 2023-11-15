@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.web.rest.iris;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
 
 import javax.ws.rs.BadRequestException;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,45 +17,46 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
-import de.tum.in.www1.artemis.service.iris.*;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.session.IrisSessionSubServiceInterface;
+import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
- * Superclass of REST controllers for managing {@link IrisMessage}.
- * The methods in this class are intended to be called by inheritors.
- * This is done to allow for different endpoints and authentication requirements.
+ * REST controller for managing {@link IrisMessage}.
  */
-public abstract class IrisMessageResource {
+@RestController
+@Profile("iris")
+@RequestMapping("api/iris/")
+public class IrisMessageResource {
 
-    protected final IrisSessionRepository irisSessionRepository;
+    private final IrisSessionRepository irisSessionRepository;
 
-    protected final IrisSessionSubServiceInterface irisSessionService;
+    private final IrisSessionService irisSessionService;
 
-    protected final IrisMessageService irisMessageService;
+    private final IrisMessageService irisMessageService;
 
-    protected final IrisMessageRepository irisMessageRepository;
+    private final IrisMessageRepository irisMessageRepository;
 
-    protected final IrisRateLimitService rateLimitService;
+    private final UserRepository userRepository;
 
-    protected final UserRepository userRepository;
-
-    public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionSubServiceInterface irisSessionService, IrisMessageService irisMessageService,
-            IrisMessageRepository irisMessageRepository, IrisRateLimitService rateLimitService, UserRepository userRepository) {
+    public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisMessageService irisMessageService,
+            IrisMessageRepository irisMessageRepository, UserRepository userRepository) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisMessageService = irisMessageService;
         this.irisMessageRepository = irisMessageRepository;
-        this.rateLimitService = rateLimitService;
         this.userRepository = userRepository;
     }
 
     /**
+     * GET session/{sessionId}/message: Retrieve the messages for the iris session.
+     *
      * @param sessionId of the session
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the list of messages, or with
-     *         status {@code 404 (Not Found)} if the session could not be found.
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the list of messages, or with status {@code 404 (Not Found)} if the session could not be found.
      */
+    @GetMapping("sessions/{sessionId}/messages")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<IrisMessage>> getMessages(@PathVariable Long sessionId) {
         IrisSession session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
@@ -62,35 +66,44 @@ public abstract class IrisMessageResource {
     }
 
     /**
-     * Create a new message from the user to the LLM
+     * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM
      *
-     * @param session the session
-     * @param message to message to send
+     * @param sessionId of the session
+     * @param message   to send
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
      */
-    protected IrisMessage postMessage(IrisSession session, IrisMessage message) {
+    @PostMapping("sessions/{sessionId}/messages")
+    @EnforceAtLeastStudent
+    public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
+        var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
-        rateLimitService.checkRateLimitElseThrow(user);
 
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
-        return savedMessage;
+        irisSessionService.sendOverWebsocket(savedMessage);
+        irisSessionService.requestMessageFromIris(session);
+
+        var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
+        return ResponseEntity.created(new URI(uriString)).body(savedMessage);
     }
 
     /**
-     * Resend a message if there was previously an error when sending it to the LLM
+     * POST sessions/{sessionId}/messages/{messageId}/resend: Resend a message if there was previously an error when sending it to the LLM
      *
-     * @param session   the session
+     * @param sessionId of the session
      * @param messageId of the message
-     * @return the {@link IrisMessage} that was resent
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with status {@code 404 (Not Found)} if the session or message could
+     *         not be found.
      */
-    protected IrisMessage getMessageToResend(IrisSession session, Long messageId) {
+    @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
+    @EnforceAtLeastStudent
+    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
+        var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
-        rateLimitService.checkRateLimitElseThrow(user);
 
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {
@@ -99,16 +112,26 @@ public abstract class IrisMessageResource {
         if (message.getSender() != IrisMessageSender.USER) {
             throw new BadRequestException("Only user messages can be resent");
         }
-        return message;
+        irisSessionService.requestMessageFromIris(session);
+        message.setMessageDifferentiator(message.getMessageDifferentiator());
+
+        return ResponseEntity.ok(message);
     }
 
     /**
+     * PUT sessions/{sessionId}/messages/{messageId}/helpful/{helpful}: Set the helpful attribute of the message
+     *
      * @param sessionId of the session
      * @param messageId of the message
      * @param helpful   true if the message was helpful, false otherwise, null as default
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated message, or with status {@code 404 (Not Found)} if the session or message could not
      *         be found.
      */
+    // @formatter:on
+    @PutMapping(value = { "sessions/{sessionId}/messages/{messageId}/helpful/null", "sessions/{sessionId}/messages/{messageId}/helpful/undefined",
+            "sessions/{sessionId}/messages/{messageId}/helpful/{helpful}" })
+    // @formatter:off
+    @EnforceAtLeastStudent
     public ResponseEntity<IrisMessage> rateMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable(required = false) Boolean helpful) {
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         var session = message.getSession();
@@ -124,5 +147,4 @@ public abstract class IrisMessageResource {
         var savedMessage = irisMessageRepository.save(message);
         return ResponseEntity.ok(savedMessage);
     }
-
 }

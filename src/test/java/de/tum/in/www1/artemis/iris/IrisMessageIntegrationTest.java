@@ -83,8 +83,9 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.USER);
         assertThat(irisMessage.getHelpful()).isNull();
         assertThat(irisMessage.getMessageDifferentiator()).isEqualTo(1453);
-        // Compare contents of messages by only comparing the textContent field
-        assertThat(irisMessage.getContent()).hasSize(3).map(IrisMessageContent::getContentAsString)
+        assertThat(irisMessage.getContent()).hasSize(3);
+        // Compare contents of messages by only comparing the string content
+        assertThat(irisMessage.getContent().stream().map(IrisMessageContent::getContentAsString).toList())
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(2).contains(irisMessage));
 
@@ -121,8 +122,9 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisMessage1 = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend1, IrisMessage.class, HttpStatus.CREATED);
         assertThat(irisMessage1.getSender()).isEqualTo(IrisMessageSender.USER);
         assertThat(irisMessage1.getHelpful()).isNull();
-        // Compare contents of messages by only comparing the textContent field
-        assertThat(irisMessage1.getContent()).hasSize(3).map(IrisMessageContent::getContentAsString)
+        assertThat(irisMessage1.getContent()).hasSize(3);
+        // Compare contents of messages by only comparing the string content
+        assertThat(irisMessage1.getContent().stream().map(IrisMessageContent::getContentAsString).toList())
                 .isEqualTo(messageToSend1.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getMessages()).hasSize(1).isEqualTo(List.of(irisMessage1));
@@ -131,8 +133,9 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisMessage2 = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend2, IrisMessage.class, HttpStatus.CREATED);
         assertThat(irisMessage2.getSender()).isEqualTo(IrisMessageSender.USER);
         assertThat(irisMessage2.getHelpful()).isNull();
-        // Compare contents of messages by only comparing the textContent field
-        assertThat(irisMessage2.getContent()).hasSize(3).map(IrisMessageContent::getContentAsString)
+        assertThat(irisMessage2.getContent()).hasSize(3);
+        // Compare contents of messages by only comparing the string content
+        assertThat(irisMessage2.getContent().stream().map(IrisMessageContent::getContentAsString).toList())
                 .isEqualTo(messageToSend2.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getMessages()).hasSize(2).isEqualTo(List.of(irisMessage1, irisMessage2));
