@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.config.localvcci;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -26,7 +23,6 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
 
 /**
  * Creates beans needed for the local CI system.
@@ -36,8 +32,6 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 @Profile("localci")
 public class LocalCIConfiguration {
 
-    private final ResourceLoaderService resourceLoaderService;
-
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private final Logger log = LoggerFactory.getLogger(LocalCIConfiguration.class);
@@ -45,14 +39,10 @@ public class LocalCIConfiguration {
     @Value("${artemis.continuous-integration.queue-size-limit:30}")
     int queueSizeLimit;
 
-    @Value("${artemis.continuous-integration.build.images.java.default}")
-    String dockerImage;
-
     @Value("${artemis.continuous-integration.docker-connection-uri}")
     String dockerConnectionUri;
 
-    public LocalCIConfiguration(ResourceLoaderService resourceLoaderService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
-        this.resourceLoaderService = resourceLoaderService;
+    public LocalCIConfiguration(ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
@@ -105,6 +95,7 @@ public class LocalCIConfiguration {
     /**
      * Creates an executor service that manages the queue of build jobs.
      *
+     * @param threadPoolSize The thread pool size bean.
      * @return The executor service bean.
      */
     @Bean
@@ -166,33 +157,6 @@ public class LocalCIConfiguration {
         log.info("Docker client created with connection URI: {}", dockerConnectionUri);
 
         return dockerClient;
-    }
-
-    /**
-     * Provides the path to the build script used for local CI build jobs.
-     * To bind the build script into the Docker container running the build job, we need to get a File or Path object directly pointing to the resource.
-     * However, if the application is packaged (like it is in production), the Java runtime does not provide direct access to the file system for embedded resources.
-     * To make the path available, the resource is retrieved as an InputStream and written to a temporary file.
-     * This is a rather costly operation, so we only do it once and then provide the Path object via this Bean.
-     * TODO LOCALVC_CI: Find a better way to provide the build script to the Docker container.
-     * To implement additional features like Sequential Test Runs, Static Code Analysis, and Testwise Coverage Analysis, the build script needs to be configurable when creating the
-     * exercise.
-     *
-     * @return the Path to the build script.
-     */
-    @Bean
-    public Path buildScriptFilePath() {
-        Path resourcePath = Path.of("templates", "localci", "java", "build_and_run_tests.sh");
-        Path scriptPath;
-        try {
-            scriptPath = resourceLoaderService.getResourceFilePath(resourcePath);
-            log.info("Providing build script at {}", scriptPath);
-        }
-        catch (IOException | URISyntaxException | IllegalArgumentException e) {
-            throw new LocalCIException("Could not retrieve build script.", e);
-        }
-
-        return scriptPath;
     }
 
     /*-------------Helper methods-----------------*/
