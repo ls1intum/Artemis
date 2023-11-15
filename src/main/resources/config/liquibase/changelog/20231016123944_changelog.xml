@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
     <changeSet author="valentinboehm" id="20231016123944">
         <addColumn tableName="student_exam">
-            <column name="abandoned" type="boolean" valueBoolean="false">
+            <column name="abandoned" type="boolean" defaultValueBoolean="false">
                 <constraints nullable="false" />
             </column>
         </addColumn>
