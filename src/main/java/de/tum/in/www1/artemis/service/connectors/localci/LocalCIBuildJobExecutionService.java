@@ -226,7 +226,8 @@ public class LocalCIBuildJobExecutionService {
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
-        List<String> testResultsPaths = getTestResultPaths(participation.getProgrammingExercise());
+        List<String> testResultsPaths = new LinkedList<>();
+        testResultsPaths.add("/repositories/test-repository/");
 
         // Get an input stream of the test result files.
         List<TarArchiveInputStream> testResultsTarInputStreams = new ArrayList<>();
