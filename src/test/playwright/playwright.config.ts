@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
  * https://github.com/motdotla/dotenv
  */
 // require('dotenv').config();
-dotenv.config();
+dotenv.config({ path: `${__dirname}/playwright.env` });
 
 /**
  * See https://playwright.dev/docs/test-configuration.

@@ -1,6 +1,7 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { UserCredentials } from '../../users';
-import { COURSE_BASE } from '../../constants';
+import { BASE_API, COURSE_BASE } from '../../constants';
+import { Course } from 'app/entities/course.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the course management page.
@@ -42,6 +43,15 @@ export class CourseManagementPage {
      */
     async openCourse(courseID: number) {
         await this.getCourse(courseID).locator('#course-card-header').click();
+    }
+
+    async deleteCourse(course: Course) {
+        await this.page.locator('#delete-course').click();
+        await expect(this.page.locator('#delete')).toBeDisabled();
+        await this.page.locator('#confirm-exercise-name').fill(course.title!);
+        const responsePromise = this.page.waitForResponse(BASE_API + 'admin/courses/' + course.id);
+        await this.page.locator('#delete').click();
+        await responsePromise;
     }
 
     /**

@@ -31,6 +31,11 @@ const courseData = {
     presentationScore: 10,
 };
 
+const editedCourseData = {
+    title: '',
+    testCourse: false,
+};
+
 const allowGroupCustomization = process.env.allowGroupCustomization;
 const dateFormat = 'MMM D, YYYY HH:mm';
 
@@ -158,6 +163,14 @@ test.describe('Course management', () => {
                 const courseBody = await courseCreation.submit();
                 course2 = courseBody;
 
+                expect(courseBody.title).toBe(courseData.title);
+                expect(courseBody.shortName).toBe(courseData.shortName);
+                expect(courseBody.testCourse).toBe(courseData.testCourse);
+                expect(courseBody.studentGroupName).toBe(courseData.studentGroupName);
+                expect(courseBody.teachingAssistantGroupName).toBe(courseData.tutorGroupName);
+                expect(courseBody.editorGroupName).toBe(courseData.editorGroupName);
+                expect(courseBody.instructorGroupName).toBe(courseData.instructorGroupName);
+
                 await expect(courseManagement.getCourseHeaderTitle(courseData.title).first()).toBeVisible();
                 await expect(courseManagement.getCourseTitle(courseData.title).first()).toBeVisible();
                 await expect(courseManagement.getCourseShortName(courseData.shortName).first()).toBeVisible();
@@ -172,6 +185,60 @@ test.describe('Course management', () => {
         test.afterEach(async ({ courseManagementAPIRequests }) => {
             await courseManagementAPIRequests.deleteCourse(course, admin);
             await courseManagementAPIRequests.deleteCourse(course2, admin);
+        });
+    });
+
+    test.describe('Course edit', () => {
+        let course: Course;
+
+        test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
+            await login(admin, '/');
+            const uid = generateUUID();
+            courseData.title = 'Course ' + uid;
+            courseData.shortName = 'playwright' + uid;
+            course = await courseManagementAPIRequests.createCourse({ courseName: courseData.title, courseShortName: courseData.shortName });
+        });
+
+        test('Edits a existing course', async ({ navigationBar, courseManagement, courseCreation }) => {
+            const uid = generateUUID();
+            editedCourseData.title = 'Course ' + uid;
+
+            await navigationBar.openCourseManagement();
+            await courseManagement.openCourse(course.id!);
+            await courseManagement.openCourseEdit();
+
+            await courseCreation.setTitle(editedCourseData.title);
+            await courseCreation.setTestCourse(editedCourseData.testCourse);
+
+            course = await courseCreation.update();
+            expect(course.title).toBe(editedCourseData.title);
+            expect(course.shortName).toBe(courseData.shortName);
+            expect(course.testCourse).toBe(editedCourseData.testCourse);
+
+            await expect(courseManagement.getCourseHeaderTitle(editedCourseData.title).first()).toBeVisible();
+            await expect(courseManagement.getCourseTitle(editedCourseData.title).first()).toBeVisible();
+            await expect(courseManagement.getCourseShortName(courseData.shortName).first()).toBeVisible();
+            await expect(courseManagement.getCourseTestCourse(convertBooleanToYesNo(editedCourseData.testCourse)).first()).toBeVisible();
+        });
+
+        test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
+            await courseManagementAPIRequests.deleteCourse(course, admin);
+        });
+    });
+
+    test.describe('Course deletion', () => {
+        let course: Course;
+
+        test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
+            await login(admin, '/');
+            course = await courseManagementAPIRequests.createCourse();
+        });
+
+        test('Deletes an existing course', async ({ navigationBar, courseManagement }) => {
+            await navigationBar.openCourseManagement();
+            await courseManagement.openCourse(course.id!);
+            await courseManagement.deleteCourse(course);
+            await expect(courseManagement.getCourse(course.id!).first()).toBeHidden();
         });
     });
 });

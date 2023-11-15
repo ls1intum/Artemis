@@ -145,7 +145,9 @@ export class CourseCreationPage {
     }
 
     async update() {
+        const responsePromise = this.page.waitForResponse(BASE_API + 'courses/*');
         await this.page.click('#save-entity');
-        return this.page.request.put(BASE_API + 'courses/*');
+        const response = await responsePromise;
+        return response.json();
     }
 }
