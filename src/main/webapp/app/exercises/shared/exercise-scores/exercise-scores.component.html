@@ -172,6 +172,110 @@
                                 <span>
                                     <a [routerLink]="getExerciseParticipationsLink(value.id)">
                                         {{ value.student?.name || value.team?.name }}
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" [sortable]="true" [minWidth]="130" [width]="140">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.[0]?.completionDate')">
+                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.completionDate' | artemisTranslate }}</span>
+                            <fa-icon [icon]="controls.iconForSortPropField('results?.[0]?.completionDate')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        {{ value.results?.[0]?.completionDate | artemisDate }}
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" [sortable]="true" [minWidth]="250" [width]="260">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.[0]?.score')">
+                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.lastResult' | artemisTranslate }}</span>
+                            <fa-icon [icon]="controls.iconForSortPropField('results?.[0]?.score')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <jhi-result *ngIf="value.results?.[0]" [exercise]="exercise" [result]="value.results?.[0]" [participation]="value"></jhi-result>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" *ngIf="newManualResultAllowed || exercise.allowComplaintsForAutomaticAssessments" [sortable]="true" [minWidth]="130" [width]="140">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.[0].assessmentType')">
+                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.type' | artemisTranslate }}</span>
+                            <fa-icon [icon]="controls.iconForSortPropField('results?.[0].assessmentType')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        {{ value.results?.[0].assessmentType }}
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column *ngIf="exercise.type === ExerciseType.PROGRAMMING && afterDueDate" prop="" [minWidth]="100" [width]="110">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('testRun')">
+                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.participation.practice"> Practice </span>
+                            <fa-icon [icon]="controls.iconForSortPropField('testRun')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        {{ (value.testRun ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="110">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('submissionCount')">
+                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.submissionCount' | artemisTranslate }}</span>
+                            <fa-icon [icon]="controls.iconForSortPropField('submissionCount')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <div class="w-100 text-center">
+                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" [routerLink]="getExerciseParticipationsLink(value.id)">
+                                {{ value.submissionCount }}
+                            </a>
+                            <ng-template #displayTextOnly>
+                                {{ value.submissionCount }}
+                            </ng-template>
+                        </div>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" [sortable]="true" [minWidth]="80" [width]="90">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.[0]?.durationInMinutes')">
+                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.duration' | artemisTranslate }}</span>
+                            <fa-icon [icon]="controls.iconForSortPropField('results?.[0]?.durationInMinutes')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        {{ value.results?.[0]?.durationInMinutes ? (value.results?.[0]?.durationInMinutes | artemisDurationFromSeconds: true) : '-' }}
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="110">
+                    <ng-template ngx-datatable-header-template>
+                        <span class="datatable-header-cell-wrapper w-100 text-center">
+                            <span class="datatable-header-cell-label bold sortable">{{ 'placeholder' }}</span>
+                            <fa-icon [icon]="controls.iconForSortPropField('results?.[0]?.completionDate')"></fa-icon>
+                        </span>
+                    </ng-template>
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <div class="w-100 text-center">
+                            <fa-icon [ngbPopover]="'Servus'" [triggers]="'hover'" [icon]="faComment"></fa-icon>
+                        </div>
+                    </ng-template>
+                </ngx-datatable-column>
+
+                <ngx-datatable-column prop="" *ngIf="exercise.isAtLeastInstructor" [minWidth]="350" [width]="400">
+                    <ng-template ngx-datatable-cell-template let-value="value">
+                        <div class="button-header">
+                            <div class="mb-2" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
+                                <ng-container *ngIf="getRepositoryLink(value)">
+                                    <a *ngIf="!localVCEnabled; else cloneRepoButton" class="btn btn-primary btn-sm me-1" href="{{ getRepositoryLink(value) }}">
+                                        <fa-icon [icon]="faCodeBranch" class="me-1"></fa-icon>
+                                        Repository
                                     </a>
                                 </span>
                             }
