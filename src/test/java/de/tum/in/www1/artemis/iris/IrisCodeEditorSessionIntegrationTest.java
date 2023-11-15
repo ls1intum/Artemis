@@ -75,17 +75,19 @@ class IrisCodeEditorSessionIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/code-editor-sessions", null, IrisSession.class,
                 HttpStatus.CREATED);
         var settings = irisSettingsService.getGlobalSettings();
+
+        irisRequestMockProvider.mockStatusResponse();
+        irisRequestMockProvider.mockStatusResponse();
+        irisRequestMockProvider.mockStatusResponse();
+
         settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_UP");
-        irisSettingsService.saveGlobalIrisSettings(settings);
-        irisRequestMockProvider.mockStatusResponse();
-        irisRequestMockProvider.mockStatusResponse();
-        irisRequestMockProvider.mockStatusResponse();
+        irisSettingsService.saveIrisSettings(settings);
         assertThat(request.get("/api/iris/code-editor-sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isTrue();
         settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_DOWN");
-        irisSettingsService.saveGlobalIrisSettings(settings);
+        irisSettingsService.saveIrisSettings(settings);
         assertThat(request.get("/api/iris/code-editor-sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isFalse();
         settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_NA");
-        irisSettingsService.saveGlobalIrisSettings(settings);
+        irisSettingsService.saveIrisSettings(settings);
         assertThat(request.get("/api/iris/code-editor-sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isFalse();
     }
 }
