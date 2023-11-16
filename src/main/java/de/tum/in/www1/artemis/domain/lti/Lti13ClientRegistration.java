@@ -8,7 +8,6 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
-import de.tum.in.www1.artemis.domain.Course;
 
 public class Lti13ClientRegistration {
 
@@ -42,26 +41,6 @@ public class Lti13ClientRegistration {
     private Lti13ToolConfiguration lti13ToolConfiguration;
 
     public Lti13ClientRegistration() { // Necessary for conversion
-    }
-
-    public Lti13ClientRegistration(String serverUrl, Course course, String clientRegistrationId) {
-        this.setGrantTypes(Arrays.asList(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue(), AuthorizationGrantType.IMPLICIT.getValue()));
-        this.setResponseTypes(List.of("id_token"));
-        this.setClientName("Artemis - " + course.getShortName());
-        this.setTokenEndpointAuthMethod("private_key_jwt");
-        this.setScope(String.join(" ", List.of(Scopes.AGS_SCORE, Scopes.AGS_RESULT)));
-        this.setRedirectUris(List.of(serverUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH));
-        this.setInitiateLoginUri(serverUrl + CustomLti13Configurer.LTI13_LOGIN_INITIATION_PATH + "/" + clientRegistrationId);
-        this.setJwksUri(serverUrl + "/.well-known/jwks.json");
-
-        Lti13ToolConfiguration toolConfiguration = new Lti13ToolConfiguration();
-        String domain = serverUrl.split("://").length >= 1 ? serverUrl.split("://")[1] : ""; // Domain cannot include protocol
-        toolConfiguration.setDomain(domain);
-        toolConfiguration.setTargetLinkUri(serverUrl + "/courses/" + course.getId());
-        toolConfiguration.setClaims(Arrays.asList("iss", "email", "sub", "name", "given_name", "family_name"));
-        Message deepLinkingMessage = new Message("LtiDeepLinkingRequest", serverUrl + CustomLti13Configurer.LTI13_BASE_PATH + "/deep-linking/" + course.getId());
-        toolConfiguration.setMessages(List.of(deepLinkingMessage));
-        this.setLti13ToolConfiguration(toolConfiguration);
     }
 
     public Lti13ClientRegistration(String serverUrl, String clientRegistrationId) {

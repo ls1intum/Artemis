@@ -107,6 +107,10 @@ public class Lti13Service {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
 
+        if (onlineCourseConfiguration.getLtiPlatformConfiguration() == null) {
+            throw new BadRequestAlertException("LTI platform is not configured for this course", "LTI", "ltiPlatformNotConfigured");
+        }
+
         Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail());
 
         if (!onlineCourseConfiguration.isRequireExistingUser() && optionalUsername.isEmpty()) {
