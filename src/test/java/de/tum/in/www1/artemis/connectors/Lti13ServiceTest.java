@@ -506,8 +506,6 @@ class Lti13ServiceTest {
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
 
         lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId);
-
-        verify(ltiDeepLinkingService).initializeDeepLinkingResponse(oidcIdToken, clientRegistrationId);
     }
 
     @Test
@@ -533,19 +531,13 @@ class Lti13ServiceTest {
     @Test
     void startDeepLinkingCourseNotFound() {
         when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/100000");
-
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
-
-        verify(ltiDeepLinkingService, never()).initializeDeepLinkingResponse(any(), any());
     }
 
     @Test
     void startDeepLinkingInvalidPath() {
         when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/with/invalid/path/to/deeplinking/11");
-
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
-
-        verify(ltiDeepLinkingService, never()).initializeDeepLinkingResponse(any(), any());
     }
 
     @Test
@@ -553,8 +545,6 @@ class Lti13ServiceTest {
         doReturn("path").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
-
-        verify(ltiDeepLinkingService, never()).initializeDeepLinkingResponse(any(), any());
     }
 
     private State getValidStateForNewResult(Result result) {

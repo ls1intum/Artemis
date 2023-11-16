@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.text.ParseException;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.bind.annotation.*;
 
 import com.google.gson.JsonObject;
+import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -61,9 +65,11 @@ public class LtiResource {
      */
     @PostMapping("/lti13/deep-linking/{courseId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseId") String exerciseId) {
-        ltiDeepLinkingService.populateContentItems(String.valueOf(courseId), exerciseId);
-        String targetLink = ltiDeepLinkingService.buildLtiDeepLinkResponse();
+    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseId") String exerciseId,
+            @RequestParam(name = "ltiIdToken") String ltiIdToken, @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
+        OidcIdToken idToken = new OidcIdToken(ltiIdToken, null, null, SignedJWT.parse(ltiIdToken).getJWTClaimsSet().getClaims());
+
+        String targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, Long.valueOf(exerciseId));
 
         JsonObject json = new JsonObject();
         json.addProperty("targetLinkUri", targetLink);

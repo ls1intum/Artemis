@@ -62,6 +62,8 @@ public class Lti13DeepLinkingResponse {
      * @param clientRegistrationId the client registration ID
      */
     public Lti13DeepLinkingResponse(OidcIdToken ltiIdToken, String clientRegistrationId) {
+        validateClaims(ltiIdToken);
+
         this.deepLinkingSettings = JsonParser.parseString(ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS).toString()).getAsJsonObject();
         this.setReturnUrl(this.deepLinkingSettings.get("deep_link_return_url").getAsString());
         this.clientRegistrationId = clientRegistrationId;
@@ -97,6 +99,31 @@ public class Lti13DeepLinkingResponse {
         claims.put(Claims.CONTENT_ITEMS, contentItems);
 
         return claims;
+    }
+
+    private void validateClaims(OidcIdToken ltiIdToken) {
+        if (ltiIdToken == null) {
+            throw new IllegalArgumentException("The OIDC ID token must not be null.");
+        }
+
+        Object deepLinkingSettingsElement = ltiIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS);
+        if (deepLinkingSettingsElement == null) {
+            throw new IllegalArgumentException("Missing or invalid deep linking settings in ID token.");
+        }
+
+        ensureClaimPresent(ltiIdToken, "iss");
+        ensureClaimPresent(ltiIdToken, "aud");
+        ensureClaimPresent(ltiIdToken, "exp");
+        ensureClaimPresent(ltiIdToken, "iat");
+        ensureClaimPresent(ltiIdToken, "nonce");
+        ensureClaimPresent(ltiIdToken, Claims.LTI_DEPLOYMENT_ID);
+    }
+
+    private void ensureClaimPresent(OidcIdToken ltiIdToken, String claimName) {
+        Object claimValue = ltiIdToken.getClaim(claimName);
+        if (claimValue == null) {
+            throw new IllegalArgumentException("Missing claim: " + claimName);
+        }
     }
 
     public void setAud(String aud) {

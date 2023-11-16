@@ -36,10 +36,6 @@ public class LtiDeepLinkingService {
 
     private final Lti13TokenRetriever tokenRetriever;
 
-    private Lti13DeepLinkingResponse lti13DeepLinkingResponse;
-
-    private String clientRegistrationId;
-
     /**
      * Constructor for LtiDeepLinkingService.
      *
@@ -52,36 +48,46 @@ public class LtiDeepLinkingService {
     }
 
     /**
+     * Constructs an LTI Deep Linking response URL with JWT for the specified course and exercise.
+     *
+     * @param ltiIdToken           OIDC ID token with the user's authentication claims.
+     * @param clientRegistrationId Client registration ID for the LTI tool.
+     * @param courseId             ID of the course for deep linking.
+     * @param exerciseId           ID of the exercise for deep linking.
+     * @return Constructed deep linking response URL.
+     * @throws BadRequestAlertException if there are issues with the OIDC ID token claims.
+     */
+    public String performDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId, Long courseId, Long exerciseId) {
+        // Initialize DeepLinkingResponse
+        Lti13DeepLinkingResponse lti13DeepLinkingResponse = new Lti13DeepLinkingResponse(ltiIdToken, clientRegistrationId);
+        // Fill selected exercise link into content items
+        String contentItems = this.populateContentItems(String.valueOf(courseId), String.valueOf(exerciseId));
+        lti13DeepLinkingResponse.setContentItems(contentItems.toString());
+
+        // Prepare return url with jwt and id parameters
+        return this.buildLtiDeepLinkResponse(clientRegistrationId, lti13DeepLinkingResponse);
+    }
+
+    /**
      * Build an LTI deep linking response URL.
      *
      * @return The LTI deep link response URL.
      */
-    public String buildLtiDeepLinkResponse() {
+    private String buildLtiDeepLinkResponse(String clientRegistrationId, Lti13DeepLinkingResponse lti13DeepLinkingResponse) {
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromUriString(this.artemisServerUrl + "/lti/select-content");
 
-        String jwt = tokenRetriever.createDeepLinkingJWT(this.clientRegistrationId, this.lti13DeepLinkingResponse.getClaims());
-        String returnUrl = this.lti13DeepLinkingResponse.getReturnUrl();
+        String jwt = tokenRetriever.createDeepLinkingJWT(clientRegistrationId, lti13DeepLinkingResponse.getClaims());
+        String returnUrl = lti13DeepLinkingResponse.getReturnUrl();
 
         // Validate properties are set to create a response
-        validateDeepLinkingResponseSettings(returnUrl, jwt);
+        validateDeepLinkingResponseSettings(returnUrl, jwt, lti13DeepLinkingResponse.getDeploymentId());
 
         uriComponentsBuilder.queryParam("jwt", jwt);
-        uriComponentsBuilder.queryParam("id", this.lti13DeepLinkingResponse.getDeploymentId());
+        uriComponentsBuilder.queryParam("id", lti13DeepLinkingResponse.getDeploymentId());
         uriComponentsBuilder.queryParam("deepLinkUri", UriComponent.encode(returnUrl, UriComponent.Type.QUERY_PARAM));
 
         return uriComponentsBuilder.build().toUriString();
 
-    }
-
-    /**
-     * Initialize the deep linking response with information from OidcIdToken and clientRegistrationId.
-     *
-     * @param ltiIdToken           The LTI 1.3 ID token.
-     * @param clientRegistrationId The LTI 1.3 client registration id.
-     */
-    public void initializeDeepLinkingResponse(OidcIdToken ltiIdToken, String clientRegistrationId) {
-        this.clientRegistrationId = clientRegistrationId;
-        this.lti13DeepLinkingResponse = new Lti13DeepLinkingResponse(ltiIdToken, clientRegistrationId);
     }
 
     /**
@@ -90,31 +96,11 @@ public class LtiDeepLinkingService {
      * @param courseId   The course ID.
      * @param exerciseId The exercise ID.
      */
-    public void populateContentItems(String courseId, String exerciseId) {
-        if (this.lti13DeepLinkingResponse == null) {
-            throw new BadRequestAlertException("Deep linking response is not initialized correctly.", "LTI", "deepLinkingResponseInitializeFailed");
-        }
-
+    private String populateContentItems(String courseId, String exerciseId) {
         JsonObject item = setContentItem(courseId, exerciseId);
         JsonArray contentItems = new JsonArray();
         contentItems.add(item);
-        this.lti13DeepLinkingResponse.setContentItems(contentItems.toString());
-    }
-
-    public String getClientRegistrationId() {
-        return clientRegistrationId;
-    }
-
-    public void setClientRegistrationId(String clientRegistrationId) {
-        this.clientRegistrationId = clientRegistrationId;
-    }
-
-    public Lti13DeepLinkingResponse getLti13DeepLinkingResponse() {
-        return lti13DeepLinkingResponse;
-    }
-
-    public void setLti13DeepLinkingResponse(Lti13DeepLinkingResponse lti13DeepLinkingResponse) {
-        this.lti13DeepLinkingResponse = lti13DeepLinkingResponse;
+        return contentItems.toString();
     }
 
     private JsonObject setContentItem(String courseId, String exerciseId) {
@@ -131,7 +117,7 @@ public class LtiDeepLinkingService {
         return item;
     }
 
-    private void validateDeepLinkingResponseSettings(String returnURL, String jwt) {
+    private void validateDeepLinkingResponseSettings(String returnURL, String jwt, String deploymentId) {
         if (isEmptyString(jwt)) {
             throw new BadRequestAlertException("Deep linking response cannot be created", "LTI", "deepLinkingResponseFailed");
         }
@@ -140,9 +126,8 @@ public class LtiDeepLinkingService {
             throw new BadRequestAlertException("Cannot find platform return URL", "LTI", "deepLinkReturnURLEmpty");
         }
 
-        if (isEmptyString(this.lti13DeepLinkingResponse.getDeploymentId())) {
+        if (isEmptyString(deploymentId))
             throw new BadRequestAlertException("Platform deployment id cannot be empty", "LTI", "deploymentIdEmpty");
-        }
     }
 
     boolean isEmptyString(String string) {

@@ -77,6 +77,11 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     }
 
     redirectUserToTargetLink(error: any): void {
+        const ltiIdToken = error.headers.get('ltiIdToken');
+        const clientRegistrationId = error.headers.get('clientRegistrationId');
+
+        this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
+
         // Redirect to target link since the user is already logged in
         window.location.replace(error.headers.get('TargetLinkUri').toString());
     }
@@ -95,7 +100,11 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
     handleLtiLaunchSuccess(data: NonNullable<unknown>): void {
         const targetLinkUri = data['targetLinkUri'];
+        const ltiIdToken = data['ltiIdToken'];
+        const clientRegistrationId = data['clientRegistrationId'];
+
         window.sessionStorage.removeItem('state');
+        this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
 
         if (targetLinkUri) {
             window.location.replace(targetLinkUri);
@@ -108,5 +117,24 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     handleLtiLaunchError(): void {
         window.sessionStorage.removeItem('state');
         this.isLaunching = false;
+    }
+
+    storeLtiSessionData(ltiIdToken: string, clientRegistrationId: string): void {
+        if (!ltiIdToken) {
+            console.error('LTI ID token required to store session data.');
+            return;
+        }
+
+        if (!clientRegistrationId) {
+            console.error('LTI client registration ID required to store session data.');
+            return;
+        }
+
+        try {
+            window.sessionStorage.setItem('ltiIdToken', ltiIdToken);
+            window.sessionStorage.setItem('clientRegistrationId', clientRegistrationId);
+        } catch (error) {
+            console.error('Failed to store session data:', error);
+        }
     }
 }

@@ -66,8 +66,6 @@ public class Lti13Service {
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    private final LtiDeepLinkingService ltiDeepLinkingService;
-
     private final RestTemplate restTemplate;
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository,
@@ -83,7 +81,6 @@ public class Lti13Service {
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.restTemplate = restTemplate;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
-        this.ltiDeepLinkingService = ltiDeepLinkingService;
     }
 
     /**
@@ -362,8 +359,6 @@ public class Lti13Service {
         if (onlineCourseConfiguration == null) {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
-
-        ltiDeepLinkingService.initializeDeepLinkingResponse(ltiIdToken, clientRegistrationId);
 
         ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
                 ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
