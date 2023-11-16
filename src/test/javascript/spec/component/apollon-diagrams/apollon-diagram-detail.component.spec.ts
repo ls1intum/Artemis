@@ -34,6 +34,7 @@ describe('ApollonDiagramDetail Component', () => {
     const course: Course = { id: 123 } as Course;
     const diagram: ApollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, course.id!);
     let alertService: AlertService;
+    let modalService: NgbModal;
     // @ts-ignore
     const model = testClassDiagram as UMLModel;
 
@@ -65,6 +66,7 @@ describe('ApollonDiagramDetail Component', () => {
                 fixture = TestBed.createComponent(ApollonDiagramDetailComponent);
                 apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
                 alertService = fixture.debugElement.injector.get(AlertService);
+                modalService = fixture.debugElement.injector.get(NgbModal);
             });
     });
 
@@ -163,6 +165,22 @@ describe('ApollonDiagramDetail Component', () => {
         // test
         await fixture.componentInstance.downloadSelection();
         expect(window.URL.createObjectURL).toHaveBeenCalledOnce();
+    });
+
+    it('confirmExitDetailView', () => {
+        const openModalSpy = jest.spyOn(modalService, 'open');
+        const emitCloseModalSpy = jest.spyOn(fixture.componentInstance.closeModal, 'emit');
+        const emitCloseEditSpy = jest.spyOn(fixture.componentInstance.closeEdit, 'emit');
+
+        fixture.componentInstance.isSaved = true;
+        fixture.componentInstance.confirmExitDetailView(true);
+        expect(emitCloseModalSpy).toHaveBeenCalledOnce();
+        fixture.componentInstance.confirmExitDetailView(false);
+        expect(emitCloseEditSpy).toHaveBeenCalledOnce();
+
+        fixture.componentInstance.isSaved = false;
+        fixture.componentInstance.confirmExitDetailView(true);
+        expect(openModalSpy).toHaveBeenCalledOnce();
     });
 
     it('ngOnInit', async () => {
