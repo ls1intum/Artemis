@@ -416,11 +416,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.isImportFromFile).toBeFalse();
             expect(comp.isImportFromExistingExercise).toBeTrue();
 
-            verifyImport();
-
-            // name and short name should not be imported
-            expect(comp.programmingExercise.title).toBeUndefined();
-            expect(comp.programmingExercise.shortName).toBeUndefined();
+            verifyImport(programmingExercise);
         }));
 
         it.each([
@@ -515,11 +511,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.isImportFromFile).toBeTrue();
             expect(comp.isImportFromExistingExercise).toBeFalse();
 
-            verifyImport();
-
-            // name and short name should be imported
-            expect(comp.programmingExercise.title).toBe('title');
-            expect(comp.programmingExercise.shortName).toBe('shortName');
+            verifyImport(programmingExercise);
         }));
 
         it('should call import-from-file from service on import for entity from file', fakeAsync(() => {
@@ -924,7 +916,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.exerciseCategories).toBe(categories);
     }));
 
-    function verifyImport() {
+    function verifyImport(importedProgrammingExercise: ProgrammingExercise) {
         expect(comp.programmingExercise.projectKey).toBeUndefined();
         expect(comp.programmingExercise.id).toBeUndefined();
         expect(comp.programmingExercise.dueDate).toBeUndefined();
@@ -943,6 +935,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
         expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+        // name and short name should also be imported
+        expect(comp.programmingExercise.title).toEqual(importedProgrammingExercise.title);
+        expect(comp.programmingExercise.shortName).toEqual(importedProgrammingExercise.shortName);
     }
 });
 
