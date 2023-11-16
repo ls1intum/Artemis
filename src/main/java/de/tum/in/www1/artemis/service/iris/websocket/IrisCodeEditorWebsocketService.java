@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.iris.websocket;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -16,6 +17,7 @@ import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 import de.tum.in.www1.artemis.service.iris.session.codeeditor.file.FileChange;
 
 @Service
+@Profile("iris")
 public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
 
     private static final String WEBSOCKET_TOPIC_SESSION_TYPE = "code-editor-sessions";

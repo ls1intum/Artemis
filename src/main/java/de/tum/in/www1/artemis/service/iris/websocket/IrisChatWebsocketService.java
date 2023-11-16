@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -17,6 +18,7 @@ import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
 
 @Service
+@Profile("iris")
 public class IrisChatWebsocketService extends IrisWebsocketService {
 
     private static final String WEBSOCKET_TOPIC_SESSION_TYPE = "sessions";
