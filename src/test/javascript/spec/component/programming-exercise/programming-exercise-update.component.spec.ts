@@ -63,8 +63,9 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 
-describe('ProgrammingExercise Management Update Component', () => {
+describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
     const course = { id: courseId } as Course;
 
@@ -415,11 +416,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.isImportFromFile).toBeFalse();
             expect(comp.isImportFromExistingExercise).toBeTrue();
 
-            verifyImport();
-
-            // name and short name should not be imported
-            expect(comp.programmingExercise.title).toBeUndefined();
-            expect(comp.programmingExercise.shortName).toBeUndefined();
+            verifyImport(programmingExercise);
         }));
 
         it.each([
@@ -480,6 +477,16 @@ describe('ProgrammingExercise Management Update Component', () => {
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             }),
         );
+
+        it('should load exercise categories on import', () => {
+            const programmingExercise = getProgrammingExerciseForImport();
+            route.data = of({ programmingExercise });
+            const loadExerciseCategoriesSpy = jest.spyOn(Utils, 'loadCourseExerciseCategories');
+
+            comp.ngOnInit();
+
+            expect(loadExerciseCategoriesSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('import from file', () => {
@@ -504,11 +511,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.isImportFromFile).toBeTrue();
             expect(comp.isImportFromExistingExercise).toBeFalse();
 
-            verifyImport();
-
-            // name and short name should be imported
-            expect(comp.programmingExercise.title).toBe('title');
-            expect(comp.programmingExercise.shortName).toBe('shortName');
+            verifyImport(programmingExercise);
         }));
 
         it('should call import-from-file from service on import for entity from file', fakeAsync(() => {
@@ -913,7 +916,7 @@ describe('ProgrammingExercise Management Update Component', () => {
         expect(comp.exerciseCategories).toBe(categories);
     }));
 
-    function verifyImport() {
+    function verifyImport(importedProgrammingExercise: ProgrammingExercise) {
         expect(comp.programmingExercise.projectKey).toBeUndefined();
         expect(comp.programmingExercise.id).toBeUndefined();
         expect(comp.programmingExercise.dueDate).toBeUndefined();
@@ -932,6 +935,9 @@ describe('ProgrammingExercise Management Update Component', () => {
         // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
         expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+        // name and short name should also be imported
+        expect(comp.programmingExercise.title).toEqual(importedProgrammingExercise.title);
+        expect(comp.programmingExercise.shortName).toEqual(importedProgrammingExercise.shortName);
     }
 });
 
