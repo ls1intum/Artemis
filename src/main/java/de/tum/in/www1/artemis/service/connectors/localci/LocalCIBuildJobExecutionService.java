@@ -226,15 +226,12 @@ public class LocalCIBuildJobExecutionService {
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
-        List<String> testResultsPaths = new ArrayList<>();
-        testResultsPaths.add("/repositories/test-repository/");
+        String testResultsPath = "/repositories/test-repository/";
 
         // Get an input stream of the test result files.
-        List<TarArchiveInputStream> testResultsTarInputStreams = new ArrayList<>();
+        TarArchiveInputStream testResultsTarInputStreams;
         try {
-            for (String testResultsPath : testResultsPaths) {
-                testResultsTarInputStreams.add(localCIContainerService.getArchiveFromContainer(containerId, testResultsPath));
-            }
+            testResultsTarInputStreams = localCIContainerService.getArchiveFromContainer(containerId, testResultsPath);
         }
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
@@ -269,17 +266,14 @@ public class LocalCIBuildJobExecutionService {
 
     // --- Helper methods ----
 
-    private LocalCIBuildResult parseTestResults(List<TarArchiveInputStream> testResultsTarInputStreams, String assignmentRepoBranchName, String assignmentRepoCommitHash,
+    private LocalCIBuildResult parseTestResults(TarArchiveInputStream testResultsTarInputStream, String assignmentRepoBranchName, String assignmentRepoCommitHash,
             String testsRepoCommitHash, ZonedDateTime buildCompletedDate) throws IOException, XMLStreamException {
 
         List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
 
         TarArchiveEntry tarEntry;
-        for (TarArchiveInputStream testResultsTarInputStream : testResultsTarInputStreams) {
-            if (testResultsTarInputStream == null) {
-                continue;
-            }
+        if (testResultsTarInputStream != null) {
             while ((tarEntry = testResultsTarInputStream.getNextTarEntry()) != null) {
                 // Go through all tar entries that are test result files.
                 if (!isValidTestResultFile(tarEntry)) {
