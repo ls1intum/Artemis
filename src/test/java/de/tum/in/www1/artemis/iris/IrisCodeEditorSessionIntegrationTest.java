@@ -80,13 +80,16 @@ class IrisCodeEditorSessionIntegrationTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockStatusResponse();
         irisRequestMockProvider.mockStatusResponse();
 
-        settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_UP");
+        // FIXME: This test fails because preferredModel is null when the REST call is made despite it being set here
+        settings.getIrisCodeEditorSettings().setPreferredModel("TEST_MODEL_UP");
         irisSettingsService.saveIrisSettings(settings);
         assertThat(request.get("/api/iris/code-editor-sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isTrue();
-        settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_DOWN");
+
+        settings.getIrisCodeEditorSettings().setPreferredModel("TEST_MODEL_DOWN");
         irisSettingsService.saveIrisSettings(settings);
         assertThat(request.get("/api/iris/code-editor-sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isFalse();
-        settings.getIrisChatSettings().setPreferredModel("TEST_MODEL_NA");
+
+        settings.getIrisCodeEditorSettings().setPreferredModel("TEST_MODEL_NA");
         irisSettingsService.saveIrisSettings(settings);
         assertThat(request.get("/api/iris/code-editor-sessions/" + irisSession.getId() + "/active", HttpStatus.OK, Boolean.class)).isFalse();
     }

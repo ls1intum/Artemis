@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.iris.message.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.*;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -26,9 +25,6 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "iriscodeeditormessageintegration";
-
-    @Autowired
-    private IrisSessionService irisSessionService;
 
     @Autowired
     private IrisCodeEditorSessionService irisCodeEditorSessionService;
@@ -157,6 +153,8 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         setupExercise();
         assertThat(content).isInstanceOf(IrisExercisePlan.class);
         var component = ((IrisExercisePlan) content).getSteps().get(0);
+        String updatedInstructions = "Updated instructions";
+        component.setInstructions(updatedInstructions);
 
         request.putWithResponseBody(
                 "/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/contents/" + content.getId() + "/components/" + component.getId(),
@@ -164,7 +162,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisMessageFromDB = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
         var componentFromDB = irisExercisePlanStepRepository.findByIdElseThrow(component.getId());
         assertThat(irisMessageFromDB.getContent()).hasSize(1);
-        assertThat(componentFromDB.getInstructions()).isEqualTo("test PS");
+        assertThat(componentFromDB.getInstructions()).isEqualTo(updatedInstructions);
     }
 
     @Test

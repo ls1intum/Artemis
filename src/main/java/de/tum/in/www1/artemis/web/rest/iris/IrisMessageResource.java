@@ -61,7 +61,7 @@ public class IrisMessageResource {
         IrisSession session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
-        var messages = irisMessageRepository.findAllExceptSystemMessagesWithContentBySessionId(sessionId);
+        var messages = irisMessageRepository.findAllBySessionId(sessionId);
         return ResponseEntity.ok(messages);
     }
 
