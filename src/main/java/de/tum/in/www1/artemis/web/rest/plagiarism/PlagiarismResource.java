@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
-import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismComparisonStatusDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
