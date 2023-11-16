@@ -19,8 +19,9 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Exam } from 'app/entities/exam.model';
+import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 
-describe('FileUploadExercise Management Update Component', () => {
+describe('FileUploadExerciseUpdateComponent', () => {
     let comp: FileUploadExerciseUpdateComponent;
     let fixture: ComponentFixture<FileUploadExerciseUpdateComponent>;
     let service: FileUploadExerciseService;
@@ -288,5 +289,16 @@ describe('FileUploadExercise Management Update Component', () => {
             expect(comp.fileUploadExercise.releaseDate).toBeUndefined();
             expect(comp.fileUploadExercise.dueDate).toBeUndefined();
         }));
+    });
+
+    it('should updateCategories properly by making category available for selection again when removing it', () => {
+        comp.fileUploadExercise = fileUploadExercise;
+        comp.exerciseCategories = [];
+        const newCategories = [{ category: 'Easy' }, { category: 'Hard' }];
+
+        comp.updateCategories(newCategories);
+
+        expect(comp.fileUploadExercise.categories).toEqual(newCategories);
+        expect(comp.exerciseCategories).toEqual(newCategories);
     });
 });
