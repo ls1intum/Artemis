@@ -109,17 +109,7 @@ class Lti13ServiceTest {
 
     @Test
     void performLaunch_exerciseFound() {
-        long exerciseId = 134;
-        Exercise exercise = new TextExercise();
-        exercise.setId(exerciseId);
-
-        long courseId = 12;
-        Course course = new Course();
-        course.setId(courseId);
-        course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
-        exercise.setCourse(course);
-        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
-        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        mockExercise result = getMockExercise();
 
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
         when(oidcIdToken.getClaim("iss")).thenReturn("http://otherDomain.com");
@@ -127,7 +117,7 @@ class Lti13ServiceTest {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("id", "resourceLinkUrl");
         when(oidcIdToken.getClaim(Claims.RESOURCE_LINK)).thenReturn(jsonObject);
-        prepareForPerformLaunch(courseId, exerciseId);
+        prepareForPerformLaunch(result.courseId(), result.exerciseId());
 
         lti13Service.performLaunch(oidcIdToken, clientRegistrationId);
 
@@ -581,6 +571,25 @@ class Lti13ServiceTest {
      */
     private record State(LtiResourceLaunch ltiResourceLaunch, Exercise exercise, User user, StudentParticipation participation, Result result,
             ClientRegistration clientRegistration) {
+    }
+
+    private mockExercise getMockExercise() {
+        long exerciseId = 134;
+        Exercise exercise = new TextExercise();
+        exercise.setId(exerciseId);
+
+        long courseId = 12;
+        Course course = new Course();
+        course.setId(courseId);
+        course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
+        exercise.setCourse(course);
+        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
+        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        mockExercise result = new mockExercise(exerciseId, courseId);
+        return result;
+    }
+
+    private record mockExercise(long exerciseId, long courseId) {
     }
 
     private void prepareForPerformLaunch(long courseId, long exerciseId) {

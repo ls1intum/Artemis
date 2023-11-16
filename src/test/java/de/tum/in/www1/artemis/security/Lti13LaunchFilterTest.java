@@ -3,11 +3,13 @@ package de.tum.in.www1.artemis.security;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -130,45 +132,15 @@ class Lti13LaunchFilterTest {
 
     @Test
     void authenticatedLogin() throws Exception {
-        doReturn(true).when(authentication).isAuthenticated();
-        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
-        doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
-        doReturn(responseWriter).when(httpResponse).getWriter();
-        initValidIdToken();
-
-        launchFilter.doFilter(httpRequest, httpResponse, filterChain);
-
-        verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
-        verify(httpResponse).setContentType("application/json");
-        verify(httpResponse).setCharacterEncoding("UTF-8");
+        JsonObject responseJsonBody = getMockJsonObject(false);
         verify(lti13Service).performLaunch(any(), any());
-
-        ArgumentCaptor<JsonObject> argument = ArgumentCaptor.forClass(JsonObject.class);
-        verify(responseWriter).print(argument.capture());
-        JsonObject responseJsonBody = argument.getValue();
-        verify(lti13Service).buildLtiResponse(any(), any());
         assertThat((responseJsonBody.get("targetLinkUri").getAsString())).as("Response body contains the expected targetLinkUri").contains(this.targetLinkUri);
     }
 
     @Test
     void authenticatedLoginForDeepLinking() throws Exception {
-        doReturn(true).when(authentication).isAuthenticated();
-        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
-        doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
-        doReturn(responseWriter).when(httpResponse).getWriter();
-        initValidTokenForDeepLinking();
-
-        launchFilter.doFilter(httpRequest, httpResponse, filterChain);
-
-        verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
-        verify(httpResponse).setContentType("application/json");
-        verify(httpResponse).setCharacterEncoding("UTF-8");
+        JsonObject responseJsonBody = getMockJsonObject(true);
         verify(lti13Service).startDeepLinking(any(), any());
-
-        ArgumentCaptor<JsonObject> argument = ArgumentCaptor.forClass(JsonObject.class);
-        verify(responseWriter).print(argument.capture());
-        JsonObject responseJsonBody = argument.getValue();
-        verify(lti13Service).buildLtiResponse(any(), any());
         assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri")
                 .contains("https://any-artemis-domain.org/lti/deep-linking/121");
 
@@ -209,5 +181,30 @@ class Lti13LaunchFilterTest {
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
 
         verify(httpResponse).sendError(eq(HttpStatus.INTERNAL_SERVER_ERROR.value()), any());
+    }
+
+    private JsonObject getMockJsonObject(boolean isDeepLinkingRequest) throws IOException, ServletException {
+        doReturn(true).when(authentication).isAuthenticated();
+        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
+        doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
+        doReturn(responseWriter).when(httpResponse).getWriter();
+        if (isDeepLinkingRequest) {
+            initValidTokenForDeepLinking();
+        }
+        else {
+            initValidIdToken();
+        }
+
+        launchFilter.doFilter(httpRequest, httpResponse, filterChain);
+
+        verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
+        verify(httpResponse).setContentType("application/json");
+        verify(httpResponse).setCharacterEncoding("UTF-8");
+
+        ArgumentCaptor<JsonObject> argument = ArgumentCaptor.forClass(JsonObject.class);
+        verify(responseWriter).print(argument.capture());
+        JsonObject responseJsonBody = argument.getValue();
+        verify(lti13Service).buildLtiResponse(any(), any());
+        return responseJsonBody;
     }
 }

@@ -348,8 +348,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deepLinkingFailsAsStudent() throws Exception {
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("exerciseId", "155");
+        var params = getDeepLinkingRequestParams();
 
         request.postWithoutResponseBody("/api/lti13/deep-linking/" + course.getId(), HttpStatus.FORBIDDEN, params);
     }
@@ -367,8 +366,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         course.setOnlineCourseConfiguration(null);
         courseRepository.save(course);
 
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("exerciseId", "155");
+        var params = getDeepLinkingRequestParams();
 
         request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.BAD_REQUEST, params);
     }
@@ -381,5 +379,13 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     private void assertParametersNewStudent(MultiValueMap<String, String> parameters) {
         assertThat(parameters.getFirst("initialize")).isNotNull();
         assertThat(parameters.getFirst("ltiSuccessLoginRequired")).isNull();
+    }
+
+    private static LinkedMultiValueMap<String, String> getDeepLinkingRequestParams() {
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("exerciseId", "155");
+        params.add("ltiIdToken", "id-token");
+        params.add("clientRegistrationId", "registration-id");
+        return params;
     }
 }
