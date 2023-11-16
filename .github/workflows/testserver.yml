@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Get PR labels
         id: get-labels
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -74,7 +74,7 @@ jobs:
 
       - name: Check if latest push had successful build
         if: fromJSON(steps.check_build.outputs.data).total_count == 0
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -279,7 +279,7 @@ jobs:
             deploy:${{ matrix.label-identifier }}
 
       - name: Check "lock:${{ matrix.environment }}" label
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -308,7 +308,7 @@ jobs:
             }
 
       - name: Compute Tag
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         id: compute-tag
         with:
           result-encoding: string
@@ -359,7 +359,7 @@ jobs:
           done
 
       - name: Add "lock:${{ matrix.environment }}" label
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
             github-token: ${{ secrets.GITHUB_TOKEN }}
             script: |
