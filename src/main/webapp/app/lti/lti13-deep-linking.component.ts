@@ -120,8 +120,8 @@ export class Lti13DeepLinkingComponent implements OnInit {
      */
     sendDeepLinkRequest() {
         if (this.selectedExercise) {
-            const ltiIdToken = window.sessionStorage.getItem('ltiIdToken');
-            const clientRegistrationId = window.sessionStorage.getItem('clientRegistrationId');
+            const ltiIdToken = window.sessionStorage.getItem('ltiIdToken') ?? '';
+            const clientRegistrationId = window.sessionStorage.getItem('clientRegistrationId') ?? '';
 
             const httpParams = new HttpParams().set('exerciseId', this.selectedExercise.id!).set('ltiIdToken', ltiIdToken!).set('clientRegistrationId', clientRegistrationId!);
 

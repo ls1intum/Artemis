@@ -7,11 +7,13 @@ import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { of, throwError } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('Lti13DeepLinkingComponent', () => {
     let component: Lti13DeepLinkingComponent;
@@ -33,7 +35,7 @@ describe('Lti13DeepLinkingComponent', () => {
         activatedRouteMock = { params: of({ courseId: '123' }) };
 
         TestBed.configureTestingModule({
-            declarations: [Lti13DeepLinkingComponent, MockPipe(ArtemisTranslatePipe), HelpIconComponent],
+            declarations: [Lti13DeepLinkingComponent, MockPipe(ArtemisTranslatePipe), HelpIconComponent, MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: ActivatedRoute, useValue: activatedRouteMock },
                 { provide: Router, useValue: routerMock },
@@ -41,6 +43,7 @@ describe('Lti13DeepLinkingComponent', () => {
                 { provide: CourseManagementService, useValue: courseManagementServiceMock },
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: SortService, useValue: sortServiceMock },
+                MockProvider(AlertService),
             ],
         }).compileComponents();
         jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -128,7 +131,7 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(component.isLinking).toBeFalse();
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('exerciseId', exercise1.id!),
+            params: new HttpParams().set('exerciseId', exercise1.id!).set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
         expect(replaceMock).not.toHaveBeenCalled(); // Verify that we did not navigate
     }));
@@ -145,7 +148,7 @@ describe('Lti13DeepLinkingComponent', () => {
         expect(component.isLinking).toBeFalse();
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('exerciseId', exercise1.id!),
+            params: new HttpParams().set('exerciseId', exercise1.id!).set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
     }));
 
@@ -168,7 +171,7 @@ describe('Lti13DeepLinkingComponent', () => {
 
         expect(httpMock.post).toHaveBeenCalledWith(`api/lti13/deep-linking/${component.courseId}`, null, {
             observe: 'response',
-            params: new HttpParams().set('exerciseId', exercise1.id!),
+            params: new HttpParams().set('exerciseId', exercise1.id!).set('ltiIdToken', '').set('clientRegistrationId', ''),
         });
     });
 });

@@ -68,8 +68,10 @@ export class Lti13SelectContentComponent implements OnInit {
      * - Submits the form.
      */
     autoSubmitForm(): void {
-        const form = this.deepLinkingForm!.nativeElement;
-        form.action = this.actionLink;
-        form.submit();
+        const form = this.deepLinkingForm?.nativeElement;
+        if (form) {
+            form.action = this.actionLink;
+            form.submit();
+        }
     }
 }

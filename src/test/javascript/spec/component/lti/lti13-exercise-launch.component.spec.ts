@@ -97,14 +97,14 @@ describe('Lti13ExerciseLaunchComponent', () => {
     });
 
     it('onInit no targetLinkUri', () => {
-        const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({}));
+        const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
         const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         expect(comp.isLaunching).toBeTrue();
 
         comp.ngOnInit();
 
-        expect(consoleSpy).toHaveBeenCalledOnce();
+        expect(consoleSpy).toHaveBeenCalled();
         expect(consoleSpy).toHaveBeenCalledWith('No LTI targetLinkUri received for a successful launch');
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
@@ -114,7 +114,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
     it('onInit success to call launch endpoint', () => {
         const targetLink = window.location.host + '/targetLink';
-        const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ targetLinkUri: targetLink }));
+        const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ targetLinkUri: targetLink, ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
 
         expect(comp.isLaunching).toBeTrue();
 

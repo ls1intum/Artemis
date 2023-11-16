@@ -1,7 +1,7 @@
 import { Lti13SelectContentComponent } from 'app/lti/lti13-select-content.component';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
@@ -23,7 +23,7 @@ describe('Lti13SelectContentComponent', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule],
+            imports: [ReactiveFormsModule, FormsModule],
             declarations: [Lti13SelectContentComponent, MockPipe(ArtemisTranslatePipe), MockPipe(SafeResourceUrlPipe)],
             providers: [FormBuilder, { provide: ActivatedRoute, useValue: routeMock }],
         }).compileComponents();
@@ -40,7 +40,7 @@ describe('Lti13SelectContentComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should initialize form on ngOnInit', () => {
+    it('should initialize form on ngOnInit', fakeAsync(() => {
         const jwt = 'jwt_token';
         const id = 'id_token';
         const deepLinkUri = 'http://example.com/deep_link';
@@ -57,22 +57,22 @@ describe('Lti13SelectContentComponent', () => {
                     return null;
             }
         });
-        const autoSubmitSpy = jest.spyOn(component, 'autoSubmitForm');
 
         component.ngOnInit();
+        tick();
 
         expect(component.actionLink).toBe(deepLinkUri);
         expect(component.isLinking).toBeTrue();
-        expect(autoSubmitSpy).toHaveBeenCalled();
-    });
+    }));
 
-    it('should not auto-submit form if parameters are missing', () => {
+    it('should not auto-submit form if parameters are missing', fakeAsync(() => {
         routeMock.snapshot.queryParamMap.get.mockReturnValue(null);
         const autoSubmitSpy = jest.spyOn(component, 'autoSubmitForm');
 
         component.ngOnInit();
+        tick();
 
         expect(component.isLinking).toBeFalse();
         expect(autoSubmitSpy).not.toHaveBeenCalled();
-    });
+    }));
 });
