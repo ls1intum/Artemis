@@ -83,7 +83,7 @@ public class LocalCISharedBuildJobQueueService {
      * @param commitHash      commit hash of the build job
      */
     public void addBuildJobInformation(Long participationId, String commitHash) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(participationId, commitHash);
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(null, participationId, commitHash, 0, 0, 0);
         queue.add(buildJobQueueItem);
     }
 
