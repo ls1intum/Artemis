@@ -72,13 +72,9 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
         var message2 = new IrisMessage();
         message2.setSession(irisSession);
         message2.setContent(List.of(createMockContent(message2), createMockContent(message2), createMockContent(message2)));
-        var message3 = new IrisMessage();
-        message3.setSession(irisSession);
-        message3.setContent(List.of(createMockContent(message3), createMockContent(message3), createMockContent(message3)));
 
-        irisMessageService.saveMessage(message1, irisSession, IrisMessageSender.ARTEMIS);
-        irisMessageService.saveMessage(message2, irisSession, IrisMessageSender.LLM);
-        irisMessageService.saveMessage(message3, irisSession, IrisMessageSender.USER);
+        irisMessageService.saveMessage(message1, irisSession, IrisMessageSender.LLM);
+        irisMessageService.saveMessage(message2, irisSession, IrisMessageSender.USER);
 
         request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.FORBIDDEN, IrisMessage.class);
     }

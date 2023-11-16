@@ -93,7 +93,7 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         var userMessage = generateUserMessage(codeHint);
         irisSession.getMessages().add(systemMessage);
         irisSession.getMessages().add(userMessage);
-        irisMessageService.saveMessage(systemMessage, irisSession, IrisMessageSender.ARTEMIS);
+        irisMessageService.saveMessage(systemMessage, irisSession, IrisMessageSender.LLM);
         irisMessageService.saveMessage(userMessage, irisSession, IrisMessageSender.USER);
         irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
         Map<String, Object> parameters = Map.of("codeHint", irisSession.getCodeHint());
@@ -119,7 +119,6 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
 
     private IrisMessage generateSystemMessage() {
         var irisMessage = new IrisMessage();
-        irisMessage.setSender(IrisMessageSender.ARTEMIS);
         irisMessage.addContent(new IrisTextMessageContent(irisMessage, SYSTEM_PROMPT));
         return irisMessage;
     }

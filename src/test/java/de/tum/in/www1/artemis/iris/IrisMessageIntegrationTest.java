@@ -149,16 +149,13 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         IrisMessage message3 = createDefaultMockMessage(irisSession);
         IrisMessage message4 = createDefaultMockMessage(irisSession);
 
-        irisMessageService.saveMessage(message1, irisSession, IrisMessageSender.ARTEMIS);
+        message1 = irisMessageService.saveMessage(message1, irisSession, IrisMessageSender.USER);
         message2 = irisMessageService.saveMessage(message2, irisSession, IrisMessageSender.LLM);
         message3 = irisMessageService.saveMessage(message3, irisSession, IrisMessageSender.USER);
         message4 = irisMessageService.saveMessage(message4, irisSession, IrisMessageSender.LLM);
 
         var messages = request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.OK, IrisMessage.class);
-        assertThat(messages).hasSize(3).usingElementComparator((o1, o2) -> {
-            return o1.getContent().size() == o2.getContent().size() && o1.getContent().stream().map(IrisMessageContent::getContentAsString).toList()
-                    .equals(o2.getContent().stream().map(IrisMessageContent::getContentAsString).toList()) ? 0 : -1;
-        }).isEqualTo(List.of(message2, message3, message4));
+        assertThat(messages).hasSize(4).containsAll(List.of(message1, message2, message3, message4));
     }
 
     @Test
