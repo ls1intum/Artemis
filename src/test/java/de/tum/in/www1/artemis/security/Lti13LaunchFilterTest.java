@@ -33,6 +33,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
+import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
 import de.tum.in.www1.artemis.security.lti.Lti13LaunchFilter;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import uk.ac.ox.ctl.lti13.lti.Claims;
@@ -181,6 +182,40 @@ class Lti13LaunchFilterTest {
         launchFilter.doFilter(httpRequest, httpResponse, filterChain);
 
         verify(httpResponse).sendError(eq(HttpStatus.INTERNAL_SERVER_ERROR.value()), any());
+    }
+
+    @Test
+    void emailAddressAlreadyInUse_serviceLaunchFailed() throws ServletException, IOException {
+        doReturn(false).when(authentication).isAuthenticated();
+        doThrow(new LtiEmailAlreadyInUseException()).when(lti13Service).performLaunch(any(), any());
+
+        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
+        doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
+        initValidIdToken();
+
+        launchFilter.doFilter(httpRequest, httpResponse, filterChain);
+
+        verify(httpResponse).sendError(eq(HttpStatus.UNAUTHORIZED.value()), any());
+        verify(httpResponse).setHeader("TargetLinkUri", targetLinkUri);
+        verify(httpResponse).setHeader("ltiIdToken", null);
+        verify(httpResponse).setHeader("clientRegistrationId", "some-registration");
+    }
+
+    @Test
+    void emailAddressAlreadyInUse_serviceDeepLinkingFailed() throws ServletException, IOException {
+        doReturn(false).when(authentication).isAuthenticated();
+        doThrow(new LtiEmailAlreadyInUseException()).when(lti13Service).startDeepLinking(any(), any());
+
+        doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
+        doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());
+        initValidTokenForDeepLinking();
+
+        launchFilter.doFilter(httpRequest, httpResponse, filterChain);
+
+        verify(httpResponse).sendError(eq(HttpStatus.UNAUTHORIZED.value()), any());
+        verify(httpResponse).setHeader("TargetLinkUri", "https://any-artemis-domain.org/lti/deep-linking/121");
+        verify(httpResponse).setHeader("ltiIdToken", null);
+        verify(httpResponse).setHeader("clientRegistrationId", "some-registration");
     }
 
     private JsonObject getMockJsonObject(boolean isDeepLinkingRequest) throws IOException, ServletException {
