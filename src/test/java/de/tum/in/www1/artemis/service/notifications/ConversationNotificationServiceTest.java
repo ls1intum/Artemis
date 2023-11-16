@@ -111,7 +111,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
         post.setContent("hi test");
         post = conversationMessageRepository.save(post);
 
-        conversationNotificationService.notifyAboutNewMessage(post, Set.of(user2), course, Set.of());
+        conversationNotificationService.createNotification(post, Set.of(user2), course, Set.of());
         verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user2.getId() + "/notifications/conversations"), (Object) any());
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
 

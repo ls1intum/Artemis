@@ -50,8 +50,9 @@ public class ConversationNotificationService {
      * @param recipients     the users which should be notified about the new message
      * @param mentionedUsers users mentioned in the message
      * @param course         the course in which the message was posted
+     * @return the created notification
      */
-    public void notifyAboutNewMessage(Post createdMessage, Set<User> recipients, Course course, Set<User> mentionedUsers) {
+    public ConversationNotification createNotification(Post createdMessage, Set<User> recipients, Course course, Set<User> mentionedUsers) {
         String notificationText;
         String[] placeholders;
         NotificationType notificationType = NotificationType.CONVERSATION_NEW_MESSAGE;
@@ -66,7 +67,7 @@ public class ConversationNotificationService {
                 notificationType = NotificationType.NEW_ANNOUNCEMENT_POST;
             }
         }
-        else if (createdMessage.getConversation() instanceof GroupChat groupChat) {
+        else if (createdMessage.getConversation() instanceof GroupChat) {
             notificationText = NEW_MESSAGE_GROUP_CHAT_TEXT;
             placeholders = new String[] { course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(), createdMessage.getAuthor().getName(),
                     conversationName, "groupChat" };
@@ -78,6 +79,7 @@ public class ConversationNotificationService {
         }
         var notification = createConversationMessageNotification(course.getId(), createdMessage, notificationType, notificationText, true, placeholders);
         saveAndSend(notification, createdMessage, course, recipients, mentionedUsers, placeholders);
+        return notification;
     }
 
     private void saveAndSend(ConversationNotification notification, Post createdMessage, Course course, Set<User> recipients, Set<User> mentionedUsers, String[] placeHolders) {
@@ -89,7 +91,7 @@ public class ConversationNotificationService {
         singleUserNotificationRepository.saveAll(mentionedUserNotifications);
         mentionedUserNotifications.forEach(singleUserNotification -> websocketMessagingService.sendMessage(singleUserNotification.getTopic(), singleUserNotification));
 
-        sendNotificationViaWebSocket(notification, recipients.stream().filter(recipient -> !mentionedUsers.contains(recipient)).collect(Collectors.toSet()));
+        // sendNotificationViaWebSocket(notification, recipients.stream().filter(recipient -> !mentionedUsers.contains(recipient)).collect(Collectors.toSet()));
 
         Post notificationSubject = new Post();
         notificationSubject.setId(createdMessage.getId());

@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { map } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
@@ -34,10 +34,11 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { RouteComponents } from 'app/shared/metis/metis.util';
+import { MetisWebsocketChannelPrefix, RouteComponents } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 
 const notificationsPerPage = 25;
 
@@ -57,6 +58,10 @@ export class NotificationService {
     subscribedTopics: string[] = [];
     wsSubscriptions: Subscription[] = [];
 
+    private subscribedCourseWideChannelTopic?: string;
+    private courseWideChannelSubscription?: Subscription;
+    private _singlePostSubject$: Subject<MetisPostDTO>;
+
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
         private router: Router,
@@ -73,6 +78,23 @@ export class NotificationService {
         });
 
         this.accountService.getAuthenticationState().subscribe((user) => this.onUserIdentityChange(user));
+
+        this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
+            const url = event.urlAfterRedirects;
+            if (url.startsWith('/courses') || url.startsWith('/course-management')) {
+                const courseIdParam = url.split('/', 3).last();
+                if (!courseIdParam) {
+                    return;
+                }
+
+                const courseId = parseInt(courseIdParam);
+                if (!isNaN(courseId)) {
+                    this.subscribeToCourseWideChannelTopic(courseId);
+                } else {
+                    this.clearCourseWideChannelSubscription();
+                }
+            }
+        });
     }
 
     private onUserIdentityChange(user: User | undefined) {
@@ -106,8 +128,14 @@ export class NotificationService {
             this.subscribedTopics = [];
             this.wsSubscriptions = [];
 
+            this.clearCourseWideChannelSubscription();
+
             this.initialized = false;
         }
+    }
+
+    get newOrUpdatedMessage(): Observable<MetisPostDTO> {
+        return this._singlePostSubject$.asObservable();
     }
 
     private setTotalNotificationCount(newCount: number): void {
@@ -377,19 +405,44 @@ export class NotificationService {
         if (!this.subscribedTopics.includes(conversationTopic)) {
             this.subscribedTopics.push(conversationTopic);
             this.jhiWebsocketService.subscribe(conversationTopic);
-            const subscription = this.jhiWebsocketService.receive(conversationTopic).subscribe((notification: Notification) => {
-                if (notification.target) {
-                    const target = JSON.parse(notification.target);
-                    const targetCourseId = target.course;
-                    // Only add notification if it is not from the current user and the user is not already in the messages tab
-                    if (notification.author?.id !== this.accountService.userIdentity?.id && !this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
-                        this.addNotification(notification);
-                    }
-                }
-            });
+            const subscription = this.jhiWebsocketService.receive(conversationTopic).subscribe(this.addConversationNotification);
             this.wsSubscriptions.push(subscription);
         }
     }
+
+    private subscribeToCourseWideChannelTopic(courseId: number): void {
+        const courseWideTopic = MetisWebsocketChannelPrefix + `courses/${courseId}`;
+
+        if (this.subscribedCourseWideChannelTopic === courseWideTopic) {
+            return;
+        }
+
+        if (this.subscribedCourseWideChannelTopic) {
+            this.clearCourseWideChannelSubscription();
+        }
+
+        this.jhiWebsocketService.subscribe(courseWideTopic);
+        this.subscribedCourseWideChannelTopic = courseWideTopic;
+
+        this.courseWideChannelSubscription = this.jhiWebsocketService.receive(courseWideTopic).subscribe((postDTO: MetisPostDTO) => {
+            this._singlePostSubject$.next(postDTO);
+
+            if (postDTO.notification) {
+                this.addConversationNotification(postDTO.notification);
+            }
+        });
+    }
+
+    private addConversationNotification = (notification: Notification): void => {
+        if (notification.target) {
+            const target = JSON.parse(notification.target);
+            const targetCourseId = target.course;
+            // Only add notification if it is not from the current user and the user is not already in the messages tab
+            if (notification.author?.id !== this.accountService.userIdentity?.id && !this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
+                this.addNotification(notification);
+            }
+        }
+    };
 
     private subscribeToQuizUpdates(courses: Course[]): void {
         courses.forEach((course) => {
@@ -444,5 +497,15 @@ export class NotificationService {
         this.notificationSubject = new ReplaySubject<Notification[]>(1);
         this.totalNotificationsSubject = new ReplaySubject<number>(1);
         this.singleNotificationSubject = new Subject<Notification>();
+        this._singlePostSubject$ = new Subject<MetisPostDTO>();
+    }
+
+    private clearCourseWideChannelSubscription() {
+        if (this.subscribedCourseWideChannelTopic) {
+            this.jhiWebsocketService.unsubscribe(this.subscribedCourseWideChannelTopic);
+        }
+        this.subscribedCourseWideChannelTopic = undefined;
+        this.courseWideChannelSubscription?.unsubscribe();
+        this.courseWideChannelSubscription = undefined;
     }
 }

@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -24,10 +25,8 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
@@ -61,11 +60,13 @@ public class ConversationMessagingService extends PostingService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final SimpUserRegistry simpUserRegistry;
+
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
             ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService, ConversationRepository conversationRepository,
-            GroupNotificationService groupNotificationService) {
+            GroupNotificationService groupNotificationService, SimpUserRegistry simpUserRegistry) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -73,6 +74,7 @@ public class ConversationMessagingService extends PostingService {
         this.channelAuthorizationService = channelAuthorizationService;
         this.conversationRepository = conversationRepository;
         this.groupNotificationService = groupNotificationService;
+        this.simpUserRegistry = simpUserRegistry;
     }
 
     /**
@@ -144,10 +146,6 @@ public class ConversationMessagingService extends PostingService {
                 .collect(Collectors.toSet());
         broadcastRecipients.addAll(mentionedUsers);
 
-        // Websocket notification 1: this notifies everyone including the author that there is a new message
-        broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
-        log.debug("      broadcastForPost DONE");
-
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
             if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created
@@ -155,6 +153,17 @@ public class ConversationMessagingService extends PostingService {
                 conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, broadcastRecipients);
             }
         }
+
+        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
+        ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, notificationRecipients, course, mentionedUsers);
+        log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
+
+        Set<String> onlineUserLogins = getLoginsOfSubscribedUsers("/topic/metis/" + "courses/" + course.getId());
+        log.debug("      getLoginsOfSubscribedUsers DONE");
+
+        // Websocket notification 1: this notifies everyone including the author that there is a new message
+        broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE, null, notification), course, broadcastRecipients);
+        log.debug("      broadcastForPost DONE");
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
         log.debug("      incrementUnreadMessagesCountOfParticipants DONE");
         // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
@@ -162,14 +171,14 @@ public class ConversationMessagingService extends PostingService {
 
         // TODO: why do we need notification 2 and 3? we should definitely re-work this!
         // Websocket notification 2
-        conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, broadcastRecipients);
-        log.debug("      conversationService.notifyAllConversationMembersAboutNewMessage DONE");
+        // conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, broadcastRecipients);
+        // log.debug(" conversationService.notifyAllConversationMembersAboutNewMessage DONE");
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
-        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
-        conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course, mentionedUsers);
-        log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
+        // Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
+        // conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course, mentionedUsers);
+        // log.debug(" conversationNotificationService.notifyAboutNewMessage DONE");
 
         if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
             saveAnnouncementNotification(createdMessage, channel, course);
@@ -397,5 +406,16 @@ public class ConversationMessagingService extends PostingService {
         postForNotification.setContent(htmlPostContent);
 
         groupNotificationService.notifyAllGroupsAboutNewAnnouncement(postForNotification, course);
+    }
+
+    /**
+     * Finds all users that are currently subscribed to one the provided topic
+     *
+     * @param topic destination/topic for which to get the subscribers
+     * @return an unmodifiable list of user logins subscribed to the provided topic
+     */
+    private Set<String> getLoginsOfSubscribedUsers(String topic) {
+        return simpUserRegistry.findSubscriptions(subscription -> subscription.getDestination().equals(topic)).stream()
+                .map(subscription -> subscription.getSession().getUser().getName()).collect(Collectors.toSet());
     }
 }

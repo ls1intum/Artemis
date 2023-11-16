@@ -1,6 +1,6 @@
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, Observable, ReplaySubject, map } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subscription, map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -33,6 +33,7 @@ import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Channel, ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { NotificationService } from 'app/shared/notification/notification.service';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -51,6 +52,7 @@ export class MetisService implements OnDestroy {
     private subscriptionChannel?: string;
 
     private forceUpdate: boolean;
+    private courseWideTopicSubscription: Subscription;
 
     constructor(
         protected postService: PostService,
@@ -60,10 +62,13 @@ export class MetisService implements OnDestroy {
         protected exerciseService: ExerciseService,
         private translateService: TranslateService,
         private jhiWebsocketService: JhiWebsocketService,
+        notificationService: NotificationService,
     ) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
         });
+
+        this.courseWideTopicSubscription = notificationService.newOrUpdatedMessage.subscribe(this.handleNewOrUpdatedMessage);
     }
 
     get posts(): Observable<Post[]> {
@@ -110,6 +115,7 @@ export class MetisService implements OnDestroy {
         if (this.subscriptionChannel) {
             this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
         }
+        this.courseWideTopicSubscription.unsubscribe();
     }
 
     getPageType(): PageType {
@@ -471,76 +477,85 @@ export class MetisService implements OnDestroy {
         // unsubscribe from existing channel subscription
         if (this.subscriptionChannel) {
             this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+            this.subscriptionChannel = undefined;
         }
+
+        // channel is course-wide which is handled by the metis-notification service
+        if (!channel.includes('conversations')) {
+            return;
+        }
+
         // create new subscription
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
-        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((postDTO: MetisPostDTO) => {
-            const postConvId = postDTO.post.conversation?.id;
-            const postIsNotFromCurrentConversation = this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId;
-            const postIsNotFromSelectedCourseWideChannels =
-                this.currentPostContextFilter.courseWideChannelIds?.length && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId);
-
-            if (postIsNotFromCurrentConversation || postIsNotFromSelectedCourseWideChannels) {
-                return;
-            }
-
-            postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
-            postDTO.post.answers?.forEach((answer: AnswerPost) => {
-                answer.creationDate = dayjs(answer.creationDate);
-            });
-
-            switch (postDTO.action) {
-                case MetisPostAction.CREATE:
-                    const doesNotMatchOwnFilter = this.currentPostContextFilter.filterToOwn && postDTO.post.author?.login !== this.user.login;
-                    const doesNotMatchReactedFilter = this.currentPostContextFilter.filterToAnsweredOrReacted;
-                    const doesNotMatchSearchString =
-                        this.currentPostContextFilter.searchText?.length &&
-                        !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase().trim());
-
-                    if (!postConvId || doesNotMatchOwnFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
-                        break;
-                    }
-                    // we can add the received conversation message to the cached messages without violating the current context filter setting
-                    if (this.currentPostContextFilter.sortingOrder === SortDirection.ASCENDING) {
-                        this.cachedPosts.push(postDTO.post);
-                    } else {
-                        this.cachedPosts = [postDTO.post, ...this.cachedPosts];
-                    }
-                    this.addTags(postDTO.post.tags);
-                    break;
-                case MetisPostAction.UPDATE:
-                    const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                    if (indexToUpdate > -1) {
-                        this.cachedPosts[indexToUpdate] = postDTO.post;
-                    }
-                    this.addTags(postDTO.post.tags);
-                    break;
-                case MetisPostAction.DELETE:
-                    const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                    if (indexToDelete > -1) {
-                        this.cachedPosts.splice(indexToDelete, 1);
-                    }
-                    break;
-                default:
-                    break;
-            }
-            // emit updated version of cachedPosts to subscribing components...
-            if (PageType.OVERVIEW === this.pageType) {
-                const oldPage = this.currentPostContextFilter.page;
-                const oldPageSize = this.currentPostContextFilter.pageSize;
-                this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
-                this.currentPostContextFilter.page = 0;
-                // ...by invoking the getFilteredPosts method with forceUpdate set to true iff receiving a new Q&A post, i.e. fetching posts from server only in this case
-                this.getFilteredPosts(this.currentPostContextFilter, !postConvId, this.currentConversation);
-                this.currentPostContextFilter.pageSize = oldPageSize;
-                this.currentPostContextFilter.page = oldPage;
-            } else {
-                // ...by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
-                this.getFilteredPosts(this.currentPostContextFilter, false);
-            }
-        });
+        this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe(this.handleNewOrUpdatedMessage);
     }
+
+    private handleNewOrUpdatedMessage = (postDTO: MetisPostDTO): void => {
+        const postConvId = postDTO.post.conversation?.id;
+        const postIsNotFromCurrentConversation = this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId;
+        const postIsNotFromSelectedCourseWideChannels =
+            this.currentPostContextFilter.courseWideChannelIds?.length && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId);
+
+        if (postIsNotFromCurrentConversation || postIsNotFromSelectedCourseWideChannels) {
+            return;
+        }
+
+        postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
+        postDTO.post.answers?.forEach((answer: AnswerPost) => {
+            answer.creationDate = dayjs(answer.creationDate);
+        });
+
+        switch (postDTO.action) {
+            case MetisPostAction.CREATE:
+                const doesNotMatchOwnFilter = this.currentPostContextFilter.filterToOwn && postDTO.post.author?.login !== this.user.login;
+                const doesNotMatchReactedFilter = this.currentPostContextFilter.filterToAnsweredOrReacted;
+                const doesNotMatchSearchString =
+                    this.currentPostContextFilter.searchText?.length &&
+                    !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase().trim());
+
+                if (!postConvId || doesNotMatchOwnFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
+                    break;
+                }
+                // we can add the received conversation message to the cached messages without violating the current context filter setting
+                if (this.currentPostContextFilter.sortingOrder === SortDirection.ASCENDING) {
+                    this.cachedPosts.push(postDTO.post);
+                } else {
+                    this.cachedPosts = [postDTO.post, ...this.cachedPosts];
+                }
+                this.addTags(postDTO.post.tags);
+                break;
+            case MetisPostAction.UPDATE:
+                const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                if (indexToUpdate > -1) {
+                    this.cachedPosts[indexToUpdate] = postDTO.post;
+                }
+                this.addTags(postDTO.post.tags);
+                break;
+            case MetisPostAction.DELETE:
+                const indexToDelete = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                if (indexToDelete > -1) {
+                    this.cachedPosts.splice(indexToDelete, 1);
+                }
+                break;
+            default:
+                break;
+        }
+        // emit updated version of cachedPosts to subscribing components...
+        if (PageType.OVERVIEW === this.pageType) {
+            const oldPage = this.currentPostContextFilter.page;
+            const oldPageSize = this.currentPostContextFilter.pageSize;
+            this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
+            this.currentPostContextFilter.page = 0;
+            // ...by invoking the getFilteredPosts method with forceUpdate set to true iff receiving a new Q&A post, i.e. fetching posts from server only in this case
+            this.getFilteredPosts(this.currentPostContextFilter, !postConvId, this.currentConversation);
+            this.currentPostContextFilter.pageSize = oldPageSize;
+            this.currentPostContextFilter.page = oldPage;
+        } else {
+            // ...by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
+            this.getFilteredPosts(this.currentPostContextFilter, false);
+        }
+    };
 
     /**
      * Determines the channel to be used for websocket communication based on the current post context filter,
@@ -553,7 +568,12 @@ export class MetisService implements OnDestroy {
             channel = `/user${MetisWebsocketChannelPrefix}courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
         } else {
             // subscribe to course as this is topic that is emitted on in every case
-            channel += `courses/${this.courseId}`;
+            // channel += `courses/${this.courseId}`;
+            if (this.subscriptionChannel) {
+                this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
+                this.subscriptionChannel = undefined;
+            }
+            return;
         }
         this.createWebsocketSubscription(channel);
     }
