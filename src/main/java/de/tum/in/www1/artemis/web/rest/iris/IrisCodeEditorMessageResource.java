@@ -45,6 +45,7 @@ public class IrisCodeEditorMessageResource {
      * @param sessionId of the session
      * @param messageId of the message
      * @param planId    of the content
+     * @param stepId    of the plan step
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status
      *         {@code 404 (Not Found)} if the session could not be found.
      */

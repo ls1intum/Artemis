@@ -44,6 +44,16 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
         super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.message(message));
     }
 
+    /**
+     * Notifies the client that a plan step was successfully executed, so that the client can update the UI accordingly.
+     * This also includes the file changes that were applied or the updated problem statement, depending on whether the step
+     * was a file change or a problem statement change.
+     *
+     * @param session                 to which the step belongs
+     * @param step                    that was executed
+     * @param fileChanges             that were applied
+     * @param updatedProblemStatement that was applied
+     */
     public void notifyStepSuccess(IrisCodeEditorSession session, IrisExercisePlanStep step, Set<FileChange> fileChanges, String updatedProblemStatement) {
         var messageId = step.getPlan().getMessage().getId();
         var planId = step.getPlan().getId();
@@ -62,6 +72,13 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
         super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.error(throwable));
     }
 
+    /**
+     * Notifies the client that a plan step could not be executed, so that the client can update the UI accordingly.
+     *
+     * @param session   to which the step belongs
+     * @param step      that was executed
+     * @param throwable that was thrown
+     */
     public void notifyStepException(IrisCodeEditorSession session, IrisExercisePlanStep step, Throwable throwable) {
         var messageId = step.getPlan().getMessage().getId();
         var planId = step.getPlan().getId();
