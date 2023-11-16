@@ -5,7 +5,7 @@
                 <span class="category-name" (click)="openColorSelector($event, category)">
                     {{ category.category }}
                 </span>
-                <button matChipRemove>
+                <button matChipRemove class="remove-button">
                     <fa-icon [icon]="faTimes" class="category-chip-remove"></fa-icon>
                 </button>
             </div>
@@ -29,4 +29,4 @@
         </mat-option>
     </mat-autocomplete>
 </mat-form-field>
-<jhi-color-selector [tagColors]="categoryColors" (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
+<jhi-color-selector [tagColors]="categoryColors" (selectedColor)="onSelectedColor($event)" />
