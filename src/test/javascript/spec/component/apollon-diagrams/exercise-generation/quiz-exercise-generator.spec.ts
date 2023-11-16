@@ -6,12 +6,10 @@ import { Selection, UMLModel } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { generateDragAndDropQuizExercise } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
@@ -27,13 +25,11 @@ Text.size = () => {
 
 describe('QuizExercise Generator', () => {
     let quizExerciseService: QuizExerciseService;
-    let fileUploaderService: FileUploaderService;
 
     const course: Course = { id: 123 } as Course;
 
     const configureServices = () => {
         quizExerciseService = TestBed.inject(QuizExerciseService);
-        fileUploaderService = TestBed.inject(FileUploaderService);
     };
 
     beforeEach(() => {
@@ -69,16 +65,15 @@ describe('QuizExercise Generator', () => {
         const classDiagram: UMLModel = testClassDiagram as UMLModel;
         const interactiveElements: Selection = classDiagram.interactive;
         const exerciseTitle = 'GenerateDragAndDropExerciseTest';
-        const generatedExercise = await generateDragAndDropQuizExercise(course, exerciseTitle, classDiagram, fileUploaderService, quizExerciseService);
-        expect(generatedExercise).toBeTruthy();
-        expect(generatedExercise.title).toEqual(exerciseTitle);
-        expect(generatedExercise.quizQuestions![0].type).toEqual(QuizQuestionType.DRAG_AND_DROP);
-        const dragAndDropQuestion = generatedExercise.quizQuestions![0] as DragAndDropQuestion;
+        const generatedQuestion = await generateDragAndDropQuizExercise(course, exerciseTitle, classDiagram);
+        expect(generatedQuestion).toBeTruthy();
+        expect(generatedQuestion.title).toEqual(exerciseTitle);
+        expect(generatedQuestion.type).toEqual(QuizQuestionType.DRAG_AND_DROP);
         // create one DragItem for each interactive element
-        expect(dragAndDropQuestion.dragItems).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
+        expect(generatedQuestion.dragItems).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
         // each DragItem needs one DropLocation
-        expect(dragAndDropQuestion.dropLocations).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
+        expect(generatedQuestion.dropLocations).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
         // if there are no similar elements -> amount of correct mappings = interactive elements
-        expect(dragAndDropQuestion.correctMappings).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
+        expect(generatedQuestion.correctMappings).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
     });
 });
