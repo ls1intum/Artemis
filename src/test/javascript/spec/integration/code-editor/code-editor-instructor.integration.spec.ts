@@ -63,6 +63,7 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
+import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { IrisCodeEditorWebsocketService } from 'app/iris/code-editor-websocket.service';
@@ -130,6 +131,7 @@ describe('CodeEditorInstructorIntegration', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ResultComponent),
                 MockComponent(ProgrammingExerciseInstructionStepWizardComponent),
+                MockComponent(ProgrammingExerciseInstructionTaskStatusComponent),
                 MockComponent(IrisCodeEditorChatbotButtonComponent),
             ],
             providers: [
