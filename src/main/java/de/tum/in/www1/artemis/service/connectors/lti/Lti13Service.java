@@ -350,8 +350,7 @@ public class Lti13Service {
         String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
         Course targetCourse = getCourseFromTargetLink(targetLinkUrl);
         if (targetCourse == null) {
-            String message = "No course to start deep-linking at " + targetLinkUrl;
-            log.error(message);
+            log.error("No course to start deep-linking at {}", targetLinkUrl);
             throw new BadRequestAlertException("Course not found", "LTI", "ltiCourseNotFound");
         }
 

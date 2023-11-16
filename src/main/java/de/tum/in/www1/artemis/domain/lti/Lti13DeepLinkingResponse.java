@@ -52,9 +52,6 @@ public class Lti13DeepLinkingResponse {
 
     private String returnUrl;
 
-    public Lti13DeepLinkingResponse() {
-    }
-
     /**
      * Constructs an Lti13DeepLinkingResponse from an OIDC ID token and client registration ID.
      *

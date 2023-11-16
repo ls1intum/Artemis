@@ -1,4 +1,4 @@
-import { Component, OnInit, SecurityContext } from '@angular/core';
+import { Component, ElementRef, NgZone, OnInit, SecurityContext, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 
@@ -18,9 +18,13 @@ export class Lti13SelectContentComponent implements OnInit {
     actionLink: string;
     isLinking = true;
 
+    @ViewChild('deepLinkingForm', { static: false })
+    deepLinkingForm?: ElementRef;
+
     constructor(
         private route: ActivatedRoute,
         private sanitizer: DomSanitizer,
+        private zone: NgZone,
     ) {}
 
     /**
@@ -32,8 +36,13 @@ export class Lti13SelectContentComponent implements OnInit {
     ngOnInit(): void {
         this.route.params.subscribe(() => {
             this.updateFormValues();
-            if (this.isLinking) {
-                this.autoSubmitForm();
+
+            // postpone auto-submit until after view updates are completed
+            // if not jwt and id is not submitted correctly
+            if (this.jwt && this.id) {
+                this.zone.runOutsideAngular(() => {
+                    setTimeout(() => this.autoSubmitForm());
+                });
             }
         });
     }
@@ -59,10 +68,8 @@ export class Lti13SelectContentComponent implements OnInit {
      * - Submits the form.
      */
     autoSubmitForm(): void {
-        const form = document.getElementById('deepLinkingForm') as HTMLFormElement;
+        const form = this.deepLinkingForm!.nativeElement;
         form.action = this.actionLink;
-        (<HTMLInputElement>document.getElementById('JWT'))!.value = this.jwt;
-        (<HTMLInputElement>document.getElementById('id'))!.value = this.id;
         form.submit();
     }
 }

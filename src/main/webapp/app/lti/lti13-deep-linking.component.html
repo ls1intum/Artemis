@@ -59,9 +59,9 @@
                         <td>{{ exercise.title ? exercise.title : '' }}</td>
                         <td>{{ course.title ? course.title : '' }}</td>
                         <td>{{ course.semester ? course.semester : '' }}</td>
-                        <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
-                        <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
-                        <td>{{ exercise.assessmentDueDate ? exercise.assessmentDueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                        <td>{{ exercise.releaseDate | artemisDate }}</td>
+                        <td>{{ exercise.dueDate | artemisDate }}</td>
+                        <td>{{ exercise.assessmentDueDate | artemisDate }}</td>
                     </tr>
                 </tbody>
             </table>

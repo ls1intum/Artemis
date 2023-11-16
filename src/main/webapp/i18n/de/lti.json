@@ -78,13 +78,13 @@
             "deepLinking": {
                 "title": "Deep Linking",
                 "linking": "Verlinkung",
-                "linkedSuccessfully": "Verknüpfte Übungen erfolgreich",
+                "linkedSuccessfully": "Verknüpfung der Übungen erfolgreich",
                 "linkedFailed": "Fehler beim Deep-Linking",
                 "link": "Verlinken"
             },
             "missingConfigurationWarning": "Fehlende Werte in der LTI1.3-Konfiguration. Starts werden nicht funktionieren.",
-            "selectContentFromCourse": "Wählen Sie Inhalte aus dem Kurs aus {{ title }}",
-            "selectContentTooltip": "Wählen Sie einfach Ihre bevorzugte Übung aus und klicken Sie dann auf die Schaltfläche Importieren, um sie in die Plattform zu integrieren."
+            "selectContentFromCourse": "Wähle Inhalte aus dem Kurs aus {{ title }}",
+            "selectContentTooltip": "Wähle eine Übung aus und klicke dann auf die Schaltfläche Importieren, um sie in die Plattform zu integrieren."
         }
     }
 }

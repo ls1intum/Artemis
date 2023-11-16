@@ -7,6 +7,8 @@ import { SortService } from 'app/shared/service/sort.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-deep-linking',
@@ -33,6 +35,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
         private http: HttpClient,
         private accountService: AccountService,
         private router: Router,
+        private alertService: AlertService,
     ) {}
 
     /**
@@ -50,21 +53,22 @@ export class Lti13DeepLinkingComponent implements OnInit {
                 this.isLinking = false;
                 return;
             }
-
-            if (this.isLinking) {
-                this.accountService.identity().then((user) => {
-                    if (user) {
-                        this.courseManagementService.findWithExercises(this.courseId).subscribe((findWithExercisesResult) => {
-                            if (findWithExercisesResult?.body?.exercises) {
-                                this.course = findWithExercisesResult.body;
-                                this.exercises = findWithExercisesResult.body.exercises;
-                            }
-                        });
-                    } else {
-                        this.redirectUserToLoginThenTargetLink(window.location.href);
-                    }
-                });
+            if (!this.isLinking) {
+                return;
             }
+
+            this.accountService.identity().then((user) => {
+                if (user) {
+                    this.courseManagementService.findWithExercises(this.courseId).subscribe((findWithExercisesResult) => {
+                        if (findWithExercisesResult?.body?.exercises) {
+                            this.course = findWithExercisesResult.body;
+                            this.exercises = findWithExercisesResult.body.exercises;
+                        }
+                    });
+                } else {
+                    this.redirectUserToLoginThenTargetLink(window.location.href);
+                }
+            });
         });
     }
 
@@ -74,7 +78,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
      *
      * @param currentLink The current URL to return to after login.
      */
-    redirectUserToLoginThenTargetLink(currentLink: any): void {
+    redirectUserToLoginThenTargetLink(currentLink: string): void {
         this.router.navigate(['/']).then(() => {
             this.accountService.getAuthenticationState().subscribe((user) => {
                 if (user) {
@@ -135,7 +139,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
                 },
                 error: (error) => {
                     this.isLinking = false;
-                    console.error('An error occurred:', error);
+                    onError(this.alertService, error);
                 },
             });
         }
