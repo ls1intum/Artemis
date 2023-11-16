@@ -124,7 +124,12 @@
             [exercise]="exercise"
         ></jhi-plagiarism-details>
 
-        <jhi-plagiarism-run-details [hidden]="!showRunDetails" [plagiarismResult]="plagiarismResult" (similaritySelected)="filterByChart($event)"></jhi-plagiarism-run-details>
+        <jhi-plagiarism-run-details
+            [hidden]="!showRunDetails"
+            [plagiarismResult]="plagiarismResult"
+            [plagiarismResultStats]="plagiarismResultStats"
+            (similaritySelected)="filterByChart($event)"
+        ></jhi-plagiarism-run-details>
     </div>
 
     <div class="plagiarism-empty" *ngIf="!plagiarismResult || detectionInProgress">
