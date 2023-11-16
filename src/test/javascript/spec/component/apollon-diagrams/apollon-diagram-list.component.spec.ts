@@ -93,7 +93,7 @@ describe('ApollonDiagramList Component', () => {
 
     it('openCreateDiagramDialog', () => {
         const openModalSpy = jest.spyOn(modalService, 'open');
-        fixture.componentInstance.openCreateDiagramDialog(course.id);
+        fixture.componentInstance.openCreateDiagramDialog(course.id!);
         expect(openModalSpy).toHaveBeenCalledOnce();
     });
 
