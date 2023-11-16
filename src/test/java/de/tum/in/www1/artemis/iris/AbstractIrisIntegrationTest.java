@@ -79,6 +79,8 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         globalSettings.getIrisChatSettings().setPreferredModel(null);
         globalSettings.getIrisHestiaSettings().setEnabled(true);
         globalSettings.getIrisHestiaSettings().setPreferredModel(null);
+        globalSettings.getIrisCodeEditorSettings().setEnabled(true);
+        globalSettings.getIrisCodeEditorSettings().setPreferredModel(null);
         irisSettingsRepository.save(globalSettings);
     }
 
@@ -93,9 +95,9 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         courseSettings.getIrisCodeEditorSettings().setEnabled(true);
         courseSettings.getIrisCodeEditorSettings().setChatTemplate(createDummyTemplate());
         courseSettings.getIrisCodeEditorSettings().setProblemStatementGenerationTemplate(createDummyTemplate());
-        courseSettings.getIrisCodeEditorSettings().setTemplateRepoGenerationTemplate(null);
-        courseSettings.getIrisCodeEditorSettings().setSolutionRepoGenerationTemplate(null);
-        courseSettings.getIrisCodeEditorSettings().setTestRepoGenerationTemplate(null);
+        courseSettings.getIrisCodeEditorSettings().setTemplateRepoGenerationTemplate(createDummyTemplate());
+        courseSettings.getIrisCodeEditorSettings().setSolutionRepoGenerationTemplate(createDummyTemplate());
+        courseSettings.getIrisCodeEditorSettings().setTestRepoGenerationTemplate(createDummyTemplate());
         courseSettings.getIrisCodeEditorSettings().setPreferredModel(null);
         irisSettingsRepository.save(courseSettings);
     }

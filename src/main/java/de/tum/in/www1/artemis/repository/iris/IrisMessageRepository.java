@@ -17,16 +17,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> {
 
-    List<IrisMessage> findAllBySessionId(Long sessionId);
-
-    @Query("""
-            SELECT DISTINCT m
-            FROM IrisMessage m
-                LEFT JOIN FETCH m.content
-            WHERE m.session.id = :sessionId
-                AND m.sender <> 'ARTEMIS'
-            """)
-    List<IrisMessage> findAllExceptSystemMessagesWithContentBySessionId(@Param("sessionId") Long sessionId);
+    List<IrisMessage> findAllBySessionId(@Param("sessionId") Long sessionId);
 
     /**
      * Counts the number of LLM responses the user got within the given timeframe.
