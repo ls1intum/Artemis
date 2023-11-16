@@ -1,0 +1,5 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light my-3">
+    <a *ngFor="let headline of sectionHeadlinesArray" (click)="scrollToView(headline.id)">
+        {{ headline.translationKey | artemisTranslate }}
+    </a>
+</nav>

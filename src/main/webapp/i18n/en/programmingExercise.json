@@ -496,7 +496,7 @@
                 "submissionPolicyType": {
                     "title": "Submission Policy Type",
                     "none": {
-                        "title": "None"
+                        "title": "-"
                     },
                     "lock_repository": {
                         "title": "Lock Repository",

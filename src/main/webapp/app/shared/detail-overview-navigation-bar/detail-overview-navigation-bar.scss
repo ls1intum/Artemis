@@ -1,0 +1,14 @@
+nav {
+    position: sticky;
+    top: -1px;
+    display: flex;
+    gap: 2rem;
+    flex-wrap: nowrap;
+    padding: 1rem;
+    overflow: auto;
+
+    a {
+        display: inline-block;
+        white-space: nowrap;
+    }
+}

@@ -497,7 +497,7 @@
                 "submissionPolicyType": {
                     "title": "Typ der Abgaberichtlinie",
                     "none": {
-                        "title": "Keine"
+                        "title": "-"
                     },
                     "lock_repository": {
                         "title": "Repository Sperre",

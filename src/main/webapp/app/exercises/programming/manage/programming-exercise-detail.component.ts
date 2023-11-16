@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { SafeHtml } from '@angular/platform-browser';
 import { Subject } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -55,6 +56,7 @@ import { ConsistencyCheckService } from 'app/shared/consistency-check/consistenc
 import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { IrisProgrammingExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-programming-exercise-settings-update/iris-programming-exercise-settings-update.component';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -72,6 +74,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ButtonSize = ButtonSize;
     readonly AssessmentType = AssessmentType;
     readonly documentationType: DocumentationType = 'Programming';
+    readonly sectionHeadlineTranslationKeys = {
+        general: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
+        mode: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
+        language: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
+        problem: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
+        grading: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
+    };
 
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
@@ -84,6 +93,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     lockingOrUnlockingRepositories = false;
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
+    formattedGradingInstructions: SafeHtml;
     // Used to hide links to repositories and build plans when the "localvc" profile is active.
     // Also used to hide the buttons to lock and unlock all repositories as that does not do anything in the local VCS.
     localVCEnabled = false;
@@ -122,7 +132,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private accountService: AccountService,
         private programmingExerciseService: ProgrammingExerciseService,
-        private exerciseService: ExerciseService,
+        public exerciseService: ExerciseService,
+        private artemisMarkdown: ArtemisMarkdownService,
         private alertService: AlertService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
@@ -149,6 +160,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.isExamExercise = !!this.programmingExercise.exerciseGroup;
             this.courseId = this.isExamExercise ? this.programmingExercise.exerciseGroup!.exam!.course!.id! : this.programmingExercise.course!.id!;
             this.isAdmin = this.accountService.isAdmin();
+            this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.programmingExercise.gradingInstructions);
 
             if (!this.isExamExercise) {
                 this.baseResource = `/course-management/${this.courseId}/programming-exercises/${exerciseId}/`;
