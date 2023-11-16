@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     void testException(int httpStatus, Class<?> exceptionClass) throws Exception {
         var template = new IrisTemplate("Dummy");
 
-        irisRequestMockProvider.mockMessageError(httpStatus);
+        irisRequestMockProvider.mockMessageV1Error(httpStatus);
 
         irisConnectorService.sendRequest(template, "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
             assertThat(throwable.getCause()).isNotNull().isInstanceOf(exceptionClass);
@@ -45,7 +46,7 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     @ParameterizedTest
     @MethodSource("irisExceptions")
     void testExceptionV2(int httpStatus, Class<?> exceptionClass) throws Exception {
-        irisRequestMockProvider.mockMessageError(httpStatus);
+        irisRequestMockProvider.mockMessageV2Error(httpStatus);
 
         irisConnectorService.sendRequestV2("Dummy", "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
             assertThat(throwable.getCause()).isNotNull().isInstanceOf(exceptionClass);
@@ -57,7 +58,7 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     void testParseException() throws Exception {
         var template = new IrisTemplate("Dummy");
 
-        irisRequestMockProvider.mockCustomJsonResponse("{\"message\": \"invalid\"}");
+        irisRequestMockProvider.mockCustomV1Response("{\"message\": \"invalid\"}");
 
         irisConnectorService.sendRequest(template, "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
             assertThat(response).isNull();
@@ -69,7 +70,7 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 
     @Test
     void testParseExceptionV2() throws Exception {
-        irisRequestMockProvider.mockCustomJsonResponse("{\"message\": \"invalid\"}");
+        irisRequestMockProvider.mockMessageV2Response(Map.of("message", "invalid"));
 
         irisConnectorService.sendRequestV2("Dummy", "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
             assertThat(response).isNull();

@@ -66,7 +66,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend = createDefaultMockMessage(irisSession);
         messageToSend.setMessageDifferentiator(1453);
         setupExercise();
-        irisRequestMockProvider.mockMessageResponse("Hello World");
+        irisRequestMockProvider.mockMessageV1Response("Hello World");
 
         var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
         assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.USER);
@@ -171,7 +171,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockMessageError();
+        irisRequestMockProvider.mockMessageV2Error(500);
         setupExercise();
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
@@ -188,7 +188,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockMessageResponse(null);
+        irisRequestMockProvider.mockMessageV1Response(null);
         setupExercise();
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);

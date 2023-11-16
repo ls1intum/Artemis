@@ -37,7 +37,10 @@ public class IrisRequestMockProvider {
     private MockRestServiceServer mockServer;
 
     @Value("${artemis.iris.url}/api/v1/messages")
-    private URL messagesApiURL;
+    private URL messagesApiV1URL;
+
+    @Value("${artemis.iris.url}/api/v1/messages")
+    private URL messagesApiV2URL;
 
     @Value("${artemis.iris.url}/api/v1/models")
     private URL modelsApiURL;
@@ -70,13 +73,13 @@ public class IrisRequestMockProvider {
     }
 
     public void mockEmptyResponse() {
-        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
+        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiV1URL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
     }
 
     /**
      * Mocks a message response from the Pyris message endpoint
      */
-    public void mockMessageResponse(String responseMessage) throws JsonProcessingException {
+    public void mockMessageV1Response(String responseMessage) throws JsonProcessingException {
         var irisMessage = new IrisMessage();
         irisMessage.setSender(IrisMessageSender.LLM);
         irisMessage.addContent(new IrisTextMessageContent(irisMessage, responseMessage));
@@ -84,7 +87,7 @@ public class IrisRequestMockProvider {
         var response = new IrisMessageResponseDTO(null, irisMessage);
         var json = mapper.writeValueAsString(response);
 
-        mockCustomJsonResponse(json);
+        mockCustomJsonResponse(messagesApiV1URL, json);
     }
 
     /**
@@ -97,22 +100,28 @@ public class IrisRequestMockProvider {
         var dto = new IrisMessageResponseV2DTO(null, ZonedDateTime.now(), mapper.valueToTree(responseContent));
         var json = mapper.writeValueAsString(dto);
 
-        mockCustomJsonResponse(json);
+        mockCustomJsonResponse(messagesApiV2URL, json);
     }
 
-    public void mockCustomJsonResponse(String responseMessage) {
-        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess(responseMessage, MediaType.APPLICATION_JSON));
+    public void mockCustomV1Response(String json) {
+        mockCustomJsonResponse(messagesApiV1URL, json);
     }
 
-    public void mockMessageError() throws JsonProcessingException {
-        mockMessageError(500);
+    public void mockCustomJsonResponse(URL url, String responseMessage) {
+        mockServer.expect(ExpectedCount.once(), requestTo(url.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(responseMessage, MediaType.APPLICATION_JSON));
     }
 
-    public void mockMessageError(int status) throws JsonProcessingException {
-        var errorResponseDTO = new IrisErrorResponseDTO("Test error");
-        var json = Map.of("detail", errorResponseDTO);
-        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST))
+    public void mockMessageV1Error(int status) throws JsonProcessingException {
+        mockMessageError(messagesApiV1URL, status);
+    }
+
+    public void mockMessageV2Error(int status) throws JsonProcessingException {
+        mockMessageError(messagesApiV2URL, status);
+    }
+
+    private void mockMessageError(URL requestUrl, int status) throws JsonProcessingException {
+        var json = Map.of("detail", new IrisErrorResponseDTO("Test error"));
+        mockServer.expect(ExpectedCount.once(), requestTo(requestUrl.toString())).andExpect(method(HttpMethod.POST))
                 .andRespond(withRawStatus(status).body(mapper.writeValueAsString(json)));
     }
 
@@ -130,7 +139,7 @@ public class IrisRequestMockProvider {
                 .andRespond(withSuccess(mapper.writeValueAsString(irisStatusDTOArray), MediaType.APPLICATION_JSON));
     }
 
-    public void mockModelsError() throws JsonProcessingException {
+    public void mockModelsError() {
         mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString())).andExpect(method(HttpMethod.GET)).andRespond(withRawStatus(418));
     }
 }

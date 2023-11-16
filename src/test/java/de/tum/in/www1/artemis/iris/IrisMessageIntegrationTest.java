@@ -73,7 +73,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend = createDefaultMockMessage(irisSession);
         messageToSend.setMessageDifferentiator(1453);
 
-        irisRequestMockProvider.mockMessageResponse("Hello World");
+        irisRequestMockProvider.mockMessageV1Response("Hello World");
         setupExercise();
 
         var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
@@ -231,7 +231,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockMessageError();
+        irisRequestMockProvider.mockMessageV1Error(500);
         setupExercise();
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
@@ -261,7 +261,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         var messageToSend = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockMessageResponse("Hello World");
+        irisRequestMockProvider.mockMessageV1Response("Hello World");
         setupExercise();
 
         var irisMessage = irisMessageService.saveMessage(messageToSend, irisSession, IrisMessageSender.USER);
@@ -279,7 +279,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend1 = createDefaultMockMessage(irisSession);
         var messageToSend2 = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockMessageResponse("Hello World");
+        irisRequestMockProvider.mockMessageV1Response("Hello World");
         setupExercise();
 
         var globalSettings = irisSettingsService.getGlobalSettings();
