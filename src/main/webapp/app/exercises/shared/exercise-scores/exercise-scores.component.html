@@ -271,20 +271,20 @@
 
                 <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="100">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper w-100 text-center">
+                        <span class="datatable-header-cell-wrapper w-100 text-center" (click)="controls.onSort('results?.[0]?.assessmentNote')">
                             <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.assessment.assessmentNote' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('results?.[0]?.completionDate')"></fa-icon>
+                            <fa-icon [icon]="controls.iconForSortPropField('results?.[0]?.assessmentNote')"></fa-icon>
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="w-100 text-center">
+                        <span class="w-100 text-center">
                             <fa-icon
                                 *ngIf="value.results?.[0]?.assessmentNote?.note"
                                 [ngbPopover]="(value.results?.[0]?.assessmentNote)!.note"
                                 [triggers]="'hover'"
                                 [icon]="faComment"
                             ></fa-icon>
-                        </div>
+                        </span>
                     </ng-template>
                 </ngx-datatable-column>
 
