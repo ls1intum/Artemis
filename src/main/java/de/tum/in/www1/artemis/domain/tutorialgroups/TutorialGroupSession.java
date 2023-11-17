@@ -27,20 +27,20 @@ public class TutorialGroupSession extends DomainObject {
     /**
      * NOTE: Stored in UTC in the database, therefore we use ZonedDateTime. Will be converted to UTC by Hibernate.
      */
-    @Column(name = "session_start")
+    @Column(name = "session_start", nullable = false)
     private ZonedDateTime start;
 
     /**
      * NOTE: Stored in UTC in the database, therefore we use ZonedDateTime. Will be converted to UTC by Hibernate.
      */
-    @Column(name = "session_end")
+    @Column(name = "session_end", nullable = false)
     private ZonedDateTime end;
 
     /**
      * The status of the session. See {@link TutorialGroupSessionStatus} for more information.
      */
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
+    @Column(name = "status", nullable = false)
     private TutorialGroupSessionStatus status;
 
     /**
@@ -56,7 +56,7 @@ public class TutorialGroupSession extends DomainObject {
     /**
      * Where the session takes place. Could be a link to a video conference or a physical location.
      */
-    @Column(name = "location")
+    @Column(name = "location", nullable = false)
     @Size(max = 2000)
     private String location;
 
@@ -92,7 +92,7 @@ public class TutorialGroupSession extends DomainObject {
      * The tutorial group that this session belongs to. Is always set for recurring and non-recurring sessions.
      */
     @ManyToOne
-    @JoinColumn(name = "tutorial_group_id")
+    @JoinColumn(name = "tutorial_group_id", nullable = false)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "tutorialGroupSessions", allowSetters = true)
     private TutorialGroup tutorialGroup;

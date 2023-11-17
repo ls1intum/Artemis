@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -34,11 +32,11 @@ public class ProgrammingSubmission extends Submission {
     @Column(name = "commit_hash")
     private String commitHash;
 
-    @Column(name = "build_failed")
-    private boolean buildFailed;
+    @Column(name = "build_failed", nullable = false, columnDefinition = "boolean default false")
+    private boolean buildFailed = false;
 
-    @Column(name = "build_artifact")
-    private boolean buildArtifact;
+    @Column(name = "build_artifact", nullable = false, columnDefinition = "boolean default false")
+    private boolean buildArtifact = false;
 
     // Only present if buildFailed == true
     @OneToMany(mappedBy = "programmingSubmission", cascade = CascadeType.ALL, orphanRemoval = true)

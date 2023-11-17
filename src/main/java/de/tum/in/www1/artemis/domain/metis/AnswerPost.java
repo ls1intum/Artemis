@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.metis;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -23,7 +22,7 @@ import de.tum.in.www1.artemis.domain.Course;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AnswerPost extends Posting {
 
-    @Column(name = "resolves_post", columnDefinition = "boolean default false")
+    @Column(name = "resolves_post", nullable = false, columnDefinition = "boolean default false")
     private Boolean resolvesPost = false;
 
     @OneToMany(mappedBy = "answerPost", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)

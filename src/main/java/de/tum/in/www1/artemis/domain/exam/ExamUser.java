@@ -2,17 +2,7 @@ package de.tum.in.www1.artemis.domain.exam;
 
 import java.nio.file.Path;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.PostLoad;
-import javax.persistence.PostPersist;
-import javax.persistence.PostRemove;
-import javax.persistence.PrePersist;
-import javax.persistence.PreUpdate;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -56,16 +46,16 @@ public class ExamUser extends AbstractAuditingEntity {
     @Column(name = "planned_seat")
     private String plannedSeat;
 
-    @Column(name = "did_check_image")
+    @Column(name = "did_check_image", nullable = false)
     private boolean didCheckImage = false;
 
-    @Column(name = "did_check_name")
+    @Column(name = "did_check_name", nullable = false)
     private boolean didCheckName = false;
 
-    @Column(name = "did_check_login")
+    @Column(name = "did_check_login", nullable = false)
     private boolean didCheckLogin = false;
 
-    @Column(name = "did_check_registration_number")
+    @Column(name = "did_check_registration_number", nullable = false)
     private boolean didCheckRegistrationNumber = false;
 
     @Size(max = 100)
@@ -77,11 +67,11 @@ public class ExamUser extends AbstractAuditingEntity {
     private String studentImagePath;
 
     @ManyToOne
-    @JoinColumn(name = "exam_id")
+    @JoinColumn(name = "exam_id", nullable = false)
     private Exam exam;
 
     @ManyToOne
-    @JoinColumn(name = "student_id")
+    @JoinColumn(name = "student_id", nullable = false)
     private User user;
 
     public String getActualRoom() {

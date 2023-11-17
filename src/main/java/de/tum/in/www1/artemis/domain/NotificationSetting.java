@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.util.Objects;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -23,16 +23,16 @@ public class NotificationSetting extends DomainObject {
     @Column(name = "setting_id", nullable = false)
     private String settingId;
 
-    @Column(name = "webapp", columnDefinition = "boolean default true", nullable = false)
+    @Column(name = "webapp", nullable = false)
     private boolean webapp = true;
 
-    @Column(name = "email", columnDefinition = "boolean default false", nullable = false)
+    @Column(name = "email", nullable = false)
     private boolean email = false;
 
     @Column(name = "push", columnDefinition = "boolean default true", nullable = false)
     private boolean push = true;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JsonIgnoreProperties("notificationSetting")
     private User user;
 

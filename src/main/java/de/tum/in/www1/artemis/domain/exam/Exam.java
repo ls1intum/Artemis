@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.domain.exam;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
@@ -15,7 +12,9 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -34,19 +33,19 @@ public class Exam extends DomainObject {
     /**
      * This boolean indicates whether it is a real exam (false) or test exam (true)
      */
-    @Column(name = "test_exam")
-    private boolean testExam;
+    @Column(name = "test_exam", columnDefinition = "boolean default false")
+    private boolean testExam = false;
 
     /**
      * student can see the exam in the UI from this date onwards
      */
-    @Column(name = "visible_date", nullable = false)
+    @Column(name = "visible_date")
     private ZonedDateTime visibleDate;
 
     /**
      * student can start working on exam from this date onwards
      */
-    @Column(name = "start_date", nullable = false)
+    @Column(name = "start_date")
     private ZonedDateTime startDate;
 
     /**
@@ -74,7 +73,7 @@ public class Exam extends DomainObject {
      * The default working time for an exam in seconds.
      * (The individual working time of a student is stored in {@link StudentExam})
      */
-    @Column(name = "working_time")
+    @Column(name = "working_time", nullable = false)
     private int workingTime;
 
     @Column(name = "start_text")

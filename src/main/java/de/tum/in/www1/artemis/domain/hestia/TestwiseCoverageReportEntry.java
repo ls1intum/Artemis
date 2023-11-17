@@ -21,11 +21,11 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TestwiseCoverageReportEntry extends DomainObject {
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JsonIgnoreProperties("testwiseCoverageEntries")
     private CoverageFileReport fileReport;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JsonIgnoreProperties("coverageEntries")
     private ProgrammingExerciseTestCase testCase;
 

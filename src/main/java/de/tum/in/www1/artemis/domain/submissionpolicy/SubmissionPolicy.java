@@ -5,7 +5,9 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -39,8 +41,8 @@ public abstract class SubmissionPolicy extends DomainObject {
     @Column(name = "submission_limit")
     private Integer submissionLimit;
 
-    @Column(name = "active")
-    private Boolean active;
+    @Column(name = "active", nullable = false, columnDefinition = "boolean default true")
+    private Boolean active = true;
 
     public Integer getSubmissionLimit() {
         return submissionLimit;

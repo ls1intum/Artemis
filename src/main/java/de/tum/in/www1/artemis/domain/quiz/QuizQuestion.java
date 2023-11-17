@@ -65,10 +65,6 @@ public abstract class QuizQuestion extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
-    @Column(name = "quiz_group_id")
-    @JsonView(QuizView.Before.class)
-    private Long quizGroupId;
-
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(unique = true)
     private QuizQuestionStatistic quizQuestionStatistic;
@@ -77,7 +73,8 @@ public abstract class QuizQuestion extends DomainObject {
     @JsonIgnore
     private QuizExercise exercise;
 
-    @Transient
+    @ManyToOne
+    @JsonView(QuizView.Before.class)
     private QuizGroup quizGroup;
 
     public String getTitle() {
@@ -175,14 +172,6 @@ public abstract class QuizQuestion extends DomainObject {
         this.exercise = quizExercise;
     }
 
-    public Long getQuizGroupId() {
-        return quizGroupId;
-    }
-
-    public void setQuizGroupId(Long quizGroupId) {
-        this.quizGroupId = quizGroupId;
-    }
-
     @JsonProperty(value = "quizGroup", access = JsonProperty.Access.READ_ONLY)
     public QuizGroup getQuizGroup() {
         return quizGroup;
@@ -267,7 +256,6 @@ public abstract class QuizQuestion extends DomainObject {
 
     /**
      * Initialize QuizQuestionStatistic of the implementor
-     *
      */
     public abstract void initializeStatistic();
 }

@@ -46,47 +46,47 @@ public class Channel extends Conversation {
     /**
      * A channel is either public or private. Users need an invitation to join a private channel. Every user can join a public channel.
      */
-    @Column(name = "is_public")
+    @Column(name = "is_public", columnDefinition = "boolean default false")
     @NotNull
-    private Boolean isPublic;
+    private Boolean isPublic = false;
 
     /**
      * An announcement channel is a special type of channel where only channel moderators and instructors can start new posts.
      * Answer posts are still possible so that students can ask questions concerning the announcement.
      */
-    @Column(name = "is_announcement")
+    @Column(name = "is_announcement", columnDefinition = "boolean default false")
     @NotNull
-    private Boolean isAnnouncementChannel;
+    private Boolean isAnnouncementChannel = false;
 
     /**
      * A channel that is no longer needed can be archived or deleted.
      * Archived channels are closed to new activity, but the message history is retained and searchable.
      * The channel can be unarchived at any time.
      */
-    @Column(name = "is_archived")
+    @Column(name = "is_archived", columnDefinition = "boolean default false")
     @NotNull
-    private Boolean isArchived;
+    private Boolean isArchived = false;
 
     /**
      * Channels, that are meant to be seen by all course members by default, even if they haven't joined the channel yet, can be flagged with is_course_wide=true.
      * A conversation_participant entry will be created on the fly for these channels as soon as an entry is needed.
      */
-    @Column(name = "is_course_wide")
+    @Column(name = "is_course_wide", nullable = false, columnDefinition = "boolean default false")
     @NotNull
     private boolean isCourseWide = false;
 
     @OneToOne
-    @JoinColumn(unique = true, name = "lecture_id")
+    @JoinColumn(name = "lecture_id") // TODO: re-add unique = true
     @JsonIgnoreProperties(value = "channel", allowSetters = true)
     private Lecture lecture;
 
     @OneToOne
-    @JoinColumn(unique = true, name = "exercise_id")
+    @JoinColumn(name = "exercise_id") // TODO: re-add unique = true
     @JsonIgnoreProperties("channel")
     private Exercise exercise;
 
     @OneToOne
-    @JoinColumn(unique = true, name = "exam_id")
+    @JoinColumn(name = "exam_id") // TODO: re-add unique = true
     @JsonIgnoreProperties("channel")
     private Exam exam;
 

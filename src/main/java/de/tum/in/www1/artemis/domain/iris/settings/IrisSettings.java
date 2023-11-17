@@ -4,7 +4,6 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.ColumnDefault;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -30,7 +29,6 @@ public class IrisSettings extends DomainObject {
     private IrisSubSettings irisHestiaSettings;
 
     @Column(name = "is_global")
-    @ColumnDefault("false")
     private boolean isGlobal = false;
 
     public IrisSubSettings getIrisChatSettings() {

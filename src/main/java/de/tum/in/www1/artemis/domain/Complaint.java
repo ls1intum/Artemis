@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import static de.tum.in.www1.artemis.config.Constants.COMPLAINT_TEXT_LIMIT;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
@@ -46,7 +46,7 @@ public class Complaint extends DomainObject {
     private ComplaintResponse complaintResponse;
 
     @OneToOne
-    @JoinColumn(unique = true)
+    @JoinColumn // TODO: re-add unique = true
     private Result result;
 
     @ManyToOne

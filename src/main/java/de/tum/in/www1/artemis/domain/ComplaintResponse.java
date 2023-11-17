@@ -18,7 +18,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * A ComplaintResponse.
- *
+ * <p>
  * The createdDate in {@link AbstractAuditingEntity#createdDate} has a special meaning in this entity as it is used to calculate the lock status. See also
  * {@link ComplaintResponse#isCurrentlyLocked()}
  */
@@ -39,7 +39,7 @@ public class ComplaintResponse extends AbstractAuditingEntity {
     private ZonedDateTime submittedTime;
 
     @OneToOne
-    @JoinColumn(unique = true)
+    @JoinColumn // TODO: re-add unique = true
     @JsonIgnoreProperties(value = "complaintResponse", allowSetters = true)
     private Complaint complaint;
 

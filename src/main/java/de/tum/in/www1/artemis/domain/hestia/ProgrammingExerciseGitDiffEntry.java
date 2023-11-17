@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExerciseGitDiffEntry extends DomainObject {
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JsonIgnoreProperties("entries")
     private ProgrammingExerciseGitDiffReport gitDiffReport;
 

@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
@@ -31,13 +29,13 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 public class TutorialGroupSchedule extends DomainObject {
 
     @OneToOne
-    @JoinColumn(name = "tutorial_group_id")
+    @JoinColumn(name = "tutorial_group_id", nullable = false)
     private TutorialGroup tutorialGroup;
 
     /**
      * The day of the week on which the tutorial group meets. 1 = Monday, 2 = Tuesday, ..., 7 = Sunday
      */
-    @Column(name = "day_of_week")
+    @Column(name = "day_of_week", nullable = false)
     private Integer dayOfWeek;
 
     /**
@@ -47,7 +45,7 @@ public class TutorialGroupSchedule extends DomainObject {
      * <p>
      * Note: String to prevent Hibernate from converting it to UTC
      */
-    @Column(name = "start_time")
+    @Column(name = "start_time", nullable = false)
     private String startTime;
 
     /**
@@ -57,7 +55,7 @@ public class TutorialGroupSchedule extends DomainObject {
      * <p>
      * Note: String to prevent Hibernate from converting it to UTC
      */
-    @Column(name = "end_time")
+    @Column(name = "end_time", nullable = false)
     private String endTime;
 
     /**
@@ -65,7 +63,7 @@ public class TutorialGroupSchedule extends DomainObject {
      * <p>
      * E.g. if the tutorial group meets every Monday then the {@link #repetitionFrequency} is 1.
      */
-    @Column(name = "repetition_frequency")
+    @Column(name = "repetition_frequency", nullable = false)
     private Integer repetitionFrequency;
 
     /**
@@ -78,7 +76,7 @@ public class TutorialGroupSchedule extends DomainObject {
      * <p>
      * Note: String to prevent Hibernate from converting it to UTC
      */
-    @Column(name = "valid_from_inclusive")
+    @Column(name = "valid_from_inclusive", nullable = false)
     private String validFromInclusive;
 
     /**
@@ -91,13 +89,13 @@ public class TutorialGroupSchedule extends DomainObject {
      * <p>
      * Note: String to prevent Hibernate from converting it to UTC
      */
-    @Column(name = "valid_to_inclusive")
+    @Column(name = "valid_to_inclusive", nullable = false)
     private String validToInclusive;
 
     /**
      * The location where the tutorial group meets. Can either be a physical location or a link to a video conference.
      */
-    @Column(name = "location")
+    @Column(name = "location", nullable = false)
     @Size(max = 2000)
     private String location;
 

@@ -51,7 +51,7 @@ public abstract class Participation extends DomainObject implements Participatio
     /**
      * Whether this participation belongs to an exam test run or practice mode.
      */
-    @Column(name = "test_run")
+    @Column(name = "test_run", columnDefinition = "boolean default false")
     private Boolean testRun = false;
 
     // NOTE: Keep default of FetchType.EAGER because most of the time we want

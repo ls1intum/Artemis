@@ -11,23 +11,23 @@ import javax.persistence.Table;
 public class MigrationChangelog extends DomainObject {
     // ID documents the execution order
 
-    @Column(name = "author")
+    @Column(name = "author", nullable = false)
     private String author;
 
     // documents when it was executed
-    @Column(name = "date_executed")
+    @Column(name = "date_executed", nullable = false)
     private ZonedDateTime dateExecuted;
 
     // document what was executed, hashed in some way if possible
-    @Column(name = "date_string")
+    @Column(name = "date_string", nullable = false)
     private String dateString;
 
     // document with what system version it was executed
-    @Column(name = "system_version")
+    @Column(name = "system_version", nullable = false)
     private String systemVersion;
 
     // document in what server startup period it was executed (same hash, same period). Could be simply datetime hashed
-    @Column(name = "deployment_id")
+    @Column(name = "deployment_id", nullable = false)
     private String deploymentId;
 
     public String getAuthor() {

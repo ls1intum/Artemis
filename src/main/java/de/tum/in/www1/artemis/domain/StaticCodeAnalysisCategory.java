@@ -19,17 +19,17 @@ import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StaticCodeAnalysisCategory extends DomainObject {
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "penalty")
-    private Double penalty;
+    @Column(name = "penalty", nullable = false, columnDefinition = "double default 1.0")
+    private Double penalty = 1.0;
 
     @Column(name = "max_penalty")
     private Double maxPenalty;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "state")
+    @Column(name = "state", nullable = false)
     private CategoryState state;
 
     @ManyToOne(fetch = FetchType.LAZY)

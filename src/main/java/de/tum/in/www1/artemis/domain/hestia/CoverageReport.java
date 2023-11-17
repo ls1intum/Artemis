@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -28,7 +28,7 @@ public class CoverageReport extends DomainObject {
     // The ProgrammingSubmission to which this CoverageReport is related. This ProgrammingSubmission is always related
     // to a SolutionProgrammingExerciseParticipation because the report will only be generated for solution participations.
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "submission_id", referencedColumnName = "id")
+    @JoinColumn(name = "submission_id", referencedColumnName = "id", nullable = false)
     @JsonIgnore
     private ProgrammingSubmission submission;
 

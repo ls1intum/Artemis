@@ -1,12 +1,9 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.net.URISyntaxException;
-import java.util.Objects;
+import java.util.*;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
@@ -40,13 +37,13 @@ public class AuxiliaryRepository extends DomainObject {
 
     /**
      * Name of the repository.
-     *
+     * <p>
      * Must NOT be one of the following: exercise, solution or tests
      * One programming exercise must not have multiple repositories
      * sharing one name.
      */
     @Size(max = MAX_NAME_LENGTH)
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     private String name;
 
     @Size(max = MAX_REPOSITORY_URL_LENGTH)

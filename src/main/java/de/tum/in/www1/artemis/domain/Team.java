@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -28,7 +27,7 @@ public class Team extends AbstractAuditingEntity implements Participant {
     @Column(name = "name")
     private String name;
 
-    @Column(name = "short_name")
+    @Column(name = "short_name", nullable = false)
     private String shortName;
 
     @Column(name = "image")

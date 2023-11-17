@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.domain.competency;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -32,8 +31,8 @@ public class Competency extends DomainObject {
     @Column(name = "soft_due_date")
     private ZonedDateTime softDueDate;
 
-    @Column(name = "mastery_threshold")
-    private Integer masteryThreshold;
+    @Column(name = "mastery_threshold", columnDefinition = "integer default 100")
+    private Integer masteryThreshold = 100;
 
     /**
      * The type of competency according to Bloom's revised taxonomy.
@@ -45,8 +44,8 @@ public class Competency extends DomainObject {
     @JsonInclude
     private CompetencyTaxonomy taxonomy;
 
-    @Column(name = "optional")
-    private boolean optional;
+    @Column(name = "optional", nullable = false, columnDefinition = "boolean default false")
+    private boolean optional = false;
 
     @ManyToOne
     @JoinColumn(name = "course_id")

@@ -20,7 +20,7 @@ public class Bonus extends DomainObject {
     /**
      * Can be either +1 or -1 to add or subtract bonus.
      */
-    @Column(name = "weight")
+    @Column(name = "weight", nullable = false)
     private double weight;
 
     @ManyToOne(optional = false)

@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -30,10 +30,10 @@ public class ProgrammingExerciseGitDiffReport extends DomainObject {
     @JsonIgnoreProperties("gitDiffReport")
     private ProgrammingExercise programmingExercise;
 
-    @Column(name = "template_repository_commit_hash")
+    @Column(name = "template_repository_commit_hash", nullable = false)
     private String templateRepositoryCommitHash;
 
-    @Column(name = "solution_repository_commit_hash")
+    @Column(name = "solution_repository_commit_hash", nullable = false)
     private String solutionRepositoryCommitHash;
 
     // Eager fetching is used here, as the git-diff is useless without the change entries

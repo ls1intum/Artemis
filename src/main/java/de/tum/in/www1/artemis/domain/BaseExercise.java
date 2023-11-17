@@ -3,18 +3,12 @@ package de.tum.in.www1.artemis.domain;
 import java.time.ZonedDateTime;
 
 import javax.annotation.Nullable;
-import javax.persistence.Column;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
@@ -32,7 +26,7 @@ public abstract class BaseExercise extends DomainObject {
     @Column(name = "max_points")
     private Double maxPoints;
 
-    @Column(name = "bonus_points")
+    @Column(name = "bonus_points", nullable = false)
     private Double bonusPoints = 0.0;
 
     @Enumerated(EnumType.STRING)

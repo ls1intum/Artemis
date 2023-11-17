@@ -4,8 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 
 import javax.persistence.*;
@@ -14,10 +13,7 @@ import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.competency.Competency;
@@ -113,7 +109,7 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private String semester;
 
-    @Column(name = "test_course", nullable = false)
+    @Column(name = "test_course", nullable = false, columnDefinition = "boolean default false")
     @JsonView({ QuizView.Before.class })
     private boolean testCourse = false;
 
@@ -136,8 +132,9 @@ public class Course extends DomainObject {
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
     @Enumerated(EnumType.ORDINAL)
-    @Column(name = "info_sharing_config", nullable = false)
+    @Column(name = "info_sharing_config", nullable = false, columnDefinition = "integer default 0")
     @JsonView(QuizView.Before.class)
+    // TODO: db default value (0) and model default value (1) are different, should be the same
     private CourseInformationSharingConfiguration courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING; // default value
 
     @Column(name = "info_sharing_messaging_code_of_conduct")
@@ -147,23 +144,23 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints = 3;  // default value
 
-    @Column(name = "max_team_complaints", nullable = false)
+    @Column(name = "max_team_complaints", columnDefinition = "int default 3")
     @JsonView(QuizView.Before.class)
     private Integer maxTeamComplaints = 3;  // default value
 
-    @Column(name = "max_complaint_time_days", nullable = false)
+    @Column(name = "max_complaint_time_days", nullable = false, columnDefinition = "integer default 7")
     @JsonView(QuizView.Before.class)
     private int maxComplaintTimeDays = 7;   // default value
 
-    @Column(name = "max_request_more_feedback_time_days", nullable = false)
+    @Column(name = "max_request_more_feedback_time_days", nullable = false, columnDefinition = "integer default 7")
     @JsonView(QuizView.Before.class)
     private int maxRequestMoreFeedbackTimeDays = 7;   // default value
 
-    @Column(name = "max_complaint_text_limit")
+    @Column(name = "max_complaint_text_limit", columnDefinition = "integer default 2000")
     @JsonView(QuizView.Before.class)
     private int maxComplaintTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT;
 
-    @Column(name = "max_complaint_response_text_limit")
+    @Column(name = "max_complaint_response_text_limit", columnDefinition = "integer default 2000")
     @JsonView(QuizView.Before.class)
     private int maxComplaintResponseTextLimit = DEFAULT_COMPLAINT_TEXT_LIMIT;
 
@@ -184,7 +181,7 @@ public class Course extends DomainObject {
     @Column(name = "registration_confirmation_message") // TODO: rename column in database
     private String enrollmentConfirmationMessage;
 
-    @Column(name = "unenrollment_enabled")
+    @Column(name = "unenrollment_enabled", nullable = false, columnDefinition = "boolean default false")
     private boolean unenrollmentEnabled = false;
 
     @Column(name = "presentation_score")
@@ -220,7 +217,7 @@ public class Course extends DomainObject {
     @OrderBy("title")
     private Set<Competency> competencies = new HashSet<>();
 
-    @Column(name = "learning_paths_enabled", nullable = false)
+    @Column(name = "learning_paths_enabled", nullable = false, columnDefinition = "boolean default false")
     private boolean learningPathsEnabled = false;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)

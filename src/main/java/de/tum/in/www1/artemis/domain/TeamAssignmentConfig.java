@@ -22,14 +22,19 @@ import de.tum.in.www1.artemis.validation.constraints.TeamAssignmentConfigConstra
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TeamAssignmentConfig extends DomainObject {
 
-    @OneToOne(mappedBy = "teamAssignmentConfig", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "teamAssignmentConfig")
     @JsonIgnoreProperties("teamAssignmentConfig")
     private Exercise exercise;
 
+    @Column(name = "exercise_id")
+    // TODO: this column is only used for migrations, but won't be used by the relation,
+    // as the @OneToOne is created the wrong way around
+    private String exerciseId;
+
     @Min(1)
     @NotNull
-    @Column(name = "min_team_size")
-    private Integer minTeamSize;
+    @Column(name = "min_team_size", columnDefinition = "integer default 1")
+    private Integer minTeamSize = 1;
 
     @Min(1)
     @Column(name = "max_team_size")

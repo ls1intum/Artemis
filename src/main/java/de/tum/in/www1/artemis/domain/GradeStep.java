@@ -31,22 +31,22 @@ public class GradeStep extends DomainObject {
     @JsonIgnoreProperties(value = "gradeSteps", allowSetters = true)
     private GradingScale gradingScale;
 
-    @Column(name = "lower_bound_percentage")
+    @Column(name = "lower_bound_percentage", nullable = false)
     private double lowerBoundPercentage;
 
-    @Column(name = "lower_bound_inclusive")
+    @Column(name = "lower_bound_inclusive", nullable = false, columnDefinition = "boolean default true")
     private boolean lowerBoundInclusive = true; // default
 
-    @Column(name = "upper_bound_percentage")
+    @Column(name = "upper_bound_percentage", nullable = false)
     private double upperBoundPercentage;
 
-    @Column(name = "upper_bound_inclusive")
+    @Column(name = "upper_bound_inclusive", columnDefinition = "boolean default false", nullable = false)
     private boolean upperBoundInclusive = false; // default
 
-    @Column(name = "grade_name")
+    @Column(name = "grade_name", nullable = false)
     private String gradeName;
 
-    @Column(name = "is_passing_grade")
+    @Column(name = "is_passing_grade", nullable = false)
     private boolean isPassingGrade;
 
     public GradingScale getGradingScale() {
@@ -149,7 +149,7 @@ public class GradeStep extends DomainObject {
     /**
      * Parses the {@link #gradeName} as a number in order to use it in grade and bonus calculations.
      * Accepts both "," and "." as decimal separators.
-     *
+     * <p>
      * Does not throw exception, returns null on failure.
      *
      * @return {@link Double} value corresponding to the {@link #gradeName} or null if it is not parseable or null.

@@ -29,7 +29,7 @@ public class TextAssessmentEvent extends DomainObject {
     private Long userId;
 
     @CreatedDate
-    @Column(name = "timestamp", updatable = false)
+    @Column(name = "timestamp", updatable = false, nullable = false)
     private Instant timestamp = Instant.now();
 
     @Enumerated(EnumType.STRING)

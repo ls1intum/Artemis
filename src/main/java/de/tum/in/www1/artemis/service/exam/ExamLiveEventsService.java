@@ -58,7 +58,7 @@ public class ExamLiveEventsService {
         var event = new ExamWideAnnouncementEvent();
 
         // Common fields
-        event.setExamId(exam.getId());
+        event.setExam(exam);
         event.setCreatedBy(sentBy.getName());
 
         // Specific fields
@@ -80,8 +80,8 @@ public class ExamLiveEventsService {
         var event = new WorkingTimeUpdateEvent();
 
         // Common fields
-        event.setExamId(studentExam.getExam().getId());
-        event.setStudentExamId(studentExam.getId());
+        event.setExam(studentExam.getExam());
+        event.setStudentExam(studentExam);
         event.setCreatedBy(sentBy.getName());
 
         // Specific fields
@@ -103,13 +103,13 @@ public class ExamLiveEventsService {
         var storedEvent = examLiveEventRepository.save(event);
 
         // If the event is for a specific student exam, only send it to that student exam.
-        if (event.getStudentExamId() != null) {
-            websocketMessagingService.sendMessage(STUDENT_EXAM_EVENT.formatted(storedEvent.getStudentExamId()), storedEvent.asDTO());
+        if (event.getStudentExam() != null) {
+            websocketMessagingService.sendMessage(STUDENT_EXAM_EVENT.formatted(storedEvent.getStudentExam().getId()), storedEvent.asDTO());
             return storedEvent;
         }
 
         // Otherwise, send it to all student exams of the exam.
-        websocketMessagingService.sendMessage(EXAM_EVENT.formatted(storedEvent.getExamId()), storedEvent.asDTO());
+        websocketMessagingService.sendMessage(EXAM_EVENT.formatted(storedEvent.getExam().getId()), storedEvent.asDTO());
 
         return storedEvent;
     }

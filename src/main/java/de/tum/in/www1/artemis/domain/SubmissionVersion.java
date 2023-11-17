@@ -19,17 +19,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @EntityListeners(AuditingEntityListener.class)
 public class SubmissionVersion extends DomainObject {
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     private Submission submission;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     private User author;
 
     @Column(name = "content")
     private String content;
 
     @CreatedDate
-    @Column(name = "created_date", updatable = false)
+    @Column(name = "created_date", updatable = false, nullable = false)
     private Instant createdDate = Instant.now();
 
     // automatically set on changes

@@ -77,7 +77,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     private Submission submission;
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn
+    @OrderColumn(name = "results_order", columnDefinition = "integer default 0")
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
@@ -103,13 +103,13 @@ public class Result extends DomainObject implements Comparable<Result> {
     private Boolean exampleResult;
 
     // The following attributes are only used for Programming Exercises
-    @Column(name = "test_case_count")
+    @Column(name = "test_case_count", columnDefinition = "TINYINT UNSIGNED DEFAULT 0")
     private Integer testCaseCount = 0;
 
-    @Column(name = "passed_test_case_count")
+    @Column(name = "passed_test_case_count", columnDefinition = "TINYINT UNSIGNED DEFAULT 0")
     private Integer passedTestCaseCount = 0;
 
-    @Column(name = "code_issue_count")
+    @Column(name = "code_issue_count", columnDefinition = "TINYINT UNSIGNED DEFAULT 0")
     private Integer codeIssueCount = 0;
 
     @LastModifiedDate
@@ -519,11 +519,10 @@ public class Result extends DomainObject implements Comparable<Result> {
      * Does not change the feedbacks attribute of this entity.
      * Also removes the test names from all feedback if it should not be shown to the student.
      *
-     * @see ResultDTO
-     *
      * @param removeHiddenFeedback true if feedbacks marked with visibility 'after due date' should also be removed.
      * @param exercise             used to check if students can see the test case names
      * @return the new filtered list
+     * @see ResultDTO
      */
     public List<Feedback> createFilteredFeedbacks(boolean removeHiddenFeedback, Exercise exercise) {
         var filteredFeedback = feedbacks.stream().filter(feedback -> !feedback.isInvisible()).filter(feedback -> !removeHiddenFeedback || !feedback.isAfterDueDate())

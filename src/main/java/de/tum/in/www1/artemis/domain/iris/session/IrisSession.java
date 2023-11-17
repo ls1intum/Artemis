@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.domain.iris.session;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -35,7 +34,7 @@ public abstract class IrisSession extends DomainObject {
     @OneToMany(mappedBy = "session", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IrisMessage> messages = new ArrayList<>();
 
-    @Column(name = "creation_date")
+    @Column(name = "creation_date", nullable = false, updatable = false)
     private ZonedDateTime creationDate;
 
     public void setCreationDate(ZonedDateTime creationDate) {

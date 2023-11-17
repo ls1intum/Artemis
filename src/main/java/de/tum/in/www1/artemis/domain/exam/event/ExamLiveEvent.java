@@ -2,14 +2,7 @@ package de.tum.in.www1.artemis.domain.exam.event;
 
 import java.time.Instant;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
-import javax.persistence.Entity;
-import javax.persistence.EntityListeners;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -17,6 +10,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.service.exam.ExamLiveEventsService;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamLiveEventDTO;
 
@@ -40,14 +35,15 @@ public abstract class ExamLiveEvent extends DomainObject {
     private String createdBy;
 
     @CreatedDate
-    @Column(name = "created_date", updatable = false)
+    @Column(name = "created_date", updatable = false, nullable = false)
     private Instant createdDate = Instant.now();
 
-    @Column(name = "exam_id", nullable = false, updatable = false)
-    private Long examId;
+    @ManyToOne(optional = false)
+    @JoinColumn(nullable = false)
+    private Exam exam;
 
-    @Column(name = "student_exam_id", updatable = false)
-    private Long studentExamId;
+    @ManyToOne
+    private StudentExam studentExam;
 
     public String getCreatedBy() {
         return createdBy;
@@ -65,20 +61,20 @@ public abstract class ExamLiveEvent extends DomainObject {
         this.createdDate = createdDate;
     }
 
-    public Long getExamId() {
-        return examId;
+    public Exam getExam() {
+        return exam;
     }
 
-    public void setExamId(Long examId) {
-        this.examId = examId;
+    public void setExam(Exam exam) {
+        this.exam = exam;
     }
 
-    public Long getStudentExamId() {
-        return studentExamId;
+    public StudentExam getStudentExam() {
+        return studentExam;
     }
 
-    public void setStudentExamId(Long studentExamId) {
-        this.studentExamId = studentExamId;
+    public void setStudentExam(StudentExam studentExam) {
+        this.studentExam = studentExam;
     }
 
     protected void populateDTO(ExamLiveEventDTO dto) {

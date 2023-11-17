@@ -9,10 +9,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -45,8 +42,8 @@ public abstract class Notification extends DomainObject {
     @Column(name = "text")
     private String text;
 
-    @Column(name = "text_is_placeholder")
-    private boolean textIsPlaceholder;
+    @Column(name = "text_is_placeholder", nullable = false, columnDefinition = "boolean default false")
+    private boolean textIsPlaceholder = false;
 
     @Column(name = "placeholder_values")
     private String placeholderValues;
@@ -71,10 +68,10 @@ public abstract class Notification extends DomainObject {
     private transient NotificationTarget targetTransient;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "priority", columnDefinition = "varchar(15) default 'MEDIUM'")
+    @Column(name = "priority", nullable = false, columnDefinition = "varchar(15) default 'MEDIUM'")
     private NotificationPriority priority = NotificationPriority.MEDIUM;
 
-    @Column(name = "outdated", columnDefinition = "boolean default false")
+    @Column(name = "outdated", nullable = false, columnDefinition = "boolean default false")
     private boolean outdated = false;
 
     @ManyToOne

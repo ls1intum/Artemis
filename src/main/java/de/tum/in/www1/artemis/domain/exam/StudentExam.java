@@ -32,8 +32,8 @@ public class StudentExam extends AbstractAuditingEntity {
     @Column(name = "working_time")
     private Integer workingTime;
 
-    @Column(name = "started")
-    private Boolean started;
+    @Column(name = "started", columnDefinition = "boolean default false")
+    private Boolean started = false;
 
     @Column(name = "started_date")
     private ZonedDateTime startedDate;
@@ -41,8 +41,8 @@ public class StudentExam extends AbstractAuditingEntity {
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
 
-    @Column(name = "test_run")
-    private Boolean testRun;
+    @Column(name = "test_run", columnDefinition = "boolean default false")
+    private Boolean testRun = false;
 
     @ManyToOne
     @JoinColumn(name = "exam_id")

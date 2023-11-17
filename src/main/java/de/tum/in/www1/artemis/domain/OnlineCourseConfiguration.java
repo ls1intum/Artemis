@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -33,7 +30,7 @@ public class OnlineCourseConfiguration extends DomainObject {
     private String userPrefix;
 
     @Column(name = "require_existing_user")
-    private boolean requireExistingUser;
+    private boolean requireExistingUser = false;
 
     @Column(name = "original_url")
     private String originalUrl;

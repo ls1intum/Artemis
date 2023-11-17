@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.modeling;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -34,7 +33,7 @@ public class ModelCluster extends DomainObject {
     @JsonIgnoreProperties("cluster")
     private Set<ModelElement> modelElements = new HashSet<>();
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JsonIgnore
     private ModelingExercise exercise;
 

@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
-import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH;
-import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH;
-import static de.tum.in.www1.artemis.config.Constants.LONG_FEEDBACK_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.util.*;
 
@@ -47,7 +44,7 @@ public class Feedback extends DomainObject {
     @Column(name = "detail_text", length = FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH)
     private String detailText;
 
-    @Column(name = "has_long_feedback_text")
+    @Column(name = "has_long_feedback_text", columnDefinition = "boolean default false")
     private boolean hasLongFeedbackText = false;
 
     @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

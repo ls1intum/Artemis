@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public abstract class AbstractAuditingEntity extends DomainObject {
 
     @CreatedBy
-    @Column(name = "created_by", nullable = false, length = 50, updatable = false)
+    @Column(name = "created_by", updatable = false, length = 50)
     @JsonIgnore
     private String createdBy;
 

@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 public class TutorialGroupFreePeriod extends DomainObject {
 
     @ManyToOne
-    @JoinColumn(name = "tutorial_groups_configuration_id")
+    @JoinColumn(name = "tutorial_groups_configuration_id", nullable = false)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "tutorialFreePeriods", allowSetters = true)
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
@@ -28,13 +28,13 @@ public class TutorialGroupFreePeriod extends DomainObject {
     /**
      * NOTE: Stored in UTC in the database
      */
-    @Column(name = "period_start")
+    @Column(name = "period_start", nullable = false)
     private ZonedDateTime start;
 
     /**
      * NOTE: Stored in UTC in the database
      */
-    @Column(name = "period_end")
+    @Column(name = "period_end", nullable = false)
     private ZonedDateTime end;
 
     @Column(name = "reason")

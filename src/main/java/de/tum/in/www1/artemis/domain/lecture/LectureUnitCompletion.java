@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.lecture;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.Objects;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -36,7 +36,7 @@ public class LectureUnitCompletion {
     @JsonIgnore
     private LectureUnit lectureUnit;
 
-    @Column(name = "completed_date")
+    @Column(name = "completed_date", nullable = false)
     private ZonedDateTime completedAt;
 
     public LectureUnitUserId getId() {

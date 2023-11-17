@@ -55,14 +55,14 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Exercise extends BaseExercise implements LearningObject {
 
-    @Column(name = "allow_complaints_for_automatic_assessments")
-    private boolean allowComplaintsForAutomaticAssessments;
+    @Column(name = "allow_complaints_for_automatic_assessments", columnDefinition = "boolean DEFAULT false")
+    private boolean allowComplaintsForAutomaticAssessments = false;
 
-    @Column(name = "allow_manual_feedback_requests")
-    private boolean allowManualFeedbackRequests;
+    @Column(name = "allow_manual_feedback_requests", columnDefinition = "boolean DEFAULT false")
+    private boolean allowManualFeedbackRequests = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "included_in_overall_score")
+    @Column(name = "included_in_overall_score", nullable = false, columnDefinition = "varchar(255) default 'INCLUDED_COMPLETELY'")
     private IncludedInOverallScore includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
 
     @Column(name = "problem_statement")
@@ -98,7 +98,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private Boolean presentationScoreEnabled = false;
 
     @Nullable
-    @Column(name = "second_correction_enabled")
+    @Column(name = "second_correction_enabled", nullable = false, columnDefinition = "boolean default false")
     private Boolean secondCorrectionEnabled = false;
 
     @ManyToOne

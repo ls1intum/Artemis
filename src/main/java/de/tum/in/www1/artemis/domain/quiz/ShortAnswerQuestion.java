@@ -43,11 +43,11 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @JsonView(QuizView.After.class)
     private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
 
-    @Column(name = "similarity_value")
+    @Column(name = "similarity_value", nullable = false, columnDefinition = "integer default 85")
     @JsonView(QuizView.Before.class)
     private Integer similarityValue = 85;
 
-    @Column(name = "match_letter_case")
+    @Column(name = "match_letter_case", nullable = false, columnDefinition = "boolean default false")
     @JsonView(QuizView.Before.class)
     private Boolean matchLetterCase = false;
 

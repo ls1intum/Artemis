@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -15,7 +12,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Entity
-@Table(name = "build_plan", uniqueConstraints = { @UniqueConstraint(columnNames = { "build_plan" }) })
+@Table(name = "build_plan")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class BuildPlan extends DomainObject {
 

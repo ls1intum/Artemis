@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -37,7 +35,7 @@ public class GradingScale extends DomainObject {
     private static final int MAX_SPECIAL_GRADE_SIZE = 100;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "grade_type")
+    @Column(name = "grade_type", nullable = false, columnDefinition = "varchar(255) default 'NONE'")
     private GradeType gradeType = GradeType.NONE; // default
 
     @Enumerated(EnumType.STRING)

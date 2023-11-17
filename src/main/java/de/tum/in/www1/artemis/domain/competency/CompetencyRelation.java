@@ -13,14 +13,14 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 public class CompetencyRelation extends DomainObject {
 
     @ManyToOne
-    @JoinColumn(name = "tail_learning_goal_id")
+    @JoinColumn(name = "tail_learning_goal_id", nullable = false)
     private Competency tailCompetency;
 
     @ManyToOne
-    @JoinColumn(name = "head_learning_goal_id")
+    @JoinColumn(name = "head_learning_goal_id", nullable = false)
     private Competency headCompetency;
 
-    @Column(name = "type")
+    @Column(name = "type", nullable = false)
     @Convert(converter = RelationTypeConverter.class)
     private RelationType type;
 

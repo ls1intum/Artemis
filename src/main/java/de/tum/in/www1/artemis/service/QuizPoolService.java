@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -15,11 +12,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.quiz.QuizGroup;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
-import de.tum.in.www1.artemis.repository.DragAndDropMappingRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.QuizGroupRepository;
-import de.tum.in.www1.artemis.repository.QuizPoolRepository;
-import de.tum.in.www1.artemis.repository.ShortAnswerMappingRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -65,17 +58,17 @@ public class QuizPoolService extends QuizService<QuizPool> {
 
         List<QuizGroup> savedQuizGroups = quizGroupRepository.saveAllAndFlush(quizPool.getQuizGroups());
         quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId).ifPresent(existingQuizPool -> {
-            List<Long> existingQuizGroupIds = existingQuizPool.getQuizQuestions().stream().map(QuizQuestion::getQuizGroupId).filter(Objects::nonNull).toList();
+            List<Long> existingQuizGroupIds = existingQuizPool.getQuizQuestions().stream().map(QuizQuestion::getQuizGroup).map(QuizGroup::getId).filter(Objects::nonNull).toList();
             removeUnusedQuizGroup(existingQuizGroupIds, savedQuizGroups);
         });
 
-        Map<String, Long> quizGroupNameIdMap = savedQuizGroups.stream().collect(Collectors.toMap(QuizGroup::getName, QuizGroup::getId));
+        Map<String, QuizGroup> quizGroupNameIdMap = savedQuizGroups.stream().collect(Collectors.toMap(QuizGroup::getName, q -> q));
         for (QuizQuestion quizQuestion : quizPool.getQuizQuestions()) {
             if (quizQuestion.getQuizGroup() != null) {
-                quizQuestion.setQuizGroupId(quizGroupNameIdMap.get(quizQuestion.getQuizGroup().getName()));
+                quizQuestion.setQuizGroup(quizGroupNameIdMap.get(quizQuestion.getQuizGroup().getName()));
             }
             else {
-                quizQuestion.setQuizGroupId(null);
+                quizQuestion.setQuizGroup(null);
             }
         }
         quizPool.reconnectJSONIgnoreAttributes();
@@ -98,7 +91,7 @@ public class QuizPoolService extends QuizService<QuizPool> {
      */
     public QuizPool findByExamId(Long examId) {
         QuizPool quizPool = quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, "examId=" + examId));
-        List<Long> quizGroupIds = quizPool.getQuizQuestions().stream().map(QuizQuestion::getQuizGroupId).filter(Objects::nonNull).toList();
+        List<Long> quizGroupIds = quizPool.getQuizQuestions().stream().map(QuizQuestion::getQuizGroup).map(QuizGroup::getId).filter(Objects::nonNull).toList();
         List<QuizGroup> quizGroups = quizGroupRepository.findAllById(quizGroupIds);
         quizPool.setQuizGroups(quizGroups);
         reassignQuizQuestion(quizPool, quizGroups);
@@ -114,8 +107,8 @@ public class QuizPoolService extends QuizService<QuizPool> {
     private void reassignQuizQuestion(QuizPool quizPool, List<QuizGroup> quizGroups) {
         Map<Long, QuizGroup> idQuizGroupMap = quizGroups.stream().collect(Collectors.toMap(QuizGroup::getId, Function.identity()));
         for (QuizQuestion quizQuestion : quizPool.getQuizQuestions()) {
-            if (quizQuestion.getQuizGroupId() != null) {
-                quizQuestion.setQuizGroup(idQuizGroupMap.get(quizQuestion.getQuizGroupId()));
+            if (quizQuestion.getQuizGroup() != null) {
+                quizQuestion.setQuizGroup(idQuizGroupMap.get(quizQuestion.getQuizGroup().getId()));
             }
         }
     }

@@ -22,7 +22,8 @@ import de.tum.in.www1.artemis.domain.enumeration.DataExportState;
 public class DataExport extends AbstractAuditingEntity {
 
     @Enumerated(EnumType.ORDINAL)
-    private DataExportState dataExportState;
+    @Column(name = "data_export_state", nullable = false, columnDefinition = "int default 0")
+    private DataExportState dataExportState = DataExportState.REQUESTED;
 
     @Column(name = "creation_finished_date")
     private ZonedDateTime creationFinishedDate;

@@ -4,7 +4,7 @@ import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Objects;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
@@ -47,7 +47,7 @@ public class TextBlock implements Serializable {
      * Automatic Blocks should be persisted regardless.
      */
     @Enumerated(EnumType.STRING)
-    @Column(name = "type")
+    @Column(name = "type", columnDefinition = "varchar(255) default 'MANUAL'")
     private TextBlockType type = TextBlockType.MANUAL;
 
     // There is a foreign key on delete set null

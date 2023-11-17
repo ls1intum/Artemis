@@ -39,7 +39,7 @@ public class QuizBatch extends DomainObject {
     private Long creator;
 
     @ManyToOne
-    @JoinColumn(name = "quiz_id")
+    @JoinColumn(name = "quiz_id", nullable = false)
     @JsonIgnore
     private QuizExercise quizExercise;
 

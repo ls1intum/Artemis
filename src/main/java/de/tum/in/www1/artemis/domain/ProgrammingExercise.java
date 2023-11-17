@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
@@ -22,10 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
@@ -62,11 +60,11 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "allow_online_editor", table = "programming_exercise_details")
     private Boolean allowOnlineEditor;
 
-    @Column(name = "allow_offline_ide", table = "programming_exercise_details")
-    private Boolean allowOfflineIde;
+    @Column(name = "allow_offline_ide", table = "programming_exercise_details", columnDefinition = "boolean default true")
+    private Boolean allowOfflineIde = true;
 
-    @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details")
-    private Boolean staticCodeAnalysisEnabled;
+    @Column(name = "static_code_analysis_enabled", table = "programming_exercise_details", columnDefinition = "boolean default false")
+    private Boolean staticCodeAnalysisEnabled = false;
 
     @Column(name = "max_static_code_analysis_penalty", table = "programming_exercise_details")
     private Integer maxStaticCodeAnalysisPenalty;
@@ -81,8 +79,8 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "sequential_test_runs")
     private Boolean sequentialTestRuns;
 
-    @Column(name = "show_test_names_to_students", table = "programming_exercise_details")
-    private boolean showTestNamesToStudents;
+    @Column(name = "show_test_names_to_students", table = "programming_exercise_details", columnDefinition = "boolean default false")
+    private boolean showTestNamesToStudents = false;
 
     @Nullable
     @Column(name = "build_and_test_student_submissions_after_due_date", table = "programming_exercise_details")
@@ -92,7 +90,7 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "test_cases_changed", table = "programming_exercise_details")
     private Boolean testCasesChanged = false;   // default value
 
-    @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
+    @Column(name = "project_key", table = "programming_exercise_details")
     private String projectKey;
 
     @Size(max = 36)
@@ -134,14 +132,15 @@ public class ProgrammingExercise extends Exercise {
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
-    @Column(name = "testwise_coverage_enabled", table = "programming_exercise_details")
-    private boolean testwiseCoverageEnabled;
+    @Column(name = "testwise_coverage_enabled", table = "programming_exercise_details", nullable = false, columnDefinition = "boolean default false")
+    @NotNull
+    private boolean testwiseCoverageEnabled = false;
 
     @Column(name = "branch", table = "programming_exercise_details")
     private String branch;
 
-    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
-    private boolean releaseTestsWithExampleSolution;
+    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false, columnDefinition = "boolean default false")
+    private boolean releaseTestsWithExampleSolution = false;
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "iris_settings_id", table = "programming_exercise_details")
@@ -354,7 +353,7 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Generates a unique project key based on the course short name and the exercise short name. This should only be used
      * for instantiating a new exercise
-     *
+     * <p>
      * The key concatenates the course short name and the exercise short name (in upper case letters), e.g.: <br>
      * Course: <code>crs</code> <br>
      * Exercise: <code>exc</code> <br>

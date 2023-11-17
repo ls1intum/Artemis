@@ -27,7 +27,7 @@ public class GuidedTourSetting extends DomainObject {
     @Column(name = "guided_tour_state")
     private Status guidedTourState;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JsonIgnore
     private User user;
 

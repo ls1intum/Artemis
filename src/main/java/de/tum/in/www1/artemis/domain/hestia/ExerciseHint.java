@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.Max;
@@ -21,7 +20,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 @Entity
 @Table(name = "exercise_hint")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING, columnDefinition = "varchar(31) DEFAULT 'T'")
 @DiscriminatorValue("T")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
@@ -51,7 +50,7 @@ public class ExerciseHint extends DomainObject {
     @JsonIgnore
     private Set<ExerciseHintActivation> exerciseHintActivations = new HashSet<>();
 
-    @Column(name = "display_threshold", columnDefinition = "TINYINT")
+    @Column(name = "display_threshold", nullable = false, columnDefinition = "TINYINT DEFAULT 3")
     @Min(0)
     @Max(100)
     private short displayThreshold = 3;

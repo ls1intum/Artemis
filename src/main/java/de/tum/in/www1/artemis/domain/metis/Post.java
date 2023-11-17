@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.metis;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
@@ -68,7 +67,7 @@ public class Post extends Posting {
     private Conversation conversation;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "display_priority", columnDefinition = "varchar(25) default 'NONE'")
+    @Column(name = "display_priority", nullable = false, columnDefinition = "varchar(25) default 'NONE'")
     private DisplayPriority displayPriority = DisplayPriority.NONE;
 
     @OneToOne

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -29,27 +28,25 @@ public class TutorialGroupsConfiguration extends DomainObject {
      * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "tutorial_period_start_inclusive")
-    @NotNull
     private String tutorialPeriodStartInclusive;
 
     /**
      * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "tutorial_period_end_inclusive")
-    @NotNull
     private String tutorialPeriodEndInclusive;
 
     /**
      * If true, tutorial groups channel will be created for each tutorial group. If false, they will not be created.
      */
-    @Column(name = "use_tutorial_group_channels")
+    @Column(name = "use_tutorial_group_channels", columnDefinition = "boolean default false")
     @NotNull
     private Boolean useTutorialGroupChannels;
 
     /**
      * If true, the created tutorial group channels will be public. If false, they will be private.
      */
-    @Column(name = "use_public_tutorial_group_channels")
+    @Column(name = "use_public_tutorial_group_channels", columnDefinition = "boolean default false")
     @NotNull
     private Boolean usePublicTutorialGroupChannels;
 

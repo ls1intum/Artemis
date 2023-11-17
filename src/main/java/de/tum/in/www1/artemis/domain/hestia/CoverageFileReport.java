@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -18,11 +18,11 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CoverageFileReport extends DomainObject {
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JsonIgnoreProperties("fileReports")
     private CoverageReport fullReport;
 
-    @Column(name = "file_path")
+    @Column(name = "file_path", nullable = false)
     private String filePath;
 
     // The number of lines in the whole file

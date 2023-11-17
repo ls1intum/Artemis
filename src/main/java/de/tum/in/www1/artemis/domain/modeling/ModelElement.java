@@ -22,17 +22,17 @@ public class ModelElement implements Serializable {
 
     @Id
     @Size(min = 36, max = 36)
-    @Column(name = "modelElementId", unique = true, columnDefinition = "CHAR(36)", length = 36)
+    @Column(name = "model_element_id", unique = true, columnDefinition = "CHAR(36)", length = 36)
     // Apollon Ids are exactly 36 characters long, Feedback.reference used this modelElementId to create a connection
     private String modelElementId;
 
     // TODO: we could also store the feedbackId here to simplify the check whether a model element has been corrected or not.
 
-    @Column(name = "modelElementType", nullable = false)
+    @Column(name = "model_element_type", nullable = false)
     // TODO: we might want to use an enum here
     private String modelElementType;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JsonIgnore
     private ModelingSubmission submission;
 

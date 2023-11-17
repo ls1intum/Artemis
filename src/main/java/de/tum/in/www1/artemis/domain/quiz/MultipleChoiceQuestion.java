@@ -30,7 +30,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
-    @Column(name = "single_choice")
+    @Column(name = "single_choice", nullable = false, columnDefinition = "boolean default false")
     @JsonView(QuizView.Before.class)
     private boolean singleChoice = false;
 

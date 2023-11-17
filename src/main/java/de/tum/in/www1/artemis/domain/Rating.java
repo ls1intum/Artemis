@@ -20,7 +20,7 @@ public class Rating extends DomainObject {
     private Integer rating;
 
     @OneToOne
-    @JoinColumn(name = "result_id")
+    @JoinColumn(name = "result_id", nullable = false)
     private Result result;
 
     public Integer getRating() {

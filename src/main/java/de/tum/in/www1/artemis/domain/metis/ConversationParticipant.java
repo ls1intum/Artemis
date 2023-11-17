@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.domain.metis;
 import java.time.ZonedDateTime;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,20 +23,19 @@ public class ConversationParticipant extends DomainObject {
 
     @ManyToOne
     @JsonIncludeProperties({ "id", "firstName", "lastName" })
-    @NotNull
     private User user;
 
     /**
      * Currently only used for {@link de.tum.in.www1.artemis.domain.metis.conversation.Channel}
      */
-    @Column(name = "is_moderator")
-    private Boolean isModerator;
+    @Column(name = "is_moderator", columnDefinition = "boolean default false")
+    private Boolean isModerator = false;
 
-    @Column(name = "is_favorite")
-    private Boolean isFavorite;
+    @Column(name = "is_favorite", columnDefinition = "boolean default false")
+    private Boolean isFavorite = false;
 
-    @Column(name = "is_hidden")
-    private Boolean isHidden;
+    @Column(name = "is_hidden", columnDefinition = "boolean default false")
+    private Boolean isHidden = false;
 
     @Column(name = "last_read")
     private ZonedDateTime lastRead;

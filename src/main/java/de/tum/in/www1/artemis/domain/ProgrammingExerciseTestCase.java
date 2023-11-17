@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType.DEFAULT;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -28,24 +27,24 @@ import de.tum.in.www1.artemis.domain.hestia.*;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ProgrammingExerciseTestCase extends DomainObject {
 
-    @Column(name = "test_name")
+    @Column(name = "test_name", nullable = false)
     private String testName;
 
-    @Column(name = "weight")
-    private Double weight;
+    @Column(name = "weight", columnDefinition = "double precision DEFAULT 1.0")
+    private Double weight = 1.0;
 
-    @Column(name = "active", columnDefinition = "boolean DEFAULT false")
-    private Boolean active = false;
+    @Column(name = "active", nullable = false)
+    private Boolean active;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "visibility")
-    private Visibility visibility;
+    @Column(name = "visibility", columnDefinition = "varchar(255) DEFAULT 'ALWAYS'")
+    private Visibility visibility = Visibility.ALWAYS;
 
-    @Column(name = "bonus_multiplier")
-    private Double bonusMultiplier;
+    @Column(name = "bonus_multiplier", columnDefinition = "double DEFAULT 1.0")
+    private Double bonusMultiplier = 1.0;
 
-    @Column(name = "bonus_points")
-    private Double bonusPoints;
+    @Column(name = "bonus_points", columnDefinition = "double precision DEFAULT 0.0")
+    private Double bonusPoints = 0.0;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "programming_exercise_task_test_case", joinColumns = @JoinColumn(name = "test_case_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "task_id", referencedColumnName = "id"))
@@ -61,7 +60,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     private ProgrammingExercise exercise;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "test_case_type", nullable = false)
+    @Column(name = "test_case_type", nullable = false, columnDefinition = "varchar(255) DEFAULT 'DEFAULT'")
     private ProgrammingExerciseTestCaseType type = DEFAULT;     // default value
 
     @OneToMany(mappedBy = "testCase", fetch = FetchType.LAZY)

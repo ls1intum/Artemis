@@ -5,17 +5,11 @@ import static de.tum.in.www1.artemis.config.Constants.USERNAME_MIN_LENGTH;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
@@ -80,10 +74,10 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @NotNull
     @Column(nullable = false)
-    private boolean activated = false;
+    private boolean activated;
 
     @NotNull
-    @Column(name = "is_deleted", nullable = false)
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "boolean default false")
     private boolean isDeleted = false; // default value
 
     @Size(min = 2, max = 6)
@@ -116,7 +110,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "hide_notifications_until")
     private ZonedDateTime hideNotificationsUntil = null;
 
-    @Column(name = "is_internal", nullable = false)
+    @Column(name = "is_internal", nullable = false, columnDefinition = "boolean default true")
     private boolean isInternal = true;          // default value
 
     /**

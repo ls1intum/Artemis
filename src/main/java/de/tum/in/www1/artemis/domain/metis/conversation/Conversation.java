@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.domain.metis.conversation;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -21,7 +20,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 @Entity
 @Table(name = "conversation")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.CHAR, length = 1, columnDefinition = "char(1) DEFAULT 'O'")
 @DiscriminatorValue("X")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -48,7 +47,7 @@ public abstract class Conversation extends DomainObject {
     private Course course;
 
     @CreatedDate
-    @Column(name = "creation_date", updatable = false)
+    @Column(name = "creation_date", nullable = false, updatable = false)
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
     @Column(name = "last_message_date")

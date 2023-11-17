@@ -18,14 +18,18 @@ public class QuizSubmission extends AbstractQuizSubmission {
     }
 
     // The use of id here is on purpose because @ManyToOne relation cannot be lazily fetched and typically, QuizBatch is not needed when loading QuizSubmission
-    @Column(name = "quiz_batch")
-    private Long quizBatch;
+    // @Column(name = "quiz_batch")
+    // private Long quizBatch;
 
-    public void setQuizBatch(Long quizBatch) {
+    @ManyToOne
+    @JoinColumn(name = "quiz_batch")
+    private QuizBatch quizBatch;
+
+    public void setQuizBatch(QuizBatch quizBatch) {
         this.quizBatch = quizBatch;
     }
 
-    public Long getQuizBatch() {
+    public QuizBatch getQuizBatch() {
         return quizBatch;
     }
 
