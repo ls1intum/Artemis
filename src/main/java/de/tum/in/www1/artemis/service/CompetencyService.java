@@ -30,25 +30,6 @@ public class CompetencyService {
     }
 
     /**
-     * Get all competencies for a course, including the progress for the user.
-     *
-     * @param course         The course for which the competencies should be retrieved.
-     * @param user           The user for whom to filter the visible lecture units attached to the competency.
-     * @param updateProgress Whether the competency progress should be updated or taken from the database.
-     * @return A list of competencies with their lecture units (filtered for the user) and user progress.
-     */
-    public Set<Competency> findAllForCourse(@NotNull Course course, @NotNull User user, boolean updateProgress) {
-        if (updateProgress) {
-            // Get the competencies with the updated progress for the specified user.
-            return competencyProgressService.getCompetenciesAndUpdateProgressByUserInCourse(user, course);
-        }
-        else {
-            // Fetch the competencies with the user progress from the database.
-            return competencyRepository.findAllForCourseWithProgressForUser(course.getId(), user.getId());
-        }
-    }
-
-    /**
      * Get all prerequisites for a course. Lecture units are removed if the student is not part of the course.
      *
      * @param course The course for which the prerequisites should be retrieved.
