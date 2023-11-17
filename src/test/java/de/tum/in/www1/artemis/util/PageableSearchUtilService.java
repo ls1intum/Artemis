@@ -20,6 +20,12 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 @Service
 public class PageableSearchUtilService {
 
+    /**
+     * Generates a PageableSearchDTO for Exercises.
+     *
+     * @param searchTerm The searchTerm to use
+     * @return The generated PageableSearchDTO
+     */
     public PageableSearchDTO<String> configureSearch(String searchTerm) {
         final var search = new PageableSearchDTO<String>();
         search.setPage(1);
@@ -35,6 +41,12 @@ public class PageableSearchUtilService {
         return search;
     }
 
+    /**
+     * Generates a PageableSearchDTO for StudentParticipations.
+     *
+     * @param searchTerm The searchTerm to use
+     * @return The generated PageableSearchDTO
+     */
     public PageableSearchDTO<String> configureStudentParticipationSearch(String searchTerm) {
         final var search = new PageableSearchDTO<String>();
         search.setPage(1);
@@ -50,6 +62,12 @@ public class PageableSearchUtilService {
         return search;
     }
 
+    /**
+     * Generates a PageableSearchDTO for Lectures.
+     *
+     * @param searchTerm The searchTerm to use
+     * @return The generated PageableSearchDTO
+     */
     public PageableSearchDTO<String> configureLectureSearch(String searchTerm) {
         final var search = new PageableSearchDTO<String>();
         search.setPage(1);
@@ -60,6 +78,12 @@ public class PageableSearchUtilService {
         return search;
     }
 
+    /**
+     * Generates a LinkedMultiValueMap from the given PageableSearchDTO. The map is used for REST calls and maps the parameters to the values.
+     *
+     * @param search The PageableSearchDTO to use
+     * @return The generated LinkedMultiValueMap
+     */
     public LinkedMultiValueMap<String, String> searchMapping(PageableSearchDTO<String> search) {
         final var mapType = new TypeToken<Map<String, String>>() {
         }.getType();
