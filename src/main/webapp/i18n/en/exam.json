@@ -315,7 +315,7 @@
                 "followExamProtocol": "Be sure to follow your instructor's exam protocol.",
                 "button": "Show exam summary{{countdown}}"
             },
-            "abandon": "Abandon",
+            "abandon": "Abandon Exam",
             "abandoned": "You abandoned this exam. It will not be graded!",
             "abandonConfirm": {
                 "title": "Abandon exam",

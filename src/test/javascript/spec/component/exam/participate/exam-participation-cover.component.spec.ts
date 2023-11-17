@@ -334,4 +334,12 @@ describe('ExamParticipationCoverComponent', () => {
         component.studentExam.submitted = false;
         expect(component.studentFailedToSubmit).toBeFalse();
     });
+
+    it('should abandon the exam', () => {
+        jest.spyOn(component.onAbandon, 'emit');
+
+        component.abandonExam();
+
+        expect(component.onAbandon.emit).toHaveBeenCalledOnce();
+    });
 });

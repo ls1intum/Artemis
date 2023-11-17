@@ -313,7 +313,7 @@
                 "followExamProtocol": "Halte dich an die Klausuranweisungen deiner Lehrenden.",
                 "button": "Zusammenfassung der Klausur anzeigen{{ countdown }}"
             },
-            "abandon": "Abbrechen",
+            "abandon": "Klausur abbrechen",
             "abandoned": "Du hast diese Klausur abgebrochen. Sie wird nicht bewertet!",
             "abandonConfirm": {
                 "title": "Klausur abbrechen",

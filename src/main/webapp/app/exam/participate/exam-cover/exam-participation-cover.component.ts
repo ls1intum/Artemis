@@ -34,6 +34,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
     @Output() onExamStarted: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamEnded: EventEmitter<StudentExam> = new EventEmitter<StudentExam>();
     @Output() onExamContinueAfterHandInEarly = new EventEmitter<void>();
+    @Output() onAbandon = new EventEmitter<void>();
     course?: Course;
     startEnabled: boolean;
     endEnabled: boolean;
@@ -205,6 +206,13 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy {
      */
     continueAfterHandInEarly() {
         this.onExamContinueAfterHandInEarly.emit();
+    }
+
+    /**
+     * Notify the parent component that the user wants to abandon the exam
+     */
+    abandonExam() {
+        this.onAbandon.emit();
     }
 
     get startButtonEnabled(): boolean {

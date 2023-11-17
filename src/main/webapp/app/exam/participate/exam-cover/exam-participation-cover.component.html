@@ -24,7 +24,11 @@
     <div *ngIf="startView" class="col-md-3"></div>
 </div>
 <div class="w-100 d-flex" *ngIf="!startView && !studentFailedToSubmit">
-    <div class="col-md-3"></div>
+    <div class="col-md-3">
+        <button *ngIf="handInEarly" id="abandon" class="btn btn-danger mt-1" (click)="abandonExam()">
+            {{ 'artemisApp.examParticipation.abandon' | artemisTranslate }}
+        </button>
+    </div>
     <p class="col-md-6 font-weight-bold" style="text-align: center">
         <span jhiTranslate="artemisApp.examParticipation.submitFinalExam"></span>
     </p>

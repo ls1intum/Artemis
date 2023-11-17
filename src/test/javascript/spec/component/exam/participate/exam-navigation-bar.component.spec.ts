@@ -261,12 +261,4 @@ describe('Exam Navigation Bar Component', () => {
         expect(comp.setExerciseButtonStatus(1)).toBe('synced');
         expect(comp.icon).toEqual(faCheck);
     });
-
-    it('should abandon the exam', () => {
-        jest.spyOn(comp.onAbandon, 'emit');
-
-        comp.abandon();
-
-        expect(comp.onAbandon.emit).toHaveBeenCalledOnce();
-    });
 });

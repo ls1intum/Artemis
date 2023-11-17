@@ -24,7 +24,6 @@
                 (onPageChanged)="onPageChange($event)"
                 (examAboutToEnd)="examEnded()"
                 (onExamHandInEarly)="toggleHandInEarly()"
-                (onAbandon)="toggleAbandon()"
             ></jhi-exam-navigation-bar>
             <!-- exercises -->
             <div [hidden]="activePageIndex !== -1">
@@ -120,7 +119,7 @@
             </div>
         </ng-container>
         <jhi-exam-participation-cover
-            *ngIf="!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver()) && !abandon && !studentExam.abandoned"
+            *ngIf="!studentExam.submitted && ((isOver() && examStartConfirmed && !abandon) || isGracePeriodOver()) && !studentExam.abandoned"
             [startView]="false"
             [exam]="exam"
             [studentExam]="studentExam"
@@ -129,9 +128,10 @@
             [submitInProgress]="submitInProgress"
             (onExamEnded)="onExamEndConfirmed()"
             (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
+            (onAbandon)="toggleAbandon()"
         ></jhi-exam-participation-cover>
         <jhi-exam-termination-confirmation
-            *ngIf="!studentExam.abandoned && ((isOver() && examStartConfirmed) || isGracePeriodOver()) && abandon"
+            *ngIf="!studentExam.abandoned && abandon && !isGracePeriodOver()"
             [exam]="exam"
             [studentExam]="studentExam"
             [abandonInProgress]="abandonInProgress"
