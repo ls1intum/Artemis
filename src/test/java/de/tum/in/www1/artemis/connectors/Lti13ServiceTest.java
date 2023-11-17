@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
-import de.tum.in.www1.artemis.service.connectors.lti.LtiDeepLinkingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -77,9 +76,6 @@ class Lti13ServiceTest {
     @Mock
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    @Mock
-    private LtiDeepLinkingService ltiDeepLinkingService;
-
     private OidcIdToken oidcIdToken;
 
     private String clientRegistrationId;
@@ -92,7 +88,7 @@ class Lti13ServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
-                onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider, ltiDeepLinkingService);
+                onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider);
         clientRegistrationId = "clientId";
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix("prefix");

@@ -7,9 +7,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.crypto.SecretKey;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.nimbusds.jose.jwk.JWK;
+
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
@@ -38,7 +42,11 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUt
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
 class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -371,6 +379,17 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.BAD_REQUEST, params);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deepLinkingFailsAsInstructor() throws Exception {
+        var oAuth2JWKSService = mock(OAuth2JWKSService.class);
+        String jwkJsonString = "{\"kty\":\"RSA\",\"d\":\"base64-encoded-value\",\"e\":\"AQAB\",\"use\":\"sig\",\"kid\":\"123456\",\"alg\":\"RS256\",\"n\":\"base64-encoded-value\"}";
+        when(oAuth2JWKSService.getJWK(any())).thenReturn(JWK.parse(jwkJsonString));
+        var params = getDeepLinkingRequestParams();
+
+        request.postWithoutResponseBody("/api/lti13/dynamic-registration/" + course.getId(), HttpStatus.BAD_REQUEST, params);
+    }
+
     private void assertParametersExistingStudent(MultiValueMap<String, String> parameters) {
         assertThat(parameters.getFirst("initialize")).isNull();
         assertThat(parameters.getFirst("ltiSuccessLoginRequired")).isNotNull();
@@ -381,11 +400,90 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         assertThat(parameters.getFirst("ltiSuccessLoginRequired")).isNull();
     }
 
-    private static LinkedMultiValueMap<String, String> getDeepLinkingRequestParams() {
+    private LinkedMultiValueMap<String, String> getDeepLinkingRequestParams() {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("exerciseId", "155");
-        params.add("ltiIdToken", "id-token");
+        params.add("ltiIdToken", createJwtForTest().toString());
         params.add("clientRegistrationId", "registration-id");
         return params;
+    }
+
+    private String createJwtForTest() {
+        SecretKey key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
+        Map<String, Object> claims = prepareTokenClaims();
+
+        return Jwts.builder().setClaims(claims).signWith(key, SignatureAlgorithm.HS256).compact();
+    }
+
+    private Map<String, Object> prepareTokenClaims() {
+        Map<String, Object> claims = new HashMap<>();
+
+        claims.put("iss", "https://platform.example.org");
+        claims.put("sub", "a6d5c443-1f51-4783-ba1a-7686ffe3b54a");
+        claims.put("aud", List.of("962fa4d8-bcbf-49a0-94b2-2de05ad274af"));
+        claims.put("exp", new Date(System.currentTimeMillis() + 3600_000)); // Token is valid for 1 hour
+        claims.put("iat", new Date(System.currentTimeMillis()));
+        claims.put("azp", "962fa4d8-bcbf-49a0-94b2-2de05ad274af");
+        claims.put("nonce", "fc5fdc6d-5dd6-47f4-b2c9-5d1216e9b771");
+        claims.put("name", "Ms Jane Marie Doe");
+        claims.put("given_name", "Jane");
+        claims.put("family_name", "Doe");
+        claims.put("middle_name", "Marie");
+        claims.put("picture", "https://example.org/jane.jpg");
+        claims.put("email", "jane@example.org");
+        claims.put("locale", "en-US");
+
+        // LTI specific claims
+        claims.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", "07940580-b309-415e-a37c-914d387c1150");
+        claims.put("https://purl.imsglobal.org/spec/lti/claim/message_type", "LtiDeepLinkingRequest");
+        claims.put("https://purl.imsglobal.org/spec/lti/claim/version", "1.3.0");
+        claims.put("https://purl.imsglobal.org/spec/lti/claim/roles",
+                Arrays.asList("http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor", "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Faculty"));
+
+        // Context claim
+        Map<String, Object> contextClaim = new HashMap<>();
+        contextClaim.put("id", "c1d887f0-a1a3-4bca-ae25-c375edcc131a");
+        contextClaim.put("label", "ECON 101");
+        contextClaim.put("title", "Economics as a Social Science");
+        contextClaim.put("type", List.of("CourseOffering"));
+        claims.put("https://purl.imsglobal.org/spec/lti/claim/context", contextClaim);
+
+        // Tool platform claim
+        Map<String, Object> toolPlatformClaim = new HashMap<>();
+        toolPlatformClaim.put("contact_email", "support@example.org");
+        toolPlatformClaim.put("description", "An Example Tool Platform");
+        toolPlatformClaim.put("name", "Example Tool Platform");
+        toolPlatformClaim.put("url", "https://example.org");
+        toolPlatformClaim.put("product_family_code", "example.org");
+        toolPlatformClaim.put("version", "1.0");
+        claims.put("https://purl.imsglobal.org/spec/lti/claim/tool_platform", toolPlatformClaim);
+
+        // Launch presentation claim
+        Map<String, Object> launchPresentationClaim = new HashMap<>();
+        launchPresentationClaim.put("document_target", "iframe");
+        launchPresentationClaim.put("height", 320);
+        launchPresentationClaim.put("width", 240);
+        claims.put("https://purl.imsglobal.org/spec/lti/claim/launch_presentation", launchPresentationClaim);
+
+        // Custom claim
+        Map<String, Object> customClaim = new HashMap<>();
+        customClaim.put("myCustom", "123");
+        claims.put("https://purl.imsglobal.org/spec/lti/claim/custom", customClaim);
+
+        // Deep linking settings claim
+        Map<String, Object> deepLinkingSettingsClaim = new HashMap<>();
+        deepLinkingSettingsClaim.put("deep_link_return_url", "https://platform.example/deep_links");
+        deepLinkingSettingsClaim.put("accept_types", Arrays.asList("link", "file", "html", "ltiResourceLink", "image"));
+        deepLinkingSettingsClaim.put("accept_media_types", "image/*,text/html");
+        deepLinkingSettingsClaim.put("accept_presentation_document_targets", Arrays.asList("iframe", "window", "embed"));
+        deepLinkingSettingsClaim.put("accept_multiple", true);
+        deepLinkingSettingsClaim.put("auto_create", true);
+        deepLinkingSettingsClaim.put("title", "This is the default title");
+        deepLinkingSettingsClaim.put("text", "This is the default text");
+        deepLinkingSettingsClaim.put("data", "csrftoken:c7fbba78-7b75-46e3-9201-11e6d5f36f53");
+        claims.put("https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings", deepLinkingSettingsClaim);
+
+        return claims;
     }
 }

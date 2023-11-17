@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDeepLinkingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * REST controller to handle LTI13 launches.
@@ -67,6 +68,14 @@ public class LtiResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseId") String exerciseId,
             @RequestParam(name = "ltiIdToken") String ltiIdToken, @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
+
+        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        if (!course.isOnlineCourse() || course.getOnlineCourseConfiguration() == null) {
+            throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
+        }
+
         OidcIdToken idToken = new OidcIdToken(ltiIdToken, null, null, SignedJWT.parse(ltiIdToken).getJWTClaimsSet().getClaims());
 
         String targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, Long.valueOf(exerciseId));
