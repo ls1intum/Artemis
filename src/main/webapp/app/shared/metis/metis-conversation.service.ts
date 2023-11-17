@@ -67,21 +67,27 @@ export class MetisConversationService implements OnDestroy {
             this.userId = user.id!;
         });
 
-        this.activeConversation$.subscribe((activeConversation: ConversationDto) => {
-            if (this.activeConversationSubscription) {
-                this.activeConversationSubscription.unsubscribe();
+        this.activeConversationSubscription = this.notificationService.newOrUpdatedMessage.subscribe((postDTO: MetisPostDTO) => {
+            if (postDTO.action === MetisPostAction.CREATE && postDTO.post.author?.id !== this.userId) {
+                this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
             }
-
-            if (!activeConversation) {
-                return;
-            }
-
-            this.activeConversationSubscription = this.notificationService.newOrUpdatedMessage.subscribe((postDTO: MetisPostDTO) => {
-                if (postDTO.action === MetisPostAction.CREATE && postDTO.post.conversation?.id !== activeConversation.id) {
-                    this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
-                }
-            });
         });
+
+        // this.activeConversation$.subscribe((activeConversation: ConversationDto) => {
+        //     if (this.activeConversationSubscription) {
+        //         this.activeConversationSubscription.unsubscribe();
+        //     }
+        //
+        //     if (!activeConversation) {
+        //         return;
+        //     }
+        //
+        //     this.activeConversationSubscription = this.notificationService.newOrUpdatedMessage.subscribe((postDTO: MetisPostDTO) => {
+        //         if (postDTO.action === MetisPostAction.CREATE && postDTO.post.conversation?.id !== activeConversation.id) {
+        //             this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
+        //         }
+        //     });
+        // });
     }
 
     ngOnDestroy(): void {
@@ -150,6 +156,15 @@ export class MetisConversationService implements OnDestroy {
         this._activeConversation$.next(this.activeConversation);
         this.isCodeOfConductPresented = true;
         this._isCodeOfConductPresented$.next(this.isCodeOfConductPresented);
+    }
+
+    public markAsRead(conversationId: number) {
+        const indexOfCachedConversation = this.conversationsOfUser.findIndex((cachedConversation) => cachedConversation.id === conversationId);
+        if (indexOfCachedConversation !== -1) {
+            this.conversationsOfUser[indexOfCachedConversation].lastMessageDate = dayjs();
+            this.conversationsOfUser[indexOfCachedConversation].unreadMessagesCount = 0;
+        }
+        this.hasUnreadMessagesCheck();
     }
 
     private updateLastReadDateAndNumberOfUnreadMessages() {

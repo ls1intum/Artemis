@@ -29,6 +29,10 @@ export enum SettingId {
     NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST = 'notification.lecture-notification.new-lecture-post',
     NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST = 'notification.lecture-notification.new-reply-for-lecture-post',
 
+    // exam notification setting group
+    NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST = 'notification.exam-notification.new-exam-post',
+    NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST = 'notification.exam-notification.new-reply-for-exam-post',
+
     // tutorial group notification setting group
     NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION = 'notification.tutorial-group-notification.tutorial-group-registration',
     NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE = 'notification.tutorial-group-notification.tutorial-group-delete-update',

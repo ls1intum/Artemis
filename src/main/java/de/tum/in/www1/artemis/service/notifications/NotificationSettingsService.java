@@ -55,6 +55,11 @@ public class NotificationSettingsService {
 
     public static final String NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST = "notification.lecture-notification.new-reply-for-lecture-post";
 
+    // exam notification setting group
+    public static final String NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST = "notification.exam-notification.new-exam-post";
+
+    public static final String NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST = "notification.exam-notification.new-reply-for-exam-post";
+
     // tutorial group notification settings group
     public static final String NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION = "notification.tutorial-group-notification.tutorial-group-registration";
 
@@ -101,6 +106,9 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
             new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
             new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
+            // exam notification setting group
+            new NotificationSetting(true, false, true, NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST),
+            new NotificationSetting(true, false, true, NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST),
             // tutorial group notification settings group
             new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
             new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE),
@@ -133,6 +141,8 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES, new NotificationType[] { ATTACHMENT_CHANGE }),
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST, new NotificationType[] { NEW_LECTURE_POST }),
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST, new NotificationType[] { NEW_REPLY_FOR_LECTURE_POST }),
+            Map.entry(NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST, new NotificationType[] { NEW_EXAM_POST }),
+            Map.entry(NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST, new NotificationType[] { NEW_EXAM_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST, new NotificationType[] { NEW_COURSE_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, new NotificationType[] { NEW_REPLY_FOR_COURSE_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST, new NotificationType[] { NEW_ANNOUNCEMENT_POST }),

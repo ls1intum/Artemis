@@ -5,9 +5,12 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.WEBAPP;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +18,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
@@ -79,8 +81,8 @@ public class SingleUserNotificationService {
     private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation, User author) {
         var singleUserNotification = switch (notificationType) {
             // Post Types
-            case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) ((List<Posting>) notificationSubject).get(0),
-                    (AnswerPost) ((List<Posting>) notificationSubject).get(1), notificationType, (Course) typeSpecificInformation);
+            // case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) ((List<Posting>) notificationSubject).get(0),
+            // (AnswerPost) ((List<Posting>) notificationSubject).get(1), notificationType, (Course) typeSpecificInformation);
             // Exercise related
             case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
             // Plagiarism related
@@ -94,8 +96,9 @@ public class SingleUserNotificationService {
             case CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_DELETE_CHANNEL -> createNotification(
                     ((ConversationNotificationSubject) notificationSubject).conversation, notificationType, ((ConversationNotificationSubject) notificationSubject).user,
                     ((ConversationNotificationSubject) notificationSubject).responsibleUser);
-            case CONVERSATION_NEW_REPLY_MESSAGE, CONVERSATION_USER_MENTIONED -> createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType,
-                    ((NewReplyNotificationSubject) notificationSubject).user, ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
+            case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST, CONVERSATION_NEW_REPLY_MESSAGE, CONVERSATION_USER_MENTIONED -> createNotification(
+                    ((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType, ((NewReplyNotificationSubject) notificationSubject).user,
+                    ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, (User) typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
@@ -416,7 +419,7 @@ public class SingleUserNotificationService {
         }).forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, mentionedUser, author, CONVERSATION_USER_MENTIONED));
 
         usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved))
-                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author, CONVERSATION_NEW_REPLY_MESSAGE));
+                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author, getAnswerMessageNotificationType(post)));
     }
 
     /**
@@ -439,6 +442,35 @@ public class SingleUserNotificationService {
         }
 
         prepareSingleUserInstantNotification(notification, notificationSubject, author);
+    }
+
+    /**
+     * Calculates the type of the notification based on the type of the conversation
+     *
+     * @param message the message the reply belongs to
+     * @return notification type
+     */
+    @NotNull
+    private NotificationType getAnswerMessageNotificationType(Post message) {
+        NotificationType answerMessageNotificationType;
+        if (message.getConversation() instanceof Channel channel) {
+            if (channel.getExercise() != null) {
+                answerMessageNotificationType = NEW_REPLY_FOR_EXERCISE_POST;
+            }
+            else if (channel.getLecture() != null) {
+                answerMessageNotificationType = NEW_REPLY_FOR_LECTURE_POST;
+            }
+            else if (channel.getExam() != null) {
+                answerMessageNotificationType = NEW_REPLY_FOR_EXAM_POST;
+            }
+            else {
+                answerMessageNotificationType = CONVERSATION_NEW_REPLY_MESSAGE;
+            }
+        }
+        else {
+            answerMessageNotificationType = CONVERSATION_NEW_REPLY_MESSAGE;
+        }
+        return answerMessageNotificationType;
     }
 
     private boolean shouldNotificationBeSaved(SingleUserNotification notification) {

@@ -155,7 +155,7 @@ public class ConversationMessagingService extends PostingService {
         }
 
         Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
-        ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, notificationRecipients, course, mentionedUsers);
+        ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, conversation, notificationRecipients, course, mentionedUsers);
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
 
         Set<String> onlineUserLogins = getLoginsOfSubscribedUsers("/topic/metis/" + "courses/" + course.getId());
@@ -176,9 +176,9 @@ public class ConversationMessagingService extends PostingService {
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
-        // Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
-        // conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course, mentionedUsers);
-        // log.debug(" conversationNotificationService.notifyAboutNewMessage DONE");
+        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
+        conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course, mentionedUsers);
+        log.debug(" conversationNotificationService.notifyAboutNewMessage DONE");
 
         if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
             saveAnnouncementNotification(createdMessage, channel, course);

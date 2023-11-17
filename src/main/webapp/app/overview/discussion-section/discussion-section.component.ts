@@ -15,6 +15,7 @@ import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.di
 import { FormBuilder } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -63,6 +64,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         private courseManagementService: CourseManagementService,
         private router: Router,
         private formBuilder: FormBuilder,
+        private metisConversationService: MetisConversationService,
     ) {
         super(metisService);
     }
@@ -217,7 +219,10 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                 target.style.width = event.rect.width + 'px';
             });
 
-        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
+        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
+            this.handleScrollOnNewMessage();
+            this.metisConversationService.markAsRead(this.channel.id!);
+        });
     }
 
     handleScrollOnNewMessage = () => {

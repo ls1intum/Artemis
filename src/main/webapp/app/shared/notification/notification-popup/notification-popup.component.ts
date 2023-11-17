@@ -5,7 +5,15 @@ import {
     LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE,
     MENTIONED_IN_MESSAGE_TITLE,
     NEW_ANNOUNCEMENT_POST_TITLE,
+    NEW_COURSE_POST_TITLE,
+    NEW_EXAM_POST_TITLE,
+    NEW_EXERCISE_POST_TITLE,
+    NEW_LECTURE_POST_TITLE,
     NEW_MESSAGE_TITLE,
+    NEW_REPLY_FOR_COURSE_POST_TITLE,
+    NEW_REPLY_FOR_EXAM_POST_TITLE,
+    NEW_REPLY_FOR_EXERCISE_POST_TITLE,
+    NEW_REPLY_FOR_LECTURE_POST_TITLE,
     NEW_REPLY_MESSAGE_TITLE,
     Notification,
     QUIZ_EXERCISE_STARTED_TITLE,
@@ -20,6 +28,21 @@ import { RouteComponents } from 'app/shared/metis/metis.util';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+
+const conversationMessageNotificationTitles = [
+    MENTIONED_IN_MESSAGE_TITLE,
+    NEW_ANNOUNCEMENT_POST_TITLE,
+    NEW_MESSAGE_TITLE,
+    NEW_REPLY_MESSAGE_TITLE,
+    NEW_EXERCISE_POST_TITLE,
+    NEW_LECTURE_POST_TITLE,
+    NEW_EXAM_POST_TITLE,
+    NEW_COURSE_POST_TITLE,
+    NEW_REPLY_FOR_EXERCISE_POST_TITLE,
+    NEW_REPLY_FOR_LECTURE_POST_TITLE,
+    NEW_REPLY_FOR_EXAM_POST_TITLE,
+    NEW_REPLY_FOR_COURSE_POST_TITLE,
+];
 
 @Component({
     selector: 'jhi-notification-popup',
@@ -77,7 +100,7 @@ export class NotificationPopupComponent implements OnInit {
 
         if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
             this.examExerciseUpdateService.navigateToExamExercise(target.exercise);
-        } else if (notification.title === NEW_REPLY_MESSAGE_TITLE || notification.title === NEW_MESSAGE_TITLE || notification.title === MENTIONED_IN_MESSAGE_TITLE) {
+        } else if (notification.title && conversationMessageNotificationTitles.includes(notification.title)) {
             const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
             const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
             // check if component reload is needed
@@ -154,12 +177,7 @@ export class NotificationPopupComponent implements OnInit {
             if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
                 this.checkIfNotificationAffectsCurrentStudentExamExercises(notification);
             }
-            if (
-                notification.title === NEW_MESSAGE_TITLE ||
-                notification.title === NEW_REPLY_MESSAGE_TITLE ||
-                notification.title === MENTIONED_IN_MESSAGE_TITLE ||
-                notification.title === NEW_ANNOUNCEMENT_POST_TITLE
-            ) {
+            if (notification.title && conversationMessageNotificationTitles.includes(notification.title)) {
                 if (this.notificationSettingsService.isNotificationAllowedBySettings(notification)) {
                     this.addMessageNotification(notification);
                     this.setRemovalTimeout(notification);
