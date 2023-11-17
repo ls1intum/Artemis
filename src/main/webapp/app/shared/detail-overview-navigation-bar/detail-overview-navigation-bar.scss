@@ -1,14 +1,22 @@
 nav {
     position: sticky;
     top: -1px;
-    display: flex;
-    gap: 2rem;
-    flex-wrap: nowrap;
-    padding: 1rem;
-    overflow: auto;
+    padding-top: 1rem;
+    background: var(--bs-card-bg);
 
-    a {
-        display: inline-block;
-        white-space: nowrap;
+    hr {
+        margin-bottom: 0;
+    }
+
+    .nav-link-container {
+        display: flex;
+        gap: 2rem;
+        flex-wrap: nowrap;
+        overflow: auto;
+
+        a {
+            display: inline-block;
+            white-space: nowrap;
+        }
     }
 }
