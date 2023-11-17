@@ -1,11 +1,15 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { ArtemisTestModule } from '../../test.module';
 import { Course } from 'app/entities/course.model';
-import { MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 
 describe('Header Course Component', () => {
+    let fixture: ComponentFixture<HeaderCourseComponent>;
     let component: HeaderCourseComponent;
 
     const courseWithLongDescription: Course = {
@@ -24,12 +28,14 @@ describe('Header Course Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [HeaderCourseComponent, MockProvider(Router)],
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, CommonModule, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
+            declarations: [HeaderCourseComponent],
+            providers: [MockProvider(Router)],
         })
             .compileComponents()
             .then(() => {
-                component = TestBed.createComponent(HeaderCourseComponent).componentInstance;
+                fixture = TestBed.createComponent(HeaderCourseComponent);
+                component = fixture.componentInstance;
             });
         window['innerWidth'] = 1920;
     });
@@ -84,19 +90,26 @@ describe('Header Course Component', () => {
         const urlSpy = jest.spyOn(router, 'url', 'get');
         urlSpy.mockReturnValue('/some-url');
 
-        const showManageLectureButton = component.shouldShowGoToCourseManagementButton();
-        expect(showManageLectureButton).toBeTrue();
+        fixture.detectChanges();
+
+        const manageButton = fixture.nativeElement.querySelector('#manage-button');
+        expect(manageButton).toBeTruthy();
     });
 
-    it('should not display manage button in course management', () => {
+    it('should not display manage button but go to student view button in course management', () => {
         component.course = courseWithShortDescription;
         component.course!.isAtLeastTutor = true;
         const router = TestBed.inject(Router);
         const urlSpy = jest.spyOn(router, 'url', 'get');
         urlSpy.mockReturnValue('/course-management/some-path');
 
-        const showManageLectureButton = component.shouldShowGoToCourseManagementButton();
-        expect(showManageLectureButton).toBeFalse();
+        fixture.detectChanges();
+
+        const manageButton = fixture.nativeElement.querySelector('#manage-button');
+        expect(manageButton).toBeNull();
+
+        const showStudentViewButton = fixture.nativeElement.querySelector('#student-view-button');
+        expect(showStudentViewButton).toBeTruthy();
     });
 
     it('should not display manage button to student', () => {
@@ -106,16 +119,20 @@ describe('Header Course Component', () => {
         const urlSpy = jest.spyOn(router, 'url', 'get');
         urlSpy.mockReturnValue('/some-url');
 
-        const showManageLectureButton = component.shouldShowGoToCourseManagementButton();
-        expect(showManageLectureButton).toBeFalse();
+        fixture.detectChanges();
+
+        const manageButton = fixture.nativeElement.querySelector('#manage-button');
+        expect(manageButton).toBeNull();
     });
 
-    it('should redirect to course management', () => {
+    it('should not display student view button in student view', () => {
         component.course = courseWithShortDescription;
+        component.course!.isAtLeastTutor = false;
         const router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        const urlSpy = jest.spyOn(router, 'url', 'get');
+        urlSpy.mockReturnValue('/courses');
 
-        component.redirectToCourseManagement();
-        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 234]);
+        const showManageLectureButton = fixture.nativeElement.querySelector('#student-view-button');
+        expect(showManageLectureButton).toBeNull();
     });
 });

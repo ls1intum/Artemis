@@ -107,24 +107,6 @@ public class CompetencyProgressService {
     }
 
     /**
-     * Update the existing progress for a specific user in a course
-     *
-     * @param user   The user for whom to update the existing competency progress
-     * @param course The course for which to fetch the competencies from
-     * @return All competencies of the course with the updated progress for the user
-     */
-    public Set<Competency> getCompetenciesAndUpdateProgressByUserInCourse(User user, Course course) {
-        var competencies = competencyRepository.findAllForCourse(course.getId());
-        competencies.forEach(competency -> {
-            var updatedProgress = updateCompetencyProgress(competency.getId(), user);
-            if (updatedProgress != null) {
-                competency.setUserProgress(Set.of(updatedProgress));
-            }
-        });
-        return competencies;
-    }
-
-    /**
      * Update the progress for all competencies linked to the given learning object
      *
      * @param learningObject The learning object for which to fetch the competencies
