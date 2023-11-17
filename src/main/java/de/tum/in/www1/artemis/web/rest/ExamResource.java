@@ -230,7 +230,7 @@ public class ExamResource {
         }
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
-        if (!originalExam.getEndDate().equals(savedExam.getEndDate())) {
+        if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
             int workingTimeChange = savedExam.getDuration() - originalExamDuration;
             updateStudentExamsAndRescheduleExercises(examWithExercises, originalExamDuration, workingTimeChange);
         }
@@ -1136,6 +1136,7 @@ public class ExamResource {
     public ResponseEntity<StudentExam> getOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
         StudentExam exam = examAccessService.getExamInCourseElseThrow(courseId, examId);
+        exam.getUser().setVisibleRegistrationNumber();
         return ResponseEntity.ok(exam);
     }
 

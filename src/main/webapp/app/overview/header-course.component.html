@@ -1,23 +1,30 @@
 <div class="course-info-bar" [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR }" id="course-detail-info-bar">
     <div class="row">
         <div class="col general-info">
-            <h3 id="course-header-title" class="fw-medium" [class.mb-0]="!courseDescription">{{ course.title }}</h3>
-            <ng-container *ngIf="courseDescription">
-                <h6 id="course-header-description" class="fw-normal">{{ courseDescription }}</h6>
-                <h6 class="fw-medium show-more" role="button" *ngIf="enableShowMore" (click)="toggleCourseDescription()">
-                    {{ 'artemisApp.courseOverview.' + (longDescriptionShown ? 'showLess' : 'showMore') | artemisTranslate }}
-                </h6>
-            </ng-container>
-        </div>
-        <div class="col-auto d-flex align-items-center" *ngIf="shouldShowGoToCourseManagementButton()">
-            <button class="btn btn-secondary" (click)="redirectToCourseManagement()">
-                {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
-            </button>
+            <div class="d-flex justify-content-between">
+                <div class="course-description">
+                    <h3 id="course-header-title" class="fw-medium" [class.mb-0]="!courseDescription">{{ course.title }}</h3>
+
+                    <div *ngIf="courseDescription" style="display: block">
+                        <h6 id="course-header-description" class="fw-normal">{{ courseDescription }}</h6>
+                        <div class="fw-medium show-more d-flex h6" role="button" *ngIf="enableShowMore" (click)="toggleCourseDescription()">
+                            {{ 'artemisApp.courseOverview.' + (longDescriptionShown ? 'showLess' : 'showMore') | artemisTranslate }}
+                            &nbsp; <fa-icon [icon]="faArrowDown" [class.rotate180]="longDescriptionShown" class="rotate-icon"></fa-icon>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-center manage-button-container" *ngIf="shouldShowGoToCourseManagementButton()">
+                    <button class="btn btn-secondary manage-button" (click)="redirectToCourseManagement()">
+                        {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="col-auto d-none d-lg-flex justify-content-end course-icon" *ngIf="course.courseIcon">
             <jhi-secured-image
                 class="d-flex justify-content-center align-items-center"
-                [src]="course.courseIcon"
+                [src]="course.courseIcon!"
                 [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"
                 [alt]="'artemisApp.courseOverview.noCourseIcon' | artemisTranslate"
             >
