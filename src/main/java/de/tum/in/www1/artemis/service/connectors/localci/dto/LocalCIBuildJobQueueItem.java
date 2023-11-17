@@ -59,5 +59,6 @@ public class LocalCIBuildJobQueueItem implements Serializable {
     public String toString() {
         return "LocalCIBuildJobQueueItem{" + "participationId='" + participationId + '\'' + ", commitHash='" + commitHash + '\'' + ", expirationTime='" + expirationTime + '\''
                 + ", retryCount='" + retryCount + '\'' + '}';
+
     }
 }
