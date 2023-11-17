@@ -56,8 +56,6 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest
         ltiPlatformConfiguration.setClientId("clientId");
         ltiPlatformConfiguration.setAuthorizationUri("authUri");
         ltiPlatformConfiguration.setTokenUri("tokenUri");
-        onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
-        ltiPlatformConfiguration.addOnlineCourseConfiguration(onlineCourseConfiguration);
 
         ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
         onlineCourseConfigurationRepository.save(onlineCourseConfiguration);

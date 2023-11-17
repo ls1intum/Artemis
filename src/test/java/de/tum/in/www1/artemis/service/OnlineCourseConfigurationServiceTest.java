@@ -11,7 +11,6 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
-import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 
@@ -42,17 +41,7 @@ class OnlineCourseConfigurationServiceTest {
     }
 
     @Test
-    void getClientRegistrationIllegalOnlineCourseConfiguration() {
-        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
-
-        ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(onlineCourseConfiguration.getLtiPlatformConfiguration());
-
-        assertThat(clientRegistration).isNull();
-    }
-
-    @Test
     void getClientRegistrationSuccess() {
-        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
         LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
         ltiPlatformConfiguration.setId(1L);
         ltiPlatformConfiguration.setRegistrationId("reg");
@@ -60,9 +49,8 @@ class OnlineCourseConfigurationServiceTest {
         ltiPlatformConfiguration.setAuthorizationUri("auth");
         ltiPlatformConfiguration.setTokenUri("token");
         ltiPlatformConfiguration.setJwkSetUri("jwk");
-        onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
 
-        ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(onlineCourseConfiguration.getLtiPlatformConfiguration());
+        ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(ltiPlatformConfiguration);
 
         assertThat(clientRegistration.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.IMPLICIT);
         assertThat(clientRegistration.getScopes()).hasSize(1).contains("openid");

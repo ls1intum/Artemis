@@ -76,6 +76,9 @@ class Lti13ServiceTest {
     @Mock
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
+    @Mock
+    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+
     private OidcIdToken oidcIdToken;
 
     private String clientRegistrationId;
@@ -88,7 +91,7 @@ class Lti13ServiceTest {
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
         lti13Service = new Lti13Service(userRepository, exerciseRepository, courseRepository, launchRepository, ltiService, resultRepository, tokenRetriever,
-                onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider);
+                onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider, ltiPlatformConfigurationRepository);
         clientRegistrationId = "clientId";
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setUserPrefix("prefix");

@@ -215,6 +215,5 @@ public class CourseFactory {
         LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
         ltiPlatformConfiguration.setTokenUri(originalUrl);
         ltiPlatformConfiguration.setRegistrationId(registrationId);
-        onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
     }
 }

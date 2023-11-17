@@ -15,13 +15,6 @@
             <column name="jkw_set_uri" type="varchar(255)"/>
             <column name="token_uri" type="varchar(255)"/>
         </createTable>
-        <!-- Add a new column for the foreign key in online_course_configuration table -->
-        <addColumn tableName="online_course_configuration">
-            <column name="lti_platform_id" type="bigint">
-                <constraints nullable="true" referencedTableName="lti_platform_configuration"
-                             referencedColumnNames="id" foreignKeyName="fk_online_course_config_lti_platform"/>
-            </column>
-        </addColumn>
         <!-- Remove the columns that are no longer present in the entity -->
         <dropColumn tableName="online_course_configuration" columnName="original_url"/>
         <dropColumn tableName="online_course_configuration" columnName="registration_id"/>

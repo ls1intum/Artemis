@@ -302,12 +302,6 @@ public class CourseResource {
 
         courseRepository.save(course);
 
-        LtiPlatformConfiguration ltiPlatformConfiguration = onlineCourseConfiguration.getLtiPlatformConfiguration();
-        if (ltiPlatformConfiguration != null) {
-            ltiPlatformConfiguration.addOnlineCourseConfiguration(onlineCourseConfiguration);
-            ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
-        }
-
         return ResponseEntity.ok(onlineCourseConfiguration);
     }
 

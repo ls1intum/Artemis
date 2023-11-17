@@ -1,14 +1,10 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Entity
@@ -36,11 +32,6 @@ public class LtiPlatformConfiguration extends DomainObject {
 
     @Column(name = "token_uri")
     private String tokenUri;
-
-    @OneToMany(mappedBy = "ltiPlatformConfiguration", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties(value = "onlineCourseConfigurations", allowSetters = true)
-    private Set<OnlineCourseConfiguration> onlineCourseConfigurations = new HashSet<>();
 
     public String getRegistrationId() {
         return registrationId;
@@ -90,16 +81,4 @@ public class LtiPlatformConfiguration extends DomainObject {
         this.issuer = issuer;
     }
 
-    public Set<OnlineCourseConfiguration> getOnlineCourseConfigurations() {
-        return onlineCourseConfigurations;
-    }
-
-    public void setOnlineCourseConfigurations(Set<OnlineCourseConfiguration> onlineCourseConfigurations) {
-        this.onlineCourseConfigurations = onlineCourseConfigurations;
-    }
-
-    public void addOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
-        this.onlineCourseConfigurations.add(onlineCourseConfiguration);
-        onlineCourseConfiguration.setLtiPlatformConfiguration(this);
-    }
 }
