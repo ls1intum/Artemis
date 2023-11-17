@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?><databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+<changeSet author="andreas (generated)" id="1700231795462-30">
+<addColumn tableName="feedback">
+<column defaultValueNumeric="0" name="results_order" type="int"/>
+</addColumn>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-31">
+<addPrimaryKey columnNames="plagiarism_result_id, idx" constraintName="plagiarism_result_similarity_distributionPK" tableName="plagiarism_result_similarity_distribution"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-32">
+<addPrimaryKey columnNames="groups, user_id" constraintName="user_groupsPK" tableName="user_groups"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-33">
+<addUniqueConstraint columnNames="submission_id" constraintName="UC_EXAMPLE_SUBMISSIONSUBMISSION_ID_COL" tableName="example_submission"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-34">
+<addUniqueConstraint columnNames="solution_participation_id" constraintName="UC_EXERCISESOLUTION_PARTICIPATION_ID_COL" tableName="exercise"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-35">
+<addUniqueConstraint columnNames="submission_policy_id" constraintName="UC_EXERCISESUBMISSION_POLICY_ID_COL" tableName="exercise"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-36">
+<addUniqueConstraint columnNames="template_participation_id" constraintName="UC_EXERCISETEMPLATE_PARTICIPATION_ID_COL" tableName="exercise"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-37">
+<addUniqueConstraint columnNames="login" constraintName="UC_JHI_USERLOGIN_COL" tableName="jhi_user"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-38">
+<addUniqueConstraint columnNames="model_element_id" constraintName="UC_MODEL_ELEMENTMODEL_ELEMENT_ID_COL" tableName="model_element"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-39">
+<addUniqueConstraint columnNames="quiz_question_statistic_id" constraintName="UC_QUIZ_QUESTIONQUIZ_QUESTION_STATISTIC_ID_COL" tableName="quiz_question"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-40">
+<addUniqueConstraint columnNames="answer_id" constraintName="UC_QUIZ_STATISTIC_COUNTERANSWER_ID_COL" tableName="quiz_statistic_counter"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-41">
+<addUniqueConstraint columnNames="drop_location_id" constraintName="UC_QUIZ_STATISTIC_COUNTERDROP_LOCATION_ID_COL" tableName="quiz_statistic_counter"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-42">
+<addUniqueConstraint columnNames="spot_id" constraintName="UC_QUIZ_STATISTIC_COUNTERSPOT_ID_COL" tableName="quiz_statistic_counter"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-43">
+<addUniqueConstraint columnNames="id" constraintName="UC_TEXT_BLOCKID_COL" tableName="text_block"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-44">
+<addUniqueConstraint columnNames="emoji_id, user_id, post_id" constraintName="UK2cjgx3tbblgqtyw1b1fq67hvi" tableName="reaction"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-45">
+<addUniqueConstraint columnNames="exercise_id, short_name" constraintName="UK2xm7ad95n4mhc9tkxwci1ye0" tableName="team"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-46">
+<addUniqueConstraint columnNames="student_id, exercise_id, initialization_state" constraintName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-47">
+<addUniqueConstraint columnNames="team_id, exercise_id, initialization_state" constraintName="UK91noy1we4g0jjqj7arej1wp04" tableName="participation"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-48">
+<addUniqueConstraint columnNames="emoji_id, user_id, answer_post_id" constraintName="UKlaepr070dckbycappt532p75j" tableName="reaction"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-49">
+<addUniqueConstraint columnNames="user_id, setting_id" constraintName="UKrg96et0161v9xp3jd4tc9wy2a" tableName="notification_setting"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-50">
+<createIndex indexName="IX_competency_learning_pathPK" tableName="competency_learning_path" unique="true">
+<column name="learning_path_id"/>
+<column name="competency_id"/>
+</createIndex>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-51">
+<createIndex indexName="IX_course_organizationPK" tableName="course_organization" unique="true">
+<column name="course_id"/>
+<column name="organization_id"/>
+</createIndex>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-52">
+<createIndex indexName="IX_learning_goal_exercisePK" tableName="learning_goal_exercise" unique="true">
+<column name="exercise_id"/>
+<column name="learning_goal_id"/>
+</createIndex>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-53">
+<createIndex indexName="IX_learning_goal_lecture_unitPK" tableName="learning_goal_lecture_unit" unique="true">
+<column name="lecture_unit_id"/>
+<column name="learning_goal_id"/>
+</createIndex>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-54">
+<createIndex indexName="IX_tutorial_group_registrationPK" tableName="tutorial_group_registration" unique="true">
+<column name="id"/>
+</createIndex>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-55">
+<createIndex indexName="IX_user_organizationPK" tableName="user_organization" unique="true">
+<column name="user_id"/>
+<column name="organization_id"/>
+</createIndex>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-56">
+<addForeignKeyConstraint baseColumnNames="id" baseTableName="programming_exercise_details" constraintName="FK154ma162owatdiykmjsexvkkk" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-57">
+<addForeignKeyConstraint baseColumnNames="learning_path_id" baseTableName="competency_learning_path" constraintName="FK4vt5lddlera41kt6ity8sph41" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="learning_path" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-58">
+<addForeignKeyConstraint baseColumnNames="user_id" baseTableName="learning_path" constraintName="FK6ihgvqgn1e0aoe9kopegskos3" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-59">
+<addForeignKeyConstraint baseColumnNames="course_id" baseTableName="learning_path" constraintName="FKhqxelldo49p4ojfw2odwcde7h" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-60">
+<addForeignKeyConstraint baseColumnNames="competency_id" baseTableName="competency_learning_path" constraintName="FKtp5qaklpbnbkrvrsdo9mvygle" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="learning_goal" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-61">
+<dropColumn columnName="allowed_per_tutor_batch_count" tableName="exercise"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-62">
+<dropColumn columnName="feedbacks_order" tableName="feedback"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-63">
+<dropColumn columnName="is_planned_to_start" tableName="exercise"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-64">
+<dropColumn columnName="is_visible_before_start" tableName="exercise"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-65">
+<dropColumn columnName="points" tableName="tutor_participation"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-1">
+<addNotNullConstraint columnDataType="double" columnName="bonus_multiplier" tableName="programming_exercise_test_case" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-2">
+<addNotNullConstraint columnDataType="double precision" columnName="bonus_points" tableName="programming_exercise_test_case" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-3">
+<dropNotNullConstraint columnDataType="varchar(50)" columnName="created_by" tableName="plagiarism_case"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-4">
+<dropNotNullConstraint columnDataType="varchar(50)" columnName="created_by" tableName="plagiarism_result"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-5">
+<dropNotNullConstraint columnDataType="varchar(50)" columnName="created_by" tableName="team"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-6">
+<dropNotNullConstraint columnDataType="datetime(6)" columnName="created_date" tableName="plagiarism_case"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-7">
+<dropNotNullConstraint columnDataType="datetime(6)" columnName="created_date" tableName="plagiarism_result"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-8">
+<dropNotNullConstraint columnDataType="datetime(6)" columnName="created_date" tableName="team"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-9">
+<addNotNullConstraint columnDataType="datetime(6)" columnName="end_date" tableName="exam" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-10">
+<addNotNullConstraint columnDataType="varchar(255)" columnName="groups" tableName="user_groups" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-11">
+<addNotNullConstraint columnDataType="int" columnName="idx" tableName="plagiarism_result_similarity_distribution" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-12">
+<addNotNullConstraint columnDataType="int" columnName="length" tableName="plagiarism_comparison_matches" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-13">
+<addNotNullConstraint columnDataType="bigint" columnName="plagiarism_comparison_id" tableName="plagiarism_comparison_matches" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-14">
+<addNotNullConstraint columnDataType="bigint" columnName="plagiarism_result_id" tableName="plagiarism_result_similarity_distribution" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-15">
+<dropDefaultValue columnDataType="int" columnName="results_order" tableName="result"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-16">
+<addNotNullConstraint columnDataType="datetime" columnName="start_date" tableName="exam" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-17">
+<addNotNullConstraint columnDataType="datetime" columnName="visible_date" tableName="exam" validate="true"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-18">
+<dropPrimaryKey tableName="competency_learning_path"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-19">
+<addPrimaryKey columnNames="learning_path_id, competency_id" constraintName="competency_learning_pathPK" tableName="competency_learning_path"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-20">
+<dropPrimaryKey tableName="course_organization"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-21">
+<addPrimaryKey columnNames="course_id, organization_id" constraintName="course_organizationPK" tableName="course_organization"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-22">
+<dropPrimaryKey tableName="learning_goal_exercise"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-23">
+<addPrimaryKey columnNames="exercise_id, learning_goal_id" constraintName="learning_goal_exercisePK" tableName="learning_goal_exercise"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-24">
+<dropPrimaryKey tableName="learning_goal_lecture_unit"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-25">
+<addPrimaryKey columnNames="lecture_unit_id, learning_goal_id" constraintName="learning_goal_lecture_unitPK" tableName="learning_goal_lecture_unit"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-26">
+<dropPrimaryKey tableName="tutorial_group_registration"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-27">
+<addPrimaryKey columnNames="id" constraintName="tutorial_group_registrationPK" tableName="tutorial_group_registration"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-28">
+<dropPrimaryKey tableName="user_organization"/>
+</changeSet>
+<changeSet author="andreas (generated)" id="1700231795462-29">
+<addPrimaryKey columnNames="user_id, organization_id" constraintName="user_organizationPK" tableName="user_organization"/>
+</changeSet>
+</databaseChangeLog>

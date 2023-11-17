@@ -39,19 +39,19 @@ public class Exam extends DomainObject {
     /**
      * student can see the exam in the UI from this date onwards
      */
-    @Column(name = "visible_date")
+    @Column(name = "visible_date", columnDefinition = "datetime", nullable = false)
     private ZonedDateTime visibleDate;
 
     /**
      * student can start working on exam from this date onwards
      */
-    @Column(name = "start_date")
+    @Column(name = "start_date", columnDefinition = "datetime", nullable = false)
     private ZonedDateTime startDate;
 
     /**
      * student can work on exam until this date
      */
-    @Column(name = "end_date", nullable = false)
+    @Column(name = "end_date")
     private ZonedDateTime endDate;
 
     @Column(name = "publish_results_date")

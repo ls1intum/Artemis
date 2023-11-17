@@ -104,7 +104,7 @@ public class ProgrammingExercise extends Exercise {
     private TemplateProgrammingExerciseParticipation templateParticipation;
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(unique = true, name = "solution_participation_id")
+    @JoinColumn(unique = true, name = "solution_participation_id") // TODO: shouldn't `table` be specified here?
     @JsonIgnoreProperties("programmingExercise")
     private SolutionProgrammingExerciseParticipation solutionParticipation;
 
@@ -121,7 +121,7 @@ public class ProgrammingExercise extends Exercise {
     private Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(unique = true, name = "submission_policy_id")
+    @JoinColumn(unique = true, name = "submission_policy_id") // TODO: shouldn't `table` be specified here?
     @JsonIgnoreProperties("programmingExercise")
     private SubmissionPolicy submissionPolicy;
 

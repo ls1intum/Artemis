@@ -29,13 +29,13 @@ public class OnlineCourseConfiguration extends DomainObject {
     @Column(name = "user_prefix", nullable = false)
     private String userPrefix;
 
-    @Column(name = "require_existing_user")
+    @Column(name = "require_existing_user", columnDefinition = "boolean default false")
     private boolean requireExistingUser = false;
 
     @Column(name = "original_url")
     private String originalUrl;
 
-    @Column(name = "registration_id")
+    @Column(name = "registration_id", unique = true)
     private String registrationId;
 
     @Column(name = "client_id")

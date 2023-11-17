@@ -68,4 +68,5 @@ public class TutorialGroupRegistration extends DomainObject {
     public void setType(TutorialGroupRegistrationType type) {
         this.type = type;
     }
+
 }

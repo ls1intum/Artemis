@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizGroup extends DomainObject {
 
-    @Column(name = "name")
+    @Column(name = "name", nullable = false)
     private String name;
 
     public void setName(String name) {

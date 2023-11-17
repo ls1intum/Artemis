@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.io.Serializable;
-import java.util.Objects;
+import java.util.*;
 
 import javax.persistence.*;
 
@@ -15,7 +15,7 @@ public class UserGroup {
     @Column(name = "user_id", insertable = false, updatable = false)
     private Long userId;
 
-    @Column(name = "`groups`", insertable = false, updatable = false)
+    @Column(name = "`groups`", insertable = false, updatable = false, nullable = false)
     private String group;
 
     @Embeddable

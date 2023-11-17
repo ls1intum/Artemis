@@ -10,12 +10,11 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
@@ -42,7 +41,6 @@ public class TutorialGroup extends DomainObject {
     private Integer capacity;
 
     @Column(name = "is_online")
-    @NotNull
     private Boolean isOnline = false;
 
     @Column(name = "campus")
@@ -126,7 +124,7 @@ public class TutorialGroup extends DomainObject {
     private Set<TutorialGroupSession> tutorialGroupSessions = new HashSet<>();
 
     @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "tutorial_group_channel_id")
+    @JoinColumn(name = "tutorial_group_channel_id", unique = true)
     @JsonIgnore // we send the DTO as a transient field instead
     private Channel tutorialGroupChannel;
 

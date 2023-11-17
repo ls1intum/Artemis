@@ -77,7 +77,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     private Submission submission;
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderColumn(name = "results_order", columnDefinition = "integer default 0")
+    @OrderColumn(name = "results_order", columnDefinition = "int DEFAULT '0'")
     @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)

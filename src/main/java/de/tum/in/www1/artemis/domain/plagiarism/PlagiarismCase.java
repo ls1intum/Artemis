@@ -47,8 +47,8 @@ public class PlagiarismCase extends AbstractAuditingEntity {
     @Column(name = "verdict_point_deduction")
     private int verdictPointDeduction;
 
-    @Column(name = "created_by_continuous_plagiarism_control")
-    private boolean createdByContinuousPlagiarismControl;
+    @Column(name = "created_by_continuous_plagiarism_control", columnDefinition = "boolean default false")
+    private boolean createdByContinuousPlagiarismControl = false;
 
     public Exercise getExercise() {
         return exercise;
