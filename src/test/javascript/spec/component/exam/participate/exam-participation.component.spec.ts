@@ -931,46 +931,6 @@ describe('ExamParticipationComponent', () => {
         });
     });
 
-    describe('toggleAbandon', () => {
-        it('should reset pageComponentVisited after the abandon window is closed', () => {
-            // Create exercises
-            const exercise1 = new ProgrammingExercise(new Course(), undefined);
-            exercise1.id = 15;
-            const exercise2 = new ProgrammingExercise(new Course(), undefined);
-            exercise2.id = 42;
-            exercise2.allowOnlineEditor = true;
-            exercise2.allowOfflineIde = false;
-            const exercise3 = new ProgrammingExercise(new Course(), undefined);
-            exercise3.id = 16;
-            exercise3.allowOnlineEditor = false;
-            exercise3.allowOfflineIde = true;
-
-            // Set initial component state
-            comp.abandon = true;
-            comp.studentExam = new StudentExam();
-            comp.studentExam.exercises = [exercise1, exercise2, exercise3];
-            comp.activeExamPage = {
-                isOverviewPage: false,
-                exercise: exercise2,
-            };
-            comp.exerciseIndex = 1;
-            comp.pageComponentVisited = [true, true, true];
-
-            // Spy on the private method resetPageComponentVisited
-            const resetPageComponentVisitedSpy = jest.spyOn<any, any>(comp, 'resetPageComponentVisited');
-
-            // Call toggleHandInEarly to change the handInEarly state
-            comp.toggleAbandon();
-
-            // Verify that resetPageComponentVisited has been called with the correct index
-            expect(resetPageComponentVisitedSpy).toHaveBeenCalledExactlyOnceWith(1);
-
-            // Verify that the pageComponentVisited array and exerciseIndex are updated correctly
-            expect(comp.pageComponentVisited).toEqual([false, true, false]);
-            expect(comp.exerciseIndex).toBe(1);
-        });
-    });
-
     describe('activePageIndex', () => {
         it('should return -1 if active page is overview page', () => {
             comp.activeExamPage = new ExamPage();

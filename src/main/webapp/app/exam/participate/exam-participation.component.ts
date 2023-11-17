@@ -452,15 +452,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     toggleAbandon() {
         this.abandon = !this.abandon;
-        if (this.abandon) {
-            this.updateLocalStudentExam();
-        } else if (this.studentExam?.exercises && this.activeExamPage) {
-            const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
-            this.exerciseIndex = index ? index : 0;
-
-            // Reset the visited pages array so ngOnInit will be called for only the active page
-            this.resetPageComponentVisited(this.exerciseIndex);
-        }
     }
 
     /**
