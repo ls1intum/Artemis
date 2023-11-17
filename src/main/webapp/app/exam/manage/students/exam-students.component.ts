@@ -109,7 +109,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                             return {
                                 ...examUser.user!,
                                 ...examUser,
-                                didExamUserAttendExam: !!studentExam!.started,
+                                didExamUserAttendExam: !!studentExam?.started,
                             };
                         }) || [];
                 }
