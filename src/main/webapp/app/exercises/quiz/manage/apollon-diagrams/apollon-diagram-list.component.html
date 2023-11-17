@@ -42,8 +42,11 @@
                                 [buttonSize]="ButtonSize.MEDIUM"
                                 [deleteQuestion]="'artemisApp.apollonDiagram.delete.question'"
                                 [entityTitle]="apollonDiagram.title"
+                                [dialogError]="dialogError$"
                                 jhiDeleteButton
-                            ></button>
+                            >
+                                <fa-icon [icon]="faTimes"></fa-icon>
+                            </button>
                         </ng-container>
                     </td>
                 </tr>

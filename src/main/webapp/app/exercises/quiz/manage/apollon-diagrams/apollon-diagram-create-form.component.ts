@@ -40,7 +40,7 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
         this.apollonDiagramService.create(this.apollonDiagram, this.apollonDiagram.courseId!).subscribe({
             next: () => {
                 this.isSaving = false;
-                this.dismiss();
+                this.activeModal.close();
             },
             error: () => {
                 this.alertService.error('artemisApp.apollonDiagram.create.error');
@@ -49,7 +49,7 @@ export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     }
 
     /**
-     * Closes the modal
+     * Cancels the modal
      */
     dismiss() {
         this.activeModal.dismiss('cancel');

@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagramCreateFormComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-create-form.component';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
@@ -11,7 +12,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { faPlus, faSort, faX } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSort, faTimes, faX } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize } from 'app/shared/components/button.component';
 
 @Component({
@@ -31,10 +32,15 @@ export class ApollonDiagramListComponent implements OnInit {
 
     course: Course;
 
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
+
     // Icons
     faSort = faSort;
     faPlus = faPlus;
     faX = faX;
+    faTimes = faTimes;
+
     ButtonSize = ButtonSize;
 
     constructor(
@@ -59,6 +65,13 @@ export class ApollonDiagramListComponent implements OnInit {
         this.courseService.find(this.courseId).subscribe((courseResponse: HttpResponse<Course>) => {
             this.course = courseResponse.body!;
         });
+        this.loadDiagrams();
+    }
+
+    /**
+     * Loads the Apollon diagrams of this course which will be shown
+     */
+    loadDiagrams() {
         this.apollonDiagramsService.getDiagramsByCourse(this.courseId).subscribe({
             next: (response) => {
                 this.apollonDiagrams = response.body!;
@@ -80,6 +93,7 @@ export class ApollonDiagramListComponent implements OnInit {
                 this.apollonDiagrams = this.apollonDiagrams.filter((diagram) => {
                     return diagram.id !== apollonDiagram.id;
                 });
+                this.dialogErrorSource.next('');
             },
             error: () => {
                 this.alertService.error('artemisApp.apollonDiagram.delete.error', { title: apollonDiagram.title });
@@ -103,6 +117,7 @@ export class ApollonDiagramListComponent implements OnInit {
         const formComponentInstance = modalRef.componentInstance as ApollonDiagramCreateFormComponent;
         // class diagram is the default value and can be changed by the user in the creation dialog
         formComponentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, courseId);
+        modalRef.result.then(() => this.loadDiagrams());
     }
 
     handleOpenDialogClick(apollonDiagramId: number) {
