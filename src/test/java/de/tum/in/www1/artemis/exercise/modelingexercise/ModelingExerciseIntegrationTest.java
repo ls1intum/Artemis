@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 
 class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -720,7 +721,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     }
 
     private void testCourseAndExamFilters(String title) throws Exception {
-        modelingExerciseUtilService.addCourseWithOneReleasedModelExerciseWithKnowledge(title);
+        modelingExerciseUtilService.addCourseWithOneModelingExercise(title);
         modelingExerciseUtilService.addCourseExamExerciseGroupWithOneModelingExercise(title + "-Morpork");
         exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/", title);
     }
@@ -808,8 +809,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         ModelingPlagiarismResult expectedResult = modelingExerciseUtilService.createModelingPlagiarismResultForExercise(modelingExercise);
 
-        ModelingPlagiarismResult result = request.get("/api/modeling-exercises/" + modelingExercise.getId() + "/plagiarism-result", HttpStatus.OK, ModelingPlagiarismResult.class);
-        assertThat(result.getId()).isEqualTo(expectedResult.getId());
+        var result = request.get("/api/modeling-exercises/" + modelingExercise.getId() + "/plagiarism-result", HttpStatus.OK, PlagiarismResultDTO.class);
+        assertThat(result.plagiarismResult().getId()).isEqualTo(expectedResult.getId());
     }
 
     @Test

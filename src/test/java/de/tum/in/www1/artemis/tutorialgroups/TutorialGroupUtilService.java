@@ -62,6 +62,9 @@ public class TutorialGroupUtilService {
     @Autowired
     private TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
+    /**
+     * Creates and saves a Course for TutorialGroup tests.
+     */
     public void addTutorialCourse() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), tutorialGroupStudents.orElseThrow(),
                 tutorialGroupTutors.orElseThrow(), tutorialGroupEditors.orElseThrow(), tutorialGroupInstructors.orElseThrow());
@@ -69,6 +72,15 @@ public class TutorialGroupUtilService {
         assertThat(courseRepo.findById(course.getId())).as("tutorial course is initialized").isPresent();
     }
 
+    /**
+     * Creates and saves a TutorialGroupSession for the TutorialGroup with the given ID.
+     *
+     * @param tutorialGroupId The ID of the TutorialGroup
+     * @param start           The start date of the TutorialGroupSession
+     * @param end             The end date of the TutorialGroupSession
+     * @param attendanceCount The attendance count of the TutorialGroupSession
+     * @return The created TutorialGroupSession
+     */
     public TutorialGroupSession createIndividualTutorialGroupSession(Long tutorialGroupId, ZonedDateTime start, ZonedDateTime end, Integer attendanceCount) {
         var tutorialGroup = tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
 
@@ -83,6 +95,14 @@ public class TutorialGroupUtilService {
         return tutorialGroupSession;
     }
 
+    /**
+     * Creates and saves a TutorialGroupFreePeriod for the TutorialGroupsConfiguration with the given ID.
+     *
+     * @param tutorialGroupsConfigurationId The ID of the TutorialGroupsConfiguration
+     * @param date                          The date of the TutorialGroupFreePeriod
+     * @param reason                        The reason for the TutorialGroupFreePeriod
+     * @return The created TutorialGroupFreePeriod
+     */
     public TutorialGroupFreePeriod addTutorialGroupFreeDay(Long tutorialGroupsConfigurationId, LocalDate date, String reason) {
         var tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
         var course = tutorialGroupsConfiguration.getCourse();
@@ -97,6 +117,20 @@ public class TutorialGroupUtilService {
         return tutorialGroupFreePeriodRepository.save(newTutorialGroupFreePeriod);
     }
 
+    /**
+     * Creates and saves a Tutorial Group for the Course with the given ID.
+     *
+     * @param courseId              The ID of the Course
+     * @param title                 The title of the TutorialGroup
+     * @param additionalInformation The additional information of the TutorialGroup
+     * @param capacity              The capacity of the TutorialGroup
+     * @param isOnline              True, if the TutorialGroup is online
+     * @param campus                The campus of the TutorialGroup
+     * @param language              The language of the TutorialGroup
+     * @param teachingAssistant     The teaching assistant of the TutorialGroup
+     * @param registeredStudents    The registered students of the TutorialGroup
+     * @return The created TutorialGroup
+     */
     public TutorialGroup createTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, String language,
             User teachingAssistant, Set<User> registeredStudents) {
         var course = courseRepo.findByIdElseThrow(courseId);
@@ -115,6 +149,14 @@ public class TutorialGroupUtilService {
         return persistedTutorialGroup;
     }
 
+    /**
+     * Creates and saves a TutorialGroupsConfiguration for the Course with the given ID.
+     *
+     * @param courseId The ID of the Course
+     * @param start    The start date of the TutorialGroupsConfiguration
+     * @param end      The end date of the TutorialGroupsConfiguration
+     * @return The created TutorialGroupsConfiguration
+     */
     public TutorialGroupsConfiguration createTutorialGroupConfiguration(Long courseId, LocalDate start, LocalDate end) {
         var course = courseRepo.findByIdElseThrow(courseId);
         var tutorialGroupConfiguration = TutorialGroupFactory.generateTutorialGroupsConfiguration(start, end);
