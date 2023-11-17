@@ -159,7 +159,7 @@ public class LocalCISharedBuildJobQueueService {
                 LocalCIBuildJobQueueItem buildJob = processingJobs.get(participationId);
                 if (buildJob != null && buildJob.getExpirationTime() < System.currentTimeMillis()) {
                     if (buildJob.getRetryCount() > 0) {
-                        log.error("Build job timed for the second time: " + buildJob + ". Removing it from the queue.");
+                        log.error("Build job timed out for the second time: " + buildJob + ". Removing it from the queue.");
                         processingJobs.delete(participationId);
                         continue;
                     }
