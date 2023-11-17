@@ -145,32 +145,61 @@ public class CourseUtilService {
     @Autowired
     private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
+    /**
+     * Creates and saves a course with null id.
+     *
+     * @return The created course.
+     */
     public Course createCourse() {
         return createCourse(null);
     }
 
+    /**
+     * Creates and saves a course with the given id.
+     *
+     * @param id The id of the course.
+     * @return The newly created course.
+     */
     public Course createCourse(Long id) {
         Course course = CourseFactory.generateCourse(id, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);
     }
 
+    /**
+     * Creates and saves a course with messaging enabled.
+     *
+     * @return The newly created course.
+     */
     public Course createCourseWithMessagingEnabled() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor", true);
         course.setCourseInformationSharingMessagingCodeOfConduct("Code of Conduct");
         return courseRepo.save(course);
     }
 
-    public Course createCourseWithCustomStudentGroupName(String studentGroupName) {
-        Course course = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor");
-        return courseRepo.save(course);
-    }
-
+    /**
+     * Creates and saves a course with the given short name and student group name.
+     *
+     * @param studentGroupName The student group name of the course.
+     * @param shortName        The short name of the course.
+     * @return The new course.
+     */
     public Course createCourseWithCustomStudentGroupName(String studentGroupName, String shortName) {
         Course course = CourseFactory.generateCourse(null, shortName, pastTimestamp, futureTimestamp, new HashSet<>(), studentGroupName, "tutor", "editor", "instructor", 3, 3, 7,
                 500, 500, true, true, 7);
         return courseRepo.save(course);
     }
 
+    /**
+     * Creates and saves a course with organizations.
+     *
+     * @param name         The name of the organization.
+     * @param shortName    The short name of the organization.
+     * @param url          The url of the organization.
+     * @param description  The description of the organization.
+     * @param logoUrl      The url of the logo.
+     * @param emailPattern The email pattern of the organization.
+     * @return The new course.
+     */
     public Course createCourseWithOrganizations(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
         Course course = createCourse();
         Set<Organization> organizations = new HashSet<>();
@@ -181,12 +210,27 @@ public class CourseUtilService {
         return courseRepo.save(course);
     }
 
+    /**
+     * Creates and saves with organizations using default values.
+     *
+     * @return The new course.
+     */
     public Course createCourseWithOrganizations() {
         return createCourseWithOrganizations("organization1", "org1", "org.org", "This is organization1", null, "^.*@matching.*$");
     }
 
+    /**
+     * Creates and saves two courses with exercises, lectures, lecture units and competencies.
+     *
+     * @param userPrefix                  The prefix of the course user groups.
+     * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
+     * @param withFiles                   True, if lecture unit attachments with files should be generated. If false, attachments without files are generated.
+     * @param numberOfTutorParticipations The number of tutor participations to add to the modeling exercise. "withParticipations" should be set to true for this to have an effect.
+     * @return The list of created and saved courses.
+     * @throws IOException If a file cannot be loaded from resources.
+     */
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
-            int numberOfTutorParticipations) throws Exception {
+            int numberOfTutorParticipations) throws IOException {
         List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
@@ -195,19 +239,39 @@ public class CourseUtilService {
         }).toList();
     }
 
-    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, int numberOfTutorParticipations) throws Exception {
-        return createCoursesWithExercisesAndLectures(prefix, withParticipations, false, numberOfTutorParticipations);
+    /**
+     * Creates and saves two courses with exercises and lectures. Lecture unit attachments without files are generated.
+     *
+     * @param userPrefix                  The prefix of the course user groups.
+     * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
+     * @param numberOfTutorParticipations The number of tutor participations to add to the modeling exercise. "withParticipations" should be set to true for this to have an effect.
+     * @return The list of created and saved courses.
+     * @throws IOException If a file cannot be loaded from resources.
+     */
+    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, int numberOfTutorParticipations) throws IOException {
+        return createCoursesWithExercisesAndLectures(userPrefix, withParticipations, false, numberOfTutorParticipations);
     }
 
-    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations) throws Exception {
+    /**
+     * Creates and saves two courses with exercises and lectures.
+     *
+     * @param userPrefix                  The prefix of the course user groups.
+     * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
+     * @param withFiles                   True, if lecture unit attachments with files should be generated. If false, attachments without files are generated.
+     * @param numberOfTutorParticipations The number of tutor participations to add to the modeling exercise. "withParticipations" should be set to true for this to have an effect.
+     * @return The list of created and saved courses.
+     * @throws IOException If a file cannot be loaded from resources.
+     */
+    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
+            throws IOException {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
 
-        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), prefix + "tumuser", prefix + "tutor", prefix + "editor",
-                prefix + "instructor");
-        Course course2 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), prefix + "tumuser", prefix + "tutor",
-                prefix + "editor", prefix + "instructor");
+        Course course1 = CourseFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor", userPrefix + "editor",
+                userPrefix + "instructor");
+        Course course2 = CourseFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), userPrefix + "tumuser", userPrefix + "tutor",
+                userPrefix + "editor", userPrefix + "instructor");
 
         ModelingExercise modelingExercise = ModelingExerciseFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
                 course1);
@@ -271,10 +335,10 @@ public class CourseUtilService {
 
         if (withParticipations) {
 
-            // create 5 tutor participations and 5 example submissions and connect all of them (to test the many-to-many relationship)
+            // create "numberOfTutorParticipations" tutor participations and example submissions. Connect all of them (to test the many-to-many relationship).
             Set<TutorParticipation> tutorParticipations = new HashSet<>();
             for (int i = 1; i < numberOfTutorParticipations + 1; i++) {
-                var tutorParticipation = new TutorParticipation().tutor(userUtilService.getUserByLogin(prefix + "tutor" + i)).status(TutorParticipationStatus.NOT_PARTICIPATED)
+                var tutorParticipation = new TutorParticipation().tutor(userUtilService.getUserByLogin(userPrefix + "tutor" + i)).status(TutorParticipationStatus.NOT_PARTICIPATED)
                         .assessedExercise(modelingExercise);
                 tutorParticipationRepo.save(tutorParticipation);
                 tutorParticipations.add(tutorParticipation);
@@ -288,7 +352,7 @@ public class CourseUtilService {
                 exampleSubmissionRepo.save(exampleSubmission);
             }
 
-            User user = userUtilService.getUserByLogin(prefix + "student1");
+            User user = userUtilService.getUserByLogin(userPrefix + "student1");
             StudentParticipation participation1 = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
             StudentParticipation participation2 = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
             StudentParticipation participation3 = ParticipationFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
@@ -532,14 +596,9 @@ public class CourseUtilService {
         onlineCourseConfiguration.setLtiKey("artemis_lti_key");
         onlineCourseConfiguration.setLtiSecret("fake-secret");
         onlineCourseConfiguration.setUserPrefix("prefix");
-
-        LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
-        ltiPlatformConfiguration.setRegistrationId(course.getId().toString());
-        onlineCourseConfiguration.setLtiPlatformConfiguration(ltiPlatformConfiguration);
-
+        onlineCourseConfiguration.setRegistrationId(course.getId().toString());
         onlineCourseConfiguration.setCourse(course);
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
-        ltiPlatformConfigurationRepository.save(ltiPlatformConfiguration);
         courseRepo.save(course);
         return onlineCourseConfiguration;
     }
