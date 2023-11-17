@@ -104,7 +104,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                 const studentExams = res.body;
                 this.allRegisteredUsers =
                     exam.examUsers?.map((examUser) => {
-                        const studentExam = studentExams!.filter((studentExam) => studentExam.user?.id === examUser.user!.id).first();
+                        const studentExam = studentExams?.filter((studentExam) => studentExam.user?.id === examUser.user!.id).first();
                         return {
                             ...examUser.user!,
                             ...examUser,
