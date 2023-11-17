@@ -51,6 +51,8 @@ export const NEW_LECTURE_POST_TITLE = 'artemisApp.groupNotification.title.newLec
 
 export const NEW_ANNOUNCEMENT_POST_TITLE = 'artemisApp.groupNotification.title.newAnnouncementPost';
 
+export const NEW_EXAM_POST_TITLE = 'artemisApp.groupNotification.title.newExamPost';
+
 export const NEW_COURSE_POST_TITLE = 'artemisApp.groupNotification.title.newCoursePost';
 
 export const NEW_REPLY_FOR_EXERCISE_POST_TITLE = 'artemisApp.groupNotification.title.newReplyForExercisePost';
@@ -58,6 +60,8 @@ export const NEW_REPLY_FOR_EXERCISE_POST_TITLE = 'artemisApp.groupNotification.t
 export const NEW_REPLY_FOR_LECTURE_POST_TITLE = 'artemisApp.groupNotification.title.newReplyForLecturePost';
 
 export const NEW_REPLY_FOR_COURSE_POST_TITLE = 'artemisApp.groupNotification.title.newReplyForCoursePost';
+
+export const NEW_REPLY_FOR_EXAM_POST_TITLE = 'artemisApp.groupNotification.title.newReplyForExamPost';
 
 export const FILE_SUBMISSION_SUCCESSFUL_TITLE = 'artemisApp.singleUserNotification.title.fileSubmissionSuccessful';
 

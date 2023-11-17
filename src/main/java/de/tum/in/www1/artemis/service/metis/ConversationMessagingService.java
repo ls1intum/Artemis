@@ -168,7 +168,7 @@ public class ConversationMessagingService extends PostingService {
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
         Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
-        conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course, mentionedUsers);
+        conversationNotificationService.notifyAboutNewMessage(createdMessage, conversation, notificationRecipients, course, mentionedUsers);
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
 
         if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
