@@ -122,8 +122,9 @@ public class LtiDeepLinkingService {
             throw new BadRequestAlertException("Cannot find platform return URL", "LTI", "deepLinkReturnURLEmpty");
         }
 
-        if (isEmptyString(deploymentId))
+        if (isEmptyString(deploymentId)) {
             throw new BadRequestAlertException("Platform deployment id cannot be empty", "LTI", "deploymentIdEmpty");
+        }
     }
 
     boolean isEmptyString(String string) {

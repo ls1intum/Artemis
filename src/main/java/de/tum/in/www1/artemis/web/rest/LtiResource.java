@@ -60,8 +60,10 @@ public class LtiResource {
      * for exercises within a course. The method populates content items with the provided course and exercise identifiers,
      * builds a deep linking response, and returns the target link URI in a JSON object.
      *
-     * @param courseId   The identifier of the course for which the deep linking is being performed.
-     * @param exerciseId The identifier of the exercise to be included in the deep linking response.
+     * @param courseId             The identifier of the course for which the deep linking is being performed.
+     * @param exerciseId           The identifier of the exercise to be included in the deep linking response.
+     * @param ltiIdToken           The token holding the deep linking information.
+     * @param clientRegistrationId The identifier online of the course configuration.
      * @return A ResponseEntity containing a JSON object with the 'targetLinkUri' property set to the deep linking response target link.
      */
     @PostMapping("/lti13/deep-linking/{courseId}")

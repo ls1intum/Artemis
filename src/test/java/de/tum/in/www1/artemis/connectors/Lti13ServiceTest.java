@@ -471,15 +471,6 @@ class Lti13ServiceTest {
         doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
 
-        JsonObject mockSettings = new JsonObject();
-        mockSettings.addProperty("deep_link_return_url", "test_return_url");
-        when(oidcIdToken.getClaim(Claims.DEEP_LINKING_SETTINGS)).thenReturn(mockSettings);
-
-        when(oidcIdToken.getClaim("iss")).thenReturn("http://artemis.com");
-        when(oidcIdToken.getClaim("aud")).thenReturn("http://moodle.com");
-        when(oidcIdToken.getClaim("exp")).thenReturn("12345");
-        when(oidcIdToken.getClaim("iat")).thenReturn("test");
-        when(oidcIdToken.getClaim("nonce")).thenReturn("1234-34535-abcbcbd");
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
         when(oidcIdToken.getClaim(Claims.MESSAGE_TYPE)).thenReturn("LtiDeepLinkingRequest");
         when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/" + courseId);
