@@ -13,6 +13,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ProgrammingExerciseGradingTasksTableComponent', () => {
     let fixture;
@@ -26,7 +27,7 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FontAwesomeTestingModule],
             declarations: [ProgrammingExerciseGradingTasksTableComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent)],
             providers: [ProgrammingExerciseTaskService, { provide: TranslateService, useClass: MockTranslateService }],
         })

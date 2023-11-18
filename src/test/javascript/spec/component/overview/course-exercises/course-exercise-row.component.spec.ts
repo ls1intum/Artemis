@@ -33,6 +33,7 @@ import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 @Component({
     template: '',
@@ -56,6 +57,7 @@ describe('CourseExerciseRowComponent', () => {
                     { path: 'courses/:courseId/exercises', component: DummyComponent },
                     { path: 'courses/:courseId/exercises/:exerciseId', component: DummyComponent },
                 ]),
+                FontAwesomeTestingModule,
             ],
             declarations: [
                 MockComponent(SubmissionResultStatusComponent),

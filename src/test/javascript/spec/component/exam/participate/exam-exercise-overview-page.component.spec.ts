@@ -13,6 +13,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ExamExerciseOverviewPageComponent', () => {
     let fixture: ComponentFixture<ExamExerciseOverviewPageComponent>;
@@ -20,7 +21,7 @@ describe('ExamExerciseOverviewPageComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, TranslateTestingModule, MockModule(NgbTooltipModule), FontAwesomeTestingModule],
             declarations: [ExamExerciseOverviewPageComponent, MockComponent(ExamTimerComponent)],
             providers: [
                 ExamParticipationService,

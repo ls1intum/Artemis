@@ -10,6 +10,7 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ButtonComponent', () => {
     let comp: ButtonComponent;
@@ -20,7 +21,7 @@ describe('ButtonComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip), FontAwesomeTestingModule],
             declarations: [ButtonComponent, FeatureToggleDirective, TranslatePipeMock, MockDirective(TranslateDirective)],
             providers: [{ provide: FeatureToggleService, useClass: MockFeatureToggleService }],
         })

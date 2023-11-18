@@ -13,6 +13,7 @@ import { CompetencyPagingService } from 'app/course/competencies/competency-pagi
 import { Competency } from 'app/entities/competency.model';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { TableColumn } from 'app/shared/import/import-component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CompetencyImportComponent', () => {
     let fixture: ComponentFixture<CompetencyImportComponent>;
@@ -26,7 +27,7 @@ describe('CompetencyImportComponent', () => {
     let competency: Competency;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
+            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination), FontAwesomeTestingModule],
             declarations: [CompetencyImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
         })
             .compileComponents()

@@ -27,6 +27,7 @@ import { NotificationSettingsService } from 'app/shared/user-settings/notificati
 import { MockNotificationSettingsService } from '../../../helpers/mocks/service/mock-notification-settings.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Notification Sidebar Component', () => {
     let notificationSidebarComponent: NotificationSidebarComponent;
@@ -59,7 +60,7 @@ describe('Notification Sidebar Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip), FontAwesomeTestingModule],
             declarations: [NotificationSidebarComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockComponent(DocumentationButtonComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

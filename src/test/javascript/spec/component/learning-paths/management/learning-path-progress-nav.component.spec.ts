@@ -7,6 +7,7 @@ import { UserNameAndLoginDTO } from 'app/core/user/user.model';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('LearningPathProgressNavComponent', () => {
     let fixture: ComponentFixture<LearningPathProgressNavComponent>;
@@ -18,7 +19,7 @@ describe('LearningPathProgressNavComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule, FontAwesomeTestingModule],
             declarations: [LearningPathProgressNavComponent, MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()

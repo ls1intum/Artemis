@@ -46,6 +46,7 @@ import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-asse
 import { AthenaService } from 'app/assessment/athena.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena-service';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;
@@ -144,7 +145,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         } as unknown as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule],
+            imports: [ArtemisTestModule, RouterTestingModule, FontAwesomeTestingModule],
             declarations: [
                 TextSubmissionAssessmentComponent,
                 TextAssessmentAreaComponent,

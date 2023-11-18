@@ -8,6 +8,7 @@ import { CommitState } from 'app/exercises/programming/shared/code-editor/model/
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockModule } from 'ng-mocks';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CodeEditorStatusComponent', () => {
     let comp: CodeEditorStatusComponent;
@@ -15,7 +16,7 @@ describe('CodeEditorStatusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, AceEditorModule, MockModule(NgbTooltipModule), FontAwesomeTestingModule],
             declarations: [CodeEditorStatusComponent, TranslatePipeMock],
         })
             .compileComponents()

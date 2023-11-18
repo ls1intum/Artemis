@@ -36,6 +36,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { AdminUserService } from 'app/core/user/admin-user.service';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
@@ -63,7 +64,7 @@ describe('UserManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(NgbModule), HttpClientTestingModule],
+            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(NgbModule), HttpClientTestingModule, FontAwesomeTestingModule],
             declarations: [
                 UserManagementComponent,
                 MockRouterLinkDirective,

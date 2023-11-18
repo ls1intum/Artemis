@@ -25,6 +25,7 @@ import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock
 import { By } from '@angular/platform-browser';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 // eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: 'ngx-graph', template: '' })
@@ -43,7 +44,7 @@ describe('CompetencyManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgbProgressbar, NgbAccordion],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgbProgressbar, NgbAccordion, FontAwesomeTestingModule],
             declarations: [
                 CompetencyManagementComponent,
                 CompetencyCardStubComponent,

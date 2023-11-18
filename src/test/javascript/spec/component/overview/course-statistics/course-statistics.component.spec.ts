@@ -29,6 +29,7 @@ import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
 import { ArtemisTestModule } from '../../../test.module';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -328,7 +329,15 @@ describe('CourseStatisticsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, TreeviewModule.forRoot(), MockModule(PieChartModule), MockModule(BarChartModule), MockModule(NgbTooltipModule)],
+            imports: [
+                ArtemisTestModule,
+                RouterTestingModule,
+                TreeviewModule.forRoot(),
+                MockModule(PieChartModule),
+                MockModule(BarChartModule),
+                MockModule(NgbTooltipModule),
+                FontAwesomeTestingModule,
+            ],
             declarations: [
                 CourseStatisticsComponent,
                 MockComponent(CourseCompetenciesComponent),

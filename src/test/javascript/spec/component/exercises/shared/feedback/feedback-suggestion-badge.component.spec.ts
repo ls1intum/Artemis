@@ -7,6 +7,7 @@ import { MockDirective, MockModule } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../../test.module';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('FeedbackSuggestionBadgeComponent', () => {
     let component: FeedbackSuggestionBadgeComponent;
@@ -15,7 +16,7 @@ describe('FeedbackSuggestionBadgeComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule), FontAwesomeTestingModule],
             declarations: [FeedbackSuggestionBadgeComponent, MockDirective(TranslateDirective)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })

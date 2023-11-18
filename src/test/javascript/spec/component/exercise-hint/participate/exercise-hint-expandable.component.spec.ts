@@ -14,6 +14,7 @@ import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/sta
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { CastToCodeHintPipe } from 'app/exercises/shared/exercise-hint/services/code-hint-cast.pipe';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Exercise Hint Expandable Component', () => {
     let comp: ExerciseHintExpandableComponent;
@@ -29,7 +30,7 @@ describe('Exercise Hint Expandable Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(MatExpansionModule)],
+            imports: [ArtemisTestModule, MockModule(MatExpansionModule), FontAwesomeTestingModule],
             declarations: [ExerciseHintExpandableComponent, MockPipe(ArtemisTranslatePipe), StarRatingComponent, CastToCodeHintPipe],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })

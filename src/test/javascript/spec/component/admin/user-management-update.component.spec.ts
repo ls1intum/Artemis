@@ -27,6 +27,7 @@ import { Title } from '@angular/platform-browser';
 import * as Sentry from '@sentry/angular-ivy';
 import { LANGUAGES } from 'app/core/language/language.constants';
 import { AdminUserService } from 'app/core/user/admin-user.service';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('User Management Update Component', () => {
     let comp: UserManagementUpdateComponent;
@@ -46,7 +47,7 @@ describe('User Management Update Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(MatFormFieldModule), MockModule(MatChipsModule), MockModule(MatAutocompleteModule)],
+            imports: [ArtemisTestModule, MockModule(MatFormFieldModule), MockModule(MatChipsModule), MockModule(MatAutocompleteModule), FontAwesomeTestingModule],
             declarations: [UserManagementUpdateComponent, TranslatePipeMock, MockDirective(NgForm), MockDirective(NgModel)],
             providers: [
                 FormBuilder,

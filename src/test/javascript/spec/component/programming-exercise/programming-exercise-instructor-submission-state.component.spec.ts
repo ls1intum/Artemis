@@ -22,6 +22,7 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     let comp: ProgrammingExerciseInstructorSubmissionStateComponent;
@@ -47,7 +48,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule), FontAwesomeTestingModule],
             declarations: [
                 ProgrammingExerciseInstructorSubmissionStateComponent,
                 ProgrammingExerciseTriggerAllButtonComponent,

@@ -7,10 +7,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from './helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from './helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from './helpers/mocks/mock-router';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import locale from '@angular/common/locales/en';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -66,8 +65,6 @@ import { MockProfileService } from './helpers/mocks/service/mock-profile.service
             useClass: MockProfileService,
         },
     ],
-    declarations: [MockComponent(FaIconComponent)],
-    exports: [MockComponent(FaIconComponent)],
 })
 export class ArtemisTestModule {
     constructor(dpConfig: NgbDatepickerConfig, translateService: TranslateService) {

@@ -15,6 +15,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import '@angular/localize/init';
 import { ButtonType } from 'app/shared/components/button.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('DeleteDialogComponent', () => {
     let comp: DeleteDialogComponent;
@@ -24,7 +25,7 @@ describe('DeleteDialogComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgbModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgbModule, FontAwesomeTestingModule],
             declarations: [DeleteDialogComponent, AlertOverlayComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [JhiLanguageHelper, AlertService],
         })

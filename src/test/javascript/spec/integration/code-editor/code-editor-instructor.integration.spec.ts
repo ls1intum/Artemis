@@ -65,6 +65,7 @@ import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CodeEditorInstructorIntegration', () => {
     // needed to make sure ace is defined
@@ -91,7 +92,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, MockModule(NgbTooltipModule), FontAwesomeTestingModule],
             declarations: [
                 CodeEditorInstructorAndEditorContainerComponent,
                 CodeEditorContainerComponent,

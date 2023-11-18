@@ -13,6 +13,7 @@ import { DebugElement, EventEmitter } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { Observable, Subject } from 'rxjs';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('DataExportConfirmationDialogComponent', () => {
     let comp: DataExportConfirmationDialogComponent;
@@ -22,7 +23,7 @@ describe('DataExportConfirmationDialogComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgbModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgbModule, FontAwesomeTestingModule],
             declarations: [DataExportConfirmationDialogComponent, AlertOverlayComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [JhiLanguageHelper, AlertService],
         })

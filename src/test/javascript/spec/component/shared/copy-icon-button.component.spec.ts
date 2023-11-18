@@ -5,6 +5,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('JhiCopyIconButtonComponent', () => {
     let component: CopyIconButtonComponent;
@@ -12,7 +13,7 @@ describe('JhiCopyIconButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ClipboardModule, MockDirective(NgbCollapse), MockDirective(NgbTooltip)],
+            imports: [ArtemisTestModule, ClipboardModule, MockDirective(NgbCollapse), MockDirective(NgbTooltip), FontAwesomeTestingModule],
             declarations: [CopyIconButtonComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [],
         }).compileComponents();

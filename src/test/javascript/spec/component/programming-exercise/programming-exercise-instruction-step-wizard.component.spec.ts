@@ -11,6 +11,7 @@ import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
     let comp: ProgrammingExerciseInstructionStepWizardComponent;
@@ -21,7 +22,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule), FontAwesomeTestingModule],
             declarations: [ProgrammingExerciseInstructionStepWizardComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [ProgrammingExerciseInstructionService],
         })

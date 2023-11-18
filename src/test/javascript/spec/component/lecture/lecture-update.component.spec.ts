@@ -23,6 +23,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTestModule } from '../../test.module';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('LectureUpdateComponent', () => {
     let lectureUpdateWizardComponentFixture: ComponentFixture<LectureUpdateWizardComponent>;
@@ -45,7 +46,7 @@ describe('LectureUpdateComponent', () => {
         pastLecture.endDate = yesterday;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, FormsModule, MockModule(NgbTooltipModule), FontAwesomeTestingModule],
             declarations: [
                 LectureUpdateComponent,
                 MockComponent(LectureTitleChannelNameComponent),

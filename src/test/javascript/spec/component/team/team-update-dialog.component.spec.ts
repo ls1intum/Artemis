@@ -18,6 +18,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TeamOwnerSearchComponent } from 'app/exercises/shared/team/team-owner-search/team-owner-search.component';
 import { TeamStudentSearchComponent } from 'app/exercises/shared/team/team-student-search/team-student-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('TeamUpdateDialogComponent', () => {
     // needed to make sure ace is defined
@@ -29,7 +30,7 @@ describe('TeamUpdateDialogComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [ArtemisTestModule, FormsModule, FontAwesomeTestingModule],
             declarations: [
                 TeamUpdateDialogComponent,
                 MockPipe(ArtemisTranslatePipe),

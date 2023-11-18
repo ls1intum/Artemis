@@ -11,6 +11,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { ExpandableSectionComponent } from 'app/assessment/assessment-instructions/expandable-section/expandable-section.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     let comp: StructuredGradingInstructionsAssessmentLayoutComponent;
@@ -18,7 +19,7 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip), MockDirective(NgbCollapse), FontAwesomeTestingModule],
             declarations: [
                 StructuredGradingInstructionsAssessmentLayoutComponent,
                 MockComponent(HelpIconComponent),

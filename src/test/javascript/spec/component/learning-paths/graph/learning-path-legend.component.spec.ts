@@ -6,6 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NodeType } from 'app/entities/competency/learning-path.model';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('LearningPathLegendComponent', () => {
     let fixture: ComponentFixture<LearningPathLegendComponent>;
@@ -13,7 +14,7 @@ describe('LearningPathLegendComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockPipe(ArtemisTranslatePipe), NgbTooltipMocksModule],
+            imports: [ArtemisTestModule, MockPipe(ArtemisTranslatePipe), NgbTooltipMocksModule, FontAwesomeTestingModule],
             declarations: [LearningPathLegendComponent],
         })
             .compileComponents()

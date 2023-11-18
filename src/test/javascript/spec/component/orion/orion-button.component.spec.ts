@@ -4,6 +4,7 @@ import { By } from '@angular/platform-browser';
 import { OrionButtonComponent } from 'app/shared/orion/orion-button/orion-button.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { MockDirective } from 'ng-mocks';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('OrionButtonComponent', () => {
     let comp: OrionButtonComponent;
@@ -11,7 +12,7 @@ describe('OrionButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FontAwesomeTestingModule],
             declarations: [OrionButtonComponent, MockDirective(FeatureToggleDirective)],
             providers: [],
         })

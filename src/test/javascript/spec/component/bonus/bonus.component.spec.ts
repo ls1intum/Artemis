@@ -19,6 +19,7 @@ import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.co
 import { FormsModule, NgModel, ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('BonusComponent', () => {
     let component: BonusComponent;
@@ -250,7 +251,7 @@ describe('BonusComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, MockModule(NgbTooltipModule), FontAwesomeTestingModule],
             declarations: [
                 BonusComponent,
                 MockPipe(ArtemisTranslatePipe),

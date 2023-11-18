@@ -11,6 +11,7 @@ import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-manage
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
@@ -76,7 +77,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(BarChartModule)],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(BarChartModule), FontAwesomeTestingModule],
             declarations: [StatisticsAverageScoreGraphComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(ArtemisNavigationUtilService), MockProvider(ChartExerciseTypeFilter), MockProvider(ChartCategoryFilter)],
         })

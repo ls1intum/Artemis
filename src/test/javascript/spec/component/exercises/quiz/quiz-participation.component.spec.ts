@@ -39,6 +39,7 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 // Store a copy of now to avoid timing issues
 const now = dayjs();
@@ -138,7 +139,7 @@ describe('QuizParticipationComponent', () => {
     describe('live mode', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
+                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip), FontAwesomeTestingModule],
                 declarations: [testBedDeclarations, MockDirective(NgModel)],
                 providers: [
                     {
@@ -499,7 +500,7 @@ describe('QuizParticipationComponent', () => {
     describe('preview mode', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
+                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip), FontAwesomeTestingModule],
                 declarations: testBedDeclarations,
                 providers: [
                     {
@@ -578,7 +579,7 @@ describe('QuizParticipationComponent', () => {
     describe('practice mode', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
+                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip), FontAwesomeTestingModule],
                 declarations: testBedDeclarations,
                 providers: [
                     {
@@ -659,7 +660,7 @@ describe('QuizParticipationComponent', () => {
     describe('solution mode', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
+                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip), FontAwesomeTestingModule],
                 declarations: testBedDeclarations,
                 providers: [
                     {

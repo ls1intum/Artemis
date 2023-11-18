@@ -42,6 +42,7 @@ import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('TextEditorComponent', () => {
     // needed to make sure ace is defined
@@ -69,7 +70,7 @@ describe('TextEditorComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([textEditorRoute[0]])],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([textEditorRoute[0]]), FontAwesomeTestingModule],
             declarations: [
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),

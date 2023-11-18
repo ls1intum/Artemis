@@ -7,6 +7,7 @@ import { ConnectionState, JhiWebsocketService } from 'app/core/websocket/websock
 import { By } from '@angular/platform-browser';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ConnectionWarning', () => {
     let fixture: ComponentFixture<JhiConnectionWarningComponent>;
@@ -16,7 +17,7 @@ describe('ConnectionWarning', () => {
     beforeEach(() => {
         subject = new BehaviorSubject<ConnectionState>(new ConnectionState(true, true, false));
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbPopoverModule],
+            imports: [ArtemisTestModule, NgbPopoverModule, FontAwesomeTestingModule],
             declarations: [JhiConnectionWarningComponent, CloseCircleComponent, TranslatePipeMock],
             providers: [
                 {

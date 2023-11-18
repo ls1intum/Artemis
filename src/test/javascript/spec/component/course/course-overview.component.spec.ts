@@ -47,6 +47,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -135,7 +136,7 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), FontAwesomeTestingModule],
             declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),

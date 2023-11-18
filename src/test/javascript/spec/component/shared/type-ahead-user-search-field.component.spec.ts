@@ -10,6 +10,7 @@ import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { FormsModule } from '@angular/forms';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('TypeAheadUserSearchFieldComponent', () => {
     let component: TypeAheadUserSearchFieldComponent;
@@ -18,7 +19,7 @@ describe('TypeAheadUserSearchFieldComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule)],
+            imports: [ArtemisTestModule, MockModule(FormsModule), FontAwesomeTestingModule],
             declarations: [TypeAheadUserSearchFieldComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTypeahead), MockDirective(TranslateDirective)],
         });
         fixture = TestBed.createComponent(TypeAheadUserSearchFieldComponent);

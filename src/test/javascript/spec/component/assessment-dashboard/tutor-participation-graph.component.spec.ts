@@ -10,6 +10,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { MockComponent } from 'ng-mocks';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('TutorParticipationGraphComponent', () => {
     let comp: TutorParticipationGraphComponent;
@@ -21,7 +22,7 @@ describe('TutorParticipationGraphComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FontAwesomeTestingModule],
             declarations: [TutorParticipationGraphComponent, MockComponent(ProgressBarComponent), TranslatePipeMock],
             providers: [{ provide: Router, useValue: router }],
         })

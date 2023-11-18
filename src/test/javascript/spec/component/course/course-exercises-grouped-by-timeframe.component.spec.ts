@@ -10,6 +10,7 @@ import { cloneDeep } from 'lodash-es';
 import { By } from '@angular/platform-browser';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 const pastExercise_1 = {
     id: 1,
@@ -62,7 +63,7 @@ describe('CourseExercisesGroupedByTimeframeComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbModule],
+            imports: [ArtemisTestModule, NgbModule, FontAwesomeTestingModule],
             declarations: [CourseExercisesGroupedByTimeframeComponent, MockPipe(ArtemisTranslatePipe), MockComponent(CourseExerciseRowComponent)],
         })
             .compileComponents()

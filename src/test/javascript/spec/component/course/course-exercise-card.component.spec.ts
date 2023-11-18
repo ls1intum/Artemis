@@ -5,13 +5,14 @@ import { MockDirective, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Course Exercise Card Component', () => {
     let fixture: ComponentFixture<CourseExerciseCardComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbCollapse)],
+            imports: [ArtemisTestModule, MockDirective(NgbCollapse), FontAwesomeTestingModule],
             declarations: [CourseExerciseCardComponent, MockDirective(TranslateDirective)],
             providers: [MockProvider(CourseManagementService)],
         }).compileComponents();

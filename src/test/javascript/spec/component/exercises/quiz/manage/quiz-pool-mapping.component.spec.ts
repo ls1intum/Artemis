@@ -13,6 +13,7 @@ import { QuizPoolMappingComponent } from 'app/exercises/quiz/manage/quiz-pool-ma
 import { QuizGroup } from 'app/entities/quiz/quiz-group.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('QuizPoolMappingComponent', () => {
     let fixture: ComponentFixture<QuizPoolMappingComponent>;
@@ -20,7 +21,7 @@ describe('QuizPoolMappingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
+            imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip), FontAwesomeTestingModule],
             declarations: [
                 QuizPoolMappingComponent,
                 ButtonComponent,

@@ -20,6 +20,7 @@ import { mockExercise, mockSourceExercise, mockSourceTeamStudents, mockSourceTea
 import { ArtemisTestModule } from '../../test.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('TeamsImportDialogComponent', () => {
     let comp: TeamsImportDialogComponent;
@@ -55,7 +56,7 @@ describe('TeamsImportDialogComponent', () => {
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FontAwesomeTestingModule],
             declarations: [
                 TeamsImportDialogComponent,
                 MockComponent(TeamsImportFromFileFormComponent),

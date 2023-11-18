@@ -18,6 +18,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 const generateCsv = jest.fn();
 jest.mock('export-to-csv', () => {
@@ -84,7 +85,7 @@ describe('Interval Grading System Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FontAwesomeTestingModule],
             declarations: [
                 MockDirective(NgModel),
                 MockDirective(NgSelectOption),

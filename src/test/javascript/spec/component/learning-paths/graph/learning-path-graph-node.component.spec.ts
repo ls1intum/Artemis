@@ -6,6 +6,7 @@ import { LearningPathNodeComponent } from 'app/course/learning-paths/learning-pa
 import { CompetencyProgressForLearningPathDTO, NgxLearningPathNode, NodeType } from 'app/entities/competency/learning-path.model';
 import { StickyPopoverDirective } from 'app/shared/sticky-popover/sticky-popover.directive';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('LearningPathGraphNodeComponent', () => {
     let fixture: ComponentFixture<LearningPathNodeComponent>;
@@ -13,7 +14,7 @@ describe('LearningPathGraphNodeComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FontAwesomeTestingModule],
             declarations: [LearningPathNodeComponent, MockDirective(StickyPopoverDirective), MockComponent(CompetencyRingsComponent)],
             providers: [],
         })

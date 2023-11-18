@@ -14,6 +14,7 @@ import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { NgbPaginationMocksModule } from '../../../helpers/mocks/directive/ngbPaginationMocks.module';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('SystemNotificationManagementComponent', () => {
     let managementComponentFixture: ComponentFixture<SystemNotificationManagementComponent>;
@@ -30,7 +31,7 @@ describe('SystemNotificationManagementComponent', () => {
         router.setUrl('');
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbPaginationMocksModule],
+            imports: [ArtemisTestModule, NgbPaginationMocksModule, FontAwesomeTestingModule],
             declarations: [
                 SystemNotificationManagementComponent,
                 MockPipe(ArtemisDatePipe),

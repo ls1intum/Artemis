@@ -14,6 +14,7 @@ import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/sta
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortService } from 'app/shared/service/sort.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('RatingListComponent', () => {
     let component: RatingListComponent;
@@ -26,7 +27,7 @@ describe('RatingListComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FontAwesomeTestingModule],
             declarations: [RatingListComponent, TranslatePipeMock, MockComponent(StarRatingComponent), MockDirective(SortDirective)],
             providers: [{ provide: ActivatedRoute, useValue: route }, { provide: Router, useClass: MockRouter }, MockProvider(RatingService), MockProvider(SortService)],
         })

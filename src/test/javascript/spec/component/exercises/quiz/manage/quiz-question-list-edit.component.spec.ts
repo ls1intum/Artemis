@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { QuizQuestionListEditExistingComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit-existing.component';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('QuizQuestionListEditComponent', () => {
     let fixture: ComponentFixture<QuizQuestionListEditComponent>;
@@ -24,7 +25,7 @@ describe('QuizQuestionListEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CommonModule, ArtemisTestModule, HttpClientTestingModule],
+            imports: [CommonModule, ArtemisTestModule, HttpClientTestingModule, FontAwesomeTestingModule],
             declarations: [
                 QuizQuestionListEditComponent,
                 MockComponent(QuizQuestionListEditExistingComponent),

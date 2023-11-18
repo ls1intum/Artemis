@@ -10,6 +10,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { LearningPathComponent } from 'app/course/learning-paths/learning-path-graph/learning-path.component';
 import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry } from 'app/course/learning-paths/participate/learning-path-storage.service';
 import { LearningPathNodeComponent } from 'app/course/learning-paths/learning-path-graph/learning-path-node.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('LearningPathComponent', () => {
     let fixture: ComponentFixture<LearningPathComponent>;
@@ -29,7 +30,7 @@ describe('LearningPathComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(LearningPathNodeComponent), MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip)],
+            imports: [ArtemisTestModule, MockComponent(LearningPathNodeComponent), MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip), FontAwesomeTestingModule],
             declarations: [LearningPathComponent],
         })
             .compileComponents()

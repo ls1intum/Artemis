@@ -16,6 +16,7 @@ import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exe
 import { ArtemisTestModule } from '../../../../test.module';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import dayjs from 'dayjs/esm';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('TextExamSubmissionComponent', () => {
     let fixture: ComponentFixture<TextExamSubmissionComponent>;
@@ -29,7 +30,7 @@ describe('TextExamSubmissionComponent', () => {
         exercise = new TextExercise(new Course(), new ExerciseGroup());
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FontAwesomeTestingModule],
             declarations: [
                 TextExamSubmissionComponent,
                 MockPipe(ArtemisTranslatePipe),

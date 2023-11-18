@@ -68,6 +68,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { User } from 'app/core/user/user.model';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ExerciseAssessmentDashboardComponent', () => {
     let comp: ExerciseAssessmentDashboardComponent;
@@ -211,7 +212,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             }),
         },
     } as any as ActivatedRoute;
-    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(PieChartModule)];
+    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(PieChartModule), FontAwesomeTestingModule];
 
     const declarations = [
         ExerciseAssessmentDashboardComponent,

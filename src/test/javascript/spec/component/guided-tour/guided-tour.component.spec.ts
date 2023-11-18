@@ -14,6 +14,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('GuidedTourComponent', () => {
     const tourStep = new TextTourStep({
@@ -56,7 +57,7 @@ describe('GuidedTourComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FontAwesomeTestingModule],
             declarations: [GuidedTourComponent, MockDirective(TranslateDirective), TranslatePipeMock, MockPipe(SafeResourceUrlPipe), MockComponent(JhiConnectionWarningComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

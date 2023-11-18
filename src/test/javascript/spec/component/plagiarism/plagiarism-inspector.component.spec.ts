@@ -31,6 +31,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { HttpResponse } from '@angular/common/http';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
@@ -102,7 +103,7 @@ describe('Plagiarism Inspector Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FontAwesomeTestingModule],
             declarations: [
                 PlagiarismInspectorComponent,
                 MockPipe(ArtemisTranslatePipe),

@@ -43,6 +43,7 @@ import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/con
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;
@@ -71,6 +72,7 @@ describe('Guided tour integration', () => {
                 MockDirective(NgbTooltip),
                 MockDirective(NgbCollapse),
                 NgbDropdownMocksModule,
+                FontAwesomeTestingModule,
             ],
             declarations: [
                 CourseCardComponent,

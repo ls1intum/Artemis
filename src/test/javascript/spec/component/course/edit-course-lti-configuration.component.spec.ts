@@ -19,6 +19,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Edit Course LTI Configuration Component', () => {
     let comp: EditCourseLtiConfigurationComponent;
@@ -48,7 +49,7 @@ describe('Edit Course LTI Configuration Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbNavModule, MockModule(ReactiveFormsModule)],
+            imports: [ArtemisTestModule, NgbNavModule, MockModule(ReactiveFormsModule), FontAwesomeTestingModule],
             declarations: [
                 EditCourseLtiConfigurationComponent,
                 MockDirective(TranslateDirective),

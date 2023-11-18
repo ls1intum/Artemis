@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { TaskCountWarningComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/task-count-warning/task-count-warning.component';
 
 describe('TaskCountWarningComponent', () => {
@@ -8,7 +8,8 @@ describe('TaskCountWarningComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [TaskCountWarningComponent, FaIconComponent],
+            imports: [FontAwesomeTestingModule],
+            declarations: [TaskCountWarningComponent],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TaskCountWarningComponent);

@@ -9,6 +9,7 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CompetencyNodeDetailsComponent', () => {
     let fixture: ComponentFixture<CompetencyNodeDetailsComponent>;
@@ -20,7 +21,7 @@ describe('CompetencyNodeDetailsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule, FontAwesomeTestingModule],
             declarations: [CompetencyNodeDetailsComponent, MockComponent(CompetencyRingsComponent), MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()

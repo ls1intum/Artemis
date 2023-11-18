@@ -33,6 +33,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { DebugElement } from '@angular/core';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -60,7 +61,7 @@ describe('ExampleTextSubmissionComponent', () => {
             },
         } as any;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [ArtemisTestModule, FormsModule, FontAwesomeTestingModule],
             declarations: [
                 ExampleTextSubmissionComponent,
                 MockComponent(ConfirmAutofocusModalComponent),

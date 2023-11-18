@@ -21,6 +21,7 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -86,7 +87,7 @@ describe('Lecture', () => {
         unspecifiedLecture.title = 'machine Learning';
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FontAwesomeTestingModule],
             declarations: [
                 LectureComponent,
                 MockPipe(ArtemisTranslatePipe),

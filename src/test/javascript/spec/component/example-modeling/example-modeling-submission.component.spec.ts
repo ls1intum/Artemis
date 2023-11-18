@@ -31,6 +31,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { FormsModule } from '@angular/forms';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Example Modeling Submission Component', () => {
     let comp: ExampleModelingSubmissionComponent;
@@ -80,7 +81,7 @@ describe('Example Modeling Submission Component', () => {
         } as ActivatedRoute;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, FormsModule, MockModule(ArtemisExampleModelingSubmissionRoutingModule)],
+            imports: [ArtemisTestModule, TranslateTestingModule, FormsModule, MockModule(ArtemisExampleModelingSubmissionRoutingModule), FontAwesomeTestingModule],
             declarations: [
                 ExampleModelingSubmissionComponent,
                 ModelingAssessmentComponent,

@@ -19,6 +19,7 @@ import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PrivacyStatement } from 'app/entities/privacy-statement.model';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('LegalDocumentUpdateComponent', () => {
     let component: LegalDocumentUpdateComponent;
@@ -29,7 +30,7 @@ describe('LegalDocumentUpdateComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip), FontAwesomeTestingModule],
             declarations: [
                 LegalDocumentUpdateComponent,
                 MockComponent(UnsavedChangesWarningComponent),

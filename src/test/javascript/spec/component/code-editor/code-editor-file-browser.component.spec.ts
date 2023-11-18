@@ -19,6 +19,7 @@ import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CodeEditorFileBrowserComponent', () => {
     let comp: CodeEditorFileBrowserComponent;
@@ -38,7 +39,7 @@ describe('CodeEditorFileBrowserComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TreeviewModule.forRoot()],
+            imports: [ArtemisTestModule, TreeviewModule.forRoot(), FontAwesomeTestingModule],
             declarations: [
                 CodeEditorFileBrowserComponent,
                 CodeEditorFileBrowserFileComponent,

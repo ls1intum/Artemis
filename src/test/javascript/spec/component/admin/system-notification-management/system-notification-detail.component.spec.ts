@@ -11,6 +11,7 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('SystemNotificationManagementDetailComponent', () => {
     let detailComponentFixture: ComponentFixture<SystemNotificationManagementDetailComponent>;
@@ -26,7 +27,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
         router.setUrl('');
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockModule(RouterModule)],
+            imports: [ArtemisTestModule, FormsModule, MockModule(RouterModule), FontAwesomeTestingModule],
             declarations: [
                 SystemNotificationManagementDetailComponent,
                 MockRouterLinkDirective,

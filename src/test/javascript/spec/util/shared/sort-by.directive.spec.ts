@@ -1,10 +1,10 @@
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 @Component({
     template: `
@@ -31,7 +31,8 @@ describe('Directive: SortByDirective', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TestSortByDirectiveComponent, SortDirective, SortByDirective, FaIconComponent],
+            imports: [FontAwesomeTestingModule],
+            declarations: [TestSortByDirectiveComponent, SortDirective, SortByDirective],
         })
             .compileComponents()
             .then(() => {

@@ -12,6 +12,7 @@ import { User } from 'app/core/user/user.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { NgForm, NgModel } from '@angular/forms';
 import { MockDirective } from 'ng-mocks';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('External Submission Dialog', () => {
     let fixture: ComponentFixture<ExternalSubmissionDialogComponent>;
@@ -26,7 +27,7 @@ describe('External Submission Dialog', () => {
             update: jest.fn(),
         };
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FontAwesomeTestingModule],
             declarations: [ExternalSubmissionDialogComponent, MockDirective(NgForm), MockDirective(NgModel)],
             providers: [{ provide: NgbActiveModal, useValue: activeModal }],
         })

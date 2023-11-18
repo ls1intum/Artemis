@@ -29,6 +29,7 @@ import { clone } from 'lodash-es';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
@@ -70,7 +71,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, DragDropModule, MockDirective(NgbCollapse), MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, DragDropModule, MockDirective(NgbCollapse), MockModule(NgbTooltipModule), FontAwesomeTestingModule],
             declarations: [
                 DragAndDropQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),

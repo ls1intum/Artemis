@@ -12,6 +12,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import dayjs from 'dayjs/esm';
 import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('SystemNotificationManagementUpdateComponent', () => {
     let updateComponentFixture: ComponentFixture<SystemNotificationManagementUpdateComponent>;
@@ -26,7 +27,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule],
+            imports: [ArtemisTestModule, ReactiveFormsModule, FontAwesomeTestingModule],
             declarations: [SystemNotificationManagementUpdateComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent)],
             providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(ArtemisNavigationUtilService)],
         })

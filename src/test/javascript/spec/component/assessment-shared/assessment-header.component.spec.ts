@@ -24,6 +24,7 @@ import { of } from 'rxjs';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -48,7 +49,7 @@ describe('AssessmentHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, NgbTooltipMocksModule, NgbAlertsMocksModule],
+            imports: [ArtemisTestModule, RouterTestingModule, NgbTooltipMocksModule, NgbAlertsMocksModule, FontAwesomeTestingModule],
             declarations: [AssessmentHeaderComponent, AssessmentWarningComponent, AlertOverlayComponent, TranslateDirective, ArtemisTranslatePipe, MockTranslateValuesDirective],
             providers: [
                 {

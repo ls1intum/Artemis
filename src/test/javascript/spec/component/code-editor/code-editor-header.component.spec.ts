@@ -3,6 +3,7 @@ import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code
 import { ArtemisTestModule } from '../../test.module';
 import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
 import { MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CodeEditorHeaderComponent', () => {
     let fixture: ComponentFixture<CodeEditorHeaderComponent>;
@@ -10,7 +11,7 @@ describe('CodeEditorHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbDropdownMocksModule],
+            imports: [ArtemisTestModule, NgbDropdownMocksModule, FontAwesomeTestingModule],
             declarations: [CodeEditorHeaderComponent],
             providers: [],
         })

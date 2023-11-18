@@ -40,6 +40,7 @@ import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.co
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('FileUploadAssessmentComponent', () => {
     let comp: FileUploadAssessmentComponent;
@@ -72,7 +73,7 @@ describe('FileUploadAssessmentComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([routes[0]])],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([routes[0]]), FontAwesomeTestingModule],
             declarations: [
                 FileUploadAssessmentComponent,
                 MockComponent(UpdatingResultComponent),

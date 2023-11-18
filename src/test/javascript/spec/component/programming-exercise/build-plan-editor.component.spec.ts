@@ -19,6 +19,7 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Build Plan Editor', () => {
     let fixture: ComponentFixture<BuildPlanEditorComponent>;
@@ -33,7 +34,7 @@ describe('Build Plan Editor', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule, NgbTooltipMocksModule],
+            imports: [ArtemisTestModule, AceEditorModule, NgbTooltipMocksModule, FontAwesomeTestingModule],
             declarations: [BuildPlanEditorComponent, TranslatePipeMock, MockComponent(CodeEditorHeaderComponent), MockComponent(UpdatingResultComponent)],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
