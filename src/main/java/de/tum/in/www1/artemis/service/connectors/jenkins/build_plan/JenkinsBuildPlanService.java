@@ -204,7 +204,7 @@ public class JenkinsBuildPlanService {
      *
      * @param templateExercise The exercise containing the old build plan URL.
      * @param newExercise      The exercise of which the build plan URL is updated.
-     * @param jobConfig        The job config in Jenkins containing the
+     * @param jobConfig        The job config in Jenkins for the new exercise.
      */
     public void updateBuildPlanURLs(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, Document jobConfig) {
         final String buildProjectKey = newExercise.getProjectKey();
