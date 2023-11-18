@@ -1,6 +1,6 @@
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, Observable, ReplaySubject, map, tap } from 'rxjs';
+import { BehaviorSubject, map, Observable, ReplaySubject, tap } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -619,8 +619,8 @@ export class MetisService implements OnDestroy {
                     }
                     // we can add the received conversation message to the cached messages without violating the current context filter setting
                     // prevent adding the same post multiple times
-                    const indexToUpdate = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
-                    if (indexToUpdate === -1) {
+                    const existingPostIndex = this.cachedPosts.findIndex((post) => post.id === postDTO.post.id);
+                    if (existingPostIndex === -1) {
                         if (this.currentPostContextFilter.sortingOrder === SortDirection.ASCENDING) {
                             this.cachedPosts.push(postDTO.post);
                         } else {
