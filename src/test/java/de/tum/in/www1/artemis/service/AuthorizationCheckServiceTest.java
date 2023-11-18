@@ -5,9 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.stereotype.Component;
@@ -16,9 +14,10 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -39,19 +38,51 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
     @Autowired
     private AuthorizationCheckService authCheckService;
 
+    @Autowired
+    private ExerciseRepository exerciseRepo;
+
+    private Course course;
+
+    private ModelingExercise modelingExercise;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
     }
 
+    void initTestCase2() {
+        course = courseUtilService.addCourseWithModelingAndTextExercise();
+        userUtilService.addInstructor(TEST_PREFIX + "instructors", TEST_PREFIX + "instructor1");
+        userUtilService.addStudent(TEST_PREFIX + "students", TEST_PREFIX + "student1");
+
+        modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
+        modelingExercise.setTestRunParticipationsExist(true);
+
+        exerciseRepo.save(modelingExercise);
+    }
+
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void testIsUserAllowedToGetResult() {
-        // Exercise exercise, StudentParticipation participation, Result result) {
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testIsUserAllowedToGetResultAsInstructorForTestRun() {
+        this.initTestCase2();
 
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+        participation.setTestRun(true);
+        Result result = new Result();
+
+        boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
+        Assertions.assertTrue(isUserAllowedToGetResult);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testIsUserAllowedToGetResultAsStudent() {
         ModelingExercise modelingExercise = new ModelingExercise();
-        Participation participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, "artemis_test");
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, "artemis_test");
+        Result result = new Result();
 
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result))
+                .withMessage("Access is forbidden");
     }
 
     @Nested
