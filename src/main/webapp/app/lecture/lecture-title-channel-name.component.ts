@@ -1,5 +1,4 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { isMessagingEnabled } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
 
 @Component({
@@ -22,11 +21,6 @@ export class LectureTitleChannelNameComponent implements OnInit {
      * @return boolean true if the channel name is required, else false
      */
     private requiresChannelName(lecture: Lecture): boolean {
-        // not required if messaging is disabled
-        if (!isMessagingEnabled(lecture.course)) {
-            return false;
-        }
-
         // required on create (messaging is enabled)
         if (lecture.id === undefined) {
             return true;

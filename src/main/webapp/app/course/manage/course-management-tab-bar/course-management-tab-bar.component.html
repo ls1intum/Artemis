@@ -27,7 +27,7 @@
             <span jhiTranslate="artemisApp.iris.settings.button.course.title">Iris</span>
             <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>
         </a>
-        <a class="tab-link" *ngIf="isMessagingEnabled(course)" [routerLink]="['/courses', course.id, 'messages']" routerLinkActive="active">
+        <a class="tab-link" *ngIf="isMessagingEnabled(course) || isCommunicationEnabled(course)" [routerLink]="['/courses', course.id, 'messages']" routerLinkActive="active">
             <fa-icon [icon]="faComments"></fa-icon>
             <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</span>
             <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>
