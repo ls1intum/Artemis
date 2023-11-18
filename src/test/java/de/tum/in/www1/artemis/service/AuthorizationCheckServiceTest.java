@@ -46,7 +46,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
     @Nested
     @Component
-    class isUserAllowedToGetResult {
+    class isUserAllowedToGetResultTest {
 
         @Autowired
         private ParticipationUtilService participationUtilService;
