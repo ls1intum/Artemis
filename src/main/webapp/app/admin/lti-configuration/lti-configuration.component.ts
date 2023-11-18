@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
-import { LtiConfigurationService } from 'app/admin/lti-configuration/lit-configuration.service';
+import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 
 @Component({
     selector: 'jhi-lti-configuration',
