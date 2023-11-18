@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -107,6 +108,37 @@ public class ConversationService {
         if (!isMember(conversationId, userId)) {
             throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
+    }
+
+    /**
+     * Checks whether the user is a member of the conversation.
+     * <p>
+     * If the user is not a member, but the conversation is course-wide, a participant entry will be created.
+     * If the user is an instructor, they are granted the moderator role.
+     *
+     * @param conversationId the id of the conversation
+     * @param user           the user
+     * @param lastReadDate   Optional date being used for a newly created participant to set the last-read date
+     * @return an optional conversation
+     */
+    public Optional<Conversation> isMemberOrCreateForCourseWideElseThrow(Long conversationId, User user, Optional<ZonedDateTime> lastReadDate) {
+        if (isMember(conversationId, user.getId())) {
+            return Optional.empty();
+        }
+
+        Conversation conversation = conversationRepository.findByIdElseThrow(conversationId);
+
+        if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
+            ConversationParticipant conversationParticipant = ConversationParticipant.createWithDefaultValues(user, channel);
+            conversationParticipant.setIsModerator(authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), user));
+            lastReadDate.ifPresent(conversationParticipant::setLastRead);
+            conversationParticipantRepository.saveAndFlush(conversationParticipant);
+        }
+        else {
+            throw new AccessForbiddenException("User not allowed to access this conversation!");
+        }
+
+        return Optional.of(conversation);
     }
 
     /**

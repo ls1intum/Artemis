@@ -229,7 +229,8 @@ public class PostService extends PostingService {
      * @param courseId id of course the post belongs to
      */
     public void addReaction(Post post, Reaction reaction, Long courseId) {
-        final Course course = preCheckUserAndCourseForCommunication(reaction.getUser(), courseId);
+        final Course course = preCheckUserAndCourseForCommunicationOrMessaging(reaction.getUser(), courseId);
+
         post.addReaction(reaction);
         Post updatedPost = postRepository.save(post);
         updatedPost.setConversation(post.getConversation());
@@ -244,7 +245,8 @@ public class PostService extends PostingService {
      * @param courseId id of course the post belongs to
      */
     public void removeReaction(Post post, Reaction reaction, Long courseId) {
-        preCheckUserAndCourseForCommunication(reaction.getUser(), courseId);
+        preCheckUserAndCourseForCommunicationOrMessaging(reaction.getUser(), courseId);
+
         post.removeReaction(reaction);
         postRepository.save(post);
     }

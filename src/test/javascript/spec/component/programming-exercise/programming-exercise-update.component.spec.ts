@@ -8,7 +8,7 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType, WindFile } from 'app/entities/programming-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -63,8 +63,10 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
+import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
-describe('ProgrammingExercise Management Update Component', () => {
+describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
     const course = { id: courseId } as Course;
 
@@ -389,6 +391,20 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
         }));
+
+        it('should clear custom build definition on programming language change', fakeAsync(() => {
+            // WHEN
+            fixture.detectChanges();
+            comp.programmingExercise.buildPlanConfiguration = 'some custom build definition';
+            comp.programmingExercise.windFile = new WindFile();
+            tick();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+            comp.onProjectTypeChange(ProjectType.FACT);
+
+            // THEN
+            expect(comp.programmingExercise.buildPlanConfiguration).toBeUndefined();
+            expect(comp.programmingExercise.windFile).toBeUndefined();
+        }));
     });
 
     describe('import with static code analysis', () => {
@@ -402,6 +418,21 @@ describe('ProgrammingExercise Management Update Component', () => {
             route.params = of({ courseId });
             route.url = of([{ path: 'import' } as UrlSegment]);
         });
+
+        it('should reset dates, id and project key', fakeAsync(() => {
+            const programmingExercise = getProgrammingExerciseForImport();
+
+            route.data = of({ programmingExercise });
+            const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+            comp.ngOnInit();
+            fixture.detectChanges();
+            tick();
+            expect(comp.isImportFromFile).toBeFalse();
+            expect(comp.isImportFromExistingExercise).toBeTrue();
+
+            verifyImport(programmingExercise);
+        }));
 
         it.each([
             [true, 80, ProjectType.PLAIN_MAVEN],
@@ -461,7 +492,18 @@ describe('ProgrammingExercise Management Update Component', () => {
                 expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             }),
         );
+
+        it('should load exercise categories on import', () => {
+            const programmingExercise = getProgrammingExerciseForImport();
+            route.data = of({ programmingExercise });
+            const loadExerciseCategoriesSpy = jest.spyOn(Utils, 'loadCourseExerciseCategories');
+
+            comp.ngOnInit();
+
+            expect(loadExerciseCategoriesSpy).toHaveBeenCalledOnce();
+        });
     });
+
     describe('import from file', () => {
         let route: ActivatedRoute;
 
@@ -471,28 +513,9 @@ describe('ProgrammingExercise Management Update Component', () => {
 
             route.url = of([{ path: 'import-from-file' } as UrlSegment]);
         });
-        it('should reset dates, id, project key and store zipFile', fakeAsync(() => {
-            const programmingExercise = new ProgrammingExercise(undefined, undefined);
-            programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
-            programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
-            programmingExercise.dueDate = dayjs();
-            programmingExercise.releaseDate = dayjs();
-            programmingExercise.startDate = dayjs();
-            programmingExercise.projectKey = 'projectKey';
 
-            programmingExercise.assessmentDueDate = dayjs();
-            programmingExercise.exampleSolutionPublicationDate = dayjs();
-            programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
-            programmingExercise.zipFileForImport = new File([''], 'test.zip');
-            programmingExercise.allowOfflineIde = true;
-            programmingExercise.allowOnlineEditor = true;
-            programmingExercise.publishBuildPlanUrl = true;
-            programmingExercise.allowComplaintsForAutomaticAssessments = true;
-            programmingExercise.allowManualFeedbackRequests = true;
-            programmingExercise.publishBuildPlanUrl = false;
-            history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
-            programmingExercise.shortName = 'shortName';
-            programmingExercise.title = 'title';
+        it('should reset dates, id, project key and store zipFile', fakeAsync(() => {
+            const programmingExercise = getProgrammingExerciseForImport();
 
             route.data = of({ programmingExercise });
             const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
@@ -501,28 +524,11 @@ describe('ProgrammingExercise Management Update Component', () => {
             fixture.detectChanges();
             tick();
             expect(comp.isImportFromFile).toBeTrue();
-            expect(comp.programmingExercise.projectKey).toBeUndefined();
-            expect(comp.programmingExercise.id).toBeUndefined();
-            expect(comp.programmingExercise.dueDate).toBeUndefined();
-            expect(comp.programmingExercise.releaseDate).toBeUndefined();
-            expect(comp.programmingExercise.startDate).toBeUndefined();
-            expect(comp.programmingExercise.assessmentDueDate).toBeUndefined();
-            expect(comp.programmingExercise.exampleSolutionPublicationDate).toBeUndefined();
-            expect(comp.programmingExercise.zipFileForImport?.name).toBe('test.zip');
-            expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
-            expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
-            expect(comp.programmingExercise.allowOfflineIde).toBeTrue();
-            expect(comp.programmingExercise.allowOnlineEditor).toBeTrue();
-            expect(comp.programmingExercise.publishBuildPlanUrl).toBeFalse();
-            expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
-            expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
-            // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
-            expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
-            expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
-            // name and short name should be imported
-            expect(comp.programmingExercise.title).toBe('title');
-            expect(comp.programmingExercise.shortName).toBe('shortName');
+            expect(comp.isImportFromExistingExercise).toBeFalse();
+
+            verifyImport(programmingExercise);
         }));
+
         it('should call import-from-file from service on import for entity from file', fakeAsync(() => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
@@ -733,6 +739,28 @@ describe('ProgrammingExercise Management Update Component', () => {
             });
         });
 
+        it('should update AuxiliaryRepository checkout directory', () => {
+            const auxiliaryRepository = new AuxiliaryRepository();
+            auxiliaryRepository.checkoutDirectory = 'aux';
+            auxiliaryRepository.name = 'aux';
+            auxiliaryRepository.repositoryUrl = 'auxurl';
+            comp.programmingExercise.auxiliaryRepositories = [auxiliaryRepository];
+            const returned = comp.updateCheckoutDirectory(auxiliaryRepository)('new-value');
+            expect(auxiliaryRepository.checkoutDirectory).toBe('new-value');
+            expect(returned).toBe('new-value');
+        });
+
+        it('should update AuxiliaryRepository name', () => {
+            const auxiliaryRepository = new AuxiliaryRepository();
+            auxiliaryRepository.checkoutDirectory = 'aux';
+            auxiliaryRepository.name = 'aux';
+            auxiliaryRepository.repositoryUrl = 'auxurl';
+            comp.programmingExercise.auxiliaryRepositories = [auxiliaryRepository];
+            const returned = comp.updateRepositoryName(auxiliaryRepository)('new-value');
+            expect(auxiliaryRepository.name).toBe('new-value');
+            expect(returned).toBe('new-value');
+        });
+
         it('should find no validation errors for valid input', () => {
             comp.programmingExercise.title = 'New title';
             comp.programmingExercise.shortName = 'home2';
@@ -924,7 +952,59 @@ describe('ProgrammingExercise Management Update Component', () => {
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);
     }));
+
+    function verifyImport(importedProgrammingExercise: ProgrammingExercise) {
+        expect(comp.programmingExercise.projectKey).toBeUndefined();
+        expect(comp.programmingExercise.id).toBeUndefined();
+        expect(comp.programmingExercise.dueDate).toBeUndefined();
+        expect(comp.programmingExercise.releaseDate).toBeUndefined();
+        expect(comp.programmingExercise.startDate).toBeUndefined();
+        expect(comp.programmingExercise.assessmentDueDate).toBeUndefined();
+        expect(comp.programmingExercise.exampleSolutionPublicationDate).toBeUndefined();
+        expect(comp.programmingExercise.zipFileForImport?.name).toBe('test.zip');
+        expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+        expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
+        expect(comp.programmingExercise.allowOfflineIde).toBeTrue();
+        expect(comp.programmingExercise.allowOnlineEditor).toBeTrue();
+        expect(comp.programmingExercise.publishBuildPlanUrl).toBeFalse();
+        expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.JAVA);
+        expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_MAVEN);
+        // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
+        expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
+        expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+        // name and short name should also be imported
+        expect(comp.programmingExercise.title).toEqual(importedProgrammingExercise.title);
+        expect(comp.programmingExercise.shortName).toEqual(importedProgrammingExercise.shortName);
+    }
 });
+
+const getProgrammingExerciseForImport = () => {
+    const programmingExercise = new ProgrammingExercise(undefined, undefined);
+    programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+    programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+    programmingExercise.dueDate = dayjs();
+    programmingExercise.releaseDate = dayjs();
+    programmingExercise.startDate = dayjs();
+    programmingExercise.projectKey = 'projectKey';
+
+    programmingExercise.assessmentDueDate = dayjs();
+    programmingExercise.exampleSolutionPublicationDate = dayjs();
+    programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+    programmingExercise.zipFileForImport = new File([''], 'test.zip');
+    programmingExercise.allowOfflineIde = true;
+    programmingExercise.allowOnlineEditor = true;
+    programmingExercise.publishBuildPlanUrl = true;
+    programmingExercise.allowComplaintsForAutomaticAssessments = true;
+    programmingExercise.allowManualFeedbackRequests = true;
+    programmingExercise.publishBuildPlanUrl = false;
+
+    history.pushState({ programmingExerciseForImportFromFile: programmingExercise }, '');
+
+    programmingExercise.shortName = 'shortName';
+    programmingExercise.title = 'title';
+
+    return programmingExercise;
+};
 
 const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage) => {
     switch (programmingLanguage) {

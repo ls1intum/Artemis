@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.metis;
 
-import static de.tum.in.www1.artemis.service.metis.PostingService.METIS_POST_ENTITY_NAME;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -19,9 +17,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.CreatedConversationMessage;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
@@ -40,8 +44,18 @@ public class ConversationMessageResource {
 
     private final ConversationMessagingService conversationMessagingService;
 
-    public ConversationMessageResource(ConversationMessagingService conversationMessagingService) {
+    private final UserRepository userRepository;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final CourseRepository courseRepository;
+
+    public ConversationMessageResource(ConversationMessagingService conversationMessagingService, UserRepository userRepository,
+            AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
         this.conversationMessagingService = conversationMessagingService;
+        this.userRepository = userRepository;
+        this.authorizationCheckService = authorizationCheckService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -58,10 +72,10 @@ public class ConversationMessageResource {
         log.debug("POST createMessage invoked for course {} with post {}", courseId, post.getContent());
         long start = System.nanoTime();
         if (post.getId() != null) {
-            throw new BadRequestAlertException("A new message post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new message post cannot already have an ID", conversationMessagingService.getEntityName(), "idexists");
         }
         if (post.getConversation() == null || post.getConversation().getId() == null) {
-            throw new BadRequestAlertException("A new message post must have a conversation", METIS_POST_ENTITY_NAME, "conversationnotset");
+            throw new BadRequestAlertException("A new message post must have a conversation", conversationMessagingService.getEntityName(), "conversationnotset");
         }
         CreatedConversationMessage createdMessageData = conversationMessagingService.createMessage(courseId, post);
         conversationMessagingService.notifyAboutMessageCreation(createdMessageData);
@@ -71,10 +85,10 @@ public class ConversationMessageResource {
     }
 
     /**
-     * GET /courses/{courseId}/posts : Get all message posts for a conversation by its id
+     * GET /courses/{courseId}/posts : Get all messages for a conversation by its id or in a list of course-wide channels
      *
-     * @param pageable          pagination settings to fetch posts in smaller batches
-     * @param postContextFilter request param for filtering posts
+     * @param pageable          pagination settings to fetch messages in smaller batches
+     * @param postContextFilter request param for filtering messages
      * @param principal         contains the login of the user for the purpose of logging
      * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
      *         or 400 (Bad Request) if the checks on user, course or post validity fail
@@ -83,7 +97,21 @@ public class ConversationMessageResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<Post>> getMessages(@ApiParam Pageable pageable, PostContextFilter postContextFilter, Principal principal) {
         long timeNanoStart = System.nanoTime();
-        Page<Post> coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter);
+        Page<Post> coursePosts;
+
+        var requestingUser = userRepository.getUser();
+        var course = courseRepository.findByIdElseThrow(postContextFilter.getCourseId());
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+
+        if (postContextFilter.getConversationId() != null) {
+            coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter, requestingUser);
+        }
+        else if (postContextFilter.getCourseWideChannelIds() != null) {
+            coursePosts = conversationMessagingService.getCourseWideMessages(pageable, postContextFilter, requestingUser);
+        }
+        else {
+            throw new BadRequestAlertException("Messages must be associated with a conversion", conversationMessagingService.getEntityName(), "conversationMissing");
+        }
         // keep the data as small as possible and avoid unnecessary information sent to the client
         // TODO: in the future we should set conversation to null
         coursePosts.getContent().forEach(post -> {
@@ -142,5 +170,21 @@ public class ConversationMessageResource {
         // deletion of message posts should not trigger entity deletion alert
         log.info("deleteMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().build();
+    }
+
+    /**
+     * PUT /courses/{courseId}/posts/{postId}/display-priority : Update the display priority of an existing post
+     *
+     * @param courseId        id of the course the post belongs to
+     * @param postId          id of the post change the displayPriority for
+     * @param displayPriority new enum value for displayPriority, i.e. either PINNED, ARCHIVED, NONE
+     * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
+     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @PutMapping("courses/{courseId}/messages/{postId}/display-priority")
+    @EnforceAtLeastTutor
+    public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
+        Post postWithUpdatedDisplayPriority = conversationMessagingService.changeDisplayPriority(courseId, postId, displayPriority);
+        return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
     }
 }

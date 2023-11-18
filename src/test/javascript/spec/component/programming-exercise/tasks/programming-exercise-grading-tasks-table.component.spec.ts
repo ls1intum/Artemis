@@ -12,6 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 import { ButtonComponent } from 'app/shared/components/button.component';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 
 describe('ProgrammingExerciseGradingTasksTableComponent', () => {
     let fixture;
@@ -75,7 +76,7 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
 
     it('should pass saving to the service', () => {
         const subject = new Subject();
-        const taskServiceSaveTestCasesStub = jest.spyOn(taskService, 'saveTestCases').mockReturnValue(subject as Observable<ProgrammingExerciseTask[]>);
+        const taskServiceSaveTestCasesStub = jest.spyOn(taskService, 'saveTestCases').mockReturnValue(subject as Observable<ProgrammingExerciseTestCase[]>);
 
         comp.saveTestCases();
 

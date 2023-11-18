@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.api.Git;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -23,6 +24,7 @@ import com.tngtech.archunit.lang.*;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 
 class ArchitectureTest extends AbstractArchitectureTest {
 
@@ -107,6 +109,19 @@ class ArchitectureTest extends AbstractArchitectureTest {
         GeneralCodingRules.NO_CLASSES_SHOULD_ACCESS_STANDARD_STREAMS.check(classes);
     }
 
+    @Test
+    void testJSONImplementations() {
+        ArchRule jsonObject = noClasses().should().dependOnClassesThat(have(simpleName("JsonObject").or(simpleName("JSONObject"))).and(not(resideInAPackage("com.google.gson"))));
+
+        ArchRule jsonArray = noClasses().should().dependOnClassesThat(have(simpleName("JsonArray").or(simpleName("JSONArray"))).and(not(resideInAPackage("com.google.gson"))));
+
+        ArchRule jsonParser = noClasses().should().dependOnClassesThat(have(simpleName("JsonParser").or(simpleName("JSONParser"))).and(not(resideInAPackage("com.google.gson"))));
+
+        jsonObject.check(allClasses);
+        jsonArray.check(allClasses);
+        jsonParser.check(allClasses);
+    }
+
     // Custom Predicates for JavaAnnotations since ArchUnit only defines them for classes
 
     private DescribedPredicate<? super JavaAnnotation<?>> simpleNameAnnotation(String name) {
@@ -128,5 +143,16 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 }
             }
         };
+    }
+
+    /**
+     * Checks that no class directly calls Git.commit(), but instead uses GitService.commit()
+     * This is necessary to ensure that committing is identical for all setups, with and without commit signing
+     */
+    @Test
+    void testNoDirectGitCommitCalls() {
+        ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
+        var classesWithoutGitService = allClasses.that(not(assignableTo(GitService.class)));
+        usage.check(classesWithoutGitService);
     }
 }

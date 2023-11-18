@@ -204,10 +204,6 @@
                     "center": "Center view"
                 },
                 "legend": {
-                    "competencyStart": {
-                        "title": "Competency start",
-                        "tooltip": "This is the start of a competency. The nodes between the competency start and end help you to master this competency."
-                    },
                     "competencyEnd": {
                         "title": "Competency end",
                         "tooltip": "This is the end of a competency. The nodes between the competency start and end help you to master this competency."
