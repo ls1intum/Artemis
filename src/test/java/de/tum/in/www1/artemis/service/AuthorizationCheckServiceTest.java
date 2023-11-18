@@ -165,7 +165,6 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
             courseRepository.save(course);
             assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> authCheckService.checkUserAllowedToEnrollInCourseElseThrow(this.student1, course))
                     .withMessage("The course does currently not allow enrollment.");
-            ;
         }
 
         @Test
