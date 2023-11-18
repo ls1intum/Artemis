@@ -11,13 +11,6 @@ export const ltiLaunchRoutes: Routes = [
         },
     },
     {
-        path: 'dynamic-registration/:courseId',
-        component: Lti13DynamicRegistrationComponent,
-        data: {
-            pageTitle: 'artemisApp.lti13.dynamicRegistration.title',
-        },
-    },
-    {
         path: 'dynamic-registration',
         component: Lti13DynamicRegistrationComponent,
         data: {

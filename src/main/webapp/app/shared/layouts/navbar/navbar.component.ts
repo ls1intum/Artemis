@@ -37,6 +37,7 @@ import {
     faHeart,
     faList,
     faLock,
+    faPuzzlePiece,
     faRobot,
     faSignOutAlt,
     faStamp,
@@ -111,6 +112,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faBookOpen = faBookOpen;
     faUserPlus = faUserPlus;
     faSignOutAlt = faSignOutAlt;
+    faPuzzlePiece = faPuzzlePiece;
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
