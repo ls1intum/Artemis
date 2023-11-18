@@ -46,8 +46,8 @@
             "cloneRatedRepository": "Clone your rated repository for this exercise:",
             "clonePracticeRepository": "Clone your practice repository for this exercise:",
             "cloneExerciseRepository": "Clone a repository for this exercise",
-            "waitForData": "Data is still being loaded. Please wait.",
-            "fetchVCSAccessTokenError": "Data could not be retrieved. Please reload the page and try again. If this issue persists, please contact an administrator.",
+            "waitForData": "Setting up access to the repository. Please wait.",
+            "fetchVCSAccessTokenError": "Credentials to access the repository could not be loaded. Please reload the page and try again. If this issue persists, please contact an administrator.",
             "repositoryPassword": "Your Password is:",
             "hoverToShow": "(hover to show)",
             "cloneSourceTree": {
