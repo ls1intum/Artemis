@@ -13,7 +13,7 @@ import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../test.module';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
-import { NgbAccordion, NgbModal, NgbModalRef, NgbPanel, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
@@ -44,7 +44,7 @@ describe('CompetencyManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgbProgressbar, NgbAccordion, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgbProgressbar, FontAwesomeTestingModule],
             declarations: [
                 CompetencyManagementComponent,
                 CompetencyCardStubComponent,
@@ -54,7 +54,6 @@ describe('CompetencyManagementComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
-                MockDirective(NgbPanel),
             ],
             providers: [
                 MockProvider(AccountService),
