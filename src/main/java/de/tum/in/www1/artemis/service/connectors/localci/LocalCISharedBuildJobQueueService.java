@@ -82,7 +82,7 @@ public class LocalCISharedBuildJobQueueService {
      * @param commitHash      commit hash of the build job
      */
     public void addBuildJobInformation(Long participationId, String commitHash) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(participationId, commitHash);
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(participationId, commitHash, 0);
         queue.add(buildJobQueueItem);
     }
 
@@ -146,7 +146,7 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     /**
-     * Requeue timed out build jobs. If a build job is still in processedJobs after the expiration time,
+     * Requeue timed out build jobs only once. If a build job is still in processedJobs after the expiration time,
      * it might be because the node crashed. Therefore, the build job is added back to the queue.
      */
     @Scheduled(fixedRate = 60000)
@@ -157,8 +157,14 @@ public class LocalCISharedBuildJobQueueService {
             for (Long participationId : processingJobs.keySet()) {
                 LocalCIBuildJobQueueItem buildJob = processingJobs.get(participationId);
                 if (buildJob != null && buildJob.getExpirationTime() < System.currentTimeMillis()) {
-                    log.info("Requeueing timed out build job: " + buildJob);
+                    if (buildJob.getRetryCount() > 0) {
+                        log.error("Build job timed out for the second time: " + buildJob + ". Removing it from the queue.");
+                        processingJobs.delete(participationId);
+                        continue;
+                    }
+                    log.warn("Requeueing timed out build job: " + buildJob);
                     processingJobs.delete(participationId);
+                    buildJob.setRetryCount(buildJob.getRetryCount() + 1);
                     queue.add(buildJob);
                 }
             }
