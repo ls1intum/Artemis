@@ -69,21 +69,21 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void isAllowedAsInstructorDuringTestRun() {
+        void testIsAllowedAsInstructorDuringTestRun() {
             boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
             Assertions.assertTrue(isUserAllowedToGetResult);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-        void isNotAllowedAsStudentDuringTestRun() {
+        void testIsNotAllowedAsStudentDuringTestRun() {
             boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
             Assertions.assertFalse(isUserAllowedToGetResult);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void isNotAllowedAsInstructorForNonTestRunExerciseBeforeDeadline() {
+        void testIsNotAllowedAsInstructorForNonTestRunExerciseBeforeDeadline() {
             participation.setTestRun(false);
 
             boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
@@ -92,7 +92,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-        void isNotAllowedAsStudentForNonTestRunExerciseBeforeDeadline() {
+        void testIsNotAllowedAsStudentForNonTestRunExerciseBeforeDeadline() {
             participation.setTestRun(false);
 
             boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
