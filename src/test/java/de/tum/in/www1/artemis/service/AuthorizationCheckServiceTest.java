@@ -52,13 +52,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
     void initTestCase2() {
         course = courseUtilService.addCourseWithModelingAndTextExercise();
-        userUtilService.addInstructor(TEST_PREFIX + "instructors", TEST_PREFIX + "instructor1");
-        userUtilService.addStudent(TEST_PREFIX + "students", TEST_PREFIX + "student1");
-
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
-        modelingExercise.setTestRunParticipationsExist(true);
-
-        exerciseRepo.save(modelingExercise);
     }
 
     @Test
