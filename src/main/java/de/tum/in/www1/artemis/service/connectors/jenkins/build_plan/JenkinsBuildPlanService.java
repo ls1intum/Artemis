@@ -204,9 +204,9 @@ public class JenkinsBuildPlanService {
      *
      * @param templateExercise The exercise containing the old build plan URL.
      * @param newExercise      The exercise of which the build plan URL is updated.
-     * @param buildPlanKey     The key of the build plan for the current participation.
+     * @param jobConfig        The job config in Jenkins containing the
      */
-    public void updateBuildPlanURLs(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, String buildPlanKey) {
+    public void updateBuildPlanURLs(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, Document jobConfig) {
         final String buildProjectKey = newExercise.getProjectKey();
 
         final Long previousExerciseId = templateExercise.getId();
@@ -217,16 +217,12 @@ public class JenkinsBuildPlanService {
         String toBeReplaced = String.format("/%d/build-plan?secret=%s", previousExerciseId, previousBuildPlanAccessSecret);
         String replacement = String.format("/%d/build-plan?secret=%s", newExerciseId, newBuildPlanAccessSecret);
 
-        final Document jobConfig = jenkinsJobService.getJobConfigForJobInFolder(buildProjectKey, buildPlanKey);
-
         try {
             JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, toBeReplaced, replacement);
         }
         catch (IllegalArgumentException e) {
             log.error("Pipeline Script not found", e);
         }
-
-        postBuildPlanConfigChange(buildPlanKey, buildProjectKey, jobConfig);
     }
 
     private void postBuildPlanConfigChange(String buildPlanKey, String buildProjectKey, Document jobConfig) {
@@ -288,6 +284,8 @@ public class JenkinsBuildPlanService {
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         final var targetPlanKey = targetProjectKey + "-" + cleanTargetName;
         final var jobXml = jenkinsJobService.getJobConfigForJobInFolder(sourceProjectKey, sourcePlanKey);
+
+        updateBuildPlanURLs(sourceExercise, targetExercise, jobXml);
         jenkinsJobService.createJobInFolder(jobXml, targetProjectKey, targetPlanKey);
 
         return targetPlanKey;

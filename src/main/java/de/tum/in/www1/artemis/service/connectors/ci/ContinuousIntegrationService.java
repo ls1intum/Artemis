@@ -157,15 +157,6 @@ public interface ContinuousIntegrationService {
     void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl, String newBranch);
 
     /**
-     * Updates the build plan URL inside the CI build plan config of the imported exercise.
-     *
-     * @param templateExercise The exercise containing the old build plan URL.
-     * @param newExercise      The newly imported exercise of which the build plan URL is updated.
-     * @param buildPlanKey     The key of the build plan of which the URL should be replaced.
-     */
-    void updateBuildPlanURL(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, String buildPlanKey);
-
-    /**
      * Gives overall roles permissions for the defined project. A role can e.g. be all logged-in users
      *
      * @param projectKey  The key of the project to grant permissions to

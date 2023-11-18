@@ -148,7 +148,6 @@ public class ProgrammingExerciseImportService {
 
         updatePlanRepositoriesInBuildPlans(newExercise, templateParticipation, solutionParticipation, targetExerciseProjectKey, templateExercise.getTemplateRepositoryUrl(),
                 templateExercise.getSolutionRepositoryUrl(), templateExercise.getTestRepositoryUrl(), templateExercise.getAuxiliaryRepositoriesForBuildPlan());
-        updateBuildPlanURLs(templateExercise, newExercise);
 
         ContinuousIntegrationTriggerService triggerService = continuousIntegrationTriggerService.orElseThrow();
         triggerService.triggerBuild(templateParticipation);
@@ -190,18 +189,6 @@ public class ProgrammingExerciseImportService {
             continuousIntegrationService.orElseThrow().updatePlanRepository(targetExerciseProjectKey, participation.getBuildPlanId(), newAuxiliaryRepository.getName(),
                     targetExerciseProjectKey, newAuxiliaryRepository.getRepositoryUrl(), oldAuxiliaryRepository.getRepositoryUrl(), auxiliaryBranch);
         }
-    }
-
-    private void updateBuildPlanURLs(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
-        ContinuousIntegrationService continuousIntegration = continuousIntegrationService.orElseThrow();
-
-        // BASE
-        final String baseBuildPlanKey = newExercise.getTemplateParticipation().getBuildPlanId();
-        continuousIntegration.updateBuildPlanURL(templateExercise, newExercise, baseBuildPlanKey);
-
-        // SOLUTION
-        final String solutionBuildPlanKey = newExercise.getSolutionParticipation().getBuildPlanId();
-        continuousIntegration.updateBuildPlanURL(templateExercise, newExercise, solutionBuildPlanKey);
     }
 
     private void cloneAndEnableAllBuildPlans(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) {

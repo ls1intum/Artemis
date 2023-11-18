@@ -288,11 +288,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void updateBuildPlanURL(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, String buildPlanKey) {
-        // not needed for GitLabCI
-    }
-
-    @Override
     public void giveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions) {
         log.error("Unsupported action: GitLabCIService.giveProjectPermissions()");
     }

@@ -115,11 +115,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void updateBuildPlanURL(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, String buildPlanKey) {
-        jenkinsBuildPlanService.updateBuildPlanURLs(templateExercise, newExercise, buildPlanKey);
-    }
-
-    @Override
     public void deleteProject(String projectKey) {
         jenkinsJobService.deleteJob(projectKey);
     }

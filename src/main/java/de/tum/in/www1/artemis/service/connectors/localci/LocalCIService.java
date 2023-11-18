@@ -134,11 +134,6 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
         // When a student pushes to a repository, a build is triggered using the information contained in the participation which includes the relevant repository.
     }
 
-    @Override
-    public void updateBuildPlanURL(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, String buildPlanKey) {
-        // not needed for LocalCI
-    }
-
     /**
      * Extract the plan key from the Bamboo requestBody.
      *
