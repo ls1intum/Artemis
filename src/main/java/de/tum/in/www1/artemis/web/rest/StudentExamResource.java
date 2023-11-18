@@ -232,7 +232,7 @@ public class StudentExamResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/attendance-check : Throw attandance Check Event in the student exam
+     * POST /courses/{courseId}/exams/{examId}/students/{studentLogin}/attendance-check : Throw attendance Check Event in the student exam
      *
      * @param courseId     the course to which the student exams belong to
      * @param examId       the exam to which the student exams belong to

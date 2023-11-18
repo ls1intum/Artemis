@@ -30,6 +30,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';
 import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
+import { By } from '@angular/platform-browser';
 
 describe('ExamParticipationCoverComponent', () => {
     const course = { id: 456 } as Course;
@@ -333,6 +334,26 @@ describe('ExamParticipationCoverComponent', () => {
         component.exam.gracePeriod = 1;
         component.studentExam.submitted = false;
         expect(component.studentFailedToSubmit).toBeFalse();
+    });
+
+    it('should not display timer when exam was not submitted', () => {
+        jest.spyOn(component, 'studentFailedToSubmit', 'get').mockReturnValue(true);
+        component.startView = false;
+
+        fixture.detectChanges();
+
+        const examTimerDebugElement = fixture.debugElement.query(By.directive(ExamTimerComponent));
+        expect(examTimerDebugElement).toBeFalsy();
+    });
+
+    it('should display timer during working time', () => {
+        jest.spyOn(component, 'studentFailedToSubmit', 'get').mockReturnValue(false);
+        component.startView = false;
+
+        fixture.detectChanges();
+
+        const examTimerDebugElement = fixture.debugElement.query(By.directive(ExamTimerComponent));
+        expect(examTimerDebugElement).toBeTruthy();
     });
 
     it('should abandon the exam', () => {

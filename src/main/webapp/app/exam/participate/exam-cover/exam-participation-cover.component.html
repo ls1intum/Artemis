@@ -20,7 +20,13 @@
         </span>
         <br />
     </h2>
-    <jhi-exam-timer *ngIf="!startView" class="col-md-3 justify-content-end" [isEndView]="true" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
+    <jhi-exam-timer
+        *ngIf="!startView && !studentFailedToSubmit"
+        class="col-md-3 justify-content-end"
+        [isEndView]="true"
+        [endDate]="graceEndDate"
+        [criticalTime]="criticalTime"
+    ></jhi-exam-timer>
     <div *ngIf="startView" class="col-md-3"></div>
 </div>
 <div class="w-100 d-flex" *ngIf="!startView && !studentFailedToSubmit">
