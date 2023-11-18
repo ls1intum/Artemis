@@ -115,6 +115,13 @@ public class ProgrammingExerciseImportFromFileService {
         return importedProgrammingExercise;
     }
 
+    /**
+     * Imports a build plan if it exists in the extracted zip file
+     * If the file cannot be read, the build plan is skipped
+     *
+     * @param programmingExercise the programming exercise for which the build plan should be imported
+     * @param importExerciseDir   the directory where the extracted zip file is located
+     */
     private void importBuildPlanIfExisting(ProgrammingExercise programmingExercise, Path importExerciseDir) {
         Path buildPlanPath = importExerciseDir.resolve(BUILD_PLAN_FILE_NAME);
         if (Files.exists(buildPlanPath)) {
