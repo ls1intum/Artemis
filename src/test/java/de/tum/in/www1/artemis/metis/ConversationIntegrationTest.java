@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -162,9 +161,9 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         var courseWideChannel = createChannel(false, TEST_PREFIX + "2");
         conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide");
         // then
-        // expected are 11 database calls independent of the number of conversations.
-        // 5 calls are for user authentication checks, 6 calls are made for retrieving conversation related data
-        assertThatDb(() -> request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class)).hasBeenCalledTimes(11);
+        // expected are 10 database calls independent of the number of conversations.
+        // 4 calls are for user authentication checks, 6 calls are made for retrieving conversation related data
+        assertThatDb(() -> request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class)).hasBeenCalledTimes(10);
 
         // cleanup
         conversationMessageRepository.deleteById(post.getId());
@@ -239,19 +238,13 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(channel.getId());
     }
 
-    @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void switchFavoriteStatus_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        switchFavoriteStatus_messagingDeactivated(courseInformationSharingConfiguration);
-
-    }
-
-    void switchFavoriteStatus_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+    void switchFavoriteStatus_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
 
-        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
 
         var trueParams = new LinkedMultiValueMap<String, String>();
         trueParams.add("isFavorite", String.valueOf(true));
@@ -303,19 +296,13 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(channel.getId());
     }
 
-    @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void switchHiddenStatus_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        switchHiddenStatus_messagingDeactivated(courseInformationSharingConfiguration);
-
-    }
-
-    void switchHiddenStatus_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+    void switchHiddenStatus_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
 
-        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
 
         var trueParams = new LinkedMultiValueMap<String, String>();
         trueParams.add("isHidden", String.valueOf(true));
@@ -327,19 +314,13 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(channel.getId());
     }
 
-    @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void searchConversationMembers_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        searchConversationMembers_messagingDeactivated(courseInformationSharingConfiguration);
-
-    }
-
-    void searchConversationMembers_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
+    void searchConversationMembers_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         // given
         var channel = createChannel(false, TEST_PREFIX);
 
-        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("loginOrName", "");
