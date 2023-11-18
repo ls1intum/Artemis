@@ -43,10 +43,6 @@
                         <th>{{ 'artemisApp.studentExamDetail.matriculationNumber' | artemisTranslate }}</th>
                         <td>{{ event.user?.visibleRegistrationNumber }}</td>
                     </tr>
-                    <tr *ngIf="examAttendanceCheckEvent.text && examAttendanceCheckEvent.text.length > 0">
-                        <th>{{ 'artemisApp.exam.events.messages.examAttendanceCheck.comment' | artemisTranslate }}</th>
-                        <td [innerHTML]="examAttendanceCheckEvent.text | htmlForMarkdown"></td>
-                    </tr>
                 </tbody>
             </table>
         </div>
