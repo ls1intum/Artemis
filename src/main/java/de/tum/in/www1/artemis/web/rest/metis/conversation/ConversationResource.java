@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -68,11 +69,12 @@ public class ConversationResource extends ConversationManagementResource {
     @GetMapping("/{courseId}/conversations")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ConversationDTO>> getConversationsOfUser(@PathVariable Long courseId) {
-        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        checkMessagingOrCommunicationEnabledElseThrow(course);
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        var conversations = conversationService.getConversationsOfUser(courseId, requestingUser);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        var conversations = conversationService.getConversationsOfUser(course, requestingUser);
         return ResponseEntity.ok(new ArrayList<>(conversations));
     }
 
@@ -87,7 +89,7 @@ public class ConversationResource extends ConversationManagementResource {
     @PostMapping("/{courseId}/conversations/{conversationId}/favorite")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> changeFavoriteStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isFavorite) {
-        checkMessagingEnabledElseThrow(courseId);
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         conversationService.switchFavoriteStatus(conversationId, requestingUser, isFavorite);
@@ -105,7 +107,7 @@ public class ConversationResource extends ConversationManagementResource {
     @PostMapping("/{courseId}/conversations/{conversationId}/hidden")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> switchHiddenStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isHidden) {
-        checkMessagingEnabledElseThrow(courseId);
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         conversationService.switchHiddenStatus(conversationId, requestingUser, isHidden);
@@ -121,7 +123,7 @@ public class ConversationResource extends ConversationManagementResource {
     @GetMapping("/{courseId}/unread-messages")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> hasUnreadMessages(@PathVariable Long courseId) {
-        checkMessagingEnabledElseThrow(courseId);
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
@@ -137,7 +139,7 @@ public class ConversationResource extends ConversationManagementResource {
     @GetMapping("/{courseId}/code-of-conduct/agreement")
     @EnforceAtLeastStudent
     public ResponseEntity<Boolean> isCodeOfConductAccepted(@PathVariable Long courseId) {
-        checkMessagingEnabledElseThrow(courseId);
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
@@ -153,7 +155,7 @@ public class ConversationResource extends ConversationManagementResource {
     @PatchMapping("/{courseId}/code-of-conduct/agreement")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> acceptCodeOfConduct(@PathVariable Long courseId) {
-        checkMessagingEnabledElseThrow(courseId);
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
@@ -170,7 +172,7 @@ public class ConversationResource extends ConversationManagementResource {
     @GetMapping("/{courseId}/code-of-conduct/responsible-users")
     @EnforceAtLeastStudent
     public ResponseEntity<List<ResponsibleUserDTO>> getResponsibleUsersForCodeOfConduct(@PathVariable Long courseId) {
-        checkMessagingEnabledElseThrow(courseId);
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -202,7 +204,7 @@ public class ConversationResource extends ConversationManagementResource {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The page size must not be greater than 20");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
-        checkMessagingEnabledElseThrow(course);
+        checkMessagingOrCommunicationEnabledElseThrow(course);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         var conversationFromDatabase = this.conversationService.getConversationById(conversationId);
         checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));

@@ -334,6 +334,9 @@ public class ChannelService {
     }
 
     private Channel updateChannelName(Channel channel, String newChannelName) {
+        if (channel == null) {
+            return null;
+        }
 
         // Update channel name if necessary
         if (!newChannelName.equals(channel.getName())) {
