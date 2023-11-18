@@ -18,13 +18,6 @@ Scripts in this folder help to configure and setup your first Artemis course to 
 
    ![IntelliJ Module Configuration](./images/module-config.png)
 
-3. Configure the `Artemis.main` module for the run configuration of the run
-   configuration `Artemis (Server, LocalVC & LocalCI)`
-
-   `Run > Edit Configurations > Spring Boot > Artemis (Server, LocalVC & LocalCI) > -cp Artemis.main`
-
-   ![IntelliJ Module Configuration](./images/localVC-localCI-classpathConfiguration.png)
-
 _Tested on python 3.7 & 3.9, other versions might work as well._
 
 ## Usage
