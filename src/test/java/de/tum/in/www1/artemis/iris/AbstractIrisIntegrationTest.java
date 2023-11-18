@@ -5,11 +5,9 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-import java.util.Objects;
-import java.util.stream.Collectors;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.mockito.ArgumentMatcher;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,8 +17,8 @@ import de.tum.in.www1.artemis.connector.IrisRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
+import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -28,7 +26,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisTemplateRepository;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
-import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -111,59 +108,29 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     }
 
     protected IrisTemplate createDummyTemplate() {
-        var template = new IrisTemplate();
-        template.setContent("Hello World");
-        return template;
+        return new IrisTemplate("Hello World");
     }
 
-    /**
-     * Verify that the message was sent through the websocket.
-     *
-     * @param user      the user
-     * @param sessionId the session id
-     * @param message   the content of the message
-     */
-    protected void verifyMessageWasSentOverWebsocket(String user, Long sessionId, String message) {
-        verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
-                ArgumentMatchers.argThat(object -> object instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO
-                        && websocketDTO.getType() == IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE
-                        && Objects.equals(websocketDTO.getMessage().getContent().stream().map(IrisMessageContent::getContentAsString).collect(Collectors.joining("\n")), message)));
+    protected void verifyWasSentOverWebsocket(IrisCodeEditorSession session, ArgumentMatcher<Object> matcher) {
+        var userLogin = session.getUser().getLogin();
+        var topicSuffix = "code-editor-sessions/" + session.getId();
+        verifyWasSentOverWebsocket(userLogin, topicSuffix, matcher);
     }
 
-    /**
-     * Verify that the message was sent through the websocket.
-     *
-     * @param user      the user
-     * @param sessionId the session id
-     * @param message   the message
-     */
-    protected void verifyMessageWasSentOverWebsocket(String user, Long sessionId, IrisMessage message) {
-        verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
-                ArgumentMatchers.argThat(object -> object instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO
-                        && websocketDTO.getType() == IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE
-                        && Objects.equals(websocketDTO.getMessage().getContent().stream().map(IrisMessageContent::getContentAsString).toList(),
-                                message.getContent().stream().map(IrisMessageContent::getContentAsString).toList())));
+    protected void verifyWasSentOverWebsocket(IrisChatSession session, ArgumentMatcher<Object> matcher) {
+        var userLogin = session.getUser().getLogin();
+        var topicSuffix = "sessions/" + session.getId();
+        verifyWasSentOverWebsocket(userLogin, topicSuffix, matcher);
     }
 
-    /**
-     * Verify that an error was sent through the websocket.
-     *
-     * @param user      the user
-     * @param sessionId the session id
-     */
-    protected void verifyErrorWasSentOverWebsocket(String user, Long sessionId) {
-        verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1)).sendMessageToUser(eq(user), eq("/topic/iris/sessions/" + sessionId),
-                ArgumentMatchers.argThat(object -> object instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO
-                        && websocketDTO.getType() == IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.ERROR));
+    private void verifyWasSentOverWebsocket(String userLogin, String topicSuffix, ArgumentMatcher<Object> matcher) {
+        verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1)).sendMessageToUser(eq(userLogin), eq("/topic/iris/" + topicSuffix), ArgumentMatchers.argThat(matcher));
     }
 
     /**
      * Verify that nothing else was sent through the websocket.
-     *
-     * @param user      the user
-     * @param sessionId the session id
      */
-    protected void verifyNothingElseWasSentOverWebsocket(String user, Long sessionId) {
+    protected void verifyNothingElseWasSentOverWebsocket() {
         verifyNoMoreInteractions(websocketMessagingService);
     }
 }

@@ -3,6 +3,12 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
+    <!--
+    This changeset modifies the iris_message_content table to allow for different types of message content.
+    The current content of the table is moved to a new table iris_text_message_content, and the iris_message_content
+    table is then modified to only contain a discriminator column, by default "TEXT" since that was the only content
+    type until now. Then the two new tables iris_exercise_plan_message_content and iris_exercise_plan_step are created.
+     -->
     <changeSet id="20231002131313" author="michael_dyer">
         <!-- Add a discriminator column to the existing iris_message_content table, set all rows to 'TEXT' -->
         <addColumn tableName="iris_message_content">
@@ -11,7 +17,7 @@
             </column>
         </addColumn>
 
-        <!-- Immediately drop again the default value on the new discriminator column, we don't want it to stay -->
+        <!-- Immediately drop again the default value on the new discriminator column, we only needed it to add the column -->
         <dropDefaultValue tableName="iris_message_content" columnName="discriminator"/>
 
         <!-- Create the iris_text_message_content table to store all the existing rows in iris_message_content -->
@@ -37,7 +43,7 @@
             FROM iris_message_content mc;
         </sql>
 
-        <!-- Drop column text_content from iris_message_content, as it is no longer needed here -->
+        <!-- Drop column text_content from iris_message_content, as it is no longer needed in the parent table -->
         <dropColumn tableName="iris_message_content" columnName="text_content"/>
 
         <!-- Create the iris_exercise_plan_message_content table -->

@@ -21,6 +21,7 @@ public interface IrisMessageRepository extends JpaRepository<IrisMessage, Long> 
 
     /**
      * Counts the number of LLM responses the user got within the given timeframe.
+     * FIXME: The query needs to distinguish between different types of IrisSession to avoid overlapping rate limits.
      *
      * @param userId the id of the user
      * @param start  the start of the timeframe

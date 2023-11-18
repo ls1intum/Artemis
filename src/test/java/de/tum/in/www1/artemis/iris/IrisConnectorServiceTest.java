@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Collections;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -55,24 +54,12 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void testParseException() throws Exception {
+    void testV1NoResponseParseException() throws Exception {
         var template = new IrisTemplate("Dummy");
 
-        irisRequestMockProvider.mockCustomV1Response("{\"message\": \"invalid\"}");
+        irisRequestMockProvider.mockCustomV1Response("{\"invalid\": \"response\"}");
 
         irisConnectorService.sendRequest(template, "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
-            assertThat(response).isNull();
-            assertThat(throwable).isNotNull();
-            assertThat(throwable.getCause()).isNotNull().isInstanceOf(IrisParseResponseException.class);
-            return null;
-        }).get();
-    }
-
-    @Test
-    void testParseExceptionV2() throws Exception {
-        irisRequestMockProvider.mockMessageV2Response(Map.of("message", "invalid"));
-
-        irisConnectorService.sendRequestV2("Dummy", "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
             assertThat(response).isNull();
             assertThat(throwable).isNotNull();
             assertThat(throwable.getCause()).isNotNull().isInstanceOf(IrisParseResponseException.class);
@@ -90,7 +77,7 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void testOfferedModelsError() throws Exception {
+    void testOfferedModelsError() {
         irisRequestMockProvider.mockModelsError();
 
         assertThatThrownBy(() -> irisConnectorService.getOfferedModels()).isInstanceOf(IrisConnectorException.class);

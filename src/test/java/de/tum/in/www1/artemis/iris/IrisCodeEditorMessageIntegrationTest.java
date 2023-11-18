@@ -4,10 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -19,6 +21,7 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.iris.*;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisCodeEditorWebsocketService;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -66,21 +69,17 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend = createDefaultMockMessage(irisSession);
         messageToSend.setMessageDifferentiator(1453);
         setupExercise();
-        irisRequestMockProvider.mockMessageV1Response("Hello World");
+        irisRequestMockProvider.mockMessageV2Response(Map.of("response", "Hi there!"));
 
         var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
         assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.USER);
         assertThat(irisMessage.getMessageDifferentiator()).isEqualTo(1453);
-        assertThat(irisMessage.getContent()).hasSize(3);
-        // Compare contents of messages by only comparing the string content
-        assertThat(irisMessage.getContent().stream().map(IrisMessageContent::getContentAsString).toList())
-                .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
+        assertThat(irisMessage.getContent()).isEqualTo(messageToSend.getContent());
         await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(2).contains(irisMessage));
 
-        // TODO: update AbstractIrisIntegrationTest.java later
-        // verifyMessageWasSentOverWebsocket(TEST_PREFIX + "editor1", irisSession.getId(), messageToSend);
-        // verifyMessageWasSentOverWebsocket(TEST_PREFIX + "editor1", irisSession.getId(), "Hello World");
-        // verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "editor1", irisSession.getId());
+        verifyWasSentOverWebsocket(irisSession, messageDTOWithContent(messageToSend.getContent()));
+        verifyWasSentOverWebsocket(irisSession, messageDTOWithContent(List.of(new IrisTextMessageContent(irisMessage, "Hi there!"))));
+        verifyNothingElseWasSentOverWebsocket();
     }
 
     @Test
@@ -98,6 +97,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var messageToSend = new IrisMessage();
         messageToSend.setSession(irisSession);
+        setupExercise();
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -154,8 +154,8 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         component.setInstructions(updatedInstructions);
 
         request.putWithResponseBody(
-                "/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/contents/" + content.getId() + "/components/" + component.getId(),
-                updateProblemStatement(component), IrisExercisePlanStep.class, HttpStatus.OK);
+                "/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/contents/" + content.getId() + "/components/" + component.getId(), component,
+                IrisExercisePlanStep.class, HttpStatus.OK);
         var irisMessageFromDB = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
         var componentFromDB = irisExercisePlanStepRepository.findByIdElseThrow(component.getId());
         assertThat(irisMessageFromDB.getContent()).hasSize(1);
@@ -173,10 +173,9 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        // TODO: update AbstractIrisIntegrationTest.java later
-        // verifyMessageWasSentOverWebsocket(TEST_PREFIX + "editor1", irisSession.getId(), messageToSend);
-        // verifyErrorWasSentOverWebsocket(TEST_PREFIX + "editor1", irisSession.getId());
-        // verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "editor1", irisSession.getId());
+        verifyWasSentOverWebsocket(irisSession, messageDTOWithContent(messageToSend.getContent()));
+        verifyWasSentOverWebsocket(irisSession, errorDTO());
+        verifyNothingElseWasSentOverWebsocket();
     }
 
     @Test
@@ -185,15 +184,14 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         IrisMessage messageToSend = createDefaultMockMessage(irisSession);
 
-        irisRequestMockProvider.mockMessageV1Response(null);
+        irisRequestMockProvider.mockMessageV2Response(Map.of("invalid", "response"));
         setupExercise();
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        // TODO: update AbstractIrisIntegrationTest.java later
-        // verifyMessageWasSentOverWebsocket(TEST_PREFIX + "editor1", irisSession.getId(), messageToSend);
-        // verifyErrorWasSentOverWebsocket(TEST_PREFIX + "editor1", irisSession.getId());
-        // verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "editor1", irisSession.getId());
+        verifyWasSentOverWebsocket(irisSession, messageDTOWithContent(messageToSend.getContent()));
+        verifyWasSentOverWebsocket(irisSession, errorDTO());
+        verifyNothingElseWasSentOverWebsocket();
     }
 
     private void setupExercise() throws Exception {
@@ -207,7 +205,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var messageToSend = new IrisMessage();
         messageToSend.setSession(irisSession);
         messageToSend.addContent(createMockTextContent(messageToSend));
-        messageToSend.addContent(createMockTextContent(messageToSend));
+        messageToSend.addContent(createMockExercisePlanContent(messageToSend));
         messageToSend.addContent(createMockTextContent(messageToSend));
         return messageToSend;
     }
@@ -237,9 +235,25 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         return content;
     }
 
-    private IrisExercisePlanStep updateProblemStatement(IrisExercisePlanStep psComponent) {
-        psComponent.setInstructions("test PS");
-        return psComponent;
+    private ArgumentMatcher<Object> messageDTOWithContent(List<IrisMessageContent> content) {
+        return object -> {
+            if (!(object instanceof IrisCodeEditorWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                return false;
+            }
+            if (websocketDTO.type() != IrisCodeEditorWebsocketService.IrisWebsocketMessageType.MESSAGE) {
+                return false;
+            }
+            return websocketDTO.message().getContent().equals(content);
+        };
+    }
+
+    private ArgumentMatcher<Object> errorDTO() {
+        return object -> {
+            if (!(object instanceof IrisCodeEditorWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                return false;
+            }
+            return websocketDTO.type() == IrisCodeEditorWebsocketService.IrisWebsocketMessageType.EXCEPTION;
+        };
     }
 
 }

@@ -24,7 +24,7 @@ public class IrisExercisePlanStep extends DomainObject {
     private IrisExercisePlan plan;
 
     @NotNull
-    @Enumerated(value = EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     @Column(name = "exercise_component")
     private ExerciseComponent component;
 
@@ -32,8 +32,8 @@ public class IrisExercisePlanStep extends DomainObject {
     @Column(name = "instructions")
     private String instructions;
 
-    @Column(name = "execution_stage")
     @Enumerated(EnumType.STRING)
+    @Column(name = "execution_stage")
     private ExecutionStage executionStage;
 
     public IrisExercisePlanStep() {

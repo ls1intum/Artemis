@@ -8,10 +8,13 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -25,6 +28,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -86,8 +90,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(2).contains(irisMessage));
 
-        verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
-        verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), "Hello World");
+        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend));
+        verifyWasSentOverWebsocket(irisSession, messageDTO("Hello World"));
     }
 
     @Test
@@ -233,8 +237,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
-        verifyErrorWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
+        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend));
+        verifyWasSentOverWebsocket(irisSession, errorDTO());
     }
 
     @Test
@@ -248,8 +252,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), messageToSend);
-        verifyErrorWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
+        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend));
+        verifyWasSentOverWebsocket(irisSession, errorDTO());
     }
 
     @Test
@@ -264,8 +268,8 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisMessage = irisMessageService.saveMessage(messageToSend, irisSession, IrisMessageSender.USER);
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, IrisMessage.class, HttpStatus.OK);
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
-        verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId(), "Hello World");
-        verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student1", irisSession.getId());
+        verifyWasSentOverWebsocket(irisSession, messageDTO("Hello World"));
+        verifyNothingElseWasSentOverWebsocket();
     }
 
     // User needs to be Admin to change settings
@@ -290,9 +294,10 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisMessage = irisMessageService.saveMessage(messageToSend2, irisSession, IrisMessageSender.USER);
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, IrisMessage.class,
                 HttpStatus.TOO_MANY_REQUESTS);
-        verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student2", irisSession.getId(), messageToSend1);
-        verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student2", irisSession.getId(), "Hello World");
-        verifyNothingElseWasSentOverWebsocket(TEST_PREFIX + "student2", irisSession.getId());
+
+        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend1));
+        verifyWasSentOverWebsocket(irisSession, messageDTO("Hello World"));
+        verifyNothingElseWasSentOverWebsocket();
 
         // Reset to not interfere with other tests
         globalSettings.getIrisChatSettings().setRateLimit(null);
@@ -327,6 +332,40 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var content = new IrisTextMessageContent(message, text);
         content.setId(rdm.nextLong());
         return content;
+    }
+
+    private ArgumentMatcher<Object> messageDTO(String message) {
+        return object -> {
+            if (!(object instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                return false;
+            }
+            if (websocketDTO.getType() != IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE) {
+                return false;
+            }
+            return Objects.equals(websocketDTO.getMessage().getContent().stream().map(IrisMessageContent::getContentAsString).collect(Collectors.joining("\n")), message);
+        };
+    }
+
+    private ArgumentMatcher<Object> messageDTO(IrisMessage message) {
+        return object -> {
+            if (!(object instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                return false;
+            }
+            if (websocketDTO.getType() != IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE) {
+                return false;
+            }
+            return Objects.equals(websocketDTO.getMessage().getContent().stream().map(IrisMessageContent::getContentAsString).toList(),
+                    message.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
+        };
+    }
+
+    private ArgumentMatcher<Object> errorDTO() {
+        return object -> {
+            if (!(object instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                return false;
+            }
+            return websocketDTO.getType() == IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.ERROR;
+        };
     }
 
 }

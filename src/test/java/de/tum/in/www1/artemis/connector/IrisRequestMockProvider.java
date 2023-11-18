@@ -39,7 +39,7 @@ public class IrisRequestMockProvider {
     @Value("${artemis.iris.url}/api/v1/messages")
     private URL messagesApiV1URL;
 
-    @Value("${artemis.iris.url}/api/v1/messages")
+    @Value("${artemis.iris.url}/api/v2/messages")
     private URL messagesApiV2URL;
 
     @Value("${artemis.iris.url}/api/v1/models")
