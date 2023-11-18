@@ -105,10 +105,10 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     /**
      * Called when the user clicks on the clone repo button. Sometimes the VCS access token is not present in the user
      * object, so the resulting repo URL is wrong. This method tries to retrieve the token from the server by requesting
-     * the user object again. This should usually be enough, since this scenario only occurs when starting an exercise
-     * directly after the first time a new user registers via SAML2. In this case Artemis has validated that the
-     * authentication is correct and lets the user log in, but further actions happen in the background that populate
-     * the missing data.
+     * the user object again.
+     * This case only happens when a user is created before VCS access tokens are enabled. For those users, a token is
+     * created the first time they start participating in a programming exercise. In that case, however, they do not
+     * have an access token yet, because during login, there was no token available.
      *
      * In case the token could not be retrieved, this method is not called again and the student
      * is prompted to reload the page. Otherwise, the error would be displayed every time the button is clicked,
@@ -121,16 +121,22 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
                 .then((user) => {
                     this.user = user ?? this.user;
                     if (!this.user.vcsAccessToken) {
-                        // if still no access token exists after fetching the user object, inform the student that
-                        // something is wrong and that they should try again after reloading the page.
-                        throw new Error();
+                        this.onTokenRetrievalFail();
                     }
                 })
                 .catch(() => {
-                    this.unableToLoadVCSAccessToken = true;
-                    this.alertService.error('artemisApp.exerciseActions.fetchVCSAccessTokenError');
+                    this.onTokenRetrievalFail();
                 });
         }
+    }
+
+    /**
+     * Called if still no access token exists after fetching the user object from the server. This informs the student
+     * that something is wrong and that they should try again after reloading the page.
+     */
+    onTokenRetrievalFail() {
+        this.unableToLoadVCSAccessToken = true;
+        this.alertService.error('artemisApp.exerciseActions.fetchVCSAccessTokenError');
     }
 
     private getRepositoryUrl() {

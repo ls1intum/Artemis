@@ -41,6 +41,17 @@ describe('ExamLiveEventComponent', () => {
         expect(authorElement.textContent).toBe('John Doe');
     });
 
+    it('should display the attendance check event', () => {
+        component.event = {
+            eventType: ExamLiveEventType.EXAM_ATTENDANCE_CHECK,
+        } as ExamLiveEvent;
+
+        fixture.detectChanges();
+
+        const typeElement = fixture.debugElement.query(By.css('.type')).nativeElement;
+        expect(typeElement.textContent).toContain('artemisApp.exam.events.type.examAttendanceCheck');
+    });
+
     it('should display exam-wide announcement text when event is of type EXAM_WIDE_ANNOUNCEMENT', () => {
         component.event = {
             eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT,

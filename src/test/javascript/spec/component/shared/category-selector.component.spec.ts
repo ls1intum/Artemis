@@ -12,7 +12,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
-describe('Category Selector Component', () => {
+describe('CategorySelectorComponent', () => {
     let comp: CategorySelectorComponent;
     let fixture: ComponentFixture<CategorySelectorComponent>;
     let emitSpy: jest.SpyInstance;
@@ -90,12 +90,18 @@ describe('Category Selector Component', () => {
 
     it('should open color selector', () => {
         fixture.detectChanges();
-        const mouseEvent = { x: 1, y: 2 } as MouseEvent;
+        const mouseEvent = new MouseEvent('click', {
+            clientX: 1,
+            clientY: 2,
+        });
+        const stopPropagationSpy = jest.spyOn(mouseEvent, 'stopPropagation');
+
         const openColorSelectorSpy = jest.spyOn(comp.colorSelector, 'openColorSelector');
         comp.openColorSelector(mouseEvent, category5);
 
         expect(comp.selectedCategory).toEqual(category5);
         expect(openColorSelectorSpy).toHaveBeenCalledWith(mouseEvent, undefined, 150);
+        expect(stopPropagationSpy).toHaveBeenCalledOnce(); // otherwise the colorpicker will close immediately
     });
 
     it('should select color for category', () => {

@@ -23,6 +23,29 @@
             </div>
             <jhi-working-time-change [oldWorkingTime]="workingTimeUpdateEvent.oldWorkingTime" [newWorkingTime]="workingTimeUpdateEvent.newWorkingTime" />
         </div>
+        <div *ngSwitchCase="ExamLiveEventType.EXAM_ATTENDANCE_CHECK">
+            <div jhiTranslate="artemisApp.exam.events.messages.examAttendanceCheck.description" class="wt-title"></div>
+            <table *ngIf="event.user" class="table table-borderless mx-auto">
+                <tbody>
+                    <tr>
+                        <th>{{ 'artemisApp.studentExamDetail.name' | artemisTranslate }}</th>
+                        <td>{{ event.user?.firstName }} {{ event.user?.lastName }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'artemisApp.studentExamDetail.login' | artemisTranslate }}</th>
+                        <td>{{ event.user?.login }}</td>
+                    </tr>
+                    <tr>
+                        <th>{{ 'artemisApp.studentExamDetail.email' | artemisTranslate }}</th>
+                        <td>{{ event.user?.email }}</td>
+                    </tr>
+                    <tr *ngIf="event.user?.visibleRegistrationNumber">
+                        <th>{{ 'artemisApp.studentExamDetail.matriculationNumber' | artemisTranslate }}</th>
+                        <td>{{ event.user?.visibleRegistrationNumber }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
     <button *ngIf="showAcknowledge" class="btn btn-primary w-100 mt-2" (click)="acknowledgeEvent()">
         <fa-icon [icon]="faCheck"></fa-icon>
