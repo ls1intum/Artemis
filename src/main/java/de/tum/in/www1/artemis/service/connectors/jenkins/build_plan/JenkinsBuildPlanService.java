@@ -200,7 +200,7 @@ public class JenkinsBuildPlanService {
     }
 
     /**
-     * Replaces the old build plan URL with the new one, and posts the change to the Jenkins job config of the new exercise.
+     * Replaces the old build plan URL with a new one containing an updated exercise and access token.
      *
      * @param templateExercise The exercise containing the old build plan URL.
      * @param newExercise      The exercise of which the build plan URL is updated.
