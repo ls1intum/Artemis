@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.BUILD_PLAN_FILE_NAME;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -13,20 +15,27 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.NotFileFilter;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class ProgrammingExerciseImportFromFileService {
+
+    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportService.class);
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -40,16 +49,23 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final FileService fileService;
 
+    private final ProfileService profileService;
+
+    private final BuildPlanRepository buildPlanRepository;
+
     private static final List<String> SHORT_NAME_REPLACEMENT_EXCLUSIONS = List.of("gradle-wrapper.jar");
 
     public ProgrammingExerciseImportFromFileService(ProgrammingExerciseService programmingExerciseService, ZipFileService zipFileService,
-            StaticCodeAnalysisService staticCodeAnalysisService, RepositoryService repositoryService, GitService gitService, FileService fileService) {
+            StaticCodeAnalysisService staticCodeAnalysisService, RepositoryService repositoryService, GitService gitService, FileService fileService, ProfileService profileService,
+            BuildPlanRepository buildPlanRepository) {
         this.programmingExerciseService = programmingExerciseService;
         this.zipFileService = zipFileService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.repositoryService = repositoryService;
         this.gitService = gitService;
         this.fileService = fileService;
+        this.profileService = profileService;
+        this.buildPlanRepository = buildPlanRepository;
     }
 
     /**
@@ -87,12 +103,29 @@ public class ProgrammingExerciseImportFromFileService {
             copyEmbeddedFiles(exerciseFilePath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(exerciseFilePath.toString())));
             importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName, user);
             importedProgrammingExercise.setCourse(course);
+            // It doesn't make sense to import a build plan on a bamboo or local CI setup.
+            if (profileService.isGitlabCiOrJenkins()) {
+                importBuildPlanIfExisting(importedProgrammingExercise, importExerciseDir);
+            }
         }
         finally {
             // want to make sure the directories are deleted, even if an exception is thrown
             fileService.scheduleDirectoryPathForRecursiveDeletion(importExerciseDir, 5);
         }
         return importedProgrammingExercise;
+    }
+
+    private void importBuildPlanIfExisting(ProgrammingExercise programmingExercise, Path importExerciseDir) {
+        Path buildPlanPath = importExerciseDir.resolve(BUILD_PLAN_FILE_NAME);
+        if (Files.exists(buildPlanPath)) {
+            try {
+                buildPlanRepository.setBuildPlanForExercise(FileUtils.readFileToString(buildPlanPath.toFile(), Charsets.UTF_8), programmingExercise);
+            }
+            catch (IOException e) {
+                log.warn("Could not read build plan file. Continue importing the exercise but skipping the build plan.", e);
+
+            }
+        }
     }
 
     /**

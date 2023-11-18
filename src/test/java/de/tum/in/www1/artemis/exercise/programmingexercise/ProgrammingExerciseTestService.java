@@ -3,8 +3,7 @@ package de.tum.in.www1.artemis.exercise.programmingexercise;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.INDIVIDUAL;
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseMode.TEAM;
 import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
-import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
-import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
+import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.*;
 import static de.tum.in.www1.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -205,6 +204,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private BuildPlanRepository buildPlanRepository;
 
     public Course course;
 
@@ -1416,11 +1418,15 @@ public class ProgrammingExerciseTestService {
             assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().matches(".*-exercise.zip"))
                     .anyMatch((filename) -> filename.toString().matches(".*-solution.zip")).anyMatch((filename) -> filename.toString().matches(".*-tests.zip"))
                     .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*.md"))
-                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"));
+                    .anyMatch((filename) -> filename.toString().matches(EXPORTED_EXERCISE_DETAILS_FILE_PREFIX + ".*.json"))
+                    .anyMatch((filename) -> BUILD_PLAN_FILE_NAME.equals(filename.toString()));
             if (saveEmbeddedFiles) {
                 assertThat(listOfIncludedFiles).anyMatch((filename) -> filename.toString().equals(embeddedFileName1))
                         .anyMatch((filename) -> filename.toString().equals(embeddedFileName2));
             }
+            Path buildPlanPath = listOfIncludedFiles.stream().filter(file -> BUILD_PLAN_FILE_NAME.equals(file.getFileName().toString())).findFirst().orElseThrow();
+            String buildPlanContent = Files.readString(extractedZipDir.resolve(buildPlanPath), StandardCharsets.UTF_8);
+            assertThat(buildPlanContent).isEqualTo("my build plan");
         }
 
         FileUtils.deleteDirectory(extractedZipDir.toFile());
@@ -1545,6 +1551,7 @@ public class ProgrammingExerciseTestService {
                     FilePathService.getMarkdownFilePath().resolve(embeddedFileName2).toFile());
         }
         exercise = programmingExerciseRepository.save(exercise);
+        buildPlanRepository.setBuildPlanForExercise("my build plan", exercise);
         exercise = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).orElseThrow();
