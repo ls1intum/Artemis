@@ -787,9 +787,9 @@ public class ProgrammingExerciseTestService {
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
-        // entries 0 through 3 are calls made for repository URL replacement, 4 and 5 are for build plan URL replacement
-        List<String> toBeReplacedURLs = toBeReplacedCaptor.getAllValues().subList(4, 6);
-        List<String> replacementURLs = replacementCaptor.getAllValues().subList(4, 6);
+        // other calls are for repository URL replacements, we only care about build plan URL replacements
+        List<String> toBeReplacedURLs = toBeReplacedCaptor.getAllValues().subList(0, 2);
+        List<String> replacementURLs = replacementCaptor.getAllValues().subList(0, 2);
 
         assertThat(sourceExercise.getBuildPlanAccessSecret()).isNotEqualTo(importedExercise.getBuildPlanAccessSecret());
         assertThat(toBeReplacedURLs.get(0)).contains(sourceExercise.getBuildPlanAccessSecret());

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -288,5 +289,33 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
         BuildPlan sourceBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(sourceExercise.getId());
         BuildPlan targetBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(targetExercise.getId());
         assertThat(sourceBuildPlan).isEqualTo(targetBuildPlan);
+    }
+
+    /**
+     * The old exercise uses the old-style build plans that are stored in Jenkins directly rather than in Artemis.
+     */
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    void testCopyLegacyBuildPlan() throws IOException {
+        var course = courseUtilService.addEmptyCourse();
+
+        ProgrammingExercise sourceExercise = new ProgrammingExercise();
+        course.addExercises(sourceExercise);
+        sourceExercise = programmingExerciseRepository.save(sourceExercise);
+
+        Optional<BuildPlan> sourceBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(sourceExercise.getId());
+        assertThat(sourceBuildPlan).isEmpty();
+
+        ProgrammingExercise targetExercise = new ProgrammingExercise();
+        course.addExercises(targetExercise);
+        targetExercise.generateAndSetProjectKey();
+        targetExercise = programmingExerciseRepository.save(targetExercise);
+
+        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetExercise.getProjectKey());
+
+        continuousIntegrationService.copyBuildPlan(sourceExercise, "", targetExercise, "", "", true);
+
+        Optional<BuildPlan> targetBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(targetExercise.getId());
+        assertThat(targetBuildPlan).isEmpty();
     }
 }
