@@ -67,7 +67,7 @@
         "rxjs": "7.8.1",
         "showdown": "2.1.0",
         "showdown-highlight": "3.1.0",
-        "showdown-katex": "0.8.0",
+        "showdown-katex": "0.6.0",
         "simple-statistics": "7.8.3",
         "smoothscroll-polyfill": "0.4.4",
         "sockjs-client": "1.6.1",
