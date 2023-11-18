@@ -1,10 +1,12 @@
 import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { GitDiffFilePanelComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file-panel.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseGitDiffFilePanel Component', () => {
     let comp: GitDiffFilePanelComponent;
@@ -13,7 +15,18 @@ describe('ProgrammingExerciseGitDiffFilePanel Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [GitDiffFilePanelComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffLineStatComponent)],
+            declarations: [
+                GitDiffFilePanelComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(GitDiffLineStatComponent),
+                MockDirective(DeleteButtonDirective),
+                MockDirective(NgbAccordionDirective),
+                MockDirective(NgbAccordionItem),
+                MockDirective(NgbAccordionHeader),
+                MockDirective(NgbAccordionButton),
+                MockDirective(NgbAccordionCollapse),
+                MockDirective(NgbAccordionBody),
+            ],
             providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffFilePanelComponent);

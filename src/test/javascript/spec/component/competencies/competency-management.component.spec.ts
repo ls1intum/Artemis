@@ -26,6 +26,7 @@ import { By } from '@angular/platform-browser';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
 
 // eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: 'ngx-graph', template: '' })
@@ -54,6 +55,12 @@ describe('CompetencyManagementComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
+                MockDirective(NgbAccordionDirective),
+                MockDirective(NgbAccordionItem),
+                MockDirective(NgbAccordionHeader),
+                MockDirective(NgbAccordionButton),
+                MockDirective(NgbAccordionCollapse),
+                MockDirective(NgbAccordionBody),
             ],
             providers: [
                 MockProvider(AccountService),
