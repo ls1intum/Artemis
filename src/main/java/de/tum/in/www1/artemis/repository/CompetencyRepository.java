@@ -50,7 +50,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
     Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
     /**
-     * Fetches a competency with all linked exercises, lecture units, the associated progress, and completion of the specified user.
+     * Fetches a competency with all linked exercises, lecture units, the associated participations, progress, and completion of the specified user.
      * <p>
      * IMPORTANT: We use the entity graph to fetch the lazy loaded data. The fetched data is limited by joining on the user id.
      *
@@ -63,15 +63,17 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             FROM Competency competency
                 LEFT JOIN competency.userProgress progress
                     ON competency.id = progress.learningGoal.id AND progress.user.id = :userId
-                LEFT JOIN FETCH competency.exercises
+                LEFT JOIN FETCH competency.exercises exercises
+                LEFT JOIN exercises.studentParticipations participations
+                    ON participations.student.id = :userId
                 LEFT JOIN FETCH competency.lectureUnits lectureUnits
                 LEFT JOIN lectureUnits.completedUsers completedUsers
                     ON lectureUnits.id = completedUsers.lectureUnit.id AND completedUsers.user.id = :userId
                 LEFT JOIN FETCH lectureUnits.lecture
             WHERE competency.id = :competencyId
             """)
-    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "lectureUnits.completedUsers" })
-    Optional<Competency> findByIdWithExercisesAndLectureUnitsAndProgressForUser(@Param("competencyId") long competencyId, @Param("userId") long userId);
+    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "exercises.studentParticipations", "lectureUnits.completedUsers" })
+    Optional<Competency> findByIdWithExercisesAndParticipationsAndLectureUnitsAndProgressForUser(@Param("competencyId") long competencyId, @Param("userId") long userId);
 
     @Query("""
             SELECT c
@@ -176,8 +178,9 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
         return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
-    default Competency findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(long competencyId, long userId) {
-        return findByIdWithExercisesAndLectureUnitsAndProgressForUser(competencyId, userId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+    default Competency findByIdWithExercisesAndParticipationsAndLectureUnitsAndProgressForUserElseThrow(long competencyId, long userId) {
+        return findByIdWithExercisesAndParticipationsAndLectureUnitsAndProgressForUser(competencyId, userId)
+                .orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     long countByCourse(Course course);
