@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
 
@@ -27,7 +27,7 @@ public class LtiResource {
     }
 
     @PostMapping("/lti13/dynamic-registration")
-    @EnforceAdmin
+    @EnforceAtLeastInstructor
     public void lti13DynamicRegistration(@RequestParam(name = "openid_configuration") String openIdConfiguration,
             @RequestParam(name = "registration_token", required = false) String registrationToken) {
 

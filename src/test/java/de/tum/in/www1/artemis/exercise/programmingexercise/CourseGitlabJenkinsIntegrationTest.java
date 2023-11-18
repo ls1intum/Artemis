@@ -1026,12 +1026,6 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testInvalidOnlineCourseConfigurationNonUniqueRegistrationId() throws Exception {
-        courseTestService.testInvalidOnlineCourseConfigurationNonUniqueRegistrationId();
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
         courseTestService.testUpdateValidOnlineCourseConfigurationAsStudent_forbidden();

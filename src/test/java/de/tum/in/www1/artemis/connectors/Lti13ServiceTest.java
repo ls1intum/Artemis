@@ -5,9 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.Mockito.*;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -438,7 +436,11 @@ class Lti13ServiceTest {
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
-
+        List<LtiPlatformConfiguration> ltiPlatformConfigurations = new ArrayList<>();
+        LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
+        ltiPlatformConfiguration.setRegistrationId("client-registration");
+        ltiPlatformConfigurations.add(ltiPlatformConfiguration);
+        doReturn(ltiPlatformConfigurations).when(ltiPlatformConfigurationRepository).findAll();
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
 
         String accessToken = "accessToken";
