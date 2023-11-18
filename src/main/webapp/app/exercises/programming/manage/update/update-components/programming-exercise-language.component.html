@@ -19,7 +19,6 @@
             </option>
         </select>
     </div>
-
     <div
         class="form-group mt-2"
         *ngIf="programmingExercise.programmingLanguage && programmingExerciseCreationConfig.projectTypes && programmingExerciseCreationConfig.projectTypes.length > 0"
@@ -150,7 +149,7 @@ It would be very complicated to change the sequential test run feature after an 
     </div>
 
     <!-- Testwise Coverage checkbox-->
-    <div class="form-group" *ngIf="programmingExerciseCreationConfig.testwiseCoverageAnalysisSupported">
+    <ng-container *ngIf="programmingExerciseCreationConfig.testwiseCoverageAnalysisSupported">
         <div class="form-check custom-control custom-checkbox">
             <input
                 class="form-check-input"
@@ -166,5 +165,10 @@ It would be very complicated to change the sequential test run feature after an 
             </label>
             <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recordTestwiseCoverageTooltip"></jhi-help-icon>
         </div>
-    </div>
+    </ng-container>
+    <jhi-programming-exercise-custom-build-plan
+        *ngIf="!programmingExercise.id && programmingExerciseCreationConfig.customBuildPlansSupported"
+        [programmingExercise]="programmingExercise"
+        [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig"
+    ></jhi-programming-exercise-custom-build-plan>
 </section>
