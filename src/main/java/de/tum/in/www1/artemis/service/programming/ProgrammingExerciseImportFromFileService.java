@@ -123,7 +123,6 @@ public class ProgrammingExerciseImportFromFileService {
             }
             catch (IOException e) {
                 log.warn("Could not read build plan file. Continue importing the exercise but skipping the build plan.", e);
-
             }
         }
     }
