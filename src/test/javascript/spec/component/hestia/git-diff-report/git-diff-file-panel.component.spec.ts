@@ -1,11 +1,10 @@
 import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { GitDiffFilePanelComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file-panel.component';
-import { NgbAccordion, NgbPanel } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseGitDiffFilePanel Component', () => {
     let comp: GitDiffFilePanelComponent;
@@ -13,7 +12,7 @@ describe('ProgrammingExerciseGitDiffFilePanel Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbPanel), MockComponent(NgbAccordion)],
+            imports: [ArtemisTestModule],
             declarations: [GitDiffFilePanelComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffLineStatComponent)],
             providers: [],
         }).compileComponents();
