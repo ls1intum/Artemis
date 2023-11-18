@@ -163,13 +163,9 @@ export class CourseManagementService {
      * Finds one course using a GET request.
      * If the course was already loaded it should be retrieved using {@link CourseStorageService#getCourse} or {@link CourseStorageService#subscribeToCourseUpdates}
      * @param courseId the course to fetch
-     * @param userRefresh whether this is a user-initiated refresh (default: false)
      */
-    findOneForDashboard(courseId: number, userRefresh = false): Observable<EntityResponseType> {
-        let params = new HttpParams();
-        if (userRefresh) {
-            params = params.set('refresh', String(true));
-        }
+    findOneForDashboard(courseId: number): Observable<EntityResponseType> {
+        const params = new HttpParams();
         return this.http.get<CourseForDashboardDTO>(`${this.resourceUrl}/${courseId}/for-dashboard`, { params, observe: 'response' }).pipe(
             map((res: HttpResponse<CourseForDashboardDTO>) => {
                 if (res.body) {
