@@ -58,8 +58,8 @@
                         (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
                         [course]="course"
                     >
-                        <ng-template *ngIf="isMessagingEnabled">
-                            <div ngbDropdown container="body" class="d-inline-block">
+                        <ng-template>
+                            <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
                                 <button id="channelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
                                     <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                 </button>
@@ -87,8 +87,8 @@
                         (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
                         [course]="course"
                     >
-                        <ng-template *ngIf="isMessagingEnabled">
-                            <div ngbDropdown container="body" class="d-inline-block">
+                        <ng-template>
+                            <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
                                 <button id="exerciseChannelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
                                     <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                 </button>
@@ -113,8 +113,8 @@
                         (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
                         [course]="course"
                     >
-                        <ng-template *ngIf="isMessagingEnabled">
-                            <div ngbDropdown container="body" class="d-inline-block">
+                        <ng-template>
+                            <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
                                 <button id="lectureChannelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
                                     <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                 </button>
@@ -139,8 +139,8 @@
                         (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
                         [course]="course"
                     >
-                        <ng-template *ngIf="isMessagingEnabled">
-                            <div ngbDropdown container="body" class="d-inline-block">
+                        <ng-template>
+                            <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
                                 <button id="examChannelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
                                     <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                 </button>

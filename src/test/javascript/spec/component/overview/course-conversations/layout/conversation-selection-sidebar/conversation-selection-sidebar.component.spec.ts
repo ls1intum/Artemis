@@ -32,6 +32,7 @@ import { GroupChatIconComponent } from 'app/overview/course-conversations/other/
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
 
 const examples: (ConversationDto | undefined)[] = [
     undefined,
@@ -52,7 +53,7 @@ examples.forEach((activeConversation) => {
             let component: ConversationSelectionSidebarComponent;
             let fixture: ComponentFixture<ConversationSelectionSidebarComponent>;
             let metisConversationService: MetisConversationService;
-            const course = { id: 1 } as any;
+            const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as any;
             const canCreateChannel = jest.fn();
             let allConversations: ConversationDto[] = [];
 
@@ -143,6 +144,7 @@ examples.forEach((activeConversation) => {
                 fixture = TestBed.createComponent(ConversationSelectionSidebarComponent);
                 component = fixture.componentInstance;
                 component.canCreateChannel = canCreateChannel;
+                component.isMessagingEnabled = true;
             });
 
             it('should create', fakeAsync(() => {
