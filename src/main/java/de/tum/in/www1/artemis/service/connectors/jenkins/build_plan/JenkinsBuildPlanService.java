@@ -206,9 +206,7 @@ public class JenkinsBuildPlanService {
      * @param newExercise      The exercise of which the build plan URL is updated.
      * @param jobConfig        The job config in Jenkins for the new exercise.
      */
-    public void updateBuildPlanURLs(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, Document jobConfig) {
-        final String buildProjectKey = newExercise.getProjectKey();
-
+    private void updateBuildPlanURLs(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, Document jobConfig) {
         final Long previousExerciseId = templateExercise.getId();
         final String previousBuildPlanAccessSecret = templateExercise.getBuildPlanAccessSecret();
         final Long newExerciseId = newExercise.getId();
@@ -286,6 +284,7 @@ public class JenkinsBuildPlanService {
         final var jobXml = jenkinsJobService.getJobConfigForJobInFolder(sourceProjectKey, sourcePlanKey);
 
         updateBuildPlanURLs(sourceExercise, targetExercise, jobXml);
+
         jenkinsJobService.createJobInFolder(jobXml, targetProjectKey, targetPlanKey);
 
         return targetPlanKey;
