@@ -121,16 +121,22 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
                 .then((user) => {
                     this.user = user ?? this.user;
                     if (!this.user.vcsAccessToken) {
-                        // if still no access token exists after fetching the user object, inform the student that
-                        // something is wrong and that they should try again after reloading the page.
-                        throw new Error();
+                        this.onTokenRetrievalFail();
                     }
                 })
                 .catch(() => {
-                    this.unableToLoadVCSAccessToken = true;
-                    this.alertService.error('artemisApp.exerciseActions.fetchVCSAccessTokenError');
+                    this.onTokenRetrievalFail();
                 });
         }
+    }
+
+    /**
+     * Called if still no access token exists after fetching the user object from the server. This informs the student
+     * that something is wrong and that they should try again after reloading the page.
+     */
+    onTokenRetrievalFail() {
+        this.unableToLoadVCSAccessToken = true;
+        this.alertService.error('artemisApp.exerciseActions.fetchVCSAccessTokenError');
     }
 
     private getRepositoryUrl() {
