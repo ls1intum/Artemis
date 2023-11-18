@@ -45,6 +45,10 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
     private ModelingExercise modelingExercise;
 
+    private StudentParticipation participation;
+
+    private Result result;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 1);
@@ -53,16 +57,16 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
     void initTestCase2() {
         course = courseUtilService.addCourseWithModelingAndTextExercise();
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
+
+        participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+        participation.setTestRun(true);
+        result = new Result();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIsUserAllowedToGetResultAsInstructorForTestRun() {
         this.initTestCase2();
-
-        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        participation.setTestRun(true);
-        Result result = new Result();
 
         boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
         Assertions.assertTrue(isUserAllowedToGetResult);
