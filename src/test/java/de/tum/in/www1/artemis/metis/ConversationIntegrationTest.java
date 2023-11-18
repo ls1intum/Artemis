@@ -15,7 +15,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -26,7 +29,10 @@ import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.service.dto.ResponsibleUserDTO;
 import de.tum.in.www1.artemis.user.UserFactory;
-import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationUserDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
 class ConversationIntegrationTest extends AbstractConversationTest {
 
@@ -171,6 +177,41 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(oneToOneChat.getId());
         conversationRepository.deleteById(channel.getId());
         conversationRepository.deleteById(courseWideChannel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getConversationsOfUser_onlyCourseWideChannelsIfMessagingDisabled() throws Exception {
+        // given
+        var channel = createChannel(false, TEST_PREFIX + "1");
+        addUsersToConversation(channel.getId(), "tutor1");
+
+        var groupChat = createGroupChat("tutor1");
+        hideConversation(groupChat.getId(), "tutor1");
+
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+                HttpStatus.CREATED);
+        var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
+        this.resetWebsocketMock();
+        favoriteConversation(oneToOneChat.getId(), "tutor1");
+
+        var courseWideChannel = createChannel(false, TEST_PREFIX + "2");
+        conversationUtilService.createCourseWideChannel(exampleCourse, "course-wide");
+
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
+        List<ConversationDTO> channels = request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
+
+        channels.forEach(conv -> assertThat(conv instanceof ChannelDTO ch && ch.getIsCourseWide()));
+
+        // cleanup
+        conversationMessageRepository.deleteById(post.getId());
+        conversationRepository.deleteById(groupChat.getId());
+        conversationRepository.deleteById(oneToOneChat.getId());
+        conversationRepository.deleteById(channel.getId());
+        conversationRepository.deleteById(courseWideChannel.getId());
+
+        // active messaging again
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 
     @Test
