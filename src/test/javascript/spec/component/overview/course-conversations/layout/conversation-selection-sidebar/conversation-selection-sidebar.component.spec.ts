@@ -144,7 +144,6 @@ examples.forEach((activeConversation) => {
                 fixture = TestBed.createComponent(ConversationSelectionSidebarComponent);
                 component = fixture.componentInstance;
                 component.canCreateChannel = canCreateChannel;
-                component.isMessagingEnabled = true;
             });
 
             it('should create', fakeAsync(() => {
@@ -296,6 +295,29 @@ examples.forEach((activeConversation) => {
                 component.openCodeOfConduct();
                 expect(metisSpy).toHaveBeenCalledOnce();
             });
+
+            it('should hide buttons if messaging disabled', fakeAsync(() => {
+                fixture.detectChanges();
+                tick(301);
+                component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as any;
+                component.isMessagingEnabled = false;
+                fixture.detectChanges();
+                tick(301);
+
+                const channelButton = fixture.debugElement.query(By.css('#channelButton'));
+                const exerciseChannelButton = fixture.debugElement.query(By.css('#exerciseChannelButton'));
+                const lectureChannelButton = fixture.debugElement.query(By.css('#lectureChannelButton'));
+                const examChannelButton = fixture.debugElement.query(By.css('#examChannelButton'));
+                const groupChatButton = fixture.debugElement.query(By.css('#createGroupChat'));
+                const oneToOneChatButton = fixture.debugElement.query(By.css('#createOneToOne'));
+
+                expect(channelButton).toBeNull();
+                expect(exerciseChannelButton).toBeNull();
+                expect(lectureChannelButton).toBeNull();
+                expect(examChannelButton).toBeNull();
+                expect(groupChatButton).toBeNull();
+                expect(oneToOneChatButton).toBeNull();
+            }));
 
             function createConversationDialogTest(modalReturnValue: any, dialog: Type<AbstractDialogComponent>, buttonId: string) {
                 fixture.detectChanges();
