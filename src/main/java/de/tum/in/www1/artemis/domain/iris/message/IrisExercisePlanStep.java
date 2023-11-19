@@ -88,12 +88,4 @@ public class IrisExercisePlanStep extends DomainObject {
         return "IrisExercisePlanStep{" + "id=" + getId() + ", component=" + component + ", instructions='" + instructions + '\'' + ", executionStage=" + executionStage + '}';
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (!super.equals(obj)) {
-            return false;
-        }
-        IrisExercisePlanStep other = (IrisExercisePlanStep) obj;
-        return this.component == other.component && this.instructions.equals(other.instructions);
-    }
 }

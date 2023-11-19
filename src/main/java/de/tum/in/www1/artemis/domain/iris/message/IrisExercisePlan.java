@@ -57,8 +57,4 @@ public class IrisExercisePlan extends IrisMessageContent {
         return "IrisExercisePlan{" + "message=" + (message == null ? "null" : message.getId()) + ", steps=" + steps + '}';
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj) && this.steps.equals(((IrisExercisePlan) obj).steps);
-    }
 }
