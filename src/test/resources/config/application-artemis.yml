@@ -61,3 +61,5 @@ artemis:
             programming: module_programming_test
     apollon:
         conversion-service-url: http://localhost:8080
+    plagiarism-checks:
+        plagiarism-results-limit: 100

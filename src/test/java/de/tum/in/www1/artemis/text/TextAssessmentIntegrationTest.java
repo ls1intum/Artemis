@@ -335,7 +335,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void getResult_studentHidden() throws Exception {
         int submissionCount = 5;
         int submissionSize = 4;
-        var textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
+        var textBlocks = TextExerciseFactory.generateTextBlocks(submissionCount * submissionSize);
         TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
         textBlocks.forEach(TextBlock::computeId);
         textBlockRepository.saveAll(textBlocks);
@@ -411,7 +411,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void getDataForTextEditor_hasTextBlocks() throws Exception {
         exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), null);
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        var textBlocks = textExerciseUtilService.generateTextBlocks(1);
+        var textBlocks = TextExerciseFactory.generateTextBlocks(1);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
 

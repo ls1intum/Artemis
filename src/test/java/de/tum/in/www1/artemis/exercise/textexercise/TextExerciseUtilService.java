@@ -81,7 +81,7 @@ public class TextExerciseUtilService {
     private UserUtilService userUtilService;
 
     /**
-     * Generate a set of specified size containing TextBlocks with dummy Text
+     * Creates and saves a TextExercise with feedback suggestions enabled.
      *
      * @param count expected size of TextBlock set
      * @return Set of dummy TextBlocks
@@ -102,6 +102,8 @@ public class TextExerciseUtilService {
      *
      * @param course The course to which the exercise belongs
      * @return the created text exercise
+     * @param course The Course to which the exercise belongs
+     * @return The created TextExercise
      */
     public TextExercise createSampleTextExercise(Course course) {
         var textExercise = new TextExercise();
@@ -114,6 +116,15 @@ public class TextExerciseUtilService {
         return textExercise;
     }
 
+    /**
+     * Creates and saves a TextExercise. Also creates and saves the given number of StudentParticipations and TextSubmissions.
+     *
+     * @param course          The Course to which the TextExercise belongs
+     * @param textBlocks      A list of TextBlocks to be used for the TextSubmissions (must be equal to submissionCount * submissionSize)
+     * @param submissionCount The number of TextSubmissions to be created
+     * @param submissionSize  The number of TextBlocks to be used for each TextSubmission
+     * @return The created TextExercise
+     */
     public TextExercise createSampleTextExerciseWithSubmissions(Course course, List<TextBlock> textBlocks, int submissionCount, int submissionSize) {
         if (textBlocks.size() != submissionCount * submissionSize) {
             throw new IllegalArgumentException("number of textBlocks must be equal to submissionCount * submissionSize");
@@ -144,15 +155,33 @@ public class TextExerciseUtilService {
         return textExercise;
     }
 
-    public TextExercise createIndividualTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
-        TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+    /**
+     * Creates and saves a TextExercise with 10 achievable points and 0 bonus points.
+     *
+     * @param course            The Course to which the exercise belongs
+     * @param releaseDate       The release date of the TextExercise
+     * @param dueDate           The due date of the TextExercise
+     * @param assessmentDueDate The assessment due date of the TextExercise
+     * @return The created TextExercise
+     */
+    public TextExercise createIndividualTextExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         return exerciseRepo.save(textExercise);
     }
 
-    public TextExercise createTeamTextExercise(Course course, ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
-        TextExercise teamTextExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+    /**
+     * Creates and saves a TextExercise with 10 achievable points and 0 bonus points for a team.
+     *
+     * @param course            The Course to which the TextExercise belongs
+     * @param releaseDate       The release date of the TextExercise
+     * @param dueDate           The due date of the TextExercise
+     * @param assessmentDueDate The assessment due date of the TextExercise
+     * @return The created TextExercise
+     */
+    public TextExercise createTeamTextExercise(Course course, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+        TextExercise teamTextExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
         teamTextExercise.setMaxPoints(10.0);
         teamTextExercise.setBonusPoints(0.0);
         teamTextExercise.setMode(ExerciseMode.TEAM);
@@ -160,8 +189,10 @@ public class TextExerciseUtilService {
     }
 
     /**
-     * @param title The title of the to be added text exercise
-     * @return A course with one specified text exercise
+     * Creates and saves a Course with one TextExercise.
+     *
+     * @param title The title of the created TextExercise
+     * @return The newly created Course
      */
     public Course addCourseWithOneReleasedTextExercise(String title) {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
@@ -177,11 +208,11 @@ public class TextExerciseUtilService {
     }
 
     /**
-     * renames the passed text exercise using the passed title
+     * Renames and saves the passed TextExercise using the given title.
      *
-     * @param textExercise exercise to be renamed
-     * @param title        new title of the exercise
-     * @return the renamed exercise
+     * @param textExercise The TextExercise to be renamed
+     * @param title        The new title of the TextExercise
+     * @return The updated TextExercise
      */
     public TextExercise renameTextExercise(TextExercise textExercise, String title) {
         textExercise.setTitle(title);
@@ -190,10 +221,21 @@ public class TextExerciseUtilService {
         return textExercise;
     }
 
+    /**
+     * Creates and saves a Course with one TextExercise.
+     *
+     * @return The created Course
+     */
     public Course addCourseWithOneReleasedTextExercise() {
         return addCourseWithOneReleasedTextExercise("Text");
     }
 
+    /**
+     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise.
+     *
+     * @param title The title of the created TextExercise
+     * @return The created TextExercise
+     */
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise(String title) {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
@@ -203,16 +245,34 @@ public class TextExerciseUtilService {
         return exerciseRepo.save(textExercise);
     }
 
+    /**
+     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise.
+     *
+     * @return The created TextExercise
+     */
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
         return addCourseExamExerciseGroupWithOneTextExercise(null);
     }
 
+    /**
+     * Creates and saves a Course with an Exam with one mandatory ExerciseGroup with one TextExercise. The exam has a review date [now; now + 60min].
+     *
+     * @return The created TextExercise
+     */
     public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamWithReviewDatesAndCourse(true);
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         return exerciseRepo.save(textExercise);
     }
 
+    /**
+     * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and login.
+     *
+     * @param exercise   The TextExercise to which the StudentParticipation belongs
+     * @param submission The TextSubmission that belongs to the StudentParticipation
+     * @param login      The login of the user the TextSubmission belongs to
+     * @return The updated TextSubmission
+     */
     public TextSubmission saveTextSubmission(TextExercise exercise, TextSubmission submission, String login) {
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmission(submission);
@@ -221,6 +281,17 @@ public class TextExerciseUtilService {
         return submission;
     }
 
+    /**
+     * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and login. Also creates and saves a Result for the StudentParticipation given the
+     * assessorLogin.
+     *
+     * @param exercise      The TextExercise the TextSubmission belongs to
+     * @param submission    The TextSubmission that belongs to the StudentParticipation
+     * @param studentLogin  The login of the user the TextSubmission belongs to (for individual exercises)
+     * @param teamId        The id of the team the TextSubmission belongs to (for team exercises)
+     * @param assessorLogin The login of the assessor the Result belongs to
+     * @return The updated TextSubmission
+     */
     private TextSubmission saveTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String studentLogin, Long teamId, String assessorLogin) {
         StudentParticipation participation = Optional.ofNullable(studentLogin).map(login -> participationUtilService.createAndSaveParticipationForExercise(exercise, login))
                 .orElseGet(() -> participationUtilService.addTeamParticipationForExercise(exercise, teamId));
@@ -250,14 +321,44 @@ public class TextExerciseUtilService {
         return submission;
     }
 
+    /**
+     * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and login. Also creates and saves a Result for the StudentParticipation given the
+     * assessorLogin.
+     *
+     * @param exercise      The TextExercise the TextSubmission belongs to
+     * @param submission    The TextSubmission that belongs to the StudentParticipation
+     * @param login         The login of the user the TextSubmission belongs to
+     * @param assessorLogin The login of the assessor the Result belongs to
+     * @return The updated TextSubmission
+     */
     public TextSubmission saveTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String login, String assessorLogin) {
         return saveTextSubmissionWithResultAndAssessor(exercise, submission, login, null, assessorLogin);
     }
 
+    /**
+     * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and teamId. Also creates and saves a Result for the StudentParticipation given the
+     * assessorLogin.
+     *
+     * @param exercise      The TextExercise the TextSubmission belongs to
+     * @param submission    The TextSubmission that belongs to the StudentParticipation
+     * @param teamId        The id of the team the TextSubmission belongs to
+     * @param assessorLogin The login of the assessor the Result belongs to
+     */
     public void saveTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, long teamId, String assessorLogin) {
         saveTextSubmissionWithResultAndAssessor(exercise, submission, null, teamId, assessorLogin);
     }
 
+    /**
+     * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and login. Also creates and saves a Result for the StudentParticipation given the
+     * assessorLogin and List of Feedbacks.
+     *
+     * @param exercise      The TextExercise the TextSubmission belongs to
+     * @param submission    The TextSubmission that belongs to the StudentParticipation
+     * @param studentLogin  The login of the user the TextSubmission belongs to
+     * @param assessorLogin The login of the assessor the Result belongs to
+     * @param feedbacks     The Feedbacks that belong to the Result
+     * @return The updated TextSubmission
+     */
     public TextSubmission addTextSubmissionWithResultAndAssessorAndFeedbacks(TextExercise exercise, TextSubmission submission, String studentLogin, String assessorLogin,
             List<Feedback> feedbacks) {
         submission = saveTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
@@ -279,6 +380,13 @@ public class TextExerciseUtilService {
         return submission;
     }
 
+    /**
+     * Saves the given TextBlocks for the given TextSubmission.
+     *
+     * @param blocks     The TextBlocks to be saved
+     * @param submission The TextSubmission the TextBlocks belong to
+     * @return The updated TextSubmission
+     */
     public TextSubmission addAndSaveTextBlocksToTextSubmission(Set<TextBlock> blocks, TextSubmission submission) {
         blocks.forEach(block -> {
             block.setSubmission(submission);
@@ -290,6 +398,14 @@ public class TextExerciseUtilService {
         return textSubmissionRepo.save(submission);
     }
 
+    /**
+     * Creates and saves a TextSubmission for the given TextExercise and Participant.
+     *
+     * @param textExercise The TextExercise the TextSubmission belongs to
+     * @param participant  The Participant the TextSubmission belongs to
+     * @param text         The text of the TextSubmission
+     * @return The created TextSubmission
+     */
     public TextSubmission createSubmissionForTextExercise(TextExercise textExercise, Participant participant, String text) {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission(text, Language.ENGLISH, true);
         textSubmission = textSubmissionRepo.save(textSubmission);
@@ -311,6 +427,12 @@ public class TextExerciseUtilService {
         return textSubmission;
     }
 
+    /**
+     * Creates and saves a TextPlagiarismResult for the given Exercise.
+     *
+     * @param exercise The Exercise the TextPlagiarismResult belongs to
+     * @return The created TextPlagiarismResult
+     */
     public TextPlagiarismResult createTextPlagiarismResultForExercise(Exercise exercise) {
         TextPlagiarismResult result = new TextPlagiarismResult();
         result.setExercise(exercise);
@@ -319,11 +441,26 @@ public class TextExerciseUtilService {
         return plagiarismResultRepo.save(result);
     }
 
+    /**
+     * Creates a TextAssessmentEvent with the given parameters.
+     *
+     * @param courseId        The id of the Course the TextAssessmentEvent belongs to
+     * @param userId          The id of the User the TextAssessmentEvent belongs to
+     * @param exerciseId      The id of the Exercise the TextAssessmentEvent belongs to
+     * @param participationId The id of the Participation the TextAssessmentEvent belongs to
+     * @param submissionId    The id of the Submission the TextAssessmentEvent belongs to
+     * @return The created TextAssessmentEvent
+     */
     public TextAssessmentEvent createSingleTextAssessmentEvent(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
         return TextExerciseFactory.generateTextAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC, courseId, userId,
                 exerciseId, participationId, submissionId);
     }
 
+    /**
+     * Creates and saves a Course with one finished TextExercise (release, due, and assessment due date in the past).
+     *
+     * @return The created Course
+     */
     public Course addCourseWithOneFinishedTextExercise() {
         Course course = CourseFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         TextExercise finishedTextExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(12), pastTimestamp.plusHours(24), course);
@@ -335,10 +472,10 @@ public class TextExerciseUtilService {
     }
 
     /**
-     * creates and saves a text exercise for an exam
+     * Creates and saves a TextExercise for an Exam.
      *
-     * @param exerciseGroup exercise group to which the text exercise should be added
-     * @return newly created text exercise
+     * @param exerciseGroup The ExerciseGroup to which the exercise belongs
+     * @return The created TextExercise
      */
     public TextExercise createTextExerciseForExam(ExerciseGroup exerciseGroup) {
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
@@ -347,16 +484,17 @@ public class TextExerciseUtilService {
     }
 
     /**
-     * Creates a submission with a result and an assessor of the passed text exercise.
+     * Creates and saves a TextSubmission and StudentParticipation for the given TextExercise, and studentLogin. Also creates and saves a Result for the
+     * StudentParticipation given the assessorLogin.
      *
-     * @param textExercise exercise of the submission.
-     * @param studentLogin login of a student who created the submission.
-     * @param tutorLogin   login of the tutor assessing the exercise.
-     * @return the created text submission.
+     * @param textExercise  The TextExercise the TextSubmission belongs to
+     * @param studentLogin  The login of the user the TextSubmission belongs to
+     * @param assessorLogin The login of the assessor the Result belongs to
+     * @return The created TextSubmission
      */
-    public TextSubmission createTextSubmissionWithResultAndAssessor(TextExercise textExercise, String studentLogin, String tutorLogin) {
+    public TextSubmission createTextSubmissionWithResultAndAssessor(TextExercise textExercise, String studentLogin, String assessorLogin) {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        textSubmission = saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, studentLogin, tutorLogin);
+        textSubmission = saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, studentLogin, assessorLogin);
 
         return textSubmission;
     }

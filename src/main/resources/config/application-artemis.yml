@@ -106,3 +106,6 @@ artemis:
 
     data-export:
         days-between-data-exports: 14
+
+    plagiarism-checks:
+        plagiarism-results-limit: 100
