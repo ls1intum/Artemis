@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
@@ -20,6 +20,7 @@ import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-ico
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { switchMap, tap } from 'rxjs/operators';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
@@ -44,7 +45,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     saveCommand: SaveExerciseCommand<FileUploadExercise>;
 
-    documentationType = DocumentationType.FileUpload;
+    readonly documentationType: DocumentationType = 'FileUpload';
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -56,7 +57,6 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         private modalService: NgbModal,
         private popupService: ExerciseUpdateWarningService,
         private activatedRoute: ActivatedRoute,
-        private router: Router,
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private alertService: AlertService,
@@ -75,9 +75,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      * Initializes information relevant to file upload exercise
      */
     ngOnInit() {
-        // This is used to scroll page to the top of the page, because the routing keeps the position for the
-        // new page from previous page.
-        window.scroll(0, 0);
+        scrollToTopOfPage();
 
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
@@ -185,6 +183,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
      */
     updateCategories(categories: ExerciseCategory[]) {
         this.fileUploadExercise.categories = categories;
+        this.exerciseCategories = categories;
     }
 
     private onSaveSuccess(exercise: Exercise) {

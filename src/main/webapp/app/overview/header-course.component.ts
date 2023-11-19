@@ -3,6 +3,7 @@ import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { Router } from '@angular/router';
+import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-header-course',
@@ -19,7 +20,8 @@ export class HeaderCourseComponent implements OnChanges {
     public enableShowMore = false;
     public longDescriptionShown = false;
 
-    constructor(private router: Router) {}
+    faArrowDown = faArrowDown;
+    constructor(protected router: Router) {}
 
     ngOnChanges() {
         this.adjustCourseDescription();
@@ -51,14 +53,5 @@ export class HeaderCourseComponent implements OnChanges {
                 this.courseDescription = this.course.description;
             }
         }
-    }
-
-    shouldShowGoToCourseManagementButton() {
-        const courseManagementPage = this.router.url.startsWith('/course-management');
-        return !courseManagementPage && this.course.isAtLeastTutor;
-    }
-
-    redirectToCourseManagement() {
-        this.router.navigate(['course-management', this.course.id]);
     }
 }

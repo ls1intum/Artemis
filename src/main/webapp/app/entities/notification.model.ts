@@ -103,6 +103,8 @@ export const NEW_MESSAGE_TITLE = 'artemisApp.conversationNotification.title.newM
 
 export const NEW_REPLY_MESSAGE_TITLE = 'artemisApp.singleUserNotification.title.messageReply';
 
+export const MENTIONED_IN_MESSAGE_TITLE = 'artemisApp.singleUserNotification.title.mentionedInMessage';
+
 export const CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE = 'artemisApp.singleUserNotification.title.createOneToOneChat';
 
 export const CONVERSATION_CREATE_GROUP_CHAT_TITLE = 'artemisApp.singleUserNotification.title.createGroupChat';

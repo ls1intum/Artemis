@@ -222,7 +222,7 @@
                         "tooltip": "Eine Lerneinheit oder Aufgabe die noch nicht hinreichend gelöst wurde."
                     },
                     "completedLearningObject": {
-                        "title": "Abgeschlossene Lerneinheit/Aufgabe",
+                        "title": "Abgeschlossene Lerneinheit / Aufgabe",
                         "tooltip": "Eine Lerneinheit oder Aufgabe die hinreichend gelöst wurde."
                     }
                 }
