@@ -203,69 +203,54 @@ public class ProgrammingExerciseService {
         VersionControlService versionControl = versionControlService.orElseThrow();
 
         // Step 1: Setting constant facts for a programming exercise
-        System.out.println("Step 1");
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setBranch(versionControl.getDefaultBranchOfArtemis());
 
         // Step 2: Creating repositories for new exercise
-        System.out.println("Step 2");
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(programmingExercise);
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // Step 3: Initializing solution and template participation
-        System.out.println("Step 3");
         initParticipations(savedProgrammingExercise);
 
         // Step 4a: Setting build plan IDs and URLs for template and solution participation
-        System.out.println("Step 4a");
         setURLsAndBuildPlanIDsForNewExercise(savedProgrammingExercise);
 
         // Step 4b: Connecting base participations with the exercise
-        System.out.println("Step 4b");
         connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
         // Step 4c: Connect auxiliary repositories
-        System.out.println("Step 4c");
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 
         // Step 5: Setup exercise template
-        System.out.println("Step 5");
         programmingExerciseRepositoryService.setupExerciseTemplate(savedProgrammingExercise, exerciseCreator);
 
         // Step 6: Create initial submission
-        System.out.println("Step 6");
         programmingSubmissionService.createInitialSubmissions(savedProgrammingExercise);
 
         savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // Step 7: Create exercise channel
-        System.out.println("Step 7");
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
 
         // Step 8: Setup build plans for template and solution participation
-        System.out.println("Step 8");
         setupBuildPlansForNewExercise(savedProgrammingExercise);
 
         savedProgrammingExercise = programmingExerciseRepository.save(savedProgrammingExercise);
 
         // Step 9: Update task from problem statement
-        System.out.println("Step 9");
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
         // Step 10: Webhooks and scheduling
         // Step 10a: Create web hooks for version control
-        System.out.println("Step 10a");
         versionControl.addWebHooksForExercise(savedProgrammingExercise);
         // Step 10b: Schedule operations
-        System.out.println("Step 10b");
         scheduleOperations(savedProgrammingExercise.getId());
         // Step 10c: Check notifications for new exercise
-        System.out.println("Step 10c");
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
 
         // Step 11: Trigger build if the exercise is not imported.
-        System.out.println("Step 11");
         if (!isImportedFromFile) {
             triggerBuildForTemplateAndSolutionParticipation(savedProgrammingExercise);
         }
