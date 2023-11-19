@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.BadRequestException;
+
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +24,7 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisExercisePlanStepRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryService;
@@ -71,12 +74,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private final SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository;
 
+    private final IrisSessionRepository irisSessionRepository;
+
     public IrisCodeEditorSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, AuthorizationCheckService authCheckService,
             IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, IrisExercisePlanStepRepository irisExercisePlanStepRepository,
             VersionControlService versionControlService, GitService gitService, RepositoryService repositoryService,
-            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository) {
+            TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
+            IrisSessionRepository irisSessionRepository) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -89,6 +94,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         this.repositoryService = repositoryService;
         this.templateParticipationRepository = templateParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
+        this.irisSessionRepository = irisSessionRepository;
     }
 
     /**
@@ -148,7 +154,10 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      */
     @Override
     public void requestAndHandleResponse(IrisSession irisSession) {
-        IrisCodeEditorSession session = castToSessionType(irisSession, IrisCodeEditorSession.class);
+        var sessionFromDB = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        if (!(sessionFromDB instanceof IrisCodeEditorSession session)) {
+            throw new BadRequestException("Iris session is not a code editor session");
+        }
         var exercise = session.getExercise();
         var params = initializeParams(exercise);
         params.put("chatHistory", session.getMessages()); // Additionally add the chat history to the request
