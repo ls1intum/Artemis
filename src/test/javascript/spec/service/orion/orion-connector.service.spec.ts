@@ -12,6 +12,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { AlertService } from 'app/core/util/alert.service';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 
 describe('OrionConnectorService', () => {
     let serviceUnderTest: OrionConnectorService;
@@ -29,6 +30,7 @@ describe('OrionConnectorService', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: Router, useValue: router },
+                { provide: OrionExerciseDetailsStudentActionsComponent, useValue: MockSyncStorage },
             ],
         });
 
