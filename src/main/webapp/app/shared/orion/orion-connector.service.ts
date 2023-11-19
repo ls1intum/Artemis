@@ -119,7 +119,6 @@ export class OrionConnectorService {
      * @param viewString ExerciseView which is currently open in the IDE as string
      */
     onExerciseOpened(opened: number, viewString: string): void {
-        this.feedbackTriggerActionSubject.next();
         const view = ExerciseView[viewString];
         this.setIDEStateParameter({ view });
         this.setIDEStateParameter({ opened });
@@ -297,6 +296,13 @@ export class OrionConnectorService {
         } else {
             theWindow().orionExerciseConnector.initializeTestRepository('null');
         }
+    }
+
+    /**
+     * Initializes feedback in orion
+     */
+    initializeFeedback() {
+        this.feedbackTriggerActionSubject.next();
     }
 
     /**

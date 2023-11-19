@@ -8,6 +8,7 @@ import { OrionConnectorService } from 'app/shared/orion/orion-connector.service'
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
+import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
     selector: 'jhi-orion-exercise-details-student-actions',
@@ -86,10 +87,11 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
                 if (result.rated !== undefined && result.rated) {
                     if (result.feedbacks !== undefined) {
                         connectorService.initializeFeedbackArray(result.feedbacks);
+                        return;
                     }
-                    return;
                 }
             });
+            connectorService.initializeFeedbackArray([] as Array<Feedback>);
         });
     }
 

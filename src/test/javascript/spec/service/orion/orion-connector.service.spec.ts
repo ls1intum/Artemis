@@ -242,12 +242,11 @@ describe('OrionConnectorService', () => {
     it('should forward initializeTestRepository', () => {
         serviceUnderTest.initializeTestRepository(exercise);
 
-        expect((window as any).orionExerciseConnector.initializeTestRepository).not.toHaveBeenCalled();
+        expect((window as any).orionExerciseConnector.initializeTestRepository).toHaveBeenCalledOnce();
 
         const advancedExercise = { id: 42, releaseTestsWithExampleSolution: true, testRepositoryUrl: 'testurl.de' } as ProgrammingExercise;
         serviceUnderTest.initializeTestRepository(advancedExercise);
 
-        expect((window as any).orionExerciseConnector.initializeTestRepository).toHaveBeenCalledOnce();
         expect((window as any).orionExerciseConnector.initializeTestRepository).toHaveBeenCalledWith('testurl.de');
     });
 
