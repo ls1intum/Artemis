@@ -88,7 +88,7 @@ public class IrisRequestMockProvider {
     public void mockMessageV1Response(String responseMessage) throws JsonProcessingException {
         var irisMessage = new IrisMessage();
         irisMessage.setSender(IrisMessageSender.LLM);
-        irisMessage.addContent(new IrisTextMessageContent(irisMessage, responseMessage));
+        irisMessage.addContent(new IrisTextMessageContent(responseMessage));
 
         var response = new IrisMessageResponseDTO(null, irisMessage);
         var json = mapper.writeValueAsString(response);

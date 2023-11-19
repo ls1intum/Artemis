@@ -124,7 +124,15 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     }
 
     private void verifyWasSentOverWebsocket(String userLogin, String topicSuffix, ArgumentMatcher<Object> matcher) {
-        verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1)).sendMessageToUser(eq(userLogin), eq("/topic/iris/" + topicSuffix), ArgumentMatchers.argThat(matcher));
+        // @formatter:off
+        verify(websocketMessagingService, timeout(TIMEOUT_MS)
+                .times(1))
+                .sendMessageToUser(
+                        eq(userLogin),
+                        eq("/topic/iris/" + topicSuffix),
+                        ArgumentMatchers.argThat(matcher)
+                );
+        // @formatter:on
     }
 
     /**

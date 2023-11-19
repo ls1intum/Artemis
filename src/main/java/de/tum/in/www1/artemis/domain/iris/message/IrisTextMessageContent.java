@@ -25,8 +25,7 @@ public class IrisTextMessageContent extends IrisMessageContent {
     public IrisTextMessageContent() {
     }
 
-    public IrisTextMessageContent(IrisMessage irisMessage, @Nullable String textContent) {
-        super(irisMessage);
+    public IrisTextMessageContent(@Nullable String textContent) {
         this.textContent = textContent;
     }
 

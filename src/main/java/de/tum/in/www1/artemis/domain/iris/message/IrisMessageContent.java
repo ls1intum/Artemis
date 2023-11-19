@@ -31,18 +31,17 @@ public abstract class IrisMessageContent extends DomainObject {
     @JsonIgnore
     IrisMessage message;
 
-    // Required by JPA
-    public IrisMessageContent() {
-    }
-
-    public IrisMessageContent(IrisMessage irisMessage) {
-        this.message = irisMessage;
-    }
-
     public IrisMessage getMessage() {
         return message;
     }
 
+    /**
+     * Sets the message this content belongs to.
+     * This is set to default visibility to ensure consistency of the object graph!
+     * It will be called by IrisMessage#addContent.
+     *
+     * @param message the message this content belongs to
+     */
     public void setMessage(IrisMessage message) {
         this.message = message;
     }

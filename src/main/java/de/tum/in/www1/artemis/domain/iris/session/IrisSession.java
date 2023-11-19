@@ -39,6 +39,13 @@ public abstract class IrisSession extends DomainObject {
     @Column(name = "creation_date")
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
+    public IrisMessage newMessage() {
+        var message = new IrisMessage();
+        message.setSession(this);
+        this.messages.add(message);
+        return message;
+    }
+
     public void setCreationDate(ZonedDateTime creationDate) {
         this.creationDate = creationDate;
     }

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class IrisExercisePlan extends IrisMessageContent {
 
+    @OrderColumn(name = "exercise_plan_step_order")
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<IrisExercisePlanStep> steps;
 
@@ -27,7 +28,13 @@ public class IrisExercisePlan extends IrisMessageContent {
     }
 
     public void setSteps(List<IrisExercisePlanStep> steps) {
+        if (this.steps != null) {
+            this.steps.forEach(step -> step.setPlan(null));
+        }
         this.steps = steps;
+        if (this.steps != null) {
+            this.steps.forEach(step -> step.setPlan(this));
+        }
     }
 
     @Override

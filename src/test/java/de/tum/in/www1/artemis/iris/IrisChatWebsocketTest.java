@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -49,9 +48,8 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendMessage() {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        var message = new IrisMessage();
-        message.setSession(irisSession);
-        message.setContent(List.of(createMockContent(message), createMockContent(message)));
+        var message = irisSession.newMessage();
+        message.addContent(createMockContent(message), createMockContent(message));
         message.setMessageDifferentiator(101010);
         irisChatWebsocketService.sendMessage(message);
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/sessions/" + irisSession.getId()),
@@ -67,7 +65,7 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
         String randomNoun = nouns[rdm.nextInt(nouns.length)];
         var text = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
 
-        var content = new IrisTextMessageContent(message, text);
+        var content = new IrisTextMessageContent(text);
         content.setId(rdm.nextLong());
         return content;
     }

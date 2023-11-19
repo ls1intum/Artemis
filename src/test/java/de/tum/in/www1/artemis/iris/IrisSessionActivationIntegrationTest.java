@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.iris;
 
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -56,9 +55,8 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void createMessageUnauthorized() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student3"));
-        var messageToSend = new IrisMessage();
-        messageToSend.setSession(irisSession);
-        messageToSend.addContent(createMockContent(messageToSend));
+        var messageToSend = irisSession.newMessage();
+        messageToSend.addContent(createMockContent());
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.FORBIDDEN);
     }
 
@@ -66,12 +64,10 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     void getMessagesUnauthorized() throws Exception {
         var irisSession = irisSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "student4"));
-        var message1 = new IrisMessage();
-        message1.setSession(irisSession);
-        message1.setContent(List.of(createMockContent(message1), createMockContent(message1), createMockContent(message1)));
-        var message2 = new IrisMessage();
-        message2.setSession(irisSession);
-        message2.setContent(List.of(createMockContent(message2), createMockContent(message2), createMockContent(message2)));
+        var message1 = irisSession.newMessage();
+        message1.addContent(createMockContent(), createMockContent(), createMockContent());
+        var message2 = irisSession.newMessage();
+        message2.addContent(createMockContent(), createMockContent(), createMockContent());
 
         irisMessageService.saveMessage(message1, irisSession, IrisMessageSender.LLM);
         irisMessageService.saveMessage(message2, irisSession, IrisMessageSender.USER);
@@ -79,8 +75,8 @@ class IrisSessionActivationIntegrationTest extends AbstractIrisIntegrationTest {
         request.getList("/api/iris/sessions/" + irisSession.getId() + "/messages", HttpStatus.FORBIDDEN, IrisMessage.class);
     }
 
-    private IrisTextMessageContent createMockContent(IrisMessage message) {
-        var content = new IrisTextMessageContent(message, "Not relevant for the test cases");
+    private IrisTextMessageContent createMockContent() {
+        var content = new IrisTextMessageContent("Not relevant for the test cases");
         content.setId(ThreadLocalRandom.current().nextLong());
         return content;
     }

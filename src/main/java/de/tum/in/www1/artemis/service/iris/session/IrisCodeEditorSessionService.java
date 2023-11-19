@@ -193,7 +193,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         var message = new IrisMessage();
         try {
             var chatWindowResponse = content.required("response").asText();
-            message.addContent(new IrisTextMessageContent(message, chatWindowResponse));
+            message.addContent(new IrisTextMessageContent(chatWindowResponse));
         }
         catch (IllegalArgumentException e) {
             log.error("Missing fields, could not parse IrisTextMessageContent: " + content.toPrettyString(), e);
@@ -245,7 +245,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                     continue;
                 }
                 var instructions = node.required("instructions").asText();
-                planSteps.add(new IrisExercisePlanStep(exercisePlan, component, instructions));
+                planSteps.add(new IrisExercisePlanStep(component, instructions));
             }
             catch (IllegalArgumentException e) {
                 log.error("Missing fields, could not parse IrisExercisePlanStep: " + node.toPrettyString(), e);

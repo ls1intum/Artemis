@@ -119,7 +119,7 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
 
     private IrisMessage generateSystemMessage() {
         var irisMessage = new IrisMessage();
-        irisMessage.addContent(new IrisTextMessageContent(irisMessage, SYSTEM_PROMPT));
+        irisMessage.addContent(new IrisTextMessageContent(SYSTEM_PROMPT));
         return irisMessage;
     }
 
@@ -145,7 +145,7 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
 
         var irisMessage = new IrisMessage();
         irisMessage.setSender(IrisMessageSender.USER);
-        irisMessage.addContent(new IrisTextMessageContent(irisMessage, userPrompt.toString()));
+        irisMessage.addContent(new IrisTextMessageContent(userPrompt.toString()));
         return irisMessage;
     }
 

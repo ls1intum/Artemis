@@ -39,8 +39,7 @@ public class IrisExercisePlanStep extends DomainObject {
     public IrisExercisePlanStep() {
     }
 
-    public IrisExercisePlanStep(IrisExercisePlan plan, ExerciseComponent component, String instructions) {
-        this.plan = plan;
+    public IrisExercisePlanStep(ExerciseComponent component, String instructions) {
         this.component = component;
         this.instructions = instructions;
         this.executionStage = ExecutionStage.NOT_EXECUTED;
@@ -50,7 +49,13 @@ public class IrisExercisePlanStep extends DomainObject {
         return plan;
     }
 
-    public void setPlan(IrisExercisePlan plan) {
+    /**
+     * Sets the plan this step belongs to.
+     * Do not use this method directly, use IrisExercisePlan#addStep instead.
+     *
+     * @param plan the plan this step belongs to
+     */
+    void setPlan(IrisExercisePlan plan) {
         this.plan = plan;
     }
 

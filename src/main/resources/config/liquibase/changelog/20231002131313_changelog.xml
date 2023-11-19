@@ -80,6 +80,9 @@
             <column name="execution_stage" type="VARCHAR(20)">
                 <constraints nullable="false"/>
             </column>
+            <column name="exercise_plan_step_order" type="INT">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
 </databaseChangeLog>

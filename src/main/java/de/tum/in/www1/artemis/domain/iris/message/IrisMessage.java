@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisMessage extends DomainObject {
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JsonIgnore
     private IrisSession session;
 
@@ -92,8 +92,11 @@ public class IrisMessage extends DomainObject {
         this.content = content;
     }
 
-    public void addContent(IrisMessageContent content) {
-        this.content.add(content);
+    public void addContent(IrisMessageContent... content) {
+        for (IrisMessageContent c : content) {
+            c.setMessage(this);
+            this.content.add(c);
+        }
     }
 
     @JsonProperty
