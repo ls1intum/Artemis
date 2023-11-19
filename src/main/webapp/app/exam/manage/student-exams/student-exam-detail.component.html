@@ -209,7 +209,7 @@
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.summary">Student Summary</span></h5>
         <div class="d-flex flex-row">
-            <div *ngIf="course?.isAtLeastInstructor" ngbTooltip="{{ 'artemisApp.examSummary.disabledTooltip' | artemisTranslate }}" [disableTooltip]="studentExam?.submitted!">
+            <div *ngIf="course?.isAtLeastInstructor" ngbTooltip="{{ 'artemisApp.exam.examSummary.disabledTooltip' | artemisTranslate }}" [disableTooltip]="studentExam?.submitted!">
                 <button class="btn btn-primary summery ms-4" [routerLink]="'./summary'" [disabled]="!studentExam.submitted">
                     <span jhiTranslate="artemisApp.exam.summary">Summary</span>
                 </button>
