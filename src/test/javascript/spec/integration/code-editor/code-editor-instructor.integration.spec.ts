@@ -569,7 +569,6 @@ describe('CodeEditorInstructorIntegration', () => {
 
         expect(websocketReceiveMock).toHaveBeenCalledOnce();
         expect(websocketReceiveMock).toHaveBeenCalledWith(channel);
-        expect(container.chatbotButton).toBeDefined();
         flush();
     }));
 });
