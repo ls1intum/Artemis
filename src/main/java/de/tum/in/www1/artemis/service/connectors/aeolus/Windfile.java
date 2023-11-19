@@ -52,6 +52,11 @@ public class Windfile {
         this.metadata.setId(id);
     }
 
+    /**
+     * Gets the script actions of a windfile.
+     *
+     * @return the script actions of a windfile.
+     */
     public List<ScriptAction> getScriptActions() {
         List<ScriptAction> scriptActions = new ArrayList<>();
         for (Action action : actions) {
