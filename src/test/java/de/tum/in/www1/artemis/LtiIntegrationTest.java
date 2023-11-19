@@ -29,15 +29,10 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -323,13 +318,25 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         var params = new LinkedMultiValueMap<String, String>();
         params.add("openid_configuration", "configurationUrl");
 
-        request.postWithoutResponseBody("/api/lti13/dynamic-registration/", HttpStatus.FORBIDDEN, params);
+        request.postWithoutResponseBody("/api/lti13/dynamic-registration", HttpStatus.FORBIDDEN, params);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin1", roles = "ADMIN")
     void dynamicRegistrationFailsWithoutOpenIdConfiguration() throws Exception {
-        request.postWithoutResponseBody("/api/lti13/dynamic-registration/", HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/lti13/dynamic-registration", HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void getAllConfiguredLtiPlatformsAsAdmin() throws Exception {
+        request.get("/api/admin/ltiplatforms", HttpStatus.OK, Object.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void getAllConfiguredLtiPlatformsAsInstructor() throws Exception {
+        request.get("/api/admin/ltiplatforms", HttpStatus.FORBIDDEN, Object.class);
     }
 
     private void assertParametersExistingStudent(MultiValueMap<String, String> parameters) {
