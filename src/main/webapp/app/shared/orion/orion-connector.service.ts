@@ -1,5 +1,5 @@
 import { Injectable, Injector } from '@angular/core';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
@@ -9,6 +9,7 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { Feedback } from 'app/entities/feedback.model';
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 
 /**
  * Return the global native browser window object with any type to prevent type errors
@@ -36,18 +37,14 @@ function theWindow(): any {
 export class OrionConnectorService {
     private orionState: OrionState;
     private orionStateSubject: BehaviorSubject<OrionState>;
-    private feedbackTriggerActionSubject: Subject<void>;
-    triggerAction: Observable<void>;
     // When loaded, the AssessmentComponent registers here to receive updates from the plugin
     activeAssessmentComponent: OrionTutorAssessmentComponent | undefined = undefined;
 
     constructor(
         private injector: Injector,
         private alertService: AlertService,
-    ) {
-        this.feedbackTriggerActionSubject = new Subject<void>();
-        this.triggerAction = this.feedbackTriggerActionSubject.asObservable();
-    }
+        private orionExerciseDetails: OrionExerciseDetailsStudentActionsComponent,
+    ) {}
 
     static initConnector(connector: OrionConnectorService) {
         theWindow().artemisClientConnector = connector;
@@ -302,7 +299,7 @@ export class OrionConnectorService {
      * Initializes feedback in orion
      */
     initializeFeedback() {
-        this.feedbackTriggerActionSubject.next();
+        this.orionExerciseDetails.initializeFeedback();
     }
 
     /**

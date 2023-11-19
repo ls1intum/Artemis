@@ -37,9 +37,6 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
      */
     ngOnInit(): void {
         this.orionConnectorService.state().subscribe((orionState: OrionState) => (this.orionState = orionState));
-        this.orionConnectorService.triggerAction.subscribe(() => {
-            this.initializeFeedback();
-        });
         this.route.queryParams.subscribe((params) => {
             if (params['withIdeSubmit']) {
                 this.submitChanges();
