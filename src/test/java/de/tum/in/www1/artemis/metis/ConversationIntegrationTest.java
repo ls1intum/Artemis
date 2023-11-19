@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
@@ -450,6 +451,22 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
         boolean unreadMessages = request.get("/api/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class);
         assertThat(unreadMessages).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void markMessagesAsRead() throws Exception {
+        Channel channel = conversationUtilService.createCourseWideChannel(exampleCourse, "mark-as-read");
+        channel.setLastMessageDate(ZonedDateTime.now());
+        ConversationParticipant participant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+
+        request.patch("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/mark-as-read", null, HttpStatus.OK);
+
+        conversationParticipantRepository.flush();
+        ConversationParticipant updatedParticipant = conversationParticipantRepository
+                .findConversationParticipantByConversationIdAndUserIdElseThrow(participant.getConversation().getId(), participant.getUser().getId());
+        assertThat(updatedParticipant.getLastRead()).isNotNull();
+        assertThat(updatedParticipant.getLastRead()).isAfter(participant.getLastRead());
     }
 
     @Test
