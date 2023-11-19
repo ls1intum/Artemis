@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +66,16 @@ class IrisChatSessionIntegrationTest extends AbstractIrisIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCurrentSession_notFound() throws Exception {
         request.get("/api/iris/programming-exercises/" + exercise.getId() + "/sessions/current", HttpStatus.NOT_FOUND, IrisSession.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getAllSessions() throws Exception {
+        var irisSession1 = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisSession.class, HttpStatus.CREATED);
+        var irisSession2 = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisSession.class, HttpStatus.CREATED);
+        List<IrisSession> sessions = List.of(irisSession2, irisSession1);
+        List<IrisSession> irisSessions = request.getList("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", HttpStatus.OK, IrisSession.class);
+        assertThat(irisSessions).isEqualTo(sessions);
     }
 
     @Test
