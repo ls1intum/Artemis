@@ -56,7 +56,7 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith('api/lti13/dynamic-registration/1', null, expect.anything());
+        expect(httpStub).toHaveBeenCalledWith('api/lti13/dynamic-registration', null, expect.anything());
 
         expect(comp.isRegistering).toBeFalse();
         expect(comp.registeredSuccessfully).toBeTrue();
@@ -73,7 +73,7 @@ describe('Lti13DynamicRegistrationComponentTest', () => {
         comp.ngOnInit();
 
         expect(httpStub).toHaveBeenCalledOnce();
-        expect(httpStub).toHaveBeenCalledWith('api/lti13/dynamic-registration/1', null, expect.anything());
+        expect(httpStub).toHaveBeenCalledWith('api/lti13/dynamic-registration', null, expect.anything());
 
         expect(comp.isRegistering).toBeFalse();
         expect(comp.registeredSuccessfully).toBeFalse();
