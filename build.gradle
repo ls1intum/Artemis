@@ -78,7 +78,7 @@ spotless {
             }
         }
         importOrderFile "artemis-spotless.importorder"
-        eclipse("4.19").configFile "artemis-spotless-style.xml"
+        eclipse("4.28").configFile "artemis-spotless-style.xml"
 
         removeUnusedImports()
         trimTrailingWhitespace()
@@ -380,7 +380,7 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.165"
     testImplementation "org.awaitility:awaitility:4.2.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.4"
+    testImplementation "org.gradle:gradle-tooling-api:8.5-rc-3"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.2.2"
     testImplementation "com.opencsv:opencsv:5.8"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.3.0"
@@ -433,7 +433,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.4"
+    gradleVersion = "8.5-rc-3"
 }
 
 tasks.register("stage") {
