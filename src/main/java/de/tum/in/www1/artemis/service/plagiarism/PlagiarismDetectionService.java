@@ -39,7 +39,7 @@ public class PlagiarismDetectionService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
-    @Value("${artemis.plagiarism-checks.plagiarism-results-limit}")
+    @Value("${artemis.plagiarism-checks.plagiarism-results-limit:100}")
     private int plagiarismResultsLimit;
 
     public PlagiarismDetectionService(TextPlagiarismDetectionService textPlagiarismDetectionService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
