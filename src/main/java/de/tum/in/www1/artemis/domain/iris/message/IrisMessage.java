@@ -111,6 +111,7 @@ public class IrisMessage extends DomainObject {
 
     @Override
     public String toString() {
-        return "IrisMessage{" + "session=" + (session == null ? "null" : session.getId()) + ", sentAt=" + sentAt + ", helpful=" + helpful + ", sender=" + sender + '}';
+        return "IrisMessage{" + "id=" + getId() + ", session=" + session + ", sentAt=" + sentAt + ", helpful=" + helpful + ", sender=" + sender + ", content=" + content
+                + ", messageDifferentiator=" + messageDifferentiator + '}';
     }
 }

@@ -54,7 +54,7 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void testV1InvalidResponseParseException() throws Exception {
+    void testV1ParseException() throws Exception {
         var template = new IrisTemplate("Dummy");
 
         irisRequestMockProvider.mockCustomV1Response("{\"invalid\": \"invalid\"}");

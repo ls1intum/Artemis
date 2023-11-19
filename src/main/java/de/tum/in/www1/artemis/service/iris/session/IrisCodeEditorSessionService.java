@@ -165,7 +165,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 irisCodeEditorWebsocketService.sendException(session, new IrisNoResponseException());
                 return null;
             }
-            log.info("\n\n\nReceived response from iris model: " + response.content().toPrettyString());
+            log.info("Received response from iris model: " + response.content().toPrettyString());
             try {
                 var irisMessage = toIrisMessage(response.content());
                 var saved = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);

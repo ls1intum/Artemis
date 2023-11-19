@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisMessageContent extends DomainObject {
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JsonIgnore
     IrisMessage message;
 
@@ -35,13 +35,6 @@ public abstract class IrisMessageContent extends DomainObject {
         return message;
     }
 
-    /**
-     * Sets the message this content belongs to.
-     * This is set to default visibility to ensure consistency of the object graph!
-     * It will be called by IrisMessage#addContent.
-     *
-     * @param message the message this content belongs to
-     */
     public void setMessage(IrisMessage message) {
         this.message = message;
     }

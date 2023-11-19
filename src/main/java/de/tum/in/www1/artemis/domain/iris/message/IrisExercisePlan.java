@@ -16,7 +16,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 @Table(name = "iris_exercise_plan_message_content")
 @DiscriminatorValue(value = "EXERCISE_PLAN")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = IrisExercisePlan.class)
 public class IrisExercisePlan extends IrisMessageContent {
 
     @OrderColumn(name = "exercise_plan_step_order")
@@ -27,6 +27,12 @@ public class IrisExercisePlan extends IrisMessageContent {
         return steps;
     }
 
+    /**
+     * Sets the steps of this plan.
+     * This method will ensure that the bidirectional relationship between the plan and its steps is consistent.
+     *
+     * @param steps the steps of this plan
+     */
     public void setSteps(List<IrisExercisePlanStep> steps) {
         if (this.steps != null) {
             this.steps.forEach(step -> step.setPlan(null));
@@ -49,5 +55,10 @@ public class IrisExercisePlan extends IrisMessageContent {
     @Override
     public String toString() {
         return "IrisExercisePlan{" + "message=" + (message == null ? "null" : message.getId()) + ", steps=" + steps + '}';
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && this.steps.equals(((IrisExercisePlan) obj).steps);
     }
 }

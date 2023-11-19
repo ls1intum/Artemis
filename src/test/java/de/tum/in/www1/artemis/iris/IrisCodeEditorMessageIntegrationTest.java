@@ -65,7 +65,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void sendOneMessage() throws Exception {
+    void testSendOneMessage() throws Exception {
         var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var messageToSend = createDefaultMockMessage(irisSession);
         messageToSend.setMessageDifferentiator(1453);
@@ -75,7 +75,8 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisMessage = request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
         assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.USER);
         assertThat(irisMessage.getMessageDifferentiator()).isEqualTo(1453);
-        assertThat(irisMessage.getContent()).isEqualTo(messageToSend.getContent());
+        assertThat(irisMessage.getContent().stream().map(IrisMessageContent::getContentAsString).toList())
+                .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(2).contains(irisMessage));
 
         verifyWasSentOverWebsocket(irisSession, messageDTOWithContent(messageToSend.getContent()));
@@ -85,7 +86,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void sendOneMessageToWrongSession() throws Exception {
+    void testSendOneMessageToWrongSession() throws Exception {
         var irisSession1 = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var irisSession2 = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor2"));
         IrisMessage messageToSend = createDefaultMockMessage(irisSession1);
@@ -94,7 +95,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void sendMessageWithoutContent() throws Exception {
+    void testSendMessageWithoutContent() throws Exception {
         var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var messageToSend = irisSession.newMessage();
         setupExercise();
@@ -103,7 +104,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void getMessages() throws Exception {
+    void testGetMessages() throws Exception {
         var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         IrisMessage message1 = createDefaultMockMessage(irisSession);
         IrisMessage message2 = createDefaultMockMessage(irisSession);
@@ -121,15 +122,15 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void executePlan() throws Exception {
+    void testExecutePlan() throws Exception {
         var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var message = irisSession.newMessage();
-        message.addContent(createMockExercisePlanContent(message));
+        message.addContent(createMockExercisePlanContent());
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
-        var exercisePlanContent = irisMessage.getContent().get(0);
+        var exercisePlan = (IrisExercisePlan) irisMessage.getContent().get(0);
         setupExercise();
 
-        request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages" + irisMessage.getId() + "/contents/" + exercisePlanContent.getId() + "/execute",
+        request.postWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages" + irisMessage.getId() + "/steps/" + exercisePlan.getId() + "/execute",
                 null, Void.class, HttpStatus.OK);
 
         // TODO: wait for requestExerciseChanges() complete
@@ -139,25 +140,25 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void updateComponentPlan() throws Exception {
+    void testUpdateExercisePlanStep() throws Exception {
         var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var message = irisSession.newMessage();
-        message.addContent(createMockExercisePlanContent(message));
+        message.addContent(createMockExercisePlanContent());
         var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
         var content = irisMessage.getContent().get(0);
         setupExercise();
         assertThat(content).isInstanceOf(IrisExercisePlan.class);
-        var component = ((IrisExercisePlan) content).getSteps().get(0);
+        var step = ((IrisExercisePlan) content).getSteps().get(0);
         String updatedInstructions = "Updated instructions";
-        component.setInstructions(updatedInstructions);
+        step.setInstructions(updatedInstructions);
 
-        request.putWithResponseBody(
-                "/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/contents/" + content.getId() + "/components/" + component.getId(), component,
+        var updatedStep = request.putWithResponseBody(
+                "/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/contents/" + content.getId() + "/steps/" + step.getId(), step,
                 IrisExercisePlanStep.class, HttpStatus.OK);
-        var irisMessageFromDB = irisMessageRepository.findById(irisMessage.getId()).orElseThrow();
-        var componentFromDB = irisExercisePlanStepRepository.findByIdElseThrow(component.getId());
-        assertThat(irisMessageFromDB.getContent()).hasSize(1);
-        assertThat(componentFromDB.getInstructions()).isEqualTo(updatedInstructions);
+
+        assertThat(updatedStep.getInstructions()).isEqualTo(updatedInstructions);
+        assertThat(irisMessageRepository.findByIdElseThrow(irisMessage.getId()).getContent()).hasSize(1);
+        assertThat(irisExercisePlanStepRepository.findByIdElseThrow(step.getId()).getInstructions()).isEqualTo(updatedInstructions);
     }
 
     @Test
@@ -200,13 +201,13 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private IrisMessage createDefaultMockMessage(IrisSession irisSession) {
         var messageToSend = irisSession.newMessage();
-        messageToSend.addContent(createMockTextContent(messageToSend));
-        messageToSend.addContent(createMockExercisePlanContent(messageToSend));
-        messageToSend.addContent(createMockTextContent(messageToSend));
+        messageToSend.addContent(createMockTextContent());
+        messageToSend.addContent(createMockExercisePlanContent());
+        messageToSend.addContent(createMockTextContent());
         return messageToSend;
     }
 
-    private IrisTextMessageContent createMockTextContent(IrisMessage message) {
+    private IrisTextMessageContent createMockTextContent() {
         String[] adjectives = { "happy", "sad", "angry", "funny", "silly", "crazy", "beautiful", "smart" };
         String[] nouns = { "dog", "cat", "house", "car", "book", "computer", "phone", "shoe" };
 
@@ -220,7 +221,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         return content;
     }
 
-    private IrisExercisePlan createMockExercisePlanContent(IrisMessage message) {
+    private IrisExercisePlan createMockExercisePlanContent() {
         var content = new IrisExercisePlan();
         content.setSteps(List.of(new IrisExercisePlanStep(ExerciseComponent.PROBLEM_STATEMENT, "I will edit the problem statement."),
                 new IrisExercisePlanStep(ExerciseComponent.SOLUTION_REPOSITORY, "I will edit the solution repository."),
@@ -231,23 +232,42 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private ArgumentMatcher<Object> messageDTOWithContent(List<IrisMessageContent> content) {
-        return object -> {
-            if (!(object instanceof IrisCodeEditorWebsocketService.IrisWebsocketDTO websocketDTO)) {
-                return false;
+        return new ArgumentMatcher<>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                if (!(argument instanceof IrisCodeEditorWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                    return false;
+                }
+                if (websocketDTO.type() != IrisCodeEditorWebsocketService.IrisWebsocketMessageType.MESSAGE) {
+                    return false;
+                }
+                return websocketDTO.message().getContent().stream().map(IrisMessageContent::getContentAsString).toList()
+                        .equals(content.stream().map(IrisMessageContent::getContentAsString).toList());
             }
-            if (websocketDTO.type() != IrisCodeEditorWebsocketService.IrisWebsocketMessageType.MESSAGE) {
-                return false;
+
+            @Override
+            public String toString() {
+                return "IrisCodeEditorWebsocketService.IrisWebsocketDTO with type MESSAGE and content " + content;
             }
-            return websocketDTO.message().getContent().equals(content);
         };
     }
 
     private ArgumentMatcher<Object> errorDTO() {
-        return object -> {
-            if (!(object instanceof IrisCodeEditorWebsocketService.IrisWebsocketDTO websocketDTO)) {
-                return false;
+        return new ArgumentMatcher<>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                if (!(argument instanceof IrisCodeEditorWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                    return false;
+                }
+                return websocketDTO.type() == IrisCodeEditorWebsocketService.IrisWebsocketMessageType.EXCEPTION;
             }
-            return websocketDTO.type() == IrisCodeEditorWebsocketService.IrisWebsocketMessageType.EXCEPTION;
+
+            @Override
+            public String toString() {
+                return "IrisCodeEditorWebsocketService.IrisWebsocketDTO with type EXCEPTION";
+            }
         };
     }
 

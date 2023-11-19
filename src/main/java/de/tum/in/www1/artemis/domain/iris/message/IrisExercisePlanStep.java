@@ -12,14 +12,14 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @Entity
 @Table(name = "iris_exercise_plan_step")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = IrisExercisePlanStep.class)
 public class IrisExercisePlanStep extends DomainObject {
 
     public enum ExecutionStage {
         NOT_EXECUTED, IN_PROGRESS, FAILED, COMPLETE
     }
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "exercise_plan_id")
     private IrisExercisePlan plan;
 
@@ -81,5 +81,19 @@ public class IrisExercisePlanStep extends DomainObject {
 
     public void setExecutionStage(ExecutionStage executionStage) {
         this.executionStage = executionStage;
+    }
+
+    @Override
+    public String toString() {
+        return "IrisExercisePlanStep{" + "id=" + getId() + ", component=" + component + ", instructions='" + instructions + '\'' + ", executionStage=" + executionStage + '}';
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!super.equals(obj)) {
+            return false;
+        }
+        IrisExercisePlanStep other = (IrisExercisePlanStep) obj;
+        return this.component == other.component && this.instructions.equals(other.instructions);
     }
 }

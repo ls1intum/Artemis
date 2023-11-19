@@ -115,7 +115,6 @@ public class IrisMessageResource {
             throw new BadRequestException("Only user messages can be resent");
         }
         irisSessionService.requestMessageFromIris(session);
-        message.setMessageDifferentiator(message.getMessageDifferentiator());
 
         return ResponseEntity.ok(message);
     }

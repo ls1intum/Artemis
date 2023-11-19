@@ -10,7 +10,6 @@ import static org.mockito.Mockito.verify;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,12 +84,11 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(irisMessage.getHelpful()).isNull();
         assertThat(irisMessage.getMessageDifferentiator()).isEqualTo(1453);
         assertThat(irisMessage.getContent()).hasSize(3);
-        // Compare contents of messages by only comparing the string content
         assertThat(irisMessage.getContent().stream().map(IrisMessageContent::getContentAsString).toList())
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(2).contains(irisMessage));
 
-        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend));
+        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
         verifyWasSentOverWebsocket(irisSession, messageDTO("Hello World"));
     }
 
@@ -231,7 +229,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend));
+        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
         verifyWasSentOverWebsocket(irisSession, errorDTO());
     }
 
@@ -246,7 +244,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend));
+        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
         verifyWasSentOverWebsocket(irisSession, errorDTO());
     }
 
@@ -289,7 +287,7 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, IrisMessage.class,
                 HttpStatus.TOO_MANY_REQUESTS);
 
-        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend1));
+        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend1.getContent()));
         verifyWasSentOverWebsocket(irisSession, messageDTO("Hello World"));
         verifyNothingElseWasSentOverWebsocket();
 
@@ -326,36 +324,46 @@ class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private ArgumentMatcher<Object> messageDTO(String message) {
-        return object -> {
-            if (!(object instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO)) {
-                return false;
-            }
-            if (websocketDTO.getType() != IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE) {
-                return false;
-            }
-            return Objects.equals(websocketDTO.getMessage().getContent().stream().map(IrisMessageContent::getContentAsString).collect(Collectors.joining("\n")), message);
-        };
+        return messageDTO(List.of(new IrisTextMessageContent(message)));
     }
 
-    private ArgumentMatcher<Object> messageDTO(IrisMessage message) {
-        return object -> {
-            if (!(object instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO)) {
-                return false;
+    private ArgumentMatcher<Object> messageDTO(List<IrisMessageContent> content) {
+        return new ArgumentMatcher<>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                if (!(argument instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                    return false;
+                }
+                if (websocketDTO.getType() != IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE) {
+                    return false;
+                }
+                return Objects.equals(websocketDTO.getMessage().getContent().stream().map(IrisMessageContent::getContentAsString).toList(),
+                        content.stream().map(IrisMessageContent::getContentAsString).toList());
             }
-            if (websocketDTO.getType() != IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.MESSAGE) {
-                return false;
+
+            @Override
+            public String toString() {
+                return "IrisChatWebsocketService.IrisWebsocketDTO with type MESSAGE and content " + content;
             }
-            return Objects.equals(websocketDTO.getMessage().getContent().stream().map(IrisMessageContent::getContentAsString).toList(),
-                    message.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         };
     }
 
     private ArgumentMatcher<Object> errorDTO() {
-        return object -> {
-            if (!(object instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO)) {
-                return false;
+        return new ArgumentMatcher<>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                if (!(argument instanceof IrisChatWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                    return false;
+                }
+                return websocketDTO.getType() == IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.ERROR;
             }
-            return websocketDTO.getType() == IrisChatWebsocketService.IrisWebsocketDTO.IrisWebsocketMessageType.ERROR;
+
+            @Override
+            public String toString() {
+                return "IrisChatWebsocketService.IrisWebsocketDTO with type ERROR";
+            }
         };
     }
 
