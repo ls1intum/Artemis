@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.ZonedDateTime;
 
@@ -72,14 +71,14 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testIsAllowedAsInstructorDuringTestRun() {
             boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
-            assertTrue(isUserAllowedToGetResult);
+            assertThat(isUserAllowedToGetResult).isTrue();
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
         void testIsNotAllowedAsStudentDuringTestRun() {
             boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
-            assertFalse(isUserAllowedToGetResult);
+            assertThat(isUserAllowedToGetResult).isFalse();
         }
 
         @Test
@@ -88,7 +87,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
             participation.setTestRun(false);
 
             boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
-            assertFalse(isUserAllowedToGetResult);
+            assertThat(isUserAllowedToGetResult).isFalse();
         }
 
         @Test
@@ -97,7 +96,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
             participation.setTestRun(false);
 
             boolean isUserAllowedToGetResult = authCheckService.isUserAllowedToGetResult(modelingExercise, participation, result);
-            assertFalse(isUserAllowedToGetResult);
+            assertThat(isUserAllowedToGetResult).isFalse();
         }
     }
 
