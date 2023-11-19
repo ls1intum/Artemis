@@ -58,3 +58,5 @@ artemis:
         secret: abcdef12345
     apollon:
         conversion-service-url: http://localhost:8080
+    plagiarism-checks:
+        plagiarism-results-limit: 100
