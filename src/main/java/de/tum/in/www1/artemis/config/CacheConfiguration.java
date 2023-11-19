@@ -165,7 +165,7 @@ public class CacheConfiguration {
         // add queue config for local ci shared queue
         QueueConfig queueConfig = new QueueConfig("default");
         queueConfig.setName("buildJobQueue");
-        queueConfig.setPriorityComparatorClassName("de.tum.in.www1.service.connectors.localci.LocalCIPriorityQueueComparator");
+        queueConfig.setPriorityComparatorClassName("de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator");
         queueConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
 
         config.addQueueConfig(queueConfig);
