@@ -171,7 +171,8 @@
                 "button": "Benachrichtigungen",
                 "type": {
                     "examWideAnnouncement": "Klausurweite Ankündigung",
-                    "workingTimeUpdate": "Bearbeitungszeit Aktualisiert"
+                    "workingTimeUpdate": "Bearbeitungszeit Aktualisiert",
+                    "examAttendanceCheck": "Anwesenheitskontrolle"
                 },
                 "from": "von",
                 "acknowledge": "Bestätigen",
@@ -182,6 +183,9 @@
                         "titlePersonal": "Deine persönliche Bearbeitungszeit dieser Klausur wurde geändert.",
                         "old": "Vorherige Bearbeitungszeit",
                         "new": "Neue Bearbeitungszeit"
+                    },
+                    "examAttendanceCheck": {
+                        "description": "Eine Klausur-Aufsicht hat die Anwesenheitskontrolle für dich ausgelöst. Bitte folge den Anweisungen der Aufsicht."
                     }
                 }
             }

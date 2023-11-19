@@ -15,10 +15,10 @@ import de.tum.in.www1.artemis.web.rest.dto.*;
 public class ExamFactory {
 
     /**
-     * Generates a real exam with student review dates set
+     * Creates an Exam with student review dates set [now; now + 60min]
      *
-     * @param course the associated course
-     * @return the created exam
+     * @param course The associated course
+     * @return The newly created Exam
      */
     public static Exam generateExamWithStudentReviewDates(Course course) {
         Exam exam = generateExamHelper(course, false);
@@ -31,50 +31,50 @@ public class ExamFactory {
     }
 
     /**
-     * Generates a real exam without student review dates set
+     * Creates an Exam without student review dates set
      *
-     * @param course the associated course
-     * @return the created exam
+     * @param course The associated course
+     * @return The newly created Exam
      */
     public static Exam generateExam(Course course) {
         return generateExamHelper(course, false);
     }
 
     /**
-     * Generates a real exam without student review dates set and attaches a channel
+     * Creates an Exam with a Channel and without student review dates set
      *
-     * @param course      the associated course
-     * @param channelName the channel name
-     * @return the created exam
+     * @param course      The associated course
+     * @param channelName The channel name
+     * @return The newly created Exam
      */
     public static Exam generateExam(Course course, String channelName) {
         return generateExamHelper(course, false, channelName);
     }
 
     /**
-     * Generates an exam without channel
+     * Creates an Exam without a Channel
      *
-     * @param course      the associated course
-     * @param visibleDate the visible date of the exam
-     * @param startDate   the start date of the exam
-     * @param endDate     the end date of the exam
-     * @param testExam    if the exam is a test exam
-     * @return the created exam
+     * @param course      The associated course
+     * @param visibleDate The visible date of the Exam
+     * @param startDate   The start date of the Exam
+     * @param endDate     The end date of the Exam
+     * @param testExam    True, if the Exam is a test exam
+     * @return The newly created Exam
      */
     public static Exam generateExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam) {
         return generateExam(course, visibleDate, startDate, endDate, testExam, null);
     }
 
     /**
-     * Generates an exam with channel
+     * Creates an Exam with a Channel
      *
-     * @param course      the associated course
-     * @param visibleDate the visible date of the exam
-     * @param startDate   the start date of the exam
-     * @param endDate     the end date of the exam
-     * @param testExam    if the exam is a test exam
-     * @param channelName the channel name
-     * @return the created exam
+     * @param course      The associated course
+     * @param visibleDate The visible date of the Exam
+     * @param startDate   The start date of the Exam
+     * @param endDate     The end date of the Exam
+     * @param testExam    True, if the Exam is a test exam
+     * @param channelName The channel name
+     * @return The newly created Exam
      */
     public static Exam generateExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, boolean testExam, String channelName) {
         Exam exam = new Exam();
@@ -98,32 +98,32 @@ public class ExamFactory {
     }
 
     /**
-     * Generates a test exam (test exams have no student review dates)
+     * Creates a test Exam (test exams have no student review dates)
      *
-     * @param course the associated course
-     * @return the created exam
+     * @param course The associated course
+     * @return The newly created Exam
      */
     public static Exam generateTestExam(Course course) {
         return generateExamHelper(course, true);
     }
 
     /**
-     * Helper method to create an exam without a channel
+     * Creates an exam without a Channel
      *
-     * @param course   the associated course
-     * @param testExam Boolean flag to determine whether it is a test exam
-     * @return the created Exam
+     * @param course   The associated course
+     * @param testExam True, if the Exam is a test exam
+     * @return The newly created Exam
      */
     private static Exam generateExamHelper(Course course, boolean testExam) {
         return generateExamHelper(course, testExam, null);
     }
 
     /**
-     * Helper method to create an exam with a channel
+     * Creates an Exam with a Channel
      *
-     * @param course   the associated course
-     * @param testExam Boolean flag to determine whether it is a test exam
-     * @return the created Exam
+     * @param course   The associated course
+     * @param testExam True, if the Exam is a test exam
+     * @return The newly created Exam
      */
     private static Exam generateExamHelper(Course course, boolean testExam, String channelName) {
         ZonedDateTime currentTime = now();
@@ -131,23 +131,23 @@ public class ExamFactory {
     }
 
     /**
-     * generates an exercise group for an exam
+     * Creates an ExerciseGroup and adds it to the given exam
      *
-     * @param mandatory if the exercise group is mandatory
-     * @param exam      the exam that this exercise group should be added to
-     * @return the newly created exercise
+     * @param mandatory True, if the exercise group is mandatory
+     * @param exam      The exam that this exercise group should be added to
+     * @return The newly created ExerciseGroup
      */
     public static ExerciseGroup generateExerciseGroup(boolean mandatory, Exam exam) {
         return generateExerciseGroupWithTitle(mandatory, exam, "Exercise group title");
     }
 
     /**
-     * generates an exercise group for an exam with the given title
+     * Creates an ExerciseGroup for an Exam
      *
-     * @param mandatory if the exercise group is mandatory
-     * @param exam      the exam that this exercise group should be added to
-     * @param title     title of the exercise group
-     * @return the newly created exercise
+     * @param mandatory True, if the exercise group is mandatory
+     * @param exam      The exam that this exercise group should be added to
+     * @param title     The title of the exercise group
+     * @return The newly created ExerciseGroup
      */
     public static ExerciseGroup generateExerciseGroupWithTitle(boolean mandatory, Exam exam, String title) {
         ExerciseGroup exerciseGroup = new ExerciseGroup();
@@ -157,6 +157,12 @@ public class ExamFactory {
         return exerciseGroup;
     }
 
+    /**
+     * Creates a StudentExam that is linked to the given exam
+     *
+     * @param exam The exam to be linked to the studentExam
+     * @return The newly created StudentExam
+     */
     public static StudentExam generateStudentExam(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);
@@ -165,10 +171,10 @@ public class ExamFactory {
     }
 
     /**
-     * Helper Method to generate a studentExam for a test exam
+     * Creates a StudentExam for a test exam
      *
-     * @param exam the exam to be linked to the studentExam
-     * @return a StudentExam for a test exam
+     * @param exam The exam to be linked to the studentExam
+     * @return The newly created StudentExam
      */
     public static StudentExam generateStudentExamForTestExam(Exam exam) {
         StudentExam studentExam = new StudentExam();
@@ -178,6 +184,12 @@ public class ExamFactory {
         return studentExam;
     }
 
+    /**
+     * Creates a StudentExam that is linked to the given exam and is a test run
+     *
+     * @param exam The exam to be linked to the studentExam
+     * @return The newly created StudentExam
+     */
     public static StudentExam generateExamTestRun(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);
@@ -186,11 +198,11 @@ public class ExamFactory {
     }
 
     /**
-     * generates an exam with one exercise group
+     * Creates an Exam with an ExerciseGroup
      *
-     * @param course    course of the exam
-     * @param mandatory if the exercise group is mandatory
-     * @return newly generated exam
+     * @param course    The associated course
+     * @param mandatory True, if the exercise group is mandatory
+     * @return The newly created Exam
      */
     public static Exam generateExamWithExerciseGroup(Course course, boolean mandatory) {
         Exam exam = generateExam(course);
@@ -200,11 +212,11 @@ public class ExamFactory {
     }
 
     /**
-     * creates exam session DTOs
+     * Creates a Set of ExamSessionDTOs from the given exam sessions
      *
-     * @param session1 first exam session
-     * @param session2 second exam session
-     * @return set of exam session DTOs
+     * @param session1 The first exam session
+     * @param session2 The second exam session
+     * @return The created set of ExamSessionDTOs
      */
     public static Set<ExamSessionDTO> createExpectedExamSessionDTOs(ExamSession session1, ExamSession session2) {
         var expectedDTOs = new HashSet<ExamSessionDTO>();
