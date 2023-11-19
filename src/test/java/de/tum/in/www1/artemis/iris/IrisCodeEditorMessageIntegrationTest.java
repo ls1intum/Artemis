@@ -57,6 +57,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        activateIrisGlobally();
         activateIrisFor(course);
         activateIrisFor(exercise);
         repository = new LocalRepository("main");
@@ -197,8 +198,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
     private void setupExercise() throws Exception {
         var savedTemplateExercise = irisUtilTestService.setupTemplate(exercise, repository);
         var savedSolutionExercise = irisUtilTestService.setupSolution(savedTemplateExercise, repository);
-        var savedExercise = irisUtilTestService.setupTest(savedSolutionExercise, repository);
-        activateIrisFor(savedExercise);
+        irisUtilTestService.setupTest(savedSolutionExercise, repository);
     }
 
     private IrisMessage createDefaultMockMessage(IrisSession irisSession) {

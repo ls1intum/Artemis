@@ -32,6 +32,8 @@ public interface IrisSessionSubServiceInterface {
      */
     void checkHasAccessToIrisSession(IrisSession irisSession, User user);
 
+    void checkRateLimit(User user);
+
     /**
      * Checks if the exercise connected to the session has Iris activated.
      *

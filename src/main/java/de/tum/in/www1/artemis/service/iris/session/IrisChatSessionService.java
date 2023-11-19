@@ -123,6 +123,11 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         irisChatWebsocketService.sendMessage(message);
     }
 
+    @Override
+    public void checkRateLimit(User user) {
+        rateLimitService.checkRateLimitElseThrow(user);
+    }
+
     /**
      * Sends all messages of the session to an LLM and handles the response by saving the message
      * and sending it to the student via the Websocket.
@@ -139,7 +144,6 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         if (chatSession.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        rateLimitService.checkRateLimitElseThrow(chatSession.getUser());
         var exercise = chatSession.getExercise();
         parameters.put("exercise", exercise);
         parameters.put("course", exercise.getCourseViaExerciseGroupOrCourseMember());

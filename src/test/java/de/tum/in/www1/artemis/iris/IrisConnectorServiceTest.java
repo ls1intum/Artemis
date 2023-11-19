@@ -54,13 +54,12 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void testV1NoResponseParseException() throws Exception {
+    void testV1InvalidResponseParseException() throws Exception {
         var template = new IrisTemplate("Dummy");
 
-        irisRequestMockProvider.mockCustomV1Response("{\"invalid\": \"response\"}");
+        irisRequestMockProvider.mockCustomV1Response("{\"invalid\": \"invalid\"}");
 
         irisConnectorService.sendRequest(template, "TEST_MODEL", Collections.emptyMap()).handle((response, throwable) -> {
-            assertThat(response).isNull();
             assertThat(throwable).isNotNull();
             assertThat(throwable.getCause()).isNotNull().isInstanceOf(IrisParseResponseException.class);
             return null;

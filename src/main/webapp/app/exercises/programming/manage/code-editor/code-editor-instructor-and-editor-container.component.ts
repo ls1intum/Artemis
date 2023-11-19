@@ -17,6 +17,10 @@ import { IrisCodeEditorWebsocketService, StepExecutionException, StepExecutionSu
 import { IrisCodeEditorChatbotButtonComponent } from 'app/iris/exercise-chatbot/code-editor-chatbot-button.component';
 import { ExerciseComponent } from 'app/entities/iris/iris-content-type.model';
 import { DeleteFileChange, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { filter, switchMap } from 'rxjs';
 
 @Component({
     selector: 'jhi-code-editor-instructor',
@@ -35,6 +39,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
 
+    irisSettings?: IrisSettings;
+
     constructor(
         router: Router,
         exerciseService: ProgrammingExerciseService,
@@ -47,6 +53,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         route: ActivatedRoute,
         alertService: AlertService,
         codeEditorWebsocketService: IrisCodeEditorWebsocketService,
+        private profileService: ProfileService,
+        private irisSettingsService: IrisSettingsService,
     ) {
         super(router, exerciseService, courseExerciseService, domainService, programmingExerciseParticipationService, location, participationService, route, alertService);
         codeEditorWebsocketService.onStepSuccess().subscribe((filesChanged: StepExecutionSuccess) => {
@@ -55,6 +63,22 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         codeEditorWebsocketService.onStepException().subscribe((stepException: StepExecutionException) => {
             this.handleExceptionNotification(stepException);
         });
+    }
+
+    protected onExerciseInitialized() {
+        this.profileService
+            .getProfileInfo()
+            .pipe(
+                filter((profileInfo) => profileInfo?.activeProfiles?.includes('iris')),
+                switchMap(() => this.irisSettingsService.getCombinedCourseSettings(this.exercise!.course!.id!)),
+            )
+            .subscribe((settings) => {
+                this.irisSettings = settings;
+            });
+    }
+
+    isIrisEnabled() {
+        return this.irisSettings?.irisCodeEditorSettings?.enabled;
     }
 
     toRepository(component: ExerciseComponent) {

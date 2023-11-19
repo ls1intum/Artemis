@@ -149,6 +149,11 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         return irisMessage;
     }
 
+    @Override
+    public void checkRateLimit(User user) {
+        // Currently no rate limit for Hestia sessions
+    }
+
     /**
      * Checks if the user has at least the given role for the exercise of the code hint.
      *

@@ -122,6 +122,11 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     @Override
+    public void checkRateLimit(User user) {
+        // Currently no rate limit for code editor sessions
+    }
+
+    @Override
     public void checkIsIrisActivated(IrisSession session) {
         checkIsIrisActivated(castToSessionType(session, IrisCodeEditorSession.class));
     }

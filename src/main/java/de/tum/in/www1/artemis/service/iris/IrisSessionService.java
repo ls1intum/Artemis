@@ -94,6 +94,10 @@ public class IrisSessionService {
         getIrisSessionSubService(session).requestAndHandleResponse(session);
     }
 
+    public void checkRateLimit(IrisSession session, User user) {
+        getIrisSessionSubService(session).checkRateLimit(user);
+    }
+
     public void sendOverWebsocket(IrisMessage message) {
         getIrisSessionSubService(message.getSession()).sendOverWebsocket(message);
     }

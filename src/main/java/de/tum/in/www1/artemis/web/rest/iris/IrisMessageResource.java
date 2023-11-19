@@ -79,6 +79,7 @@ public class IrisMessageResource {
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
+        irisSessionService.checkRateLimit(session, user);
 
         var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
@@ -104,6 +105,7 @@ public class IrisMessageResource {
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
+        irisSessionService.checkRateLimit(session, user);
 
         var message = irisMessageRepository.findByIdElseThrow(messageId);
         if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {

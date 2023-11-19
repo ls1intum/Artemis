@@ -73,11 +73,17 @@ public class IrisRequestMockProvider {
     }
 
     public void mockEmptyResponse() {
-        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiV1URL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
+        // @formatter:off
+        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiV1URL.toString()))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess());
+        // @formatter:on
     }
 
     /**
      * Mocks a message response from the Pyris message endpoint
+     *
+     * @param responseMessage The content of the response
      */
     public void mockMessageV1Response(String responseMessage) throws JsonProcessingException {
         var irisMessage = new IrisMessage();
@@ -107,8 +113,12 @@ public class IrisRequestMockProvider {
         mockCustomJsonResponse(messagesApiV1URL, json);
     }
 
-    public void mockCustomJsonResponse(URL url, String responseMessage) {
-        mockServer.expect(ExpectedCount.once(), requestTo(url.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(responseMessage, MediaType.APPLICATION_JSON));
+    public void mockCustomJsonResponse(URL requestUrl, String responseJson) {
+        // @formatter:off
+        mockServer.expect(ExpectedCount.once(), requestTo(requestUrl.toString()))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess(responseJson, MediaType.APPLICATION_JSON));
+        // @formatter:on
     }
 
     public void mockMessageV1Error(int status) throws JsonProcessingException {
@@ -121,25 +131,38 @@ public class IrisRequestMockProvider {
 
     private void mockMessageError(URL requestUrl, int status) throws JsonProcessingException {
         var json = Map.of("detail", new IrisErrorResponseDTO("Test error"));
-        mockServer.expect(ExpectedCount.once(), requestTo(requestUrl.toString())).andExpect(method(HttpMethod.POST))
+        // @formatter:off
+        mockServer.expect(ExpectedCount.once(), requestTo(requestUrl.toString()))
+                .andExpect(method(HttpMethod.POST))
                 .andRespond(withRawStatus(status).body(mapper.writeValueAsString(json)));
+        // @formatter:on
     }
 
     public void mockModelsResponse() throws JsonProcessingException {
         var irisModelDTO = new IrisModelDTO("TEST_MODEL", "Test model", "Test description");
         var irisModelDTOArray = new IrisModelDTO[] { irisModelDTO };
-        mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString())).andExpect(method(HttpMethod.GET))
+        // @formatter:off
+        mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString()))
+                .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(irisModelDTOArray), MediaType.APPLICATION_JSON));
+        // @formatter:on
     }
 
     public void mockStatusResponse() throws JsonProcessingException {
         var irisStatusDTOArray = new IrisStatusDTO[] { new IrisStatusDTO("TEST_MODEL_UP", IrisStatusDTO.ModelStatus.UP),
                 new IrisStatusDTO("TEST_MODEL_DOWN", IrisStatusDTO.ModelStatus.DOWN), new IrisStatusDTO("TEST_MODEL_NA", IrisStatusDTO.ModelStatus.NOT_AVAILABLE) };
-        mockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
+        // @formatter:off
+        mockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString()))
+                .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(irisStatusDTOArray), MediaType.APPLICATION_JSON));
+        // @formatter:on
     }
 
     public void mockModelsError() {
-        mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString())).andExpect(method(HttpMethod.GET)).andRespond(withRawStatus(418));
+        // @formatter:off
+        mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString()))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withRawStatus(418));
+        // @formatter:on
     }
 }

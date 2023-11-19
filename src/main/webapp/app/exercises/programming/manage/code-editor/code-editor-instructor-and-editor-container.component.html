@@ -142,5 +142,5 @@
         class="instructions-wrapper__content card-body p-0"
     >
     </jhi-programming-exercise-editable-instructions>
-    <jhi-code-editor-chatbot-button chatbot-button></jhi-code-editor-chatbot-button>
+    <jhi-code-editor-chatbot-button chatbot-button *ngIf="isIrisEnabled()"></jhi-code-editor-chatbot-button>
 </jhi-code-editor-container>
