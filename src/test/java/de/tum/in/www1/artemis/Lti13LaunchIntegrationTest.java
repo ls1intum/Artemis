@@ -18,7 +18,7 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
-import de.tum.in.www1.artemis.web.rest.LtiResource;
+import de.tum.in.www1.artemis.web.rest.open.PublicLtiResource;
 import io.jsonwebtoken.Jwts;
 
 /**
@@ -115,7 +115,7 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationIndependentTes
     }
 
     private void validateRedirect(URI locationHeader, String token) {
-        assertThat(locationHeader.getPath()).isEqualTo(LtiResource.LOGIN_REDIRECT_CLIENT_PATH);
+        assertThat(locationHeader.getPath()).isEqualTo(PublicLtiResource.LOGIN_REDIRECT_CLIENT_PATH);
 
         List<NameValuePair> params = URLEncodedUtils.parse(locationHeader, StandardCharsets.UTF_8);
         assertUriParamsContain(params, "id_token", token);

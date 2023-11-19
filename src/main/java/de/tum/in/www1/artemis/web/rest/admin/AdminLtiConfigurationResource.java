@@ -7,13 +7,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
 
 @RestController
 @RequestMapping("api/admin/")
@@ -24,8 +24,15 @@ public class AdminLtiConfigurationResource {
 
     private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
-    public AdminLtiConfigurationResource(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
+    private final LtiDynamicRegistrationService ltiDynamicRegistrationService;
+
+    private final AuthorizationCheckService authCheckService;
+
+    public AdminLtiConfigurationResource(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository, LtiDynamicRegistrationService ltiDynamicRegistrationService,
+            AuthorizationCheckService authCheckService) {
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
+        this.ltiDynamicRegistrationService = ltiDynamicRegistrationService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -39,6 +46,15 @@ public class AdminLtiConfigurationResource {
         log.debug("REST request to get all configured lti platforms");
         List<LtiPlatformConfiguration> platforms = ltiPlatformConfigurationRepository.findAll();
         return new ResponseEntity<>(platforms, HttpStatus.OK);
+    }
+
+    @PostMapping("/lti13/dynamic-registration")
+    @EnforceAdmin
+    public void lti13DynamicRegistration(@RequestParam(name = "openid_configuration") String openIdConfiguration,
+            @RequestParam(name = "registration_token", required = false) String registrationToken) {
+
+        authCheckService.checkIsAdminElseThrow(null);
+        ltiDynamicRegistrationService.performDynamicRegistration(openIdConfiguration, registrationToken);
     }
 
 }

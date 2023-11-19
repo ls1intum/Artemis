@@ -318,13 +318,13 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         var params = new LinkedMultiValueMap<String, String>();
         params.add("openid_configuration", "configurationUrl");
 
-        request.postWithoutResponseBody("/api/lti13/dynamic-registration", HttpStatus.FORBIDDEN, params);
+        request.postWithoutResponseBody("/api/admin/lti13/dynamic-registration", HttpStatus.FORBIDDEN, params);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin1", roles = "ADMIN")
     void dynamicRegistrationFailsWithoutOpenIdConfiguration() throws Exception {
-        request.postWithoutResponseBody("/api/lti13/dynamic-registration", HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/admin/lti13/dynamic-registration", HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
     }
 
     @Test
