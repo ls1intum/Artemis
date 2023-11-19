@@ -229,7 +229,7 @@ public class ProgrammingExerciseService {
         // Step 6: Create initial submission
         programmingSubmissionService.createInitialSubmissions(savedProgrammingExercise);
 
-        savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
+        savedProgrammingExercise = programmingExerciseRepository.save(savedProgrammingExercise);
 
         // Step 7: Create exercise channel
         channelService.createExerciseChannel(savedProgrammingExercise, Optional.ofNullable(programmingExercise.getChannelName()));
