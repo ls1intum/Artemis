@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,6 +131,25 @@ public class ConversationResource extends ConversationManagementResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         return ResponseEntity.ok(conversationService.userHasUnreadMessages(courseId, requestingUser));
+    }
+
+    /**
+     * GET /api/courses/:courseId/unread-messages : Checks for unread messages of the current user
+     *
+     * @param courseId the id of the course
+     * @return ResponseEntity with status 200 (Ok) and the information if the user has unread messages
+     */
+    @PatchMapping("/{courseId}/conversations/{conversationId}/mark-as-read")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Boolean> markAsRead(@PathVariable Long courseId, @PathVariable Long conversationId) {
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
+
+        conversationService.markAsRead(conversationId, requestingUser.getId());
+
+        return ResponseEntity.ok().build();
     }
 
     /**

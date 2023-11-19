@@ -202,6 +202,10 @@ public class ConversationService {
         return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId());
     }
 
+    public void markAsRead(Long conversationId, Long userId) {
+        conversationParticipantRepository.updateLastReadAsync(userId, conversationId, ZonedDateTime.now());
+    }
+
     /**
      * Updates a conversation
      *
