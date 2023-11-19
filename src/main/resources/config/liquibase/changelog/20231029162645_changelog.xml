@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20231029162645" author="reschandreas">
         <addColumn tableName="programming_exercise_details">
-            <column name="build_plan_configuration" type="json"/>
+            <column name="build_plan_configuration" type="longtext"/>
         </addColumn>
     </changeSet>
 </databaseChangeLog>
