@@ -598,7 +598,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @return The updated problem statement
      */
     private String injectChangesIntoProblemStatement(ProgrammingExercise exercise, List<ProblemStatementChange> changes) {
-        log.info("Injecting changes into problem statement: \n\n\n" + changes);
+        log.info("Injecting changes into problem statement: \n" + changes);
         var problemStatement = exercise.getProblemStatement();
         int successes = 0;
         int failures = 0;
@@ -626,7 +626,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @param changes    The changes to inject
      */
     private Set<FileChange> injectChangesIntoRepository(Repository repository, List<FileChange> changes) {
-        log.info("Injecting changes into repository: \n\n\n" + changes);
+        log.info("Injecting changes into repository: \n" + changes);
         Map<String, Optional<File>> targetedFiles = changes.stream().map(FileChange::path).distinct()
                 .collect(Collectors.toMap(fileName -> fileName, fileName -> gitService.getFileByName(repository, fileName)));
         Set<FileChange> successful = new HashSet<>();

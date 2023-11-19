@@ -6,9 +6,13 @@ import static org.awaitility.Awaitility.await;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -79,8 +83,8 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(2).contains(irisMessage));
 
-        verifyWasSentOverWebsocket(irisSession, messageDTOWithContent(messageToSend.getContent()));
-        verifyWasSentOverWebsocket(irisSession, messageDTOWithContent(List.of(new IrisTextMessageContent("Hi there!"))));
+        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
+        verifyWasSentOverWebsocket(irisSession, messageDTO(List.of(new IrisTextMessageContent("Hi there!"))));
         verifyNothingElseWasSentOverWebsocket();
     }
 
@@ -120,22 +124,95 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(messages).hasSize(4).containsAll(List.of(message1, message2, message3, message4));
     }
 
-    @Test
+    private static Stream<Arguments> stepExecutions() {
+        // @formatter:off
+        var overwriteProblemStatement = Map.of("type", "overwrite", "updated", "New problem statement");
+        var updateProblemStatement = Map.of("type", "modify", "changes", List.of(
+                Map.of("from", "start", "to", "end", "updated", "updated content"))
+        );
+        var fileChanges = Map.of("changes", List.of(
+                Map.of("type", "overwrite", "path", "overwrite_me.txt", "updated", "new content"),
+                Map.of("type", "modify", "path", "modify_me.txt", "original", "quote", "updated", "updated quote"),
+                Map.of("type", "create", "path", "create_me.txt", "content", "new file content"),
+                Map.of("type", "delete", "path", "delete_me.txt"),
+                Map.of("type", "rename", "path", "rename_me.txt", "updated", "renamed.txt")
+        ));
+        var noType = Map.of("!type", "...");
+        var overwriteNoUpdated = Map.of("type", "overwrite");
+        var modifyWithZeroChanges = Map.of("type", "modify", "changes", List.of());
+        var modifyChangesNoFrom = Map.of("type", "modify", "changes", List.of(
+                Map.of("to", "end", "updated", "updated content"))
+        );
+        var missingChanges = Map.of("type", "modify");
+        var fileWithZeroChanges = Map.of("changes", List.of());
+        return Stream.of(
+                Arguments.of(ExerciseComponent.PROBLEM_STATEMENT, overwriteProblemStatement, IrisExercisePlanStep.ExecutionStage.COMPLETE),
+                Arguments.of(ExerciseComponent.PROBLEM_STATEMENT, updateProblemStatement, IrisExercisePlanStep.ExecutionStage.COMPLETE),
+                Arguments.of(ExerciseComponent.SOLUTION_REPOSITORY, fileChanges, IrisExercisePlanStep.ExecutionStage.COMPLETE),
+                Arguments.of(ExerciseComponent.TEMPLATE_REPOSITORY, fileChanges, IrisExercisePlanStep.ExecutionStage.COMPLETE),
+                Arguments.of(ExerciseComponent.TEST_REPOSITORY, fileChanges, IrisExercisePlanStep.ExecutionStage.COMPLETE),
+                Arguments.of(ExerciseComponent.PROBLEM_STATEMENT, noType, IrisExercisePlanStep.ExecutionStage.FAILED),
+                Arguments.of(ExerciseComponent.PROBLEM_STATEMENT, overwriteNoUpdated, IrisExercisePlanStep.ExecutionStage.FAILED),
+                Arguments.of(ExerciseComponent.PROBLEM_STATEMENT, modifyWithZeroChanges, IrisExercisePlanStep.ExecutionStage.FAILED),
+                Arguments.of(ExerciseComponent.PROBLEM_STATEMENT, modifyChangesNoFrom, IrisExercisePlanStep.ExecutionStage.FAILED),
+                Arguments.of(ExerciseComponent.PROBLEM_STATEMENT, missingChanges, IrisExercisePlanStep.ExecutionStage.FAILED),
+                Arguments.of(ExerciseComponent.SOLUTION_REPOSITORY, missingChanges, IrisExercisePlanStep.ExecutionStage.FAILED),
+                Arguments.of(ExerciseComponent.TEMPLATE_REPOSITORY, missingChanges, IrisExercisePlanStep.ExecutionStage.FAILED),
+                Arguments.of(ExerciseComponent.TEST_REPOSITORY, missingChanges, IrisExercisePlanStep.ExecutionStage.FAILED),
+                Arguments.of(ExerciseComponent.SOLUTION_REPOSITORY, fileWithZeroChanges, IrisExercisePlanStep.ExecutionStage.FAILED),
+                Arguments.of(ExerciseComponent.TEMPLATE_REPOSITORY, fileWithZeroChanges, IrisExercisePlanStep.ExecutionStage.FAILED),
+                Arguments.of(ExerciseComponent.TEST_REPOSITORY, fileWithZeroChanges, IrisExercisePlanStep.ExecutionStage.FAILED)
+        );
+        // @formatter:on
+    }
+
+    @ParameterizedTest
+    @MethodSource("stepExecutions")
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testExecutePlan() throws Exception {
+    void testExecutePlan(ExerciseComponent component, Map<String, ?> irisResponse, IrisExercisePlanStep.ExecutionStage expectedExecutionResult) throws Exception {
         var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
         var message = irisSession.newMessage();
-        message.addContent(createMockExercisePlanContent());
-        var irisMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
-        var exercisePlan = (IrisExercisePlan) irisMessage.getContent().get(0);
+        var exercisePlan = new IrisExercisePlan();
+        exercisePlan.setSteps(List.of(new IrisExercisePlanStep(component, "Make some changes")));
+        message.addContent(exercisePlan);
+        var savedMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
+        var savedPlan = (IrisExercisePlan) savedMessage.getContent().get(0);
+        var savedStep = savedPlan.getSteps().get(0);
         setupExercise();
 
-        request.postWithResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages" + irisMessage.getId() + "/steps/" + exercisePlan.getId() + "/execute",
-                null, Void.class, HttpStatus.OK);
+        irisRequestMockProvider.mockMessageV2Response(irisResponse);
 
-        // TODO: wait for requestExerciseChanges() complete
-        assertThat(irisMessage.getSender()).isEqualTo(IrisMessageSender.LLM);
-        await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(1).contains(irisMessage));
+        // This REST call does not return anything, but the changes will be sent over the websocket when they are ready
+        request.postWithoutResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages/" + savedMessage.getId() + "/contents/" + savedPlan.getId() + "/steps/"
+                + savedStep.getId() + "/execute", null, HttpStatus.OK);
+
+        switch (expectedExecutionResult) {
+            case COMPLETE -> verifyWasSentOverWebsocket(irisSession, stepSuccessDTO(component));
+            case FAILED -> verifyWasSentOverWebsocket(irisSession, stepFailedDTO());
+        }
+        assertThat(irisExercisePlanStepRepository.findByIdElseThrow(savedStep.getId()).getExecutionStage()).isEqualTo(expectedExecutionResult);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testExecutePlanResponseError() throws Exception {
+        var irisSession = irisCodeEditorSessionService.createSession(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "editor1"));
+        var message = irisSession.newMessage();
+        var exercisePlan = new IrisExercisePlan();
+        exercisePlan.setSteps(List.of(new IrisExercisePlanStep(ExerciseComponent.PROBLEM_STATEMENT, "Make some changes")));
+        message.addContent(exercisePlan);
+        var savedMessage = irisMessageService.saveMessage(message, irisSession, IrisMessageSender.LLM);
+        var savedPlan = (IrisExercisePlan) savedMessage.getContent().get(0);
+        var savedStep = savedPlan.getSteps().get(0);
+        setupExercise();
+
+        irisRequestMockProvider.mockMessageV2Error(500);
+
+        // This REST call does not return anything, but the changes will be sent over the websocket when they are ready
+        request.postWithoutResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages/" + savedMessage.getId() + "/contents/" + savedPlan.getId() + "/steps/"
+                + savedStep.getId() + "/execute", null, HttpStatus.OK);
+
+        verifyWasSentOverWebsocket(irisSession, stepFailedDTO());
     }
 
     @Test
@@ -172,8 +249,8 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        verifyWasSentOverWebsocket(irisSession, messageDTOWithContent(messageToSend.getContent()));
-        verifyWasSentOverWebsocket(irisSession, errorDTO());
+        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
+        verifyWasSentOverWebsocket(irisSession, messageExceptionDTO());
         verifyNothingElseWasSentOverWebsocket();
     }
 
@@ -188,8 +265,8 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        verifyWasSentOverWebsocket(irisSession, messageDTOWithContent(messageToSend.getContent()));
-        verifyWasSentOverWebsocket(irisSession, errorDTO());
+        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
+        verifyWasSentOverWebsocket(irisSession, messageExceptionDTO());
         verifyNothingElseWasSentOverWebsocket();
     }
 
@@ -223,15 +300,60 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private IrisExercisePlan createMockExercisePlanContent() {
         var content = new IrisExercisePlan();
-        content.setSteps(List.of(new IrisExercisePlanStep(ExerciseComponent.PROBLEM_STATEMENT, "I will edit the problem statement."),
+        // @formatter:off
+        content.setSteps(List.of(
+                new IrisExercisePlanStep(ExerciseComponent.PROBLEM_STATEMENT, "I will edit the problem statement."),
                 new IrisExercisePlanStep(ExerciseComponent.SOLUTION_REPOSITORY, "I will edit the solution repository."),
                 new IrisExercisePlanStep(ExerciseComponent.TEMPLATE_REPOSITORY, "I will edit the template repository."),
-                new IrisExercisePlanStep(ExerciseComponent.TEST_REPOSITORY, "I will edit the test repository.")));
+                new IrisExercisePlanStep(ExerciseComponent.TEST_REPOSITORY, "I will edit the test repository.")
+        ));
+        // @formatter:on
         content.setId(ThreadLocalRandom.current().nextLong());
         return content;
     }
 
-    private ArgumentMatcher<Object> messageDTOWithContent(List<IrisMessageContent> content) {
+    private ArgumentMatcher<Object> stepSuccessDTO(ExerciseComponent component) {
+        return new ArgumentMatcher<>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                if (!(argument instanceof IrisCodeEditorWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                    return false;
+                }
+                if (websocketDTO.type() != IrisCodeEditorWebsocketService.IrisWebsocketMessageType.STEP_SUCCESS) {
+                    return false;
+                }
+                // TODO: Could be improved by also checking that the file changes and updated problem statement are correct,
+                // but this would require setting up the exercise with the correct files etc. to be successfully modified in the test
+                return websocketDTO.stepExecutionSuccess().component() == component;
+            }
+
+            @Override
+            public String toString() {
+                return "IrisCodeEditorWebsocketService.IrisWebsocketDTO with type STEP_SUCCESS and component " + component;
+            }
+        };
+    }
+
+    private ArgumentMatcher<Object> stepFailedDTO() {
+        return new ArgumentMatcher<>() {
+
+            @Override
+            public boolean matches(Object argument) {
+                if (!(argument instanceof IrisCodeEditorWebsocketService.IrisWebsocketDTO websocketDTO)) {
+                    return false;
+                }
+                return websocketDTO.type() == IrisCodeEditorWebsocketService.IrisWebsocketMessageType.STEP_EXCEPTION;
+            }
+
+            @Override
+            public String toString() {
+                return "IrisCodeEditorWebsocketService.IrisWebsocketDTO with type STEP_EXCEPTION";
+            }
+        };
+    }
+
+    private ArgumentMatcher<Object> messageDTO(List<IrisMessageContent> content) {
         return new ArgumentMatcher<>() {
 
             @Override
@@ -253,7 +375,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         };
     }
 
-    private ArgumentMatcher<Object> errorDTO() {
+    private ArgumentMatcher<Object> messageExceptionDTO() {
         return new ArgumentMatcher<>() {
 
             @Override

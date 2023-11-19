@@ -94,10 +94,10 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
         MESSAGE, STEP_SUCCESS, STEP_EXCEPTION, EXCEPTION
     }
 
-    private record StepExecutionSuccess(long messageId, long planId, long stepId, ExerciseComponent component, Set<FileChange> fileChanges, String updatedProblemStatement) {
+    public record StepExecutionSuccess(long messageId, long planId, long stepId, ExerciseComponent component, Set<FileChange> fileChanges, String updatedProblemStatement) {
     }
 
-    private record StepExecutionException(long messageId, long planId, long stepId, String errorMessage, String errorTranslationKey, Map<String, Object> translationParams) {
+    public record StepExecutionException(long messageId, long planId, long stepId, String errorMessage, String errorTranslationKey, Map<String, Object> translationParams) {
     }
 
     public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, StepExecutionSuccess stepExecutionSuccess, StepExecutionException executionException,

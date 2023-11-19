@@ -23,10 +23,16 @@ class IrisConnectorServiceTest extends AbstractIrisIntegrationTest {
     private IrisConnectorService irisConnectorService;
 
     private static Stream<Arguments> irisExceptions() {
-        return Stream.of(Arguments.of(400, IrisInvalidTemplateException.class), Arguments.of(401, IrisForbiddenException.class), Arguments.of(403, IrisForbiddenException.class),
-                Arguments.of(404, IrisModelNotAvailableException.class), Arguments.of(500, IrisInternalPyrisErrorException.class),
-                // Test default case
-                Arguments.of(418, IrisInternalPyrisErrorException.class));
+        // @formatter:off
+        return Stream.of(
+                Arguments.of(400, IrisInvalidTemplateException.class),
+                Arguments.of(401, IrisForbiddenException.class),
+                Arguments.of(403, IrisForbiddenException.class),
+                Arguments.of(404, IrisModelNotAvailableException.class),
+                Arguments.of(500, IrisInternalPyrisErrorException.class),
+                Arguments.of(418, IrisInternalPyrisErrorException.class) // Test default case
+        );
+        // @formatter:on
     }
 
     @ParameterizedTest
