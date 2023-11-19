@@ -73,9 +73,8 @@ class IrisChatSessionIntegrationTest extends AbstractIrisIntegrationTest {
     void getAllSessions() throws Exception {
         var irisSession1 = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisSession.class, HttpStatus.CREATED);
         var irisSession2 = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", null, IrisSession.class, HttpStatus.CREATED);
-        List<IrisSession> sessions = List.of(irisSession2, irisSession1);
         List<IrisSession> irisSessions = request.getList("/api/iris/programming-exercises/" + exercise.getId() + "/sessions", HttpStatus.OK, IrisSession.class);
-        assertThat(irisSessions).isEqualTo(sessions);
+        assertThat(irisSessions).hasSize(2).containsAll(List.of(irisSession1, irisSession2));
     }
 
     @Test

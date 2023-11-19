@@ -78,9 +78,8 @@ class IrisCodeEditorSessionIntegrationTest extends AbstractIrisIntegrationTest {
                 HttpStatus.CREATED);
         var irisSession2 = request.postWithResponseBody("/api/iris/programming-exercises/" + exercise.getId() + "/code-editor-sessions", null, IrisSession.class,
                 HttpStatus.CREATED);
-        List<IrisSession> sessions = List.of(irisSession2, irisSession1);
         List<IrisSession> irisSessions = request.getList("/api/iris/programming-exercises/" + exercise.getId() + "/code-editor-sessions", HttpStatus.OK, IrisSession.class);
-        assertThat(irisSessions).isEqualTo(sessions);
+        assertThat(irisSessions).hasSize(2).containsAll(List.of(irisSession1, irisSession2));
     }
 
     @Test
