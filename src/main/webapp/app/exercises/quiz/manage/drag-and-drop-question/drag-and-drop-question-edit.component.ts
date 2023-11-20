@@ -151,8 +151,17 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.currentDropLocation = new DropLocation();
         this.mouse = new DragAndDropMouseEvent();
         this.questionEditorText = generateExerciseHintExplanation(this.question);
-        if (this.question.importedApollonBackground) {
-            this.setBackgroundFile({ target: { files: [this.question.importedApollonBackground] } });
+
+        // check if question was generated with an ApollonDiagram
+        if (this.question.importedFiles) {
+            this.setBackgroundFile({ target: { files: [new File([this.question.importedFiles.get('diagram-background.png')!], 'diagram-background.png')] } });
+            for (const dragItem of this.question.dragItems ?? []) {
+                if (dragItem.pictureFilePath && this.question.importedFiles.has(dragItem.pictureFilePath)) {
+                    this.changeToPictureDragItem(dragItem, {
+                        target: { files: [new File([this.question.importedFiles.get(dragItem.pictureFilePath!)!], dragItem.pictureFilePath!)] },
+                    });
+                }
+            }
         }
     }
 

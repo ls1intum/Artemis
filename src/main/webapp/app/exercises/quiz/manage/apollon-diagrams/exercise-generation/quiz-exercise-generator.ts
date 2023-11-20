@@ -30,7 +30,6 @@ export async function generateDragAndDropQuizExercise(course: Course, title: str
     const diagramBackground = await convertRenderedSVGToPNG(renderedDiagram);
     const files = new Map<string, Blob>();
     files.set('diagram-background.png', diagramBackground);
-    const bgImage = new File([diagramBackground], 'diagram-background.png');
 
     const dragItems = new Map<string, DragItem>();
     const dropLocations = new Map<string, DropLocation>();
@@ -51,7 +50,7 @@ export async function generateDragAndDropQuizExercise(course: Course, title: str
 
     // Generate a drag-and-drop question object
     const dragAndDropQuestion = createDragAndDropQuestion(title, 'diagram-background.png', [...dragItems.values()], [...dropLocations.values()], correctMappings);
-    dragAndDropQuestion.importedApollonBackground = bgImage;
+    dragAndDropQuestion.importedFiles = files;
 
     return dragAndDropQuestion;
 }
