@@ -44,15 +44,11 @@ public class MathExerciseResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final FeedbackRepository feedbackRepository;
-
     private final MathExerciseService mathExerciseService;
 
     private final ExerciseService exerciseService;
 
     private final ExerciseDeletionService exerciseDeletionService;
-
-    private final PlagiarismResultRepository plagiarismResultRepository;
 
     private final MathExerciseRepository mathExerciseRepository;
 
@@ -64,19 +60,13 @@ public class MathExerciseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final StudentParticipationRepository studentParticipationRepository;
-
     private final ParticipationRepository participationRepository;
-
-    private final ResultRepository resultRepository;
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     private final GroupNotificationScheduleService groupNotificationScheduleService;
 
     private final GradingCriterionRepository gradingCriterionRepository;
-
-    private final PlagiarismDetectionService plagiarismDetectionService;
 
     private final CourseRepository courseRepository;
 
@@ -91,23 +81,18 @@ public class MathExerciseResource {
             ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository,
             GroupNotificationScheduleService groupNotificationScheduleService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
             ChannelService channelService, ChannelRepository channelRepository) {
-        this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
-        this.plagiarismResultRepository = plagiarismResultRepository;
         this.mathExerciseService = mathExerciseService;
         this.mathExerciseRepository = mathExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
-        this.studentParticipationRepository = studentParticipationRepository;
         this.participationRepository = participationRepository;
-        this.resultRepository = resultRepository;
         this.mathExerciseImportService = mathExerciseImportService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.plagiarismDetectionService = plagiarismDetectionService;
         this.courseRepository = courseRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
