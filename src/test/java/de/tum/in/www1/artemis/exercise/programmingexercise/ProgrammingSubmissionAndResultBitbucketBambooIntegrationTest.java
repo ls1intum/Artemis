@@ -137,6 +137,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     private ProgrammingExercise exercise;
 
+    private static final boolean IS_TEST_RUN = false;
+
     @BeforeEach
     void setUp() {
         bambooRequestMockProvider.enableMockingOfRequests();
@@ -805,8 +807,6 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     @NotNull
     private StudentExam createEndedStudentExamWithGracePeriod(User user, Integer gracePeriod) {
-        boolean IS_TEST_RUN = false;
-
         Course course = courseUtilService.addEmptyCourse();
         var exam = examUtilService.addActiveExamWithRegisteredUser(course, user);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
