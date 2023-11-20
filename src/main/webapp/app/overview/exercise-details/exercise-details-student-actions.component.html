@@ -223,8 +223,8 @@
                         (gradedParticipation?.initializationState === InitializationState.INITIALIZED || (beforeDueDate && !hasRatedGradedResult)
                             ? editorLabel
                             : hasRatedGradedResult
-                            ? 'viewResults'
-                            : 'viewSubmissions') | artemisTranslate
+                              ? 'viewResults'
+                              : 'viewSubmissions') | artemisTranslate
                 "
                 [outlined]="(!beforeDueDate || hasRatedGradedResult) && gradedParticipation?.initializationState === InitializationState.FINISHED"
                 [buttonLoading]="!!exercise.loading"
