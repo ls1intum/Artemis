@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizMessagingService;
 import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
 @Service
@@ -65,9 +66,11 @@ public class QuizScheduleService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
+    private final Optional<LtiNewResultService> ltiNewResultService;
+
     public QuizScheduleService(WebsocketMessagingService websocketMessagingService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
             QuizSubmissionRepository quizSubmissionRepository, HazelcastInstance hazelcastInstance, QuizExerciseRepository quizExerciseRepository,
-            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService) {
+            QuizMessagingService quizMessagingService, QuizStatisticService quizStatisticService, Optional<LtiNewResultService> ltiNewResultService) {
         this.websocketMessagingService = websocketMessagingService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
@@ -78,6 +81,7 @@ public class QuizScheduleService {
         this.scheduledProcessQuizSubmissions = hazelcastInstance.getCPSubsystem().getAtomicReference(HAZELCAST_PROCESS_CACHE_HANDLER);
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_QUIZ_SCHEDULER);
         this.quizCache = new QuizCache(hazelcastInstance);
+        this.ltiNewResultService = ltiNewResultService;
     }
 
     /**
@@ -484,8 +488,11 @@ public class QuizScheduleService {
                             log.error("Participation is missing student (or student is missing username): {}", participation);
                         }
                         else {
-                            sendQuizResultToUser(quizExerciseId, participation);
-                            cachedQuiz.getParticipations().remove(entry.getKey());
+                            if(ltiNewResultService.isPresent()) {
+                                ltiNewResultService.get().onNewResult(participation);
+                            }
+                           sendQuizResultToUser(quizExerciseId, participation);
+                           cachedQuiz.getParticipations().remove(entry.getKey());
                         }
                     });
                     if (!finishedParticipations.isEmpty()) {

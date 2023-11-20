@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnInit, Output, Renderer2 } from '@angular/core';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 export interface Coordinates {
@@ -37,24 +37,31 @@ export class ColorSelectorComponent implements OnInit {
     @Input() tagColors: string[] = DEFAULT_COLORS;
     @Output() selectedColor = new EventEmitter<string>();
 
+    constructor(
+        private elementRef: ElementRef,
+        private renderer: Renderer2,
+    ) {}
+
     /**
      * set default position on init
      */
     ngOnInit(): void {
         this.colorSelectorPosition = { left: 0, top: 0 };
+
+        this.addEventListenerToCloseComponentOnClickOutside();
     }
 
-    /**
-     * close colorSelector if click happens outside
-     * @param event
-     */
-    @HostListener('document:click', ['$event'])
-    clickOutside(event: any) {
-        if (this.showColorSelector) {
-            if (!event.target?.className.includes('color-selector') && !event.target?.className.includes('color-preview')) {
-                this.showColorSelector = false;
+    private addEventListenerToCloseComponentOnClickOutside() {
+        this.renderer.listen('document', 'click', (event: Event) => {
+            if (this.showColorSelector) {
+                const target = event.target as HTMLElement;
+
+                const isClickOutsideOfComponent = !this.elementRef.nativeElement.contains(target);
+                if (isClickOutsideOfComponent) {
+                    this.showColorSelector = false;
+                }
             }
-        }
+        });
     }
 
     /**
@@ -65,11 +72,13 @@ export class ColorSelectorComponent implements OnInit {
      */
     openColorSelector(event: MouseEvent, marginTop?: number, height?: number) {
         const parentElement = (event.target as Element).closest('.ng-trigger') as HTMLElement;
+
         this.colorSelectorPosition.left = parentElement ? parentElement.offsetLeft : 0;
         this.colorSelectorPosition.top = marginTop ?? 65;
         if (height !== undefined) {
             this.height = height;
         }
+
         this.showColorSelector = !this.showColorSelector;
     }
 

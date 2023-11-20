@@ -171,7 +171,8 @@
                 "button": "Notifications",
                 "type": {
                     "examWideAnnouncement": "Exam-Wide Announcement",
-                    "workingTimeUpdate": "Working Time Update"
+                    "workingTimeUpdate": "Working Time Update",
+                    "examAttendanceCheck": "Attendance Check"
                 },
                 "from": "from",
                 "acknowledge": "Acknowledge",
@@ -182,6 +183,9 @@
                         "titlePersonal": "Your personal working time of the exam has been changed.",
                         "old": "Previous working time",
                         "new": "New working time"
+                    },
+                    "examAttendanceCheck": {
+                        "description": "An exam supervisor has triggered the attendance check for you. Please follow the instructions of the supervisor."
                     }
                 }
             }
@@ -248,7 +252,9 @@
             "totalColumn": "Total",
             "exerciseGroupTitle": "Average scores of exercise group \"{{ groupTitle }}\" in comparison",
             "gradesBeforeBonus": "Grades before bonus",
-            "gradesAfterBonus": "Grades after bonus"
+            "gradesAfterBonus": "Grades after bonus",
+            "noStudentResultAvailable": "No student results available",
+            "noExerciseGroupAvailable": "No exercise groups available"
         },
         "examParticipation": {
             "timer": "Time left: ",

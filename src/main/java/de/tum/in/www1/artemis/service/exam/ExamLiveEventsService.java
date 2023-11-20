@@ -5,9 +5,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
-import de.tum.in.www1.artemis.domain.exam.event.ExamWideAnnouncementEvent;
-import de.tum.in.www1.artemis.domain.exam.event.WorkingTimeUpdateEvent;
+import de.tum.in.www1.artemis.domain.exam.event.*;
 import de.tum.in.www1.artemis.repository.ExamLiveEventRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
@@ -17,6 +15,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
  * <ul>
  * <li>Exam Wide Announcements
  * <li>Working Time Updates
+ * <li>Exam Attendance Check
  * </ul>
  * <p>
  * In the future, we can incorporate more events here.
@@ -62,6 +61,28 @@ public class ExamLiveEventsService {
         event.setCreatedBy(sentBy.getName());
 
         // Specific fields
+        event.setTextContent(message);
+
+        return this.storeAndDistributeLiveExamEvent(event);
+    }
+
+    /**
+     * Send an attendance check event to the specified student
+     *
+     * @param studentExam The student exam the where the popup should be shown
+     * @param message     The message to send.
+     * @param sentBy      The user who sent the message.
+     * @return The created event.
+     */
+    public ExamAttendanceCheckEvent createAndSendExamAttendanceCheckEvent(StudentExam studentExam, String message, User sentBy) {
+        var event = new ExamAttendanceCheckEvent();
+
+        // Common fields
+        event.setExamId(studentExam.getExam().getId());
+        event.setStudentExamId(studentExam.getId());
+        event.setCreatedBy(sentBy.getName());
+
+        // specific fields
         event.setTextContent(message);
 
         return this.storeAndDistributeLiveExamEvent(event);
