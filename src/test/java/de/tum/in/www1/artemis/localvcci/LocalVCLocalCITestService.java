@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -486,7 +487,7 @@ public class LocalVCLocalCITestService {
         // wait for result to be persisted
         await().until(() -> resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        await().until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).until(() -> {
             SecurityContextHolder.getContext().setAuthentication(auth);
             return programmingSubmissionRepository.findFirstByParticipationIdOrderByLegalSubmissionDateDesc(participationId).orElseThrow().getLatestResult() != null;
         });
