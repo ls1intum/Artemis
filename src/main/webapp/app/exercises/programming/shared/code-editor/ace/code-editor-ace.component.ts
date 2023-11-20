@@ -2,6 +2,7 @@ import { UndoManager, acequire } from 'brace';
 import 'brace/ext/language_tools';
 import 'brace/ext/modelist';
 import 'brace/mode/java';
+import 'brace/mode/sh';
 import 'brace/mode/markdown';
 import 'brace/mode/haskell';
 import 'brace/mode/ocaml';
