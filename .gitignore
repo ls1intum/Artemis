@@ -72,6 +72,7 @@ classes/
 .local/share/JetBrains/
 .java/
 out/
+.jpb/
 
 ######################
 # Visual Studio Code
