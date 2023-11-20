@@ -40,8 +40,6 @@ def liquibaseCommand(command) {
         }
         main = "liquibase.integration.commandline.Main"
 
-        args "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() + "_changelog.xml"
-        args "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQL8Dialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"
         args "--username=root"
         args "--password="
         args "--url=jdbc:mysql://localhost:3306/ArTEMiS?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
@@ -50,38 +48,56 @@ def liquibaseCommand(command) {
     }
 }
 
+def liquibaseDiffCommand(command) {
+    liquibaseCommand([
+        "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() + "_changelog.xml",
+        "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQL8Dialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy",
+        command
+    ])
+}
+
 task liquibaseDiff(dependsOn: initPaths) {
     group = "liquibase"
     doLast {
-        liquibaseCommand("diff")
+        liquibaseDiffCommand("diff")
     }
 }
 
 task liquibaseStatus(dependsOn: initPaths) {
     group = "liquibase"
     doLast {
-        liquibaseCommand("status")
+        liquibaseDiffCommand("status")
     }
 }
 
 task liquibaseDiffChangeLog(dependsOn: initPaths) {
     group = "liquibase"
     doLast {
-        liquibaseCommand("diffChangeLog")
+        liquibaseDiffCommand("diffChangeLog")
     }
 }
 
 task liquibaseClearChecksums(dependsOn: initPaths) {
     group = "liquibase"
     doLast {
-        liquibaseCommand("clearChecksums")
+        liquibaseDiffCommand("clearChecksums")
     }
 }
 
 task liquibaseGenerateChangelog(dependsOn: initPaths) {
     group = "liquibase"
     doLast {
-        liquibaseCommand("generateChangelog")
+        liquibaseDiffCommand("generateChangelog")
+    }
+}
+
+task liquibaseUpdate(dependsOn: initPaths) {
+    group = "liquibase"
+    doLast {
+        liquibaseCommand([
+            "--changeLogFile=src/main/resources/config/liquibase/master.xml",
+            "update"
+        ])
     }
 }
 

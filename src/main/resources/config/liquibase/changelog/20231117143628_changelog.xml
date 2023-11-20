@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="andreas" id="20231117143628-1">
+        <createIndex indexName="UC_EXAMPLE_SUBMISSIONSUBMISSION_ID_COL_TMP" tableName="example_submission">
+            <column name="submission_id"/>
+        </createIndex>
+        <dropIndex indexName="UC_EXAMPLE_SUBMISSIONSUBMISSION_ID_COL" tableName="example_submission"/>
+        <addUniqueConstraint columnNames="submission_id" constraintName="UC_EXAMPLE_SUBMISSIONSUBMISSION_ID_COL"
+                             tableName="example_submission"/>
+        <dropIndex indexName="UC_EXAMPLE_SUBMISSIONSUBMISSION_ID_COL_TMP" tableName="example_submission"/>
+    </changeSet>
+    <changeSet author="andreas" id="20231117143628-2">
+        <createIndex indexName="UC_EXERCISESOLUTION_PARTICIPATION_ID_COL_TMP" tableName="exercise">
+            <column name="solution_participation_id"/>
+        </createIndex>
+        <dropIndex indexName="UC_EXERCISESOLUTION_PARTICIPATION_ID_COL" tableName="exercise"/>
+        <addUniqueConstraint columnNames="solution_participation_id"
+                             constraintName="UC_EXERCISESOLUTION_PARTICIPATION_ID_COL" tableName="exercise"/>
+        <dropIndex indexName="UC_EXERCISESOLUTION_PARTICIPATION_ID_COL_TMP" tableName="exercise"/>
+    </changeSet>
+    <changeSet author="andreas" id="20231117143628-3">
+        <createIndex indexName="UC_EXERCISESUBMISSION_POLICY_ID_COL_TMP" tableName="exercise">
+            <column name="submission_policy_id"/>
+        </createIndex>
+        <dropIndex indexName="UC_EXERCISEUBMISSION_POLICY_ID_COL" tableName="exercise"/>
+        <addUniqueConstraint columnNames="submission_policy_id" constraintName="UC_EXERCISESUBMISSION_POLICY_ID_COL"
+                             tableName="exercise"/>
+        <dropIndex indexName="UC_EXERCISESUBMISSION_POLICY_ID_COL_TMP" tableName="exercise"/>
+    </changeSet>
+    <changeSet author="andreas" id="20231117143628-4">
+        <createIndex indexName="UC_EXERCISETEMPLATE_PARTICIPATION_ID_COL_TMP" tableName="exercise">
+            <column name="template_participation_id"/>
+        </createIndex>
+        <dropIndex indexName="UC_EXERCISETEMPLATE_PARTICIPATION_ID_COL" tableName="exercise"/>
+        <addUniqueConstraint columnNames="template_participation_id"
+                             constraintName="UC_EXERCISETEMPLATE_PARTICIPATION_ID_COL" tableName="exercise"/>
+        <dropIndex indexName="UC_EXERCISETEMPLATE_PARTICIPATION_ID_COL_TMP" tableName="exercise"/>
+    </changeSet>
+    <changeSet author="andreas" id="20231117143628-5">
+        <createIndex indexName="UC_EXERCISETEMPLATE_PARTICIPATION_ID_COL_TMP" tableName="exercise">
+            <column name="template_participation_id"/>
+        </createIndex>
+        <dropIndex indexName="UC_EXERCISETEMPLATE_PARTICIPATION_ID_COL" tableName="exercise"/>
+        <addUniqueConstraint columnNames="template_participation_id"
+                             constraintName="UC_EXERCISETEMPLATE_PARTICIPATION_ID_COL" tableName="exercise"/>
+        <dropIndex indexName="UC_EXERCISETEMPLATE_PARTICIPATION_ID_COL_TMP" tableName="exercise"/>
+    </changeSet>
+    <changeSet author="andreas" id="20231117143628-6">
+        <createIndex indexName="UC_JHI_USERLOGIN_COL_TMP" tableName="jhi_user">
+            <column name="login"/>
+        </createIndex>
+        <dropIndex indexName="login" tableName="jhi_user"/>
+        <addUniqueConstraint columnNames="login" constraintName="UC_JHI_USERLOGIN_COL" tableName="jhi_user"/>
+        <dropIndex indexName="UC_JHI_USERLOGIN_COL_TMP" tableName="jhi_user"/>
+    </changeSet>
+    <!--    <changeSet author="andreas" id="20231117143628-7">-->
+    <!--        <createIndex indexName="UC_MODEL_ELEMENTMODEL_ELEMENT_ID_COL_TMP" tableName="model_element">-->
+    <!--            <column name="model_element_id"/>-->
+    <!--        </createIndex>-->
+    <!--        <dropIndex indexName="UC_MODEL_ELEMENTMODEL_ELEMENT_ID_COL" tableName="model_element"/>-->
+    <!--        <addUniqueConstraint columnNames="model_element_id" constraintName="UC_MODEL_ELEMENTMODEL_ELEMENT_ID_COL"-->
+    <!--                             tableName="model_element"/>-->
+    <!--        <dropIndex indexName="UC_MODEL_ELEMENTMODEL_ELEMENT_ID_COL_TMP" tableName="model_element"/>-->
+    <!--    </changeSet>-->
+    <changeSet author="andreas" id="20231117143628-8">
+        <createIndex indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL_TMP" tableName="quiz_question">
+            <column name="quiz_question_statistic_id"/>
+        </createIndex>
+        <dropIndex indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL" tableName="quiz_question"/>
+        <addUniqueConstraint columnNames="quiz_question_statistic_id"
+                             constraintName="UC_QUIZ_QUESTIONQUIZ_QUESTION_STATISTIC_ID_COL" tableName="quiz_question"/>
+        <dropIndex indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL_TMP" tableName="quiz_question"/>
+    </changeSet>
+    <changeSet author="andreas" id="20231117143628-9">
+        <createIndex indexName="UC_QUIZ_STATISTIC_COUNTERANSWER_ID_COL_TMP" tableName="quiz_statistic_counter">
+            <column name="answer_id"/>
+        </createIndex>
+        <dropIndex indexName="UC_STATISTIC_COUNTERANSWER_ID_COL" tableName="quiz_statistic_counter"/>
+        <addUniqueConstraint columnNames="answer_id" constraintName="UC_QUIZ_STATISTIC_COUNTERANSWER_ID_COL"
+                             tableName="quiz_statistic_counter"/>
+        <dropIndex indexName="UC_QUIZ_STATISTIC_COUNTERANSWER_ID_COL_TMP" tableName="quiz_statistic_counter"/>
+    </changeSet>
+    <changeSet author="andreas" id="20231117143628-10">
+        <createIndex indexName="UC_QUIZ_STATISTIC_COUNTERDROP_LOCATION_ID_COL_TMP" tableName="quiz_statistic_counter">
+            <column name="drop_location_id"/>
+        </createIndex>
+        <dropIndex indexName="UC_STATISTIC_COUNTERDROP_LOCATION_ID_COL" tableName="quiz_statistic_counter"/>
+        <addUniqueConstraint columnNames="drop_location_id"
+                             constraintName="UC_QUIZ_STATISTIC_COUNTERDROP_LOCATION_ID_COL"
+                             tableName="quiz_statistic_counter"/>
+        <dropIndex indexName="UC_QUIZ_STATISTIC_COUNTERDROP_LOCATION_ID_COL_TMP" tableName="quiz_statistic_counter"/>
+    </changeSet>
+    <changeSet author="andreas" id="20231117143628-11">
+        <createIndex indexName="UC_QUIZ_STATISTIC_COUNTERSPOT_ID_COL_TMP" tableName="quiz_statistic_counter">
+            <column name="spot_id"/>
+        </createIndex>
+        <dropIndex indexName="UC_STATISTIC_COUNTERSPOT_ID_COL" tableName="quiz_statistic_counter"/>
+        <addUniqueConstraint columnNames="spot_id" constraintName="UC_QUIZ_STATISTIC_COUNTERSPOT_ID_COL"
+                             tableName="quiz_statistic_counter"/>
+        <dropIndex indexName="UC_QUIZ_STATISTIC_COUNTERSPOT_ID_COL_TMP" tableName="quiz_statistic_counter"/>
+    </changeSet>
+    <!--    <changeSet author="andreas" id="20231117143628-12">-->
+    <!--        <createIndex indexName="UC_TEXT_BLOCKID_COL_TMP" tableName="text_block">-->
+    <!--            <column name="id"/>-->
+    <!--        </createIndex>-->
+    <!--        <dropIndex indexName="UC_TEXT_BLOCKID_COL" tableName="text_block"/>-->
+    <!--        <addUniqueConstraint columnNames="id" constraintName="UC_TEXT_BLOCKID_COL" tableName="text_block"/>-->
+    <!--        <dropIndex indexName="UC_TEXT_BLOCKID_COL_TMP" tableName="text_block"/>-->
+    <!--    </changeSet>-->
+    <changeSet author="andreas" id="20231117143628-13">
+        <dropIndex indexName="unique_answer_post_reaction" tableName="reaction"/>
+        <addUniqueConstraint columnNames="emoji_id, user_id, answer_post_id"
+                             constraintName="UKlaepr070dckbycappt532p75j" tableName="reaction"/>
+    </changeSet>
+    <changeSet author="andreas" id="20231117143628-14">
+        <dropIndex indexName="unique_post_reaction" tableName="reaction"/>
+        <addUniqueConstraint columnNames="emoji_id, user_id, post_id" constraintName="UK2cjgx3tbblgqtyw1b1fq67hvi"
+                             tableName="reaction"/>
+    </changeSet>
+    <changeSet author="andreas" id="20231117143628-15">
+        <createIndex indexName="uc_team_exercise_id_and_short_name_tmp" tableName="team">
+            <column name="exercise_id"/>
+            <column name="short_name"/>
+        </createIndex>
+        <dropIndex indexName="uc_team_exercise_id_and_short_name" tableName="team"/>
+        <addUniqueConstraint columnNames="exercise_id, short_name" constraintName="UK2xm7ad95n4mhc9tkxwci1ye0"
+                             tableName="team"/>
+        <dropIndex indexName="uc_team_exercise_id_and_short_name_tmp" tableName="team"/>
+    </changeSet>
+    <changeSet author="andreas" id="20231117143628-16">
+        <createIndex indexName="uc_notification_setting_user_id_and_setting_id_tmp" tableName="notification_setting">
+            <column name="user_id"/>
+            <column name="setting_id"/>
+        </createIndex>
+        <dropIndex indexName="UKNotificationSettingTableUserIdSettingId" tableName="notification_setting"/>
+        <addUniqueConstraint columnNames="user_id, setting_id" constraintName="UKrg96et0161v9xp3jd4tc9wy2a"
+                             tableName="notification_setting"/>
+        <dropIndex indexName="uc_notification_setting_user_id_and_setting_id_tmp" tableName="notification_setting"/>
+    </changeSet>
+    <changeSet author="andreas" id="20231117143628-17">
+        <dropIndex indexName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation"/>
+        <addUniqueConstraint columnNames="student_id, exercise_id, initialization_state"
+                             constraintName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation"/>
+    </changeSet>
+    <changeSet author="andreas" id="20231117143628-18">
+        <dropIndex indexName="UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS"
+                   tableName="participation"/>
+        <addUniqueConstraint columnNames="team_id, exercise_id, initialization_state"
+                             constraintName="UK91noy1we4g0jjqj7arej1wp04" tableName="participation"/>
+    </changeSet>
+</databaseChangeLog>
