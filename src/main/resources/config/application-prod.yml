@@ -109,7 +109,7 @@ jhipster:
             enabled: false
             host: localhost
             port: 5000
-            queue-size: 512
+            ring-buffer-size: 512
     audit-events:
         retention-period: 120 # Number of days before audit events are deleted.
 
