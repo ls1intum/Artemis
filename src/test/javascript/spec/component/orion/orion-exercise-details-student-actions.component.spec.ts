@@ -19,6 +19,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
     let orionConnectorService: OrionConnectorService;
 
     let orionStateStub: jest.SpyInstance;
+    let orionFeedbackStub: jest.SpyInstance;
     let cloneSpy: jest.SpyInstance;
     let submitSpy: jest.SpyInstance;
     let forwardBuildSpy: jest.SpyInstance;
@@ -48,7 +49,8 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
                 comp = fixture.componentInstance;
                 orionConnectorService = TestBed.inject(OrionConnectorService);
                 orionStateStub = jest.spyOn(orionConnectorService, 'state').mockReturnValue(new BehaviorSubject(orionState));
-                forwardBuildSpy = jest.spyOn(TestBed.inject(OrionBuildAndTestService), 'listenOnBuildOutputAndForwardChanges');
+                (orionFeedbackStub = jest.spyOn(orionConnectorService, 'getObservableForFeedback').mockReturnValue(new Subject<any>())),
+                    (forwardBuildSpy = jest.spyOn(TestBed.inject(OrionBuildAndTestService), 'listenOnBuildOutputAndForwardChanges'));
                 cloneSpy = jest.spyOn(orionConnectorService, 'importParticipation');
                 submitSpy = jest.spyOn(orionConnectorService, 'submit');
             });
@@ -59,11 +61,12 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
     });
 
     it('ngOnInit should subscribe to state', () => {
-        orionConnectorService.triggerAction = new Subject<void>().asObservable();
         comp.ngOnInit();
 
         expect(orionStateStub).toHaveBeenCalledOnce();
         expect(orionStateStub).toHaveBeenCalledWith();
+        expect(orionFeedbackStub).toHaveBeenCalledOnce();
+        expect(orionFeedbackStub).toHaveBeenCalledWith();
         expect(comp.orionState).toEqual(orionState);
     });
 
@@ -97,10 +100,11 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
 
     it('should submit if stated in route', () => {
         const submitChangesSpy = jest.spyOn(comp, 'submitChanges');
-        orionConnectorService.triggerAction = new Subject<void>().asObservable();
 
         comp.ngOnInit();
 
+        expect(orionFeedbackStub).toHaveBeenCalledOnce();
+        expect(orionFeedbackStub).toHaveBeenCalledWith();
         expect(submitChangesSpy).toHaveBeenCalledOnce();
         expect(submitChangesSpy).toHaveBeenCalledWith();
     });

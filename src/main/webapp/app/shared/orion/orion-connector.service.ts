@@ -1,5 +1,5 @@
 import { Injectable, Injector } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
@@ -9,7 +9,6 @@ import { Annotation } from 'app/exercises/programming/shared/code-editor/ace/cod
 import { Feedback } from 'app/entities/feedback.model';
 import { OrionTutorAssessmentComponent } from 'app/orion/assessment/orion-tutor-assessment.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 
 /**
  * Return the global native browser window object with any type to prevent type errors
@@ -37,13 +36,13 @@ function theWindow(): any {
 export class OrionConnectorService {
     private orionState: OrionState;
     private orionStateSubject: BehaviorSubject<OrionState>;
+    private orionFeedbackSubject = new Subject<any>();
     // When loaded, the AssessmentComponent registers here to receive updates from the plugin
     activeAssessmentComponent: OrionTutorAssessmentComponent | undefined = undefined;
 
     constructor(
         private injector: Injector,
         private alertService: AlertService,
-        private orionExerciseDetails: OrionExerciseDetailsStudentActionsComponent,
     ) {}
 
     static initConnector(connector: OrionConnectorService) {
@@ -52,6 +51,12 @@ export class OrionConnectorService {
         connector.orionStateSubject = new BehaviorSubject<OrionState>(connector.orionState);
     }
 
+    /**
+     * Gets the observable of the feedback subject
+     */
+    getObservableForFeedback() {
+        return this.orionFeedbackSubject.asObservable();
+    }
     /**
      * Yes, this is not best practice. But since this bridge service is an APP_INITIALIZER and has to be set on
      * the window object right in the beginning (so that the IDE can interact with Artemis as soon as the page has been
@@ -119,6 +124,7 @@ export class OrionConnectorService {
         const view = ExerciseView[viewString];
         this.setIDEStateParameter({ view });
         this.setIDEStateParameter({ opened });
+        this.orionFeedbackSubject.next(viewString);
     }
 
     /**
@@ -293,13 +299,6 @@ export class OrionConnectorService {
         } else {
             theWindow().orionExerciseConnector.initializeTestRepository('null');
         }
-    }
-
-    /**
-     * Initializes feedback in orion
-     */
-    initializeFeedback() {
-        this.orionExerciseDetails.initializeFeedback();
     }
 
     /**

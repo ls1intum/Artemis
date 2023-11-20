@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -26,6 +27,8 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     @Input() examMode: boolean;
     protected readonly OrionButtonType = OrionButtonType;
 
+    private feedbackRequestSubscription: Subscription;
+
     constructor(
         private orionConnectorService: OrionConnectorService,
         private ideBuildAndTestService: OrionBuildAndTestService,
@@ -41,6 +44,9 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
             if (params['withIdeSubmit']) {
                 this.submitChanges();
             }
+        });
+        this.feedbackRequestSubscription = this.orionConnectorService.getObservableForFeedback().subscribe(() => {
+            this.initializeFeedback();
         });
     }
 
