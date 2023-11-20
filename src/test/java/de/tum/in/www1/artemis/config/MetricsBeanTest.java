@@ -24,14 +24,8 @@ import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExamUserRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import io.micrometer.core.instrument.MeterRegistry;
 
@@ -40,10 +34,10 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     private static final String TEST_PREFIX = "metricsbeans";
 
     @Autowired
-    MeterRegistry meterRegistry;
+    private MeterRegistry meterRegistry;
 
     @Autowired
-    MetricsBean metricsBean;
+    private MetricsBean metricsBean;
 
     @Autowired
     private CourseUtilService courseUtilService;
@@ -67,25 +61,22 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
-    CourseService courseService;
+    private UserRepository userRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private ExerciseRepository exerciseRepository;
 
     @Autowired
-    ExerciseRepository exerciseRepository;
+    private ExamUserRepository examUserRepository;
 
     @Autowired
-    ExamUserRepository examUserRepository;
+    private ExamRepository examRepository;
 
     @Autowired
-    ExamRepository examRepository;
+    private CourseRepository courseRepository;
 
     @Autowired
-    CourseRepository courseRepository;
-
-    @Autowired
-    SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     @BeforeEach
     void resetDatabase() {
