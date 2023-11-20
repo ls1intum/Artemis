@@ -72,6 +72,9 @@ public class IrisRequestMockProvider {
         }
     }
 
+    /**
+     * Mocks a message with empty response from the Pyris message endpoint
+     */
     public void mockEmptyResponse() {
         // @formatter:off
         mockServer.expect(ExpectedCount.once(), requestTo(messagesApiV1URL.toString()))
@@ -109,6 +112,11 @@ public class IrisRequestMockProvider {
         mockCustomJsonResponse(messagesApiV2URL, json);
     }
 
+    /**
+     * Mocks a custom message response from the Pyris message endpoint
+     *
+     * @param json The content of the response
+     */
     public void mockCustomV1Response(String json) {
         mockCustomJsonResponse(messagesApiV1URL, json);
     }
@@ -158,6 +166,9 @@ public class IrisRequestMockProvider {
         // @formatter:on
     }
 
+    /**
+     * Mocks a get model error from the Pyris models endpoint
+     */
     public void mockModelsError() {
         // @formatter:off
         mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString()))
