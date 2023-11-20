@@ -151,7 +151,7 @@ public class ProgrammingExercise extends Exercise {
     @JoinColumn(name = "iris_settings_id", table = "programming_exercise_details")
     private IrisSettings irisSettings;
 
-    @Column(name = "build_plan_configuration", table = "programming_exercise_details", columnDefinition = "json")
+    @Column(name = "build_plan_configuration", table = "programming_exercise_details", columnDefinition = "longtext")
     private String buildPlanConfiguration;
 
     /**
