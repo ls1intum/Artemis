@@ -56,6 +56,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDeletionService;
 import de.tum.in.www1.artemis.service.export.CourseExamExportService;
+import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
@@ -154,6 +155,8 @@ public class CourseService {
 
     private final LearningPathService learningPathService;
 
+    private final IrisSettingsService irisSettingsService;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
@@ -164,7 +167,8 @@ public class CourseService {
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository, LearningPathService learningPathService) {
+            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository, LearningPathService learningPathService,
+            IrisSettingsService irisSettingsService) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -203,6 +207,7 @@ public class CourseService {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.conversationRepository = conversationRepository;
         this.learningPathService = learningPathService;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -373,6 +378,7 @@ public class CourseService {
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
         deleteTutorialGroupsOfCourse(course);
+        irisSettingsService.deleteSettingsFor(course);
         courseRepository.deleteById(course.getId());
     }
 
