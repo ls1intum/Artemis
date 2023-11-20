@@ -3,74 +3,8 @@
     xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
-    <include file="changelog/00000000000000_initial_schema.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20220000000600_cleanup.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20220826000000_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20220905125330_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20221026200000_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20221107120000_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20221117081200_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20221120004207_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230102203648_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230104145003_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230107160224_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230118205224_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230122022904_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230121123250_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230123101046_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230201130617_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230201102700_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230212181908_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230217110200_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230220022200_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230217140000_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230223202600_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230222092714_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230227191919_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230426171937_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230323181300_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230325100000_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230417110819_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230419102000_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230422110433_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230430235959_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230508114600_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230510004500_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230510004600_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230514121500_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230517171700_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230519181800_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230525170100_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230527010101_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230613000000_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230613131313_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230601154000_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230705141500_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230615151100_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230609100000_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230605115500_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230630151806_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230626220000_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230629194400_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230714012100_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230717171717_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230713171500_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230721135400_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230810100000_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230812135300_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230622000000_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230713113211_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230907114600_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230907225501_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230922222222_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230920133000_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230927125606_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230524102945_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20230930160925_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20231023163427_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20231117143628_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/20231117143629_changelog.xml" relativeToChangelogFile="true"/>
-    <include file="classpath:config/liquibase/changelog/00000000000000_initial_schema.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/00000000000000_initial_schema.xml"
+             relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220000000600_cleanup.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220826000000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220905125330_changelog.xml" relativeToChangelogFile="false"/>
@@ -136,6 +70,8 @@
     <include file="classpath:config/liquibase/changelog/20230930160925_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20231023163427_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20231029162645_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20231117143628_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20231117143629_changelog.xml" relativeToChangelogFile="false"/>
     <!-- NOTE: please use the format "YYYYMMDDhhmmss_changelog.xml", i.e. year month day hour minutes seconds and not something else! -->
     <!-- we should also stay in a chronological order! -->
     <!-- you can use the command 'date '+%Y%m%d%H%M%S'' to get the current date and time in the correct format -->
