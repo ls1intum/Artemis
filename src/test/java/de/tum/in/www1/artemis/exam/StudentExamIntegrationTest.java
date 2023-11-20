@@ -2382,11 +2382,16 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     void testTestRunGradeSummaryIsFound() throws Exception {
         StudentExam testRun = createTestRun();
         testRun.setSubmitted(true);
+        testRun.getExam().setPublishResultsDate(ZonedDateTime.now());
+        testRun.getExam().setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(2));
         studentExamRepository.save(testRun);
+        examRepository.save(testRun.getExam());
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
-        StudentExamWithGradeDTO studentExamGradeInfoFromServer = request
-                .get("/api/courses/" + course1.getId() + "/exams/" + testRun.getId() + "/student-exams/grade-summary?isTestRun=true", HttpStatus.OK, StudentExamWithGradeDTO.class);
+        StudentExamWithGradeDTO studentExamGradeInfoFromServer = request.get(
+                "/api/courses/" + course1.getId() + "/exams/" + testRun.getId() + "/student-exams/grade-summary?userId=" + instructor1.getId() + "&isTestRun=true", HttpStatus.OK,
+                StudentExamWithGradeDTO.class);
     }
 
     private void checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
