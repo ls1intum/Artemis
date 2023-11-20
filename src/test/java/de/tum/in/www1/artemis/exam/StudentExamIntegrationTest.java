@@ -2328,6 +2328,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         testRun.setExam(exam);
         testRun.setWorkingTime(6000);
         testRun.setUser(instructor);
+        testRun.setSubmitted(true);
 
         var testRunsInDbBefore = studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam.getId());
         var newTestRun = request.postWithResponseBody("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run", testRun, StudentExam.class,
@@ -2337,6 +2338,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(newTestRun.isTestRun()).isTrue();
         assertThat(newTestRun.getWorkingTime()).isEqualTo(6000);
         assertThat(newTestRun.getUser()).isEqualTo(instructor);
+        assertThat(newTestRun.isSubmitted()).isTrue();
         return newTestRun;
     }
 
@@ -2375,6 +2377,16 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(testRunResponse);
         // make sure that no second result is created
         checkQuizSubmission(quizExercise.getId(), quizSubmission.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testTestRunGradeSummaryIsFound() throws Exception {
+        StudentExam testRun = createTestRun();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        StudentExamWithGradeDTO studentExamGradeInfoFromServer = request
+                .get("/api/courses/" + course1.getId() + "/exams/" + testRun.getId() + "/student-exams/grade-summary?isTestRun=true", HttpStatus.OK, StudentExamWithGradeDTO.class);
     }
 
     private void checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
