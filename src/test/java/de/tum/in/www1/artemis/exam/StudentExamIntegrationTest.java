@@ -2461,10 +2461,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
         StudentExamWithGradeDTO studentExamGradeInfoFromServer = request.get(
-                "/api/courses/" + course1.getId() + "/exams/" + testRun.getId() + "/student-exams/grade-summary?userId=" + instructor1.getId() + "&isTestRun=true", HttpStatus.OK,
-                StudentExamWithGradeDTO.class);
+                "/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/grade-summary?userId=" + instructor1.getId() + "&isTestRun=true",
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
 
-        assertThat(studentExamGradeInfoFromServer).isNotNull();
+        assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(19.0);
+        assertThat(studentExamGradeInfoFromServer.achievedPointsPerExercise().size()).isEqualTo(3);
     }
 
     private void checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
