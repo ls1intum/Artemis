@@ -78,8 +78,8 @@ public class ExamLiveEventsService {
         var event = new ExamAttendanceCheckEvent();
 
         // Common fields
-        event.setExamId(studentExam.getExam().getId());
-        event.setStudentExamId(studentExam.getId());
+        event.setExam(studentExam.getExam());
+        event.setStudentExam(studentExam);
         event.setCreatedBy(sentBy.getName());
 
         // specific fields
