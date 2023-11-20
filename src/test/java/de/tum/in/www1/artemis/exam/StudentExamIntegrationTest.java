@@ -2328,7 +2328,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         testRun.setExam(exam);
         testRun.setWorkingTime(6000);
         testRun.setUser(instructor);
-        testRun.setSubmitted(true);
 
         var testRunsInDbBefore = studentExamRepository.findAllByExamId_AndTestRunIsTrue(exam.getId());
         var newTestRun = request.postWithResponseBody("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run", testRun, StudentExam.class,
@@ -2338,7 +2337,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(newTestRun.isTestRun()).isTrue();
         assertThat(newTestRun.getWorkingTime()).isEqualTo(6000);
         assertThat(newTestRun.getUser()).isEqualTo(instructor);
-        assertThat(newTestRun.isSubmitted()).isTrue();
         return newTestRun;
     }
 
@@ -2383,6 +2381,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testTestRunGradeSummaryIsFound() throws Exception {
         StudentExam testRun = createTestRun();
+        testRun.setSubmitted(true);
+        studentExamRepository.save(testRun);
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         StudentExamWithGradeDTO studentExamGradeInfoFromServer = request
