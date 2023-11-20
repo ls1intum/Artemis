@@ -227,7 +227,8 @@ public class TextAssessmentResource extends AssessmentResource {
             throw new BadRequestAlertException("This exercise isn't a TextExercise!", "Exercise", "wrongExerciseType");
         }
         else if (!result.getParticipation().getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId in Result of resultId " + resultId + " doesn't match the paths participationId!", "participationId", "participationIdMismatch");
+            throw new BadRequestAlertException("participationId in Result of resultId " + resultId + " doesn't match the paths participationId!", "participationId",
+                    "participationIdMismatch");
         }
         checkAuthorization(exercise, null);
         final TextSubmission textSubmission = textSubmissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(resultId);
@@ -407,7 +408,8 @@ public class TextAssessmentResource extends AssessmentResource {
         final ExampleSubmission exampleSubmission = exampleSubmissionRepository.findBySubmissionIdWithResultsElseThrow(submissionId);
         final var textExercise = exampleSubmission.getExercise();
         if (!textExercise.getId().equals(exerciseId)) {
-            throw new BadRequestAlertException("Exercise to submission with submissionId " + submissionId + " doesn't have the exerciseId " + exerciseId + " !", "exerciseId", "exerciseIdMismatch");
+            throw new BadRequestAlertException("Exercise to submission with submissionId " + submissionId + " doesn't have the exerciseId " + exerciseId + " !", "exerciseId",
+                    "exerciseIdMismatch");
         }
 
         // If the user is not at least a tutor for this exercise, return error
@@ -430,23 +432,21 @@ public class TextAssessmentResource extends AssessmentResource {
             final List<Feedback> assessments = feedbackRepository.findByResult(result);
             result.setFeedbacks(assessments);
 
-
             if (Boolean.TRUE.equals(exampleSubmission.isUsedForTutorial()) && !authCheckService.isAtLeastInstructorForExercise(textExercise, user)) {
                 Result freshResult = new Result();
                 // set the id to null to make sure that the client does know it is a restricted result and treat it accordingly
                 result.setId(null);
                 if (result.getFeedbacks() != null) {
                     result.getFeedbacks().stream().filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.hasText(feedback.getReference()))
-                        .forEach(feedback -> {
-                            Feedback freshFeedback = new Feedback();
-                            freshFeedback.setId(feedback.getId());
-                            freshResult.addFeedback(freshFeedback.reference(feedback.getReference()).type(feedback.getType()));
-                        });
+                            .forEach(feedback -> {
+                                Feedback freshFeedback = new Feedback();
+                                freshFeedback.setId(feedback.getId());
+                                freshResult.addFeedback(freshFeedback.reference(feedback.getReference()).type(feedback.getType()));
+                            });
                 }
                 result = freshResult;
             }
         }
-
 
         return ResponseEntity.ok().body(result);
     }
