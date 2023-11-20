@@ -2,12 +2,10 @@ package de.tum.in.www1.artemis.localvcci;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -57,6 +55,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commit hash for the tests repository.
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/test-repository/.git/refs/heads/[^/]+",
                 Map.of("testCommitHash", DUMMY_COMMIT_HASH), Map.of("testCommitHash", DUMMY_COMMIT_HASH));
+        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, "/repositories/assignment-repository/.git/refs/heads/[^/]+", Map.of("commitHash", commitHash),
+                Map.of("commitHash", commitHash));
     }
 
     @AfterEach
@@ -243,6 +243,9 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         });
 
         localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+
+        await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(studentParticipation), any()));
+
         // Should notify the user.
         verifyUserNotification(studentParticipation);
     }
@@ -254,6 +257,9 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, "/repositories/test-repository/build/test-results/test");
         localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+
+        await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(studentParticipation), any()));
+
         // Should notify the user.
         verifyUserNotification(studentParticipation);
     }

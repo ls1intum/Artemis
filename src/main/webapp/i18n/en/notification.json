@@ -109,6 +109,7 @@
                 "tutorialGroupAssigned": "You have been assigned to lead a tutorial group",
                 "tutorialGroupUnassigned": "You have been unassigned from leading a tutorial group",
                 "messageReply": "New message reply in conversation",
+                "mentionedInMessage": "You were mentioned",
                 "deleteChannel": "Channel deleted",
                 "removeUserChannel": "You have been removed from a channel",
                 "addUserChannel": "You have been added to a channel",

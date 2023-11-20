@@ -55,6 +55,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private quizExercisesChannel: string;
     public hasUnreadMessages: boolean;
     public messagesRouteLoaded: boolean;
+    public communicationRouteLoaded: boolean;
 
     private conversationServiceInstantiated = false;
     private checkedForUnreadMessages = false;
@@ -134,11 +135,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     private setUpConversationService() {
-        if (!isMessagingEnabled(this.course)) {
+        if (!isMessagingEnabled(this.course) && !isCommunicationEnabled(this.course)) {
             return;
         }
 
-        if (!this.conversationServiceInstantiated && this.messagesRouteLoaded) {
+        if (!this.conversationServiceInstantiated && (this.messagesRouteLoaded || this.communicationRouteLoaded)) {
             this.metisConversationService
                 .setUpConversationService(this.course!)
                 .pipe(takeUntil(this.ngUnsubscribe))
@@ -149,7 +150,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                         this.subscribeToHasUnreadMessages();
                     },
                 });
-        } else if (!this.checkedForUnreadMessages) {
+        } else if (!this.checkedForUnreadMessages && isMessagingEnabled(this.course)) {
             this.metisConversationService.checkForUnreadMessages(this.course!);
             this.subscribeToHasUnreadMessages();
             this.checkedForUnreadMessages = true;
@@ -178,6 +179,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     onSubRouteActivate(componentRef: any) {
         this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
+        this.communicationRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'discussion';
 
         this.setUpConversationService();
 
@@ -261,7 +263,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     loadCourse(refresh = false): Observable<void> {
         this.refreshingCourse = refresh;
-        const observable = this.courseService.findOneForDashboard(this.courseId, refresh).pipe(
+        const observable = this.courseService.findOneForDashboard(this.courseId).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.course = res.body;
