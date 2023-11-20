@@ -263,7 +263,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      */
     loadCourse(refresh = false): Observable<void> {
         this.refreshingCourse = refresh;
-        const observable = this.courseService.findOneForDashboard(this.courseId, refresh).pipe(
+        const observable = this.courseService.findOneForDashboard(this.courseId).pipe(
             map((res: HttpResponse<Course>) => {
                 if (res.body) {
                     this.course = res.body;
