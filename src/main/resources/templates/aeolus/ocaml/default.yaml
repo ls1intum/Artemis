@@ -1,0 +1,21 @@
+api: v0.0.1
+metadata:
+    name: ocaml-normal
+    id: ocaml-normal
+    description: Build Plan for OCaml Exercises
+actions:
+    - name: build_and_test_the_code
+      script: |-
+          # the build process is specified in `run.sh` in the test repository
+          cd tests
+          chmod +x run.sh
+          cat run.sh
+          ./run.sh -s
+      runAlways: false
+    - name: junit
+      parameters:
+          ignore_time: false
+          test_results: '**/test-reports/*.xml'
+      platform: bamboo
+      kind: junit
+      runAlways: true

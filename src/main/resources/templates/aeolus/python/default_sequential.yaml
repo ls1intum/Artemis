@@ -1,0 +1,22 @@
+api: v0.0.1
+metadata:
+    name: python sequential runs
+    id: python-windfile
+    description: This is a windfile for python exercises
+actions:
+    - name: compile_the_code
+      script: python3 -m compileall . -q
+      runAlways: false
+    - name: run_structural_tests
+      script: pytest structural/* --junitxml=test-reports/structural-results.xml
+      runAlways: false
+    - name: run_behavior_tests
+      script: pytest behavior/* --junitxml=test-reports/behavior-results.xml
+      runAlways: false
+    - name: junit
+      parameters:
+          ignore_time: false
+          test_results: test-reports/*results.xml
+      platform: bamboo
+      kind: junit
+      runAlways: true
