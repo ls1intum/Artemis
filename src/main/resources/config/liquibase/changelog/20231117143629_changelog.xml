@@ -293,4 +293,10 @@
                                  initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT"
                                  referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
     </changeSet>
+    <changeSet author="andreas (generated)" id="1700472740401-18">
+        <dropForeignKeyConstraint baseTableName="text_exercise_details" constraintName="fk_text_exercise_details"/>
+    </changeSet>
+    <changeSet author="andreas (generated)" id="1700472740401-19">
+        <dropTable tableName="text_exercise_details"/>
+    </changeSet>
 </databaseChangeLog>
