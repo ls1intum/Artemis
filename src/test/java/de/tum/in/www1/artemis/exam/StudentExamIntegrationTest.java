@@ -43,9 +43,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.ExamUser;
-import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.exam.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -2382,9 +2380,16 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     void testTestRunGradeSummaryIsFound() throws Exception {
         StudentExam testRun = createTestRun();
         testRun.setSubmitted(true);
+        studentExamRepository.save(testRun);
         testRun.getExam().setPublishResultsDate(ZonedDateTime.now());
         testRun.getExam().setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(2));
-        studentExamRepository.save(testRun);
+
+        List<ExerciseGroup> exerciseGroups = new ArrayList<>();
+        testRun.getExercises().forEach((exercise -> {
+            exerciseGroups.add(exercise.getExerciseGroup());
+        }));
+
+        testRun.getExam().setExerciseGroups(exerciseGroups);
         examRepository.save(testRun.getExam());
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
