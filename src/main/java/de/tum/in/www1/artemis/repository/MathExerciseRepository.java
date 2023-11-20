@@ -30,6 +30,9 @@ public interface MathExerciseRepository extends JpaRepository<MathExercise, Long
 
     List<MathExercise> findByAssessmentTypeAndDueDateIsAfter(AssessmentType assessmentType, ZonedDateTime dueDate);
 
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
+    Optional<MathExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
+
     @Query("select mathExercise from MathExercise mathExercise left join fetch mathExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results result left join fetch result.feedbacks left join fetch result.assessor left join fetch mathExercise.teamAssignmentConfig where mathExercise.id = :#{#exerciseId}")
     Optional<MathExercise> findByIdWithExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
 

@@ -6,12 +6,7 @@ import static java.util.Collections.emptySet;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,10 +39,7 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
@@ -232,7 +224,7 @@ public class TextExerciseResource {
     }
 
     /**
-     * GET /courses/:courseId/exercises : get all the exercises.
+     * GET /courses/:courseId/text-exercises : get all the text exercises.
      *
      * @param courseId id of the course of which all the exercises should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of textExercises in body
