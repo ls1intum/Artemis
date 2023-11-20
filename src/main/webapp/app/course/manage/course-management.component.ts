@@ -29,13 +29,13 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     semesterCollapsed: { [key: string]: boolean };
     coursesBySemester: { [key: string]: Course[] };
     eventSubscriber: Subscription;
-    documentationType = DocumentationType.Course;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     courseForGuidedTour?: Course;
 
+    readonly documentationType: DocumentationType = 'Course';
     // Icons
     faPlus = faPlus;
     faAngleDown = faAngleDown;

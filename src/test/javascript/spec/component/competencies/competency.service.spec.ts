@@ -7,6 +7,8 @@ import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { Competency, CompetencyProgress, CompetencyRelation, CourseCompetencyProgress } from 'app/entities/competency.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 
 describe('CompetencyService', () => {
     let competencyService: CompetencyService;
@@ -30,6 +32,7 @@ describe('CompetencyService', () => {
                         return lectureUnits;
                     },
                 }),
+                { provide: AccountService, useClass: MockAccountService },
             ],
         });
         expectedResultCompetency = {} as HttpResponse<Competency>;

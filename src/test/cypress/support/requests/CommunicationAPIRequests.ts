@@ -1,12 +1,14 @@
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { Post } from 'app/entities/metis/post.model';
 
-import { COURSE_BASE, CourseWideContext, GET, POST, PUT } from '../constants';
+import { COURSE_BASE, GET, POST, PUT } from '../constants';
 import { CypressCredentials } from '../users';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import Chainable = Cypress.Chainable;
 
 /**
  * A class which encapsulates all API requests related to communications.
@@ -16,25 +18,25 @@ export class CommunicationAPIRequests {
      * Creates a new course post.
      *
      * @param course - The course to which the post belongs.
-     * @param title - The title of the post.
      * @param content - The content of the post.
-     * @param context - The context of the course-wide post.
+     * @param channel - The channel the post belongs to
      * @returns A Cypress.Chainable<Cypress.Response<any>> representing the API request response.
      */
-    createCoursePost(course: Course, title: string, content: string, context: CourseWideContext) {
+    createCoursePost(course: Course, content: string, channel: ChannelDTO) {
         const body = {
             content,
             course: {
                 id: course.id,
                 title: course.title,
             },
-            courseWideContext: context,
+            conversation: {
+                id: channel.id,
+                type: channel.type,
+            },
             displayPriority: 'NONE',
-            title,
-            tags: [],
             visibleForStudents: true,
         };
-        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/posts`, body });
+        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/messages`, body });
     }
 
     /**
@@ -56,6 +58,18 @@ export class CommunicationAPIRequests {
             type: 'channel',
         };
         return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels`, body });
+    }
+
+    /**
+     * Get course-wide channels of a course
+     *
+     * @param courseId - The id of the course
+     * @returns A Cypress.Chainable<ChannelDTO[]> with the course-wide channels of the course
+     */
+    getCourseWideChannels(courseId: number): Chainable<ChannelDTO[]> {
+        return cy
+            .request({ method: GET, url: `${COURSE_BASE}${courseId}/conversations` })
+            .then((response) => response.body.filter((conv: ConversationDto) => getAsChannelDto(conv)?.isCourseWide === true));
     }
 
     /**
@@ -115,6 +129,27 @@ export class CommunicationAPIRequests {
     }
 
     /**
+     * Creates a new course message.
+     *
+     * @param course - The course to which the message belongs.
+     * @param targetId - The ID of the conversation target channel.
+     * @param message - The content of the message.
+     * @returns A Cypress.Chainable<Cypress.Response<any>> representing the API request response.
+     */
+    createCourseWideMessage(course: Course, targetId: number, message: string) {
+        const body = {
+            content: message,
+            conversation: {
+                id: targetId,
+                type: 'channel',
+            },
+            displayPriority: 'NONE',
+            visibleForStudents: true,
+        };
+        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/messages`, body });
+    }
+
+    /**
      * Updates the name of a course message group chat.
      *
      * @param course - The course to which the group chat belongs.
@@ -134,13 +169,13 @@ export class CommunicationAPIRequests {
      * Joins a user into a channel.
      *
      * @param course - The course to which the channel belongs.
-     * @param channel - The channel to join.
+     * @param channelId - The id of the channel to join.
      * @param user - The user's credentials.
      * @returns A Cypress.Chainable<Cypress.Response<any>> representing the API request response.
      */
-    joinUserIntoChannel(course: Course, channel: Channel, user: CypressCredentials) {
+    joinUserIntoChannel(course: Course, channelId: number, user: CypressCredentials) {
         const body = [user.username];
-        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels/${channel.id}/register`, body });
+        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/channels/${channelId}/register`, body });
     }
 
     /**
@@ -151,13 +186,13 @@ export class CommunicationAPIRequests {
      * @param content - The content of the post reply.
      * @returns A Cypress.Chainable<Cypress.Response<any>> representing the API request response.
      */
-    createCoursePostReply(course: Course, post: Post, content: string) {
+    createCourseMessageReply(course: Course, post: Post, content: string) {
         const body = {
             content,
             post,
             resolvesPost: true,
         };
-        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/answer-posts`, body });
+        return cy.request({ method: POST, url: `${COURSE_BASE}${course.id}/answer-messages`, body });
     }
 
     /**

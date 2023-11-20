@@ -3,7 +3,7 @@
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                 <th *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(quizExercises)" />
+                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(quizExercises)" [ngModel]="allChecked" />
                 </th>
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
                 <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
@@ -82,7 +82,7 @@
                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz">Start Quiz</span>
                         </button>
                         <ng-container
-                            *ngIf="(quizExercise.status === QuizStatus.VISIBLE || quizExercise.status === QuizStatus.ACTIVE) && quizExercise.quizMode == QuizMode.BATCHED"
+                            *ngIf="(quizExercise.status === QuizStatus.VISIBLE || quizExercise.status === QuizStatus.ACTIVE) && quizExercise.quizMode === QuizMode.BATCHED"
                         >
                             <div *ngFor="let batch of quizExercise.quizBatches">
                                 ID: {{ batch.id }}

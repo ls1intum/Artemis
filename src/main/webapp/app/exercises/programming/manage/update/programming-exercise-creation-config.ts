@@ -17,6 +17,7 @@ export type ProgrammingExerciseCreationConfig = {
     auxiliaryRepositoryDuplicateDirectories: boolean;
     auxiliaryRepositoryDuplicateNames: boolean;
     checkoutSolutionRepositoryAllowed: boolean;
+    customBuildPlansSupported: boolean;
     invalidDirectoryNamePattern: RegExp;
     invalidRepositoryNamePattern: RegExp;
     isImportFromExistingExercise: boolean;
@@ -52,4 +53,5 @@ export type ProgrammingExerciseCreationConfig = {
     isExamMode: boolean;
     isEdit: boolean;
     showSummary: boolean;
+    buildPlanLoaded: boolean;
 };
