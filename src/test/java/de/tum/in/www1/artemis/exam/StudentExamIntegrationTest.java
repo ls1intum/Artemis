@@ -2377,7 +2377,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testTestRunGradeSummaryIsFound() throws Exception {
+    void testTestRunGradeSummaryDoesNotReturn404() throws Exception {
         StudentExam testRun = createTestRun();
         testRun.setSubmitted(true);
         studentExamRepository.save(testRun);
@@ -2397,6 +2397,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         StudentExamWithGradeDTO studentExamGradeInfoFromServer = request.get(
                 "/api/courses/" + course1.getId() + "/exams/" + testRun.getId() + "/student-exams/grade-summary?userId=" + instructor1.getId() + "&isTestRun=true", HttpStatus.OK,
                 StudentExamWithGradeDTO.class);
+
+        assertThat(studentExamGradeInfoFromServer).isNotNull();
     }
 
     private void checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
