@@ -134,10 +134,11 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * GET /api/courses/:courseId/unread-messages : Checks for unread messages of the current user
+     * PATCH /api/courses/:courseId/conversations/:conversationId/mark-as-read : Marks all messages as read for the requesting user in the given conversation
      *
-     * @param courseId the id of the course
-     * @return ResponseEntity with status 200 (Ok) and the information if the user has unread messages
+     * @param courseId       the id of the course
+     * @param conversationId the id of the conversation
+     * @return ResponseEntity with status 200 (Ok)
      */
     @PatchMapping("/{courseId}/conversations/{conversationId}/mark-as-read")
     @EnforceAtLeastStudent
