@@ -19,9 +19,14 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
 export class CategorySelectorComponent implements OnChanges {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
-    // the selected categories, which can be manipulated by the user in the UI
+    /**
+     * the selected categories, which can be manipulated by the user in the UI
+     */
     @Input() categories: ExerciseCategory[];
-    // the existing categories used for auto-completion, might include duplicates
+
+    /**
+     * the existing categories used for auto-completion, might include duplicates
+     */
     @Input() existingCategories: ExerciseCategory[];
 
     @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();
@@ -76,6 +81,13 @@ export class CategorySelectorComponent implements OnChanges {
      * @param {ExerciseCategory} tagItem
      */
     openColorSelector(event: MouseEvent, tagItem: ExerciseCategory) {
+        /**
+         * without {@link event#stopPropagation} the color picker would close immediately as the mouseEvent
+         * is triggered again for the child component {@link ColorSelectorComponent} which would interpret
+         * it as a click outside the colorpicker
+         */
+        event.stopPropagation();
+
         this.selectedCategory = tagItem;
         this.colorSelector.openColorSelector(event, undefined, this.colorSelectorHeight);
     }

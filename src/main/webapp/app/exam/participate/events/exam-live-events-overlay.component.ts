@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/participate/exam-participation-live-events.service';
-import { USER_DISPLAY_RELEVANT_EVENTS } from 'app/exam/participate/events/exam-live-events-button.component';
+import { USER_DISPLAY_RELEVANT_EVENTS, USER_DISPLAY_RELEVANT_EVENTS_REOPEN } from 'app/exam/participate/events/exam-live-events-button.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -34,7 +34,7 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.allLiveEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS).subscribe((events: ExamLiveEvent[]) => {
+        this.allLiveEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS_REOPEN).subscribe((events: ExamLiveEvent[]) => {
             this.events = events;
             if (!this.eventsToDisplay) {
                 this.updateEventsToDisplay();
