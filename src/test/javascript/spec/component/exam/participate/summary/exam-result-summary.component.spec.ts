@@ -239,7 +239,7 @@ describe('ExamResultSummaryComponent', () => {
 
         const courseId = 1;
         expect(serviceSpy).toHaveBeenCalledOnce();
-        expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.user!.id);
+        expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.user!.id, false);
         expect(component.studentExam).toEqual(studentExam);
         expect(component.studentExamGradeInfoDTO).toEqual({ ...gradeInfo, studentExam });
     });

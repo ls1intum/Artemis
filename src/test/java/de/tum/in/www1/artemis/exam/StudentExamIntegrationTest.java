@@ -184,6 +184,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private static final int NUMBER_OF_STUDENTS = 2;
 
+    private static final boolean IS_TEST_RUN = false;
+
     @BeforeEach
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 2);
@@ -245,9 +247,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFindOneWithExercisesByUserIdAndExamId() {
-        var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(Long.MAX_VALUE, exam1.getId());
+        var studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(Long.MAX_VALUE, exam1.getId(), IS_TEST_RUN);
         assertThat(studentExam).isEmpty();
-        studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student1.getId(), exam1.getId());
+        studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student1.getId(), exam1.getId(), IS_TEST_RUN);
         assertThat(studentExam).contains(studentExam1);
     }
 

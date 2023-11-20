@@ -95,6 +95,8 @@ public class StudentExamResource {
 
     private final ExamLiveEventRepository examLiveEventRepository;
 
+    private static final boolean IS_TEST_RUN = false;
+
     @Value("${info.student-exam-store-session-data:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
@@ -248,7 +250,7 @@ public class StudentExamResource {
 
         var student = userRepository.getUserByLoginElseThrow(studentLogin);
 
-        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), examId).orElseThrow();
+        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), examId, IS_TEST_RUN).orElseThrow();
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExam.getId());
 
@@ -413,8 +415,8 @@ public class StudentExamResource {
     }
 
     @NotNull
-    private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId) {
-        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId)
+    private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId, boolean isTestRun) {
+        StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId, isTestRun)
                 .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + user.getId()));
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);
         return studentExam;
@@ -497,12 +499,12 @@ public class StudentExamResource {
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/grade-summary")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentExamWithGradeDTO> getStudentExamGradesForSummary(@PathVariable Long courseId, @PathVariable Long examId,
-            @RequestParam(required = false) Long userId) {
+            @RequestParam(required = false) Long userId, @RequestParam(required = false, defaultValue = "false") boolean isTestRun) {
         long start = System.currentTimeMillis();
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam grades of user with id {} for exam {} by user {}", userId, examId, currentUser.getLogin());
         User targetUser = userId == null ? currentUser : userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
-        StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId);
+        StudentExam studentExam = findStudentExamWithExercisesElseThrow(targetUser, examId, courseId, isTestRun);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
         if (!isAtLeastInstructor && !currentUser.getId().equals(targetUser.getId())) {
