@@ -172,7 +172,8 @@
                 "button": "Notifications",
                 "type": {
                     "examWideAnnouncement": "Exam-Wide Announcement",
-                    "workingTimeUpdate": "Working Time Update"
+                    "workingTimeUpdate": "Working Time Update",
+                    "examAttendanceCheck": "Attendance Check"
                 },
                 "from": "from",
                 "acknowledge": "Acknowledge",
@@ -183,6 +184,9 @@
                         "titlePersonal": "Your personal working time of the exam has been changed.",
                         "old": "Previous working time",
                         "new": "New working time"
+                    },
+                    "examAttendanceCheck": {
+                        "description": "An exam supervisor has triggered the attendance check for you. Please follow the instructions of the supervisor."
                     }
                 }
             }
