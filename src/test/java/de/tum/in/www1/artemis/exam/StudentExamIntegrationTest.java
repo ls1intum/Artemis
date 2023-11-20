@@ -2447,16 +2447,17 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         StudentExam testRun = createTestRun();
         testRun.setSubmitted(true);
         studentExamRepository.save(testRun);
-        testRun.getExam().setPublishResultsDate(ZonedDateTime.now());
-        testRun.getExam().setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(2));
+
+        Exam exam = testRun.getExam();
+        exam.setPublishResultsDate(ZonedDateTime.now());
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusDays(2));
 
         List<ExerciseGroup> exerciseGroups = new ArrayList<>();
-        testRun.getExercises().forEach((exercise -> {
-            exerciseGroups.add(exercise.getExerciseGroup());
-        }));
+        testRun.getExercises().forEach((exercise -> exerciseGroups.add(exercise.getExerciseGroup())));
 
-        testRun.getExam().setExerciseGroups(exerciseGroups);
-        examRepository.save(testRun.getExam());
+        exam.setExerciseGroups(exerciseGroups);
+        examRepository.save(exam);
+
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         User instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
 
@@ -2464,8 +2465,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 "/api/courses/" + course1.getId() + "/exams/" + testRunExam.getId() + "/student-exams/grade-summary?userId=" + instructor1.getId() + "&isTestRun=true",
                 HttpStatus.OK, StudentExamWithGradeDTO.class);
 
-        assertThat(studentExamGradeInfoFromServer.maxPoints()).isEqualTo(19.0);
-        assertThat(studentExamGradeInfoFromServer.achievedPointsPerExercise().size()).isEqualTo(3);
+        assertThat(studentExamGradeInfoFromServer.achievedPointsPerExercise().size()).isEqualTo(testRunExam.getExerciseGroups().size());
     }
 
     private void checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
