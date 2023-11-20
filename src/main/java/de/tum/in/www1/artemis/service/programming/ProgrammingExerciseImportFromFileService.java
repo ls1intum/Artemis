@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportSer
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -22,20 +23,18 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class ProgrammingExerciseImportFromFileService {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportService.class);
+    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseImportFromFileService.class);
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -126,7 +125,7 @@ public class ProgrammingExerciseImportFromFileService {
         Path buildPlanPath = importExerciseDir.resolve(BUILD_PLAN_FILE_NAME);
         if (Files.exists(buildPlanPath)) {
             try {
-                buildPlanRepository.setBuildPlanForExercise(FileUtils.readFileToString(buildPlanPath.toFile(), Charsets.UTF_8), programmingExercise);
+                buildPlanRepository.setBuildPlanForExercise(FileUtils.readFileToString(buildPlanPath.toFile(), StandardCharsets.UTF_8), programmingExercise);
             }
             catch (IOException e) {
                 log.warn("Could not read build plan file. Continue importing the exercise but skipping the build plan.", e);
