@@ -14,17 +14,16 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
  * A MathExercise.
  */
 @Entity
-@DiscriminatorValue(value = "M")
-@Table(name = "math_exercise_details")
+@DiscriminatorValue(value = "MATH")
+@SecondaryTable(name = "math_exercise_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MathExercise extends Exercise {
 
-    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
     public String getType() {
         return "math";
     }
 
-    @Column(name = "example_solution")
+    @Column(name = "example_solution", table = "math_exercise_details")
     private String exampleSolution;
 
     public String getExampleSolution() {
@@ -48,17 +47,6 @@ public class MathExercise extends Exercise {
         if (isFeedbackSuggestionsEnabled()) {
             setAssessmentType(AssessmentType.MANUAL);
         }
-    }
-
-    /**
-     * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
-     */
-    @Override
-    public void filterSensitiveInformation() {
-        if (!isExampleSolutionPublished()) {
-            setExampleSolution(null);
-        }
-        super.filterSensitiveInformation();
     }
 
     @Override

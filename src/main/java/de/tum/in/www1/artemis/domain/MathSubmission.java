@@ -14,7 +14,8 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
  * A MathSubmission.
  */
 @Entity
-@DiscriminatorValue(value = "M")
+@DiscriminatorValue(value = "MATH")
+@SecondaryTable(name = "math_submission_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class MathSubmission extends Submission {
 
@@ -25,12 +26,12 @@ public class MathSubmission extends Submission {
 
     private static final int MAX_EXCERPT_LENGTH = 100;
 
-    @Column(name = "text")
+    @Column(name = "text", table = "math_submission_details")
     @Size(max = MAX_SUBMISSION_TEXT_LENGTH, message = "The text submission is too large.")
     private String text;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "language")
+    @Column(name = "language", table = "math_submission_details")
     private Language language;
 
     public MathSubmission() {
