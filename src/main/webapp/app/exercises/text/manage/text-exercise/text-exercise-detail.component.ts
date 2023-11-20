@@ -20,7 +20,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     templateUrl: './text-exercise-detail.component.html',
 })
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
-    documentationType = DocumentationType.Text;
+    readonly documentationType: DocumentationType = 'Text';
 
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;

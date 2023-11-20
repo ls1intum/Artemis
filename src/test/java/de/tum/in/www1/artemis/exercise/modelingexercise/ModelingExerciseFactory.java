@@ -18,6 +18,16 @@ import de.tum.in.www1.artemis.exercise.ExerciseFactory;
  */
 public class ModelingExerciseFactory {
 
+    /**
+     * Generates a ModelingExercise for a Course.
+     *
+     * @param releaseDate       The release date of the exercise
+     * @param dueDate           The due date of the exercise
+     * @param assessmentDueDate The assessment due date of the exercise
+     * @param diagramType       The DiagramType of the exercise
+     * @param course            The Course the exercise belongs to
+     * @return The generated ModelingExercise
+     */
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
             Course course) {
         var modelingExercise = (ModelingExercise) ExerciseFactory.populateExercise(new ModelingExercise(), releaseDate, dueDate, assessmentDueDate, course);
@@ -27,6 +37,13 @@ public class ModelingExerciseFactory {
         return modelingExercise;
     }
 
+    /**
+     * Generates a ModelingExercise for an Exam.
+     *
+     * @param diagramType   The DiagramType of the exercise
+     * @param exerciseGroup The Exam's ExerciseGroup the exercise belongs to
+     * @return The generated ModelingExercise
+     */
     public static ModelingExercise generateModelingExerciseForExam(DiagramType diagramType, ExerciseGroup exerciseGroup) {
         var modelingExercise = (ModelingExercise) ExerciseFactory.populateExerciseForExam(new ModelingExercise(), exerciseGroup);
         modelingExercise.setDiagramType(diagramType);
@@ -35,6 +52,14 @@ public class ModelingExerciseFactory {
         return modelingExercise;
     }
 
+    /**
+     * Generates a ModelingExercise for an Exam.
+     *
+     * @param diagramType   The DiagramType of the exercise
+     * @param exerciseGroup The Exam's ExerciseGroup the exercise belongs to
+     * @param title         The title of the exercise
+     * @return The generated ModelingExercise
+     */
     public static ModelingExercise generateModelingExerciseForExam(DiagramType diagramType, ExerciseGroup exerciseGroup, String title) {
         var modelingExercise = (ModelingExercise) ExerciseFactory.populateExerciseForExam(new ModelingExercise(), exerciseGroup, title);
         modelingExercise.setDiagramType(diagramType);
@@ -43,6 +68,13 @@ public class ModelingExerciseFactory {
         return modelingExercise;
     }
 
+    /**
+     * Generates an ApollonDiagram with the given DiagramType. The diagram is empty as its jsonRepresentation is not set.
+     *
+     * @param diagramType The DiagramType of the ApollonDiagram
+     * @param title       The title of the ApollonDiagram
+     * @return The generated ApollonDiagram
+     */
     public static ApollonDiagram generateApollonDiagram(DiagramType diagramType, String title) {
         ApollonDiagram apollonDiagram = new ApollonDiagram();
         apollonDiagram.setDiagramType(diagramType);
@@ -51,21 +83,21 @@ public class ModelingExerciseFactory {
     }
 
     /**
-     * Create modeling exercise for a given course
+     * Generates a ModelingExercise for a Course.
      *
-     * @param courseId id of the given course
-     * @return created modeling exercise
+     * @param courseId The id of the Course the exercise belongs to
+     * @return The generated ModelingExercise
      */
     public static ModelingExercise createModelingExercise(Long courseId) {
         return createModelingExercise(courseId, null);
     }
 
     /**
-     * Create modeling exercise with a given id for a given course
+     * Generates a ModelingExercise for a Course.
      *
-     * @param courseId   id of the given course
-     * @param exerciseId id of modeling exercise
-     * @return created modeling exercise
+     * @param courseId   The id of the Course the exercise belongs to
+     * @param exerciseId The id of the Exercise
+     * @return The generated ModelingExercise
      */
     public static ModelingExercise createModelingExercise(Long courseId, Long exerciseId) {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -84,12 +116,12 @@ public class ModelingExerciseFactory {
     }
 
     /**
-     * Creates a new modeling exercise submission with the passed model
+     * Generates a ModelingSubmission and StudentParticipation for the given ModelingExercise.
      *
-     * @param modelingExercise the exercise for which a submission should be generated
-     * @param model            model of the submission
-     * @param explanation      explanation of the submissions
-     * @return the created modeling submission
+     * @param modelingExercise The ModelingExercise the submission belongs to
+     * @param model            The model of the submission
+     * @param explanation      The explanation of the submission
+     * @return The generated ModelingSubmission
      */
     public static ModelingSubmission generateModelingExerciseSubmission(ModelingExercise modelingExercise, String model, String explanation) {
         ModelingSubmission submission = new ModelingSubmission();

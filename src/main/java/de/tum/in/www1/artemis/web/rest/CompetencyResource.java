@@ -146,15 +146,10 @@ public class CompetencyResource {
         long start = System.nanoTime();
         var currentUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        // TODO: this database request is quite intense and might lead to memory issues
-        // it loads many completed user objects even if those are not necessary which could include are large object graph
-        var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsElseThrow(competencyId);
+        var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(competencyId, currentUser.getId());
         checkAuthorizationForCompetency(Role.STUDENT, course, competency);
 
-        competency.setUserProgress(competencyProgressRepository.findByCompetencyIdAndUserId(competencyId, currentUser.getId()).map(Set::of).orElse(Set.of()));
-        // Set completion status and remove exercise units (redundant as we also return all exercises)
-        competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
-                .filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, currentUser))
+        competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, currentUser))
                 .peek(lectureUnit -> lectureUnit.setCompleted(lectureUnit.isCompletedFor(currentUser))).collect(Collectors.toSet()));
         competency.setExercises(
                 competency.getExercises().stream().filter(exercise -> authorizationCheckService.isAllowedToSeeExercise(exercise, currentUser)).collect(Collectors.toSet()));

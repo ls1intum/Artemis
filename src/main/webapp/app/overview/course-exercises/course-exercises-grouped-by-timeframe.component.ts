@@ -22,14 +22,14 @@ const DEFAULT_EXERCISE_GROUPS = {
 };
 
 @Component({
-    selector: 'jhi-course-exercises-grouped-by-category',
-    templateUrl: './course-exercises-grouped-by-category.component.html',
+    selector: 'jhi-course-exercises-grouped-by-timeframe',
+    templateUrl: './course-exercises-grouped-by-timeframe.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
+export class CourseExercisesGroupedByTimeframeComponent implements OnChanges {
     protected readonly Object = Object;
 
-    @Input() filteredExercises?: Exercise[];
+    @Input() filteredAndSortedExercises?: Exercise[];
     @Input() course?: Course;
     @Input() exerciseForGuidedTour?: Exercise;
     @Input() appliedSearchString?: string;
@@ -44,21 +44,21 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
     faChevronRight = faChevronRight;
 
     ngOnChanges() {
-        this.exerciseGroups = this.groupExercisesByDueDate();
+        this.exerciseGroups = this.groupExercisesByTimeframe();
     }
 
     toggleGroupCategoryCollapse(exerciseGroupCategoryKey: string) {
         this.exerciseGroups[exerciseGroupCategoryKey].isCollapsed = !this.exerciseGroups[exerciseGroupCategoryKey].isCollapsed;
     }
 
-    private groupExercisesByDueDate(): ExerciseGroups {
+    private groupExercisesByTimeframe(): ExerciseGroups {
         const updatedExerciseGroups: ExerciseGroups = cloneDeep(DEFAULT_EXERCISE_GROUPS);
 
-        if (!this.filteredExercises) {
+        if (!this.filteredAndSortedExercises) {
             return updatedExerciseGroups;
         }
 
-        for (const exercise of this.filteredExercises) {
+        for (const exercise of this.filteredAndSortedExercises) {
             const exerciseGroup = this.getExerciseGroup(exercise);
             updatedExerciseGroups[exerciseGroup].exercises.push(exercise);
         }
@@ -101,12 +101,12 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
      */
     private makeSureAtLeastOneExerciseGroupIsExpanded(exerciseGroups: ExerciseGroups) {
         const exerciseGroupsWithExercises = Object.entries(exerciseGroups).filter(([, exerciseGroup]) => exerciseGroup.exercises.length > 0);
-        const expandedExerciseGroups = exerciseGroupsWithExercises.filter(([exerciseGroupKey, exerciseGroup]) => !exerciseGroup.isCollapsed && exerciseGroupKey !== 'past');
+        const expandedExerciseGroups = exerciseGroupsWithExercises.filter(([, exerciseGroup]) => !exerciseGroup.isCollapsed);
 
         const atLeastOneExerciseIsExpanded = expandedExerciseGroups.length > 0;
         const expandableGroupsExist = !atLeastOneExerciseIsExpanded && exerciseGroupsWithExercises.length > 0;
 
-        if (!expandableGroupsExist) {
+        if (!expandableGroupsExist || atLeastOneExerciseIsExpanded) {
             return;
         }
 
@@ -163,5 +163,12 @@ export class CourseExercisesGroupedByCategoryComponent implements OnChanges {
         }
 
         return 'future';
+    }
+
+    /**
+     * This is a workaround to make {@link DEFAULT_EXERCISE_GROUPS} accessible for tests without exporting it
+     */
+    getDefaultExerciseGroups() {
+        return DEFAULT_EXERCISE_GROUPS;
     }
 }
