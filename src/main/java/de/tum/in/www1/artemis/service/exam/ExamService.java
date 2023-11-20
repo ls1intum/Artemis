@@ -125,6 +125,8 @@ public class ExamService {
 
     private static final boolean IS_TEST_RUN = false;
 
+    private static final String NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY = "You are not allowed to access the grade summary of a student exam ";
+
     public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, StudentParticipationRepository studentParticipationRepository,
             ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
@@ -400,8 +402,11 @@ public class ExamService {
         loadQuizExercisesForStudentExam(studentExam);
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
-        if (!Boolean.TRUE.equals(studentExam.isSubmitted()) || !studentExam.areResultsPublishedYet()) {
-            throw new AccessForbiddenException("You are not allowed to access the grade summary of a student exam which was NOT submitted!");
+        if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
+            throw new AccessForbiddenException(NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY + "which was NOT submitted!");
+        }
+        if (!studentExam.areResultsPublishedYet()) {
+            throw new AccessForbiddenException(NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY + "before the release date of results");
         }
 
         // fetch participations, submissions and results and connect them to the studentExam
