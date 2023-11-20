@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -30,10 +30,29 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
     }
 
+    ngOnChanges(changes: SimpleChanges | void) {
+        if (this.formGroup && changes) {
+            for (const propName in changes) {
+                // eslint-disable-next-line no-prototype-builtins
+                if (changes.hasOwnProperty(propName) && propName === 'posting') {
+                    if (changes['posting'].previousValue?.post?.id === changes['posting'].currentValue?.post?.id) {
+                        this.posting.content = this.formGroup.get('content')?.value;
+                    }
+                }
+            }
+        }
+
+        super.ngOnChanges();
+    }
+
     /**
      * resets the answer post content
      */
-    resetFormGroup(): void {
+    resetFormGroup(content: string | undefined = undefined): void {
+        if (content !== undefined) {
+            this.posting.content = content;
+        }
+
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the content must include at least one non-whitespace character
             content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
@@ -48,7 +67,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         this.posting.content = this.formGroup.get('content')?.value;
         this.metisService.createAnswerPost(this.posting).subscribe({
             next: (answerPost: AnswerPost) => {
-                this.resetFormGroup();
+                this.resetFormGroup('');
                 this.isLoading = false;
                 this.onCreate.emit(answerPost);
             },
