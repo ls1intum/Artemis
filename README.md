@@ -95,7 +95,7 @@ Once the PR is ready to merge, notify the responsible feature maintainer:
 #### Maintainers
   
 | Feature / Aspect               | Maintainer                                                                                      |
-|--------------------------------| ----------------------------------------------------------------------------------------------- |
+|--------------------------------|-------------------------------------------------------------------------------------------------|
 | Programming exercises          | [@krusche](https://github.com/krusche)                                                          |
 | Quiz exercises                 | [@Santia-go](https://github.com/Santia-go)                                                      |
 | Modeling exercises (+ Apollon) | [@krusche](https://github.com/krusche)                                                          |
@@ -104,8 +104,8 @@ Once the PR is ready to merge, notify the responsible feature maintainer:
 | Exam mode                      | [@krusche](https://github.com/krusche)                                                          |
 | Grading                        | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
 | Assessment                     | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
-| Communication                  | [@krusche](https://github.com/krusche)                                                          |
-| Notifications                  | [@krusche](https://github.com/krusche)                                                          |
+| Communication                  | [@rabeatwork](https://github.com/rabeatwork)                                                    |
+| Notifications                  | [@rabeatwork](https://github.com/rabeatwork)                                                    |
 | Team Exercises                 | [@krusche](https://github.com/krusche)                                                          |
 | Lectures                       | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
 | Integrated Markdown Editor     | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
@@ -115,7 +115,8 @@ Once the PR is ready to merge, notify the responsible feature maintainer:
 | Tutorial Groups                | [@Santia-go](https://github.com/Santia-go)                                                      |
 | Iris                           | [@bassner](https://github.com/bassner)                                                          |
 | Scalability                    | [@mtze](https://github.com/mtze)                                                                |
-| Usability + Performance        | [@bassner](https://github.com/bassner)                                                          |
+| Usability                      | [@rabeatwork](https://github.com/rabeatwork)                                                    |
+| Performance                    | [@rabeatwork](https://github.com/rabeatwork)                                                    |
 | Infrastructure                 | [@mtze](https://github.com/mtze)                                                                |
 | Mobile apps (iOS + Android)    | [@krusche](https://github.com/krusche) [@maximiliansoelch](https://github.com/maximiliansoelch) |
 
