@@ -6,7 +6,6 @@ import java.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -56,14 +55,13 @@ public class LocalCISharedBuildJobQueueService {
 
     private final FencedLock lock;
 
-    @Value("${artemis.continuous-integration.thread-pool-size:1}")
-    int threadPoolSize;
+    private final int threadPoolSize;
 
     @Autowired
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, int threadPoolSize) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.localCIBuildJobManagementService = localCIBuildJobManagementService;
@@ -75,6 +73,7 @@ public class LocalCISharedBuildJobQueueService {
         this.lock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.queue.addItemListener(new BuildJobItemListener(), true);
+        this.threadPoolSize = threadPoolSize;
     }
 
     /**
@@ -196,8 +195,8 @@ public class LocalCISharedBuildJobQueueService {
         LocalCIBuildJobQueueItem buildJob = queue.poll();
         if (buildJob != null) {
             Long participationId = buildJob.getParticipationId();
-            buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(130));
             buildJob.setBuildStartDate(System.currentTimeMillis());
+            buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(180));
             processingJobs.put(participationId, buildJob);
         }
         return buildJob;
@@ -226,9 +225,10 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     // Checks whether the node has at least one thread available for a new build job
+    // getActiveCount() returns an approximation thus we double check with getQueue().size()
     private Boolean nodeIsAvailable() {
         log.info("Current active threads: " + localCIBuildExecutorService.getActiveCount());
-        return localCIBuildExecutorService.getActiveCount() < threadPoolSize;
+        return localCIBuildExecutorService.getActiveCount() < threadPoolSize && localCIBuildExecutorService.getQueue().size() < 1;
     }
 
     private class BuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {

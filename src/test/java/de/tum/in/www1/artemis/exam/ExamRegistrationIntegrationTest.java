@@ -367,7 +367,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationBambooBit
     void testCheckRegistrationOrRegisterStudentToTestExam_noTestExam() {
         assertThatThrownBy(
                 () -> examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, exam1.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student1")))
-                        .isInstanceOf(BadRequestAlertException.class);
+                .isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
@@ -375,7 +375,7 @@ class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationBambooBit
     void testCheckRegistrationOrRegisterStudentToTestExam_studentNotPartOfCourse() {
         assertThatThrownBy(
                 () -> examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, exam1.getId(), userUtilService.getUserByLogin(TEST_PREFIX + "student42")))
-                        .isInstanceOf(BadRequestAlertException.class);
+                .isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
