@@ -9,8 +9,9 @@ import java.time.ZonedDateTime;
  * @param isModerator               true if the user is a moderator of a channel
  * @param isFavorite                true if the conversation is marked as favorite
  * @param isHidden                  true if the conversation is marked as hidden
- * @param muted                     ths muted status
+ * @param notificationsSetting      the notifications setting
  * @param lastRead                  the last date the participant read the messages in the conversation
  */
-public record ConversationParticipantSettingsView(Long conversationParticipantId, Boolean isModerator, Boolean isFavorite, Boolean isHidden, Muted muted, ZonedDateTime lastRead) {
+public record ConversationParticipantSettingsView(Long conversationParticipantId, Boolean isModerator, Boolean isFavorite, Boolean isHidden,
+        ConversationNotificationsSetting notificationsSetting, ZonedDateTime lastRead) {
 }

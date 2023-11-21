@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.metis.Muted;
+import de.tum.in.www1.artemis.domain.metis.ConversationNotificationsSetting;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -114,25 +114,26 @@ public class ConversationResource extends ConversationManagementResource {
     }
 
     /**
-     * POST /api/courses/:courseId/conversations/:conversationId/muted : Updates the muted status of a conversation for the requesting user
+     * POST /api/courses/:courseId/conversations/:conversationId/notifications-setting : Updates the notifications setting of a conversation for the requesting user
      *
-     * @param courseId
-     * @param conversationId
-     * @param mutedStatus
+     * @param courseId             the id of the course
+     * @param conversationId       the id of the conversation
+     * @param notificationsSetting the new notfication setting
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("/{courseId}/conversations/{conversationId}/muted")
+    @PostMapping("/{courseId}/conversations/{conversationId}/notifications-setting")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> switchMutedStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Muted mutedStatus) {
+    public ResponseEntity<Void> switchMutedStatus(@PathVariable Long courseId, @PathVariable Long conversationId,
+            @RequestParam ConversationNotificationsSetting notificationsSetting) {
         checkMessagingEnabledElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        switch (mutedStatus) {
+        switch (notificationsSetting) {
             case MUTED:
-                conversationService.switchMutedStatus(conversationId, requestingUser, Muted.UNMUTED);
+                conversationService.setNotificationsSetting(conversationId, requestingUser, ConversationNotificationsSetting.UNMUTED);
                 break;
             case UNMUTED:
-                conversationService.switchMutedStatus(conversationId, requestingUser, Muted.MUTED);
+                conversationService.setNotificationsSetting(conversationId, requestingUser, ConversationNotificationsSetting.MUTED);
                 break;
         }
         return ResponseEntity.ok().build();

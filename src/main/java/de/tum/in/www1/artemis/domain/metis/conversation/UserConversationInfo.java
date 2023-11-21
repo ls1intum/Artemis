@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.domain.metis.conversation;
 
 import java.time.ZonedDateTime;
 
+import de.tum.in.www1.artemis.domain.metis.ConversationNotificationsSetting;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipantSettingsView;
-import de.tum.in.www1.artemis.domain.metis.Muted;
 
 /**
  * Stores user-related information about a conversation
@@ -19,7 +19,7 @@ public class UserConversationInfo {
     public UserConversationInfo(Long conversationId, Long participantId, Boolean isModerator, Boolean isFavorite, Boolean isHidden, ZonedDateTime lastRead,
             long unreadMessagesCount) {
         this.conversationId = conversationId;
-        this.conversationParticipant = new ConversationParticipantSettingsView(participantId, isModerator, isFavorite, isHidden, Muted.MUTED, lastRead);
+        this.conversationParticipant = new ConversationParticipantSettingsView(participantId, isModerator, isFavorite, isHidden, ConversationNotificationsSetting.MUTED, lastRead);
         this.unreadMessagesCount = unreadMessagesCount;
     }
 

@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.ConversationNotificationsSetting;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
-import de.tum.in.www1.artemis.domain.metis.Muted;
 import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -394,15 +394,15 @@ public class ConversationService {
     }
 
     /**
-     * Switch the muted status of a conversation for a user
+     * Set the notifications setting of a conversation for a user
      *
-     * @param conversationId the id of the conversation
-     * @param requestingUser the user that wants to switch the muted status
-     * @param mutedStatus    the new muted status
+     * @param conversationId       the id of the conversation
+     * @param requestingUser       the user that wants to switch the muted status
+     * @param notificationsSetting the new muted status
      */
-    public void switchMutedStatus(Long conversationId, User requestingUser, Muted mutedStatus) {
+    public void setNotificationsSetting(Long conversationId, User requestingUser, ConversationNotificationsSetting notificationsSetting) {
         var conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
-        conversationParticipant.setMuted(mutedStatus);
+        conversationParticipant.setNotificationsSetting(notificationsSetting);
         conversationParticipantRepository.save(conversationParticipant);
     }
 
