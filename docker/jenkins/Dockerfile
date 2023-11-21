@@ -11,4 +11,5 @@ RUN jenkins-plugin-cli --plugin-file /usr/share/jenkins/ref/plugins.yml
 # Disables the first-time setup wizard of Jenkins
 # (Uncomment this line if you're using jenknis-casc-config.yml for auto-configuration)
 # ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
+
 USER jenkins
