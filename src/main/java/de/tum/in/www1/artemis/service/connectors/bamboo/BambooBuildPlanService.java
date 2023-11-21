@@ -140,7 +140,9 @@ public class BambooBuildPlanService {
                 }
                 repositoryMap.put(TEST_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(testRepositoryUrl).toString(), programmingExercise.getBranch(),
                         ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
-                // TODO add auxiliary repositories
+                for (var auxRepo : auxiliaryRepositories) {
+                    repositoryMap.put(auxRepo.name(), new AeolusRepository(auxRepo.repositoryUrl().toString(), programmingExercise.getBranch(), auxRepo.name()));
+                }
                 windfile.setRepositories(repositoryMap);
                 windfile.setGitCredentials(this.gitUser);
                 windfile.setResultHook(artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH);
