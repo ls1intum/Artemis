@@ -4,7 +4,7 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20231113013046" author="zbil">
         <addColumn tableName="conversation_participant">
-            <column name="muted" type="int"></column>
+            <column name="notifications_setting" type="int"></column>
         </addColumn>
     </changeSet>
 </databaseChangeLog>
