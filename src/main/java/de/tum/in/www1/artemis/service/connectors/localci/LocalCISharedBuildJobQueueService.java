@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.util.List;
 import java.util.concurrent.*;
 
 import org.slf4j.Logger;
@@ -82,17 +83,32 @@ public class LocalCISharedBuildJobQueueService {
      * @param participationId participation id of the build job
      * @param commitHash      commit hash of the build job
      */
-    public void addBuildJobInformation(Long participationId, String commitHash) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem("bob", participationId, commitHash, System.currentTimeMillis(),
-                ThreadLocalRandom.current().nextInt(1, 6), 0, 0);
+    public void addBuildJobInformation(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId) {
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, 0, 0, courseId);
         queue.add(buildJobQueueItem);
+    }
+
+    public List<LocalCIBuildJobQueueItem> getQueuedJobs() {
+        return queue.stream().toList();
+    }
+
+    public List<LocalCIBuildJobQueueItem> getProcessingJobs() {
+        return processingJobs.values().stream().toList();
+    }
+
+    public List<LocalCIBuildJobQueueItem> getQueuedJobsForCourse(long courseId) {
+        return queue.stream().filter(job -> job.getCourseId() == courseId).toList();
+    }
+
+    public List<LocalCIBuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
+        return processingJobs.values().stream().filter(job -> job.getCourseId() == courseId).toList();
     }
 
     /**
      * Get first build job item from the queue. If it exists, process build job and after completion,
      * try to process next item.
      */
-    public void processBuild() {
+    private void processBuild() {
 
         if (queue.isEmpty()) {
             return;
@@ -152,7 +168,7 @@ public class LocalCISharedBuildJobQueueService {
      * it might be because the node crashed. Therefore, the build job is added back to the queue.
      */
     @Scheduled(fixedRate = 60000)
-    public void requeueTimedOutJobs() {
+    protected void requeueTimedOutJobs() {
 
         lock.lock();
         try {
@@ -181,6 +197,7 @@ public class LocalCISharedBuildJobQueueService {
         if (buildJob != null) {
             Long participationId = buildJob.getParticipationId();
             buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(130));
+            buildJob.setBuildStartDate(System.currentTimeMillis());
             processingJobs.put(participationId, buildJob);
         }
         return buildJob;

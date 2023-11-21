@@ -25,7 +25,9 @@ public class LocalCIBuildJobQueueItem implements Serializable {
     // 1-5, 1 is highest priority
     private int priority;
 
-    public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, int retryCount, long buildStartDate) {
+    private long courseId;
+
+    public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, int retryCount, long buildStartDate, long courseId) {
         this.name = name;
         this.participationId = participationId;
         this.commitHash = commitHash;
@@ -34,6 +36,7 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         this.submissionDate = submissionDate;
         this.buildStartDate = buildStartDate;
         this.priority = priority;
+        this.courseId = courseId;
     }
 
     public String getName() {
@@ -100,9 +103,17 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         this.retryCount = retryCount;
     }
 
+    public long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(long courseId) {
+        this.courseId = courseId;
+    }
+
     @Override
     public String toString() {
         return "LocalCIBuildJobQueueItem{" + "name='" + name + '\'' + ", participationId=" + participationId + ", commitHash='" + commitHash + '\'' + ", submissionDate="
-                + submissionDate + ", retryCount=" + retryCount + ", priority=" + priority + '}';
+                + submissionDate + ", retryCount=" + retryCount + ", priority=" + priority + ", buildStartDate=" + buildStartDate + '}';
     }
 }
