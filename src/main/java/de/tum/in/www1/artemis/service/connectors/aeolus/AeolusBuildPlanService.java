@@ -15,8 +15,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService;
-import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsInternalUrlService;
 
 /**
  * Service for publishing custom build plans using Aeolus, supports Bamboo and Jenkins
@@ -37,17 +37,17 @@ public class AeolusBuildPlanService {
     @Value("${artemis.continuous-integration.url}")
     private String ciUrl;
 
-    private final Optional<JenkinsInternalUrlService> jenkinsInternalUrlService;
-
     private final Optional<BambooInternalUrlService> bambooInternalUrlService;
 
     private final RestTemplate restTemplate;
 
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+
     public AeolusBuildPlanService(@Qualifier("aeolusRestTemplate") RestTemplate restTemplate, Optional<BambooInternalUrlService> bambooInternalUrlService,
-            Optional<JenkinsInternalUrlService> jenkinsInternalUrlService) {
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.restTemplate = restTemplate;
-        this.jenkinsInternalUrlService = jenkinsInternalUrlService;
         this.bambooInternalUrlService = bambooInternalUrlService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     /**
@@ -57,13 +57,7 @@ public class AeolusBuildPlanService {
      * @return the internal URL of the CI server
      */
     private String getCiUrl() {
-        if (jenkinsInternalUrlService.isPresent()) {
-            return jenkinsInternalUrlService.get().toInternalCiUrl(ciUrl);
-        }
-        else if (bambooInternalUrlService.isPresent()) {
-            return bambooInternalUrlService.get().toInternalCiUrl(ciUrl);
-        }
-        return null;
+        return bambooInternalUrlService.map(internalUrlService -> internalUrlService.toInternalCiUrl(ciUrl)).orElse(null);
     }
 
     /**

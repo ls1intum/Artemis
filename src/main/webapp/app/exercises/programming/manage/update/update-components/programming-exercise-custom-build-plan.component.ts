@@ -3,7 +3,7 @@ import { BuildAction, PlatformAction, ProgrammingExercise, ProgrammingLanguage, 
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { FileService } from 'app/shared/http/file.service';
+import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -20,9 +20,9 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     sequentialTestRuns?: boolean;
     testwiseCoverageEnabled?: boolean;
 
-    constructor(private fileService: FileService) {}
+    constructor(private aeolusService: AeolusService) {}
 
-    code: string = '#!/bin/bash\n\n# Add your custom build plan here\n\nexit 0';
+    code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
     active?: BuildAction = undefined;
 
     private _editor?: AceEditorComponent;
@@ -76,37 +76,39 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
         this.sequentialTestRuns = this.programmingExercise.sequentialTestRuns;
         this.testwiseCoverageEnabled = this.programmingExercise.testwiseCoverageEnabled;
-        this.fileService
-            .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-            .subscribe({
-                next: (file) => {
-                    if (file && !this.programmingExerciseCreationConfig.buildPlanLoaded) {
+        if (this.programmingExerciseCreationConfig.customBuildPlansSupported) {
+            this.aeolusService
+                .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
+                .subscribe({
+                    next: (file) => {
+                        if (file && !this.programmingExerciseCreationConfig.buildPlanLoaded) {
+                            this.programmingExerciseCreationConfig.buildPlanLoaded = true;
+                            const templateFile: WindFile = JSON.parse(file);
+                            const actions: BuildAction[] = [];
+                            templateFile.actions.forEach((anyAction: any) => {
+                                let action: BuildAction | undefined;
+                                if (anyAction.class === 'script-action' || anyAction.script) {
+                                    action = new ScriptAction();
+                                    (action as ScriptAction).script = anyAction.script;
+                                } else {
+                                    action = new PlatformAction();
+                                    (action as PlatformAction).kind = anyAction.kind;
+                                    (action as PlatformAction).parameters = anyAction.parameters;
+                                }
+                                action.name = anyAction.name;
+                                action.runAlways = anyAction.runAlways;
+                                actions.push(action);
+                            });
+                            templateFile.actions = actions;
+                            this.programmingExercise.windFile = templateFile;
+                        }
+                    },
+                    error: () => {
+                        this.resetCustomBuildPlan();
                         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-                        const templateFile: WindFile = JSON.parse(file);
-                        const actions: BuildAction[] = [];
-                        templateFile.actions.forEach((anyAction: any) => {
-                            let action: BuildAction | undefined;
-                            if (anyAction.class === 'script-action' || anyAction.script) {
-                                action = new ScriptAction();
-                                (action as ScriptAction).script = anyAction.script;
-                            } else {
-                                action = new PlatformAction();
-                                (action as PlatformAction).kind = anyAction.kind;
-                                (action as PlatformAction).parameters = anyAction.parameters;
-                            }
-                            action.name = anyAction.name;
-                            action.runAlways = anyAction.runAlways;
-                            actions.push(action);
-                        });
-                        templateFile.actions = actions;
-                        this.programmingExercise.windFile = templateFile;
-                    }
-                },
-                error: () => {
-                    this.resetCustomBuildPlan();
-                    this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-                },
-            });
+                    },
+                });
+        }
     }
 
     get editor(): AceEditorComponent | undefined {
