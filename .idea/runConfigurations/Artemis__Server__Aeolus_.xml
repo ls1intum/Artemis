@@ -7,6 +7,7 @@
     <option name="VM_PARAMETERS" value="-XX:+ShowCodeDetailsInExceptionMessages -Duser.country=US -Duser.language=en" />
     <method v="2">
       <option name="Gradle.BeforeRunTask" enabled="false" tasks="build" externalProjectPath="$PROJECT_DIR$" vmOptions="" scriptParameters="-x webapp -x test -x jacocoTestCoverageVerification -x spotlessCheck -x checkstyleMain -x checkstyleTest" />
+      <option name="ToolBeforeRunTask" enabled="true" actionId="Tool_External Tools_start aeolus" />
     </method>
   </configuration>
 </component>
