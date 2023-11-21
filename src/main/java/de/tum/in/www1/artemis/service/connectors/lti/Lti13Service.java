@@ -310,4 +310,12 @@ public class Lti13Service {
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);
     }
+
+    public void buildLtiEmailInUseResponse(HttpServletResponse response, String userEmail) {
+        Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(userEmail);
+
+        if (optionalUsername.isPresent()) {
+            response.addHeader("ltiSuccessLoginRequired", optionalUsername.get());
+        }
+    }
 }
