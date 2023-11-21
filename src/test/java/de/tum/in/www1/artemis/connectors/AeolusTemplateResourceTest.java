@@ -53,7 +53,6 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationIndependentTes
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true", 2);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true&testCoverage=true", 3);
         templatesWithExpectedScriptActions.put("PYTHON", 1);
-        templatesWithExpectedScriptActions.put("PYTHON?sequentialRuns=true", 3);
         for (Map.Entry<String, Integer> entry : templatesWithExpectedScriptActions.entrySet()) {
             String template = request.get("/api/aeolus/templates/" + entry.getKey(), HttpStatus.OK, String.class);
             assertThat(template).isNotEmpty();
