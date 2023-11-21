@@ -314,8 +314,25 @@ public class Lti13Service {
     public void buildLtiEmailInUseResponse(HttpServletResponse response, String userEmail) {
         Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(userEmail);
 
-        if (optionalUsername.isPresent()) {
+        if (optionalUsername.isPresent() && isValidUsername(optionalUsername.get())) {
             response.addHeader("ltiSuccessLoginRequired", optionalUsername.get());
         }
+    }
+
+    private boolean isValidUsername(String username) {
+        String regexPattern = "^[a-zA-Z0-9]+.*_.*$";
+
+        if (!username.matches(regexPattern)) {
+            return false;
+        }
+
+        if (!username.matches(".*[a-zA-Z].*")) {
+            return false;
+        }
+
+        if (username.trim().isEmpty()) {
+            return false;
+        }
+        return true;
     }
 }
