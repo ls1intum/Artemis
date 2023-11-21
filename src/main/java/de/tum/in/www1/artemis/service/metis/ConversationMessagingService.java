@@ -12,6 +12,7 @@ import javax.validation.Valid;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -139,19 +140,32 @@ public class ConversationMessagingService extends PostingService {
     }
 
     private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage, Set<User> mentionedUsers) {
-        Set<ConversationNotificationRecipientSummary> webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
-        log.debug("      getWebSocketRecipients DONE");
-        Set<User> broadcastRecipients = webSocketRecipients.stream()
-                .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
-                .collect(Collectors.toSet());
+        // Websocket notification 1: this notifies everyone including the author that there is a new message
+        Set<ConversationNotificationRecipientSummary> webSocketRecipients;
+        Set<User> broadcastRecipients;
+        if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
+            // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
+            broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, null);
+            log.debug("      broadcastForPost DONE");
+
+            webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+            log.debug("      getWebSocketRecipients DONE");
+            broadcastRecipients = mapToUsers(webSocketRecipients);
+        }
+        else {
+            // In all other cases we need the list of participants to send the WS messages to the correct topics. Hence, the db query has to be made before sending WS messages
+            webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+            log.debug("      getWebSocketRecipients DONE");
+            broadcastRecipients = mapToUsers(webSocketRecipients);
+
+            broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
+            log.debug("      broadcastForPost DONE");
+        }
+
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
         mentionedUsers = mentionedUsers.stream().map(user -> new User(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getLangKey(), user.getEmail()))
                 .collect(Collectors.toSet());
         broadcastRecipients.addAll(mentionedUsers);
-
-        // Websocket notification 1: this notifies everyone including the author that there is a new message
-        broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
-        log.debug("      broadcastForPost DONE");
 
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
@@ -179,6 +193,19 @@ public class ConversationMessagingService extends PostingService {
         if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
             saveAnnouncementNotification(createdMessage, channel, course);
         }
+    }
+
+    /**
+     * Maps a set of {@link ConversationNotificationRecipientSummary} to a set of {@link User}
+     *
+     * @param webSocketRecipients Set of recipient summaries
+     * @return Set of users meant to receive WebSocket messages
+     */
+    @NotNull
+    private static Set<User> mapToUsers(Set<ConversationNotificationRecipientSummary> webSocketRecipients) {
+        return webSocketRecipients.stream()
+                .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
+                .collect(Collectors.toSet());
     }
 
     /**
