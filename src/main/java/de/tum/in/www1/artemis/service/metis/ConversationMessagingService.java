@@ -12,7 +12,6 @@ import javax.validation.Valid;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -201,7 +200,6 @@ public class ConversationMessagingService extends PostingService {
      * @param webSocketRecipients Set of recipient summaries
      * @return Set of users meant to receive WebSocket messages
      */
-    @NotNull
     private static Set<User> mapToUsers(Set<ConversationNotificationRecipientSummary> webSocketRecipients) {
         return webSocketRecipients.stream()
                 .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
