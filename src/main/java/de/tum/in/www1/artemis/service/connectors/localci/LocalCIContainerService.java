@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
 
 /**
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
@@ -311,6 +312,15 @@ public class LocalCIContainerService {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
 
+        List<ScriptAction> actions;
+
+        try {
+            actions = programmingExercise.getWindfile().getScriptActions();
+        }
+        catch (NullPointerException e) {
+            actions = null;
+        }
+
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
         if (!Files.exists(scriptsPath)) {
@@ -329,11 +339,16 @@ public class LocalCIContainerService {
                 cd /repositories/test-repository
                 """);
 
-        // programming language specific tasks
-        switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
-            case PYTHON -> scriptForPython(buildScript);
-            default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
+        if (actions != null) {
+            actions.forEach(action -> buildScript.append(action.getScript()).append("\n"));
+        }
+        else {
+            // Windfile actions are not defined, use default build script
+            switch (programmingExercise.getProgrammingLanguage()) {
+                case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
+                case PYTHON -> scriptForPython(buildScript);
+                default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
+            }
         }
 
         try {
