@@ -1,30 +1,29 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
-import java.io.IOException;
+import java.lang.reflect.Type;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 
 /**
  * Deserializer for {@link Action} that determines the type of the action based on the content of the JSON.
  */
-public class ActionDeserializer extends JsonDeserializer<Action> {
+public class ActionDeserializer implements JsonDeserializer<Action> {
 
     @Override
-    public Action deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-        JsonNode node = jp.getCodec().readTree(jp);
+    public Action deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        JsonObject jsonObject = json.getAsJsonObject();
 
-        if (node.has("script")) {
-            return jp.getCodec().treeToValue(node, ScriptAction.class);
+        if (jsonObject.has("script")) {
+            return context.deserialize(jsonObject, ScriptAction.class);
         }
-        else if (node.has("platform")) {
-            return jp.getCodec().treeToValue(node, PlatformAction.class);
+        else if (jsonObject.has("platform")) {
+            return context.deserialize(jsonObject, PlatformAction.class);
         }
 
-        throw new JsonProcessingException("Cannot determine type") {
-        };
+        throw new JsonParseException("Cannot determine type");
     }
 }

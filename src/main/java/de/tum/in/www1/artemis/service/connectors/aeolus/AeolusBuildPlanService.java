@@ -15,11 +15,10 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService;
 
 /**
- * Service for publishing custom build plans using Aeolus, supports Bamboo and Jenkins
+ * Service for publishing custom build plans using Aeolus, currently supports Bamboo
  */
 @Service
 @Profile("aeolus")
@@ -41,13 +40,9 @@ public class AeolusBuildPlanService {
 
     private final RestTemplate restTemplate;
 
-    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
-
-    public AeolusBuildPlanService(@Qualifier("aeolusRestTemplate") RestTemplate restTemplate, Optional<BambooInternalUrlService> bambooInternalUrlService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+    public AeolusBuildPlanService(@Qualifier("aeolusRestTemplate") RestTemplate restTemplate, Optional<BambooInternalUrlService> bambooInternalUrlService) {
         this.restTemplate = restTemplate;
         this.bambooInternalUrlService = bambooInternalUrlService;
-        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     /**

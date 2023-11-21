@@ -2,12 +2,9 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
 /**
  * Base class for the actions that can be defined in a {@link Windfile}
  */
-@JsonDeserialize(using = ActionDeserializer.class)
 public abstract class Action {
 
     private String name;

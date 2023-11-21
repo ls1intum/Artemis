@@ -1,11 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
 /**
  * Represents a CI action that is intended to run only on a specific target, can be used in a {@link Windfile}.
  */
-@JsonDeserialize()
 public class PlatformAction extends Action {
 
     private String kind;
