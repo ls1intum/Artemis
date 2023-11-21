@@ -11,6 +11,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { programmingExerciseCreationConfigMock } from './update-components/programming-exercise-creation-config-mock';
 
 describe('ProgrammingExercise Custom Build Plan', () => {
     let mockThemeService: ThemeService;
@@ -195,6 +196,8 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.sequentialTestRuns = undefined;
         comp.staticCodeAnalysisEnabled = undefined;
         comp.testwiseCoverageEnabled = undefined;
+        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
+        comp.programmingExerciseCreationConfig.customBuildPlansSupported = true;
         comp.loadAeolusTemplate();
         expect(comp.programmingLanguage).toBe(programmingExercise.programmingLanguage);
         expect(comp.projectType).toBe(programmingExercise.projectType);

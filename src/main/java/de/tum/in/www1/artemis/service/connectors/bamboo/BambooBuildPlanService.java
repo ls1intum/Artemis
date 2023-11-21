@@ -167,9 +167,9 @@ public class BambooBuildPlanService {
         if (!couldCreateCustomBuildPlan) {
             Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryUrl, testRepositoryUrl,
                     programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryUrl, auxiliaryRepositories)
-                            .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
-                                    programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(),
-                                    programmingExercise.getCheckoutSolutionRepository(), recordTestwiseCoverage, programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
+                    .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
+                            programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository(),
+                            recordTestwiseCoverage, programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
             bambooServer.publish(plan);
             assignedKey = plan.getKey().toString();
         }

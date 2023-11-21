@@ -89,7 +89,10 @@ public class AeolusTemplateResource {
     private ResponseEntity<String> getAeolusTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix, boolean staticAnalysis, boolean sequentialRuns,
             boolean testCoverage) {
         try {
-            Optional<ProjectType> optionalProjectType = Optional.ofNullable(projectTypePrefix).map(String::toUpperCase).map(ProjectType::valueOf);
+            Optional<ProjectType> optionalProjectType = Optional.empty();
+            if (!projectTypePrefix.isEmpty()) {
+                optionalProjectType = Optional.of(ProjectType.valueOf(projectTypePrefix.toUpperCase()));
+            }
             String fileName = buildAeolusTemplateName(optionalProjectType, staticAnalysis, sequentialRuns, testCoverage);
             Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", languagePrefix, fileName));
             if (!fileResource.exists()) {
@@ -102,7 +105,8 @@ public class AeolusTemplateResource {
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.APPLICATION_JSON);
             ObjectMapper mapper = new ObjectMapper();
-            return new ResponseEntity<>(mapper.writeValueAsString(windfile), responseHeaders, HttpStatus.OK);
+            String json = mapper.writeValueAsString(windfile);
+            return new ResponseEntity<>(json, responseHeaders, HttpStatus.OK);
         }
         catch (IOException ex) {
             log.warn("Error when retrieving aeolus template file", ex);
@@ -144,12 +148,11 @@ public class AeolusTemplateResource {
      * @return the Windfile object
      * @throws IOException if the yaml file is not valid
      */
-    private Windfile readWindfile(String yaml) throws IOException {
+    private static Windfile readWindfile(String yaml) throws IOException {
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(Action.class, new ActionDeserializer());
         Gson gson = builder.create();
-        Windfile windfile = gson.fromJson(convertYamlToJson(yaml), Windfile.class);
-        return windfile;
+        return gson.fromJson(convertYamlToJson(yaml), Windfile.class);
     }
 
     /**
@@ -158,7 +161,7 @@ public class AeolusTemplateResource {
      * @param yaml YAML string
      * @return JSON string
      */
-    private String convertYamlToJson(String yaml) throws JsonProcessingException {
+    private static String convertYamlToJson(String yaml) throws JsonProcessingException {
         ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
         Object obj = yamlReader.readValue(yaml, Object.class);
 
