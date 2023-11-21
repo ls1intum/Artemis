@@ -155,8 +155,7 @@ public class BambooBuildPlanService {
                     couldCreateCustomBuildPlan = true;
                 }
                 else {
-                    throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id "
-                            + programmingExercise.getId() + ", will create default build plan");
+                    throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle());
                 }
             }
             catch (Exception e) {

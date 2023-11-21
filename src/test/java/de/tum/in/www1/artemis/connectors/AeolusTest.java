@@ -79,5 +79,36 @@ class AeolusTest {
         windfile.setMetadata(null);
         windfile.setId("id");
         assertThat(windfile.getMetadata().getId()).isEqualTo("id");
+        windfile.setMetadata(null);
+        windfile.setDescription("description");
+        assertThat(windfile.getMetadata().getDescription()).isEqualTo("description");
+        windfile.setDescription("newDescription");
+        assertThat(windfile.getMetadata().getDescription()).isEqualTo("newDescription");
+        windfile.setMetadata(null);
+        windfile.setName("name");
+        assertThat(windfile.getMetadata().getName()).isEqualTo("name");
+        windfile.setName("newName");
+        assertThat(windfile.getMetadata().getName()).isEqualTo("newName");
+        windfile.setMetadata(null);
+        windfile.setResultHook("resultHook");
+        assertThat(windfile.getMetadata().getResultHook()).isEqualTo("resultHook");
+        windfile.setResultHook("newResultHook");
+        assertThat(windfile.getMetadata().getResultHook()).isEqualTo("newResultHook");
+        AeolusRepository aeolusRepository = new AeolusRepository("url", "branch", "path");
+        Map<String, AeolusRepository> map = Map.of("key", aeolusRepository);
+        windfile.setRepositories(map);
+        assertThat(windfile.getRepositories().get("key")).isEqualTo(aeolusRepository);
+    }
+
+    @Test
+    void testAeolusRepository() {
+        AeolusRepository aeolusRepository = new AeolusRepository("oldurl", "oldbranch", "oldPath");
+        assertThat(aeolusRepository.getBranch()).isEqualTo("oldbranch");
+        assertThat(aeolusRepository.getPath()).isEqualTo("oldPath");
+        assertThat(aeolusRepository.getUrl()).isEqualTo("oldurl");
+        aeolusRepository.setBranch("branch");
+        assertThat(aeolusRepository.getBranch()).isEqualTo("branch");
+        aeolusRepository.setUrl("url");
+        assertThat(aeolusRepository.getUrl()).isEqualTo("url");
     }
 }
