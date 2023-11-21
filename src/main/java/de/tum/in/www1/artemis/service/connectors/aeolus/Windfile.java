@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -49,5 +50,20 @@ public class Windfile {
             this.metadata = new WindfileMetadata();
         }
         this.metadata.setId(id);
+    }
+
+    /**
+     * Gets the script actions of a windfile.
+     *
+     * @return the script actions of a windfile.
+     */
+    public List<ScriptAction> getScriptActions() {
+        List<ScriptAction> scriptActions = new ArrayList<>();
+        for (Action action : actions) {
+            if (action instanceof ScriptAction) {
+                scriptActions.add((ScriptAction) action);
+            }
+        }
+        return scriptActions;
     }
 }
