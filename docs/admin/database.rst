@@ -59,7 +59,7 @@ Migrating MySQL Data to PostgreSQL
                     - db-migration
 
             postgres:
-                image: docker.io/library/postgres:15
+                image: docker.io/library/postgres:16.1
                 environment:
                     - POSTGRES_USER=root
                     - POSTGRES_DB=Artemis
