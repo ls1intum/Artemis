@@ -64,16 +64,20 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationIndependentTes
     @Test()
     void testInvalidWindfileDeserialization() {
         try {
-            GsonBuilder builder = new GsonBuilder();
-            builder.registerTypeAdapter(Action.class, new ActionDeserializer());
-            Gson gson = builder.create();
             String invalidWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"invalid-action\",\n\"runAlways\": true\n}\n]\n}";
-            gson.fromJson(invalidWindfile, Windfile.class);
+            Windfile.deserialize(invalidWindfile);
             fail("Should have thrown an exception as there is no script or platform in the actions object");
         }
         catch (JsonParseException e) {
             assertThat(e.getMessage()).isEqualTo("Cannot determine type");
         }
+    }
+
+    @Test()
+    void testValidWindfileDeserializationWithClass() {
+        String invalidWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"class\": \"script-action\",\n\"script\": \"echo $PATH\",\n\"runAlways\": true\n}\n]\n}";
+        Windfile windfile = Windfile.deserialize(invalidWindfile);
+        assertThat(windfile.getActions().get(0)).isInstanceOf(ScriptAction.class);
     }
 
     @Test

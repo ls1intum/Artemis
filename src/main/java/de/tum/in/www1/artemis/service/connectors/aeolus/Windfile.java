@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+
 /**
  * Represents a windfile, the definition file for an aeolus build plan that
  * can then be used to generate a Bamboo build plan or a Jenkinsfile.
@@ -104,5 +108,12 @@ public class Windfile {
 
     public Map<String, AeolusRepository> getRepositories() {
         return repositories;
+    }
+
+    public static Windfile deserialize(String json) throws JsonSyntaxException {
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(Action.class, new ActionDeserializer());
+        Gson gson = builder.create();
+        return gson.fromJson(json, Windfile.class);
     }
 }
