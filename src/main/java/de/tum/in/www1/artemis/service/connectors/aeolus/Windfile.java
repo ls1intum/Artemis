@@ -101,4 +101,8 @@ public class Windfile {
     public void setRepositories(Map<String, AeolusRepository> repositories) {
         this.repositories = repositories;
     }
+
+    public Map<String, AeolusRepository> getRepositories() {
+        return repositories;
+    }
 }
