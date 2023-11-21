@@ -107,7 +107,7 @@ public abstract class PostingService {
             else {
                 if (recipients == null) {
                     // send to all participants of the conversation
-                    recipients = conversationParticipantRepository.findConversationParticipantByConversationId(postConversation.getId()).stream()
+                    recipients = conversationParticipantRepository.findConversationParticipantsByConversationId(postConversation.getId()).stream()
                             .map(ConversationParticipant::getUser).collect(Collectors.toSet());
                 }
                 recipients.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), genericTopicName + "/conversations/" + postConversation.getId(), postDTO));
@@ -132,7 +132,7 @@ public abstract class PostingService {
                     course.getEditorGroupName(), course.getInstructorGroupName()).stream();
         }
 
-        return conversationParticipantRepository.findConversationParticipantWithUserGroupsByConversationId(conversation.getId()).stream()
+        return conversationParticipantRepository.findConversationParticipantsWithUserGroupsByConversationId(conversation.getId()).stream()
                 .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsHidden() != null && participant.getIsHidden(),
                         authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), participant.getUser())));
     }

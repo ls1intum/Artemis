@@ -84,7 +84,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
     abstract String getTestPrefix();
 
     Set<ConversationParticipant> getParticipants(Long conversationId) {
-        return conversationParticipantRepository.findConversationParticipantByConversationId(conversationId);
+        return conversationParticipantRepository.findConversationParticipantsByConversationId(conversationId);
     }
 
     Post postInConversation(Long conversationId, String authorLoginWithoutPrefix) throws Exception {

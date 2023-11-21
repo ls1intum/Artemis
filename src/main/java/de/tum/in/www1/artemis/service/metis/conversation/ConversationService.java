@@ -215,7 +215,7 @@ public class ConversationService {
      * @param memberLimit  the maximum number of members in the conversation
      */
     public void registerUsersToConversation(Course course, Set<User> users, Conversation conversation, Optional<Integer> memberLimit) {
-        var existingUsers = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+        var existingUsers = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         var usersToBeRegistered = users.stream().filter(user -> !existingUsers.contains(user)).collect(Collectors.toSet());
 
@@ -243,7 +243,7 @@ public class ConversationService {
      * @param conversation conversation which members to notify
      */
     public void notifyAllConversationMembersAboutUpdate(Conversation conversation) {
-        var usersToContact = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+        var usersToContact = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.UPDATE, conversation, usersToContact);
     }
@@ -267,7 +267,7 @@ public class ConversationService {
      * @param conversation the conversation from which the users are removed
      */
     public void deregisterUsersFromAConversation(Course course, Set<User> users, Conversation conversation) {
-        var existingUsers = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+        var existingUsers = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         var usersToBeDeregistered = users.stream().filter(existingUsers::contains).collect(Collectors.toSet());
         var remainingUsers = existingUsers.stream().filter(user -> !usersToBeDeregistered.contains(user)).collect(Collectors.toSet());

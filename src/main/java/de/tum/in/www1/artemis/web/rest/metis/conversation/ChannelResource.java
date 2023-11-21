@@ -242,7 +242,7 @@ public class ChannelResource extends ConversationManagementResource {
             throw new BadRequestAlertException("The channel belongs to tutorial group " + tutorialGroup.getTitle(), CHANNEL_ENTITY_NAME, "channel.tutorialGroup.mismatch");
         }, Optional::empty);
 
-        var usersToNotify = conversationParticipantRepository.findConversationParticipantByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
+        var usersToNotify = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         conversationService.deleteConversation(channel);
         usersToNotify.forEach(

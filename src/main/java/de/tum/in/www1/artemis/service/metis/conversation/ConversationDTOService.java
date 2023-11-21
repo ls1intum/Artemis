@@ -252,7 +252,7 @@ public class ConversationDTOService {
             conversationParticipants = conversation.getConversationParticipants();
         }
         else {
-            conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId());
+            conversationParticipants = conversationParticipantRepository.findConversationParticipantsByConversationId(conversation.getId());
         }
         return conversationParticipants;
     }
