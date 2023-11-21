@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.aeolus;
+package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -8,19 +8,22 @@ import java.util.*;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.*;
 
 /**
  * Service for retrieving aeolus template files based on the programming language, project type, and
@@ -28,24 +31,23 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
  * image for the programming language and project type for the artemis instance.
  */
 @RestController
-@RequestMapping("/api/aeolus/")
-@Profile("aeolus | localci")
-public class AeolusTemplateService {
+@RequestMapping("/api/aeolus")
+public class AeolusTemplateResource {
 
-    private final Logger log = LoggerFactory.getLogger(AeolusTemplateService.class);
+    private final Logger log = LoggerFactory.getLogger(AeolusTemplateResource.class);
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService) {
+    public AeolusTemplateResource(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     /**
-     * GET /files/aeolus/templates/:language/:projectType : Get the aeolus template file with the given filename<br/>
-     * GET /files/aeolus/templates/:language : Get the aeolus template file with the given filename
+     * GET /api/aeolus/templates/:language/:projectType : Get the aeolus template file with the given filename<br/>
+     * GET /api/aeolus/templates/:language : Get the aeolus template file with the given filename
      * <p>
      * The windfile contains the default build plan configuration for new programming exercises.
      *
@@ -143,8 +145,25 @@ public class AeolusTemplateService {
      * @throws IOException if the yaml file is not valid
      */
     private Windfile readWindfile(String yaml) throws IOException {
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(Action.class, new ActionDeserializer());
+        Gson gson = builder.create();
+        Windfile windfile = gson.fromJson(convertYamlToJson(yaml), Windfile.class);
+        return windfile;
+    }
+
+    /**
+     * Converts a YAML string to a JSON string for easier communication with the client and usage with Gson
+     *
+     * @param yaml YAML string
+     * @return JSON string
+     */
+    private String convertYamlToJson(String yaml) throws JsonProcessingException {
         ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
-        return yamlReader.readValue(yaml, Windfile.class);
+        Object obj = yamlReader.readValue(yaml, Object.class);
+
+        ObjectMapper jsonWriter = new ObjectMapper();
+        return jsonWriter.writeValueAsString(obj);
     }
 
     /**
