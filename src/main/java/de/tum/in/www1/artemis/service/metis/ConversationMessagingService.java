@@ -18,7 +18,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ConversationNotificationRecipientSummary;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -120,13 +123,15 @@ public class ConversationMessagingService extends PostingService {
         conversationParticipantRepository.updateLastReadAsync(author.getId(), conversation.getId(), ZonedDateTime.now());
 
         var createdMessage = conversationMessageRepository.save(newMessage);
+        log.debug("      conversationMessageRepository.save DONE");
         // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
         // reduce the payload of the response / websocket message: this is important to avoid overloading the involved subsystems
         if (createdMessage.getConversation() != null) {
             createdMessage.getConversation().hideDetails();
         }
-        log.debug("      conversationMessageRepository.save DONE");
+        setAuthorRoleForPosting(createdMessage, course);
+
         // TODO: we should consider invoking the following method async to avoid that authors wait for the message creation if many notifications are sent
         notifyAboutMessageCreation(author, savedConversation, course, createdMessage, mentionedUsers);
         log.debug("      notifyAboutMessageCreation DONE");
