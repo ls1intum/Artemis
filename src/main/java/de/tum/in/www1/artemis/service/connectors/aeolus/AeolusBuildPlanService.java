@@ -7,11 +7,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -64,9 +61,8 @@ public class AeolusBuildPlanService {
      */
     public String publishBuildPlan(String buildPlan, String target) {
         String url = getCiUrl();
-        MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         String requestUrl = aeolusUrl + "/publish/" + target;
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
         Map<String, Object> jsonObject = new HashMap<>();
         jsonObject.put("url", url);
         jsonObject.put("username", ciUsername);
@@ -74,7 +70,7 @@ public class AeolusBuildPlanService {
         jsonObject.put("windfile", buildPlan);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(jsonObject, null);
-        var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, new ParameterizedTypeReference<Map<String, String>>() {
+        ResponseEntity<HashMap<String, String>> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, new ParameterizedTypeReference<>() {
         });
         if (response.getBody() != null) {
             return response.getBody().get("key");

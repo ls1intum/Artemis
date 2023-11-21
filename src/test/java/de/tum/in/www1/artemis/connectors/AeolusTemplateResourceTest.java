@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,6 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonParseException;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.service.connectors.aeolus.*;
@@ -24,10 +26,10 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationIndependentTes
     private static final String TEST_PREFIX = "aeolusintegration";
 
     @Autowired
-    private UserUtilService userUtilService;
+    protected RequestUtilService request;
 
     @Autowired
-    protected RequestUtilService request;
+    private UserUtilService userUtilService;
 
     @BeforeEach
     void initTestCase() {
@@ -58,6 +60,27 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationIndependentTes
             Windfile windfile = gson.fromJson(template, Windfile.class);
             this.assertWindfileIsCorrect(windfile, entry.getValue());
         }
+    }
+
+    @Test()
+    void testInvalidWindfileDeserialization() {
+        try {
+            GsonBuilder builder = new GsonBuilder();
+            builder.registerTypeAdapter(Action.class, new ActionDeserializer());
+            Gson gson = builder.create();
+            String invalidWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"invalid-action\",\n\"runAlways\": true\n}\n]\n}";
+            gson.fromJson(invalidWindfile, Windfile.class);
+            fail("Should have thrown an exception as there is no script or platform in the actions object");
+        }
+        catch (JsonParseException e) {
+            assertThat(e.getMessage()).isEqualTo("Cannot determine type");
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetInvalidAeolusTemplateFile() throws Exception {
+        request.get("/api/aeolus/templates/INVALID", HttpStatus.BAD_REQUEST, String.class);
     }
 
     void assertWindfileIsCorrect(Windfile windfile, long expectedScriptActions) {

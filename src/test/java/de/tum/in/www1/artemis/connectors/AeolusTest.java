@@ -66,6 +66,10 @@ class AeolusTest {
         assertThat(scriptAction.getEnvironment()).isEqualTo(Map.of("key", "value"));
         assertThat(scriptAction.getParameters()).isEqualTo(Map.of("key", "value"));
         PlatformAction platformAction = (PlatformAction) windfile.getActions().get(1);
+        platformAction.setKind("junit");
+        assertThat(platformAction.getKind()).isEqualTo("junit");
+        platformAction.setType("type");
+        assertThat(platformAction.getType()).isEqualTo("type");
         assertThat(platformAction.getName()).isEqualTo("platformAction");
         assertThat(platformAction.isRunAlways()).isEqualTo(true);
         assertThat(platformAction.getPlatform()).isEqualTo("bamboo");
@@ -79,6 +83,8 @@ class AeolusTest {
         windfile.setMetadata(null);
         windfile.setId("id");
         assertThat(windfile.getMetadata().getId()).isEqualTo("id");
+        windfile.setId("newId");
+        assertThat(windfile.getMetadata().getId()).isEqualTo("newId");
         windfile.setMetadata(null);
         windfile.setDescription("description");
         assertThat(windfile.getMetadata().getDescription()).isEqualTo("description");
@@ -98,6 +104,11 @@ class AeolusTest {
         Map<String, AeolusRepository> map = Map.of("key", aeolusRepository);
         windfile.setRepositories(map);
         assertThat(windfile.getRepositories().get("key")).isEqualTo(aeolusRepository);
+        windfile.setGitCredentials("gitCredentials");
+        assertThat(windfile.getMetadata().getGitCredentials()).isEqualTo("gitCredentials");
+        windfile.setMetadata(null);
+        windfile.setGitCredentials("newGitCredentials");
+        assertThat(windfile.getMetadata().getGitCredentials()).isEqualTo("newGitCredentials");
     }
 
     @Test
@@ -110,5 +121,7 @@ class AeolusTest {
         assertThat(aeolusRepository.getBranch()).isEqualTo("branch");
         aeolusRepository.setUrl("url");
         assertThat(aeolusRepository.getUrl()).isEqualTo("url");
+        aeolusRepository.setPath("path");
+        assertThat(aeolusRepository.getPath()).isEqualTo("path");
     }
 }

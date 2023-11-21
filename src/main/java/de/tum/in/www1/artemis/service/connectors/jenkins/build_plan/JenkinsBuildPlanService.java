@@ -39,7 +39,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsEndpoints;
@@ -79,12 +78,9 @@ public class JenkinsBuildPlanService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final Optional<AeolusBuildPlanService> aeolusBuildPlanService;
-
     public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
             JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator,
-            Optional<AeolusBuildPlanService> aeolusBuildPlanService) {
+            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator) {
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
@@ -94,7 +90,6 @@ public class JenkinsBuildPlanService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
         this.jenkinsPipelineScriptCreator = jenkinsPipelineScriptCreator;
-        this.aeolusBuildPlanService = aeolusBuildPlanService;
     }
 
     /**
@@ -107,25 +102,19 @@ public class JenkinsBuildPlanService {
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUrls = getInternalRepositoryUrls(exercise, repositoryURL);
 
+        final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
+        final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
+        final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
+        final boolean checkoutSolution = exercise.getCheckoutSolutionRepository();
+        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, checkoutSolution,
+                buildPlanUrl);
+
+        // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
+        jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
+
         final String jobFolder = exercise.getProjectKey();
         final String job = jobFolder + "-" + planKey;
-        final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
-        if (aeolusBuildPlanService.isPresent()) {
-            return;
-        }
-        else {
-            final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
-            final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
-            final boolean checkoutSolution = exercise.getCheckoutSolutionRepository();
-            final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, checkoutSolution,
-                    buildPlanUrl);
-
-            // create build plan in database first, otherwise the job in Jenkins cannot find it for the initial build
-            jenkinsPipelineScriptCreator.createBuildPlanForExercise(exercise);
-
-            jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
-        }
-
+        jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
         givePlanPermissions(exercise, planKey);
         triggerBuild(jobFolder, job);
     }
