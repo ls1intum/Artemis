@@ -16,14 +16,22 @@ public class ActionDeserializer implements JsonDeserializer<Action> {
     @Override
     public Action deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         JsonObject jsonObject = json.getAsJsonObject();
-
-        if (jsonObject.has("script")) {
-            return context.deserialize(jsonObject, ScriptAction.class);
+        String className = "not-determined";
+        if (jsonObject.has("class")) {
+            className = jsonObject.get("class").getAsString();
         }
-        else if (jsonObject.has("platform")) {
-            return context.deserialize(jsonObject, PlatformAction.class);
+        else {
+            if (jsonObject.has("script")) {
+                className = "script-action";
+            }
+            else if (jsonObject.has("platform")) {
+                className = "platform-action";
+            }
         }
-
-        throw new JsonParseException("Cannot determine type");
+        return switch (className) {
+            case "script-action" -> context.deserialize(jsonObject, ScriptAction.class);
+            case "platform-action" -> context.deserialize(jsonObject, PlatformAction.class);
+            default -> throw new JsonParseException("Cannot determine type");
+        };
     }
 }
