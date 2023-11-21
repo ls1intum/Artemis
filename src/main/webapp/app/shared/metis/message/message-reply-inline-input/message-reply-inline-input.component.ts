@@ -1,4 +1,4 @@
-import { Component, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, OnChanges, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -13,7 +13,7 @@ import { LocalStorageService } from 'ngx-webstorage';
     styleUrls: ['./message-reply-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit {
+export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges {
     warningDismissed = false;
 
     constructor(
