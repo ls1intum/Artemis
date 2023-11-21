@@ -78,8 +78,8 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetInvalidAeolusTemplateFile() throws Exception {
-        request.get("/api/aeolus/templates/INVALID", HttpStatus.BAD_REQUEST, String.class);
+    void testGetNonExistingAeolusTemplateFile() throws Exception {
+        request.get("/api/aeolus/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true&testCoverage=true", HttpStatus.NOT_FOUND, String.class);
     }
 
     void assertWindfileIsCorrect(Windfile windfile, long expectedScriptActions) {

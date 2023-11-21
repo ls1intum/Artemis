@@ -115,6 +115,7 @@ public class JenkinsBuildPlanService {
         final String jobFolder = exercise.getProjectKey();
         final String job = jobFolder + "-" + planKey;
         jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
+
         givePlanPermissions(exercise, planKey);
         triggerBuild(jobFolder, job);
     }
