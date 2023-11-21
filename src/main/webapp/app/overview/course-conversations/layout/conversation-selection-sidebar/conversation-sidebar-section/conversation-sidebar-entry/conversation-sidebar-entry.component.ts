@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
-import { ConversationDto, Muted } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDto, ConversationNotificationsSetting } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
@@ -31,7 +31,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     favorite$ = new Subject<boolean>();
     hide$ = new Subject<boolean>();
-    muted$ = new Subject<Muted>();
+    notificationsSetting$ = new Subject<ConversationNotificationsSetting>();
 
     @Input()
     course: Course;
@@ -52,7 +52,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     conversationHiddenStatusChange = new EventEmitter<void>();
 
     @Output()
-    conversationMutedStatusChange = new EventEmitter<void>();
+    conversationNotificationsSettingChange = new EventEmitter<void>();
 
     conversationAsChannel?: ChannelDTO;
     channelSubTypeReferenceTranslationKey?: string;
@@ -96,12 +96,12 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     onMuteClicked($event: MouseEvent) {
         $event.stopPropagation();
-        switch (this.conversation.muted) {
-            case Muted.MUTED:
-                this.muted$.next(Muted.UNMUTED);
+        switch (this.conversation.notificationsSetting) {
+            case ConversationNotificationsSetting.MUTED:
+                this.notificationsSetting$.next(ConversationNotificationsSetting.UNMUTED);
                 break;
-            case Muted.UNMUTED:
-                this.muted$.next(Muted.MUTED);
+            case ConversationNotificationsSetting.UNMUTED:
+                this.notificationsSetting$.next(ConversationNotificationsSetting.MUTED);
                 break;
         }
     }
@@ -141,11 +141,11 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         });
-        this.muted$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((muted) => {
-            this.conversationService.changeMutedStatus(this.course.id!, this.conversation.id!, muted).subscribe({
+        this.notificationsSetting$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((notificationsSetting) => {
+            this.conversationService.changeNotificationsSetting(this.course.id!, this.conversation.id!, notificationsSetting).subscribe({
                 next: () => {
-                    this.conversation.muted = muted;
-                    this.conversationMutedStatusChange.emit();
+                    this.conversation.notificationsSetting = notificationsSetting;
+                    this.conversationNotificationsSettingChange.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });

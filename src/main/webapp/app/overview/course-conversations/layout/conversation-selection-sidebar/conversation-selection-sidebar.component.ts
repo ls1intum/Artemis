@@ -343,7 +343,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         this.onConversationsUpdate([...this.allConversations]);
     }
 
-    onConversationMutedStatusChange() {
+    onConversationNotificationsSettingChange() {
         this.onConversationsUpdate([...this.allConversations]);
     }
 

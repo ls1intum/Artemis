@@ -24,7 +24,7 @@
                 (settingsChanged)="settingsChanged.emit()"
                 (conversationFavoriteStatusChange)="conversationFavoriteStatusChange.emit()"
                 (conversationHiddenStatusChange)="conversationHiddenStatusChange.emit()"
-                (conversationMutedStatusChange)="conversationMutedStatusChange.emit()"
+                (conversationNotificationsSettingChange)="conversationNotificationsSettingChange.emit()"
             ></li>
             <ng-container *ngIf="hiddenConversations && hiddenConversations.length > 0">
                 <li (click)="showHiddenConversations = !showHiddenConversations" class="hidden-conversation-divider text-center">
@@ -49,7 +49,7 @@
                         (settingsChanged)="settingsChanged.emit()"
                         (conversationFavoriteStatusChange)="conversationFavoriteStatusChange.emit()"
                         (conversationHiddenStatusChange)="conversationHiddenStatusChange.emit()"
-                        (conversationMutedStatusChange)="conversationMutedStatusChange.emit()"
+                        (conversationNotificationsSettingChange)="conversationNotificationsSettingChange.emit()"
                     ></li>
                 </ng-container>
             </ng-container>
