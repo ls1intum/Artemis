@@ -16,10 +16,10 @@ public class UserConversationInfo {
 
     private final long unreadMessagesCount;
 
-    public UserConversationInfo(Long conversationId, Long participantId, Boolean isModerator, Boolean isFavorite, Boolean isHidden, ZonedDateTime lastRead,
-            long unreadMessagesCount) {
+    public UserConversationInfo(Long conversationId, Long participantId, Boolean isModerator, Boolean isFavorite, Boolean isHidden,
+            ConversationNotificationsSetting notificationsSetting, ZonedDateTime lastRead, long unreadMessagesCount) {
         this.conversationId = conversationId;
-        this.conversationParticipant = new ConversationParticipantSettingsView(participantId, isModerator, isFavorite, isHidden, ConversationNotificationsSetting.MUTED, lastRead);
+        this.conversationParticipant = new ConversationParticipantSettingsView(participantId, isModerator, isFavorite, isHidden, notificationsSetting, lastRead);
         this.unreadMessagesCount = unreadMessagesCount;
     }
 

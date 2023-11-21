@@ -123,7 +123,7 @@ public class ConversationResource extends ConversationManagementResource {
      */
     @PostMapping("/{courseId}/conversations/{conversationId}/notifications-setting")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> switchMutedStatus(@PathVariable Long courseId, @PathVariable Long conversationId,
+    public ResponseEntity<Void> updateNotificationsSetting(@PathVariable Long courseId, @PathVariable Long conversationId,
             @RequestParam ConversationNotificationsSetting notificationsSetting) {
         checkMessagingEnabledElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();

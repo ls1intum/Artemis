@@ -53,7 +53,7 @@ export abstract class ConversationDto {
 }
 
 /**
- * Muted
+ * Conversation Notifications Setting
  */
 export enum ConversationNotificationsSetting {
     MUTED = 'MUTED',
