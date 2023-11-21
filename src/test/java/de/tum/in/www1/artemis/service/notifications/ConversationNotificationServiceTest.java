@@ -119,7 +119,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
 
         verify(generalInstantNotificationService).sendNotification(sentNotification, Set.of(user2), post);
 
-        var participants = conversationParticipantRepository.findConversationParticipantByConversationId(oneToOneChat.getId());
+        var participants = conversationParticipantRepository.findConversationParticipantsByConversationId(oneToOneChat.getId());
         // make sure that objects can be deleted after notification is saved
         conversationMessageRepository.deleteAllById(List.of(post.getId()));
         conversationParticipantRepository.deleteAllById(participants.stream().map(ConversationParticipant::getId).toList());
