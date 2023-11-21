@@ -3,12 +3,15 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 import java.net.URL;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -20,6 +23,8 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService
 @Service
 @Profile("aeolus")
 public class AeolusBuildPlanService {
+
+    private static final Logger log = LoggerFactory.getLogger(AeolusBuildPlanService.class);
 
     @Value("${aeolus.url}")
     private URL aeolusUrl;
@@ -70,10 +75,15 @@ public class AeolusBuildPlanService {
         jsonObject.put("windfile", buildPlan);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(jsonObject, null);
-        ResponseEntity<HashMap<String, String>> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, new ParameterizedTypeReference<>() {
-        });
-        if (response.getBody() != null) {
-            return response.getBody().get("key");
+        try {
+            ResponseEntity<HashMap<String, String>> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, new ParameterizedTypeReference<>() {
+            });
+            if (response.getBody() != null) {
+                return response.getBody().get("key");
+            }
+        }
+        catch (HttpServerErrorException e) {
+            log.error("Error while publishing build plan {} to Aeolus target {}", buildPlan, target, e);
         }
         return null;
     }
