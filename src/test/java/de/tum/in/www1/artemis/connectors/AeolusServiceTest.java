@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.connectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.*;
 import java.net.URL;
 
 import org.junit.jupiter.api.AfterEach;
@@ -57,16 +56,32 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
      * Publishes a build plan using Aeolus
      */
     @Test
-    void testPublishBuildPlan() {
+    void testSuccessfulPublishBuildPlan() {
         Windfile mockWindfile = new Windfile();
         var expectedPlanKey = "PLAN";
         mockWindfile.setId("PROJECT-" + expectedPlanKey);
 
         String request = new Gson().toJson(mockWindfile);
 
-        aeolusRequestMockProvider.mockPublishBuildPlan("bamboo", expectedPlanKey);
+        aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan("bamboo", expectedPlanKey);
         String key = aeolusBuildPlanService.publishBuildPlan(request, "bamboo");
         assertThat(key).isEqualTo(expectedPlanKey);
+    }
+
+    /**
+     * Publishes a build plan using Aeolus
+     */
+    @Test
+    void testFailedPublishBuildPlan() {
+        Windfile mockWindfile = new Windfile();
+        var expectedPlanKey = "PLAN";
+        mockWindfile.setId("PROJECT-" + expectedPlanKey);
+
+        String request = new Gson().toJson(mockWindfile);
+
+        aeolusRequestMockProvider.mockFailedPublishBuildPlan("bamboo");
+        String key = aeolusBuildPlanService.publishBuildPlan(request, "bamboo");
+        assertThat(key).isEqualTo(null);
     }
 
 }

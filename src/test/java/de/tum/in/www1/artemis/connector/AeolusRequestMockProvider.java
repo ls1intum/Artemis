@@ -39,18 +39,22 @@ public class AeolusRequestMockProvider {
         mockServer = MockRestServiceServer.createServer(restTemplate);
     }
 
-    public void mockPublishBuildPlan(String target, String expectedKey) {
+    public void mockSuccessfulPublishBuildPlan(String target, String expectedKey) {
         final var uriPattern = Pattern.compile(AEOLUS_URL + "/publish/" + target);
 
         Map<String, String> responseBody = new HashMap<>();
         responseBody.put("key", expectedKey);
         responseBody.put("result", "imagine a result here");
-        Gson gson = new Gson();
-
-        String json = gson.toJson(responseBody);
+        String json = new Gson().toJson(responseBody);
 
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).body(json).contentType(org.springframework.http.MediaType.APPLICATION_JSON));
+    }
+
+    public void mockFailedPublishBuildPlan(String target) {
+        final var uriPattern = Pattern.compile(AEOLUS_URL + "/publish/" + target);
+
+        mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
     }
 
     /**
