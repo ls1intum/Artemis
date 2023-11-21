@@ -13,3 +13,10 @@ actions:
     - name: maven
       script: mvn spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd
       run_always: true
+    - name: junit
+      parameters:
+          ignore_time: false
+          test_results: '**/target/surefire-reports/*.xml'
+      platform: bamboo
+      kind: junit
+      runAlways: true
