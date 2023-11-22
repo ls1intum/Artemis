@@ -32,6 +32,7 @@ import { GroupChatIconComponent } from 'app/overview/course-conversations/other/
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
 import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { MetisService } from 'app/shared/metis/metis.service';
+import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
 
 const examples: (ConversationDto | undefined)[] = [
     undefined,
@@ -52,7 +53,7 @@ examples.forEach((activeConversation) => {
             let component: ConversationSelectionSidebarComponent;
             let fixture: ComponentFixture<ConversationSelectionSidebarComponent>;
             let metisConversationService: MetisConversationService;
-            const course = { id: 1 } as any;
+            const course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING } as any;
             const canCreateChannel = jest.fn();
             let allConversations: ConversationDto[] = [];
 
@@ -294,6 +295,29 @@ examples.forEach((activeConversation) => {
                 component.openCodeOfConduct();
                 expect(metisSpy).toHaveBeenCalledOnce();
             });
+
+            it('should hide buttons if messaging disabled', fakeAsync(() => {
+                fixture.detectChanges();
+                tick(301);
+                component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as any;
+                component.isMessagingEnabled = false;
+                fixture.detectChanges();
+                tick(301);
+
+                const channelButton = fixture.debugElement.query(By.css('#channelButton'));
+                const exerciseChannelButton = fixture.debugElement.query(By.css('#exerciseChannelButton'));
+                const lectureChannelButton = fixture.debugElement.query(By.css('#lectureChannelButton'));
+                const examChannelButton = fixture.debugElement.query(By.css('#examChannelButton'));
+                const groupChatButton = fixture.debugElement.query(By.css('#createGroupChat'));
+                const oneToOneChatButton = fixture.debugElement.query(By.css('#createOneToOne'));
+
+                expect(channelButton).toBeNull();
+                expect(exerciseChannelButton).toBeNull();
+                expect(lectureChannelButton).toBeNull();
+                expect(examChannelButton).toBeNull();
+                expect(groupChatButton).toBeNull();
+                expect(oneToOneChatButton).toBeNull();
+            }));
 
             function createConversationDialogTest(modalReturnValue: any, dialog: Type<AbstractDialogComponent>, buttonId: string) {
                 fixture.detectChanges();

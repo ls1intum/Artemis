@@ -61,7 +61,7 @@
                         [course]="course"
                     >
                         <ng-template>
-                            <div ngbDropdown container="body" class="d-inline-block">
+                            <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
                                 <button id="channelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
                                     <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                 </button>
@@ -91,7 +91,7 @@
                         [course]="course"
                     >
                         <ng-template>
-                            <div ngbDropdown container="body" class="d-inline-block">
+                            <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
                                 <button id="exerciseChannelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
                                     <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                 </button>
@@ -118,7 +118,7 @@
                         [course]="course"
                     >
                         <ng-template>
-                            <div ngbDropdown container="body" class="d-inline-block">
+                            <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
                                 <button id="lectureChannelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
                                     <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                 </button>
@@ -145,7 +145,7 @@
                         [course]="course"
                     >
                         <ng-template>
-                            <div ngbDropdown container="body" class="d-inline-block">
+                            <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
                                 <button id="examChannelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
                                     <fa-icon [icon]="faPlus" size="sm"></fa-icon>
                                 </button>
@@ -159,6 +159,7 @@
                     </jhi-conversation-sidebar-section>
                     <!-- Group Chats -->
                     <jhi-conversation-sidebar-section
+                        *ngIf="isMessagingEnabled"
                         [searchTerm]="searchTerm"
                         [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.groupChats' | artemisTranslate"
                         [headerKey]="'groupChats'"
@@ -182,6 +183,7 @@
                     </jhi-conversation-sidebar-section>
                     <!-- Direct Messages -->
                     <jhi-conversation-sidebar-section
+                        *ngIf="isMessagingEnabled"
                         [searchTerm]="searchTerm"
                         [label]="'artemisApp.conversationsLayout.conversationSelectionSideBar.oneToOneChats' | artemisTranslate"
                         [headerKey]="'directMessages'"

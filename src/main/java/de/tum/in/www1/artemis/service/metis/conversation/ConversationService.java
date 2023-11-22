@@ -145,19 +145,26 @@ public class ConversationService {
     /**
      * Gets the conversation in a course for which the user is a member
      *
-     * @param courseId       the id of the course
+     * @param course         the course
      * @param requestingUser the user for which the conversations are requested
      * @return the conversation in the course for which the user is a member
      */
-    public List<ConversationDTO> getConversationsOfUser(Long courseId, User requestingUser) {
-        var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
-        var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
-        var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
-
+    public List<ConversationDTO> getConversationsOfUser(Course course, User requestingUser) {
         var conversationsOfUser = new ArrayList<Conversation>();
-        conversationsOfUser.addAll(oneToOneChatsOfUser);
-        conversationsOfUser.addAll(groupChatsOfUser);
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        List<Channel> channelsOfUser;
+        if (course.getCourseInformationSharingConfiguration().isMessagingEnabled()) {
+            var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(course.getId(), requestingUser.getId());
+            conversationsOfUser.addAll(oneToOneChatsOfUser);
+
+            var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(course.getId(), requestingUser.getId());
+            conversationsOfUser.addAll(groupChatsOfUser);
+
+            channelsOfUser = channelRepository.findChannelsOfUser(course.getId(), requestingUser.getId());
+        }
+        else {
+            channelsOfUser = channelRepository.findCourseWideChannelsInCourse(course.getId());
+        }
+
         // if the user is only a student in the course, we filter out all channels that are not yet open
         var isOnlyStudent = authorizationCheckService.isOnlyStudentInCourse(course, requestingUser);
         var filteredChannels = isOnlyStudent ? filterVisibleChannelsForStudents(channelsOfUser.stream()).toList() : channelsOfUser;
@@ -173,7 +180,7 @@ public class ConversationService {
         for (Channel channel : filteredChannels) {
             if (channel.getIsCourseWide()) {
                 if (numberOfCourseMembers == null) {
-                    numberOfCourseMembers = courseRepository.countCourseMembers(courseId);
+                    numberOfCourseMembers = courseRepository.countCourseMembers(course.getId());
                 }
                 generalConversationInfos.get(channel.getId()).setNumberOfParticipants(numberOfCourseMembers);
             }
@@ -194,6 +201,10 @@ public class ConversationService {
      */
     public boolean userHasUnreadMessages(Long courseId, User requestingUser) {
         return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId());
+    }
+
+    public void markAsRead(Long conversationId, Long userId) {
+        conversationParticipantRepository.updateLastReadAsync(userId, conversationId, ZonedDateTime.now());
     }
 
     /**
