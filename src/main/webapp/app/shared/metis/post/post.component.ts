@@ -11,6 +11,7 @@ import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-c
 import { isMessagingEnabled } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 @Component({
     selector: 'jhi-post',
@@ -34,6 +35,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     contextInformation: ContextInformation;
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
+    protected readonly getAsChannelDto = getAsChannelDto;
 
     // Icons
     faBullhorn = faBullhorn;
