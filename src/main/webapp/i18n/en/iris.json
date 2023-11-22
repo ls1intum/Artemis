@@ -51,6 +51,13 @@
                         "templateRepoTemplate": "Template Repository Generation Template",
                         "solutionRepoTemplate": "Solution Repository Generation Template",
                         "testRepoTemplate": "Test Repository Generation Template"
+                    },
+                    "enabled": {
+                        "on": "Enabled",
+                        "off": "Disabled",
+                        "chat": "Iris Chat",
+                        "codeEditor": "Programming Exercise Creation Chat",
+                        "hestia": "Hestia Integration"
                     }
                 },
                 "title": {

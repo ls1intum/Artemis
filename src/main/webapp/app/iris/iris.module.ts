@@ -20,6 +20,7 @@ import { IrisChatSubSettingsUpdateComponent } from 'app/iris/settings/iris-setti
 import { IrisHestiaSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-hestia-sub-settings-update/iris-hestia-sub-settings-update.component';
 import { IrisGlobalAutoupdateSettingsUpdateComponent } from './settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
 import { IrisCodeEditorSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-code-editor-sub-settings-update/iris-code-editor-sub-settings-update.component';
+import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
 
 @NgModule({
     declarations: [
@@ -36,9 +37,10 @@ import { IrisCodeEditorSubSettingsUpdateComponent } from 'app/iris/settings/iris
         IrisHestiaSubSettingsUpdateComponent,
         IrisGlobalAutoupdateSettingsUpdateComponent,
         IrisCodeEditorSubSettingsUpdateComponent,
+        IrisEnabledComponent,
     ],
     imports: [CommonModule, MatDialogModule, FormsModule, FontAwesomeModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisSharedComponentModule, RouterModule],
     providers: [],
-    exports: [ExerciseChatbotComponent],
+    exports: [ExerciseChatbotComponent, IrisEnabledComponent],
 })
 export class IrisModule {}

@@ -170,10 +170,10 @@ public class IrisSubSettingsService {
         else if (authCheckService.isAdmin()) {
             return newPreferredModel;
         }
-        else if (allowedModels != null && allowedModels.contains(newPreferredModel)) {
+        else if (allowedModels != null && !allowedModels.isEmpty() && allowedModels.contains(newPreferredModel)) {
             return newPreferredModel;
         }
-        else if (allowedModels == null && parentAllowedModels != null && parentAllowedModels.contains(newPreferredModel)) {
+        else if ((allowedModels == null || allowedModels.isEmpty()) && parentAllowedModels != null && parentAllowedModels.contains(newPreferredModel)) {
             return newPreferredModel;
         }
         else {
