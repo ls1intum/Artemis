@@ -31,6 +31,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     @Input() isGradingKeyCollapsed: boolean = true;
     @Input() isBonusGradingKeyCollapsed: boolean = true;
     @Input() exerciseInfos: Record<number, ExerciseInfo>;
+    @Input() isTestRun: boolean = false;
 
     gradingScaleExists = false;
     isBonus = false;
@@ -56,6 +57,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      * - exam.publishResultsDate is set
      * - we are after the exam.publishResultsDate
      * - at least one exercise has a result
+     * - it is a test run (results are published immediately)
      */
     showResultOverview = false;
 
@@ -105,6 +107,10 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     }
 
     private isExamResultPublished() {
+        if (this.isTestRun) {
+            return true;
+        }
+
         const exam = this.studentExamWithGrade?.studentExam?.exam;
         return exam && exam.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
