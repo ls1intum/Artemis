@@ -155,7 +155,7 @@ public class CourseService {
 
     private final LearningPathService learningPathService;
 
-    private final IrisSettingsService irisSettingsService;
+    private final Optional<IrisSettingsService> irisSettingsService;
 
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
@@ -168,7 +168,7 @@ public class CourseService {
             ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
             PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository, LearningPathService learningPathService,
-            IrisSettingsService irisSettingsService) {
+            Optional<IrisSettingsService> irisSettingsService) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -378,7 +378,7 @@ public class CourseService {
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
         deleteTutorialGroupsOfCourse(course);
-        irisSettingsService.deleteSettingsFor(course);
+        irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
     }
 
