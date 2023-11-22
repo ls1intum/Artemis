@@ -151,6 +151,9 @@ export class NotificationService {
     }
 
     private addNotification(notification: Notification): void {
+        if (!this.notificationSettingsService.isNotificationAllowedBySettings(notification)) {
+            return;
+        }
         this.addNotifications([notification]);
 
         // Single notifications should also be sent through the single notification subject for the notifcation popup
