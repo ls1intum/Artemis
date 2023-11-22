@@ -1,10 +1,10 @@
 import requests
 import configparser
+import logging
 
 from authenticate_all_users import authenticate_all_generated_users
 from utils import login_as_admin
 from utils import get_user_details_by_index
-from utils import print_success
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -21,9 +21,9 @@ def make_create_user_post_request(session, user_details):
     response = session.post(url, json=payload, headers=headers)
 
     if response.status_code == 201:
-        print_success(f"{user_details['login']} was created successfully")
+        logging.info(f"{user_details['login']} was created successfully")
     elif response.status_code == 400 and "userExists" in response.json().get("errorKey", ""):
-        print(f"User {user_details['login']} already exists.")
+        logging.info(f"User {user_details['login']} already exists.")
     else:
         raise Exception(
             f"Creating {user_details['login']} failed. Status code: {response.status_code}\nResponse content: {response.text}")

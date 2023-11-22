@@ -1,5 +1,6 @@
 import requests
 import configparser
+import logging
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -7,22 +8,6 @@ config.read('config.ini')
 server_url = config.get('Settings', 'server_url')
 admin_user = config.get('Settings', 'admin_user')
 admin_password = config.get('Settings', 'admin_password')
-
-
-class Colors:
-    # See https://stackoverflow.com/a/287944/16540383 if you want to
-    # extend the colors and styling options for explanation
-    SUCCESS = '\033[92m'
-    ERROR = '\033[91m'
-    ENDC = '\033[0m'
-
-
-def print_success(success_message):
-    print(f"{Colors.SUCCESS}{success_message}{Colors.ENDC}")
-
-
-def print_error(error_message):
-    print(f"{Colors.ERROR}{error_message}{Colors.ENDC}")
 
 
 def login_as_admin(session):
@@ -33,9 +18,9 @@ def add_user_to_course(session, course_id, user_group, user_name):
     url = f"{server_url}/api/courses/{course_id}/{user_group}/{user_name}"
     response = session.post(url)
     if response.status_code == 200:
-        print_success(f"Added user {user_name} to group {user_group}")
+        logging.info(f"Added user {user_name} to group {user_group}")
     else:
-        print_error(f"Could not add user {user_name} to group {user_group}")
+        logging.error(f"Could not add user {user_name} to group {user_group}")
 
 
 def authenticate_user(username, password, session=requests.Session()):
@@ -53,7 +38,7 @@ def authenticate_user(username, password, session=requests.Session()):
     response = session.post(url, json=payload, headers=headers)
 
     if response.status_code == 200:
-        print_success(f"Authentication successful for user {username}")
+        logging.info(f"Authentication successful for user {username}")
     else:
         raise Exception(
             f"Authentication failed for user {username}. Status code: {response.status_code}\n Response content: {response.text}")

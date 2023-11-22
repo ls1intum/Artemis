@@ -3,9 +3,9 @@ import configparser
 import json
 import urllib3
 import re
+import logging
 
 from utils import login_as_admin
-from utils import print_success
 from add_users_to_course import add_users_to_groups_of_course
 
 config = configparser.ConfigParser()
@@ -88,11 +88,10 @@ def create_course(session):
     response = session.post(url, data=body, headers=headers)
 
     if response.status_code == 201:
-        print_success(f"Created course {course_name} with shortName {course_short_name}")
-        print(response.json())
+        logging.success(f"Created course {course_name} with shortName {course_short_name} \n {response.json()}")
     else:
-        print("Problem with the group 'students' and interacting with a test server? Is 'is_local_course' in "
-              "'config.ini' set to 'False'?")
+        logging.error("Problem with the group 'students' and interacting with a test server? Is 'is_local_course' in "
+                      "'config.ini' set to 'False'?")
         raise Exception(
             f"Could not create course {course_name}; Status code: {response.status_code}\n Double check whether the courseShortName {course_short_name} is not already used for another course!\nResponse content: {response.text}")
     return response
