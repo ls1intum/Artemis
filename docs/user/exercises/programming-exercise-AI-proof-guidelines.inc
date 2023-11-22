@@ -129,30 +129,108 @@ beautiful as with real text.
 
          Example GUI from homework exercise
 
-   .. note::
-      Apply this approach when students already have knowledge of what a GUI is. Most likely in
-      a later stage of the semester.
+   -  Providing GIFs is also possible and shows a good way to show the dynamic behaviour of the GUI.
+      This also ensures less likelyhood to copy this format into various AI tools.
+
 
 .. note::
-   ChatGPT is limited to text input. Including a fair amount of graphical
+   The unpaid version of ChatGPT is limited to text input like many other but not all LLMs. Including a fair amount of graphical
    representation for the exercises helps to limit the effectiveness of such tools.
+   Even though there are other LLMs that can also use graphical representation, mixing up the representation with text and graphics
+   is always a good idea.
 
 Problem statement and exercise instructions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
--  **Exercise length:** There is a negative correlation between the
-   length of exercises and AI performance:
+-  **Exercise length:** At this point of time exercise length has an effect on the performance of AI tools and can be considered for
+   certain exercises. This will change drastically as LLMs get more advanced.
 
-   -  Do not keep the exercises between 500 and 1000 characters, but
-      rather keep them between 1200 and 2500 characters. Short exercises
-      are normally easier to solve for AI since there are not so many
+   -  Studies suggest, exercises between 500 and 1000 characters are easier for AI tools,
+      while 1200 and 2500 characters lead to worse performance
+      Short exercises are normally easier to solve for AI since there are not so many
       constraints and the problem statement only focused on the most
       relevant implementation parts.
 
    .. note::
        Apply this with more complex exercises at a later stage of the semester. In the first exercises
        it does not make sense to give more text just to make the exercise more complicated.
+
+
+-  **Uncommon data types:** Using types that aren't commonly used in Java
+   programming can confuse the AI.
+   With additional specification given to AI tools, it is still able to work with all data-types
+   but that needs to be specified in the prompts, which teaches them to also learn prompting for the future.
+   Complex data types, such as custom classes and data structures, often involve
+   additional levels of complexity and variation in their
+   implementation.
+
+   Here are some of the complex data types that can improve the AI
+   security of the exercises:
+
+   -  Duration
+
+   -  BigInteger, BigDecimal
+
+   -  LocalDate
+
+   -  LocalTime
+
+   -  Locale
+
+   -  StringBuilder
+
+   -  Currency
+
+   -  Custom classes implemented in the template repository
+
+   In the following example you can see how ChatGPT tries to work around
+   using BigInteger. In the exercise the students needed to
+   validate the IBAN that was given as a parameter with a checkSum by using methods from the
+   BigInteger library. ChatGPT on the other hand first converted the BIGInteger into a String
+   to perform the required operations.
+
+   Generated solution:
+
+   .. code:: java
+
+      public static boolean validateIBAN(BigInteger iban) {
+          String rearranged = iban.toString().substring(4) +
+               iban.toString().substring(0, 4);
+
+          StringBuilder numericString = new StringBuilder();
+          for (int i = 0; i < rearranged.length(); i++) {
+            char c = rearranged.charAt(i);
+            if (Character.isLetter(c)) {
+              numericString.append((int)c - 55);
+            } else {
+              numericString.append(c);
+            }
+          }
+
+           BigInteger numeric = new BigInteger(numericString.toString());
+          return numeric.mod(BigInteger.valueOf(97)).equals(BigInteger.ONE);
+      }
+
+   Example solution:
+
+   .. code:: java
+
+      public static boolean validateIBAN(BigInteger iban) {
+
+          BigInteger checkSum = iban.divide(BigInteger.TEN.pow(18));
+          BigInteger accountNumber = iban.mod(BigInteger.TEN.pow(18));
+          BigInteger shifted = accountNumber.multiply(BigInteger.TEN.pow(6));
+          BigInteger deInserted = shifted.add(new BigInteger("131400"));
+          BigInteger deCheckSumInserted = deInserted.add(checkSum);
+          BigInteger remainder = deCheckSumInserted.mod(new BigInteger("97"));
+          return remainder.intValue() == 1;
+      }
+
+   .. note::
+      Give information to the students on which datatypes they should use. You can either do that
+      by stating it in the test cases or directly in the problem statement.
+      Do not overstate it in the problem statement, since ChatGPT will then also have that information.
 
 
 -  **Standard Java methods:** Make use of letting students implement

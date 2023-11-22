@@ -126,7 +126,7 @@ Best practices for creating AI-proof exercises
 
 The following section presents guidelines for crafting AI-resistant exercise instructions.
 While not every recommendation will suit every exercise, focus on those most pertinent to the specific problem at hand.
-This is illustrated with diverse exercise examples.
+Illustrations of this concept are provided through various exercise examples
 
 .. include:: programming-exercise-AI-proof-guidelines.inc
 
