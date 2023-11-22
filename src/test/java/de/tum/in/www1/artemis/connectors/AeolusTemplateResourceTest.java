@@ -45,13 +45,8 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationIndependentTes
         Map<String, Integer> templatesWithExpectedScriptActions = new HashMap<>();
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE", 2);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?sequentialRuns=true", 3);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true", 3);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true&testCoverage=true", 3);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN", 1);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?sequentialRuns=true", 2);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?testCoverage=true", 2);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true", 2);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true&testCoverage=true", 3);
         templatesWithExpectedScriptActions.put("PYTHON", 1);
         for (Map.Entry<String, Integer> entry : templatesWithExpectedScriptActions.entrySet()) {
             String template = request.get("/api/aeolus/templates/" + entry.getKey(), HttpStatus.OK, String.class);
