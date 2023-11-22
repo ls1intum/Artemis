@@ -15,7 +15,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.Organization;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -673,7 +680,7 @@ public class AuthorizationCheckService {
      * Checks if the currently logged-in user is allowed to retrieve the given result.
      * The user is allowed to retrieve the result if (s)he is an instructor of the course, or (s)he is at least a student in the corresponding course, the
      * submission is his/her submission, the assessment due date of the corresponding exercise is in the past (or not set) and the result is finished.
-     * Instructors are allowed to retrieve the results for test-runs.
+     * Instructors are allowed to retrieve the results for test runs.
      *
      * @param exercise      the corresponding exercise
      * @param participation the participation the result belongs to
