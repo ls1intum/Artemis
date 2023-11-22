@@ -49,6 +49,6 @@ export enum SettingId {
 
     // user notification setting group
     NOTIFICATION__USER_NOTIFICATION__CONVERSATION_MESSAGE = 'notification.user-notification.conversation-message',
-
     NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE = 'notification.user-notification.new-reply-in-conversation',
+    NOTIFICATION__USER_NOTIFICATION__USER_MENTION = 'notification.user-notification.user-mention',
 }
