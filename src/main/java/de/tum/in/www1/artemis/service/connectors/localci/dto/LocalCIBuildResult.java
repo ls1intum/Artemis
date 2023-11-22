@@ -103,6 +103,9 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
         return buildLogEntries;
     }
 
+    /**
+     * Setter for the buildLogEntries
+     */
     public void setBuildLogEntries(List<BuildLogEntry> buildLogEntries) {
         this.buildLogEntries = buildLogEntries;
         hasLogs = true;

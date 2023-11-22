@@ -32,7 +32,9 @@ import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.*;
+import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Frame;
+import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -55,7 +57,7 @@ public class LocalCIContainerService {
 
     private final HostConfig hostConfig;
 
-    private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+    private final List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
