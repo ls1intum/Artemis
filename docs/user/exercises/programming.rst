@@ -126,6 +126,8 @@ Best practices for creating AI-proof exercises
 
 The following section presents guidelines for crafting AI-resistant exercise instructions.
 While not every recommendation will suit every exercise, focus on those most pertinent to the specific problem at hand.
+Most of the recommendations are focused the most commonly used AI tool, ChatGPT3.5, but are often times also applicable for other LLMs 
+even though some of them have more graphical capabilities that help to circumvent certain recommendations better. 
 Illustrations of this concept are provided through various exercise examples
 
 .. include:: programming-exercise-AI-proof-guidelines.inc
