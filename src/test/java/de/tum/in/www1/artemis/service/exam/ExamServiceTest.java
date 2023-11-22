@@ -240,16 +240,39 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
             student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
             studentExam = new StudentExam();
+            studentExam.setExam(exam1);
         }
 
         @Test
-        @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = "student1", roles = "STUDENT")
         void testThrowsExceptionIfNotSubmitted() {
             studentExam.setSubmitted(false);
             isTestRun = false;
 
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummaryAsStudent(instructor1, studentExam, isTestRun))
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummaryAsStudent(student1, studentExam, isTestRun))
                     .withMessage("You are not allowed to access the grade summary of a student exam which was NOT submitted!");
+        }
+
+        @Test
+        @WithMockUser(username = "student1", roles = "STUDENT")
+        void testThrowsExceptionIfNotPublished() {
+            studentExam.setSubmitted(true);
+            isTestRun = false;
+            studentExam.getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(5));
+
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummaryAsStudent(student1, studentExam, isTestRun))
+                    .withMessage("You are not allowed to access the grade summary of a student exam before the release date of results");
+        }
+
+        @Test
+        @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+        void testDoesNotThrowExceptionForTestRuns() {
+            studentExam.setSubmitted(false);
+            studentExam.getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(5));
+            studentExam.setUser(instructor1);
+            isTestRun = true;
+
+            examService.getStudentExamGradesForSummaryAsStudent(instructor1, studentExam, isTestRun);
         }
 
     }
