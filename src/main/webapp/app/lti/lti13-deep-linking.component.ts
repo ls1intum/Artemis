@@ -9,6 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
+import { SessionStorageService } from 'ngx-webstorage';
 
 @Component({
     selector: 'jhi-deep-linking',
@@ -36,6 +37,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
         private accountService: AccountService,
         private router: Router,
         private alertService: AlertService,
+        private sessionStorageService: SessionStorageService,
     ) {}
 
     /**
@@ -120,8 +122,8 @@ export class Lti13DeepLinkingComponent implements OnInit {
      */
     sendDeepLinkRequest() {
         if (this.selectedExercise) {
-            const ltiIdToken = window.sessionStorage.getItem('ltiIdToken') ?? '';
-            const clientRegistrationId = window.sessionStorage.getItem('clientRegistrationId') ?? '';
+            const ltiIdToken = this.sessionStorageService.retrieve('ltiIdToken') ?? '';
+            const clientRegistrationId = this.sessionStorageService.retrieve('clientRegistrationId') ?? '';
 
             const httpParams = new HttpParams().set('exerciseId', this.selectedExercise.id!).set('ltiIdToken', ltiIdToken!).set('clientRegistrationId', clientRegistrationId!);
 
@@ -134,7 +136,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
                         }
                     } else {
                         this.isLinking = false;
-                        console.log('Unexpected response status:', response.status);
+                        this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
                     }
                 },
                 error: (error) => {

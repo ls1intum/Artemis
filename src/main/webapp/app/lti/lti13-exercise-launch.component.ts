@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
+import { captureException } from '@sentry/angular-ivy';
+import { SessionStorageService } from 'ngx-webstorage';
 
 @Component({
     selector: 'jhi-lti-exercise-launch',
@@ -15,6 +17,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         private http: HttpClient,
         private accountService: AccountService,
         private router: Router,
+        private sessionStorageService: SessionStorageService,
     ) {
         this.isLaunching = true;
     }
@@ -121,18 +124,18 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
     storeLtiSessionData(ltiIdToken: string, clientRegistrationId: string): void {
         if (!ltiIdToken) {
-            console.error('LTI ID token required to store session data.');
+            captureException(new Error('LTI ID token required to store session data.'));
             return;
         }
 
         if (!clientRegistrationId) {
-            console.error('LTI client registration ID required to store session data.');
+            captureException(new Error('LTI client registration ID required to store session data.'));
             return;
         }
 
         try {
-            window.sessionStorage.setItem('ltiIdToken', ltiIdToken);
-            window.sessionStorage.setItem('clientRegistrationId', clientRegistrationId);
+            this.sessionStorageService.store('ltiIdToken', ltiIdToken);
+            this.sessionStorageService.store('clientRegistrationId', clientRegistrationId);
         } catch (error) {
             console.error('Failed to store session data:', error);
         }

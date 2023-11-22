@@ -58,7 +58,7 @@ public class LtiDeepLinkingService {
         Lti13DeepLinkingResponse lti13DeepLinkingResponse = new Lti13DeepLinkingResponse(ltiIdToken, clientRegistrationId);
         // Fill selected exercise link into content items
         String contentItems = this.populateContentItems(String.valueOf(courseId), String.valueOf(exerciseId));
-        lti13DeepLinkingResponse.setContentItems(contentItems.toString());
+        lti13DeepLinkingResponse.setContentItems(contentItems);
 
         // Prepare return url with jwt and id parameters
         return this.buildLtiDeepLinkResponse(clientRegistrationId, lti13DeepLinkingResponse);
