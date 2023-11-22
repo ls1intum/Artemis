@@ -533,7 +533,7 @@ describe('ExamResultSummaryComponent', () => {
     });
 
     it('loads and displays exam summary when results are published & testExam is set', () => {
-        const mockLoadStudentExamGradeInfoForSummary = jest.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        const mockLoadStudentExamGradeInfoForSummary = jest.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockResolvedValue();
 
         fixture.detectChanges();
 
@@ -553,6 +553,7 @@ describe('ExamResultSummaryComponent', () => {
         });
 
         it('should be false if publishReleaseDate is in the future', () => {
+            component.studentExam.exam = exam;
             component.isTestRun = false;
             const dateInFuture = dayjs().add(5, 'days');
             component.studentExam.exam!.publishResultsDate = dateInFuture;
@@ -563,6 +564,7 @@ describe('ExamResultSummaryComponent', () => {
         });
 
         it('should be true if publishReleaseDate is in the past', () => {
+            component.studentExam.exam = exam;
             component.isTestRun = false;
             const dateInFuture = dayjs().subtract(2, 'days');
             component.studentExam.exam!.publishResultsDate = dateInFuture;
