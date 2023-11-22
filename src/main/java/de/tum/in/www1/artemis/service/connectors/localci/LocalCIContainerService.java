@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -30,9 +32,9 @@ import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.*;
 
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -52,6 +54,8 @@ public class LocalCIContainerService {
     private final DockerClient dockerClient;
 
     private final HostConfig hostConfig;
+
+    private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
@@ -290,6 +294,12 @@ public class LocalCIContainerService {
         dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
 
             @Override
+            public void onNext(Frame item) {
+                String text = new String(item.getPayload());
+                buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), text));
+            }
+
+            @Override
             public void onComplete() {
                 latch.countDown();
             }
@@ -432,5 +442,9 @@ public class LocalCIContainerService {
         catch (IOException e) {
             throw new LocalCIException("Failed to delete build script file", e);
         }
+    }
+
+    public List<BuildLogEntry> getBuildLogEntries() {
+        return buildLogEntries;
     }
 }

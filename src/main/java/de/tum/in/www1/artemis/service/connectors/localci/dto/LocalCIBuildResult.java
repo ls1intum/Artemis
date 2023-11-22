@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.service.connectors.localci.dto;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
@@ -30,6 +30,10 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
     private final ZonedDateTime buildRunDate;
 
     private final List<LocalCIJobDTO> jobs;
+
+    private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+
+    private boolean hasLogs = false;
 
     public LocalCIBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
             List<LocalCIJobDTO> jobs) {
@@ -91,14 +95,17 @@ public class LocalCIBuildResult extends AbstractBuildResultNotificationDTO {
 
     @Override
     public boolean hasLogs() {
-        // TODO LOCALVC_CI: Implement the retrieval of build logs and return true here if there are any.
-        return false;
+        return hasLogs;
     }
 
     @Override
-    public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
-        // TODO LOCALVC_CI: Implement the retrieval of build logs.
-        return Collections.emptyList();
+    public List<BuildLogEntry> extractBuildLogs() {
+        return buildLogEntries;
+    }
+
+    public void setBuildLogEntries(List<BuildLogEntry> buildLogEntries) {
+        this.buildLogEntries = buildLogEntries;
+        hasLogs = true;
     }
 
     @Override

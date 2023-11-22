@@ -254,6 +254,7 @@ public class LocalCIBuildJobExecutionService {
         LocalCIBuildResult buildResult;
         try {
             buildResult = parseTestResults(testResultsTarInputStreams, branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
+            buildResult.setBuildLogEntries(localCIContainerService.getBuildLogEntries());
         }
         catch (IOException | XMLStreamException | IllegalStateException e) {
             throw new LocalCIException("Error while parsing test results", e);
