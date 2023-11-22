@@ -23,7 +23,22 @@ describe('ExerciseTitleChannelNameComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('should hide channel name input if messaging disabled', () => {
+    it('should hide channel name input if messaging and communication disabled', () => {
+        const course = new Course();
+        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
+        const textExercise = new TextExercise(course, undefined);
+        textExercise.course = course;
+
+        component.exercise = textExercise;
+        component.course = textExercise.course;
+        component.isExamMode = false;
+        component.isImport = true;
+        component.ngOnChanges({ course: new SimpleChange(undefined, course, true) });
+
+        expect(component.hideChannelNameInput).toBeTrue();
+    });
+
+    it('should show channel name input if messaging disabled but communication enabled', () => {
         const course = new Course();
         course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
         const textExercise = new TextExercise(course, undefined);
@@ -35,7 +50,7 @@ describe('ExerciseTitleChannelNameComponent', () => {
         component.isImport = true;
         component.ngOnChanges({ course: new SimpleChange(undefined, course, true) });
 
-        expect(component.hideChannelNameInput).toBeTrue();
+        expect(component.hideChannelNameInput).toBeFalse();
     });
 
     it('should hide channel name input based on isExamMode and isImport if messaging is enabled', () => {
