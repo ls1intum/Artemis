@@ -33,6 +33,7 @@ import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Channel, ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -60,6 +61,7 @@ export class MetisService implements OnDestroy {
         protected exerciseService: ExerciseService,
         private translateService: TranslateService,
         private jhiWebsocketService: JhiWebsocketService,
+        private conversationService: ConversationService,
     ) {
         this.accountService.identity().then((user: User) => {
             this.user = user!;
@@ -492,7 +494,7 @@ export class MetisService implements OnDestroy {
 
             switch (postDTO.action) {
                 case MetisPostAction.CREATE:
-                    const doesNotMatchOwnFilter = this.currentPostContextFilter.filterToOwn && postDTO.post.author?.login !== this.user.login;
+                    const doesNotMatchOwnFilter = this.currentPostContextFilter.filterToOwn && postDTO.post.author?.id !== this.user.id;
                     const doesNotMatchReactedFilter = this.currentPostContextFilter.filterToAnsweredOrReacted;
                     const doesNotMatchSearchString =
                         this.currentPostContextFilter.searchText?.length &&
@@ -507,6 +509,11 @@ export class MetisService implements OnDestroy {
                     } else {
                         this.cachedPosts = [postDTO.post, ...this.cachedPosts];
                     }
+
+                    if (this.currentPostContextFilter.conversationId && postDTO.post.author?.id !== this.user.id) {
+                        this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationId).subscribe();
+                    }
+
                     this.addTags(postDTO.post.tags);
                     break;
                 case MetisPostAction.UPDATE:

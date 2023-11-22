@@ -383,7 +383,10 @@ dependencies {
     testImplementation "org.gradle:gradle-tooling-api:8.5-rc-3"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.2.2"
     testImplementation "com.opencsv:opencsv:5.8"
-    testImplementation "io.zonky.test:embedded-database-spring-test:2.3.0"
+    testImplementation("io.zonky.test:embedded-database-spring-test:2.3.0") {
+        exclude group: 'org.testcontainers', module: 'mariadb'
+        exclude group: 'org.testcontainers', module: 'mssqlserver'
+    }
     testImplementation "com.tngtech.archunit:archunit:1.2.0"
     testImplementation "org.skyscreamer:jsonassert:1.5.1"
     testImplementation ("net.bytebuddy:byte-buddy") {
