@@ -6,7 +6,10 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFacto
 
 import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DataExport;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -269,7 +272,7 @@ public class SingleUserNotificationFactory {
             throw new IllegalArgumentException("No users provided for notification");
         }
 
-        if (notificationType != NotificationType.CONVERSATION_USER_MENTIONED) {
+        if (notificationType != NotificationType.CONVERSATION_USER_MENTIONED && notificationType != NotificationType.NEW_ANNOUNCEMENT_POST) {
             throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 

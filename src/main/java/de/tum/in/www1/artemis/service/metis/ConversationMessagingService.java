@@ -24,15 +24,16 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.CreatedConversationMessage;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
@@ -67,11 +68,13 @@ public class ConversationMessagingService extends PostingService {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final SingleUserNotificationRepository singleUserNotificationRepository;
+
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
             ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService, ConversationRepository conversationRepository,
-            GroupNotificationService groupNotificationService) {
+            GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -79,6 +82,7 @@ public class ConversationMessagingService extends PostingService {
         this.channelAuthorizationService = channelAuthorizationService;
         this.conversationRepository = conversationRepository;
         this.groupNotificationService = groupNotificationService;
+        this.singleUserNotificationRepository = singleUserNotificationRepository;
     }
 
     /**
@@ -142,41 +146,41 @@ public class ConversationMessagingService extends PostingService {
         Course course = conversation.getCourse();
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
-        Set<ConversationNotificationRecipientSummary> webSocketRecipients;
-        Set<User> recipientUserLoginsAndIds;
+        Set<ConversationNotificationRecipientSummary> recipientSummaries;
+        Set<User> recipientUsers;
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
             broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, null);
             log.debug("      broadcastForPost DONE");
 
-            webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+            recipientSummaries = getWebSocketRecipients(conversation).collect(Collectors.toSet());
             log.debug("      getWebSocketRecipients DONE");
-            recipientUserLoginsAndIds = webSocketRecipients.stream()
+            recipientUsers = recipientSummaries.stream()
                     .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
                     .collect(Collectors.toSet());
         }
         else {
             // In all other cases we need the list of participants to send the WS messages to the correct topics. Hence, the db query has to be made before sending WS messages
-            webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+            recipientSummaries = getWebSocketRecipients(conversation).collect(Collectors.toSet());
             log.debug("      getWebSocketRecipients DONE");
-            recipientUserLoginsAndIds = webSocketRecipients.stream()
+            recipientUsers = recipientSummaries.stream()
                     .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
                     .collect(Collectors.toSet());
 
-            broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, recipientUserLoginsAndIds);
+            broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, recipientUsers);
             log.debug("      broadcastForPost DONE");
         }
 
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
         Set<User> mentionedUserLoginsAndIds = createdConversationMessage.mentionedUsers().stream()
                 .map(user -> new User(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getLangKey(), user.getEmail())).collect(Collectors.toSet());
-        recipientUserLoginsAndIds.addAll(mentionedUserLoginsAndIds);
+        recipientUsers.addAll(mentionedUserLoginsAndIds);
 
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
             if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created
                 // Another websocket notification
-                conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, recipientUserLoginsAndIds);
+                conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, recipientUsers);
             }
         }
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
@@ -186,17 +190,17 @@ public class ConversationMessagingService extends PostingService {
 
         // TODO: why do we need notification 2 and 3? we should definitely re-work this!
         // Websocket notification 2
-        conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, recipientUserLoginsAndIds);
+        conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, recipientUsers);
         log.debug("      conversationService.notifyAllConversationMembersAboutNewMessage DONE");
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
-        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUserLoginsAndIds);
+        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, recipientSummaries, mentionedUserLoginsAndIds);
         conversationNotificationService.notifyAboutNewMessage(createdMessage, conversation, notificationRecipients, course, mentionedUserLoginsAndIds);
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
 
         if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
-            saveAnnouncementNotification(createdMessage, channel, course);
+            saveAnnouncementNotification(createdMessage, channel, course, recipientUsers);
         }
         log.debug("      notifyAboutMessageCreation DONE");
     }
@@ -394,11 +398,12 @@ public class ConversationMessagingService extends PostingService {
     /**
      * Saves announcement notifications for each course group
      *
-     * @param message message that triggered the notification
-     * @param channel announcement channel the message belongs to
-     * @param course  course the channel belongs to
+     * @param message    message that triggered the notification
+     * @param channel    announcement channel the message belongs to
+     * @param course     course the channel belongs to
+     * @param recipients channel members, if the channel is not course-wide
      */
-    private void saveAnnouncementNotification(Post message, Channel channel, Course course) {
+    private void saveAnnouncementNotification(Post message, Channel channel, Course course, Set<User> recipients) {
         // create post for notification
         Post postForNotification = new Post();
         postForNotification.setId(message.getId());
@@ -421,6 +426,17 @@ public class ConversationMessagingService extends PostingService {
         }
         postForNotification.setContent(htmlPostContent);
 
-        groupNotificationService.notifyAllGroupsAboutNewAnnouncement(postForNotification, course);
+        if (channel.getIsCourseWide()) {
+            groupNotificationService.notifyAllGroupsAboutNewAnnouncement(postForNotification, course);
+        }
+        else {
+            String[] placeholders = new String[] { course.getTitle(), message.getContent(), message.getCreationDate().toString(), channel.getName(), message.getAuthor().getName(),
+                    "channel" };
+            Set<SingleUserNotification> announcementNotifications = recipients.stream().map(recipient -> SingleUserNotificationFactory.createNotification(postForNotification,
+                    NotificationType.NEW_ANNOUNCEMENT_POST, NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT, placeholders, recipient)).collect(Collectors.toSet());
+            announcementNotifications.add(SingleUserNotificationFactory.createNotification(postForNotification, NotificationType.NEW_ANNOUNCEMENT_POST,
+                    NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT, placeholders, postForNotification.getAuthor()));
+            singleUserNotificationRepository.saveAll(announcementNotifications);
+        }
     }
 }
