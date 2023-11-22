@@ -28,6 +28,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.in.www1.artemis.domain.lti.Scopes;
@@ -42,7 +43,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 
-class Lti13ServiceTest {
+class Lti13ServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private Lti13Service lti13Service;
 

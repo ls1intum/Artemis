@@ -17,6 +17,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.gson.JsonObject;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
@@ -24,7 +25,7 @@ import de.tum.in.www1.artemis.service.connectors.lti.LtiDeepLinkingService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 
-class LtiDeepLinkingServiceTest {
+class LtiDeepLinkingServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Mock
     private ExerciseRepository exerciseRepository;
