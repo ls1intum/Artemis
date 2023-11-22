@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -17,19 +18,25 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
+
+    private static final String TEST_PREFIX = "examservicetest";
 
     @Autowired
     private ExamService examService;
@@ -48,6 +55,9 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private UserUtilService userUtilService;
 
     private Exam exam1;
 
@@ -205,6 +215,43 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(examChecklistDTO.getNumberOfAllComplaints()).isZero();
         assertThat(examChecklistDTO.getNumberOfAllComplaintsDone()).isZero();
         assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
+    }
+
+    @Nested
+    class GetStudentExamGradesForSummaryAsStudentTests {
+
+        private static final int NUMBER_OF_STUDENTS = 1;
+
+        private static final int NUMBER_OF_INSTRUCTORS = 1;
+
+        private User instructor1;
+
+        private User student1;
+
+        private StudentExam studentExam;
+
+        private boolean isTestRun;
+
+        @BeforeEach
+        void initializeTest() {
+            userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 0, 0, NUMBER_OF_INSTRUCTORS);
+
+            instructor1 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+            student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+            studentExam = new StudentExam();
+        }
+
+        @Test
+        @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+        void testThrowsExceptionIfNotSubmitted() {
+            studentExam.setSubmitted(false);
+            isTestRun = false;
+
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummaryAsStudent(instructor1, studentExam, isTestRun))
+                    .withMessage("You are not allowed to access the grade summary of a student exam which was NOT submitted!");
+        }
+
     }
 
     private Exam createExam(int numberOfExercisesInExam, Long id, Integer maxPoints) {
