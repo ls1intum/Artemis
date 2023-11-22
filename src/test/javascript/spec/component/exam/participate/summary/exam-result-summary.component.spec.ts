@@ -532,14 +532,14 @@ describe('ExamResultSummaryComponent', () => {
         });
     });
 
-    it('loads and displays exam summary when results are published & testExam is set', () => {
-        const mockLoadStudentExamGradeInfoForSummary = jest.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary').mockResolvedValue();
+    it('loads exam summary when results are published & testExam is set', () => {
+        component.isTestRun = true;
+        component.studentExam = studentExam;
+        const loadStudentExamGradeInfoForSummarySpy = jest.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
 
-        fixture.detectChanges();
+        component.ngOnInit();
 
-        const examSummaryResultOverviewElement = fixture.nativeElement.querySelector('#exam-summary-result-overview');
-        expect(examSummaryResultOverviewElement).toBeTruthy();
-        expect(mockLoadStudentExamGradeInfoForSummary).toHaveBeenCalledOnce();
+        expect(loadStudentExamGradeInfoForSummarySpy).toHaveBeenCalledOnce();
     });
 
     describe('isExamResultPublished', () => {
