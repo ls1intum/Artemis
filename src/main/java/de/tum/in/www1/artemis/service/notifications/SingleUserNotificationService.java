@@ -10,7 +10,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -450,7 +449,6 @@ public class SingleUserNotificationService {
      * @param message the message the reply belongs to
      * @return notification type
      */
-    @NotNull
     private NotificationType getAnswerMessageNotificationType(Post message) {
         NotificationType answerMessageNotificationType;
         if (message.getConversation() instanceof Channel channel) {
