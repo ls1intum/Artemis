@@ -282,4 +282,15 @@ describe('ExamResultOverviewComponent', () => {
             expect(consoleErrorSpy).not.toHaveBeenCalled();
         });
     });
+
+    describe('isExamResultPublished', () => {
+        it('should always be true for test runs', () => {
+            component.isTestRun = true;
+            component.studentExamWithGrade.studentExam = undefined;
+
+            //@ts-ignore accessing private method
+            const resultsArePublished = component.isExamResultPublished();
+            expect(resultsArePublished).toBeTrue();
+        });
+    });
 });
