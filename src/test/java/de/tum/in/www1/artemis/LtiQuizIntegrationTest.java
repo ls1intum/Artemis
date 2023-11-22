@@ -44,7 +44,7 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 @Isolated
-class LtiQuizIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "ltiquizsubmissiontest";
 

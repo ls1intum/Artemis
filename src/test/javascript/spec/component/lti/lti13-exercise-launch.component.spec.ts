@@ -9,6 +9,8 @@ import { LoginService } from 'app/core/login/login.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 
 describe('Lti13ExerciseLaunchComponent', () => {
     let fixture: ComponentFixture<Lti13ExerciseLaunchComponent>;
@@ -36,6 +38,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
                 { provide: LoginService, useValue: loginService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useValue: mockRouter },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
             .compileComponents()

@@ -14,6 +14,8 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { AlertService } from 'app/core/util/alert.service';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { SessionStorageService } from 'ngx-webstorage';
 
 describe('Lti13DeepLinkingComponent', () => {
     let component: Lti13DeepLinkingComponent;
@@ -43,6 +45,7 @@ describe('Lti13DeepLinkingComponent', () => {
                 { provide: CourseManagementService, useValue: courseManagementServiceMock },
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: SortService, useValue: sortServiceMock },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
                 MockProvider(AlertService),
             ],
         }).compileComponents();
