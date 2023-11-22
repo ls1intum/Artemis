@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { Course, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, isMessagingOrCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 
 @Component({
@@ -48,7 +48,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
      */
     private requiresChannelName(exercise: Exercise, course: Course | undefined, isExamMode: boolean, isImport: boolean): boolean {
         // not required if messaging is disabled or exam mode
-        if (!isMessagingEnabled(course) || isExamMode) {
+        if (!isMessagingOrCommunicationEnabled(course) || isExamMode) {
             return false;
         }
 

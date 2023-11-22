@@ -22,7 +22,19 @@ describe('LectureTitleChannelNameComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('should hide channel name input when messaging is disabled', () => {
+    it('should hide channel name input when messaging and communication is disabled', () => {
+        const course = new Course();
+        course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
+        const lecture = new Lecture();
+        lecture.course = course;
+
+        component.lecture = lecture;
+        component.ngOnInit();
+
+        expect(component.hideChannelNameInput).toBeTrue();
+    });
+
+    it('should show channel name input when messaging is disabled but communication enabled', () => {
         const course = new Course();
         course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
         const lecture = new Lecture();
@@ -31,7 +43,7 @@ describe('LectureTitleChannelNameComponent', () => {
         component.lecture = lecture;
         component.ngOnInit();
 
-        expect(component.hideChannelNameInput).toBeTrue();
+        expect(component.hideChannelNameInput).toBeFalse();
     });
 
     it('should not hide channel name input when lecture is created', () => {
