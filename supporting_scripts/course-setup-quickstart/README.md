@@ -24,7 +24,14 @@ _Tested on python 3.7 & 3.9, other versions might work as well._
 
 1. Start your local Artemis instance
 2. Configure the values in `config.ini` according to your setup
-3. Install the packages of the python scripts that you want to execute
+3. Install the missing packages of the python scripts that you want to execute
+
+   _Make sure to install it for the python version that was configured in [Setup](#setup). 
+   Installing packages for a certain python version works can be done with_
+   ```shell
+   python3.9 -m pip install <packageName>
+   ```
+
 4. Either use the play button within IntelliJ _(which should be displayed if Python was configured properly within
    IntelliJ)_ to run the scripts or follow the following descriptions
 
