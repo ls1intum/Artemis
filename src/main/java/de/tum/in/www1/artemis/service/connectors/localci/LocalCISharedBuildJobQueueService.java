@@ -116,6 +116,8 @@ public class LocalCISharedBuildJobQueueService {
         // so it can be later added back to the queue if the node fails
         LocalCIBuildJobQueueItem buildJob;
 
+        log.debug("LocalCIBuildJobQueueItem classloader: " + LocalCIBuildJobQueueItem.class.getClassLoader());
+
         // lock the queue to prevent multiple nodes from processing the same build job
         lock.lock();
         try {
