@@ -69,7 +69,7 @@ describe('PostingsMarkdownEditor', () => {
             });
     });
 
-    it('should have set the correct default commands on init if messaging is enabled', () => {
+    it('should have set the correct default commands on init if messaging or communication is enabled', () => {
         component.ngOnInit();
 
         expect(component.defaultCommands).toEqual([
@@ -87,8 +87,8 @@ describe('PostingsMarkdownEditor', () => {
         ]);
     });
 
-    it('should have set the correct default commands on init if messaging is disabled', () => {
-        jest.spyOn(CourseModel, 'isMessagingEnabled').mockReturnValueOnce(false);
+    it('should have set the correct default commands on init if communication and messaging and communication is disabled', () => {
+        jest.spyOn(CourseModel, 'isMessagingOrCommunicationEnabled').mockReturnValueOnce(false);
         component.ngOnInit();
 
         expect(component.defaultCommands).toEqual([
