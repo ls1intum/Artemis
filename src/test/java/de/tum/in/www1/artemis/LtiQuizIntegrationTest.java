@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
-class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class LtiQuizIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "ltiquizsubmissiontest";
 
