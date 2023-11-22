@@ -209,6 +209,10 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     private isExamResultPublished() {
+        if (this.isTestRun) {
+            return true;
+        }
+
         const exam = this.studentExam.exam;
         return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }

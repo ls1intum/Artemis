@@ -529,4 +529,15 @@ describe('ExamResultSummaryComponent', () => {
             expect(toggleShowSampleSolutionSpy).toHaveBeenCalled();
         });
     });
+
+    describe('isExamResultPublished', () => {
+        it('should always be true for test runs', () => {
+            component.isTestRun = true;
+            component.studentExam.exam = undefined;
+
+            //@ts-ignore accessing private method
+            const result = component.isExamResultPublished();
+            expect(result).toBeTrue();
+        });
+    });
 });
