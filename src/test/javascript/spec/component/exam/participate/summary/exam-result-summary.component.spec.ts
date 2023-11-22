@@ -59,6 +59,7 @@ import * as Utils from 'app/shared/util/utils';
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
 let artemisServerDateService: ArtemisServerDateService;
+let examParticipationService: ExamParticipationService;
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -197,6 +198,7 @@ function sharedSetup(url: string[]) {
                 component = fixture.componentInstance;
                 component.studentExam = studentExam;
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
+                examParticipationService = TestBed.inject(ExamParticipationService);
             });
     });
 
@@ -530,14 +532,44 @@ describe('ExamResultSummaryComponent', () => {
         });
     });
 
+    it('loads and displays exam summary when results are published & testExam is set', () => {
+        const mockLoadStudentExamGradeInfoForSummary = jest.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+
+        fixture.detectChanges();
+
+        const examSummaryResultOverviewElement = fixture.nativeElement.querySelector('#exam-summary-result-overview');
+        expect(examSummaryResultOverviewElement).toBeTruthy();
+        expect(mockLoadStudentExamGradeInfoForSummary).toHaveBeenCalledOnce();
+    });
+
     describe('isExamResultPublished', () => {
         it('should always be true for test runs', () => {
             component.isTestRun = true;
             component.studentExam.exam = undefined;
 
             //@ts-ignore accessing private method
-            const result = component.isExamResultPublished();
-            expect(result).toBeTrue();
+            const resultsArePublished = component.isExamResultPublished();
+            expect(resultsArePublished).toBeTrue();
+        });
+
+        it('should be false if publishReleaseDate is in the future', () => {
+            component.isTestRun = false;
+            const dateInFuture = dayjs().add(5, 'days');
+            component.studentExam.exam!.publishResultsDate = dateInFuture;
+
+            //@ts-ignore accessing private method
+            const resultsArePublished = component.isExamResultPublished();
+            expect(resultsArePublished).toBeFalse();
+        });
+
+        it('should be true if publishReleaseDate is in the past', () => {
+            component.isTestRun = false;
+            const dateInFuture = dayjs().subtract(2, 'days');
+            component.studentExam.exam!.publishResultsDate = dateInFuture;
+
+            //@ts-ignore accessing private method
+            const resultsArePublished = component.isExamResultPublished();
+            expect(resultsArePublished).toBeTrue();
         });
     });
 });
