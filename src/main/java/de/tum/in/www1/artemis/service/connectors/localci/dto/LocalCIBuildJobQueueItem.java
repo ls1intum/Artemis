@@ -14,10 +14,13 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private Long expirationTime;
 
-    public LocalCIBuildJobQueueItem(Long participationId, String commitHash) {
+    private int retryCount;
+
+    public LocalCIBuildJobQueueItem(Long participationId, String commitHash, int retryCount) {
         this.participationId = participationId;
         this.commitHash = commitHash;
         this.expirationTime = 0L;
+        this.retryCount = retryCount;
     }
 
     public Long getParticipationId() {
@@ -44,8 +47,18 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         this.expirationTime = expirationTime;
     }
 
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+    public void setRetryCount(int retryCount) {
+        this.retryCount = retryCount;
+    }
+
     @Override
     public String toString() {
-        return "LocalCIBuildJobQueueItem{" + "participationId='" + participationId + '\'' + ", commitHash='" + commitHash + '\'' + '}';
+        return "LocalCIBuildJobQueueItem{" + "participationId='" + participationId + '\'' + ", commitHash='" + commitHash + '\'' + ", expirationTime='" + expirationTime + '\''
+                + ", retryCount='" + retryCount + '\'' + '}';
+
     }
 }
