@@ -84,16 +84,18 @@ public class SingleUserNotificationService {
             // Exercise related
             case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
             // Plagiarism related
-            case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT -> createNotification((PlagiarismCase) notificationSubject,
-                    notificationType, (User) typeSpecificInformation, author);
+            case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT ->
+                createNotification((PlagiarismCase) notificationSubject, notificationType, (User) typeSpecificInformation, author);
             // Tutorial Group related
-            case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED -> createNotification(
-                    ((TutorialGroupNotificationSubject) notificationSubject).tutorialGroup, notificationType, ((TutorialGroupNotificationSubject) notificationSubject).users,
-                    ((TutorialGroupNotificationSubject) notificationSubject).responsibleUser);
+            case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR,
+                    TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED ->
+                createNotification(((TutorialGroupNotificationSubject) notificationSubject).tutorialGroup, notificationType,
+                        ((TutorialGroupNotificationSubject) notificationSubject).users, ((TutorialGroupNotificationSubject) notificationSubject).responsibleUser);
             // Conversation creation related
-            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_DELETE_CHANNEL -> createNotification(
-                    ((ConversationNotificationSubject) notificationSubject).conversation, notificationType, ((ConversationNotificationSubject) notificationSubject).user,
-                    ((ConversationNotificationSubject) notificationSubject).responsibleUser);
+            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_CHANNEL,
+                    CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_DELETE_CHANNEL ->
+                createNotification(((ConversationNotificationSubject) notificationSubject).conversation, notificationType,
+                        ((ConversationNotificationSubject) notificationSubject).user, ((ConversationNotificationSubject) notificationSubject).responsibleUser);
             case CONVERSATION_NEW_REPLY_MESSAGE, CONVERSATION_USER_MENTIONED -> createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType,
                     ((NewReplyNotificationSubject) notificationSubject).user, ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, (User) typeSpecificInformation);

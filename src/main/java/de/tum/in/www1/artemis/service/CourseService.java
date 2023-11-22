@@ -253,10 +253,9 @@ public class CourseService {
      *
      * @param courseId the course to fetch
      * @param user     the user entity
-     * @param refresh  if the user requested an explicit refresh
      * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      */
-    public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
+    public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(Long courseId, User user) {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
@@ -264,7 +263,7 @@ public class CourseService {
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
         course.setExams(examRepository.findByCourseIdsForUser(Set.of(course.getId()), user.getId(), user.getGroups(), ZonedDateTime.now()));
         course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
-        course.setCompetencies(competencyService.findAllForCourse(course, user, refresh));
+        course.setCompetencies(competencyRepository.findAllForCourseWithProgressForUser(course.getId(), user.getId()));
         course.setPrerequisites(competencyService.findAllPrerequisitesForCourse(course, user));
         course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
         course.setTutorialGroupsConfiguration(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
