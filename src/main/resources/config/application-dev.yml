@@ -13,6 +13,13 @@
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
 
+artemis:
+    continuous-integration:
+        # Using the local ci priority queue in the development environment can lead to class loader issues because of spring devtools.
+        # Therefore, we disable it by default. If you want to use the local ci priority queue in development,
+        # you have to set this property to true and disable spring devtools.
+        priority-queue-enabled: false
+
 logging:
     level:
         ROOT: DEBUG
