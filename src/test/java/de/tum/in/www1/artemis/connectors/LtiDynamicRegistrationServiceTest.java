@@ -14,7 +14,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.lti.Lti13ClientRegistration;
@@ -24,7 +23,7 @@ import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-class LtiDynamicRegistrationServiceTest extends AbstractSpringIntegrationIndependentTest {
+class LtiDynamicRegistrationServiceTest {
 
     @Mock
     private OAuth2JWKSService oAuth2JWKSService;
