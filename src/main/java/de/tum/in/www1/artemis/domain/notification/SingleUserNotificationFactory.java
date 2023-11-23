@@ -241,10 +241,6 @@ public class SingleUserNotificationFactory {
             throw new IllegalArgumentException("No users provided for notification");
         }
 
-        if (notificationType != NotificationType.CONVERSATION_NEW_REPLY_MESSAGE && notificationType != NotificationType.CONVERSATION_USER_MENTIONED) {
-            throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
-        }
-
         String conversationTitle = answerPost.getPost().getConversation().getHumanReadableNameForReceiver(answerPost.getAuthor());
 
         String[] placeholders = new String[] { answerPost.getPost().getConversation().getCourse().getTitle(), answerPost.getPost().getContent(),
