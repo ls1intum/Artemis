@@ -56,6 +56,15 @@ public interface ChannelRepository extends JpaRepository<Channel, Long> {
     @Query("""
              SELECT DISTINCT channel
              FROM Channel channel
+             WHERE channel.course.id = :courseId
+                 AND channel.isCourseWide IS true
+             ORDER BY channel.name
+            """)
+    List<Channel> findCourseWideChannelsInCourse(@Param("courseId") long courseId);
+
+    @Query("""
+             SELECT DISTINCT channel
+             FROM Channel channel
              WHERE channel.course.id = :#{#courseId}
              AND channel.name = :#{#name}
              ORDER BY channel.name
