@@ -17,8 +17,8 @@ export class GitDiffLineStatComponent implements OnInit {
 
     ngOnInit(): void {
         if (!this.addedLineCount && !this.removedSquareCount) {
-            this.addedSquareCount = 5;
-            this.removedSquareCount = 5;
+            this.addedSquareCount = 1;
+            this.removedSquareCount = 1;
         } else if (this.addedLineCount === 0) {
             this.addedSquareCount = 0;
             this.removedSquareCount = 5;
