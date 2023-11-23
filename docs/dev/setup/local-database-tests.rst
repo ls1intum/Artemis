@@ -10,7 +10,7 @@ Database tests are the standard server integration tests executed against a real
 
 Before running those tests, make sure you have got a working Docker setup:
 
-1. Install `Docker Desktop <https://docs.docker.com/desktop/#docker-for-mac>`__ or `Docker Engine and Docker CLI <https://docs.docker.com/engine/install/>`__.
+1. Install `Docker Desktop <https://docs.docker.com/desktop/>`__ or `Docker Engine and Docker CLI <https://docs.docker.com/engine/install/>`__.
 2. Enable `remote access for the Docker daemon <https://docs.docker.com/config/daemon/remote-access/>`__.
 
 Executing tests from Intellij
