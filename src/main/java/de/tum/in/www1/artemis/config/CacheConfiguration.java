@@ -62,7 +62,7 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    @Value("${artemis.continuous-integration.priority-queue.enabled:true}")
+    @Value("${artemis.continuous-integration.priority-queue-enabled:true}")
     private boolean priorityQueueEnabled;
 
     public CacheConfiguration(ServerProperties serverProperties, DiscoveryClient discoveryClient, ApplicationContext applicationContext) {

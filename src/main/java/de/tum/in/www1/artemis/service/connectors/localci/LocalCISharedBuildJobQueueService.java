@@ -55,13 +55,11 @@ public class LocalCISharedBuildJobQueueService {
 
     private final FencedLock lock;
 
-    private final int threadPoolSize;
-
     @Autowired
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
-            ProgrammingExerciseRepository programmingExerciseRepository, int threadPoolSize) {
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.localCIBuildJobManagementService = localCIBuildJobManagementService;
@@ -73,7 +71,6 @@ public class LocalCISharedBuildJobQueueService {
         this.lock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.queue.addItemListener(new BuildJobItemListener(), true);
-        this.threadPoolSize = threadPoolSize;
     }
 
     /**
@@ -115,8 +112,6 @@ public class LocalCISharedBuildJobQueueService {
         // need to add the build job to processingJobs before taking it from the queue,
         // so it can be later added back to the queue if the node fails
         LocalCIBuildJobQueueItem buildJob;
-
-        log.debug("LocalCIBuildJobQueueItem classloader: " + LocalCIBuildJobQueueItem.class.getClassLoader());
 
         // lock the queue to prevent multiple nodes from processing the same build job
         lock.lock();
@@ -230,7 +225,7 @@ public class LocalCISharedBuildJobQueueService {
     // getActiveCount() returns an approximation thus we double check with getQueue().size()
     private Boolean nodeIsAvailable() {
         log.info("Current active threads: " + localCIBuildExecutorService.getActiveCount());
-        return localCIBuildExecutorService.getActiveCount() < threadPoolSize && localCIBuildExecutorService.getQueue().size() < 1;
+        return localCIBuildExecutorService.getActiveCount() < localCIBuildExecutorService.getMaximumPoolSize() && localCIBuildExecutorService.getQueue().size() < 1;
     }
 
     private class BuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
