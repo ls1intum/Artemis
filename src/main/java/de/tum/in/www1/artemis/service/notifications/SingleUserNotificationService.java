@@ -95,7 +95,8 @@ public class SingleUserNotificationService {
                 createNotification(((ConversationNotificationSubject) notificationSubject).conversation, notificationType,
                         ((ConversationNotificationSubject) notificationSubject).user, ((ConversationNotificationSubject) notificationSubject).responsibleUser);
             // Message reply related
-            case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST, CONVERSATION_NEW_REPLY_MESSAGE, CONVERSATION_USER_MENTIONED ->
+            case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXAM_POST, CONVERSATION_NEW_REPLY_MESSAGE,
+                    CONVERSATION_USER_MENTIONED ->
                 createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType, ((NewReplyNotificationSubject) notificationSubject).user,
                         ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, (User) typeSpecificInformation);
@@ -417,8 +418,9 @@ public class SingleUserNotificationService {
             return (isChannelAndCourseWide && isChannelVisibleToMentionedUser) || conversationService.isMember(post.getConversation().getId(), user.getId());
         }).forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, mentionedUser, author, CONVERSATION_USER_MENTIONED));
 
+        Conversation conv = conversationService.getConversationById(post.getConversation().getId());
         usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved))
-                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author, getAnswerMessageNotificationType(post)));
+                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author, getAnswerMessageNotificationType(conv)));
     }
 
     /**
@@ -430,7 +432,7 @@ public class SingleUserNotificationService {
      */
     private void saveAndSend(SingleUserNotification notification, Object notificationSubject, User author) {
         // do not save notifications that are not relevant for the user
-        if (shouldNotificationBeSaved(notification)) {
+        if (shouldNotificationBeSaved(notification) && !Objects.equals(notification.getRecipient().getId(), author.getId())) {
             singleUserNotificationRepository.save(notification);
         }
         // we only want to notify one individual user therefore we can check the settings and filter preemptively
@@ -446,12 +448,12 @@ public class SingleUserNotificationService {
     /**
      * Calculates the type of the notification based on the type of the conversation
      *
-     * @param message the message the reply belongs to
+     * @param conversation the message the reply belongs to
      * @return notification type
      */
-    private NotificationType getAnswerMessageNotificationType(Post message) {
+    private NotificationType getAnswerMessageNotificationType(Conversation conversation) {
         NotificationType answerMessageNotificationType;
-        if (message.getConversation() instanceof Channel channel) {
+        if (conversation instanceof Channel channel) {
             if (channel.getExercise() != null) {
                 answerMessageNotificationType = NEW_REPLY_FOR_EXERCISE_POST;
             }
