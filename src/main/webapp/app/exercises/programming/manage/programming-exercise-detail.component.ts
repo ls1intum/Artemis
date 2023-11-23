@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
-import { Subject } from 'rxjs';
+import { Subject, lastValueFrom } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
@@ -45,7 +45,6 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
@@ -142,7 +141,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
         private repositoryFileService: CodeEditorRepositoryFileService,
         private eventManager: EventManager,
-        private modalService: NgbModal,
+        public modalService: NgbModal,
         private translateService: TranslateService,
         private profileService: ProfileService,
         private statisticsService: StatisticsService,
@@ -179,7 +178,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     `/exercise-groups/${this.programmingExercise.exerciseGroup?.id}/exercises/${this.programmingExercise.exerciseGroup?.exam?.id}/`;
             }
 
-            this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!).subscribe((updatedProgrammingExercise) => {
+            this.programmingExerciseService.findWithTemplateAndSolutionParticipationAndLatestResults(programmingExercise.id!).subscribe(async (updatedProgrammingExercise) => {
                 this.programmingExercise = updatedProgrammingExercise.body!;
 
                 this.setLatestCoveredLineRatio();
@@ -213,13 +212,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.programmingExercise.submissionPolicy = submissionPolicy;
                 });
 
-                this.loadGitDiffReport();
+                await this.loadGitDiffReport();
 
                 // the build logs endpoint requires at least editor privileges
                 if (this.programmingExercise.isAtLeastEditor) {
-                    this.programmingExerciseService.getBuildLogStatistics(exerciseId!).subscribe((buildLogStatisticsDto) => {
-                        this.programmingExercise.buildLogStatistics = buildLogStatisticsDto;
-                    });
+                    const buildLogStatisticsDto = await lastValueFrom(this.programmingExerciseService.getBuildLogStatistics(exerciseId!));
+                    this.programmingExercise.buildLogStatistics = buildLogStatisticsDto;
                 }
 
                 this.setLatestCoveredLineRatio();
@@ -385,7 +383,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             addedLineCount: this.addedLineCount,
                             removedLineCount: this.removedLineCount,
                             isLoadingDiffReport: this.isLoadingDiffReport,
-                            onClick: this.showGitDiff,
+                            gitDiffReport: exercise.gitDiffReport,
                         },
                     },
                     {
@@ -475,7 +473,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         titleHelpText: 'artemisApp.programmingExercise.buildLogStatistics.tooltip',
                         data: { buildLogStatistics: exercise.buildLogStatistics },
                     },
-                ],
+                ].filter(Boolean),
             },
         ] as DetailOverviewSection[];
     }
@@ -645,31 +643,22 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         return link;
     }
 
-    loadGitDiffReport(): void {
-        this.programmingExerciseService.getDiffReport(this.programmingExercise.id!).subscribe((gitDiffReport) => {
-            if (gitDiffReport) {
-                this.programmingExercise.gitDiffReport = gitDiffReport;
-                gitDiffReport.programmingExercise = this.programmingExercise;
-                this.addedLineCount = gitDiffReport.entries
-                    .map((entry) => entry.lineCount)
-                    .filter((lineCount) => lineCount)
-                    .map((lineCount) => lineCount!)
-                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
-                this.removedLineCount = gitDiffReport.entries
-                    .map((entry) => entry.previousLineCount)
-                    .filter((lineCount) => lineCount)
-                    .map((lineCount) => lineCount!)
-                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
-            }
-        });
-    }
-
-    /**
-     * Shows the git-diff in a modal.
-     */
-    showGitDiff(): void {
-        const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
-        modalRef.componentInstance.report = this.programmingExercise.gitDiffReport;
+    async loadGitDiffReport(): Promise<void> {
+        const gitDiffReport = await lastValueFrom(this.programmingExerciseService.getDiffReport(this.programmingExercise.id!));
+        if (gitDiffReport) {
+            this.programmingExercise.gitDiffReport = gitDiffReport;
+            gitDiffReport.programmingExercise = this.programmingExercise;
+            this.addedLineCount = gitDiffReport.entries
+                .map((entry) => entry.lineCount)
+                .filter((lineCount) => lineCount)
+                .map((lineCount) => lineCount!)
+                .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
+            this.removedLineCount = gitDiffReport.entries
+                .map((entry) => entry.previousLineCount)
+                .filter((lineCount) => lineCount)
+                .map((lineCount) => lineCount!)
+                .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
+        }
     }
 
     /**

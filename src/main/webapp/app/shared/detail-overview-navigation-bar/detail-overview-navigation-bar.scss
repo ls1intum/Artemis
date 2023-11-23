@@ -1,12 +1,11 @@
 nav {
     position: sticky;
-    top: -1px;
-    padding-top: 1rem;
+    top: -2px;
+    z-index: 2;
+    padding: 1rem 0;
     background: var(--bs-card-bg);
-
-    hr {
-        margin-bottom: 0;
-    }
+    border-bottom: 1px solid var(--bs-border-color);
+    border-top: 1px solid var(--bs-border-color);
 
     .nav-link-container {
         display: flex;

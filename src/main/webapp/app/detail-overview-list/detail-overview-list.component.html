@@ -112,7 +112,7 @@
                             [icon]="faEye"
                             [title]="'artemisApp.programmingExercise.diffReport.button'"
                             [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
-                            (onClick)="detail.data.onClick()"
+                            (onClick)="showGitDiff(detail.data.gitDiffReport)"
                             class="ms-2"
                         ></jhi-button>
                     </div>
@@ -131,7 +131,10 @@
                         [readOnly]="true"
                     ></jhi-programming-exercise-lifecycle>
                 </dd>
-                <dd *ngSwitchCase="DetailType.Markdown" class="editor-outline-background"><span [innerHTML]="detail.data.innerHtml"></span></dd>
+                <dd *ngSwitchCase="DetailType.Markdown">
+                    <div *ngIf="detail.data.innerHtml" class="p3 border" [innerHTML]="detail.data.innerHtml"></div>
+                    <span *ngIf="!detail.data.innerHtml">-</span>
+                </dd>
                 <dd *ngSwitchCase="DetailType.ProgrammingGradingCriteria" class="col-md-6 mt-4">
                     <jhi-structured-grading-instructions-assessment-layout
                         [readonly]="true"

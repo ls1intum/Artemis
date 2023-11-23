@@ -195,6 +195,15 @@
                     >
                         <fa-icon [icon]="faTimes"></fa-icon>
                     </button>
+                    <button
+                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                        *ngIf="programmingExercise.isAtLeastEditor"
+                        (click)="checkConsistencies(programmingExercise)"
+                        class="btn btn-outline-primary btn-sm me-1"
+                        style="margin-bottom: 10px"
+                    >
+                        <fa-icon [icon]="faCheckDouble"></fa-icon> <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
+                    </button>
                 </div>
             </div>
             <div *ngIf="!programmingExercise.releaseDate || dayjs(programmingExercise.releaseDate).isBefore(dayjs())" class="mt-3">
