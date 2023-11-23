@@ -383,7 +383,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 if (!(argument instanceof IrisCodeEditorWebsocketService.IrisWebsocketDTO websocketDTO)) {
                     return false;
                 }
-                return websocketDTO.type() == IrisCodeEditorWebsocketService.IrisWebsocketMessageType.EXCEPTION;
+                return websocketDTO.type() == IrisCodeEditorWebsocketService.IrisWebsocketMessageType.ERROR;
             }
 
             @Override

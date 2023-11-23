@@ -91,7 +91,7 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
     }
 
     public enum IrisWebsocketMessageType {
-        MESSAGE, STEP_SUCCESS, STEP_EXCEPTION, EXCEPTION
+        MESSAGE, STEP_SUCCESS, STEP_EXCEPTION, ERROR
     }
 
     public record StepExecutionSuccess(long messageId, long planId, long stepId, ExerciseComponent component, Set<FileChange> fileChanges, String updatedProblemStatement) {
@@ -112,7 +112,7 @@ public class IrisCodeEditorWebsocketService extends IrisWebsocketService {
         }
 
         private static IrisWebsocketDTO error(Throwable throwable) {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.EXCEPTION, null, null, null, throwable.getMessage(),
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.ERROR, null, null, null, throwable.getMessage(),
                     throwable instanceof IrisException i ? i.getTranslationKey() : null, throwable instanceof IrisException i ? i.getTranslationParams() : null);
         }
 
