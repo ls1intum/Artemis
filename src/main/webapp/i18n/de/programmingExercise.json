@@ -485,6 +485,7 @@
                 },
                 "submissionPenalty": {
                     "optionLabel": "Punktabzug je Überschreitung",
+                    "detailLabel": "Punktabzug je Überschreitung",
                     "penaltyInputFieldTitle": "Punktabzug je Überschreitung des Abgabelimits",
                     "exceedingLimitDescription": "Der Punktabzug von dem Gesamtergebnis für jede Abgabe, die das Abgabelimit überschreitet. Jede Punktzahl größer 0 kann eingetragen werden.",
                     "penaltyInputFieldValidationWarning": {

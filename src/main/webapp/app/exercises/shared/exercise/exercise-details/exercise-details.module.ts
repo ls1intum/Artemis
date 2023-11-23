@@ -13,6 +13,7 @@ import { ExerciseDetailStatisticsComponent } from 'app/exercises/shared/statisti
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
 
 @NgModule({
     imports: [
@@ -27,6 +28,7 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
         ArtemisProgrammingExerciseLifecycleModule,
         ArtemisChartsModule,
         ExerciseCategoriesModule,
+        DetailModule,
     ],
     declarations: [ExerciseDetailsComponent, ExerciseDetailStatisticsComponent, ExerciseStatisticsComponent],
     exports: [ExerciseDetailsComponent, ExerciseDetailStatisticsComponent, ExerciseStatisticsComponent],

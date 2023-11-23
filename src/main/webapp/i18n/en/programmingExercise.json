@@ -484,6 +484,7 @@
                 },
                 "submissionPenalty": {
                     "optionLabel": "Submission Penalty",
+                    "detailLabel": "Submission Penalty Points",
                     "penaltyInputFieldTitle": "Exceeding Submission Limit Penalty",
                     "exceedingLimitDescription": "The number of points that is deducted from the result score for each submission exceeding the submission limit. Enter any number of points greater than 0.",
                     "penaltyInputFieldValidationWarning": {

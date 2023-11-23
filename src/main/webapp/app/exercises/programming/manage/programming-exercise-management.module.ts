@@ -17,7 +17,6 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
-import { ProgrammingExerciseInstructorRepoDownloadComponent } from '../shared/actions/programming-exercise-instructor-repo-download.component';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 import { ProgrammingExerciseInstructorExerciseDownloadComponent } from '../shared/actions/programming-exercise-instructor-exercise-download.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
@@ -28,6 +27,7 @@ import { ArtemisCodeHintGenerationOverviewModule } from 'app/exercises/programmi
 import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
 
 @NgModule({
     imports: [
@@ -54,11 +54,11 @@ import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-e
         ArtemisCodeHintGenerationOverviewModule,
         AceEditorModule,
         ArtemisCodeEditorModule,
+        DetailModule,
     ],
     declarations: [
         ProgrammingExerciseDetailComponent,
         ProgrammingExerciseEditSelectedComponent,
-        ProgrammingExerciseInstructorRepoDownloadComponent,
         ProgrammingExerciseInstructorExerciseDownloadComponent,
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
         BuildPlanEditorComponent,
