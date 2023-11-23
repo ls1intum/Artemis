@@ -8,10 +8,12 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 })
 export class ExerciseUpdatePlagiarismComponent implements OnInit {
     @Input() exercise: Exercise;
+    minimumSizeTooltip?: string;
 
     readonly faQuestionCircle = faQuestionCircle;
 
     ngOnInit(): void {
+        this.minimumSizeTooltip = this.getMinimumSizeTooltip();
         if (!this.exercise.plagiarismDetectionConfig) {
             // Create the default plagiarism configuration if there is none (e.g. importing an old exercise from a file)
             this.exercise.plagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG;
