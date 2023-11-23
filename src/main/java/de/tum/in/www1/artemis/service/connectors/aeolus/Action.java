@@ -15,6 +15,8 @@ public abstract class Action {
 
     private boolean runAlways;
 
+    private String workdir;
+
     public Map<String, Object> getParameters() {
         return parameters;
     }
@@ -45,5 +47,13 @@ public abstract class Action {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getWorkdir() {
+        return workdir;
+    }
+
+    public void setWorkdir(String workdir) {
+        this.workdir = workdir;
     }
 }

@@ -12,8 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
@@ -39,19 +37,16 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationIndependentTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAeolusTemplateFile() throws Exception {
-        GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(Action.class, new ActionDeserializer());
-        Gson gson = builder.create();
         Map<String, Integer> templatesWithExpectedScriptActions = new HashMap<>();
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE", 2);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?sequentialRuns=true", 3);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE", 1);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?sequentialRuns=true", 1);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN", 1);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?sequentialRuns=true", 2);
-        templatesWithExpectedScriptActions.put("PYTHON", 1);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?sequentialRuns=true", 1);
+        templatesWithExpectedScriptActions.put("ASSEMBLER", 3);
         for (Map.Entry<String, Integer> entry : templatesWithExpectedScriptActions.entrySet()) {
             String template = request.get("/api/aeolus/templates/" + entry.getKey(), HttpStatus.OK, String.class);
             assertThat(template).isNotEmpty();
-            Windfile windfile = gson.fromJson(template, Windfile.class);
+            Windfile windfile = Windfile.deserialize(template);
             this.assertWindfileIsCorrect(windfile, entry.getValue());
         }
     }

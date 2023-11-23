@@ -84,23 +84,17 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                         if (file && !this.programmingExerciseCreationConfig.buildPlanLoaded) {
                             this.programmingExerciseCreationConfig.buildPlanLoaded = true;
                             const templateFile: WindFile = JSON.parse(file);
+                            const windFile: WindFile = Object.assign(new WindFile(), templateFile);
                             const actions: BuildAction[] = [];
                             templateFile.actions.forEach((anyAction: any) => {
-                                let action: BuildAction | undefined;
                                 if (anyAction.class === 'script-action' || anyAction.script) {
-                                    action = new ScriptAction();
-                                    (action as ScriptAction).script = anyAction.script;
+                                    actions.push(Object.assign(new ScriptAction(), anyAction));
                                 } else {
-                                    action = new PlatformAction();
-                                    (action as PlatformAction).kind = anyAction.kind;
-                                    (action as PlatformAction).parameters = anyAction.parameters;
+                                    actions.push(Object.assign(new PlatformAction(), anyAction));
                                 }
-                                action.name = anyAction.name;
-                                action.runAlways = anyAction.runAlways;
-                                actions.push(action);
                             });
-                            templateFile.actions = actions;
-                            this.programmingExercise.windFile = templateFile;
+                            windFile.actions = actions;
+                            this.programmingExercise.windFile = windFile;
                         }
                     },
                     error: () => {
