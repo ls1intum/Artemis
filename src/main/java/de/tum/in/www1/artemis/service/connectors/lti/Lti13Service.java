@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.lti;
 
-import static de.tum.in.www1.artemis.config.Constants.USERNAME_MAX_LENGTH;
-import static de.tum.in.www1.artemis.config.Constants.USERNAME_MIN_LENGTH;
-
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
@@ -148,7 +145,7 @@ public class Lti13Service {
         }
         else {
             String userEmail = ltiIdToken.getEmail();
-            username = this.getEmailLocalPart(userEmail); // Get the initial part of the user's email
+            username = userEmail.substring(0, userEmail.indexOf('@')); // Get the initial part of the user's email
         }
         username = username.replace(" ", "");
 
@@ -319,53 +316,9 @@ public class Lti13Service {
 
         String sanitizedUsername = getSanitizedUsername(optionalUsername.get());
 
-        if (optionalUsername.isPresent() && validateLtiUsername(ltiIdToken, sanitizedUsername)) {
+        if (optionalUsername.isPresent()) {
             response.addHeader("ltiSuccessLoginRequired", sanitizedUsername);
         }
-    }
-
-    private boolean validateLtiUsername(OidcIdToken ltiIdToken, String userName) {
-
-        if (!StringUtils.hasLength(userName) || userName.length() < USERNAME_MIN_LENGTH || userName.length() > USERNAME_MAX_LENGTH) {
-            return false;
-        }
-
-        Optional<User> user = userRepository.findOneByLogin(userName);
-
-        if (!user.isPresent()) {
-            return false;
-        }
-
-        if (ltiService.isLtiCreatedUser(user.get())) {
-            return matchesLtiTokenInfo(ltiIdToken, userName);
-        }
-
-        return true;
-    }
-
-    private boolean matchesLtiTokenInfo(OidcIdToken ltiIdToken, String receivedUsername) {
-
-        if (receivedUsername.split("_").length < 2) {
-            return false;
-        }
-        String cleanedUsername = receivedUsername.split("_")[1];
-
-        if (StringUtils.hasLength(ltiIdToken.getPreferredUsername()) && cleanedUsername.equals(ltiIdToken.getPreferredUsername())) {
-            return true;
-        }
-
-        if (StringUtils.hasLength(ltiIdToken.getGivenName()) && StringUtils.hasLength(ltiIdToken.getFamilyName())
-                && cleanedUsername.equals(ltiIdToken.getGivenName() + ltiIdToken.getFamilyName())) {
-            return true;
-        }
-
-        String emailLocalPart = getEmailLocalPart(ltiIdToken.getEmail());
-        return StringUtils.hasLength(emailLocalPart) && cleanedUsername.equals(emailLocalPart);
-    }
-
-    private String getEmailLocalPart(String email) {
-        int atIndex = email.indexOf('@');
-        return atIndex > 0 ? email.substring(0, atIndex) : "";
     }
 
     private String getSanitizedUsername(String username) {
