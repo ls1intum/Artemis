@@ -6,7 +6,7 @@ Running database tests locally
 Prerequisites
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Database tests are standard server integration tests executed against real database (MySQL or Postgres) started as Docker containers. Gradle test task will automatically pull necessary images and start Docker containers.
+Database tests are the standard server integration tests executed against a real database (MySQL or Postgres) started as Docker containers. The Gradle test task will automatically pull the necessary images and start the containers.
 
 Before running those tests, make sure that the following steps were executed:
 
