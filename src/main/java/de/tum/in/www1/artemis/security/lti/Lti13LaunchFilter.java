@@ -78,7 +78,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
             // We need targetLink to redirect user on the client-side after successful authentication
             UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLink);
-            lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken.getEmail());
+            lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken);
             response.setHeader("TargetLinkUri", uriBuilder.build().toUriString());
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "LTI 1.3 user authentication failed");
         }
