@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
 @Service
 @Profile("lti")
@@ -317,8 +318,10 @@ public class Lti13Service {
     public void buildLtiEmailInUseResponse(HttpServletResponse response, OidcIdToken ltiIdToken) {
         Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail());
 
-        if (optionalUsername.isPresent() && validateLtiUsername(ltiIdToken, optionalUsername.get())) {
-            response.addHeader("ltiSuccessLoginRequired", optionalUsername.get());
+        String sanitizedUsername = getSanitizedUsername(optionalUsername.get());
+
+        if (optionalUsername.isPresent() && validateLtiUsername(ltiIdToken, sanitizedUsername)) {
+            response.addHeader("ltiSuccessLoginRequired", sanitizedUsername);
         }
     }
 
@@ -364,6 +367,10 @@ public class Lti13Service {
     private String getEmailLocalPart(String email) {
         int atIndex = email.indexOf('@');
         return atIndex > 0 ? email.substring(0, atIndex) : "";
+    }
+
+    private String getSanitizedUsername(String username) {
+        return StringUtil.sanitizeStringForFileName(username);
     }
 
 }
