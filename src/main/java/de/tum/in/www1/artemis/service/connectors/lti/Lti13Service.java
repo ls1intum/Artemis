@@ -40,7 +40,6 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
 @Service
 @Profile("lti")
@@ -370,7 +369,8 @@ public class Lti13Service {
     }
 
     private String getSanitizedUsername(String username) {
-        return StringUtil.sanitizeStringForFileName(username);
+        // Remove \r and LF \n characters to prevent HTTP response splitting
+        return username.replaceAll("[\r\n]", "");
     }
 
 }
