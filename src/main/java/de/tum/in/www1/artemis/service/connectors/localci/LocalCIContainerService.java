@@ -57,7 +57,7 @@ public class LocalCIContainerService {
 
     private final HostConfig hostConfig;
 
-    private final List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+    private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
 
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
@@ -108,6 +108,8 @@ public class LocalCIContainerService {
      */
 
     public void runScriptInContainer(String containerId) {
+        // the build log entries are reset here because this method is called for each build job
+        buildLogEntries = new ArrayList<>();
         log.info("Started running the build script for build job in container with id {}", containerId);
         // The "sh script.sh" execution command specified here is run inside the container as an additional process. This command runs in the background, independent of the
         // container's
