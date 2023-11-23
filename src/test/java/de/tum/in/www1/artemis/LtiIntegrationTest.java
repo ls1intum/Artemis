@@ -20,7 +20,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,7 +37,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -62,9 +60,6 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @Autowired
     private CourseUtilService courseUtilService;
-
-    @SpyBean
-    private OAuth2JWKSService oAuth2JWKSService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -382,7 +377,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deepLinkingAsInstructor() throws Exception {
         String jwkJsonString = "{\"kty\":\"RSA\",\"d\":\"base64-encoded-value\",\"e\":\"AQAB\",\"use\":\"sig\",\"kid\":\"123456\",\"alg\":\"RS256\",\"n\":\"base64-encoded-value\"}";
-        when(oAuth2JWKSService.getJWK(any())).thenReturn(JWK.parse(jwkJsonString));
+        when(this.oAuth2JWKSService.getJWK(any())).thenReturn(JWK.parse(jwkJsonString));
         var params = getDeepLinkingRequestParams();
 
         request.postWithoutResponseBody("/api/lti13/deep-linking/" + course.getId(), HttpStatus.BAD_REQUEST, params);
