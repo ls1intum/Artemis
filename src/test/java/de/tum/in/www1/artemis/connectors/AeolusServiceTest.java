@@ -69,7 +69,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     /**
-     * Publishes a build plan using Aeolus
+     * Fails in publishing a build plan using Aeolus
      */
     @Test
     void testFailedPublishBuildPlan() {
