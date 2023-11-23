@@ -24,8 +24,10 @@ import {
     NEW_EXERCISE_POST_TITLE,
     NEW_LECTURE_POST_TITLE,
     NEW_REPLY_FOR_COURSE_POST_TITLE,
+    NEW_REPLY_FOR_EXAM_POST_TITLE,
     NEW_REPLY_FOR_EXERCISE_POST_TITLE,
     NEW_REPLY_FOR_LECTURE_POST_TITLE,
+    NEW_REPLY_MESSAGE_TITLE,
     Notification,
     QUIZ_EXERCISE_STARTED_TEXT,
     QUIZ_EXERCISE_STARTED_TITLE,
@@ -219,7 +221,6 @@ export class NotificationService {
                 notification.title === 'New announcement' ||
                 notification.title === NEW_COURSE_POST_TITLE ||
                 notification.title === 'New course-wide post' ||
-                notification.title === NEW_REPLY_FOR_COURSE_POST_TITLE ||
                 notification.title === 'New reply for course-wide post'
             ) {
                 if (targetConversationId) {
@@ -231,21 +232,11 @@ export class NotificationService {
                     const routeComponents: RouteComponents = MetisService.getLinkForCoursePost(targetCourseId);
                     this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
                 }
-            } else if (
-                notification.title === NEW_EXERCISE_POST_TITLE ||
-                notification.title === 'New exercise post' ||
-                notification.title === NEW_REPLY_FOR_EXERCISE_POST_TITLE ||
-                notification.title === 'New reply for exercise post'
-            ) {
+            } else if (notification.title === NEW_EXERCISE_POST_TITLE || notification.title === 'New exercise post' || notification.title === 'New reply for exercise post') {
                 const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
                 const routeComponents: RouteComponents = MetisService.getLinkForExercisePost(targetCourseId, target.exercise ?? target.exerciseId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
-            } else if (
-                notification.title === NEW_LECTURE_POST_TITLE ||
-                notification.title === 'New lecture post' ||
-                notification.title === NEW_REPLY_FOR_LECTURE_POST_TITLE ||
-                notification.title === 'New reply for lecture post'
-            ) {
+            } else if (notification.title === NEW_LECTURE_POST_TITLE || notification.title === 'New lecture post' || notification.title === 'New reply for lecture post') {
                 const queryParams: Params = MetisService.getQueryParamsForLectureOrExercisePost(target.id);
                 const routeComponents: RouteComponents = MetisService.getLinkForLecturePost(targetCourseId, target.lecture ?? target.lectureId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
@@ -259,7 +250,14 @@ export class NotificationService {
                 const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
                 const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
-            } else if (notification.title === MENTIONED_IN_MESSAGE_TITLE) {
+            } else if (
+                notification.title === MENTIONED_IN_MESSAGE_TITLE ||
+                notification.title === NEW_REPLY_FOR_LECTURE_POST_TITLE ||
+                notification.title === NEW_REPLY_FOR_EXERCISE_POST_TITLE ||
+                notification.title === NEW_REPLY_FOR_COURSE_POST_TITLE ||
+                notification.title === NEW_REPLY_MESSAGE_TITLE ||
+                notification.title === NEW_REPLY_FOR_EXAM_POST_TITLE
+            ) {
                 const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
                 const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
