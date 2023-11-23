@@ -396,16 +396,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             if (gitDiffReport) {
                 this.programmingExercise.gitDiffReport = gitDiffReport;
                 gitDiffReport.programmingExercise = this.programmingExercise;
-                this.addedLineCount = gitDiffReport.entries
-                    .map((entry) => entry.lineCount)
-                    .filter((lineCount) => lineCount)
-                    .map((lineCount) => lineCount!)
-                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
-                this.removedLineCount = gitDiffReport.entries
-                    .map((entry) => entry.previousLineCount)
-                    .filter((lineCount) => lineCount)
-                    .map((lineCount) => lineCount!)
-                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
+                this.addedLineCount =
+                    gitDiffReport.entries
+                        ?.map((entry) => entry.lineCount)
+                        .filter((lineCount) => lineCount)
+                        .map((lineCount) => lineCount!)
+                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+                this.removedLineCount =
+                    gitDiffReport.entries
+                        ?.map((entry) => entry.previousLineCount)
+                        .filter((lineCount) => lineCount)
+                        .map((lineCount) => lineCount!)
+                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
             }
         });
     }
