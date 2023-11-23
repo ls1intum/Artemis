@@ -83,7 +83,7 @@
                                 [displayedOnExamSummary]="true"
                             />
                             <jhi-programming-exercise-example-solution-repo-download
-                                *ngIf="exercise.releaseTestsWithExampleSolution"
+                                *ngIf="exerciseInfos[exercise.id!].releaseTestsWithExampleSolution"
                                 class="ms-2 float-end"
                                 [exerciseId]="exercise.id!"
                                 [includeTests]="true"
