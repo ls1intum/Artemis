@@ -8,7 +8,7 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType, WindFile } from 'app/entities/programming-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -64,6 +64,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
+import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -390,6 +391,20 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
         }));
+
+        it('should clear custom build definition on programming language change', fakeAsync(() => {
+            // WHEN
+            fixture.detectChanges();
+            comp.programmingExercise.buildPlanConfiguration = 'some custom build definition';
+            comp.programmingExercise.windFile = new WindFile();
+            tick();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+            comp.onProjectTypeChange(ProjectType.FACT);
+
+            // THEN
+            expect(comp.programmingExercise.buildPlanConfiguration).toBeUndefined();
+            expect(comp.programmingExercise.windFile).toBeUndefined();
+        }));
     });
 
     describe('import with static code analysis', () => {
@@ -416,11 +431,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.isImportFromFile).toBeFalse();
             expect(comp.isImportFromExistingExercise).toBeTrue();
 
-            verifyImport();
-
-            // name and short name should not be imported
-            expect(comp.programmingExercise.title).toBeUndefined();
-            expect(comp.programmingExercise.shortName).toBeUndefined();
+            verifyImport(programmingExercise);
         }));
 
         it.each([
@@ -515,11 +526,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.isImportFromFile).toBeTrue();
             expect(comp.isImportFromExistingExercise).toBeFalse();
 
-            verifyImport();
-
-            // name and short name should be imported
-            expect(comp.programmingExercise.title).toBe('title');
-            expect(comp.programmingExercise.shortName).toBe('shortName');
+            verifyImport(programmingExercise);
         }));
 
         it('should call import-from-file from service on import for entity from file', fakeAsync(() => {
@@ -732,6 +739,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
+        it('should update AuxiliaryRepository checkout directory', () => {
+            const auxiliaryRepository = new AuxiliaryRepository();
+            auxiliaryRepository.checkoutDirectory = 'aux';
+            auxiliaryRepository.name = 'aux';
+            auxiliaryRepository.repositoryUrl = 'auxurl';
+            comp.programmingExercise.auxiliaryRepositories = [auxiliaryRepository];
+            const returned = comp.updateCheckoutDirectory(auxiliaryRepository)('new-value');
+            expect(auxiliaryRepository.checkoutDirectory).toBe('new-value');
+            expect(returned).toBe('new-value');
+        });
+
+        it('should update AuxiliaryRepository name', () => {
+            const auxiliaryRepository = new AuxiliaryRepository();
+            auxiliaryRepository.checkoutDirectory = 'aux';
+            auxiliaryRepository.name = 'aux';
+            auxiliaryRepository.repositoryUrl = 'auxurl';
+            comp.programmingExercise.auxiliaryRepositories = [auxiliaryRepository];
+            const returned = comp.updateRepositoryName(auxiliaryRepository)('new-value');
+            expect(auxiliaryRepository.name).toBe('new-value');
+            expect(returned).toBe('new-value');
+        });
+
         it('should find no validation errors for valid input', () => {
             comp.programmingExercise.title = 'New title';
             comp.programmingExercise.shortName = 'home2';
@@ -924,7 +953,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.exerciseCategories).toBe(categories);
     }));
 
-    function verifyImport() {
+    function verifyImport(importedProgrammingExercise: ProgrammingExercise) {
         expect(comp.programmingExercise.projectKey).toBeUndefined();
         expect(comp.programmingExercise.id).toBeUndefined();
         expect(comp.programmingExercise.dueDate).toBeUndefined();
@@ -943,6 +972,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         // allow manual feedback requests and complaints for automatic assessments should be set to false because we reset all dates and hence they can only be false
         expect(comp.programmingExercise.allowManualFeedbackRequests).toBeFalse();
         expect(comp.programmingExercise.allowComplaintsForAutomaticAssessments).toBeFalse();
+        // name and short name should also be imported
+        expect(comp.programmingExercise.title).toEqual(importedProgrammingExercise.title);
+        expect(comp.programmingExercise.shortName).toEqual(importedProgrammingExercise.shortName);
     }
 });
 

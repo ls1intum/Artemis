@@ -143,9 +143,9 @@ public class IrisConnectorService {
 
     private String tryExtractErrorMessage(HttpStatusCodeException ex) {
         try {
-            return objectMapper.readTree(ex.getResponseBodyAsString()).get("detail").get("errorMessage").asText();
+            return objectMapper.readTree(ex.getResponseBodyAsString()).required("detail").required("errorMessage").asText();
         }
-        catch (JsonProcessingException e) {
+        catch (JsonProcessingException | IllegalArgumentException e) {
             log.error("Failed to parse error message from Pyris", e);
             return "";
         }

@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
 import de.tum.in.www1.artemis.util.IrisUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
-class IrisMessageIntegrationTest extends AbstractIrisIntegrationTest {
+class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "irismessageintegration";
 
