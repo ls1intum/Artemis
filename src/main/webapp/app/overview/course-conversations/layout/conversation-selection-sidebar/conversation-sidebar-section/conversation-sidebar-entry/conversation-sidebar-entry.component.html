@@ -1,4 +1,4 @@
-<div class="conversation-list-entry" *ngIf="conversation" [class.active]="isActiveConversation">
+<div class="conversation-list-entry" *ngIf="conversation" [class.active]="isActiveConversation" [class.muted]="isMutedConversation">
     <div>
         <span class="conversation-name">
             <ng-container *ngIf="conversationAsChannel">

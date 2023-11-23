@@ -56,6 +56,6 @@ export abstract class ConversationDto {
  * Conversation Notifications Setting
  */
 export enum ConversationNotificationsSetting {
-    MUTED = 'MUTED',
     UNMUTED = 'UNMUTED',
+    MUTED = 'MUTED',
 }

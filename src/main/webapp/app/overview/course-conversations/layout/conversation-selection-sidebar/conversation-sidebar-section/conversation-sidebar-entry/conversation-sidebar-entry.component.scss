@@ -16,6 +16,10 @@
         color: var(--metis-conversation-sidebar-active);
     }
 
+    &.muted {
+        color: var(--metis-conversation-sidebar-muted);
+    }
+
     .interaction {
         visibility: hidden;
     }
