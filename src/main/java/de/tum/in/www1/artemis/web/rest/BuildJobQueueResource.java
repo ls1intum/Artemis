@@ -50,7 +50,7 @@ public class BuildJobQueueResource {
         log.debug("REST request to get the queued build jobs for course {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
-            throw new AccessForbiddenException("You are not allowed to manage exams in this course!");
+            throw new AccessForbiddenException("You are not allowed to access queued build jobs of this course!");
         }
         List<LocalCIBuildJobQueueItem> buildJobQueue = localCIBuildJobQueueService.getQueuedJobsForCourse(courseId);
         return ResponseEntity.ok(buildJobQueue);
@@ -68,7 +68,7 @@ public class BuildJobQueueResource {
         log.debug("REST request to get the running build jobs for course {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
-            throw new AccessForbiddenException("You are not allowed to manage exams in this course!");
+            throw new AccessForbiddenException("You are not allowed to access running build jobs of this course!");
         }
         List<LocalCIBuildJobQueueItem> runningBuildJobs = localCIBuildJobQueueService.getProcessingJobsForCourse(courseId);
         return ResponseEntity.ok(runningBuildJobs);
