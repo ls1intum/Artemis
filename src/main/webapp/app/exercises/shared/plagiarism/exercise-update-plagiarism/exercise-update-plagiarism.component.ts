@@ -18,6 +18,13 @@ export class ExerciseUpdatePlagiarismComponent implements OnInit {
         }
     }
 
+    toggleCPCEnabled() {
+        const config = this.exercise.plagiarismDetectionConfig!;
+        const newValue = !config.continuousPlagiarismControlEnabled;
+        config.continuousPlagiarismControlEnabled = newValue;
+        config.continuousPlagiarismControlPostDueDateChecksEnabled = newValue;
+    }
+
     /**
      * Return the translation identifier of the minimum size tooltip for the current exercise type.
      */
