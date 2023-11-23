@@ -76,8 +76,12 @@ public class LocalCISharedBuildJobQueueService {
     /**
      * Create build job item object and add it to the queue.
      *
+     * @param name            name of the build job
      * @param participationId participation id of the build job
      * @param commitHash      commit hash of the build job
+     * @param submissionDate  submission date of the build job
+     * @param priority        priority of the build job
+     * @param courseId        course id of the build job
      */
     public void addBuildJobInformation(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId) {
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, 0, 0, courseId);
