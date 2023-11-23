@@ -27,6 +27,11 @@ public class AdminBuildJobQueueResource {
         this.localCIBuildJobQueueService = localCIBuildJobQueueService;
     }
 
+    /**
+     * Returns the queued build jobs.
+     *
+     * @return the queued build jobs
+     */
     @GetMapping("/build-job-queue/queued")
     @EnforceAdmin
     public ResponseEntity<List<LocalCIBuildJobQueueItem>> getQueuedBuildJobs() {
@@ -35,6 +40,11 @@ public class AdminBuildJobQueueResource {
         return ResponseEntity.ok(buildJobQueue);
     }
 
+    /**
+     * Returns the running build jobs.
+     *
+     * @return the running build jobs
+     */
     @GetMapping("/build-job-queue/running")
     @EnforceAdmin
     public ResponseEntity<List<LocalCIBuildJobQueueItem>> getRunningBuildJobs() {

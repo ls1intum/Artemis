@@ -38,6 +38,12 @@ public class BuildJobQueueResource {
         this.courseRepository = courseRepository;
     }
 
+    /**
+     * Returns the queued build jobs for the given course.
+     *
+     * @param courseId the id of the course for which to get the queued build jobs
+     * @return the queued build jobs
+     */
     @GetMapping("/build-job-queue/queued/{courseId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<LocalCIBuildJobQueueItem>> getQueuedBuildJobsForCourse(Long courseId) {
@@ -50,6 +56,12 @@ public class BuildJobQueueResource {
         return ResponseEntity.ok(buildJobQueue);
     }
 
+    /**
+     * Returns the running build jobs for the given course.
+     *
+     * @param courseId the id of the course for which to get the running build jobs
+     * @return the running build jobs
+     */
     @GetMapping("/build-job-queue/running/{courseId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<LocalCIBuildJobQueueItem>> getRunningBuildJobsForCourse(Long courseId) {
