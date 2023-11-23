@@ -168,12 +168,12 @@
             class="form-check-input"
             name="releaseTestsWithExampleSolution"
             [checked]="exercise.releaseTestsWithExampleSolution"
-            [disabled]="!exercise.exampleSolutionPublicationDate || readOnly"
+            [disabled]="(!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate) || readOnly"
             id="releaseTestsWithExampleSolution"
             (change)="toggleReleaseTests()"
         />
         <label
-            [ngStyle]="!exercise.exampleSolutionPublicationDate && !readOnly ? { color: 'grey' } : {}"
+            [ngStyle]="!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate && !readOnly ? { color: 'grey' } : {}"
             class="form-control-label"
             for="releaseTestsWithExampleSolution"
             jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"
