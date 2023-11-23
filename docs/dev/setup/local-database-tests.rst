@@ -8,7 +8,7 @@ Prerequisites
 
 Database tests are the standard server integration tests executed against a real database (MySQL or Postgres) started as Docker containers. The Gradle test task will automatically pull the necessary images and start the containers.
 
-Before running those tests, make sure that the following steps were executed:
+Before running those tests, make sure you have got a working Docker setup:
 
 1. Install `Docker Desktop <https://docs.docker.com/desktop/#docker-for-mac>`__ or `Docker Engine and Docker CLI <https://docs.docker.com/engine/install/>`__.
 2. Enable `remote access for Docker daemon <https://docs.docker.com/config/daemon/remote-access/>`__.
