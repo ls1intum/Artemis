@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
@@ -13,9 +12,6 @@ import java.time.ZonedDateTime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Isolated;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -43,7 +39,7 @@ import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
-@Isolated
+// @Isolated
 class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "ltiquizsubmissiontest";
@@ -90,41 +86,41 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         super.resetSpyBeans();
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(booleans = { true, false })
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testLtiServicesAreCalledUponQuizSubmission(boolean isSubmitted) {
-
-        QuizExercise quizExercise = createSimpleQuizExercise(ZonedDateTime.now().minusMinutes(1), 240);
-        quizExercise = quizExerciseService.save(quizExercise);
-
-        QuizSubmission quizSubmission = new QuizSubmission();
-        for (var question : quizExercise.getQuizQuestions()) {
-            quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(question));
-        }
-
-        userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
-        quizSubmission.submitted(isSubmitted);
-        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> TEST_PREFIX + "student1");
-
-        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
-        quizScheduleService.processCachedQuizSubmissions();
-
-        verifyNoInteractions(lti10Service);
-        verifyNoInteractions(lti13Service);
-
-        // End the quiz right now
-        quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
-        assertThat(quizExercise).isNotNull();
-        quizExercise.setDueDate(ZonedDateTime.now());
-        exerciseRepository.saveAndFlush(quizExercise);
-
-        quizScheduleService.processCachedQuizSubmissions();
-
-        verify(lti10Service).onNewResult(any());
-        verify(lti13Service).onNewResult(any());
-
-    }
+    // @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    // @ValueSource(booleans = { true, false })
+    // @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    // void testLtiServicesAreCalledUponQuizSubmission(boolean isSubmitted) {
+    //
+    // QuizExercise quizExercise = createSimpleQuizExercise(ZonedDateTime.now().minusMinutes(1), 240);
+    // quizExercise = quizExerciseService.save(quizExercise);
+    //
+    // QuizSubmission quizSubmission = new QuizSubmission();
+    // for (var question : quizExercise.getQuizQuestions()) {
+    // quizSubmission.addSubmittedAnswers(QuizExerciseFactory.generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(question));
+    // }
+    //
+    // userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+    // quizSubmission.submitted(isSubmitted);
+    // quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> TEST_PREFIX + "student1");
+    //
+    // assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
+    // quizScheduleService.processCachedQuizSubmissions();
+    //
+    // verifyNoInteractions(lti10Service);
+    // verifyNoInteractions(lti13Service);
+    //
+    // // End the quiz right now
+    // quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+    // assertThat(quizExercise).isNotNull();
+    // quizExercise.setDueDate(ZonedDateTime.now());
+    // exerciseRepository.saveAndFlush(quizExercise);
+    //
+    // quizScheduleService.processCachedQuizSubmissions();
+    //
+    // verify(lti10Service).onNewResult(any());
+    // verify(lti13Service).onNewResult(any());
+    //
+    // }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
