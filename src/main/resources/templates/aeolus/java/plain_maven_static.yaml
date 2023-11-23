@@ -1,0 +1,28 @@
+api: v0.0.1
+metadata:
+    name: java-maven
+    id: java-windfile
+    description: Build Plan for a java Exercise with maven
+actions:
+    - name: maven
+      script: mvn clean test
+      runAlways: false
+    - name: static-code-analysis
+      script: mvn spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd
+      runAlways: true
+      results:
+          - name: spotbugs
+            path: target/spotbugsXml.xml
+          - name: checkstyle
+            path: target/checkstyle-result.xml
+          - name: pmd
+            path: target/pmd.xml
+          - name: pmd_cpd
+            path: target/cpd.xml
+    - name: junit
+      parameters:
+          ignore_time: false
+          test_results: '**/target/surefire-reports/*.xml'
+      platform: bamboo
+      kind: junit
+      runAlways: true

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType, WindFile } from 'app/entities/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class AeolusService {
@@ -27,5 +27,9 @@ export class AeolusService {
             testCoverage: !!coverage,
         };
         return this.http.get<string>(`${this.resourceUrl}/templates/` + path, { responseType: 'text' as 'json', params });
+    }
+
+    generatePreview(windfile: WindFile): Observable<string> {
+        return this.http.post<string>(`http://localhost:8090/generate/cli`, windfile, { responseType: 'text' as 'json' });
     }
 }

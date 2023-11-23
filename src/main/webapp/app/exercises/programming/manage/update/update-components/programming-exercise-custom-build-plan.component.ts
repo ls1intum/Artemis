@@ -26,6 +26,15 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     active?: BuildAction = undefined;
 
     private _editor?: AceEditorComponent;
+    private _genereditor?: AceEditorComponent;
+
+    @ViewChild('generetoreditor', { static: false }) set genereditor(value: AceEditorComponent) {
+        this._genereditor = value;
+        if (this._genereditor) {
+            this.setupGeneratorEditor();
+            this._genereditor.setText('#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0');
+        }
+    }
 
     @ViewChild('editor', { static: false }) set editor(value: AceEditorComponent) {
         this._editor = value;
@@ -87,11 +96,25 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                             const windFile: WindFile = Object.assign(new WindFile(), templateFile);
                             const actions: BuildAction[] = [];
                             templateFile.actions.forEach((anyAction: any) => {
+                                let action: BuildAction | undefined = undefined;
                                 if (anyAction.class === 'script-action' || anyAction.script) {
-                                    actions.push(Object.assign(new ScriptAction(), anyAction));
+                                    action = Object.assign(new ScriptAction(), anyAction);
                                 } else {
-                                    actions.push(Object.assign(new PlatformAction(), anyAction));
+                                    action = Object.assign(new PlatformAction(), anyAction);
                                 }
+                                if (!action) {
+                                    return;
+                                }
+                                action.parameters = new Map<string, string | boolean | number>();
+                                if (anyAction.parameters) {
+                                    for (const key of Object.keys(anyAction.parameters)) {
+                                        console.log(key);
+                                        console.log(anyAction.parameters[key]);
+                                        action.parameters.set(key, anyAction.parameters[key]);
+                                        console.log(action.parameters.keys());
+                                    }
+                                }
+                                actions.push(action);
                             });
                             windFile.actions = actions;
                             this.programmingExercise.windFile = windFile;
@@ -160,10 +183,51 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         }
     }
 
+    addParameter(): void {
+        if (this.active) {
+            if (!this.active.parameters) {
+                this.active.parameters = new Map<string, string | boolean | number>();
+            }
+            this.active.parameters.set('newParameter' + this.active.parameters.size, 'newValue');
+        }
+    }
+
+    deleteParameter(key: string): void {
+        if (this.active && this.active.parameters) {
+            this.active.parameters.delete(key);
+        }
+    }
+
     codeChanged(code: string): void {
         if (this.active instanceof ScriptAction) {
             (this.active as ScriptAction).script = code;
+            if (this.programmingExercise.windFile) {
+                const copy: WindFile = Object.assign({}, this.programmingExercise.windFile);
+                copy.metadata.id = 'temp';
+                this.aeolusService.generatePreview(this.programmingExercise.windFile).subscribe({
+                    next: (file) => {
+                        this.genereditor?.setText(file);
+                    },
+                    error: () => {
+                        this.genereditor?.setText('#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0');
+                    },
+                });
+            }
         }
+    }
+
+    protected getParameterKeys(): string[] {
+        if (this.active && this.active.parameters) {
+            return Array.from(this.active.parameters.keys());
+        }
+        return [];
+    }
+
+    protected getParameter(key: string): string | number | boolean {
+        if (this.active) {
+            return this.active.parameters.get(key) ?? '';
+        }
+        return '';
     }
 
     /**
@@ -184,6 +248,27 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             mode: 'ace/mode/sh',
         });
         this._editor.getEditor().renderer.setOptions({
+            showFoldWidgets: false,
+        });
+    }
+    /**
+     * Sets up an ace editor for the template or solution file.
+     */
+    setupGeneratorEditor(): void {
+        if (!this._genereditor) {
+            return;
+        }
+        this._genereditor.getEditor().setOptions({
+            animatedScroll: true,
+            maxLines: 20,
+            showPrintMargin: false,
+            readOnly: false,
+            highlightActiveLine: false,
+            highlightGutterLine: false,
+            minLines: 20,
+            mode: 'ace/mode/sh',
+        });
+        this._genereditor.getEditor().renderer.setOptions({
             showFoldWidgets: false,
         });
     }

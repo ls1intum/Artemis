@@ -15,6 +15,14 @@ export class BuildAction {
     runAlways: boolean;
     class: string;
     workdir: string;
+    results?: AeolusResult[];
+    parameters: Map<string, string | boolean | number>;
+}
+
+export class AeolusResult {
+    name: string;
+    path: string;
+    ignore: string;
 }
 
 export class ScriptAction extends BuildAction {
@@ -25,7 +33,6 @@ export class ScriptAction extends BuildAction {
 export class PlatformAction extends BuildAction {
     type: string;
     class: string = 'platform-action';
-    parameters: Map<string, string | boolean | number>;
     kind: string;
 }
 

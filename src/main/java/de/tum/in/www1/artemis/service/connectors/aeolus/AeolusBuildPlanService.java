@@ -16,22 +16,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService;
-
-/**
- * Service for publishing custom build plans using Aeolus, currently supports Bamboo
-import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsInternalUrlService;
 
 /**
  * Service for publishing custom build plans using Aeolus, supports Bamboo and Jenkins

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,9 +14,11 @@ public abstract class Action {
 
     private Map<String, Object> environment;
 
-    private boolean runAlways;
+    private List<AeolusResult> results;
 
     private String workdir;
+
+    private boolean runAlways;
 
     public Map<String, Object> getParameters() {
         return parameters;
@@ -47,6 +50,14 @@ public abstract class Action {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public List<AeolusResult> getResults() {
+        return results;
+    }
+
+    public void setResults(List<AeolusResult> results) {
+        this.results = results;
     }
 
     public String getWorkdir() {

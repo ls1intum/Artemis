@@ -4,14 +4,9 @@ metadata:
     id: java-windfile
     description: Build Plan for a java Exercise
 actions:
-    - name: gradle
-      script: |
-        chmod +x gradlew
-        ./gradlew clean test
+    - name: tests
+      script: ./gradlew clean test tiaTests --run-all-tests
       runAlways: false
-      parameters:
-          ignore_time: false
-          test_results: '**/test-results/test/*.xml'
     - name: junit
       parameters:
           ignore_time: false
@@ -22,3 +17,6 @@ actions:
     - name: setup_working_directory_for_cleanup
       script: chmod -R 777 ${WORKDIR}
       runAlways: true
+      results:
+          - name: testwiseCoverageReport
+            path: build/reports/testwise-coverage/tiaTests/tiaTests.json
