@@ -45,7 +45,7 @@
                             : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.favorite' | artemisTranslate)
                     }}
                 </button>
-                <button class="mute" ngbDropdownItem (click)="onMuteClicked($event)">
+                <button class="notificationsSetting" ngbDropdownItem (click)="onNotificationsSettingClicked($event)">
                     <div [ngSwitch]="conversation.notificationsSetting">
                         <div *ngSwitchCase="'MUTED'">{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.unmute' | artemisTranslate }}</div>
                         <div *ngSwitchCase="'UNMUTED'">{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.mute' | artemisTranslate }}</div>

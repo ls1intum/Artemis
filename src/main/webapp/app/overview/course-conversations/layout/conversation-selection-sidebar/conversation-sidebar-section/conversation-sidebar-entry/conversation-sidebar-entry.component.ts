@@ -94,7 +94,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
         this.favorite$.next(!this.conversation.isFavorite);
     }
 
-    onMuteClicked($event: MouseEvent) {
+    onNotificationsSettingClicked($event: MouseEvent) {
         $event.stopPropagation();
         switch (this.conversation.notificationsSetting) {
             case ConversationNotificationsSetting.MUTED:

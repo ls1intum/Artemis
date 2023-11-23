@@ -133,14 +133,7 @@ public class ConversationResource extends ConversationManagementResource {
         checkMessagingEnabledElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        switch (notificationsSetting) {
-            case MUTED:
-                conversationService.setNotificationsSetting(conversationId, requestingUser, ConversationNotificationsSetting.UNMUTED);
-                break;
-            case UNMUTED:
-                conversationService.setNotificationsSetting(conversationId, requestingUser, ConversationNotificationsSetting.MUTED);
-                break;
-        }
+        conversationService.setNotificationsSetting(conversationId, requestingUser, notificationsSetting);
         return ResponseEntity.ok().build();
     }
 
