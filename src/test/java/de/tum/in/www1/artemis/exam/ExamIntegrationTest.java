@@ -45,7 +45,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
@@ -137,9 +136,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private ExamUserRepository examUserRepository;
-
-    @Autowired
-    private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
     private QuizPoolService quizPoolService;
@@ -308,14 +304,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private void setupGroupsAndQuestionsForQuizPool(QuizPool quizPool) {
-        QuizGroup quizGroup0 = quizExerciseUtilService.createQuizGroup("Encapsulation");
-        QuizGroup quizGroup1 = quizExerciseUtilService.createQuizGroup("Inheritance");
-        QuizGroup quizGroup2 = quizExerciseUtilService.createQuizGroup("Polymorphism");
-        QuizQuestion mcQuizQuestion0 = quizExerciseUtilService.createMultipleChoiceQuestionWithTitleAndGroup("MC 0", quizGroup0);
-        QuizQuestion mcQuizQuestion1 = quizExerciseUtilService.createMultipleChoiceQuestionWithTitleAndGroup("MC 1", quizGroup0);
-        QuizQuestion dndQuizQuestion0 = quizExerciseUtilService.createDragAndDropQuestionWithTitleAndGroup("DND 0", quizGroup1);
-        QuizQuestion dndQuizQuestion1 = quizExerciseUtilService.createDragAndDropQuestionWithTitleAndGroup("DND 1", quizGroup2);
-        QuizQuestion saQuizQuestion0 = quizExerciseUtilService.createShortAnswerQuestionWithTitleAndGroup("SA 0", null);
+        QuizGroup quizGroup0 = QuizExerciseFactory.createQuizGroup("Encapsulation");
+        QuizGroup quizGroup1 = QuizExerciseFactory.createQuizGroup("Inheritance");
+        QuizGroup quizGroup2 = QuizExerciseFactory.createQuizGroup("Polymorphism");
+        QuizQuestion mcQuizQuestion0 = QuizExerciseFactory.createMultipleChoiceQuestionWithTitleAndGroup("MC 0", quizGroup0);
+        QuizQuestion mcQuizQuestion1 = QuizExerciseFactory.createMultipleChoiceQuestionWithTitleAndGroup("MC 1", quizGroup0);
+        QuizQuestion dndQuizQuestion0 = QuizExerciseFactory.createDragAndDropQuestionWithTitleAndGroup("DND 0", quizGroup1);
+        QuizQuestion dndQuizQuestion1 = QuizExerciseFactory.createDragAndDropQuestionWithTitleAndGroup("DND 1", quizGroup2);
+        QuizQuestion saQuizQuestion0 = QuizExerciseFactory.createShortAnswerQuestionWithTitleAndGroup("SA 0", null);
         quizPool.setQuizGroups(List.of(quizGroup0, quizGroup1, quizGroup2));
         quizPool.setQuizQuestions(List.of(mcQuizQuestion0, mcQuizQuestion1, dndQuizQuestion0, dndQuizQuestion1, saQuizQuestion0));
     }
