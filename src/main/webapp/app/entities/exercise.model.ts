@@ -63,6 +63,14 @@ export enum IncludedInOverallScore {
     NOT_INCLUDED = 'NOT_INCLUDED',
 }
 
+export const DEFAULT_PLAGIARISM_DETECTION_CONFIG: PlagiarismDetectionConfig = {
+    continuousPlagiarismControlEnabled: false,
+    continuousPlagiarismControlPostDueDateChecksEnabled: false,
+    similarityThreshold: 90,
+    minimumSize: 50,
+    minimumScore: 0,
+};
+
 export abstract class Exercise implements BaseEntity {
     public id?: number;
     public problemStatement?: string;
@@ -97,13 +105,7 @@ export abstract class Exercise implements BaseEntity {
     public exerciseGroup?: ExerciseGroup;
     public competencies?: Competency[];
 
-    public plagiarismDetectionConfig?: PlagiarismDetectionConfig = {
-        continuousPlagiarismControlEnabled: false,
-        continuousPlagiarismControlPostDueDateChecksEnabled: true,
-        similarityThreshold: 90,
-        minimumSize: 50,
-        minimumScore: 0,
-    }; // default value
+    public plagiarismDetectionConfig?: PlagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG; // default value
 
     // transient objects which might not be set
     public numberOfSubmissions?: DueDateStat;
