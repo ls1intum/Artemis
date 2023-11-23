@@ -32,5 +32,6 @@ Executing tests from console
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Database tests can be executed by running the dedicated Gradle command:
+
 * For MySQL tests: `SPRING_PROFILES_INCLUDE=mysql ./gradlew cleanTest test -x webapp`.
 * For Postgres tests: `SPRING_PROFILES_INCLUDE=postgres ./gradlew cleanTest test -x webapp`.
