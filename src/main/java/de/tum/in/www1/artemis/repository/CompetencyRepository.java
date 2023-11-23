@@ -68,7 +68,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                     ON participations.student.id = :userId
                 LEFT JOIN participations.submissions submissions
                     ON submissions.participation.id = participations.id
-                LEFT JOIN submissions.results results
+                LEFT JOIN participations.results results
                     ON results.submission.id = submissions.id
                 LEFT JOIN FETCH competency.lectureUnits lectureUnits
                 LEFT JOIN lectureUnits.completedUsers completedUsers
@@ -76,7 +76,8 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lectureUnits.lecture
             WHERE competency.id = :competencyId
             """)
-    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "exercises.studentParticipations", "exercises.studentParticipations.submissions", "lectureUnits.completedUsers" })
+    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "exercises.studentParticipations", "exercises.studentParticipations.submissions",
+            "exercises.studentParticipations.results", "lectureUnits.completedUsers" })
     Optional<Competency> findByIdWithExercisesAndParticipationsAndLectureUnitsAndProgressForUser(@Param("competencyId") long competencyId, @Param("userId") long userId);
 
     @Query("""
