@@ -76,7 +76,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN FETCH lectureUnits.lecture
             WHERE competency.id = :competencyId
             """)
-    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "exercises.studentParticipations", "lectureUnits.completedUsers" })
+    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "exercises.studentParticipations", "exercises.studentParticipations.submissions", "lectureUnits.completedUsers" })
     Optional<Competency> findByIdWithExercisesAndParticipationsAndLectureUnitsAndProgressForUser(@Param("competencyId") long competencyId, @Param("userId") long userId);
 
     @Query("""
