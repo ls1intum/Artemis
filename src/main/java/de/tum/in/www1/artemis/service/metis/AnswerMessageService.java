@@ -105,6 +105,7 @@ public class AnswerMessageService extends PostingService {
         answerMessage.setResolvesPost(false);
         AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
         savedAnswerMessage.getPost().setConversation(conversation);
+        setAuthorRoleForPosting(savedAnswerMessage, course);
         this.preparePostAndBroadcast(savedAnswerMessage, course);
         this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, mentionedUsers, savedAnswerMessage, author);
         return savedAnswerMessage;
