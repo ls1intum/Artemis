@@ -298,17 +298,12 @@ public class ConversationDTOService {
         var participantOptional = Optional.ofNullable(conversationSummary.userConversationInfo().getConversationParticipantSettingsView());
 
         conversationDTO.setIsMember(participantOptional.isPresent());
+        conversationDTO.setIsFavorite(participantOptional.map(ConversationParticipantSettingsView::isFavorite).orElse(false));
+        conversationDTO.setIsHidden(participantOptional.map(ConversationParticipantSettingsView::isHidden).orElse(false));
+        conversationDTO
+                .setNotificationsSetting(participantOptional.map(ConversationParticipantSettingsView::notificationsSetting).orElse(ConversationNotificationsSetting.UNMUTED));
 
-        participantOptional.ifPresentOrElse(participant -> {
-            conversationDTO.setIsFavorite(participant.isFavorite());
-            conversationDTO.setIsHidden(participant.isHidden());
-            conversationDTO.setNotificationsSetting(participant.notificationsSetting());
-            conversationDTO.setLastMessageDate(participant.lastRead());
-        }, () -> {
-            conversationDTO.setIsFavorite(false);
-            conversationDTO.setIsHidden(false);
-            conversationDTO.setNotificationsSetting(ConversationNotificationsSetting.UNMUTED);
-        });
+        participantOptional.ifPresent(participant -> conversationDTO.setLastReadDate(participant.lastRead()));
 
         conversationDTO.setUnreadMessagesCount(conversationSummary.userConversationInfo().getUnreadMessagesCount());
         conversationDTO.setNumberOfMembers(conversationSummary.generalConversationInfo().getNumberOfParticipants());
