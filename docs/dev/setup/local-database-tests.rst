@@ -26,7 +26,7 @@ Or alternatively, by creating a custom configuration. The screenshot below prese
 .. figure:: intellij-postgres-tests-run-configuration.png
    :align: center
    :scale: 50 %
-   :alt: An example of IntelliJ run configuration fro starting Postgres server tests.
+   :alt: An example of IntelliJ run configuration for starting Postgres server tests.
 
 
 Executing tests from the console
