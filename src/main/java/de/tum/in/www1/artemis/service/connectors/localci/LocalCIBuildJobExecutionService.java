@@ -29,6 +29,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -202,7 +203,7 @@ public class LocalCIBuildJobExecutionService {
         localCIContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, auxiliaryRepositoriesPaths, auxiliaryRepositoryNames,
                 buildScriptPath);
 
-        localCIContainerService.runScriptInContainer(containerId);
+        List<BuildLogEntry> buildLogEntries = localCIContainerService.runScriptInContainer(containerId);
 
         log.info("Finished running the build script in container {}", containerName);
 
@@ -254,7 +255,7 @@ public class LocalCIBuildJobExecutionService {
         LocalCIBuildResult buildResult;
         try {
             buildResult = parseTestResults(testResultsTarInputStreams, branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
-            buildResult.setBuildLogEntries(localCIContainerService.getBuildLogEntries());
+            buildResult.setBuildLogEntries(buildLogEntries);
         }
         catch (IOException | XMLStreamException | IllegalStateException e) {
             throw new LocalCIException("Error while parsing test results", e);
