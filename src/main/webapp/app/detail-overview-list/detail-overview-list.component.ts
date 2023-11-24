@@ -22,6 +22,7 @@ interface Detail {
 export enum DetailType {
     Link,
     Text,
+    Date,
     Boolean,
     Markdown,
     ProgrammingRepositoryButtons,
@@ -37,6 +38,7 @@ export enum DetailType {
 @Component({
     selector: 'jhi-detail-overview-list',
     templateUrl: './detail-overview-list.component.html',
+    styleUrls: ['./detail-overview-list.component.scss'],
 })
 export class DetailOverviewListComponent implements OnInit {
     protected readonly DetailType = DetailType;

@@ -65,7 +65,7 @@
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Programmiersprache",
                     "problemStepTitle": "Aufgabenstellung",
                     "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
-                    "gradingStepTitle": "Benotung",
+                    "gradingStepTitle": "Bewertung",
                     "gradingStepMessage": "Definiere die Bewertungskriterien für diese Aufgabe und wie sich das Ergebnis auf die Gesamtnote des Kurses auswirkt"
                 },
                 "gradingLabels": {

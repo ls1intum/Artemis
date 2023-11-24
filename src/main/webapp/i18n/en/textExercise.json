@@ -7,6 +7,13 @@
                 "editLabel": "Edit Text Exercise",
                 "importLabel": "Import Text Exercise"
             },
+            "sections": {
+                "general": "General Information",
+                "mode": "Mode",
+                "grading": "Grading",
+                "problem": "Problem Statement",
+                "solution": "Example Solution"
+            },
             "submitButton": {
                 "create": "Create",
                 "import": "Import",

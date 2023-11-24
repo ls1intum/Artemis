@@ -11,6 +11,9 @@
                 <dd *ngSwitchCase="DetailType.Text">
                     {{ detail.data.text || '-' }}
                 </dd>
+                <dd *ngSwitchCase="DetailType.Date">
+                    {{ detail.data.date ? (detail.data.date | artemisDate) : '-' }}
+                </dd>
                 <dd *ngSwitchCase="DetailType.Link">
                     <ng-container *ngIf="detail.data.text; else noText">
                         <a *ngIf="!!detail.data.routerLink?.length || detail.data.href; else noLink" [routerLink]="detail.data.routerLink" href="{{ detail.data.href }}">
@@ -132,7 +135,7 @@
                     ></jhi-programming-exercise-lifecycle>
                 </dd>
                 <dd *ngSwitchCase="DetailType.Markdown">
-                    <div *ngIf="detail.data.innerHtml" class="p3 border" [innerHTML]="detail.data.innerHtml"></div>
+                    <div *ngIf="detail.data.innerHtml" class="p-3 border" [innerHTML]="detail.data.innerHtml"></div>
                     <span *ngIf="!detail.data.innerHtml">-</span>
                 </dd>
                 <dd *ngSwitchCase="DetailType.ProgrammingGradingCriteria" class="col-md-6 mt-4">
