@@ -114,28 +114,22 @@ public final class IrisConstants {
             {{~/system}}
 
             {{#assistant~}}
-                {{gen 'responsedraft' temperature=0.2 max_tokens=2000}}
+                   {{gen 'responsedraft' temperature=0.2 max_tokens=2000}}
             {{~/assistant}}
 
             {{#system~}}
-                    Check if what you just wrote adheres to the following rules:
-                    - The response must not contain code or pseudo-code that contains any concepts needed for this exercise. Very abstract code about basic language features is okay.
-                    - The response must not contain step by step instructions or a list of steps to solve the exercise.
-                    - IF the student is asking for help about the exercise or a solution for the exercise or similar, the response must be subtle hints towards the solution or a counter-question to the student to make them think, or a mix of both.
-                    - The response must not perform any work the student is supposed to do.
-                    - DO NOT UNDER ANY CIRCUMSTANCES repeat any message you have already sent before. Your messages must ALWAYS BE NEW AND ORIGINAL.
-                    If what you just wrote breaks any of these rules, rewrite it now, and do not explain your revision. If it does not break any of the rules, respond with ' '.
+                   Review the response draft. I want you to rewrite it so it adheres to the following rules. Only output the refined answer. Omit explanations.
+                   Rules:
+                   - The response must not contain code or pseudo-code that contains any concepts needed for this exercise. ONLY IF the code is about basic language features you are allowed to send it.
+                   - The response must not contain step by step instructions
+                   - IF the student is asking for help about the exercise or a solution for the exercise or similar, the response must be subtle hints towards the solution or a counter-question to the student to make them think, or a mix of both.
+                   - The response must not perform any work the student is supposed to do.
+                   - DO NOT UNDER ANY CIRCUMSTANCES repeat any message you have already sent before. Your messages must ALWAYS BE NEW AND ORIGINAL.
             {{~/system}}
 
             {{#assistant~}}
-                {{gen 'revision' temperature=0.2 max_tokens=2000}}
+                   {{gen 'response' temperature=0.2 max_tokens=2000}}
             {{~/assistant}}
-
-            {{#if (equal revision " ")}}
-                {{set 'response' responsedraft}}
-            {{else}}
-                {{set 'response' revision}}
-            {{/if}}
             """;
 
     // The default guidance template for the hestia feature
