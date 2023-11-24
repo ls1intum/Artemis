@@ -28,8 +28,8 @@
                             (!participation.results?.[correctionRound]?.assessmentType || participation.results?.[correctionRound]?.assessmentType === AssessmentType.AUTOMATIC
                                 ? 'assess'
                                 : participation.results?.[correctionRound]?.completionDate
-                                ? 'open'
-                                : 'continue') | artemisTranslate: { correctionRound: correctionRound + 1 }
+                                  ? 'open'
+                                  : 'continue') | artemisTranslate: { correctionRound: correctionRound + 1 }
                     }}
                 </ng-container>
                 <ng-template #complaint>
