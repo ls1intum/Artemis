@@ -102,7 +102,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private Boolean secondCorrectionEnabled = false;
 
     @Column(name = "feedback_suggestions_enabled") // enables Athena
-    private boolean feedbackSuggestionsEnabled = false;
+    private Boolean feedbackSuggestionsEnabled = false;
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
@@ -784,7 +784,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     public boolean getFeedbackSuggestionsEnabled() {
-        return feedbackSuggestionsEnabled;
+        return Boolean.TRUE.equals(feedbackSuggestionsEnabled);
     }
 
     public void setFeedbackSuggestionsEnabled(boolean feedbackSuggestionsEnabled) {
