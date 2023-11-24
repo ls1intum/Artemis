@@ -153,7 +153,7 @@ describe('GuidedTourService', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
+                imports: [ArtemisTestModule, FontAwesomeTestingModule],
                 declarations: [
                     GuidedTourComponent,
                     MockDirective(TranslateDirective),

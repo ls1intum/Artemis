@@ -23,6 +23,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Course LTI Configuration Component', () => {
     let comp: CourseLtiConfigurationComponent;
@@ -56,7 +57,7 @@ describe('Course LTI Configuration Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbNavModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, NgbNavModule, MockModule(NgbTooltipModule), FontAwesomeTestingModule],
             declarations: [
                 CourseLtiConfigurationComponent,
                 MockDirective(TranslateDirective),
