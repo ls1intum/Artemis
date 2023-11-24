@@ -62,9 +62,6 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.localInstances:true}")
     private boolean hazelcastLocalInstances;
 
-    @Value("${artemis.continuous-integration.priority-queue-enabled:true}")
-    private boolean priorityQueueEnabled;
-
     public CacheConfiguration(ServerProperties serverProperties, DiscoveryClient discoveryClient, ApplicationContext applicationContext) {
         this.serverProperties = serverProperties;
         this.discoveryClient = discoveryClient;
@@ -169,15 +166,7 @@ public class CacheConfiguration {
         QueueConfig queueConfig = new QueueConfig("default");
         queueConfig.setName("buildJobQueue");
         queueConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
-
-        if (priorityQueueEnabled) {
-            log.info("Using priority queue for local continuous integration");
-            queueConfig.setPriorityComparatorClassName("de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator");
-        }
-        else {
-            log.info("Priority queue disabled. Using FIFO queue for local continuous integration");
-        }
-
+        queueConfig.setPriorityComparatorClassName("de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator");
         config.addQueueConfig(queueConfig);
 
         QuizScheduleService.configureHazelcast(config);
