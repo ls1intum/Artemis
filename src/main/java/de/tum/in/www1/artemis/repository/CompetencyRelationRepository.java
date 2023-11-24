@@ -30,7 +30,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
     @Query("""
             DELETE FROM CompetencyRelation relation
             WHERE relation.headCompetency.id = :competencyId
-            OR relation.tailCompetency.id = :competencyId
+                OR relation.tailCompetency.id = :competencyId
             """)
     void deleteAllByCompetencyId(@Param("competencyId") Long competencyId);
 
