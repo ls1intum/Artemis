@@ -218,6 +218,9 @@ public class ProgrammingExerciseService {
         programmingExerciseRepositoryService.setupExerciseTemplate(programmingExercise, exerciseCreator);
         programmingSubmissionService.createInitialSubmissions(programmingExercise);
 
+        // make sure that plagiarism detection config does not use existing id
+        Optional.ofNullable(programmingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
+
         // Save programming exercise to prevent transient exception
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 

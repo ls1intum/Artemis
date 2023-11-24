@@ -426,6 +426,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
+    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig" })
+    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigById(Long exerciseId);
+
     long countByShortNameAndCourse(String shortName, Course course);
 
     long countByTitleAndCourse(String shortName, Course course);
@@ -443,6 +446,18 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @NotNull
     default ProgrammingExercise findByIdElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
         return findById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Find a programming exercise by its id and fetch related plagiarism detection config.
+     * Throws an EntityNotFoundException if the exercise cannot be found.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
+        return findWithPlagiarismDetectionConfigById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
     /**
