@@ -55,6 +55,7 @@ import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import * as Utils from 'app/shared/util/utils';
+import * as ExamUtils from 'app/exam/participate/exam.utils';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -375,6 +376,17 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.resultsArePublished).toBeFalse();
     });
 
+    it('should load exam summary when results are published', () => {
+        component.studentExam = studentExam;
+        const loadStudentExamGradeInfoForSummarySpy = jest.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        const isExamResultPublishedSpy = jest.spyOn(ExamUtils, 'isExamResultPublished').mockReturnValue(true);
+
+        component.ngOnInit();
+
+        expect(isExamResultPublishedSpy).toHaveBeenCalledOnce();
+        expect(loadStudentExamGradeInfoForSummarySpy).toHaveBeenCalledOnce();
+    });
+
     it('should correctly determine if it is after student review start', () => {
         const now = dayjs();
         const dateSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
@@ -530,16 +542,6 @@ describe('ExamResultSummaryComponent', () => {
             button.click();
             expect(toggleShowSampleSolutionSpy).toHaveBeenCalled();
         });
-    });
-
-    it('loads exam summary when results are published & testExam is set', () => {
-        component.isTestRun = true;
-        component.studentExam = studentExam;
-        const loadStudentExamGradeInfoForSummarySpy = jest.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
-
-        component.ngOnInit();
-
-        expect(loadStudentExamGradeInfoForSummarySpy).toHaveBeenCalledOnce();
     });
 
     describe('isExamResultPublished', () => {

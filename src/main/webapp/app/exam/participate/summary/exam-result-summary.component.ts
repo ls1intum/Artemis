@@ -22,6 +22,7 @@ import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } fro
 import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular-ivy';
 import { AlertService } from 'app/core/util/alert.service';
+import { isExamResultPublished } from 'app/exam/participate/exam.utils';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -154,7 +155,7 @@ export class ExamResultSummaryComponent implements OnInit {
             throw new Error('studentExam.user.id should be present to fetch grade info');
         }
 
-        if (this.isExamResultPublished()) {
+        if (isExamResultPublished(this.isTestRun, this.studentExam, this.serverDateService)) {
             this.examParticipationService
                 .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id, this.isTestRun)
                 .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
@@ -206,15 +207,6 @@ export class ExamResultSummaryComponent implements OnInit {
                 this.plagiarismCaseInfos = res.body ?? {};
             });
         }
-    }
-
-    private isExamResultPublished() {
-        if (this.isTestRun) {
-            return true;
-        }
-
-        const exam = this.studentExam.exam;
-        return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
 
     /**
