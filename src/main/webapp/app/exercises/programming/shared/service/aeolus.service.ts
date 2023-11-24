@@ -20,14 +20,12 @@ export class AeolusService {
      * @returns json test file
      */
     getAeolusTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): Observable<string> {
-        const urlParts: string[] = [language];
-        const params: string[] = [];
-        if (projectType) {
-            urlParts.push(projectType);
-        }
-        params.push('staticAnalysis=' + (staticAnalysis == undefined ? false : staticAnalysis));
-        params.push('sequentialRuns=' + (sequentialRuns == undefined ? false : sequentialRuns));
-        params.push('testCoverage=' + (coverage == undefined ? false : coverage));
-        return this.http.get<string>(`${this.resourceUrl}/templates/` + urlParts.join('/') + '?' + params.join('&'), { responseType: 'text' as 'json' });
+        const path: string = [language, projectType].filter(Boolean).join('/');
+        const params = {
+            staticAnalysis: !!staticAnalysis,
+            sequentialRuns: !!sequentialRuns,
+            testCoverage: !!coverage,
+        };
+        return this.http.get<string>(`${this.resourceUrl}/templates/` + path, { responseType: 'text' as 'json', params });
     }
 }
