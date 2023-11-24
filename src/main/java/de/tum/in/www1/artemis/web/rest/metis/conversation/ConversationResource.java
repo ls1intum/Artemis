@@ -17,7 +17,6 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.metis.ConversationNotificationsSetting;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -92,11 +91,11 @@ public class ConversationResource extends ConversationManagementResource {
      */
     @PostMapping("/{courseId}/conversations/{conversationId}/favorite")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> changeFavoriteStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isFavorite) {
+    public ResponseEntity<Void> updateIsFavorite(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isFavorite) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        conversationService.switchFavoriteStatus(conversationId, requestingUser, isFavorite);
+        conversationService.setIsFavorite(conversationId, requestingUser, isFavorite);
         return ResponseEntity.ok().build();
     }
 
@@ -110,30 +109,29 @@ public class ConversationResource extends ConversationManagementResource {
      */
     @PostMapping("/{courseId}/conversations/{conversationId}/hidden")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> switchHiddenStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isHidden) {
+    public ResponseEntity<Void> updateIsHidden(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isHidden) {
         checkMessagingOrCommunicationEnabledElseThrow(courseId);
         var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        conversationService.switchHiddenStatus(conversationId, requestingUser, isHidden);
+        conversationService.setIsHidden(conversationId, requestingUser, isHidden);
         return ResponseEntity.ok().build();
     }
 
     /**
-     * POST /api/courses/:courseId/conversations/:conversationId/notifications-setting : Updates the notifications setting of a conversation for the requesting user
+     * POST /api/courses/:courseId/conversations/:conversationId/muted : Updates a conversation's muted status for the requesting user
      *
-     * @param courseId             the id of the course
-     * @param conversationId       the id of the conversation
-     * @param notificationsSetting the new notfication setting
+     * @param courseId       the id of the course
+     * @param conversationId the id of the conversation
+     * @param isMuted        the new muted status
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("/{courseId}/conversations/{conversationId}/notifications-setting")
+    @PostMapping("/{courseId}/conversations/{conversationId}/muted")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> updateNotificationsSetting(@PathVariable Long courseId, @PathVariable Long conversationId,
-            @RequestParam ConversationNotificationsSetting notificationsSetting) {
+    public ResponseEntity<Void> updateIsMuted(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isMuted) {
         checkMessagingEnabledElseThrow(courseId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
-        conversationService.setNotificationsSetting(conversationId, requestingUser, notificationsSetting);
+        conversationService.setIsMuted(conversationId, requestingUser, isMuted);
         return ResponseEntity.ok().build();
     }
 

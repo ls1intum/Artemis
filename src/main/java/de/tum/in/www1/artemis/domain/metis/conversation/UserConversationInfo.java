@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.metis.conversation;
 
 import java.time.ZonedDateTime;
 
-import de.tum.in.www1.artemis.domain.metis.ConversationNotificationsSetting;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipantSettingsView;
 
 /**
@@ -16,10 +15,10 @@ public class UserConversationInfo {
 
     private final long unreadMessagesCount;
 
-    public UserConversationInfo(Long conversationId, Long participantId, Boolean isModerator, Boolean isFavorite, Boolean isHidden,
-            ConversationNotificationsSetting notificationsSetting, ZonedDateTime lastRead, long unreadMessagesCount) {
+    public UserConversationInfo(Long conversationId, Long participantId, Boolean isModerator, Boolean isFavorite, Boolean isHidden, Boolean isMuted, ZonedDateTime lastRead,
+            long unreadMessagesCount) {
         this.conversationId = conversationId;
-        this.conversationParticipant = new ConversationParticipantSettingsView(participantId, isModerator, isFavorite, isHidden, notificationsSetting, lastRead);
+        this.conversationParticipant = new ConversationParticipantSettingsView(participantId, isModerator, isFavorite, isHidden, isMuted, lastRead);
         this.unreadMessagesCount = unreadMessagesCount;
     }
 

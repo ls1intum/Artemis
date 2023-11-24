@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
-import de.tum.in.www1.artemis.domain.metis.ConversationNotificationsSetting;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -95,8 +94,7 @@ public class ConversationNotificationService {
             var conversationId = notification.getConversation().getId();
             var userIds = recipients.stream().map(User::getId).collect(Collectors.toSet());
             var conversationParticipants = conversationParticipantRepository.findConversationParticipantsByConversationId(conversationId);
-            var unmutedUsers = conversationParticipants.stream().filter(p -> p.getNotificationsSetting() == ConversationNotificationsSetting.UNMUTED)
-                    .map(ConversationParticipant::getUser).collect(Collectors.toSet());
+            var unmutedUsers = conversationParticipants.stream().filter(ConversationParticipant::getIsMuted).map(ConversationParticipant::getUser).collect(Collectors.toSet());
             notifees = recipients.stream().filter(mentionedUser -> unmutedUsers.contains(mentionedUser)).collect(Collectors.toSet());
         }
 

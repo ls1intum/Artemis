@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import de.tum.in.www1.artemis.domain.metis.ConversationNotificationsSetting;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -42,7 +41,7 @@ public class ConversationDTO {
     private Boolean isHidden;
 
     // property not taken from entity
-    private ConversationNotificationsSetting notificationsSetting;
+    private Boolean isMuted;
 
     // property not taken from entity
     private Boolean isCreator;
@@ -154,12 +153,12 @@ public class ConversationDTO {
         isHidden = hidden;
     }
 
-    public ConversationNotificationsSetting getNotificationsSetting() {
-        return notificationsSetting;
+    public Boolean getIsMuted() {
+        return isMuted;
     }
 
-    public void setNotificationsSetting(ConversationNotificationsSetting notificationsSetting) {
-        this.notificationsSetting = notificationsSetting;
+    public void setIsMuted(Boolean isMuted) {
+        this.isMuted = isMuted;
     }
 
     public ZonedDateTime getLastReadDate() {

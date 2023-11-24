@@ -55,7 +55,7 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
                  cp.isModerator,
                  cp.isFavorite,
                  cp.isHidden,
-                 cp.notificationsSetting,
+                 cp.isMuted,
                  cp.lastRead,
                  COUNT(p.id)
              )

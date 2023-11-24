@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.ConversationNotificationsSetting;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.conversation.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -385,7 +384,7 @@ public class ConversationService {
      * @param requestingUser the user that wants to switch the favorite status
      * @param favoriteStatus the new favorite status
      */
-    public void switchFavoriteStatus(Long conversationId, User requestingUser, Boolean favoriteStatus) {
+    public void setIsFavorite(Long conversationId, User requestingUser, Boolean favoriteStatus) {
         ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
         conversationParticipant.setIsFavorite(favoriteStatus);
         conversationParticipantRepository.save(conversationParticipant);
@@ -398,22 +397,22 @@ public class ConversationService {
      * @param requestingUser the user that wants to switch the hidden status
      * @param hiddenStatus   the new hidden status
      */
-    public void switchHiddenStatus(Long conversationId, User requestingUser, Boolean hiddenStatus) {
+    public void setIsHidden(Long conversationId, User requestingUser, Boolean hiddenStatus) {
         ConversationParticipant conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
         conversationParticipant.setIsHidden(hiddenStatus);
         conversationParticipantRepository.save(conversationParticipant);
     }
 
     /**
-     * Set the notifications setting of a conversation for a user
+     * Set the muted status of a conversation for a user
      *
-     * @param conversationId       the id of the conversation
-     * @param requestingUser       the user that wants to switch the muted status
-     * @param notificationsSetting the new muted status
+     * @param conversationId the id of the conversation
+     * @param requestingUser the user that wants to switch the muted status
+     * @param isMuted        the new muted status
      */
-    public void setNotificationsSetting(Long conversationId, User requestingUser, ConversationNotificationsSetting notificationsSetting) {
+    public void setIsMuted(Long conversationId, User requestingUser, Boolean isMuted) {
         var conversationParticipant = getOrCreateConversationParticipant(conversationId, requestingUser);
-        conversationParticipant.setNotificationsSetting(notificationsSetting);
+        conversationParticipant.setIsMuted(isMuted);
         conversationParticipantRepository.save(conversationParticipant);
     }
 
