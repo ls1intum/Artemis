@@ -167,7 +167,7 @@ export const mockCodeEditorWebsocketTestSuccess = {
 
 export const mockCodeEditorWebsocketStepException = {
     type: IrisCodeEditorWebsocketMessageType.STEP_EXCEPTION,
-    stepExecutionException: mockStepExecutionException,
+    executionException: mockStepExecutionException,
 } as IrisCodeEditorWebsocketDTO;
 
 export const mockCodeEditorWebsocketKnownError = {

@@ -51,7 +51,7 @@ export class IrisCodeEditorWebsocketDTO {
     type: IrisCodeEditorWebsocketMessageType;
     message?: IrisMessage;
     stepExecutionSuccess?: StepExecutionSuccess;
-    stepExecutionException?: StepExecutionException;
+    executionException?: StepExecutionException;
     errorTranslationKey?: IrisErrorMessageKey;
     translationParams?: Map<string, any>;
     rateLimitInfo?: IrisRateLimitInformation;
@@ -86,7 +86,7 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
                 this.handleStepSuccess(response.stepExecutionSuccess!);
                 break;
             case IrisCodeEditorWebsocketMessageType.STEP_EXCEPTION:
-                this.handleStepException(response.stepExecutionException!);
+                this.handleStepException(response.executionException!);
                 break;
             case IrisCodeEditorWebsocketMessageType.ERROR:
                 super.handleError(response.errorTranslationKey, response.translationParams);
