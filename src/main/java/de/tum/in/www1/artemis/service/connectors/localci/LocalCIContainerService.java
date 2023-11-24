@@ -103,6 +103,7 @@ public class LocalCIContainerService {
      * Run the script in the container and wait for it to finish before returning.
      *
      * @param containerId the id of the container in which the script should be run
+     * @return a list of {@link BuildLogEntry} that contains the logs of the script execution
      */
 
     public List<BuildLogEntry> runScriptInContainer(String containerId) {
