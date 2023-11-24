@@ -24,7 +24,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
@@ -40,7 +39,6 @@ describe('ProgrammingExercise Management Detail Component', () => {
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
     let statisticsService: StatisticsService;
     let exerciseService: ProgrammingExerciseService;
-    let modalService: NgbModal;
     let alertService: AlertService;
     let profileService: ProfileService;
     let programmingLanguageFeatureService: ProgrammingLanguageFeatureService;
@@ -132,7 +130,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
             .mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })));
         gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
         buildLogStatisticsStub = jest.spyOn(exerciseService, 'getBuildLogStatistics').mockReturnValue(of(buildLogStatistics));
-        modalService = fixture.debugElement.injector.get(NgbModal);
+
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
         jest.spyOn(programmingLanguageFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
             plagiarismCheckSupported: true,
@@ -141,19 +139,6 @@ describe('ProgrammingExercise Management Detail Component', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    it('should open git-diff', () => {
-        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
-        programmingExercise.id = 123;
-        comp.programmingExercise = programmingExercise;
-
-        jest.spyOn(modalService, 'open');
-
-        comp.showGitDiff();
-
-        expect(modalService.open).toHaveBeenCalledOnce();
-        expect(modalService.open).toHaveBeenCalledWith(GitDiffReportModalComponent, { size: 'xl' });
     });
 
     describe('onInit for course exercise', () => {
@@ -165,16 +150,16 @@ describe('ProgrammingExercise Management Detail Component', () => {
             route.data = of({ programmingExercise });
         });
 
-        it('should not be in exam mode', fakeAsync(() => {
+        it('should not be in exam mode', async () => {
             // WHEN
             comp.ngOnInit();
 
-            tick();
-
             // THEN
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
-            expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
+            expect(statisticsServiceStub).toHaveBeenCalledOnce();
+
+            await Promise.resolve();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
@@ -182,22 +167,26 @@ describe('ProgrammingExercise Management Detail Component', () => {
             expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
             expect(comp.programmingExercise.gitDiffReport).toBeDefined();
             expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
-        }));
-
-        it.each([true, false])('should only call service method to get build log statistics onInit if the user is at least an editor for this exercise', (isEditor: boolean) => {
-            const programmingExercise = new ProgrammingExercise(new Course(), undefined);
-            programmingExercise.id = 123;
-            programmingExercise.isAtLeastEditor = isEditor;
-            jest.spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
-                of({ body: programmingExercise } as unknown as HttpResponse<ProgrammingExercise>),
-            );
-            comp.ngOnInit();
-            if (isEditor) {
-                expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
-            } else {
-                expect(buildLogStatisticsStub).not.toHaveBeenCalled();
-            }
         });
+
+        it.each([true, false])(
+            'should only call service method to get build log statistics onInit if the user is at least an editor for this exercise',
+            async (isEditor: boolean) => {
+                const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+                programmingExercise.id = 123;
+                programmingExercise.isAtLeastEditor = isEditor;
+                jest.spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults').mockReturnValue(
+                    of({ body: programmingExercise } as unknown as HttpResponse<ProgrammingExercise>),
+                );
+                comp.ngOnInit();
+                await new Promise((r) => setTimeout(r, 100));
+                if (isEditor) {
+                    expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
+                } else {
+                    expect(buildLogStatisticsStub).not.toHaveBeenCalled();
+                }
+            },
+        );
     });
 
     describe('onInit for exam exercise', () => {
@@ -227,6 +216,20 @@ describe('ProgrammingExercise Management Detail Component', () => {
             expect(comp.programmingExercise.gitDiffReport).toBeDefined();
             expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
         }));
+    });
+
+    it('should create empty details', () => {
+        const programmingExercise = new ProgrammingExercise(new Course(), undefined);
+        programmingExercise.id = 123;
+        comp.programmingExercise = programmingExercise;
+
+        const sections = comp.getExerciseDetails();
+        expect(sections).toBeDefined();
+        for (const section of sections) {
+            for (const detail of section.details) {
+                expect(detail).toBeDefined();
+            }
+        }
     });
 
     it('should create structural solution entries', () => {

@@ -2,14 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DetailOverviewNavigationBarComponent } from 'app/shared/detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
-const sectionHeadlines = {
-    general: 'some.translation.key',
-    grading: 'another.translation.key',
-};
-
-const expectedSectionHeadlinesArray = [
-    { id: 'general', translationKey: sectionHeadlines.general },
-    { id: 'grading', translationKey: sectionHeadlines.grading },
+const sectionHeadlines = [
+    { id: 'general', translationKey: 'some.translation.key' },
+    { id: 'grading', translationKey: 'another.translation.key' },
 ];
 
 const headlineToScrollInto = {
@@ -40,7 +35,6 @@ describe('DetailOverviewNavigationBar', () => {
     it('should initialize', () => {
         component.sectionHeadlines = sectionHeadlines;
         fixture.detectChanges();
-        expect(component.sectionHeadlinesArray).toEqual(expectedSectionHeadlinesArray);
         expect(DetailOverviewNavigationBarComponent).not.toBeNull();
     });
 
