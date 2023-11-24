@@ -786,33 +786,49 @@ describe('IrisChatbotWidgetComponent', () => {
     it('should display not executed execution stage color', () => {
         const step = { ...mockExercisePlanStep, executionStage: ExecutionStage.NOT_EXECUTED };
         const getStepMock = jest.spyOn(component, 'getStepColor');
+        const getStatusMock = jest.spyOn(component, 'getStepStatus');
         component.getStepColor(step);
         expect(getStepMock).toHaveBeenCalledWith(step);
         expect(getStepMock).toHaveLastReturnedWith('var(--iris-chat-widget-background)');
+        component.getStepStatus(step);
+        expect(getStatusMock).toHaveBeenCalledWith(step);
+        expect(getStatusMock).toHaveLastReturnedWith('');
     });
 
     it('should display in progress execution stage color', () => {
         const step = { ...mockExercisePlanStep, executionStage: ExecutionStage.IN_PROGRESS };
         const getStepMock = jest.spyOn(component, 'getStepColor');
+        const getStatusMock = jest.spyOn(component, 'getStepStatus');
         component.getStepColor(step);
         expect(getStepMock).toHaveBeenCalledWith(step);
         expect(getStepMock).toHaveLastReturnedWith('#ffc107');
+        component.getStepStatus(step);
+        expect(getStatusMock).toHaveBeenCalledWith(step);
+        expect(getStatusMock).toHaveLastReturnedWith('Generating changes, please be patient...');
     });
 
     it('should display completed execution stage color', () => {
         const step = { ...mockExercisePlanStep, executionStage: ExecutionStage.COMPLETE };
         const getStepMock = jest.spyOn(component, 'getStepColor');
+        const getStatusMock = jest.spyOn(component, 'getStepStatus');
         component.getStepColor(step);
         expect(getStepMock).toHaveBeenCalledWith(step);
         expect(getStepMock).toHaveLastReturnedWith('#28a745');
+        component.getStepStatus(step);
+        expect(getStatusMock).toHaveBeenCalledWith(step);
+        expect(getStatusMock).toHaveLastReturnedWith('Changes applied.');
     });
 
     it('should display failed execution stage color', () => {
         const step = { ...mockExercisePlanStep, executionStage: ExecutionStage.FAILED };
         const getStepMock = jest.spyOn(component, 'getStepColor');
+        const getStatusMock = jest.spyOn(component, 'getStepStatus');
         component.getStepColor(step);
         expect(getStepMock).toHaveBeenCalledWith(step);
         expect(getStepMock).toHaveLastReturnedWith('#dc3545');
+        component.getStepStatus(step);
+        expect(getStatusMock).toHaveBeenCalledWith(step);
+        expect(getStatusMock).toHaveLastReturnedWith('Encountered an error.');
     });
 
     describe('clear chat session', () => {
