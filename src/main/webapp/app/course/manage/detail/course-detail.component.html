@@ -238,6 +238,26 @@
                     [innerHTML]="course.courseInformationSharingMessagingCodeOfConduct | htmlForMarkdown"
                 ></dd>
             </ng-container>
+            <div *ngIf="irisEnabled && irisChatEnabled">
+                <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.chat">Iris Chat</span></dt>
+                <dd>
+                    <jhi-iris-enabled [course]="course" [irisSubSettingsType]="CHAT" [disabled]="!isAdmin"></jhi-iris-enabled>
+                </dd>
+            </div>
+            <!-- TODO: Enable in future PR -->
+            <div *ngIf="false && irisEnabled && irisHestiaEnabled">
+                <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.hesita">Iris Hestia</span></dt>
+                <dd>
+                    <jhi-iris-enabled [course]="course" [irisSubSettingsType]="HESTIA" [disabled]="!isAdmin"></jhi-iris-enabled>
+                </dd>
+            </div>
+            <!-- TODO: Enable in future PR -->
+            <div *ngIf="false && irisEnabled && irisCodeEditorEnabled">
+                <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.codeEditor">Iris CodeEditor</span></dt>
+                <dd>
+                    <jhi-iris-enabled [course]="course" [irisSubSettingsType]="CODE_EDITOR" [disabled]="!isAdmin"></jhi-iris-enabled>
+                </dd>
+            </div>
         </dl>
     </div>
 </div>

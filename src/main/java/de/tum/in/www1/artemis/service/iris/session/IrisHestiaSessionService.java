@@ -19,12 +19,13 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.iris.*;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
+import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
@@ -87,14 +88,14 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         irisMessageService.saveMessage(userMessage, irisSession, IrisMessageSender.USER);
         irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
         Map<String, Object> parameters = Map.of("codeHint", irisSession.getCodeHint());
-        var irisSettings = irisSettingsService.getCombinedIrisSettings(irisSession.getCodeHint().getExercise(), false);
+        var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(irisSession.getCodeHint().getExercise(), false);
         try {
-            var irisMessage1 = irisConnectorService
-                    .sendRequest(irisSettings.getIrisHestiaSettings().getTemplate(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
+            var irisMessage1 = irisConnectorService.sendRequest(irisSettings.irisHestiaSettings().getTemplate(), irisSettings.irisHestiaSettings().getPreferredModel(), parameters)
+                    .get();
             irisMessageService.saveMessage(irisMessage1.message(), irisSession, IrisMessageSender.LLM);
             irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
-            var irisMessage2 = irisConnectorService
-                    .sendRequest(irisSettings.getIrisHestiaSettings().getTemplate(), irisSettings.getIrisHestiaSettings().getPreferredModel(), parameters).get();
+            var irisMessage2 = irisConnectorService.sendRequest(irisSettings.irisHestiaSettings().getTemplate(), irisSettings.irisHestiaSettings().getPreferredModel(), parameters)
+                    .get();
             irisMessageService.saveMessage(irisMessage2.message(), irisSession, IrisMessageSender.LLM);
 
             codeHint.setContent(irisMessage1.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
@@ -179,6 +180,6 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
     @Override
     public void checkIsIrisActivated(IrisSession session) {
         var irisHestiaSession = castToSessionType(session, IrisHestiaSession.class);
-        irisSettingsService.checkIsIrisHestiaSessionEnabledElseThrow(irisHestiaSession.getCodeHint().getExercise());
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.HESTIA, irisHestiaSession.getCodeHint().getExercise());
     }
 }
