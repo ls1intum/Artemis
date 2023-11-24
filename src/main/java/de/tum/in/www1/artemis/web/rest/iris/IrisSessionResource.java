@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisChatSessionRepository;
@@ -21,7 +22,7 @@ import de.tum.in.www1.artemis.service.connectors.iris.IrisHealthIndicator;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisStatusDTO;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
-import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
+import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 
 /**
  * REST controller for managing {@link IrisSession}.
@@ -70,7 +71,7 @@ public class IrisSessionResource {
     @EnforceAtLeastStudent
     public ResponseEntity<IrisSession> getCurrentSession(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
@@ -89,7 +90,7 @@ public class IrisSessionResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<IrisSession>> getAllSessions(@PathVariable Long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
@@ -110,7 +111,7 @@ public class IrisSessionResource {
     @EnforceAtLeastStudent
     public ResponseEntity<IrisSession> createSessionForProgrammingExercise(@PathVariable Long exerciseId) throws URISyntaxException {
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        irisSettingsService.checkIsIrisChatSessionEnabledElseThrow(exercise);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CHAT, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
@@ -134,12 +135,12 @@ public class IrisSessionResource {
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
         irisSessionService.checkIsIrisActivated(session);
-        var settings = irisSettingsService.getCombinedIrisSettings(session.getExercise(), false);
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(session.getExercise(), false);
         var health = irisHealthIndicator.health();
         IrisStatusDTO[] modelStatuses = (IrisStatusDTO[]) health.getDetails().get("modelStatuses");
         var specificModelStatus = false;
         if (modelStatuses != null) {
-            specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(settings.getIrisChatSettings().getPreferredModel()))
+            specificModelStatus = Arrays.stream(modelStatuses).filter(x -> x.model().equals(settings.irisChatSettings().getPreferredModel()))
                     .anyMatch(x -> x.status() == IrisStatusDTO.ModelStatus.UP);
         }
 
