@@ -314,9 +314,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 else {
                     var changes = extractFileChanges(response.content());
                     log.info("Extracted file changes for exercise " + component + ": " + changes);
-                    try (Repository repository = repositoryFor(exercise, component)) {
-                        successfulChanges = injectChangesIntoRepository(repository, changes);
-                    }
+                    successfulChanges = injectChangesIntoRepository(repositoryFor(exercise, component), changes);
                 }
                 log.info("Setting exercise step as executed");
                 irisExercisePlanStepRepository.setCompleted(exerciseStep);
@@ -341,13 +339,9 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     private Map<String, Object> initializeParams(ProgrammingExercise exercise) {
         var params = new HashMap<String, Object>();
         params.put("problemStatement", exercise.getProblemStatement());
-        try (Repository solutionRepository = solutionRepository(exercise);
-                Repository templateRepository = templateRepository(exercise);
-                Repository testRepository = testRepository(exercise)) {
-            params.put("solutionRepository", filterFiles(read(solutionRepository)));
-            params.put("templateRepository", filterFiles(read(templateRepository)));
-            params.put("testRepository", filterFiles(read(testRepository)));
-        }
+        params.put("solutionRepository", filterFiles(read(solutionRepository(exercise))));
+        params.put("templateRepository", filterFiles(read(templateRepository(exercise))));
+        params.put("testRepository", filterFiles(read(testRepository(exercise))));
         return params;
     }
 
@@ -507,6 +501,15 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                         break;
                     }
                     for (JsonNode node : content.required("changes")) {
+                        if (node.has("json")) {
+                            try {
+                                node = new ObjectMapper().readTree(node.required("json").asText());
+                            }
+                            catch (JsonProcessingException e) {
+                                log.error("Could not parse json field of ProblemStatementChange: " + node.toPrettyString(), e);
+                                continue;
+                            }
+                        }
                         try {
                             if (node.required("from").asText().equals("!done!")) {
                                 // This is a special case when the LLM decides to stop generating changes.
@@ -566,8 +569,17 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         List<FileChange> changes = new ArrayList<>();
         for (JsonNode node : content.path("changes")) {
             try {
-                var fileChange = switch (node.path("type").asText()) {
-                    case "overwrite" -> OverwriteFileChange.parse(node);
+                String type = node.path("type").asText();
+                if (node.has("json")) {
+                    try {
+                        node = new ObjectMapper().readTree(node.required("json").asText());
+                    }
+                    catch (JsonProcessingException e) {
+                        log.error("Could not parse json field of FileChange: " + node.toPrettyString(), e);
+                        continue;
+                    }
+                }
+                var fileChange = switch (type) {
                     case "modify" -> ModifyFileChange.parse(node);
                     case "create" -> CreateFileChange.parse(node);
                     case "delete" -> DeleteFileChange.parse(node);
@@ -627,8 +639,13 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      */
     private Set<FileChange> injectChangesIntoRepository(Repository repository, List<FileChange> changes) {
         log.info("Injecting changes into repository: \n" + changes);
-        Map<String, Optional<File>> targetedFiles = changes.stream().map(FileChange::path).distinct()
-                .collect(Collectors.toMap(fileName -> fileName, fileName -> gitService.getFileByName(repository, fileName)));
+        // @formatter:off
+        Map<String, Optional<File>> targetedFiles = changes.stream()
+                .map(FileChange::path)
+                .distinct()
+                .collect(Collectors.toMap(fileName -> fileName,
+                        fileName -> gitService.getFileByName(repository, fileName)));
+        // @formatter:on
         Set<FileChange> successful = new HashSet<>();
         int successes = 0;
         int failures = 0;

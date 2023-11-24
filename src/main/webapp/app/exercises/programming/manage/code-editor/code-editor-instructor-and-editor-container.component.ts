@@ -16,7 +16,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { IrisCodeEditorWebsocketService, StepExecutionException, StepExecutionSuccess } from 'app/iris/code-editor-websocket.service';
 import { IrisCodeEditorChatbotButtonComponent } from 'app/iris/exercise-chatbot/code-editor-chatbot-button.component';
 import { ExerciseComponent } from 'app/entities/iris/iris-content-type.model';
-import { DeleteFileChange, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { CreateFileChange, DeleteFileChange, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -124,8 +124,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     this.codeEditorContainer.fileBrowser.handleFileChange(new DeleteFileChange(FileType.FILE, path));
                 }
                 for (const path of reloadPaths) {
-                    // TODO: Figure out a better way to ensure all new files are displayed in the file browser
-                    this.codeEditorContainer.fileBrowser.repositoryFiles[path] = FileType.FILE;
+                    this.codeEditorContainer.fileBrowser.handleFileChange(new CreateFileChange(FileType.FILE, path));
                 }
                 this.codeEditorContainer.aceEditor.forceReloadAll(reloadPaths);
             }
