@@ -42,7 +42,7 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void init() {
         // Create apollonConversionService and inject @Value fields
         aeolusRequestMockProvider = new AeolusRequestMockProvider(restTemplate);
-        ReflectionTestUtils.setField(aeolusRequestMockProvider, "aeolus_url", aeolusUrl);
+        ReflectionTestUtils.setField(aeolusRequestMockProvider, "aeolusUrl", aeolusUrl);
 
         aeolusRequestMockProvider.enableMockingOfRequests();
     }

@@ -42,6 +42,12 @@ public class AeolusTemplateResource {
 
     private final ResourceLoaderService resourceLoaderService;
 
+    /**
+     * Constructor for the AeolusTemplateResource
+     *
+     * @param programmingLanguageConfiguration the programming language configuration
+     * @param resourceLoaderService            the resource loader service
+     */
     public AeolusTemplateResource(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;

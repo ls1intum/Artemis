@@ -66,7 +66,7 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 @Profile("bamboo")
 public class BambooBuildPlanService {
 
-    private static final Logger logger = LoggerFactory.getLogger(BambooBuildPlanService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BambooBuildPlanService.class);
 
     private final BambooInternalUrlService bambooInternalUrlService;
 
@@ -164,14 +164,14 @@ public class BambooBuildPlanService {
         boolean couldCreateCustomBuildPlan = false;
         if (aeolusBuildPlanService.isPresent() && programmingExercise.getBuildPlanConfiguration() != null) {
             try {
-                assignedKey = tryToPublishCustomBuildPlan(programmingExercise, planKey, planDescription, projectKey, projectName, repositoryUrl, testRepositoryUrl,
-                        solutionRepositoryUrl, auxiliaryRepositories);
+                assignedKey = tryToPublishCustomBuildPlan(projectKey + "-" + planKey, programmingExercise, planDescription, repositoryUrl, testRepositoryUrl, solutionRepositoryUrl,
+                        auxiliaryRepositories);
                 if (assignedKey != null) {
                     couldCreateCustomBuildPlan = true;
                 }
             }
             catch (ContinuousIntegrationBuildPlanException e) {
-                logger.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
+                LOGGER.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
                         + ", will create default build plan", e);
             }
         }
@@ -192,10 +192,8 @@ public class BambooBuildPlanService {
      * Tries to create a custom Build Plan for a Programming Exercise
      *
      * @param programmingExercise   the programming exercise for which to create the build plan
-     * @param planKey               the key of the build plan
+     * @param buildPlanId           the id of the build plan
      * @param planDescription       the description of the build plan
-     * @param projectKey            the key of the project
-     * @param projectName           the name of the project
      * @param repositoryUrl         the url of the assignment repository
      * @param testRepositoryUrl     the url of the test repository
      * @param solutionRepositoryUrl the url of the solution repository
@@ -203,9 +201,9 @@ public class BambooBuildPlanService {
      * @return the key of the created build plan, or null if it could not be created
      * @throws ContinuousIntegrationBuildPlanException if the build plan could not be created
      */
-    private String tryToPublishCustomBuildPlan(ProgrammingExercise programmingExercise, String planKey, String planDescription, String projectKey, String projectName,
-            VcsRepositoryUrl repositoryUrl, VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl,
-            List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories) throws ContinuousIntegrationBuildPlanException {
+    private String tryToPublishCustomBuildPlan(String buildPlanId, ProgrammingExercise programmingExercise, String planDescription, VcsRepositoryUrl repositoryUrl,
+            VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl, List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories)
+            throws ContinuousIntegrationBuildPlanException {
         if (aeolusBuildPlanService.isEmpty()) {
             return null;
         }
@@ -222,7 +220,8 @@ public class BambooBuildPlanService {
         for (var auxRepo : auxiliaryRepositories) {
             repositoryMap.put(auxRepo.name(), new AeolusRepository(auxRepo.repositoryUrl().toString(), programmingExercise.getBranch(), auxRepo.name()));
         }
-        windfile.setPreProcessingMetadata(projectKey + "-" + planKey, projectName, this.gitUser, artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH, planDescription, repositoryMap);
+        windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.gitUser, artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH, planDescription,
+                repositoryMap);
         String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(new Gson().toJson(windfile), "bamboo");
         if (generatedKey != null && generatedKey.contains("-")) {
             return generatedKey.split("-")[1];

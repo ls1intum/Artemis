@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService
 @Profile("aeolus")
 public class AeolusBuildPlanService {
 
-    private static final Logger logger = LoggerFactory.getLogger(AeolusBuildPlanService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AeolusBuildPlanService.class);
 
     private final Optional<BambooInternalUrlService> bambooInternalUrlService;
 
@@ -93,7 +93,7 @@ public class AeolusBuildPlanService {
             }
         }
         catch (HttpServerErrorException e) {
-            logger.error("Error while publishing build plan {} to Aeolus target {}", buildPlan, target, e);
+            LOGGER.error("Error while publishing build plan {} to Aeolus target {}", buildPlan, target, e);
         }
         return null;
     }
