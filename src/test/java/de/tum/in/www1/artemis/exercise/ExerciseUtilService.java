@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.mathexercise.MathExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
@@ -78,6 +79,9 @@ public class ExerciseUtilService {
 
     @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;
+
+    @Autowired
+    private MathExerciseUtilService mathExerciseUtilService;
 
     @Autowired
     private ChannelRepository channelRepository;
@@ -237,6 +241,15 @@ public class ExerciseUtilService {
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
                     fileUploadExerciseUtilService.saveFileUploadSubmission((FileUploadExercise) exercise, submission, userPrefix + "student" + j);
+                }
+                return course;
+            }
+            case "math" -> {
+                course = mathExerciseUtilService.addCourseWithOneFinishedMathExercise();
+                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
+                for (int j = 1; j <= numberOfSubmissions; j++) {
+                    MathSubmission submission = ParticipationFactory.generateMathSubmission("Math" + j + j, null, true);
+                    mathExerciseUtilService.saveMathSubmission((MathExercise) exercise, submission, userPrefix + "student" + j);
                 }
                 return course;
             }
