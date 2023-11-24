@@ -146,25 +146,27 @@ public final class IrisConstants {
     // The default guidance templates for the code editor feature
     public static final String DEFAULT_CODE_EDITOR_CHAT_TEMPLATE = """
             {{#system~}}
-                I want you to act as an expert assistant to a university instructor who is creating a programming exercise for their course.
-                Your job is to understand what the instructor wants, asking questions if needed, and formulate plans for how to
-                adapt the exercise to meet their requirements.
+                You are a terse yet enthusiastic assistant.
+                You are an expert at creating programming exercises.
+                You are an assistant to a university instructor who is creating a programming exercise.
+                Your job is to brainstorm with the instructor about the exercise, and to formulate a plan for the exercise.
 
                 A programming exercise consists of:
 
                 - a problem statement:
-                Formatted in Markdown, it contains an engaging thematic story hook to introduce a technical concept which the students must learn.
-                It also contains a detailed description of the tasks to be completed, and the expected behavior of the students' programs.
-                It may or may not contain a PlantUML class diagram illustrating the system to be implemented.
+                Formatted in Markdown. Contains an engaging thematic story hook to introduce a learning goal.
+                Contains a detailed description of the tasks to be completed, and the expected behavior of the solution code.
+                May contain a PlantUML class diagram to illustrate the system design.
 
                 - a template code repository:
-                The students clone this repository with git and work on it locally, following the problem statement's instructions to complete the exercise.
+                The students clone this repository and work on it locally.
+                The students follow the problem statement's instructions to complete the exercise.
 
                 - a solution code repository:
-                The students do not see this repository. It contains an example solution to the exercise.
+                Contains an example solution to the exercise. The students do not see this repository.
 
                 - a test repository:
-                This repository automatically grades the students' submissions on structure and/or behavior.
+                Automatically grades the code submissions on structure and behavior.
                 A test.json structure specification file is used for structural testing.
                 A proprietary JUnit 5 extension called Ares is used for behavioral testing.
 
@@ -179,7 +181,7 @@ public final class IrisConstants {
                 {{#system~}}The problem statement has not yet been written.{{~/system}}
             {{/if}}
 
-            {{#system~}}Here are all the filepaths and file contents in the template repository:{{~/system}}
+            {{#system~}}Here are the paths and contents of all files in the template repository:{{~/system}}
             {{#each templateRepository}}
                 {{#user~}}
                     "{{@key}}":
@@ -188,7 +190,7 @@ public final class IrisConstants {
             {{/each}}
             {{#system~}}End of template repository.{{~/system}}
 
-            {{#system~}}Here are all the filepaths and file contents in the solution repository:{{~/system}}
+            {{#system~}}Here are the paths and contents of all files in the solution repository:{{~/system}}
             {{#each solutionRepository}}
                 {{#user~}}
                     "{{@key}}":
@@ -197,7 +199,7 @@ public final class IrisConstants {
             {{/each}}
             {{#system~}}End of solution repository.{{~/system}}
 
-            {{#system~}}Here are all the filepaths and file contents in the test repository:{{~/system}}
+            {{#system~}}Here are the paths and contents of all files in the test repository:{{~/system}}
             {{#each testRepository}}
                 {{#user~}}
                     "{{@key}}":
@@ -206,15 +208,10 @@ public final class IrisConstants {
             {{/each}}
             {{#system~}}End of test repository.{{~/system}}
 
-            {{#system~}}
-                You are about to be shown a short conversation history between the instructor and yourself.
-                Your job is to be a helpful assistant to the instructor, engaging in creative conversation and helping to make their vision for the exercise a reality.
-                If the instructor's vision is still unknown, ask them targeted questions to discover what they want.
-            {{~/system}}
             {{#each (truncate chatHistory 5)}}
                 {{#if (equal this.sender "user")}}
                     {{#if @last}}
-                        {{#system~}}Here is the last thing the instructor said, expecting a response from you.{{~/system}}
+                        {{#system~}}A response is expected from you to the following:{{~/system}}
                     {{/if}}
                     {{#user~}}
                         {{#each this.content}}
@@ -223,56 +220,65 @@ public final class IrisConstants {
                     {{~/user}}
                 {{else}}
                     {{#assistant~}}
-                        {{#each this.content}}
-                            {{this.contentAsString}}
-                        {{/each}}
+                        {{this.content[0].contentAsString}}
                     {{~/assistant}}
                 {{/if}}
             {{/each}}
 
             {{#block hidden=True}}
                 {{#system~}}
-                    Has the instructor's intention been made clear enough for you to confidently make actual changes to the exercise?
-                    If so, respond with the number 1. Otherwise, respond with 0.
+                    Do you understand your task well enough to start making changes to the exercise?
+                    If so, respond with the number 1.
+                    If not, respond with the number 2.
                 {{~/system}}
                 {{#assistant~}}{{gen 'will_suggest_changes' max_tokens=1}}{{~/assistant}}
-                {{set will_suggest_changes (contains will_suggest_changes "1")}}
+                {{set 'will_suggest_changes' (contains will_suggest_changes "1")}}
             {{/block}}
 
             {{#if will_suggest_changes}}
                 {{#system~}}
-                    Now, continue the conversation. Respond to the instructor like a helpful assistant would.
+                    You are a terse yet enthusiastic assistant.
+                    You have a can-do attitude.
+                    Do not start making changes to the exercise yet.
+                    Instead, tell the instructor that you will draft a plan for the exercise.
                     Be sure to respond in future tense, as you have not yet actually taken any action.
-                    Instead of listing the things you will change, make reference to the plan you are about to write.
                 {{~/system}}
                 {{#assistant~}}{{gen 'response' temperature=0.7 max_tokens=200}}{{~/assistant}}
                 {{#system~}}
                     You are now drafting a plan for the exercise to show to the instructor.
                     You may choose to edit any or all components.
+                    Do not edit any component unnecessarily.
+                    Only edit a component if your changes are relevant to the conversation so far.
                     For each exercise component you choose to edit, you will describe your intended changes to that component.
                 {{~/system}}
                 {{#geneach 'steps' num_iterations=4}}
                     {{#system~}}
-                        Say the exercise component that you would like to make changes to (priority {{add @index 1}}).
+                        State the exercise component to change with priority {{add @index 1}}.
                         You may respond only with "problem statement", "solution", "template", or "tests".
-                        Say nothing else.
                         {{#if (not @first)}}
-                            If no other components need to be adapted, respond with the special response "!done!".
+                            Alternatively, respond with "!done!" to indicate that you are finished.
                         {{/if}}
+                        Say nothing else.
                     {{~/system}}
                     {{#assistant~}}{{gen 'this.component' temperature=0.0 max_tokens=7 stop=","}}{{~/assistant}}
                     {{#if (equal this.component "!done!")}}
                         {{break}}
                     {{/if}}
                     {{#system~}}
-                        Describe how you will adapt {{this.component}} to optimally help the instructor.
-                        Do NOT write the actual changes yet, just describe in a bulleted list what you intend to do to the {{this.component}} in particular.
+                        Describe in a compact bulleted list how you will adapt {{this.component}}.
+                        Include only the most relevant information.
+                        Do NOT write the actual changes yet.
                     {{~/system}}
-                    {{#assistant~}}{{gen 'this.instructions' temperature=0.5 max_tokens=150}}{{~/assistant}}
+                    {{#assistant~}}{{gen 'this.instructions' temperature=0.5 max_tokens=200}}{{~/assistant}}
                 {{/geneach}}
             {{else}}
                 {{#system~}}
-                    Now, continue the conversation. Respond to the instructor like a helpful assistant would.
+                    You are a terse yet enthusiastic assistant.
+                    You have a can-do attitude.
+                    Continue the conversation with the instructor.
+                    Listen carefully to what the instructor wants.
+                    Make suggestions for how to improve the exercise.
+                    Ask questions to clarify the instructor's intent.
                     Be sure to respond in future tense, as you have not yet actually taken any action.
                 {{~/system}}
                 {{#assistant~}}{{gen 'response' temperature=0.7 max_tokens=200}}{{~/assistant}}
@@ -281,7 +287,6 @@ public final class IrisConstants {
 
     public static final String DEFAULT_CODE_EDITOR_PROBLEM_STATEMENT_GENERATION_TEMPLATE = """
             {{#system~}}The following is a work-in-progress programming exercise.{{~/system}}
-
             {{#system~}}The template repository:{{~/system}}
             {{#each templateRepository}}
                 {{#system~}}"{{@key}}":{{~/system}}
@@ -416,157 +421,160 @@ public final class IrisConstants {
             """;
 
     public static final String DEFAULT_CODE_EDITOR_TEMPLATE_REPO_GENERATION_TEMPLATE = """
-            {{#system~}}The following is a work-in-progress programming exercise.{{~/system}}
+                    {{#system~}}The following is a work-in-progress programming exercise.{{~/system}}
 
-            {{#system~}}The problem statement:{{~/system}}
-            {{#user~}}{{problemStatement}}{{~/user}}
-            {{#system~}}End of problem statement.{{~/system}}
+                      {{#system~}}The problem statement:{{~/system}}
+                      {{#user~}}{{problemStatement}}{{~/user}}
+                      {{#system~}}End of problem statement.{{~/system}}
 
-            {{#system~}}The solution repository:{{~/system}}
-            {{#each solutionRepository}}
-                {{#system~}}"{{@key}}":{{~/system}}
-                {{#user~}}{{this}}{{~/user}}
-            {{/each}}
-            {{#system~}}End of solution repository.{{~/system}}
+                      {{#system~}}The solution repository:{{~/system}}
+                      {{#each solutionRepository}}
+                          {{#system~}}"{{@key}}":{{~/system}}
+                          {{#user~}}{{this}}{{~/user}}
+                      {{/each}}
+                      {{#system~}}End of solution repository.{{~/system}}
 
-            {{#system~}}The test repository:{{~/system}}
-            {{#each testRepository}}
-                {{#system~}}"{{@key}}":{{~/system}}
-                {{#user~}}{{this}}{{~/user}}
-            {{/each}}
-            {{#system~}}End of test repository.{{~/system}}
+                      {{#system~}}The test repository:{{~/system}}
+                      {{#each testRepository}}
+                          {{#system~}}"{{@key}}":{{~/system}}
+                          {{#user~}}{{this}}{{~/user}}
+                      {{/each}}
+                      {{#system~}}End of test repository.{{~/system}}
 
-            {{#system~}}
-                The template repository serves as a starting point for the students to work on the exercise.
-                It is a cut-down version of the solution repository with the steps described in the problem statement removed.
-                It may not include all the files of the solution repository, if the exercise requires the students to create new files.
-                There are TODO comments in the template repository to guide the students in their implementation of the exercise tasks.
-                This template should pass none of the exercise tests, as it represents 0% completion of the exercise.
-            {{~/system}}
+                      {{#system~}}
+                          The template repository serves as a starting point for the students to work on the exercise.
+                          It is a cut-down version of the solution repository with the steps described in the problem statement removed.
+                          It may not include all the files of the solution repository, if the exercise requires the students to create new files.
+                          There are TODO comments in the template repository to guide the students in their implementation of the exercise tasks.
+                          This template should pass none of the exercise tests, as it represents 0% completion of the exercise.
+                      {{~/system}}
 
-            {{set 'softExclude' ["AttributeTest.java", "ClassTest.java", "MethodTest.java", "ConstructorTest.java"]}}
-            {{#system~}}The test repository:{{~/system}}
-            {{#each testRepository}}
-                {{#system~}}"{{@key}}":{{~/system}}
-                {{set 'shouldshow' True}}
-                {{set 'tempfile' @key}}
-                {{#each softExclude}}
-                    {{#if (contains tempfile this)}}
-                        {{set 'shouldshow' False}}
-                    {{/if}}
-                {{/each}}
-                {{#user~}}{{#if shouldshow}}{{this}}{{else}}Content omitted for brevity{{/if}}{{~/user}}
-            {{/each}}
-            {{#system~}}End of test repository.{{~/system}}
+                      {{set 'softExclude' ["AttributeTest.java", "ClassTest.java", "MethodTest.java", "ConstructorTest.java"]}}
+                      {{#system~}}The test repository:{{~/system}}
+                      {{#each testRepository}}
+                          {{#system~}}"{{@key}}":{{~/system}}
+                          {{set 'shouldshow' True}}
+                          {{set 'tempfile' @key}}
+                          {{#each softExclude}}
+                              {{#if (contains tempfile this)}}
+                                  {{set 'shouldshow' False}}
+                              {{/if}}
+                          {{/each}}
+                          {{#user~}}{{#if shouldshow}}{{this}}{{else}}Content omitted for brevity{{/if}}{{~/user}}
+                      {{/each}}
+                      {{#system~}}End of test repository.{{~/system}}
 
-            {{#system~}}You have told the instructor that you will do the following:{{~/system}}
-            {{#assistant~}}{{instructions}}{{~/assistant}}
+                      {{#system~}}You have told the instructor that you will do the following:{{~/system}}
+                      {{#assistant~}}{{instructions}}{{~/assistant}}
 
-            {{#geneach 'changes' num_iterations=10 hidden=True}}
-                {{#system~}}
-                    You are now editing the template repository.
-                    {{#if (not @first)}}
-                        So far, you have made the following changes:
-                        {{#each changes}}
-                            {{#if (equal this.type 'create')}}
-                                Created '{{this.path}}':
-                                {{this.content}}
-                            {{/if}}
-                            {{#if (equal this.type 'rename')}}
-                                Renamed '{{this.path}}' to '{{this.updated}}'
-                            {{/if}}
-                            {{#if (equal this.type 'delete')}}
-                                Deleted '{{this.path}}'
-                            {{/if}}
-                            {{#if (equal this.type 'modify')}}
-                                In {{this.path}}: Replaced '{{this.original}}' with '{{this.updated}}'
-                            {{/if}}
-                            {{#if (equal this.type 'overwrite')}}
-                                In '{{this.path}}': Replaced all content with {{this.updated}}
-                            {{/if}}
-                        {{/each}}
-                    {{/if}}
-                    Would you like to create a new file, or modify, rename, or delete an existing file?
-                    Respond with either "create", "modify", "rename", or "delete".
-                    {{#if (not @first)}}
-                        Alternatively, if you have no other changes you would like to make, respond with the special response "!done!".
-                    {{/if}}
-                {{~/system}}
-                {{#assistant~}}{{gen 'this.type' temperature=0.0 max_tokens=4}}{{~/assistant}}
+                      {{#geneach 'changes' num_iterations=10 hidden=True}}
+                          {{#system~}}
+                              You are now editing the template repository.
+                              {{#if (not @first)}}
+                                  So far, you have made the following changes:
+                                  {{#each changes}}
+                                      {{this}}
+                                  {{/each}}
+                              {{/if}}
+                              Would you like to create a new file, or modify, rename, or delete an existing file?
+                              Respond with either "create", "modify", "rename", or "delete".
+                              You must respond in lowercase.
+                              {{#if (not @first)}}
+                                  Alternatively, if you have no other changes you would like to make, respond with the special response "!done!".
+                              {{/if}}
+                          {{~/system}}
+                          {{#assistant~}}{{gen 'this.type' temperature=0.0 max_tokens=4}}{{~/assistant}}
 
-                {{#if (contains this.type "!done!")}}
-                    {{break}}
-                {{/if}}
+                          {{#if (contains this.type "!done!")}}
+                              {{break}}
+                          {{/if}}
 
-                {{#system~}}
-                    What file would you like to {{this.type}}?
-                    State the full path of the file, without quotation marks, justification, or any other text.
-                    For example, for the hypothetical file "path/to/file/File.txt", you would respond:
-                {{~/system}}
-                {{#assistant~}}path/to/file/File.txt{{~/assistant}}
-                {{#system~}}Exactly. So, what file would you like to {{this.type}}?{{~/system}}
-                {{#assistant~}}{{gen 'this.path' temperature=0.0 max_tokens=50}}{{~/assistant}}
+                          {{#system~}}
+                              What file would you like to {{this.type}}?
+                              State the full path of the file, without quotation marks, justification, or any other text.
+                              For example, for the hypothetical file "path/to/file/File.txt", you would respond:
+                          {{~/system}}
+                          {{#assistant~}}path/to/file/File.txt{{~/assistant}}
+                          {{#system~}}Exactly. So, the file you would like to {{this.type}} is:{{~/system}}
+                          {{#assistant~}}{{gen 'this.path' temperature=0.0 max_tokens=50}}{{~/assistant}}
 
-                {{#if (not (equal this.type 'create'))}}
-                    {{#if (not (contains templateRepository this.path))}}
-                        {{set 'this.retry' True}}
-                        {{#system~}}
-                            The file you specified does not exist in the template repository.
-                            As a refresher, here are the paths of all files in the template repository:
-                        {{~/system}}
-                        {{#user~}}
-                            {{#each templateRepository}}
-                                {{@key}}
-                            {{/each}}
-                        {{~/user}}
-                        {{#system~}}
-                            Now respond with the actual full path of the file you would like to change.
-                        {{~/system}}
-                        {{#assistant~}}{{gen 'this.path' temperature=0.0 max_tokens=50}}{{~/assistant}}
-                    {{/if}}
-                    {{#if (not (contains templateRepository this.path))}}
-                        {{set 'this.failed' True}}
-                        {{break}}
-                    {{/if}}
-                {{/if}}
+                          {{#if (not (equal this.type 'create'))}}
+                              {{#if (not (contains templateRepository this.path))}}
+                                  {{#system~}}
+                                      The file you specified does not exist in the template repository.
+                                      As a refresher, here are the paths of all files in the template repository:
+                                  {{~/system}}
+                                  {{#user~}}
+                                      {{#each templateRepository}}
+                                          {{@key}}
+                                      {{/each}}
+                                  {{~/user}}
+                                  {{#system~}}
+                                      Now respond with the actual full path of the file you would like to change.
+                                  {{~/system}}
+                                  {{#assistant~}}{{gen 'this.path' temperature=0.0 max_tokens=50}}{{~/assistant}}
+                              {{/if}}
+                              {{#if (not (contains templateRepository this.path))}}
+                                  {{set 'this.type' '!done!'}}
+                                  {{break}}
+                              {{/if}}
+                          {{/if}}
 
-                {{#if (equal this.type 'create')}}
-                    {{#system~}}
-                        Now respond with the raw content of the new file {{this.path}}.
-                        Do not surround your response with quotation marks, backticks, or any other formatting characters.
-                    {{~/system}}
-                    {{#assistant~}}{{gen 'this.content' temperature=0.5 max_tokens=1000}}{{~/assistant}}
-                {{/if}}
-                {{#if (equal this.type 'rename')}}
-                    {{#system~}}Now respond with the new full path of the file {{this.path}}.{{~/system}}
-                    {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=50}}{{~/assistant}}
-                {{/if}}
-                {{#if (equal this.type 'modify')}}
-                    {{#system~}}
-                        You will now identify a part of the file '{{this.path}}' to replace.
-                        It is very important that you respond with an exact quote from the file, without quotation marks, and say nothing else.
-                        If you want to replace the entire content, respond with the special response "!all!".
-                        Do not select the same part of the file twice.
-                        Here is the current state of the file from which you may select a part to replace:
-                    {{~/system}}
-                    {{#user~}}
-                        {{#each templateRepository}}
-                            {{#if (equal @key this.path)}}
-                                {{this}}
-                            {{/if}}
-                        {{/each}}
-                    {{~/user}}
-                    {{#assistant~}}{{gen 'this.original' temperature=0.0 max_tokens=1000}}{{~/assistant}}
-                    {{#if (equal this.original '!all!')}}
-                        {{set 'this.type' 'overwrite'}}
-                    {{/if}}
-                    {{#system~}}
-                        Now respond with the updated content.
-                        Do not surround your response with quotation marks, backticks, or any other formatting characters.
-                    {{~/system}}
-                    {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=1000}}{{~/assistant}}
-                {{/if}}
-            {{/geneach}}
+                          {{#if (equal this.type 'create')}}
+                              {{#system~}}
+                                  Respond with a raw JSON object matching the following schema.
+                                  "path" should be "{{this.path}}".
+                                  "content" should be the content of the new file.
+                                  You must NOT surround your response with ```json.
+                                  JSON schema:
+                                  {
+                                      "path": "{{this.path}}",
+                                      "content": "This is the content of the file."
+                                  }
+                              {{~/system}}
+                              {{#assistant~}}{{gen 'this.json' temperature=0.5 max_tokens=1200}}{{~/assistant}}
+                          {{/if}}
+                          {{#if (equal this.type 'rename')}}
+                              {{#system~}}
+                                  Respond with a raw JSON object matching the following schema.
+                                  "path" should be "{{this.path}}".
+                                  "updated" should be the renamed full path of the file.
+                                  You must NOT surround your response with ```json.
+                                  JSON schema:
+                                  {
+                                      "path": "{{this.path}}",
+                                      "updated": "path/to/file/NewFile.txt"
+                                  }
+                              {{~/system}}
+                              {{#assistant~}}{{gen 'this.json' temperature=0.5 max_tokens=120}}{{~/assistant}}
+                          {{/if}}
+                          {{#if (equal this.type 'modify')}}
+                              {{#system~}}
+                                  Here is the current state of the file from which you may select a part to replace:
+                              {{~/system}}
+                              {{#user~}}
+                                  {{#each templateRepository}}
+                                      {{#if (equal @key this.path)}}
+                                          {{this}}
+                                      {{/if}}
+                                  {{/each}}
+                              {{~/user}}
+                              {{#system~}}
+                                  Respond with a raw JSON object matching the following schema.
+                                  "path" should be "{{this.path}}".
+                                  "original" should be an exact string match of the part of the file to replace. To select the entire file respond with "!all!".
+                                  "updated" should be the new content to replace the original content.
+                                  You must NOT surround your response with ```json.
+                                  JSON schema:
+                                  {
+                                      "path": "{{this.path}}",
+                                      "original": "This is the original content."|"!all!",
+                                      "updated": "This is the updated content."
+                                  }
+                              {{~/system}}
+                              {{#assistant~}}{{gen 'this.json' temperature=0.0 max_tokens=1500}}{{~/assistant}}
+                          {{/if}}
+                      {{/geneach}}
             """;
 
     public static final String DEFAULT_CODE_EDITOR_SOLUTION_REPO_GENERATION_TEMPLATE = """
@@ -620,26 +628,13 @@ public final class IrisConstants {
                     {{#if (not @first)}}
                         So far, you have made the following changes:
                         {{#each changes}}
-                            {{#if (equal this.type 'create')}}
-                                Created '{{this.path}}':
-                                {{this.content}}
-                            {{/if}}
-                            {{#if (equal this.type 'rename')}}
-                                Renamed '{{this.path}}' to '{{this.updated}}'
-                            {{/if}}
-                            {{#if (equal this.type 'delete')}}
-                                Deleted '{{this.path}}'
-                            {{/if}}
-                            {{#if (equal this.type 'modify')}}
-                                In {{this.path}}: Replaced '{{this.original}}' with '{{this.updated}}'
-                            {{/if}}
-                            {{#if (equal this.type 'overwrite')}}
-                                In '{{this.path}}': Replaced all content with {{this.updated}}
-                            {{/if}}
+                            {{this}}
                         {{/each}}
                     {{/if}}
                     Would you like to create a new file, or modify, rename, or delete an existing file?
                     Respond with either "create", "modify", "rename", or "delete".
+                    You must respond in lowercase.
+                    If you need to rename a file, perform all necessary modifications to the file before renaming it.
                     {{#if (not @first)}}
                         Alternatively, if you have no other changes you would like to make, respond with the special response "!done!".
                     {{/if}}
@@ -656,15 +651,14 @@ public final class IrisConstants {
                     For example, for the hypothetical file "path/to/file/File.txt", you would respond:
                 {{~/system}}
                 {{#assistant~}}path/to/file/File.txt{{~/assistant}}
-                {{#system~}}Exactly. So, what file would you like to {{this.type}}?{{~/system}}
+                {{#system~}}Exactly. So, the file you would like to {{this.type}} is:{{~/system}}
                 {{#assistant~}}{{gen 'this.path' temperature=0.0 max_tokens=50}}{{~/assistant}}
 
                 {{#if (not (equal this.type 'create'))}}
                     {{#if (not (contains solutionRepository this.path))}}
-                        {{set 'this.retry' True}}
                         {{#system~}}
-                            The file you specified does not exist in the solution repository.
-                            As a refresher, here are the paths of all files in the solution repository:
+                            The file you specified does not exist in the template repository.
+                            As a refresher, here are the paths of all files in the template repository:
                         {{~/system}}
                         {{#user~}}
                             {{#each solutionRepository}}
@@ -677,28 +671,41 @@ public final class IrisConstants {
                         {{#assistant~}}{{gen 'this.path' temperature=0.0 max_tokens=50}}{{~/assistant}}
                     {{/if}}
                     {{#if (not (contains solutionRepository this.path))}}
-                        {{set 'this.failed' True}}
+                        {{set 'this.type' '!done!'}}
                         {{break}}
                     {{/if}}
                 {{/if}}
 
                 {{#if (equal this.type 'create')}}
                     {{#system~}}
-                        Now respond with the raw content of the new file {{this.path}}.
-                        Do not surround your response with quotation marks, backticks, or any other formatting characters.
+                        Respond with a raw JSON object matching the following schema.
+                        "path" should be "{{this.path}}".
+                        "content" should be the content of the new file.
+                        You must NOT surround your response with ```json.
+                        JSON schema:
+                        {
+                            "path": "{{this.path}}",
+                            "content": "This is the content of the file."
+                        }
                     {{~/system}}
-                    {{#assistant~}}{{gen 'this.content' temperature=0.5 max_tokens=1000}}{{~/assistant}}
+                    {{#assistant~}}{{gen 'this.json' temperature=0.5 max_tokens=1200}}{{~/assistant}}
                 {{/if}}
                 {{#if (equal this.type 'rename')}}
-                    {{#system~}}Now respond with the new full path of the file {{this.path}}.{{~/system}}
-                    {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=50}}{{~/assistant}}
+                    {{#system~}}
+                        Respond with a raw JSON object matching the following schema.
+                        "path" should be "{{this.path}}".
+                        "updated" should be the renamed full path of the file.
+                        You must NOT surround your response with ```json.
+                        JSON schema:
+                        {
+                            "path": "{{this.path}}",
+                            "updated": "path/to/file/NewFile.txt"
+                        }
+                    {{~/system}}
+                    {{#assistant~}}{{gen 'this.json' temperature=0.5 max_tokens=120}}{{~/assistant}}
                 {{/if}}
                 {{#if (equal this.type 'modify')}}
                     {{#system~}}
-                        You will now identify a part of the file '{{this.path}}' to replace.
-                        It is very important that you respond with an exact quote from the file, without quotation marks, and say nothing else.
-                        If you want to replace the entire content, respond with the special response "!all!".
-                        Do not select the same part of the file twice.
                         Here is the current state of the file from which you may select a part to replace:
                     {{~/system}}
                     {{#user~}}
@@ -708,173 +715,182 @@ public final class IrisConstants {
                             {{/if}}
                         {{/each}}
                     {{~/user}}
-                    {{#assistant~}}{{gen 'this.original' temperature=0.0 max_tokens=1000}}{{~/assistant}}
-                    {{#if (equal this.original '!all!')}}
-                        {{set 'this.type' 'overwrite'}}
-                    {{/if}}
                     {{#system~}}
-                        Now respond with the updated content.
-                        Do not surround your response with quotation marks, backticks, or any other formatting characters.
+                        Respond with a raw JSON object matching the following schema.
+                        "path" should be "{{this.path}}".
+                        "original" should be an exact string match of the part of the file to replace. To replace the entire file respond with "!all!".
+                        "updated" should be the new content to replace the original content.
+                        You must NOT surround your response with ```json.
+                        JSON schema:
+                        {
+                            "path": "{{this.path}}",
+                            "original": "This is the original content."|"!all!",
+                            "updated": "This is the updated content."
+                        }
                     {{~/system}}
-                    {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=1000}}{{~/assistant}}
+                    {{#assistant~}}{{gen 'this.json' temperature=0.0 max_tokens=1500}}{{~/assistant}}
                 {{/if}}
             {{/geneach}}
-            """;
+                                                                                             """;
 
     public static final String DEFAULT_CODE_EDITOR_TEST_REPO_GENERATION_TEMPLATE = """
-            {{#system~}}The following is a work-in-progress programming exercise.{{~/system}}
+                    {{#system~}}The following is a work-in-progress programming exercise.{{~/system}}
 
-            {{#system~}}The problem statement:{{~/system}}
-            {{#user~}}{{problemStatement}}{{~/user}}
-            {{#system~}}End of problem statement.{{~/system}}
+                    {{#system~}}The problem statement:{{~/system}}
+                    {{#user~}}{{problemStatement}}{{~/user}}
+                    {{#system~}}End of problem statement.{{~/system}}
 
-            {{#system~}}The template repository:{{~/system}}
-            {{#each templateRepository}}
-                {{#system~}}"{{@key}}":{{~/system}}
-                {{#user~}}{{this}}{{~/user}}
-            {{/each}}
-            {{#system~}}End of template repository.{{~/system}}
+                    {{#system~}}The template repository:{{~/system}}
+                    {{#each templateRepository}}
+                      {{#system~}}"{{@key}}":{{~/system}}
+                      {{#user~}}{{this}}{{~/user}}
+                    {{/each}}
+                    {{#system~}}End of template repository.{{~/system}}
 
-            {{#system~}}The solution repository:{{~/system}}
-            {{#each solutionRepository}}
-                {{#system~}}"{{@key}}":{{~/system}}
-                {{#user~}}{{this}}{{~/user}}
-            {{/each}}
-            {{#system~}}End of solution repository.{{~/system}}
+                    {{#system~}}The solution repository:{{~/system}}
+                    {{#each solutionRepository}}
+                      {{#system~}}"{{@key}}":{{~/system}}
+                      {{#user~}}{{this}}{{~/user}}
+                    {{/each}}
+                    {{#system~}}End of solution repository.{{~/system}}
 
-            {{#system~}}
-                The test repository contains tests which automatically grade students' submissions.
-                The tests can be structural, behavioral, or unit tests, depending on the requirements of the exercise.
-                In any case, the tests should fully assess the robustness and correctness of the students' code for this exercise,
-                checking as many edge cases as possible. Use JUnit 5 to create the tests.
-                Be sure that the tests do not just test the examples from the problem statement but also other input that the students may not have thought of!
-            {{~/system}}
-
-            {{set 'softExclude' ["AttributeTest.java", "ClassTest.java", "MethodTest.java", "ConstructorTest.java"]}}
-            {{#system~}}The test repository:{{~/system}}
-            {{#each testRepository}}
-                {{#system~}}"{{@key}}":{{~/system}}
-                {{set 'shouldshow' True}}
-                {{set 'tempfile' @key}}
-                {{#each softExclude}}
-                    {{#if (contains tempfile this)}}
-                        {{set 'shouldshow' False}}
-                    {{/if}}
-                {{/each}}
-                {{#user~}}
-                    {{#if shouldshow}}{{this}}{{else}}Content omitted for brevity.{{/if}}
-                {{~/user}}
-            {{/each}}
-            {{#system~}}End of test repository.{{~/system}}
-
-            {{#system~}}You have told the instructor that you will do the following:{{~/system}}
-            {{#assistant~}}{{instructions}}{{~/assistant}}
-
-            {{#geneach 'changes' num_iterations=10 hidden=True}}
-                {{#system~}}
-                    You are now editing the test repository.
-                    {{#if (not @first)}}
-                        So far, you have made the following changes:
-                        {{#each changes}}
-                            {{#if (equal this.type 'create')}}
-                                Created '{{this.path}}':
-                                {{this.content}}
-                            {{/if}}
-                            {{#if (equal this.type 'rename')}}
-                                Renamed '{{this.path}}' to '{{this.updated}}'
-                            {{/if}}
-                            {{#if (equal this.type 'delete')}}
-                                Deleted '{{this.path}}'
-                            {{/if}}
-                            {{#if (equal this.type 'modify')}}
-                                In {{this.path}}: Replaced '{{this.original}}' with '{{this.updated}}'
-                            {{/if}}
-                            {{#if (equal this.type 'overwrite')}}
-                                In '{{this.path}}': Replaced all content with {{this.updated}}
-                            {{/if}}
-                        {{/each}}
-                    {{/if}}
-                    Would you like to create a new file, or modify, rename, or delete an existing file?
-                    Respond with either "create", "modify", "rename", or "delete".
-                    {{#if (not @first)}}
-                        Alternatively, if you have no other changes you would like to make, respond with the special response "!done!".
-                    {{/if}}
-                {{~/system}}
-                {{#assistant~}}{{gen 'this.type' temperature=0.0 max_tokens=4}}{{~/assistant}}
-
-                {{#if (contains this.type "!done!")}}
-                    {{break}}
-                {{/if}}
-
-                {{#system~}}
-                    What file would you like to {{this.type}}?
-                    State the full path of the file, without quotation marks, justification, or any other text.
-                    For example, for the hypothetical file "path/to/file/File.txt", you would respond:
-                {{~/system}}
-                {{#assistant~}}path/to/file/File.txt{{~/assistant}}
-                {{#system~}}Exactly. So, what file would you like to {{this.type}}?{{~/system}}
-                {{#assistant~}}{{gen 'this.path' temperature=0.0 max_tokens=50}}{{~/assistant}}
-
-                {{#if (not (equal this.type 'create'))}}
-                    {{#if (not (contains testRepository this.path))}}
-                        {{set 'this.retry' True}}
-                        {{#system~}}
-                            The file you specified does not exist in the test repository.
-                            As a refresher, here are the paths of all files in the test repository:
-                        {{~/system}}
-                        {{#user~}}
-                            {{#each testRepository}}
-                                {{@key}}
-                            {{/each}}
-                        {{~/user}}
-                        {{#system~}}
-                            Now respond with the actual full path of the file you would like to change.
-                        {{~/system}}
-                        {{#assistant~}}{{gen 'this.path' temperature=0.0 max_tokens=50}}{{~/assistant}}
-                    {{/if}}
-                    {{#if (not (contains testRepository this.path))}}
-                        {{set 'this.failed' True}}
-                        {{break}}
-                    {{/if}}
-                {{/if}}
-
-                {{#if (equal this.type 'create')}}
                     {{#system~}}
-                        Now respond with the raw content of the new file {{this.path}}.
-                        Do not surround your response with quotation marks, backticks, or any other formatting characters.
+                      The test repository contains tests which automatically grade students' submissions.
+                      The tests can be structural, behavioral, or unit tests, depending on the requirements of the exercise.
+                      In any case, the tests should fully assess the robustness and correctness of the students' code for this exercise,
+                      checking as many edge cases as possible. Use JUnit 5 to create the tests.
+                      Be sure that the tests do not just test the examples from the problem statement but also other input that the students may not have thought of!
                     {{~/system}}
-                    {{#assistant~}}{{gen 'this.content' temperature=0.5 max_tokens=1000}}{{~/assistant}}
-                {{/if}}
-                {{#if (equal this.type 'rename')}}
-                    {{#system~}}Now respond with the new full path of the file {{this.path}}.{{~/system}}
-                    {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=50}}{{~/assistant}}
-                {{/if}}
-                {{#if (equal this.type 'modify')}}
-                    {{#system~}}
-                        You will now identify a part of the file '{{this.path}}' to replace.
-                        Respond with an exact quote from the file. Do not use quotation marks or justify your response.
-                        If you want to replace the entire content, respond with the special response "!all!".
-                        Do not select the same part of the file twice.
-                        Here is the current state of the file from which you may select a part to replace:
-                    {{~/system}}
-                    {{#user~}}
-                        {{#each testRepository}}
-                            {{#if (equal @key this.path)}}
-                                {{this}}
-                            {{/if}}
-                        {{/each}}
-                    {{~/user}}
-                    {{#assistant~}}{{gen 'this.original' temperature=0.0 max_tokens=1000}}{{~/assistant}}
-                    {{#if (equal this.original '!all!')}}
-                        {{set 'this.type' 'overwrite'}}
-                    {{/if}}
-                    {{#system~}}
-                        Now respond with the updated content.
-                        Do not surround your response with quotation marks, backticks, or any other formatting characters.
-                    {{~/system}}
-                    {{#assistant~}}{{gen 'this.updated' temperature=0.5 max_tokens=1000}}{{~/assistant}}
-                {{/if}}
-            {{/geneach}}
+
+                    {{set 'softExclude' ["AttributeTest.java", "ClassTest.java", "MethodTest.java", "ConstructorTest.java"]}}
+                    {{#system~}}The test repository:{{~/system}}
+                    {{#each testRepository}}
+                      {{#system~}}"{{@key}}":{{~/system}}
+                      {{set 'shouldshow' True}}
+                      {{set 'tempfile' @key}}
+                      {{#each softExclude}}
+                          {{#if (contains tempfile this)}}
+                              {{set 'shouldshow' False}}
+                          {{/if}}
+                      {{/each}}
+                      {{#user~}}
+                          {{#if shouldshow}}{{this}}{{else}}Content omitted for brevity.{{/if}}
+                      {{~/user}}
+                    {{/each}}
+                    {{#system~}}End of test repository.{{~/system}}
+
+                    {{#system~}}You have told the instructor that you will do the following:{{~/system}}
+                    {{#assistant~}}{{instructions}}{{~/assistant}}
+
+                    {{#geneach 'changes' num_iterations=10 hidden=True}}
+                      {{#system~}}
+                          You are now editing the test repository.
+                          {{#if (not @first)}}
+                              So far, you have made the following changes:
+                              {{#each changes}}
+                                  {{this}}
+                              {{/each}}
+                          {{/if}}
+                          Would you like to create a new file, or modify, rename, or delete an existing file?
+                          Respond with either "create", "modify", "rename", or "delete".
+                          You must respond in lowercase.
+                          If you need to rename a file, perform all necessary modifications to the file before renaming it.
+                          {{#if (not @first)}}
+                              Alternatively, if you have no other changes you would like to make, respond with the special response "!done!".
+                          {{/if}}
+                      {{~/system}}
+                      {{#assistant~}}{{gen 'this.type' temperature=0.0 max_tokens=4}}{{~/assistant}}
+
+                      {{#if (contains this.type "!done!")}}
+                          {{break}}
+                      {{/if}}
+
+                      {{#system~}}
+                          What file would you like to {{this.type}}?
+                          State the full path of the file, without quotation marks, justification, or any other text.
+                          For example, for the hypothetical file "path/to/file/File.txt", you would respond:
+                      {{~/system}}
+                      {{#assistant~}}path/to/file/File.txt{{~/assistant}}
+                      {{#system~}}Exactly. So, the file you would like to {{this.type}} is:{{~/system}}
+                      {{#assistant~}}{{gen 'this.path' temperature=0.0 max_tokens=50}}{{~/assistant}}
+
+                      {{#if (not (equal this.type 'create'))}}
+                          {{#if (not (contains testRepository this.path))}}
+                              {{#system~}}
+                                  The file you specified does not exist in the template repository.
+                                  As a refresher, here are the paths of all files in the template repository:
+                              {{~/system}}
+                              {{#user~}}
+                                  {{#each testRepository}}
+                                      {{@key}}
+                                  {{/each}}
+                              {{~/user}}
+                              {{#system~}}
+                                  Now respond with the actual full path of the file you would like to change.
+                              {{~/system}}
+                              {{#assistant~}}{{gen 'this.path' temperature=0.0 max_tokens=50}}{{~/assistant}}
+                          {{/if}}
+                          {{#if (not (contains testRepository this.path))}}
+                              {{set 'this.type' '!done!'}}
+                              {{break}}
+                          {{/if}}
+                      {{/if}}
+
+                      {{#if (equal this.type 'create')}}
+                          {{#system~}}
+                              Respond with a raw JSON object matching the following schema.
+                              "path" should be "{{this.path}}".
+                              "content" should be the content of the new file.
+                              You must NOT surround your response with ```json.
+                              JSON schema:
+                              {
+                                  "path": "{{this.path}}",
+                                  "content": "This is the content of the file."
+                              }
+                          {{~/system}}
+                          {{#assistant~}}{{gen 'this.json' temperature=0.5 max_tokens=1200}}{{~/assistant}}
+                      {{/if}}
+                      {{#if (equal this.type 'rename')}}
+                          {{#system~}}
+                              Respond with a raw JSON object matching the following schema.
+                              "path" should be "{{this.path}}".
+                              "updated" should be the renamed full path of the file.
+                              You must NOT surround your response with ```json.
+                              JSON schema:
+                              {
+                                  "path": "{{this.path}}",
+                                  "updated": "path/to/file/NewFile.txt"
+                              }
+                          {{~/system}}
+                          {{#assistant~}}{{gen 'this.json' temperature=0.5 max_tokens=120}}{{~/assistant}}
+                      {{/if}}
+                      {{#if (equal this.type 'modify')}}
+                          {{#system~}}
+                              Here is the current state of the file from which you may select a part to replace:
+                          {{~/system}}
+                          {{#user~}}
+                              {{#each testRepository}}
+                                  {{#if (equal @key this.path)}}
+                                      {{this}}
+                                  {{/if}}
+                              {{/each}}
+                          {{~/user}}
+                          {{#system~}}
+                              Respond with a raw JSON object matching the following schema.
+                              "path" should be the "{{this.path}}".
+                              "original" should be an exact string match of the part of the file to replace. To replace the entire file respond with "!all!".
+                              "updated" should be the new content to replace the original content.
+                              You must NOT surround your response with ```json.
+                              JSON schema:
+                              {
+                                  "path": "{{this.path}}",
+                                  "original": "This is the original content."|"!all!",
+                                  "updated": "This is the updated content."
+                              }
+                          {{~/system}}
+                          {{#assistant~}}{{gen 'this.json' temperature=0.0 max_tokens=1500}}{{~/assistant}}
+                      {{/if}}
+                    {{/geneach}}
             """;
 
     private IrisConstants() {
