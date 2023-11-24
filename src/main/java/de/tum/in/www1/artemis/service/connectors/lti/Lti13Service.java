@@ -314,9 +314,8 @@ public class Lti13Service {
     public void buildLtiEmailInUseResponse(HttpServletResponse response, OidcIdToken ltiIdToken) {
         Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail());
 
-        String sanitizedUsername = getSanitizedUsername(optionalUsername.get());
-
         if (optionalUsername.isPresent()) {
+            String sanitizedUsername = getSanitizedUsername(optionalUsername.get());
             response.addHeader("ltiSuccessLoginRequired", sanitizedUsername);
         }
     }
