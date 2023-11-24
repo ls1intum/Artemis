@@ -30,6 +30,7 @@
         "cypress:setup": "cypress install && cypress run --quiet --spec init/ImportUsers.cy.ts",
         "cypress:record:mysql": "npx cypress-cloud run --parallel --record --ci-build-id \"${SORRY_CYPRESS_BRANCH_NAME} #${SORRY_CYPRESS_BUILD_ID} ${SORRY_CYPRESS_RERUN_COUNT} (MySQL)\"",
         "cypress:record:postgres": "npx cypress-cloud run --parallel --record --ci-build-id \"${SORRY_CYPRESS_BRANCH_NAME} #${SORRY_CYPRESS_BUILD_ID} ${SORRY_CYPRESS_RERUN_COUNT} (Postgres)\"",
+        "cypress:record:local": "npx cypress-cloud run --parallel --record --ci-build-id \"${SORRY_CYPRESS_BRANCH_NAME} #${SORRY_CYPRESS_BUILD_ID} ${SORRY_CYPRESS_RERUN_COUNT} (Local)\"",
         "update": "ncu -i --format group"
     }
 }
