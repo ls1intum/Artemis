@@ -22,6 +22,14 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+// Preliminary mock before import to prevent errors
+jest.mock('@sentry/angular-ivy', () => {
+    const originalModule = jest.requireActual('@sentry/angular-ivy');
+    return {
+        ...originalModule,
+        captureException: jest.fn(),
+    };
+});
 import * as Sentry from '@sentry/angular-ivy';
 
 describe('ResultService', () => {
@@ -241,6 +249,7 @@ describe('ResultService', () => {
         });
 
         it('reports to Sentry if result or exercise is undefined', () => {
+            // Re-mock to get reference because direct import doesn't work here
             const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
             expect(resultService.getResultString(undefined, undefined)).toBe('');
             expect(captureExceptionSpy).toHaveBeenCalledOnce();
