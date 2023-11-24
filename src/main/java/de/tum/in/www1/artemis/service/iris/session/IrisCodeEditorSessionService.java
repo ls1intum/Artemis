@@ -10,9 +10,12 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.message.*;
@@ -76,12 +79,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private final IrisSessionRepository irisSessionRepository;
 
+    private final ObjectMapper objectMapper;
+
     public IrisCodeEditorSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, AuthorizationCheckService authCheckService,
             IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, IrisExercisePlanStepRepository irisExercisePlanStepRepository,
             VersionControlService versionControlService, GitService gitService, RepositoryService repositoryService,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
-            IrisSessionRepository irisSessionRepository) {
+            IrisSessionRepository irisSessionRepository, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -95,6 +100,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         this.templateParticipationRepository = templateParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.irisSessionRepository = irisSessionRepository;
+        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
     }
 
     /**
@@ -503,7 +509,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                     for (JsonNode node : content.required("changes")) {
                         if (node.has("json")) {
                             try {
-                                node = new ObjectMapper().readTree(node.required("json").asText());
+                                node = objectMapper.readTree(node.required("json").asText());
                             }
                             catch (JsonProcessingException e) {
                                 log.error("Could not parse json field of ProblemStatementChange: " + node.toPrettyString(), e);
@@ -572,7 +578,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 String type = node.path("type").asText();
                 if (node.has("json")) {
                     try {
-                        node = new ObjectMapper().readTree(node.required("json").asText());
+                        node = objectMapper.readTree(node.required("json").asText());
                     }
                     catch (JsonProcessingException e) {
                         log.error("Could not parse json field of FileChange: " + node.toPrettyString(), e);
