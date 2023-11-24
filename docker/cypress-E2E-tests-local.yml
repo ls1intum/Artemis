@@ -12,12 +12,16 @@ services:
         extends:
             file: ./artemis.yml
             service: artemis-app
+        group_add:
+            - "999"
         depends_on:
             mysql:
                 condition: service_healthy
         env_file:
             - ./artemis/config/cypress.env
             - ./artemis/config/cypress-local.env
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock
 
     nginx:
         extends:
