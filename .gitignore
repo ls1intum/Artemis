@@ -210,3 +210,4 @@ data-exports/
 /src/main/resources/id_*
 /src/main/resources/known_hosts
 /.nx
+/local-ci-scripts

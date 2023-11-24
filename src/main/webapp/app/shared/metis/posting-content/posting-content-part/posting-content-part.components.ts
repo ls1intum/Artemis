@@ -30,6 +30,7 @@ export class PostingContentPartComponent {
     @Output() userReferenceClicked = new EventEmitter<string>();
 
     imageNotFound = false;
+    hasClickedUserReference = false;
 
     // Only allow certain html tags and attributes
     allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'li', 'mark', 'ol', 'p', 'pre', 'small', 'span', 'strong', 'sub', 'sup', 'ul'];
@@ -105,7 +106,8 @@ export class PostingContentPartComponent {
      * @param referenceUserLogin login of the referenced user
      */
     onClickUserReference(referenceUserLogin: string | undefined) {
-        if (referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity?.login) {
+        if (!this.hasClickedUserReference && referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity?.login) {
+            this.hasClickedUserReference = true;
             this.userReferenceClicked.emit(referenceUserLogin);
         }
     }
