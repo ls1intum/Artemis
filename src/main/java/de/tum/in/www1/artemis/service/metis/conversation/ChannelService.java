@@ -297,6 +297,9 @@ public class ChannelService {
             return null;
         }
         Channel channel = channelRepository.findChannelByLectureId(originalLecture.getId());
+        if (channel == null) {
+            return null;
+        }
         return updateChannelName(channel, channelName);
     }
 
@@ -330,11 +333,13 @@ public class ChannelService {
             return null;
         }
         Channel channel = channelRepository.findChannelByExamId(originalExam.getId());
+        if (channel == null) {
+            return null;
+        }
         return updateChannelName(channel, updatedExam.getChannelName());
     }
 
     private Channel updateChannelName(Channel channel, String newChannelName) {
-
         // Update channel name if necessary
         if (!newChannelName.equals(channel.getName())) {
             channel.setName(newChannelName);
