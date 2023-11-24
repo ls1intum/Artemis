@@ -67,6 +67,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationIndependentTes
     void testValidWindfileDeserializationWithClass() {
         String invalidWindfile = "{\n\"api\": \"v0.0.1\",\n\"metadata\": {\n\"name\": \"example windfile\",\n\"description\": \"example windfile\",\n\"id\": \"example-windfile\"\n},\n\"actions\": [\n{\n\"name\": \"valid-action\",\n\"class\": \"script-action\",\n\"script\": \"echo $PATH\",\n\"runAlways\": true\n}\n]\n}";
         Windfile windfile = Windfile.deserialize(invalidWindfile);
+        assertThat(windfile).isNotNull();
         assertThat(windfile.getActions().get(0)).isInstanceOf(ScriptAction.class);
     }
 
@@ -80,6 +81,6 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationIndependentTes
         assertThat(windfile.getApi()).isEqualTo("v0.0.1");
         assertThat(windfile.getMetadata().getGitCredentials()).isNull();
         assertThat(windfile.getMetadata().getDocker()).isNotNull();
-        assertThat(windfile.getActions().stream().filter(action -> action instanceof ScriptAction).count()).isEqualTo(expectedScriptActions);
+        assertThat(windfile.getScriptActions().size()).isEqualTo(expectedScriptActions);
     }
 }

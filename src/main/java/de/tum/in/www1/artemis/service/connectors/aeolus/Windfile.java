@@ -46,6 +46,12 @@ public class Windfile {
         this.actions = actions;
     }
 
+    private void checkMetadata() {
+        if (this.metadata == null) {
+            setMetadata(new WindfileMetadata());
+        }
+    }
+
     /**
      * Sets the id of the windfile. If no metadata is present, also sets the metadata.
      *
@@ -53,9 +59,7 @@ public class Windfile {
      *               that is generated from this windfile
      */
     public void setId(String id) {
-        if (this.metadata == null) {
-            setMetadata(new WindfileMetadata());
-        }
+        checkMetadata();
         this.metadata.setId(id);
     }
 
@@ -74,31 +78,43 @@ public class Windfile {
         return scriptActions;
     }
 
+    /**
+     * Sets the credentials for the git repository that is used within the CI system.
+     *
+     * @param credentials the credentials for the git repository that is used within the CI system.
+     */
     public void setGitCredentials(String credentials) {
-        if (this.metadata == null) {
-            setMetadata(new WindfileMetadata());
-        }
+        checkMetadata();
         this.metadata.setGitCredentials(credentials);
     }
 
+    /**
+     * Sets the name of the windfile.
+     *
+     * @param name the name of the windfile.
+     */
     public void setName(String name) {
-        if (this.metadata == null) {
-            setMetadata(new WindfileMetadata());
-        }
+        checkMetadata();
         this.metadata.setName(name);
     }
 
-    public void setDescription(String name) {
-        if (this.metadata == null) {
-            setMetadata(new WindfileMetadata());
-        }
-        this.metadata.setDescription(name);
+    /**
+     * Sets the description of the windfile.
+     *
+     * @param description the description of the windfile.
+     */
+    public void setDescription(String description) {
+        checkMetadata();
+        this.metadata.setDescription(description);
     }
 
+    /**
+     * Sets the result hook for the windfile.
+     *
+     * @param resultHook the result hook for the windfile.
+     */
     public void setResultHook(String resultHook) {
-        if (this.metadata == null) {
-            setMetadata(new WindfileMetadata());
-        }
+        checkMetadata();
         this.metadata.setResultHook(resultHook);
     }
 
@@ -110,6 +126,32 @@ public class Windfile {
         return repositories;
     }
 
+    /**
+     * Sets the pre-processing metadata for the windfile.
+     *
+     * @param id             the id of the windfile.
+     * @param name           the name of the windfile.
+     * @param gitCredentials the git credentials of the windfile.
+     * @param resultHook     the result hook of the windfile.
+     * @param description    the description of the windfile.
+     * @param repositories   the repositories of the windfile.
+     */
+    public void setPreProcessingMetadata(String id, String name, String gitCredentials, String resultHook, String description, Map<String, AeolusRepository> repositories) {
+        this.setId(id);
+        this.setName(name);
+        this.setGitCredentials(gitCredentials);
+        this.setResultHook(resultHook);
+        this.setDescription(description);
+        this.setRepositories(repositories);
+    }
+
+    /**
+     * Deserializes a windfile from a json string.
+     *
+     * @param json the json string to deserialize.
+     * @return the deserialized windfile.
+     * @throws JsonSyntaxException if the json string is not valid.
+     */
     public static Windfile deserialize(String json) throws JsonSyntaxException {
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(Action.class, new ActionDeserializer());

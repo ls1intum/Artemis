@@ -11,6 +11,13 @@ public class AeolusRepository {
 
     private String path;
 
+    /**
+     * Creates a new AeolusRepository
+     *
+     * @param url    the url of the repository
+     * @param branch the branch of the repository
+     * @param path   the path of the repository
+     */
     public AeolusRepository(String url, String branch, String path) {
         this.url = url;
         this.branch = branch;

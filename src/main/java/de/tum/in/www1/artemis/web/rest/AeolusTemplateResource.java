@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.web.rest;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -34,7 +36,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.*;
 @RequestMapping("/api/aeolus")
 public class AeolusTemplateResource {
 
-    private final Logger log = LoggerFactory.getLogger(AeolusTemplateResource.class);
+    private final Logger logger = LoggerFactory.getLogger(AeolusTemplateResource.class);
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
@@ -43,6 +45,34 @@ public class AeolusTemplateResource {
     public AeolusTemplateResource(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+    }
+
+    /**
+     * Reads the yaml file and returns a Windfile object
+     *
+     * @param yaml the yaml file
+     * @return the Windfile object
+     * @throws IOException if the yaml file is not valid
+     */
+    private static Windfile readWindfile(String yaml) throws IOException {
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(Action.class, new ActionDeserializer());
+        Gson gson = builder.create();
+        return gson.fromJson(convertYamlToJson(yaml), Windfile.class);
+    }
+
+    /**
+     * Converts a YAML string to a JSON string for easier communication with the client and usage with Gson
+     *
+     * @param yaml YAML string
+     * @return JSON string
+     */
+    private static String convertYamlToJson(String yaml) throws JsonProcessingException {
+        ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
+        Object obj = yamlReader.readValue(yaml, Object.class);
+
+        ObjectMapper jsonWriter = new ObjectMapper();
+        return jsonWriter.writeValueAsString(obj);
     }
 
     /**
@@ -64,7 +94,7 @@ public class AeolusTemplateResource {
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
             @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns,
             @RequestParam(value = "testCoverage", defaultValue = "false") boolean testCoverage) {
-        log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
+        logger.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
                 projectType, staticAnalysis, sequentialRuns, testCoverage);
 
         String languagePrefix = language.name().toLowerCase();
@@ -109,7 +139,7 @@ public class AeolusTemplateResource {
             return new ResponseEntity<>(json, responseHeaders, HttpStatus.OK);
         }
         catch (IOException ex) {
-            log.warn("Error when retrieving aeolus template file", ex);
+            logger.warn("Error when retrieving aeolus template file", ex);
             HttpHeaders responseHeaders = new HttpHeaders();
             return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
         }
@@ -139,34 +169,6 @@ public class AeolusTemplateResource {
             fileNameComponents.add("coverage");
         }
         return String.join("_", fileNameComponents) + ".yaml";
-    }
-
-    /**
-     * Reads the yaml file and returns a Windfile object
-     *
-     * @param yaml the yaml file
-     * @return the Windfile object
-     * @throws IOException if the yaml file is not valid
-     */
-    private static Windfile readWindfile(String yaml) throws IOException {
-        GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(Action.class, new ActionDeserializer());
-        Gson gson = builder.create();
-        return gson.fromJson(convertYamlToJson(yaml), Windfile.class);
-    }
-
-    /**
-     * Converts a YAML string to a JSON string for easier communication with the client and usage with Gson
-     *
-     * @param yaml YAML string
-     * @return JSON string
-     */
-    private static String convertYamlToJson(String yaml) throws JsonProcessingException {
-        ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
-        Object obj = yamlReader.readValue(yaml, Object.class);
-
-        ObjectMapper jsonWriter = new ObjectMapper();
-        return jsonWriter.writeValueAsString(obj);
     }
 
     /**

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.connector;
 
-import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 import java.net.URL;
@@ -20,21 +21,32 @@ import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.Gson;
 
+/**
+ * Mocks requests to Aeolus
+ */
 @Component
 @Profile("aeolus")
 public class AeolusRequestMockProvider {
 
-    @Value("${aeolus.url}")
-    private URL AEOLUS_URL;
-
     private final RestTemplate restTemplate;
+
+    @Value("${aeolus.url}")
+    private URL aeolus_url;
 
     private MockRestServiceServer mockServer;
 
+    /**
+     * Constructor for the AeolusRequestMockProvider
+     *
+     * @param restTemplate the rest template to use
+     */
     public AeolusRequestMockProvider(@Qualifier("aeolusRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Enables mocking of requests
+     */
     public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
     }
@@ -46,7 +58,7 @@ public class AeolusRequestMockProvider {
      * @param expectedKey the expected key
      */
     public void mockSuccessfulPublishBuildPlan(String target, String expectedKey) {
-        final var uriPattern = Pattern.compile(AEOLUS_URL + "/publish/" + target);
+        final var uriPattern = Pattern.compile(aeolus_url + "/publish/" + target);
 
         Map<String, String> responseBody = new HashMap<>();
         responseBody.put("key", expectedKey);
@@ -63,7 +75,7 @@ public class AeolusRequestMockProvider {
      * @param target the target to publish to
      */
     public void mockFailedPublishBuildPlan(String target) {
-        final var uriPattern = Pattern.compile(AEOLUS_URL + "/publish/" + target);
+        final var uriPattern = Pattern.compile(aeolus_url + "/publish/" + target);
 
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
     }

@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
 import java.net.URL;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +11,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -24,7 +28,11 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService
 @Profile("aeolus")
 public class AeolusBuildPlanService {
 
-    private static final Logger log = LoggerFactory.getLogger(AeolusBuildPlanService.class);
+    private static final Logger logger = LoggerFactory.getLogger(AeolusBuildPlanService.class);
+
+    private final Optional<BambooInternalUrlService> bambooInternalUrlService;
+
+    private final RestTemplate restTemplate;
 
     @Value("${aeolus.url}")
     private URL aeolusUrl;
@@ -38,10 +46,12 @@ public class AeolusBuildPlanService {
     @Value("${artemis.continuous-integration.url}")
     private String ciUrl;
 
-    private final Optional<BambooInternalUrlService> bambooInternalUrlService;
-
-    private final RestTemplate restTemplate;
-
+    /**
+     * Constructor for the AeolusBuildPlanService
+     *
+     * @param restTemplate             the rest template to use
+     * @param bambooInternalUrlService the internal URL service for Bamboo
+     */
     public AeolusBuildPlanService(@Qualifier("aeolusRestTemplate") RestTemplate restTemplate, Optional<BambooInternalUrlService> bambooInternalUrlService) {
         this.restTemplate = restTemplate;
         this.bambooInternalUrlService = bambooInternalUrlService;
@@ -83,7 +93,7 @@ public class AeolusBuildPlanService {
             }
         }
         catch (HttpServerErrorException e) {
-            log.error("Error while publishing build plan {} to Aeolus target {}", buildPlan, target, e);
+            logger.error("Error while publishing build plan {} to Aeolus target {}", buildPlan, target, e);
         }
         return null;
     }
