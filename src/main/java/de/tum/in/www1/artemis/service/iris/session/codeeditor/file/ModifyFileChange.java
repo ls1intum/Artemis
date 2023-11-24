@@ -54,6 +54,9 @@ public record ModifyFileChange(String path, String original, String updated) imp
         String path = node.required("path").asText();
         String original = node.required("original").asText();
         String updated = node.required("updated").asText();
+        if (original.equals("!all!")) {
+            return new OverwriteFileChange(path, updated);
+        }
         return new ModifyFileChange(path, original, updated);
     }
 }

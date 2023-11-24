@@ -10,9 +10,12 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.message.*;
@@ -76,12 +79,14 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private final IrisSessionRepository irisSessionRepository;
 
+    private final ObjectMapper objectMapper;
+
     public IrisCodeEditorSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, AuthorizationCheckService authCheckService,
             IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, IrisExercisePlanStepRepository irisExercisePlanStepRepository,
             VersionControlService versionControlService, GitService gitService, RepositoryService repositoryService,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
-            IrisSessionRepository irisSessionRepository) {
+            IrisSessionRepository irisSessionRepository, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.irisConnectorService = irisConnectorService;
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -95,6 +100,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         this.templateParticipationRepository = templateParticipationRepository;
         this.solutionParticipationRepository = solutionParticipationRepository;
         this.irisSessionRepository = irisSessionRepository;
+        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
     }
 
     /**
@@ -314,9 +320,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 else {
                     var changes = extractFileChanges(response.content());
                     log.info("Extracted file changes for exercise " + component + ": " + changes);
-                    try (Repository repository = repositoryFor(exercise, component)) {
-                        successfulChanges = injectChangesIntoRepository(repository, changes);
-                    }
+                    successfulChanges = injectChangesIntoRepository(repositoryFor(exercise, component), changes);
                 }
                 log.info("Setting exercise step as executed");
                 irisExercisePlanStepRepository.setCompleted(exerciseStep);
@@ -341,13 +345,9 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     private Map<String, Object> initializeParams(ProgrammingExercise exercise) {
         var params = new HashMap<String, Object>();
         params.put("problemStatement", exercise.getProblemStatement());
-        try (Repository solutionRepository = solutionRepository(exercise);
-                Repository templateRepository = templateRepository(exercise);
-                Repository testRepository = testRepository(exercise)) {
-            params.put("solutionRepository", filterFiles(read(solutionRepository)));
-            params.put("templateRepository", filterFiles(read(templateRepository)));
-            params.put("testRepository", filterFiles(read(testRepository)));
-        }
+        params.put("solutionRepository", filterFiles(read(solutionRepository(exercise))));
+        params.put("templateRepository", filterFiles(read(templateRepository(exercise))));
+        params.put("testRepository", filterFiles(read(testRepository(exercise))));
         return params;
     }
 
@@ -507,6 +507,15 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                         break;
                     }
                     for (JsonNode node : content.required("changes")) {
+                        if (node.has("json")) {
+                            try {
+                                node = objectMapper.readTree(node.required("json").asText());
+                            }
+                            catch (JsonProcessingException e) {
+                                log.error("Could not parse json field of ProblemStatementChange: " + node.toPrettyString(), e);
+                                continue;
+                            }
+                        }
                         try {
                             if (node.required("from").asText().equals("!done!")) {
                                 // This is a special case when the LLM decides to stop generating changes.
@@ -566,8 +575,17 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         List<FileChange> changes = new ArrayList<>();
         for (JsonNode node : content.path("changes")) {
             try {
-                var fileChange = switch (node.path("type").asText()) {
-                    case "overwrite" -> OverwriteFileChange.parse(node);
+                String type = node.path("type").asText();
+                if (node.has("json")) {
+                    try {
+                        node = objectMapper.readTree(node.required("json").asText());
+                    }
+                    catch (JsonProcessingException e) {
+                        log.error("Could not parse json field of FileChange: " + node.toPrettyString(), e);
+                        continue;
+                    }
+                }
+                var fileChange = switch (type) {
                     case "modify" -> ModifyFileChange.parse(node);
                     case "create" -> CreateFileChange.parse(node);
                     case "delete" -> DeleteFileChange.parse(node);
@@ -627,8 +645,13 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      */
     private Set<FileChange> injectChangesIntoRepository(Repository repository, List<FileChange> changes) {
         log.info("Injecting changes into repository: \n" + changes);
-        Map<String, Optional<File>> targetedFiles = changes.stream().map(FileChange::path).distinct()
-                .collect(Collectors.toMap(fileName -> fileName, fileName -> gitService.getFileByName(repository, fileName)));
+        // @formatter:off
+        Map<String, Optional<File>> targetedFiles = changes.stream()
+                .map(FileChange::path)
+                .distinct()
+                .collect(Collectors.toMap(fileName -> fileName,
+                        fileName -> gitService.getFileByName(repository, fileName)));
+        // @formatter:on
         Set<FileChange> successful = new HashSet<>();
         int successes = 0;
         int failures = 0;

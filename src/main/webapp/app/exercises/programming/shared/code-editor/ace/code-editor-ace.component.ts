@@ -298,11 +298,12 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param fileName Name of the file to be loaded
      */
     async ensureLoadedThenInitEditorIfSelected(fileName: string): Promise<void> {
-        this.isLoading = true;
         // If the file is not yet loaded or loading failed, fetch it from the server
         // If the file is already loaded, we don't need to load it again
         if (!this.fileSession[fileName] || this.fileSession[fileName].loadingError) {
+            this.isLoading = true;
             await this.forceReloadFileContents(fileName);
+            this.isLoading = false;
         }
 
         // Only initialize the editor if the selected file has not changed in between
@@ -310,7 +311,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
         if (this.selectedFile === fileName) {
             await this.initEditor();
         }
-        this.isLoading = false;
     }
 
     async forceReloadAll(fileNames: string[]) {
