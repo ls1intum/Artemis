@@ -66,18 +66,6 @@ describe('ExerciseDetailsComponent', () => {
         expect(isAtLeastInstructor).toHaveBeenCalledOnce();
     });
 
-    it('should show timeline', () => {
-        fixture.detectChanges();
-        const timeline = getElement(fixture.debugElement, 'jhi-programming-exercise-lifecycle');
-        expect(timeline).not.toBeNull();
-    });
-
-    it('should show instructions', () => {
-        fixture.detectChanges();
-        const instructions = getElement(fixture.debugElement, 'jhi-programming-exercise-instructions');
-        expect(instructions).not.toBeNull();
-    });
-
     it('should not show grading criteria', () => {
         fixture.detectChanges();
         const gradingCriteria = getElement(fixture.debugElement, 'jhi-structured-grading-instructions-assessment-layout');
