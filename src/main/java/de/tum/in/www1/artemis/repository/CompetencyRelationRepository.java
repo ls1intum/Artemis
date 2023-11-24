@@ -32,7 +32,7 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
             WHERE relation.headCompetency.id = :competencyId
                 OR relation.tailCompetency.id = :competencyId
             """)
-    void deleteAllByCompetencyId(@Param("competencyId") Long competencyId);
+    void deleteAllByCompetencyId(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT relation
