@@ -39,6 +39,12 @@ public class AeolusRequestMockProvider {
         mockServer = MockRestServiceServer.createServer(restTemplate);
     }
 
+    /**
+     * Mocks a successful generate build plan request
+     *
+     * @param target      the target to publish to
+     * @param expectedKey the expected key
+     */
     public void mockSuccessfulPublishBuildPlan(String target, String expectedKey) {
         final var uriPattern = Pattern.compile(AEOLUS_URL + "/publish/" + target);
 
@@ -51,6 +57,11 @@ public class AeolusRequestMockProvider {
                 .andRespond(withStatus(HttpStatus.OK).body(json).contentType(org.springframework.http.MediaType.APPLICATION_JSON));
     }
 
+    /**
+     * Mocks a failed publish build plan request
+     *
+     * @param target the target to publish to
+     */
     public void mockFailedPublishBuildPlan(String target) {
         final var uriPattern = Pattern.compile(AEOLUS_URL + "/publish/" + target);
 
