@@ -74,13 +74,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ButtonSize = ButtonSize;
     readonly AssessmentType = AssessmentType;
     readonly documentationType: DocumentationType = 'Programming';
-    readonly sectionHeadlineTranslationKeys = {
-        general: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
-        mode: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
-        language: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
-        problem: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
-        grading: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
-    };
 
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
@@ -325,12 +318,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     {
                         type: DetailType.ProgrammingRepositoryButtons,
                         title: 'artemisApp.programmingExercise.templateRepositoryUrl',
-                        data: { participation: exercise.templateParticipation, exerciseId: exercise.id, type: 'TEMPLATE' },
+                        data: { participation: exercise.templateParticipation, exerciseId: exercise.id, type: ProgrammingExerciseParticipationType.TEMPLATE },
                     },
                     {
                         type: DetailType.ProgrammingRepositoryButtons,
                         title: 'artemisApp.programmingExercise.solutionRepositoryUrl',
-                        data: { participation: exercise.solutionParticipation, exerciseId: exercise.id, type: 'SOLUTION' },
+                        data: { participation: exercise.solutionParticipation, exerciseId: exercise.id, type: ProgrammingExerciseParticipationType.SOLUTION },
                     },
                     {
                         type: DetailType.ProgrammingRepositoryButtons,
@@ -360,7 +353,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             exercise,
                             participation: exercise.templateParticipation,
                             loading: this.loadingTemplateParticipationResults,
-                            submissionRouterLink: this.getParticipationSubmissionLink(exercise.templateParticipation?.id!),
+                            submissionRouterLink: exercise.templateParticipation && this.getParticipationSubmissionLink(exercise.templateParticipation.id!),
                             onParticipationChange: this.onParticipationChange,
                             type: ProgrammingExerciseParticipationType.TEMPLATE,
                         },
@@ -372,7 +365,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             exercise,
                             participation: exercise.solutionParticipation,
                             loading: this.loadingSolutionParticipationResults,
-                            submissionRouterLink: this.getParticipationSubmissionLink(exercise.solutionParticipation?.id!),
+                            submissionRouterLink: exercise.solutionParticipation && this.getParticipationSubmissionLink(exercise.solutionParticipation.id!),
                             type: ProgrammingExerciseParticipationType.SOLUTION,
                         },
                     },
@@ -395,7 +388,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         exercise?.testwiseCoverageEnabled && {
                             type: DetailType.Text,
                             title: 'artemisApp.programmingExercise.coveredLineRatio',
-                            data: { text: exercise?.coveredLinesRatio ? (exercise?.coveredLinesRatio! * 100).toFixed(1) + ' %' : undefined },
+                            data: { text: exercise?.coveredLinesRatio ? (exercise.coveredLinesRatio * 100).toFixed(1) + ' %' : undefined },
                         },
                     {
                         type: DetailType.Text,
