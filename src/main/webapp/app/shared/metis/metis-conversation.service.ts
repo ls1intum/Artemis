@@ -134,7 +134,7 @@ export class MetisConversationService implements OnDestroy {
         }
     }
 
-    public forceRefresh = (notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> => {
+    public forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
         if (!this._course) {
             throw new Error('Course is not set. The service does not seem to be initialized.');
         }
@@ -177,7 +177,7 @@ export class MetisConversationService implements OnDestroy {
             // refresh complete
             switchMap(() => EMPTY),
         );
-    };
+    }
 
     public createOneToOneChat = (loginOfChatPartner: string): Observable<HttpResponse<OneToOneChatDTO>> =>
         this.onConversationCreation(this.oneToOneChatService.create(this._courseId, loginOfChatPartner));
