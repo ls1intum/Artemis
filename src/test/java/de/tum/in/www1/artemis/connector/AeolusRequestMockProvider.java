@@ -31,7 +31,7 @@ public class AeolusRequestMockProvider {
     private final RestTemplate restTemplate;
 
     @Value("${aeolus.url}")
-    private URL aeolus_url;
+    private URL aeolusUrl;
 
     private MockRestServiceServer mockServer;
 
@@ -58,7 +58,7 @@ public class AeolusRequestMockProvider {
      * @param expectedKey the expected key
      */
     public void mockSuccessfulPublishBuildPlan(String target, String expectedKey) {
-        final var uriPattern = Pattern.compile(aeolus_url + "/publish/" + target);
+        final var uriPattern = Pattern.compile(aeolusUrl + "/publish/" + target);
 
         Map<String, String> responseBody = new HashMap<>();
         responseBody.put("key", expectedKey);
@@ -75,7 +75,7 @@ public class AeolusRequestMockProvider {
      * @param target the target to publish to
      */
     public void mockFailedPublishBuildPlan(String target) {
-        final var uriPattern = Pattern.compile(aeolus_url + "/publish/" + target);
+        final var uriPattern = Pattern.compile(aeolusUrl + "/publish/" + target);
 
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
     }
