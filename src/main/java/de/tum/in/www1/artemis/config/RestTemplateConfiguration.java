@@ -80,6 +80,9 @@ public class RestTemplateConfiguration {
         return createRestTemplate();
     }
 
+    /**
+     * Creates a RestTemplate that can be used to communicate with Aeolus
+     */
     @Bean
     @Profile("aeolus")
     public RestTemplate aeolusRestTemplate() {
@@ -155,6 +158,11 @@ public class RestTemplateConfiguration {
         return createShortTimeoutRestTemplate();
     }
 
+    /**
+     * Creates a RestTemplate that can be used to communicate with Aeolus
+     *
+     * @return a RestTemplate with short timeouts
+     */
     @Bean
     @Profile("aeolus")
     public RestTemplate shortTimeoutAeolusRestTemplate() {

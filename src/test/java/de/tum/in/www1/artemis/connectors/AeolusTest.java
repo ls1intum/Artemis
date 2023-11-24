@@ -80,35 +80,29 @@ class AeolusTest {
     @Test
     void testSettersWithoutMetadata() {
         windfile.setMetadata(null);
+        AeolusRepository aeolusRepository = new AeolusRepository("url", "branch", "path");
+        windfile.setPreProcessingMetadata("id", "name", "gitCredentials", "resultHook", "description", Map.of("key", aeolusRepository));
+        assertThat(windfile.getMetadata().getId()).isEqualTo("id");
+        assertThat(windfile.getMetadata().getDescription()).isEqualTo("description");
+        assertThat(windfile.getMetadata().getName()).isEqualTo("name");
+        assertThat(windfile.getRepositories().get("key")).isEqualTo(aeolusRepository);
+        assertThat(windfile.getMetadata().getGitCredentials()).isEqualTo("gitCredentials");
+    }
+
+    @Test
+    void testSettersWithMetadata() {
+        windfile.setMetadata(null);
         windfile.setApi("v0.0.1");
         assertThat(windfile.getApi()).isEqualTo("v0.0.1");
-        windfile.setMetadata(null);
-        windfile.setId("id");
-        assertThat(windfile.getMetadata().getId()).isEqualTo("id");
         windfile.setId("newId");
         assertThat(windfile.getMetadata().getId()).isEqualTo("newId");
-        windfile.setMetadata(null);
-        windfile.setDescription("description");
-        assertThat(windfile.getMetadata().getDescription()).isEqualTo("description");
         windfile.setDescription("newDescription");
         assertThat(windfile.getMetadata().getDescription()).isEqualTo("newDescription");
-        windfile.setMetadata(null);
-        windfile.setName("name");
-        assertThat(windfile.getMetadata().getName()).isEqualTo("name");
         windfile.setName("newName");
         assertThat(windfile.getMetadata().getName()).isEqualTo("newName");
         windfile.setMetadata(null);
-        windfile.setResultHook("resultHook");
-        assertThat(windfile.getMetadata().getResultHook()).isEqualTo("resultHook");
         windfile.setResultHook("newResultHook");
         assertThat(windfile.getMetadata().getResultHook()).isEqualTo("newResultHook");
-        AeolusRepository aeolusRepository = new AeolusRepository("url", "branch", "path");
-        Map<String, AeolusRepository> map = Map.of("key", aeolusRepository);
-        windfile.setRepositories(map);
-        assertThat(windfile.getRepositories().get("key")).isEqualTo(aeolusRepository);
-        windfile.setGitCredentials("gitCredentials");
-        assertThat(windfile.getMetadata().getGitCredentials()).isEqualTo("gitCredentials");
-        windfile.setMetadata(null);
         windfile.setGitCredentials("newGitCredentials");
         assertThat(windfile.getMetadata().getGitCredentials()).isEqualTo("newGitCredentials");
     }

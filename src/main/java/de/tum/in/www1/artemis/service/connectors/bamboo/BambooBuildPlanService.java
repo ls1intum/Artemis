@@ -66,19 +66,9 @@ import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 @Profile("bamboo")
 public class BambooBuildPlanService {
 
-    @Value("${artemis.continuous-integration.user}")
-    private String bambooUser;
-
-    @Value("${artemis.user-management.external.admin-group-name}")
-    private String adminGroupName;
-
-    @Value("${server.url}")
-    private URL artemisServerUrl;
+    private static final Logger logger = LoggerFactory.getLogger(BambooBuildPlanService.class);
 
     private final BambooInternalUrlService bambooInternalUrlService;
-
-    @Value("${artemis.version-control.user}")
-    private String gitUser;
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
@@ -90,9 +80,19 @@ public class BambooBuildPlanService {
 
     private final Optional<AeolusBuildPlanService> aeolusBuildPlanService;
 
-    private static final Logger log = LoggerFactory.getLogger(BambooBuildPlanService.class);
-
     private final UrlService urlService;
+
+    @Value("${artemis.continuous-integration.user}")
+    private String bambooUser;
+
+    @Value("${artemis.user-management.external.admin-group-name}")
+    private String adminGroupName;
+
+    @Value("${server.url}")
+    private URL artemisServerUrl;
+
+    @Value("${artemis.version-control.user}")
+    private String gitUser;
 
     public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Optional<VersionControlService> versionControlService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, UrlService urlService, BambooInternalUrlService bambooInternalUrlService,
@@ -104,6 +104,40 @@ public class BambooBuildPlanService {
         this.urlService = urlService;
         this.bambooInternalUrlService = bambooInternalUrlService;
         this.aeolusBuildPlanService = aeolusBuildPlanService;
+    }
+
+    /**
+     * Returns a path pattern that matches all shell scripts that define the build plan steps.
+     * <p>
+     * The name and number of scripts is different for each exercise type.
+     * Therefore, a pattern is returned that matches all {@code sh}-scripts in the specific template directory depending on the exercise features.
+     * A resource loader can then load all matching scripts in one go, rather than loading the files individually.
+     *
+     * @param programmingLanguage     The programming language of the exercise for which a build plan is set up.
+     * @param projectTypeSubDirectory The subdirectory where the template files are stored based on the project type of the exercise.
+     * @param sequentialBuildRuns     If sequential build runs are enabled for the exercise.
+     * @param getScaTasks             If static code analysis is enabled for the exercise.
+     * @return A path pattern that matches all shell scripts needed for the build steps in Bamboo.
+     */
+    private static Path getScriptPattern(final ProgrammingLanguage programmingLanguage, final Optional<Path> projectTypeSubDirectory, final boolean sequentialBuildRuns,
+            final boolean getScaTasks) {
+        Path pattern = Path.of("templates", "bamboo", programmingLanguage.name().toLowerCase());
+        if (projectTypeSubDirectory.isPresent()) {
+            pattern = pattern.resolve(projectTypeSubDirectory.get());
+        }
+
+        final String projectTypeDir;
+        if (getScaTasks) {
+            projectTypeDir = "staticCodeAnalysisRuns";
+        }
+        else if (sequentialBuildRuns) {
+            projectTypeDir = "sequentialRuns";
+        }
+        else {
+            projectTypeDir = "regularRuns";
+        }
+
+        return pattern.resolve(projectTypeDir);
     }
 
     /**
@@ -130,36 +164,14 @@ public class BambooBuildPlanService {
         boolean couldCreateCustomBuildPlan = false;
         if (aeolusBuildPlanService.isPresent() && programmingExercise.getBuildPlanConfiguration() != null) {
             try {
-                Windfile windfile = programmingExercise.getWindfile();
-                Map<String, AeolusRepository> repositoryMap = new HashMap<>();
-                repositoryMap.put(ASSIGNMENT_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(repositoryUrl).toString(), programmingExercise.getBranch(),
-                        RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
-                if (programmingExercise.getCheckoutSolutionRepository()) {
-                    repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(solutionRepositoryUrl).toString(),
-                            programmingExercise.getBranch(), RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
-                }
-                repositoryMap.put(TEST_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(testRepositoryUrl).toString(), programmingExercise.getBranch(),
-                        ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
-                for (var auxRepo : auxiliaryRepositories) {
-                    repositoryMap.put(auxRepo.name(), new AeolusRepository(auxRepo.repositoryUrl().toString(), programmingExercise.getBranch(), auxRepo.name()));
-                }
-                windfile.setRepositories(repositoryMap);
-                windfile.setGitCredentials(this.gitUser);
-                windfile.setResultHook(artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH);
-                windfile.setName(projectName);
-                windfile.setId(projectKey + "-" + planKey);
-                windfile.setDescription(planDescription);
-                String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(new Gson().toJson(windfile), "bamboo");
-                if (generatedKey != null) {
-                    assignedKey = generatedKey.split("-")[1];
+                assignedKey = tryToPublishCustomBuildPlan(programmingExercise, planKey, planDescription, projectKey, projectName, repositoryUrl, testRepositoryUrl,
+                        solutionRepositoryUrl, auxiliaryRepositories);
+                if (assignedKey != null) {
                     couldCreateCustomBuildPlan = true;
                 }
-                else {
-                    throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle());
-                }
             }
-            catch (Exception e) {
-                log.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
+            catch (ContinuousIntegrationBuildPlanException e) {
+                logger.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
                         + ", will create default build plan", e);
             }
         }
@@ -174,6 +186,50 @@ public class BambooBuildPlanService {
         }
 
         setBuildPlanPermissionsForExercise(programmingExercise, assignedKey);
+    }
+
+    /**
+     * Tries to create a custom Build Plan for a Programming Exercise
+     *
+     * @param programmingExercise   the programming exercise for which to create the build plan
+     * @param planKey               the key of the build plan
+     * @param planDescription       the description of the build plan
+     * @param projectKey            the key of the project
+     * @param projectName           the name of the project
+     * @param repositoryUrl         the url of the assignment repository
+     * @param testRepositoryUrl     the url of the test repository
+     * @param solutionRepositoryUrl the url of the solution repository
+     * @param auxiliaryRepositories List of auxiliary repositories to be included in the build plan
+     * @return the key of the created build plan, or null if it could not be created
+     * @throws ContinuousIntegrationBuildPlanException if the build plan could not be created
+     */
+    private String tryToPublishCustomBuildPlan(ProgrammingExercise programmingExercise, String planKey, String planDescription, String projectKey, String projectName,
+            VcsRepositoryUrl repositoryUrl, VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl,
+            List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories) throws ContinuousIntegrationBuildPlanException {
+        if (aeolusBuildPlanService.isEmpty()) {
+            return null;
+        }
+        Windfile windfile = programmingExercise.getWindfile();
+        Map<String, AeolusRepository> repositoryMap = new HashMap<>();
+        repositoryMap.put(ASSIGNMENT_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(repositoryUrl).toString(), programmingExercise.getBranch(),
+                RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
+        if (programmingExercise.getCheckoutSolutionRepository()) {
+            repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(solutionRepositoryUrl).toString(), programmingExercise.getBranch(),
+                    RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
+        }
+        repositoryMap.put(TEST_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(testRepositoryUrl).toString(), programmingExercise.getBranch(),
+                ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingExercise.getProgrammingLanguage())));
+        for (var auxRepo : auxiliaryRepositories) {
+            repositoryMap.put(auxRepo.name(), new AeolusRepository(auxRepo.repositoryUrl().toString(), programmingExercise.getBranch(), auxRepo.name()));
+        }
+        windfile.setPreProcessingMetadata(projectKey + "-" + planKey, projectName, this.gitUser, artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH, planDescription, repositoryMap);
+        String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(new Gson().toJson(windfile), "bamboo");
+        if (generatedKey != null && generatedKey.contains("-")) {
+            return generatedKey.split("-")[1];
+        }
+        else {
+            throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle());
+        }
     }
 
     /**
@@ -539,40 +595,6 @@ public class BambooBuildPlanService {
         catch (IOException e) {
             throw new ContinuousIntegrationBuildPlanException("Unable to load template build plans", e);
         }
-    }
-
-    /**
-     * Returns a path pattern that matches all shell scripts that define the build plan steps.
-     * <p>
-     * The name and number of scripts is different for each exercise type.
-     * Therefore, a pattern is returned that matches all {@code sh}-scripts in the specific template directory depending on the exercise features.
-     * A resource loader can then load all matching scripts in one go, rather than loading the files individually.
-     *
-     * @param programmingLanguage     The programming language of the exercise for which a build plan is set up.
-     * @param projectTypeSubDirectory The subdirectory where the template files are stored based on the project type of the exercise.
-     * @param sequentialBuildRuns     If sequential build runs are enabled for the exercise.
-     * @param getScaTasks             If static code analysis is enabled for the exercise.
-     * @return A path pattern that matches all shell scripts needed for the build steps in Bamboo.
-     */
-    private static Path getScriptPattern(final ProgrammingLanguage programmingLanguage, final Optional<Path> projectTypeSubDirectory, final boolean sequentialBuildRuns,
-            final boolean getScaTasks) {
-        Path pattern = Path.of("templates", "bamboo", programmingLanguage.name().toLowerCase());
-        if (projectTypeSubDirectory.isPresent()) {
-            pattern = pattern.resolve(projectTypeSubDirectory.get());
-        }
-
-        final String projectTypeDir;
-        if (getScaTasks) {
-            projectTypeDir = "staticCodeAnalysisRuns";
-        }
-        else if (sequentialBuildRuns) {
-            projectTypeDir = "sequentialRuns";
-        }
-        else {
-            projectTypeDir = "regularRuns";
-        }
-
-        return pattern.resolve(projectTypeDir);
     }
 
     /**
