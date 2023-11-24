@@ -20,6 +20,7 @@ import { GradeType } from 'app/entities/grading-scale.model';
 import { Course } from 'app/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
 let component: ExamResultOverviewComponent;
@@ -122,7 +123,7 @@ describe('ExamResultOverviewComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), HttpClientTestingModule],
-            declarations: [ExamResultOverviewComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [ExamResultOverviewComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockComponent(GradingKeyTableComponent)],
             providers: [MockProvider(ExerciseService)],
         })
             .compileComponents()
