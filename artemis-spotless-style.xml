@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<profiles version="21">
-    <profile kind="CodeFormatterProfile" name="Artemis Spotless Code Style" version="21">
+<profiles version="28">
+    <profile kind="CodeFormatterProfile" name="Artemis Spotless Code Style" version="28">
         <setting id="org.eclipse.jdt.core.formatter.insert_space_after_ellipsis" value="insert"/>
         <setting id="org.eclipse.jdt.core.formatter.insert_space_after_comma_in_enum_declarations" value="insert"/>
         <setting id="org.eclipse.jdt.core.formatter.insert_space_before_comma_in_allocation_expression" value="do not insert"/>

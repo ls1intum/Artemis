@@ -14,6 +14,9 @@ jhi-category-selector {
                 border-radius: 0.25rem;
                 color: #fff;
 
+                display: flex;
+                align-items: center;
+
                 &:hover {
                     opacity: 0.8;
                 }
@@ -29,6 +32,11 @@ jhi-category-selector {
         height: 30px !important;
         color: var(--text-editor-color);
     }
+}
+
+// Otherwise the x will jump when opening the colorpicker
+.remove-button::before {
+    position: absolute;
 }
 
 .tag-option {

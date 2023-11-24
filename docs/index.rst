@@ -59,6 +59,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    dev/docker
    dev/cypress
    dev/open-source
+   dev/local-moodle-setup-for-lti
 
 
 .. toctree::

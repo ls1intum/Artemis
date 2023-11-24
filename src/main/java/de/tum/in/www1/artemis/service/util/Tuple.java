@@ -6,5 +6,5 @@ package de.tum.in.www1.artemis.service.util;
  * @param <X> first param.
  * @param <Y> second param.
  */
-public record Tuple<X, Y> (X x, Y y) {
+public record Tuple<X, Y>(X x, Y y) {
 }
