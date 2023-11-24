@@ -259,6 +259,7 @@ export class NotificationService {
                 notification.title === NEW_REPLY_FOR_EXAM_POST_TITLE
             ) {
                 const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
+                queryParams.postId = target.id;
                 const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
             } else {
