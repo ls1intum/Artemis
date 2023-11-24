@@ -543,37 +543,4 @@ describe('ExamResultSummaryComponent', () => {
             expect(toggleShowSampleSolutionSpy).toHaveBeenCalled();
         });
     });
-
-    describe('isExamResultPublished', () => {
-        it('should always be true for test runs', () => {
-            component.isTestRun = true;
-            component.studentExam.exam = undefined;
-
-            //@ts-ignore accessing private method
-            const resultsArePublished = component.isExamResultPublished();
-            expect(resultsArePublished).toBeTrue();
-        });
-
-        it('should be false if publishReleaseDate is in the future', () => {
-            component.studentExam.exam = exam;
-            component.isTestRun = false;
-            const dateInFuture = dayjs().add(5, 'days');
-            component.studentExam.exam!.publishResultsDate = dateInFuture;
-
-            //@ts-ignore accessing private method
-            const resultsArePublished = component.isExamResultPublished();
-            expect(resultsArePublished).toBeFalse();
-        });
-
-        it('should be true if publishReleaseDate is in the past', () => {
-            component.studentExam.exam = exam;
-            component.isTestRun = false;
-            const dateInFuture = dayjs().subtract(2, 'days');
-            component.studentExam.exam!.publishResultsDate = dateInFuture;
-
-            //@ts-ignore accessing private method
-            const resultsArePublished = component.isExamResultPublished();
-            expect(resultsArePublished).toBeTrue();
-        });
-    });
 });
