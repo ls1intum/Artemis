@@ -151,11 +151,11 @@ public class IrisSettingsResource {
      *         found.
      */
     @PutMapping("programming-exercises/{exerciseId}/raw-iris-settings")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastInstructor
     public ResponseEntity<IrisExerciseSettings> updateProgrammingExerciseSettings(@PathVariable Long exerciseId, @RequestBody IrisExerciseSettings settings) {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
         settings.setExercise(exercise);
         var updatedSettings = irisSettingsService.saveIrisSettings(settings);
         return ResponseEntity.ok(updatedSettings);

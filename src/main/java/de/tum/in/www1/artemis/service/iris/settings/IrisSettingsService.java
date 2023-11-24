@@ -386,4 +386,26 @@ public class IrisSettingsService {
     public IrisExerciseSettings getRawIrisSettingsFor(Exercise exercise) {
         return irisSettingsRepository.findExerciseSettings(exercise.getId()).orElse(getDefaultSettingsFor(exercise));
     }
+
+    /**
+     * Delete the Iris settings for a course.
+     * If no Iris settings for the course exist, nothing happens.
+     *
+     * @param course The course to delete the Iris settings for
+     */
+    public void deleteSettingsFor(Course course) {
+        var irisCourseSettingsOptional = irisSettingsRepository.findCourseSettings(course.getId());
+        irisCourseSettingsOptional.ifPresent(irisSettingsRepository::delete);
+    }
+
+    /**
+     * Delete the Iris settings for an exercise.
+     * If no Iris settings for the exercise exist, nothing happens.
+     *
+     * @param exercise The course to delete the Iris settings for
+     */
+    public void deleteSettingsFor(Exercise exercise) {
+        var irisExerciseSettingsOptional = irisSettingsRepository.findExerciseSettings(exercise.getId());
+        irisExerciseSettingsOptional.ifPresent(irisSettingsRepository::delete);
+    }
 }

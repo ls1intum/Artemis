@@ -11,7 +11,7 @@ const routes: Routes = [
         path: '',
         component: IrisExerciseSettingsUpdateComponent,
         data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.iris.settings.title.exercise',
         },
         canActivate: [UserRouteAccessService],

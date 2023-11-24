@@ -61,7 +61,7 @@
                     </a>
 
                     <a
-                        *ngIf="irisEnabled && programmingExercise.isAtLeastEditor && programmingExercise.course && !isExamExercise"
+                        *ngIf="irisEnabled && programmingExercise.isAtLeastInstructor && programmingExercise.course && !isExamExercise"
                         [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'iris-settings']"
                         ngbTooltip="{{ 'artemisApp.iris.settings.button.programmingExercise.tooltip' | artemisTranslate }}"
                         class="btn btn-warning btn-sm me-1"
@@ -517,6 +517,14 @@
                         <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Submissions</span>
                     </a>
                 </dd>
+
+                <div *ngIf="irisEnabled && irisChatEnabled && programmingExercise.course && !isExamExercise">
+                    <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.chat">Iris Chat</span></dt>
+                    <dd>
+                        <jhi-iris-enabled [exercise]="programmingExercise" [irisSubSettingsType]="CHAT" [disabled]="!programmingExercise.isAtLeastInstructor"></jhi-iris-enabled>
+                    </dd>
+                </div>
+
                 <div *ngIf="programmingExercise?.gitDiffReport">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatLabel">Lines added/removed between template and solution</span></dt>
                     <dd>

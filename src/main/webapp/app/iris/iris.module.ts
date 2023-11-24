@@ -23,6 +23,7 @@ import { IrisTutorChatbotButtonComponent } from 'app/iris/exercise-chatbot/tutor
 import { IrisCodeEditorWebsocketService } from 'app/iris/code-editor-websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
+import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
 
 @NgModule({
     declarations: [
@@ -40,9 +41,10 @@ import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/cha
         IrisHestiaSubSettingsUpdateComponent,
         IrisGlobalAutoupdateSettingsUpdateComponent,
         IrisCodeEditorSubSettingsUpdateComponent,
+        IrisEnabledComponent,
     ],
     imports: [CommonModule, MatDialogModule, FormsModule, FontAwesomeModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisSharedComponentModule, RouterModule],
     providers: [IrisCodeEditorWebsocketService, IrisStateStore],
-    exports: [IrisCodeEditorChatbotButtonComponent, IrisTutorChatbotButtonComponent],
+    exports: [IrisCodeEditorChatbotButtonComponent, IrisTutorChatbotButtonComponent, IrisEnabledComponent],
 })
 export class IrisModule {}
