@@ -44,6 +44,14 @@ const conversationMessageNotificationTitles = [
     NEW_REPLY_FOR_COURSE_POST_TITLE,
 ];
 
+const conversationMessageReplyNotificationTitles = [
+    NEW_REPLY_MESSAGE_TITLE,
+    NEW_REPLY_FOR_EXERCISE_POST_TITLE,
+    NEW_REPLY_FOR_LECTURE_POST_TITLE,
+    NEW_REPLY_FOR_EXAM_POST_TITLE,
+    NEW_REPLY_FOR_COURSE_POST_TITLE,
+];
+
 @Component({
     selector: 'jhi-notification-popup',
     templateUrl: './notification-popup.component.html',
@@ -102,6 +110,11 @@ export class NotificationPopupComponent implements OnInit {
             this.examExerciseUpdateService.navigateToExamExercise(target.exercise);
         } else if (notification.title && conversationMessageNotificationTitles.includes(notification.title)) {
             const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
+
+            if (conversationMessageReplyNotificationTitles.includes(notification.title)) {
+                queryParams.postId = target.id;
+            }
+
             const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
             // check if component reload is needed
             if (currentCourseId === undefined || currentCourseId !== targetCourseId || this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
