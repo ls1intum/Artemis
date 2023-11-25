@@ -7,8 +7,6 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -66,16 +64,6 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
      */
     @EntityGraph(type = LOAD, attributePaths = { "blocks" })
     Set<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
-
-    /**
-     * Gets all TextSubmissions which are submitted and loads all blocks
-     *
-     * @param exerciseId the ID of the exercise
-     * @param pageable   the pagination information for the query
-     * @return Set of Text Submissions
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "blocks" })
-    Page<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId, Pageable pageable);
 
     @NotNull
     default TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(long resultId) {

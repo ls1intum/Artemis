@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement, EventEmitter } from '@angular/core';
 import { NgModel } from '@angular/forms';
@@ -17,9 +17,10 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
-import { FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 
 describe('CodeEditorAceComponent', () => {
     let comp: CodeEditorAceComponent;
@@ -36,6 +37,7 @@ describe('CodeEditorAceComponent', () => {
                 CodeEditorAceComponent,
                 TranslatePipeMock,
                 MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
+                MockComponent(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent),
                 MockComponent(CodeEditorHeaderComponent),
                 MockDirective(NgModel),
             ],
@@ -107,7 +109,7 @@ describe('CodeEditorAceComponent', () => {
         expect(comp.editor.getEditor().getReadOnly()).toBeFalse();
     });
 
-    it('should correctly init editor after file change', () => {
+    it('should correctly init editor after file change', waitForAsync(async () => {
         const selectedFile = 'dummy';
         const fileSession = {};
         const loadFileSubject = new Subject();
@@ -118,45 +120,52 @@ describe('CodeEditorAceComponent', () => {
 
         triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
         fixture.detectChanges();
+        await fixture.whenStable();
 
         expect(comp.isLoading).toBeTrue();
         expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
         expect(initEditorSpy).not.toHaveBeenCalled();
         loadFileSubject.next({ fileName: selectedFile, fileContent: 'lorem ipsum' });
         fixture.detectChanges();
+        await fixture.whenStable();
 
         expect(comp.isLoading).toBeFalse();
         expect(comp.fileSession).toEqual({ dummy: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false } });
         expect(initEditorSpy).toHaveBeenCalledWith();
-    });
+    }));
 
     it.each([
         [new ConnectionError(), 'loadingFailedInternetDisconnected'],
         [new Error(), 'loadingFailed'],
-    ])('should correctly init editor after file change in case of error', (error: Error, errorCode: string) => {
-        const selectedFile = 'dummy';
-        const fileSession = {};
-        const loadFileSubject = new Subject();
-        const initEditorSpy = jest.spyOn(comp, 'initEditor');
-        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
-        loadRepositoryFileStub.mockReturnValue(loadFileSubject);
-        comp.selectedFile = selectedFile;
-        comp.fileSession = fileSession;
+    ])(
+        'should correctly init editor after file change in case of error',
+        waitForAsync(async (error: Error, errorCode: string) => {
+            const selectedFile = 'dummy';
+            const fileSession = {};
+            const loadFileSubject = new Subject();
+            const initEditorSpy = jest.spyOn(comp, 'initEditor');
+            const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+            loadRepositoryFileStub.mockReturnValue(loadFileSubject);
+            comp.selectedFile = selectedFile;
+            comp.fileSession = fileSession;
 
-        triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
-        fixture.detectChanges();
+            triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        expect(comp.isLoading).toBeTrue();
-        expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
-        expect(initEditorSpy).not.toHaveBeenCalled();
-        loadFileSubject.error(error);
-        fixture.detectChanges();
+            expect(comp.isLoading).toBeTrue();
+            expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
+            expect(initEditorSpy).not.toHaveBeenCalled();
+            loadFileSubject.error(error);
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        expect(comp.isLoading).toBeFalse();
-        expect(comp.fileSession).toEqual({ dummy: { code: '', cursor: { column: 0, row: 0 }, loadingError: true } });
-        expect(initEditorSpy).toHaveBeenCalledWith();
-        expect(onErrorSpy).toHaveBeenCalledWith(errorCode);
-    });
+            expect(comp.isLoading).toBeFalse();
+            expect(comp.fileSession).toEqual({ dummy: { code: '', cursor: { column: 0, row: 0 }, loadingError: true } });
+            expect(initEditorSpy).toHaveBeenCalledWith();
+            expect(onErrorSpy).toHaveBeenCalledWith(errorCode);
+        }),
+    );
 
     it('should discard all new feedback after a re-init because of a file change', async () => {
         comp.newFeedbackLines = [1, 2, 3];
@@ -168,7 +177,7 @@ describe('CodeEditorAceComponent', () => {
         const selectedFile = 'dummy';
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false } };
         const initEditorSpy = jest.spyOn(comp, 'initEditor');
-        const loadFileSpy = jest.spyOn(comp, 'loadFile');
+        const loadFileSpy = jest.spyOn(comp, 'fetchFileContent');
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
 
@@ -179,20 +188,23 @@ describe('CodeEditorAceComponent', () => {
         expect(loadFileSpy).not.toHaveBeenCalled();
     });
 
-    it('should load the file from server on selected file change if the file is already in session but there was a loading error', () => {
+    it('should load the file from server on selected file change if the file is already in session but there was a loading error', waitForAsync(async () => {
         const selectedFile = 'dummy';
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: true } };
         const initEditorSpy = jest.spyOn(comp, 'initEditor');
-        const loadFileSpy = jest.spyOn(comp, 'loadFile');
+        const loadFileSpy = jest.spyOn(comp, 'fetchFileContent');
+        const loadFileSubject = new Subject<{ fileName: 'dummy'; fileContent: 'lorem ipsum' }>();
+        loadRepositoryFileStub.mockReturnValue(loadFileSubject);
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
 
         triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
         fixture.detectChanges();
+        await fixture.whenStable();
 
         expect(initEditorSpy).not.toHaveBeenCalled();
         expect(loadFileSpy).toHaveBeenCalledOnce();
-    });
+    }));
 
     it('should update file session references on file rename', async () => {
         const selectedFile = 'file';
@@ -340,9 +352,15 @@ describe('CodeEditorAceComponent', () => {
         expect(removeLineWidget).toHaveBeenCalledTimes(2);
     });
 
+    it('should only show referenced feedback that is for the current file', () => {
+        comp.selectedFile = 'src/Test.java';
+        const feedbacks = [{ reference: 'file:src/Test.java_line:16' }, { reference: 'file:src/Another.java_line:16' }, { reference: undefined }];
+        expect(comp.filterFeedbackForFile(feedbacks)).toEqual([{ reference: 'file:src/Test.java_line:16' }]);
+    });
+
     it('should convert an accepted feedback suggestion to a marked manual feedback', async () => {
         await comp.initEditor();
-        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.AUTOMATIC };
+        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.MANUAL };
         comp.feedbackSuggestions = [suggestion];
         await comp.acceptSuggestion(suggestion);
         expect(comp.feedbackSuggestions).toBeEmpty();
@@ -351,9 +369,34 @@ describe('CodeEditorAceComponent', () => {
 
     it('should remove discarded suggestions', async () => {
         await comp.initEditor();
-        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.AUTOMATIC };
+        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.MANUAL };
         comp.feedbackSuggestions = [suggestion];
         comp.discardSuggestion(suggestion);
         expect(comp.feedbackSuggestions).toBeEmpty();
+    });
+
+    it('should update the line widget heights when feedbacks or suggestions change', async () => {
+        const updateLineWidgetHeightSpy = jest.spyOn(comp, 'updateLineWidgets');
+
+        await comp.initEditor();
+
+        // Change of feedbacks from the outside
+        await comp.ngOnChanges({ feedbacks: { previousValue: [], currentValue: [new Feedback()], firstChange: true, isFirstChange: () => true } });
+        expect(updateLineWidgetHeightSpy).toHaveBeenCalled();
+
+        // Change of feedback suggestions from the outside
+        await comp.ngOnChanges({ feedbackSuggestions: { previousValue: [], currentValue: [new Feedback()], firstChange: true, isFirstChange: () => true } });
+        expect(updateLineWidgetHeightSpy).toHaveBeenCalled();
+    });
+
+    it('renders line widgets for feedback suggestions', async () => {
+        await comp.initEditor();
+        const addLineWidgetWithFeedbackSpy = jest.spyOn(comp, 'addLineWidgetWithFeedback');
+
+        comp.feedbackSuggestions = [{ text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.MANUAL }];
+        comp.selectedFile = 'src/Test.java';
+        await comp.updateLineWidgets();
+
+        expect(addLineWidgetWithFeedbackSpy).toHaveBeenCalled();
     });
 });

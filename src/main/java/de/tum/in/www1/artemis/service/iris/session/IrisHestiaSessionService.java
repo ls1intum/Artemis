@@ -1,12 +1,8 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
-import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
-
-import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +12,10 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
-import de.tum.in.www1.artemis.domain.iris.*;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
@@ -66,6 +65,16 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
         this.irisSessionRepository = irisSessionRepository;
     }
 
+    @Override
+    public void sendOverWebsocket(IrisMessage message) {
+        throw new UnsupportedOperationException("Sending messages over websocket is not supported for Iris Hestia sessions");
+    }
+
+    @Override
+    public void requestAndHandleResponse(IrisSession irisSession) {
+        throw new UnsupportedOperationException("Requesting and handling responses is not supported for Iris Hestia sessions");
+    }
+
     /**
      * Generates the description and content for a code hint.
      * It does not directly save the code hint, but instead returns it with the generated description and content.
@@ -82,9 +91,9 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
 
         var systemMessage = generateSystemMessage();
         var userMessage = generateUserMessage(codeHint);
-        var irisMessages = List.of(systemMessage, userMessage);
-        irisSession.getMessages().addAll(irisMessages);
-        irisMessageService.saveMessage(systemMessage, irisSession, IrisMessageSender.ARTEMIS);
+        irisSession.getMessages().add(systemMessage);
+        irisSession.getMessages().add(userMessage);
+        irisMessageService.saveMessage(systemMessage, irisSession, IrisMessageSender.LLM);
         irisMessageService.saveMessage(userMessage, irisSession, IrisMessageSender.USER);
         irisSession = (IrisHestiaSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
         Map<String, Object> parameters = Map.of("codeHint", irisSession.getCodeHint());
@@ -98,8 +107,8 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
                     .get();
             irisMessageService.saveMessage(irisMessage2.message(), irisSession, IrisMessageSender.LLM);
 
-            codeHint.setContent(irisMessage1.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
-            codeHint.setDescription(irisMessage2.message().getContent().stream().map(IrisMessageContent::getTextContent).collect(Collectors.joining("\n")));
+            codeHint.setContent(irisMessage1.message().getContent().stream().map(IrisMessageContent::getContentAsString).collect(Collectors.joining("\n")));
+            codeHint.setDescription(irisMessage2.message().getContent().stream().map(IrisMessageContent::getContentAsString).collect(Collectors.joining("\n")));
             return codeHint;
         }
         catch (InterruptedException | ExecutionException e) {
@@ -110,12 +119,7 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
 
     private IrisMessage generateSystemMessage() {
         var irisMessage = new IrisMessage();
-        irisMessage.setSender(IrisMessageSender.ARTEMIS);
-        irisMessage.setSentAt(ZonedDateTime.now());
-        var irisMessageContent = new IrisMessageContent();
-        irisMessageContent.setMessage(irisMessage);
-        irisMessageContent.setTextContent(SYSTEM_PROMPT);
-        irisMessage.setContent(List.of(irisMessageContent));
+        irisMessage.addContent(new IrisTextMessageContent(SYSTEM_PROMPT));
         return irisMessage;
     }
 
@@ -141,22 +145,13 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
 
         var irisMessage = new IrisMessage();
         irisMessage.setSender(IrisMessageSender.USER);
-        irisMessage.setSentAt(ZonedDateTime.now());
-        var irisMessageContent = new IrisMessageContent();
-        irisMessageContent.setMessage(irisMessage);
-        irisMessageContent.setTextContent(userPrompt.toString());
-        irisMessage.setContent(List.of(irisMessageContent));
+        irisMessage.addContent(new IrisTextMessageContent(userPrompt.toString()));
         return irisMessage;
     }
 
-    /**
-     * Not supported for Iris Hestia sessions.
-     *
-     * @param irisSession The session to get a message for
-     */
     @Override
-    public void requestAndHandleResponse(IrisSession irisSession) {
-        throw new BadRequestException("Iris Hestia Session not supported");
+    public void checkRateLimit(User user) {
+        // Currently no rate limit for Hestia sessions
     }
 
     /**

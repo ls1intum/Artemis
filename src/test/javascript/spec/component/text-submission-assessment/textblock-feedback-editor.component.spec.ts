@@ -180,7 +180,7 @@ describe('TextblockFeedbackEditorComponent', () => {
     });
 
     it('should send assessment event if feedback type changed', () => {
-        component.feedback.type = FeedbackType.AUTOMATIC;
+        component.feedback.text = 'FeedbackSuggestion:accepted:Test';
         const typeSpy = jest.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.didChange();
         expect(typeSpy).toHaveBeenCalledOnce();
