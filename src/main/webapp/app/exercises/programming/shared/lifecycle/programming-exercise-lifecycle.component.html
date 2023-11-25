@@ -167,12 +167,12 @@
                 class="form-check-input"
                 name="releaseTestsWithExampleSolution"
                 [checked]="exercise.releaseTestsWithExampleSolution"
-                [disabled]="!exercise.exampleSolutionPublicationDate || readOnly"
+                [disabled]="!exercise.exampleSolutionPublicationDate"
                 id="releaseTestsWithExampleSolution"
                 (change)="toggleReleaseTests()"
             />
             <label
-                [ngStyle]="!exercise.exampleSolutionPublicationDate && !readOnly ? { color: 'grey' } : {}"
+                [ngStyle]="!exercise.exampleSolutionPublicationDate ? { color: 'grey' } : {}"
                 class="form-control-label"
                 for="releaseTestsWithExampleSolution"
                 jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"
@@ -185,17 +185,17 @@
                 class="form-check-input"
                 name="feedbackSuggestionsEnabled"
                 [checked]="exercise.feedbackSuggestionsEnabled"
-                [disabled]="exercise.assessmentType == assessmentType.AUTOMATIC || readOnly"
+                [disabled]="exercise.assessmentType === assessmentType.AUTOMATIC"
                 id="feedbackSuggestionsEnabled"
                 (change)="exercise.feedbackSuggestionsEnabled = !exercise.feedbackSuggestionsEnabled"
-           />
-           <label
-               [ngStyle]="exercise.assessmentType == assessmentType.AUTOMATIC ? { color: 'grey' } : {}"
-               class="form-control-label"
-               for="feedbackSuggestionsEnabled"
+            />
+            <label
+                [ngStyle]="exercise.assessmentType === assessmentType.AUTOMATIC ? { color: 'grey' } : {}"
+                class="form-control-label"
+                for="feedbackSuggestionsEnabled"
                 jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"
             ></label>
             <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'"></jhi-help-icon>
         </div>
-      </ng-container>
+    </ng-container>
 </div>
