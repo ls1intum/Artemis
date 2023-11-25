@@ -18,7 +18,7 @@
       "prefix": "jhi",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular-devkit/build-angular:browser-esbuild",
           "options": {
             "allowedCommonJsDependencies": [
               "brace",
@@ -58,7 +58,7 @@
             ],
             "outputPath": "build/resources/main/static/",
             "index": "src/main/webapp/index.html",
-            "browser": "src/main/webapp/app/app.main.ts",
+            "main": "src/main/webapp/app/app.main.ts",
             "polyfills": [
                 "src/main/webapp/app/polyfills.ts"
             ],
@@ -137,7 +137,8 @@
               "namedChunks": true,
               "aot": true,
               "extractLicenses": true,
-              "serviceWorker": "src/main/webapp/ngsw-config.json",
+              "serviceWorker": true,
+              "ngswConfigPath": "src/main/webapp/ngsw-config.json",
               "budgets": [
                 {
                   "type": "initial",
