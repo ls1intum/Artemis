@@ -13,6 +13,9 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faChartBar, faClipboard, faEye, faFlag, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
+import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -32,6 +35,9 @@ export enum DoughnutChartType {
 export class CourseDetailComponent implements OnInit, OnDestroy {
     readonly DoughnutChartType = DoughnutChartType;
     readonly FeatureToggle = FeatureToggle;
+    readonly CHAT = IrisSubSettingsType.CHAT;
+    readonly HESTIA = IrisSubSettingsType.HESTIA;
+    readonly CODE_EDITOR = IrisSubSettingsType.CODE_EDITOR;
 
     courseDTO: CourseManagementDetailViewDto;
     activeStudents?: number[];
@@ -39,8 +45,13 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     messagingEnabled: boolean;
     communicationEnabled: boolean;
-
+    irisEnabled = false;
+    irisChatEnabled = false;
+    irisHestiaEnabled = false;
+    irisCodeEditorEnabled = false;
     ltiEnabled = false;
+
+    isAdmin = false;
 
     private eventSubscriber: Subscription;
     paramSub: Subscription;
@@ -62,6 +73,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private alertService: AlertService,
         private profileService: ProfileService,
+        private accountService: AccountService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     /**
@@ -70,6 +83,14 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
+            this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+            if (this.irisEnabled) {
+                this.irisSettingsService.getGlobalSettings().subscribe((settings) => {
+                    this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
+                    this.irisHestiaEnabled = settings?.irisHestiaSettings?.enabled ?? false;
+                    this.irisCodeEditorEnabled = settings?.irisCodeEditorSettings?.enabled ?? false;
+                });
+            }
         });
         this.route.data.subscribe(({ course }) => {
             if (course) {
@@ -77,6 +98,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 this.messagingEnabled = !!this.course.courseInformationSharingConfiguration?.includes('MESSAGING');
                 this.communicationEnabled = !!this.course.courseInformationSharingConfiguration?.includes('COMMUNICATION');
             }
+            this.isAdmin = this.accountService.isAdmin();
         });
         // There is no course 0 -> will fetch no course if route does not provide different courseId
         let courseId = 0;
