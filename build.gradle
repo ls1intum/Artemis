@@ -249,7 +249,7 @@ dependencies {
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
-    implementation "com.atlassian.bamboo:bamboo-specs:9.3.3"
+    implementation "com.atlassian.bamboo:bamboo-specs:9.3.5"
     implementation ("org.yaml:snakeyaml") {
         version {
             strictly "2.0" // needed for Bamboo-specs and to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml
@@ -383,7 +383,10 @@ dependencies {
     testImplementation "org.gradle:gradle-tooling-api:8.5-rc-3"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.2.2"
     testImplementation "com.opencsv:opencsv:5.8"
-    testImplementation "io.zonky.test:embedded-database-spring-test:2.3.0"
+    testImplementation("io.zonky.test:embedded-database-spring-test:2.3.0") {
+        exclude group: 'org.testcontainers', module: 'mariadb'
+        exclude group: 'org.testcontainers', module: 'mssqlserver'
+    }
     testImplementation "com.tngtech.archunit:archunit:1.2.0"
     testImplementation "org.skyscreamer:jsonassert:1.5.1"
     testImplementation ("net.bytebuddy:byte-buddy") {
