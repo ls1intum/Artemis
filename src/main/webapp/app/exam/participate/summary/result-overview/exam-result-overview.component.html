@@ -2,8 +2,8 @@
     <h3>
         {{ 'artemisApp.exam.examSummary.points.overview' | artemisTranslate }}
     </h3>
-    <div class="container exam-points-summary-container">
-        <table class="table table-striped table-hover" id="result-overview-table">
+    <div class="exam-points-summary-container">
+        <table class="table table-striped table-hover w-auto" id="result-overview-table">
             <thead>
                 <tr>
                     <th scope="col">#</th>
@@ -34,50 +34,50 @@
                         &nbsp;
                         <span>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
                     </td>
-                    <td *ngIf="showIncludedInScoreColumn">{{ exerciseService.isIncludedInScore(exercise) }}</td>
-                    <td>
+                    <td class="text-center" *ngIf="showIncludedInScoreColumn">{{ exerciseService.isIncludedInScore(exercise) }}</td>
+                    <td class="text-center">
                         {{ studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0 }}
                     </td>
-                    <td>
-                        <span *ngIf="exercise.maxPoints != undefined">{{
-                            exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints
-                        }}</span>
+                    <td class="text-center">
+                        <div *ngIf="exercise.maxPoints != undefined">
+                            {{ exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints }}
+                        </div>
                     </td>
-                    <td>
-                        <span
+                    <td class="text-center">
+                        <div
                             *ngIf="exerciseInfos[exercise.id!].achievedPercentage !== undefined; else noPercentageKnownPlaceholder"
                             [class]="exerciseInfos[exercise.id!].colorClass"
                         >
                             {{ exerciseInfos[exercise.id!].achievedPercentage }}%
-                        </span>
+                        </div>
                         <ng-template #noPercentageKnownPlaceholder> - </ng-template>
                     </td>
                     <td *ngIf="studentExamWithGrade?.maxBonusPoints">
-                        <span *ngIf="exercise.bonusPoints != undefined">{{
-                            exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? exercise.maxPoints : exercise.bonusPoints
-                        }}</span>
+                        <div *ngIf="exercise.bonusPoints != undefined">
+                            {{ exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? exercise.maxPoints : exercise.bonusPoints }}
+                        </div>
                     </td>
                 </tr>
             </tbody>
             <tfoot class="total-footer">
                 <tr>
                     <th scope="row" colspan="2">{{ 'artemisApp.exam.examSummary.points.total' | artemisTranslate }}</th>
-                    <td *ngIf="showIncludedInScoreColumn">-</td>
-                    <th>
+                    <td *ngIf="showIncludedInScoreColumn" class="text-center">-</td>
+                    <th class="text-center">
                         {{ overallAchievedPoints }}
                     </th>
-                    <th>
+                    <th class="text-center">
                         {{ maxPoints }}
                     </th>
-                    <th>
-                        <span
+                    <th class="text-center">
+                        <div
                             *ngIf="studentExamWithGrade.studentResult.overallScoreAchieved !== undefined; else totalScoreNotDefinedPlaceholder"
                             [class]="hasPassed ? 'text-success' : 'text-danger'"
                         >
                             {{ overallAchievedPercentageRoundedByCourseSettings }}%
-                        </span>
+                        </div>
                         <ng-template #totalScoreNotDefinedPlaceholder>
-                            <span>-</span>
+                            <div>-</div>
                         </ng-template>
                     </th>
                     <th *ngIf="studentExamWithGrade?.maxBonusPoints">
