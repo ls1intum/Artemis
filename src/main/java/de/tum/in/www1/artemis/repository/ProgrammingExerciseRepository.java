@@ -449,6 +449,23 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
+     * Find a programming exercise by its id, with grading criteria loaded, and throw an EntityNotFoundException if it cannot be found
+     *
+     * @param exerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    @Query("""
+            SELECT DISTINCT e FROM ProgrammingExercise e
+            LEFT JOIN FETCH e.gradingCriteria
+            WHERE e.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findByIdWithGradingCriteria(long exerciseId);
+
+    default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
+        return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+    }
+
+    /**
      * Find a programming exercise by its id and fetch related plagiarism detection config.
      * Throws an EntityNotFoundException if the exercise cannot be found.
      *

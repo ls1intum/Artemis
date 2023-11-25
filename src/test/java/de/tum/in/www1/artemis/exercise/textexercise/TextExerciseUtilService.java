@@ -83,15 +83,35 @@ public class TextExerciseUtilService {
     /**
      * Creates and saves a TextExercise with feedback suggestions enabled.
      *
+     * @param count expected size of TextBlock set
+     * @return Set of dummy TextBlocks
+     */
+    public Set<TextBlock> generateTextBlocks(int count) {
+        Set<TextBlock> textBlocks = new HashSet<>();
+        TextBlock textBlock;
+        for (int i = 0; i < count; i++) {
+            textBlock = new TextBlock();
+            textBlock.setText("TextBlock" + i);
+            textBlocks.add(textBlock);
+        }
+        return textBlocks;
+    }
+
+    /**
+     * Create an example text exercise
+     *
+     * @param course The course to which the exercise belongs
+     * @return the created text exercise
      * @param course The Course to which the exercise belongs
      * @return The created TextExercise
      */
     public TextExercise createSampleTextExercise(Course course) {
-        TextExercise textExercise = new TextExercise();
+        var textExercise = new TextExercise();
         textExercise.setCourse(course);
         textExercise.setTitle("Title");
         textExercise.setShortName("Shortname");
-        textExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        textExercise.setMaxPoints(10.0);
+        textExercise.setBonusPoints(0.0);
         textExercise = textExerciseRepository.save(textExercise);
         return textExercise;
     }

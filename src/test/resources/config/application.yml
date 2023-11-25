@@ -66,8 +66,6 @@ artemis:
                     default: "~~invalid~~"
                 ocaml:
                     default: "~~invalid~~"
-    athena:
-        secret: abcdef12345
 
 spring:
     application:

@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseLifecycle;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ExerciseLifecycleService;
 import de.tum.in.www1.artemis.service.ProfileService;
@@ -28,7 +28,7 @@ public class AthenaScheduleService {
 
     private final ExerciseLifecycleService exerciseLifecycleService;
 
-    private final TextExerciseRepository textExerciseRepository;
+    private final ExerciseRepository exerciseRepository;
 
     private final ProfileService profileService;
 
@@ -36,16 +36,16 @@ public class AthenaScheduleService {
 
     private final AthenaSubmissionSendingService athenaSubmissionSendingService;
 
-    public AthenaScheduleService(ExerciseLifecycleService exerciseLifecycleService, TextExerciseRepository textExerciseRepository, ProfileService profileService,
+    public AthenaScheduleService(ExerciseLifecycleService exerciseLifecycleService, ExerciseRepository exerciseRepository, ProfileService profileService,
             AthenaSubmissionSendingService athenaSubmissionSendingService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
-        this.textExerciseRepository = textExerciseRepository;
+        this.exerciseRepository = exerciseRepository;
         this.profileService = profileService;
         this.athenaSubmissionSendingService = athenaSubmissionSendingService;
     }
 
     /**
-     * Schedule Athena tasks for all text exercises with future due dates on startup.
+     * Schedule Athena tasks for all exercises with future due dates on startup.
      */
     @PostConstruct
     public void scheduleRunningExercisesOnStartup() {
@@ -54,18 +54,18 @@ public class AthenaScheduleService {
             // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
             return;
         }
-        final List<TextExercise> runningTextExercises = textExerciseRepository.findAllAutomaticAssessmentTextExercisesWithFutureDueDate();
-        runningTextExercises.forEach(this::scheduleExerciseForAthenaIfRequired);
-        log.info("Scheduled Athena for {} text exercises with future due dates.", runningTextExercises.size());
+        final Set<Exercise> runningExercises = exerciseRepository.findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate();
+        runningExercises.forEach(this::scheduleExerciseForAthenaIfRequired);
+        log.info("Scheduled Athena for {} exercises with future due dates.", runningExercises.size());
     }
 
     /**
-     * Schedule an Athena task for a text exercise with its due date if automatic assessments are enabled and its due date is in the future.
+     * Schedule an Athena task for a exercise with its due date if automatic assessments are enabled and its due date is in the future.
      *
      * @param exercise exercise to schedule Athena for
      */
-    public void scheduleExerciseForAthenaIfRequired(TextExercise exercise) {
-        if (!exercise.isFeedbackSuggestionsEnabled()) {
+    public void scheduleExerciseForAthenaIfRequired(Exercise exercise) {
+        if (!exercise.getFeedbackSuggestionsEnabled()) {
             cancelScheduledAthena(exercise.getId());
             return;
         }
@@ -77,7 +77,7 @@ public class AthenaScheduleService {
         scheduleExerciseForAthena(exercise);
     }
 
-    private void scheduleExerciseForAthena(TextExercise exercise) {
+    private void scheduleExerciseForAthena(Exercise exercise) {
         // check if already scheduled for exercise. if so, cancel.
         // no exercise should be scheduled for Athena more than once.
         cancelScheduledAthena(exercise.getId());
@@ -85,11 +85,11 @@ public class AthenaScheduleService {
         final ScheduledFuture<?> future = exerciseLifecycleService.scheduleTask(exercise, ExerciseLifecycle.DUE, athenaRunnableForExercise(exercise));
 
         scheduledAthenaTasks.put(exercise.getId(), future);
-        log.debug("Scheduled Athena for Text Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getDueDate());
+        log.debug("Scheduled Athena for Exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getDueDate());
     }
 
     @NotNull
-    private Runnable athenaRunnableForExercise(TextExercise exercise) {
+    private Runnable athenaRunnableForExercise(Exercise exercise) {
         return () -> {
             SecurityUtils.setAuthorizationObject();
             athenaSubmissionSendingService.sendSubmissions(exercise);
