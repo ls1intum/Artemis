@@ -163,8 +163,7 @@ public class CacheConfiguration {
         config.getMapConfigs().put("de.tum.in.www1.artemis.domain.*", initializeDomainMapConfig(jHipsterProperties));
 
         // add queue config for local ci shared queue
-        QueueConfig queueConfig = new QueueConfig("default");
-        queueConfig.setName("buildJobQueue");
+        QueueConfig queueConfig = new QueueConfig("buildJobQueue");
         queueConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
         queueConfig.setPriorityComparatorClassName("de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator");
         config.addQueueConfig(queueConfig);

@@ -84,7 +84,7 @@ public class LocalCISharedBuildJobQueueService {
      * @param courseId        course id of the build job
      */
     public void addBuildJobInformation(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, 0, 0, courseId);
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, courseId);
         queue.add(buildJobQueueItem);
     }
 
@@ -229,7 +229,7 @@ public class LocalCISharedBuildJobQueueService {
     // getActiveCount() returns an approximation thus we double check with getQueue().size()
     private Boolean nodeIsAvailable() {
         log.info("Current active threads: " + localCIBuildExecutorService.getActiveCount());
-        return localCIBuildExecutorService.getActiveCount() < localCIBuildExecutorService.getMaximumPoolSize() && localCIBuildExecutorService.getQueue().size() < 1;
+        return localCIBuildExecutorService.getActiveCount() < localCIBuildExecutorService.getMaximumPoolSize() && localCIBuildExecutorService.getQueue().isEmpty();
     }
 
     private class BuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {

@@ -27,14 +27,11 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private long courseId;
 
-    public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, int retryCount, long buildStartDate, long courseId) {
+    public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId) {
         this.name = name;
         this.participationId = participationId;
         this.commitHash = commitHash;
-        this.expirationTime = 0L;
-        this.retryCount = retryCount;
         this.submissionDate = submissionDate;
-        this.buildStartDate = buildStartDate;
         this.priority = priority;
         this.courseId = courseId;
     }
