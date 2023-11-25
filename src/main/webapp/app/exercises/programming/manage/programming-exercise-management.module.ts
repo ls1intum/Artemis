@@ -28,6 +28,7 @@ import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
+import { IrisModule } from 'app/iris/iris.module';
 
 @NgModule({
     imports: [
@@ -55,6 +56,7 @@ import { DetailModule } from 'app/detail-overview-list/detail.module';
         AceEditorModule,
         ArtemisCodeEditorModule,
         DetailModule,
+        IrisModule,
     ],
     declarations: [
         ProgrammingExerciseDetailComponent,

@@ -61,6 +61,7 @@
                 "steps": {
                     "generalInfoStepTitle": "Information",
                     "difficultyStepTitle": "Mode",
+                    "buildPlansTitle": "Build Plans",
                     "languageStepTitle": "Language",
                     "gradingStepTitle": "Grading",
                     "problemStepTitle": "Problem",
@@ -70,6 +71,7 @@
                     "generalInfoStepTitle": "General Information",
                     "generalInfoStepMessage": "Input essential information that forms the foundation of your programming exercise",
                     "difficultyStepTitle": "Mode",
+                    "buildPlansTitle": "Build Plans",
                     "difficultyStepMessage": "Configure the settings related to the execution and collaboration aspects of the programming exercise",
                     "languageStepTitle": "Programming Language",
                     "languageStepMessage": "Set the specific details related to the programming language used in the exercise as well as features directly related to it",
@@ -112,6 +114,8 @@
             "buildPlanEditor": "Build Plan Editor",
             "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
             "publishBuildPlanUrl": "Publish Build Plan",
+            "customizeBuildPlanWithAeolus": "Customize Build Plan with Aeolus",
+            "runActionAlways": "Always run, even if other actions fail",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
                 "alert": "At least one option (Offline IDE or Online Editor) must be selected"
@@ -553,6 +557,7 @@
             "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
             "recordTestwiseCoverage": "Record Testwise Coverage",
             "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java/Kotlin-exercises with non-sequential test runs.",
+            "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the build plans with Aeolus. This option is only available during exercise creation.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
             "testwiseCoverageReport": {
                 "button": "Show testwise coverage",

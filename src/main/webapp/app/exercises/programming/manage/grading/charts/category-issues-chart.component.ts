@@ -56,10 +56,10 @@ export class CategoryIssuesChartComponent implements OnChanges {
                     this.category.state === StaticCodeAnalysisCategoryState.Inactive
                         ? '#ddd'
                         : numStudents === 0 || this.category.state !== StaticCodeAnalysisCategoryState.Graded
-                        ? '#28a745'
-                        : numIssues > maxGradedIssues
-                        ? '#dc3545'
-                        : '#ffc107',
+                          ? '#28a745'
+                          : numIssues > maxGradedIssues
+                            ? '#dc3545'
+                            : '#ffc107',
                 tooltip: `${numStudents} student${numStudents !== 1 ? 's' : ''} ${numStudents !== 1 ? 'have' : 'has'} ${numIssues} issue${numIssues !== 1 ? 's' : ''}.`,
             };
         });

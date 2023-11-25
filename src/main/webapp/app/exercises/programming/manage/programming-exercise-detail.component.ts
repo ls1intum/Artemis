@@ -57,6 +57,8 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
 import { IrisProgrammingExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-programming-exercise-settings-update/iris-programming-exercise-settings-update.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -74,6 +76,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ButtonSize = ButtonSize;
     readonly AssessmentType = AssessmentType;
     readonly documentationType: DocumentationType = 'Programming';
+    readonly CHAT = IrisSubSettingsType.CHAT;
 
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
@@ -91,6 +94,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     // Also used to hide the buttons to lock and unlock all repositories as that does not do anything in the local VCS.
     localVCEnabled = false;
     irisEnabled = false;
+    irisChatEnabled = false;
 
     isAdmin = false;
     addedLineCount: number;
@@ -144,6 +148,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private router: Router,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private consistencyCheckService: ConsistencyCheckService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     ngOnInit() {
@@ -197,7 +202,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.supportsAuxiliaryRepositories =
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                        this.irisEnabled = profileInfo.activeProfiles.includes('iris') && !this.programmingExercise.exerciseGroup;
+                        this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                        if (this.irisEnabled) {
+                            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                                this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
+                            });
+                        }
                     }
                 });
 
@@ -652,14 +662,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 .map((lineCount) => lineCount!)
                 .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
         }
-    }
-
-    /**
-     * Shows the iris settings in a modal.
-     */
-    showIrisSettings(): void {
-        const modalRef = this.modalService.open(IrisProgrammingExerciseSettingsUpdateComponent, { size: 'xl' });
-        modalRef.componentInstance.programmingExerciseId = this.programmingExercise.id;
     }
 
     createStructuralSolutionEntries() {

@@ -51,6 +51,16 @@
                         <fa-icon [icon]="faFileSignature"></fa-icon>
                         <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                     </a>
+                    <a
+                        *ngIf="irisEnabled && programmingExercise.isAtLeastInstructor && programmingExercise.course && !isExamExercise"
+                        [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'iris-settings']"
+                        ngbTooltip="{{ 'artemisApp.iris.settings.button.programmingExercise.tooltip' | artemisTranslate }}"
+                        class="btn btn-warning btn-sm me-1"
+                        style="margin-bottom: 10px"
+                    >
+                        <fa-icon [icon]="faRobot"></fa-icon>
+                        <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title">Iris</span>
+                    </a>
                     <a *ngIf="programmingExercise.isAtLeastTutor" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm">
                         <fa-icon [icon]="faListAlt"></fa-icon>
                         <span jhiTranslate="artemisApp.exercise.participations">Participations</span>
@@ -135,18 +145,7 @@
                                 <span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.button">Show Testwise Coverage</span>
                             </button>
                         </span>
-                        <button
-                            *ngIf="irisEnabled"
-                            type="button"
-                            (click)="showIrisSettings()"
-                            class="btn btn-secondary btn-sm"
-                            ngbTooltip="{{ 'artemisApp.iris.settings.button.programmingExercise.tooltip' | artemisTranslate }}"
-                        >
-                            <fa-icon [icon]="faRobot"></fa-icon>
-                            <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title">Iris</span>
-                        </button>
                     </span>
-
                     <button
                         id="unlockAllRepositoriesButton"
                         class="btn btn-danger btn-sm me-1"
@@ -215,6 +214,12 @@
                 ></jhi-exercise-detail-statistics>
             </div>
             <jhi-detail-overview-list *ngIf="exerciseDetailSections" [sections]="exerciseDetailSections"></jhi-detail-overview-list>
+            <div *ngIf="irisEnabled && irisChatEnabled && programmingExercise.course && !isExamExercise">
+                <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.chat">Iris Chat</span></dt>
+                <dd>
+                    <jhi-iris-enabled [exercise]="programmingExercise" [irisSubSettingsType]="CHAT" [disabled]="!programmingExercise.isAtLeastInstructor"></jhi-iris-enabled>
+                </dd>
+            </div>
         </div>
     </div>
 </div>

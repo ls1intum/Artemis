@@ -7,6 +7,8 @@ artemis:
     continuous-integration:
         # The Docker connection URI to be used by docker-java to connect to the system's Docker installation. Use "unix:///var/run/docker.sock" for Unix based systems and "tcp://localhost:2375" for Windows systems.
         docker-connection-uri: unix:///var/run/docker.sock
+        # Set this to true if you want to specify the thread pool size. If false, the thread pool size will be determined based on system resources.
+        specify-thread-pool-size: false
         # The number of threads that are used to execute the CI jobs.
         thread-pool-size: 1
         # If true, the CI jobs will be executed asynchronously. If false, the CI jobs will be executed synchronously (e.g. for debugging and tests).

@@ -8,15 +8,15 @@ import de.tum.in.www1.artemis.domain.Organization;
 public class OrganizationFactory {
 
     /**
-     * Generate an example organization entity
+     * Generates an Organization.
      *
-     * @param name         of organization
-     * @param shortName    of organization
-     * @param url          of organization
-     * @param description  of organization
-     * @param logoUrl      of organization
-     * @param emailPattern of organization
-     * @return An organization entity
+     * @param name         The name of the Organization
+     * @param shortName    The short name of the Organization
+     * @param url          The url of the Organization
+     * @param description  The description of the Organization
+     * @param logoUrl      The url to the logo of the Organization
+     * @param emailPattern The email pattern of the Organization
+     * @return The generated Organization
      */
     public static Organization generateOrganization(String name, String shortName, String url, String description, String logoUrl, String emailPattern) {
         Organization organization = new Organization();

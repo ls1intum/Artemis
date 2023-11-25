@@ -93,6 +93,9 @@ artemis:
     athena:
         url: http://localhost:5000
         secret: abcdef12345
+        modules:
+            text: module_text_cofee
+            programming: module_programming_themisml
     apollon:
         conversion-service-url: http://localhost:8080
 
@@ -103,3 +106,6 @@ artemis:
 
     data-export:
         days-between-data-exports: 14
+
+    plagiarism-checks:
+        plagiarism-results-limit: 100
