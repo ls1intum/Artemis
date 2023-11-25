@@ -155,10 +155,10 @@ describe('ProgrammingExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
+            await Promise.resolve();
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
-
             await Promise.resolve();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeFalse();
@@ -201,16 +201,18 @@ describe('ProgrammingExercise Management Detail Component', () => {
             route.data = of({ programmingExercise });
         });
 
-        it('should be in exam mode', fakeAsync(() => {
+        it('should be in exam mode', fakeAsync(async () => {
             // WHEN
             comp.ngOnInit();
 
             tick();
 
             // THEN
+            await Promise.resolve();
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
+            await Promise.resolve();
             expect(comp.programmingExercise).toEqual(mockProgrammingExercise);
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.programmingExercise.gitDiffReport).toBeDefined();
