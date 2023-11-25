@@ -85,9 +85,9 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
 
     private void setLocationForStaticAssets(WebServerFactory server) {
         if (server instanceof ConfigurableServletWebServerFactory servletWebServer) {
-            File root;
             String prefixPath = resolvePathPrefix();
-            root = new File(prefixPath + "build/resources/main/static/");
+            // Note: since Angular 17, the path apparently changed
+            File root = new File(prefixPath + "build/resources/main/static/browser");
             if (root.exists() && root.isDirectory()) {
                 servletWebServer.setDocumentRoot(root);
             }
