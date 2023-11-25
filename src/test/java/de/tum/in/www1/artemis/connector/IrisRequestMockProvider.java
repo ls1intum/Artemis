@@ -6,7 +6,6 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.Collections;
 import java.util.Map;
 
 import org.mockito.MockitoAnnotations;
@@ -24,9 +23,9 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.domain.iris.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageContent;
-import de.tum.in.www1.artemis.domain.iris.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.*;
 
 @Component
@@ -38,7 +37,10 @@ public class IrisRequestMockProvider {
     private MockRestServiceServer mockServer;
 
     @Value("${artemis.iris.url}/api/v1/messages")
-    private URL messagesApiURL;
+    private URL messagesApiV1URL;
+
+    @Value("${artemis.iris.url}/api/v2/messages")
+    private URL messagesApiV2URL;
 
     @Value("${artemis.iris.url}/api/v1/models")
     private URL modelsApiURL;
@@ -71,57 +73,107 @@ public class IrisRequestMockProvider {
     }
 
     /**
-     * Mocks response call for the pyris call
+     * Mocks a message with empty response from the Pyris message endpoint
      */
-    public void mockMessageResponse(String responseMessage) throws JsonProcessingException {
-        if (responseMessage == null) {
-            mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess());
-            return;
-        }
+    public void mockEmptyResponse() {
+        // @formatter:off
+        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiV1URL.toString()))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess());
+        // @formatter:on
+    }
+
+    /**
+     * Mocks a message response from the Pyris message endpoint
+     *
+     * @param responseMessage The content of the response
+     */
+    public void mockMessageV1Response(String responseMessage) throws JsonProcessingException {
         var irisMessage = new IrisMessage();
-        var irisMessageContent = new IrisMessageContent();
-        irisMessageContent.setTextContent(responseMessage);
-        irisMessage.setContent(Collections.singletonList(irisMessageContent));
         irisMessage.setSender(IrisMessageSender.LLM);
-        irisMessage.setSentAt(ZonedDateTime.now());
+        irisMessage.addContent(new IrisTextMessageContent(responseMessage));
 
         var response = new IrisMessageResponseDTO(null, irisMessage);
         var json = mapper.writeValueAsString(response);
 
-        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST)).andRespond(withSuccess(json, MediaType.APPLICATION_JSON));
+        mockCustomJsonResponse(messagesApiV1URL, json);
     }
 
-    public void mockCustomJsonResponse(String responseMessage) throws JsonProcessingException {
-        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST))
-                .andRespond(withSuccess(responseMessage, MediaType.APPLICATION_JSON));
+    /**
+     * Mocks a message response from the Pyris V2 message endpoint
+     *
+     * @param responseContent The content of the response
+     * @throws JsonProcessingException If the response content cannot be serialized to JSON
+     */
+    public void mockMessageV2Response(Map<?, ?> responseContent) throws JsonProcessingException {
+        var dto = new IrisMessageResponseV2DTO(null, ZonedDateTime.now(), mapper.valueToTree(responseContent));
+        var json = mapper.writeValueAsString(dto);
+
+        mockCustomJsonResponse(messagesApiV2URL, json);
     }
 
-    public void mockMessageError() throws JsonProcessingException {
-        mockMessageError(500);
+    /**
+     * Mocks a custom message response from the Pyris message endpoint
+     *
+     * @param json The content of the response
+     */
+    public void mockCustomV1Response(String json) {
+        mockCustomJsonResponse(messagesApiV1URL, json);
     }
 
-    public void mockMessageError(int status) throws JsonProcessingException {
-        var errorResponseDTO = new IrisErrorResponseDTO("Test error");
-        var json = Map.of("detail", errorResponseDTO);
-        mockServer.expect(ExpectedCount.once(), requestTo(messagesApiURL.toString())).andExpect(method(HttpMethod.POST))
+    public void mockCustomJsonResponse(URL requestUrl, String responseJson) {
+        // @formatter:off
+        mockServer.expect(ExpectedCount.once(), requestTo(requestUrl.toString()))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withSuccess(responseJson, MediaType.APPLICATION_JSON));
+        // @formatter:on
+    }
+
+    public void mockMessageV1Error(int status) throws JsonProcessingException {
+        mockMessageError(messagesApiV1URL, status);
+    }
+
+    public void mockMessageV2Error(int status) throws JsonProcessingException {
+        mockMessageError(messagesApiV2URL, status);
+    }
+
+    private void mockMessageError(URL requestUrl, int status) throws JsonProcessingException {
+        var json = Map.of("detail", new IrisErrorResponseDTO("Test error"));
+        // @formatter:off
+        mockServer.expect(ExpectedCount.once(), requestTo(requestUrl.toString()))
+                .andExpect(method(HttpMethod.POST))
                 .andRespond(withRawStatus(status).body(mapper.writeValueAsString(json)));
+        // @formatter:on
     }
 
     public void mockModelsResponse() throws JsonProcessingException {
         var irisModelDTO = new IrisModelDTO("TEST_MODEL", "Test model", "Test description");
         var irisModelDTOArray = new IrisModelDTO[] { irisModelDTO };
-        mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString())).andExpect(method(HttpMethod.GET))
+        // @formatter:off
+        mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString()))
+                .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(irisModelDTOArray), MediaType.APPLICATION_JSON));
+        // @formatter:on
     }
 
     public void mockStatusResponse() throws JsonProcessingException {
         var irisStatusDTOArray = new IrisStatusDTO[] { new IrisStatusDTO("TEST_MODEL_UP", IrisStatusDTO.ModelStatus.UP),
                 new IrisStatusDTO("TEST_MODEL_DOWN", IrisStatusDTO.ModelStatus.DOWN), new IrisStatusDTO("TEST_MODEL_NA", IrisStatusDTO.ModelStatus.NOT_AVAILABLE) };
-        mockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString())).andExpect(method(HttpMethod.GET))
+        // @formatter:off
+        mockServer.expect(ExpectedCount.once(), requestTo(healthApiURL.toString()))
+                .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(mapper.writeValueAsString(irisStatusDTOArray), MediaType.APPLICATION_JSON));
+        // @formatter:on
     }
 
-    public void mockModelsError() throws JsonProcessingException {
-        mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString())).andExpect(method(HttpMethod.GET)).andRespond(withRawStatus(418));
+    /**
+     * Mocks a get model error from the Pyris models endpoint
+     */
+    public void mockModelsError() {
+        // @formatter:off
+        mockServer.expect(ExpectedCount.once(), requestTo(modelsApiURL.toString()))
+                .andExpect(method(HttpMethod.GET))
+                .andRespond(withRawStatus(418));
+        // @formatter:on
     }
 }

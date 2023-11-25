@@ -529,6 +529,24 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(long userId);
 
     /**
+     * Finds all exercises filtered by feedback suggestions and due date.
+     *
+     * @param feedbackSuggestionsEnabled - filter by feedback suggestions enabled
+     * @param dueDate                    - filter by due date
+     * @return Set of Exercises
+     */
+    Set<Exercise> findByFeedbackSuggestionsEnabledAndDueDateIsAfter(boolean feedbackSuggestionsEnabled, ZonedDateTime dueDate);
+
+    /**
+     * Find all exercises feedback suggestions (Athena) and with *Due Date* in the future.
+     *
+     * @return Set of Exercises
+     */
+    default Set<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
+        return findByFeedbackSuggestionsEnabledAndDueDateIsAfter(true, ZonedDateTime.now());
+    }
+
+    /**
      * For an explanation, see {@link de.tum.in.www1.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long,long)}
      *
      * @param examId the id of the exam for which we want to get all exercises with potential plagiarism
