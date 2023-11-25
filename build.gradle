@@ -249,7 +249,7 @@ dependencies {
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
-    implementation "com.atlassian.bamboo:bamboo-specs:9.3.3"
+    implementation "com.atlassian.bamboo:bamboo-specs:9.3.5"
     implementation ("org.yaml:snakeyaml") {
         version {
             strictly "2.0" // needed for Bamboo-specs and to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml

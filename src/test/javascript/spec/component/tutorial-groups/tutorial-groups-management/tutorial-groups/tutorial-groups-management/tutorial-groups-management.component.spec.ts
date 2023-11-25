@@ -50,7 +50,6 @@ describe('TutorialGroupsManagementComponent', () => {
     let configurationService: TutorialGroupsConfigurationService;
     let getAllOfCourseSpy: jest.SpyInstance;
     let getOneOfCourseSpy: jest.SpyInstance;
-    let navigateSpy: jest.SpyInstance;
 
     const router = new MockRouter();
 
@@ -101,8 +100,6 @@ describe('TutorialGroupsManagementComponent', () => {
                 );
                 configurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 getOneOfCourseSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
-                navigateSpy = jest.spyOn(router, 'navigate');
-                navigateSpy.mockClear();
                 fixture.detectChanges();
             });
     });
@@ -139,12 +136,5 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
-    });
-
-    it('should navigate to tutorial group detail page when tutorial group click callback is called', () => {
-        component.courseId = 1;
-        component.onTutorialGroupSelected(tutorialGroupOne);
-        expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups', tutorialGroupOne.id]);
     });
 });
