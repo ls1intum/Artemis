@@ -65,6 +65,7 @@
                 "backToOverview": "Back to overview",
                 "examResults": "Exam Results",
                 "generalInformation": "General Information",
+                "youAreViewingAnUnsubmittedExam": "You are viewing an unsubmitted exam",
                 "exportPDF": "Export PDF",
                 "noSubmissionFound": "You didn't submit any solution for this exercise.",
                 "submissionLinkedToCommit": "The submission is linked to commit",
