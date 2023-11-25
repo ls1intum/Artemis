@@ -426,7 +426,7 @@ public class ExamService {
             StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(targetUser.getId(), examId, IS_TEST_RUN)
                     .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + studentId));
 
-            StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummaryAsStudent(targetUser, studentExam);
+            StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummary(targetUser, targetUser, studentExam);
             var studentResult = studentExamWithGradeDTO.studentResult();
             return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null,
                     Boolean.TRUE.equals(studentResult.submitted())));
@@ -446,14 +446,15 @@ public class ExamService {
      * See {@link StudentExamWithGradeDTO} for more explanation.
      *
      * @param targetUser  the user who submitted the studentExam
+     * @param currentUser the user who wants to access the exam summary (might be an instructor)
      * @param studentExam the student exam to be evaluated
      * @return the student exam result with points and grade
      */
-    public StudentExamWithGradeDTO getStudentExamGradesForSummaryAsStudent(User targetUser, StudentExam studentExam) {
+    public StudentExamWithGradeDTO getStudentExamGradesForSummary(User targetUser, User currentUser, StudentExam studentExam) {
 
         loadQuizExercisesForStudentExam(studentExam);
 
-        boolean accessToSummaryAlwaysAllowed = studentExam.isTestRun() || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), targetUser);
+        boolean accessToSummaryAlwaysAllowed = studentExam.isTestRun() || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
         if (!Boolean.TRUE.equals(studentExam.isSubmitted()) && !accessToSummaryAlwaysAllowed) {

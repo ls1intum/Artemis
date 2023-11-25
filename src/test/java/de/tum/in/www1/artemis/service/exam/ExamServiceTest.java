@@ -246,7 +246,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         void testThrowsExceptionIfNotSubmitted() {
             studentExam.setSubmitted(false);
 
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummaryAsStudent(student1, studentExam))
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummary(student1, student1, studentExam))
                     .withMessage("You are not allowed to access the grade summary of a student exam which was NOT submitted!");
         }
 
@@ -256,7 +256,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
             studentExam.setSubmitted(true);
             studentExam.getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(5));
 
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummaryAsStudent(student1, studentExam))
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummary(student1, student1, studentExam))
                     .withMessage("You are not allowed to access the grade summary of a student exam before the release date of results");
         }
 
@@ -268,7 +268,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
             studentExam.getExam().setTestExam(true);
             studentExam.setUser(instructor1);
 
-            examService.getStudentExamGradesForSummaryAsStudent(instructor1, studentExam);
+            examService.getStudentExamGradesForSummary(instructor1, instructor1, studentExam);
         }
 
     }
