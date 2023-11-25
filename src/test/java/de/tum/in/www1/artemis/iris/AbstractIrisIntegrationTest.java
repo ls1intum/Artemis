@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.iris;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -125,8 +125,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
     private void verifyWasSentOverWebsocket(String userLogin, String topicSuffix, ArgumentMatcher<Object> matcher) {
         // @formatter:off
-        verify(websocketMessagingService, timeout(TIMEOUT_MS)
-                .times(1))
+        verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1))
                 .sendMessageToUser(
                         eq(userLogin),
                         eq("/topic/iris/" + topicSuffix),
@@ -136,9 +135,34 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     }
 
     /**
+     * Verify that nothing else was sent through the websocket for the given chat session.
+     */
+    protected void verifyNothingElseWasSentOverWebsocket(IrisChatSession session) {
+        String userLogin = session.getUser().getLogin();
+        String topicSuffix = "sessions/" + session.getId();
+        verifyNothingElseWasSentOverWebsocket(userLogin, topicSuffix);
+    }
+
+    /**
+     * Verify that nothing else was sent through the websocket for the given code editor session.
+     */
+    protected void verifyNothingElseWasSentOverWebsocket(IrisCodeEditorSession session) {
+        String userLogin = session.getUser().getLogin();
+        String topicSuffix = "code-editor-sessions/" + session.getId();
+        verifyNothingElseWasSentOverWebsocket(userLogin, topicSuffix);
+    }
+
+    /**
      * Verify that nothing else was sent through the websocket.
      */
-    protected void verifyNothingElseWasSentOverWebsocket() {
-        verifyNoMoreInteractions(websocketMessagingService);
+    private void verifyNothingElseWasSentOverWebsocket(String userLogin, String topicSuffix) {
+        // @formatter:off
+        verify(websocketMessagingService, timeout(TIMEOUT_MS).times(0))
+                .sendMessageToUser(
+                        eq(userLogin),
+                        eq("/topic/iris/" + topicSuffix),
+                        any()
+                );
+        // @formatter:on
     }
 }

@@ -261,7 +261,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, IrisMessage.class, HttpStatus.OK);
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
         verifyWasSentOverWebsocket(irisSession, messageDTO("Hello World"));
-        verifyNothingElseWasSentOverWebsocket();
+        verifyNothingElseWasSentOverWebsocket(irisSession);
     }
 
     // User needs to be Admin to change settings
@@ -289,7 +289,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend1.getContent()));
         verifyWasSentOverWebsocket(irisSession, messageDTO("Hello World"));
-        verifyNothingElseWasSentOverWebsocket();
+        verifyNothingElseWasSentOverWebsocket(irisSession);
 
         // Reset to not interfere with other tests
         globalSettings.getIrisChatSettings().setRateLimit(null);
