@@ -182,6 +182,7 @@ describe('Modeling Assessment Service', () => {
                     { id: 0, credits: 3, referenceId: '25', referenceType: UMLRelationshipType.ClassBidirectional } as Feedback,
                 ];
                 const uml = {
+                    version: '3.0.0',
                     elements: {
                         '6': { id: '6', name: 'Dominik', type: UMLElementType.Class },
                         '7': { id: '7', name: 'Dominik', type: UMLElementType.Package },

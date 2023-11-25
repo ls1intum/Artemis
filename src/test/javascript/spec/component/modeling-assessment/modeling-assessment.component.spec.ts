@@ -80,7 +80,7 @@ describe('ModelingAssessmentComponent', () => {
         return { width: 0, height: 0 };
     };
 
-    const mockModel = generateMockModel('elementId1', 'elementId2', 'relationshipId');
+    const makeMockModel = () => generateMockModel('elementId1', 'elementId2', 'relationshipId');
     const mockFeedbackWithReference: Feedback = {
         text: 'FeedbackWithReference',
         referenceId: 'relationshipId',
@@ -171,14 +171,14 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should initialize apollon editor', () => {
-        comp.umlModel = mockModel;
+        comp.umlModel = makeMockModel();
         comp.diagramType = UMLDiagramType.ClassDiagram;
         fixture.detectChanges();
         expect(comp.apollonEditor).not.toBeNull();
     });
 
     it('should filter references', () => {
-        comp.umlModel = mockModel;
+        comp.umlModel = makeMockModel();
         comp.readOnly = true;
         comp.feedbacks = mockFeedbacks;
         fixture.detectChanges();
@@ -191,7 +191,7 @@ describe('ModelingAssessmentComponent', () => {
         expect(comp.referencedFeedbacks).toBeEmpty();
         expect(comp.feedbacks).toBeUndefined();
 
-        comp.umlModel = mockModel;
+        comp.umlModel = makeMockModel();
         comp.resultFeedbacks = mockFeedbacks;
 
         expect(comp.referencedFeedbacks).toEqual([mockFeedbackWithReference, mockFeedbackInvalid]);
@@ -200,6 +200,7 @@ describe('ModelingAssessmentComponent', () => {
 
     it('should calculate drop info', () => {
         const spy = jest.spyOn(translatePipe, 'transform');
+        const mockModel = makeMockModel();
         comp.umlModel = mockModel;
         comp.resultFeedbacks = [mockFeedbackWithGradingInstruction];
 
@@ -221,6 +222,7 @@ describe('ModelingAssessmentComponent', () => {
             }));
         }
 
+        const mockModel = makeMockModel();
         comp.umlModel = mockModel;
         const elementCounts = getElementCounts(mockModel);
         comp.elementCounts = elementCounts;
@@ -235,6 +237,7 @@ describe('ModelingAssessmentComponent', () => {
     });
 
     it('should generate feedback from assessment', () => {
+        const mockModel = makeMockModel();
         comp.umlModel = mockModel;
         comp.resultFeedbacks = [mockFeedbackWithGradingInstruction];
 
@@ -248,7 +251,7 @@ describe('ModelingAssessmentComponent', () => {
         const highlightedElements = new Map();
         highlightedElements.set('elementId1', 'red');
         highlightedElements.set('relationshipId', 'blue');
-        comp.umlModel = mockModel;
+        comp.umlModel = makeMockModel();
         comp.highlightedElements = highlightedElements;
 
         fixture.detectChanges();
@@ -284,7 +287,7 @@ describe('ModelingAssessmentComponent', () => {
         const highlightedElements = new Map();
         highlightedElements.set('elementId2', 'green');
         const changes = { highlightedElements: { currentValue: highlightedElements } as SimpleChange };
-        comp.umlModel = mockModel;
+        comp.umlModel = makeMockModel();
         comp.highlightedElements = highlightedElements;
 
         fixture.detectChanges();
@@ -311,7 +314,7 @@ describe('ModelingAssessmentComponent', () => {
     it('should update highlighted assessments first round', async () => {
         const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
         comp.highlightDifferences = true;
-        comp.umlModel = mockModel;
+        comp.umlModel = makeMockModel();
         comp.feedbacks = [mockFeedbackWithReference];
         comp.referencedFeedbacks = [mockFeedbackWithReference];
         jest.spyOn(translatePipe, 'transform').mockReturnValue('Second correction round');
@@ -333,7 +336,7 @@ describe('ModelingAssessmentComponent', () => {
     it('should update highlighted assessments', async () => {
         const changes = { highlightDifferences: { currentValue: true } as SimpleChange };
         comp.highlightDifferences = true;
-        comp.umlModel = mockModel;
+        comp.umlModel = makeMockModel();
 
         fixture.detectChanges();
         comp.feedbacks = [mockFeedbackWithReferenceCopied];
@@ -359,7 +362,7 @@ describe('ModelingAssessmentComponent', () => {
         const newMockFeedbackInvalid = { text: 'NewFeedbackInvalid', referenceId: '4', reference: 'reference' };
         const newMockValidFeedbacks = [newMockFeedbackWithReference, newMockFeedbackWithoutReference];
         const newMockFeedbacks = [...newMockValidFeedbacks, newMockFeedbackInvalid];
-        comp.umlModel = mockModel;
+        comp.umlModel = makeMockModel();
         comp.readOnly = true;
         fixture.detectChanges();
         const changes = { feedbacks: { currentValue: newMockFeedbacks } as SimpleChange };
