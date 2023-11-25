@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType, addOrUpdateAssessment } from '@ls1intum/apollon';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ModelElementCount } from 'app/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -255,26 +255,19 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             return;
         }
 
-        this.umlModel.assessments = feedbacks.reduce<{
-            [id: string]: Assessment;
-        }>(
-            (assessments, feedback) => ({
-                ...assessments,
-                ...{
-                    [feedback.referenceId!]: {
-                        modelElementId: feedback.referenceId!,
-                        elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
-                        score: feedback.credits!,
-                        feedback: feedback.text || undefined,
-                        label: this.calculateLabel(feedback),
-                        labelColor: this.calculateLabelColor(feedback),
-                        correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
-                        dropInfo: this.calculateDropInfo(feedback),
-                    },
-                },
-            }),
-            {},
-        );
+        feedbacks.forEach((feedback) => {
+            addOrUpdateAssessment(this.umlModel, {
+                modelElementId: feedback.referenceId!,
+                elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
+                score: feedback.credits!,
+                feedback: feedback.text || undefined,
+                label: this.calculateLabel(feedback),
+                labelColor: this.calculateLabelColor(feedback),
+                correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
+                dropInfo: this.calculateDropInfo(feedback),
+            });
+        });
+
         if (this.apollonEditor) {
             await this.apollonEditor.nextRender;
             this.apollonEditor.model = this.umlModel;
