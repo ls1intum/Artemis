@@ -43,6 +43,7 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -55,6 +56,7 @@ describe('Metis Service', () => {
     let reactionService: ReactionService;
     let postService: PostService;
     let answerPostService: AnswerPostService;
+    let conversationService: ConversationService;
     let post: Post;
     let answerPost: AnswerPost;
     let reaction: Reaction;
@@ -65,6 +67,7 @@ describe('Metis Service', () => {
             imports: [HttpClientTestingModule],
             providers: [
                 MockProvider(SessionStorageService),
+                MockProvider(ConversationService),
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: PostService, useClass: MockPostService },
@@ -80,6 +83,7 @@ describe('Metis Service', () => {
         reactionService = TestBed.inject(ReactionService);
         postService = TestBed.inject(PostService);
         answerPostService = TestBed.inject(AnswerPostService);
+        conversationService = TestBed.inject(ConversationService);
         metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
         metisServiceCreateWebsocketSubscriptionSpy = jest.spyOn(metisService, 'createWebsocketSubscription');
         metisServiceUserStub = jest.spyOn(metisService, 'getUser');
@@ -557,7 +561,6 @@ describe('Metis Service', () => {
             'should not call postService.getPosts() for new or updated messages received over WebSocket',
             (action: MetisPostAction) => {
                 // Setup
-                const channel = 'someChannel';
                 const mockPostDTO = {
                     post: metisPostInChannel,
                     action,
@@ -565,17 +568,23 @@ describe('Metis Service', () => {
                 const mockReceiveObservable = new Subject();
                 websocketServiceReceiveStub.mockReturnValue(mockReceiveObservable.asObservable());
                 metisService.setPageType(PageType.OVERVIEW);
-                metisService.createWebsocketSubscription(channel);
 
                 // set currentPostContextFilter appropriately
                 metisService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id } as PostContextFilter);
 
                 // Ensure subscribe to websocket was called
-                expect(websocketService.subscribe).toHaveBeenCalled();
+                expect(websocketService.subscribe).toHaveBeenCalledOnce();
 
                 // Emulate receiving a message
                 const getPostsSpy = jest.spyOn(postService, 'getPosts');
+                const markAsReadSpy = jest.spyOn(conversationService, 'markAsRead');
                 mockReceiveObservable.next(mockPostDTO);
+
+                if (action === MetisPostAction.CREATE) {
+                    expect(markAsReadSpy).toHaveBeenCalledOnce();
+                } else {
+                    expect(markAsReadSpy).not.toHaveBeenCalled();
+                }
 
                 // Ensure getPosts() was not called
                 expect(getPostsSpy).not.toHaveBeenCalled();
@@ -608,6 +617,7 @@ describe('Metis Service', () => {
             // set currentPostContextFilter with search text
             metisService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id, searchText: 'Search text' } as PostContextFilter);
 
+            jest.spyOn(conversationService, 'markAsRead').mockReturnValue(of());
             // Emulate receiving a message matching the search text
             mockReceiveObservable.next(mockPostDTO);
             // Emulate receiving a message not matching the search text
@@ -621,31 +631,5 @@ describe('Metis Service', () => {
             });
             tick();
         }));
-
-        it.each([MetisPostAction.CREATE, MetisPostAction.UPDATE, MetisPostAction.DELETE])(
-            'should not call postService.getPosts() for new or updated messages received over WebSocket',
-            (action: MetisPostAction) => {
-                // Setup
-                const channel = 'someChannel';
-                const mockPostDTO = {
-                    post: metisPostInChannel,
-                    action,
-                };
-                const mockReceiveObservable = new Subject();
-                websocketServiceReceiveStub.mockReturnValue(mockReceiveObservable.asObservable());
-                const getPostsSpy = jest.spyOn(postService, 'getPosts');
-                metisService.setPageType(PageType.OVERVIEW);
-                metisService.createWebsocketSubscription(channel);
-
-                // Ensure subscribe to websocket was called
-                expect(websocketService.subscribe).toHaveBeenCalled();
-
-                // Emulate receiving a post
-                mockReceiveObservable.next(mockPostDTO);
-
-                // Ensure getPosts() was not called
-                expect(getPostsSpy).not.toHaveBeenCalled();
-            },
-        );
     });
 });

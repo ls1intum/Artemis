@@ -13,6 +13,7 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { ChangeDetectorRef } from '@angular/core';
 
 describe('CompetencySelection', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;
@@ -117,5 +118,16 @@ describe('CompetencySelection', () => {
         component.writeValue([{ id: 1, title: 'other' } as Competency]);
         expect(component.value).toBeArrayOfSize(1);
         expect(component.value.first()?.title).toBe('test');
+    });
+
+    it('should trigger change detection after loading competencies', () => {
+        jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
+        jest.spyOn(competencyService, 'getAllForCourse').mockReturnValue(of(new HttpResponse({ body: [] })));
+        const changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
+        const detectChangesStub = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
+
+        fixture.detectChanges();
+
+        expect(detectChangesStub).toHaveBeenCalledOnce();
     });
 });

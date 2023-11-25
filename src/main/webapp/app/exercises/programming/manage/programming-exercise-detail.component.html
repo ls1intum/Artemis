@@ -59,6 +59,17 @@
                         <fa-icon [icon]="faFileSignature"></fa-icon>
                         <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                     </a>
+
+                    <a
+                        *ngIf="irisEnabled && programmingExercise.isAtLeastInstructor && programmingExercise.course && !isExamExercise"
+                        [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'iris-settings']"
+                        ngbTooltip="{{ 'artemisApp.iris.settings.button.programmingExercise.tooltip' | artemisTranslate }}"
+                        class="btn btn-warning btn-sm me-1"
+                        style="margin-bottom: 10px"
+                    >
+                        <fa-icon [icon]="faRobot"></fa-icon>
+                        <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title">Iris</span>
+                    </a>
                 </div>
                 <div>
                     <a *ngIf="programmingExercise.isAtLeastTutor" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
@@ -166,22 +177,12 @@
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
                             (click)="getAndShowTestwiseCoverage()"
-                            class="btn btn-secondary btn-sm"
+                            class="btn btn-secondary btn-sm me-1"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.testwiseCoverageReport.tooltip' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.button">Show Testwise Coverage</span>
                         </button>
                     </span>
-                    <button
-                        *ngIf="irisEnabled"
-                        type="button"
-                        (click)="showIrisSettings()"
-                        class="btn btn-secondary btn-sm"
-                        ngbTooltip="{{ 'artemisApp.iris.settings.button.programmingExercise.tooltip' | artemisTranslate }}"
-                    >
-                        <fa-icon [icon]="faRobot"></fa-icon>
-                        <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title">Iris</span>
-                    </button>
                 </div>
                 <div>
                     <button
@@ -249,6 +250,10 @@
             </div>
             <dl class="row-md jh-entity-details">
                 <jhi-exercise-details [exercise]="programmingExercise"></jhi-exercise-details>
+                <dt><span jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled">Enable feedback suggestions from Athena</span></dt>
+                <dd>
+                    <span>{{ (programmingExercise.feedbackSuggestionsEnabled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                </dd>
                 <ng-container *ngIf="programmingExercise.dueDate">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
                     <dd>
@@ -516,6 +521,14 @@
                         <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Submissions</span>
                     </a>
                 </dd>
+
+                <div *ngIf="irisEnabled && irisChatEnabled && programmingExercise.course && !isExamExercise">
+                    <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.chat">Iris Chat</span></dt>
+                    <dd>
+                        <jhi-iris-enabled [exercise]="programmingExercise" [irisSubSettingsType]="CHAT" [disabled]="!programmingExercise.isAtLeastInstructor"></jhi-iris-enabled>
+                    </dd>
+                </div>
+
                 <div *ngIf="programmingExercise?.gitDiffReport">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatLabel">Lines added/removed between template and solution</span></dt>
                     <dd>
@@ -526,6 +539,7 @@
                                 ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
                             ></jhi-git-diff-line-stat>
                             <jhi-button
+                                *ngIf="addedLineCount > 0 || removedLineCount > 0"
                                 [featureToggle]="FeatureToggle.ProgrammingExercises"
                                 [isLoading]="isLoadingDiffReport"
                                 [btnSize]="ButtonSize.SMALL"
