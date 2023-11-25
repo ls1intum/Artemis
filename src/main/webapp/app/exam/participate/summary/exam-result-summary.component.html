@@ -9,6 +9,11 @@
         </button>
     </h2>
 </div>
+<div *ngIf="studentExam && !studentExam.submitted" class="alert alert-danger text-center">
+    <strong>
+        {{ 'artemisApp.exam.examSummary.youAreViewingAnUnsubmittedExam' | artemisTranslate }}
+    </strong>
+</div>
 <jhi-exam-general-information
     *ngIf="studentExam?.exam"
     [exam]="studentExam.exam!"

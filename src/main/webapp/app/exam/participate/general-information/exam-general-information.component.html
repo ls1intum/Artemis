@@ -2,13 +2,7 @@
     <h3 *ngIf="!displayOnExamCover" id="general-information-title">
         {{ 'artemisApp.exam.examSummary.generalInformation' | artemisTranslate }}
     </h3>
-    <div class="mt-3 mb-4 text-center">
-        <div *ngIf="studentExam && !studentExam.submitted" class="alert alert-danger">
-            <strong>
-                {{ 'artemisApp.exam.examSummary.youAreViewingAnUnsubmittedExam' | artemisTranslate }}
-            </strong>
-        </div>
-
+    <div class="ml-4 mt-3 mb-4">
         <table class="table table-borderless mx-auto d-block">
             <tbody>
                 <tr *ngIf="isTestExam">
