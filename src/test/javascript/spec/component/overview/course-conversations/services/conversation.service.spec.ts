@@ -63,9 +63,9 @@ describe('ConversationService', () => {
         tick();
     }));
 
-    it('changeFavoriteStatus', fakeAsync(() => {
+    it('updateIsFavorite', fakeAsync(() => {
         service
-            .changeFavoriteStatus(1, 1, true)
+            .updateIsFavorite(1, 1, true)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
 
@@ -74,9 +74,9 @@ describe('ConversationService', () => {
         tick();
     }));
 
-    it('changeHiddenStatus', fakeAsync(() => {
+    it('updateIsHidden', fakeAsync(() => {
         service
-            .changeHiddenStatus(1, 1, false)
+            .updateIsHidden(1, 1, false)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
 

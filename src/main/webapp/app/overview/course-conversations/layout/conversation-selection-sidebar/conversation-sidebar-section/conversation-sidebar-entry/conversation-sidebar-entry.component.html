@@ -31,13 +31,6 @@
                 <button class="setting" ngbDropdownItem (click)="openConversationDetailDialog($event)" *ngIf="!isOneToOneChat(conversation)">
                     {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.settings' | artemisTranslate }}
                 </button>
-                <button class="hide" ngbDropdownItem (click)="onHiddenClicked($event)">
-                    {{
-                        conversation.isHidden
-                            ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.show' | artemisTranslate)
-                            : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hide' | artemisTranslate)
-                    }}
-                </button>
                 <button class="favorite" ngbDropdownItem (click)="onFavoriteClicked($event)">
                     {{
                         conversation.isFavorite
@@ -50,6 +43,13 @@
                         conversation.isMuted
                             ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.unmute' | artemisTranslate)
                             : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.mute' | artemisTranslate)
+                    }}
+                </button>
+                <button class="hide" ngbDropdownItem (click)="onHiddenClicked($event)">
+                    {{
+                        conversation.isHidden
+                            ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.show' | artemisTranslate)
+                            : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hide' | artemisTranslate)
                     }}
                 </button>
             </div>

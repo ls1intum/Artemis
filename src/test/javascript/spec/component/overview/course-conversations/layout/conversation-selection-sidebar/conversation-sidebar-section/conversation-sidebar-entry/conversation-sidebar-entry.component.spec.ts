@@ -88,7 +88,7 @@ examples.forEach((conversation) => {
             expect(component).toBeTruthy();
         });
 
-        it('should call changeHiddenStatus when button is clicked', fakeAsync(() => {
+        it('should call updateIsHidden when button is clicked', fakeAsync(() => {
             const conversationIsHiddenDidChangeSpy = jest.spyOn(component.conversationIsHiddenDidChange, 'emit');
             const button = fixture.debugElement.nativeElement.querySelector('.hide');
             button.click();
@@ -98,7 +98,7 @@ examples.forEach((conversation) => {
             expect(conversationIsHiddenDidChangeSpy).toHaveBeenCalledOnce();
         }));
 
-        it('should call changeFavoriteStatus when button is clicked', fakeAsync(() => {
+        it('should call updateIsFavorite when button is clicked', fakeAsync(() => {
             const conversationFavoriteStatusChangeSpy = jest.spyOn(component.conversationIsFavoriteDidChange, 'emit');
             const button = fixture.debugElement.nativeElement.querySelector('.favorite');
             button.click();
