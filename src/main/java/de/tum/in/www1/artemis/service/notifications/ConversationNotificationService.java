@@ -89,22 +89,19 @@ public class ConversationNotificationService {
     private void saveAndSend(ConversationNotification notification, Post createdMessage, Course course, Set<User> recipients, Set<User> mentionedUsers, String[] placeHolders) {
         conversationNotificationRepository.save(notification);
 
-        Set<User> notifees;
-        {
-            var conversationId = notification.getConversation().getId();
-            var userIds = recipients.stream().map(User::getId).collect(Collectors.toSet());
-            var conversationParticipants = conversationParticipantRepository.findConversationParticipantsByConversationId(conversationId);
-            var unmutedUsers = conversationParticipants.stream().filter(ConversationParticipant::getIsMuted).map(ConversationParticipant::getUser).collect(Collectors.toSet());
-            notifees = recipients.stream().filter(mentionedUser -> unmutedUsers.contains(mentionedUser)).collect(Collectors.toSet());
-        }
-
         Set<SingleUserNotification> mentionedUserNotifications = mentionedUsers.stream().map(mentionedUser -> SingleUserNotificationFactory
                 .createNotification(notification.getMessage(), NotificationType.CONVERSATION_USER_MENTIONED, notification.getText(), placeHolders, mentionedUser))
                 .collect(Collectors.toSet());
         singleUserNotificationRepository.saveAll(mentionedUserNotifications);
         mentionedUserNotifications.forEach(singleUserNotification -> websocketMessagingService.sendMessage(singleUserNotification.getTopic(), singleUserNotification));
 
-        sendNotificationViaWebSocket(notification, notifees.stream().filter(recipient -> !mentionedUsers.contains(recipient)).collect(Collectors.toSet()));
+        var conversationParticipants = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(notification.getConversation().getId(),
+                recipients.stream().map(User::getId).collect(Collectors.toSet()));
+        var mutedUsers = conversationParticipants.stream().filter(ConversationParticipant::getIsMuted).map(ConversationParticipant::getUser).collect(Collectors.toSet());
+        var unmutedUsers = recipients.stream().filter(user -> !mutedUsers.contains(user)).collect(Collectors.toSet());
+        var unmutedAndUnmentionedUsers = unmutedUsers.stream().filter(user -> !mentionedUsers.contains(user)).collect(Collectors.toSet());
+
+        sendNotificationViaWebSocket(notification, unmutedAndUnmentionedUsers);
 
         Post notificationSubject = new Post();
         notificationSubject.setId(createdMessage.getId());
@@ -113,7 +110,7 @@ public class ConversationNotificationService {
         notificationSubject.setTitle(createdMessage.getTitle());
         notificationSubject.setCourse(course);
         notificationSubject.setAuthor(createdMessage.getAuthor());
-        generalInstantNotificationService.sendNotification(notification, notifees, notificationSubject);
+        generalInstantNotificationService.sendNotification(notification, unmutedUsers, notificationSubject);
     }
 
     private void sendNotificationViaWebSocket(ConversationNotification notification, Set<User> recipients) {
