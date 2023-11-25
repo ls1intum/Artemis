@@ -16,6 +16,14 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import {
+    getExerciseGeneralDetailsSection,
+    getExerciseGradingDefaultDetails,
+    getExerciseGradingInstructionsCriteriaDetails,
+    getExerciseMarkdownSolution,
+    getExerciseModeDetailSection,
+    getExerciseProblemDetailSection,
+} from 'app/exercises/shared/utils';
 
 @Component({
     selector: 'jhi-text-exercise-detail',
@@ -84,100 +92,23 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
 
     getExerciseDetailSections() {
         const exercise = this.textExercise;
+        const generalSection = getExerciseGeneralDetailsSection(exercise);
+        const modeSection = getExerciseModeDetailSection(exercise);
+        const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement);
+        const solutionSection = getExerciseMarkdownSolution(exercise, this.formattedExampleSolution);
+        const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise, this.exerciseService);
+        const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.formattedGradingInstructions);
         return [
+            generalSection,
+            modeSection,
+            problemSection,
+            solutionSection,
             {
-                headline: 'artemisApp.textExercise.sections.general',
+                headline: 'artemisApp.exercise.sections.grading',
                 details: [
-                    exercise.course && {
-                        type: DetailType.Link,
-                        title: 'artemisApp.exercise.course',
-                        data: { text: exercise.course?.title, routerLink: ['/course-management', exercise.course?.id] },
-                    },
-                    exercise.exerciseGroup && {
-                        type: DetailType.Link,
-                        title: 'artemisApp.exercise.course',
-                        data: { text: exercise.exerciseGroup?.exam?.course?.title, routerLink: ['/course-management', exercise.exerciseGroup.exam?.course?.id] },
-                    },
-                    exercise.exerciseGroup && {
-                        type: DetailType.Link,
-                        title: 'artemisApp.exercise.exam',
-                        data: {
-                            text: exercise.exerciseGroup.exam?.title,
-                            routerLink: ['/course-management', exercise.exerciseGroup?.exam?.course?.id, 'exams', exercise.exerciseGroup?.exam?.id],
-                        },
-                    },
-                    {
-                        type: DetailType.Text,
-                        title: 'artemisApp.exercise.title',
-                        data: { text: exercise.title },
-                    },
-                    {
-                        type: DetailType.Text,
-                        title: 'artemisApp.exercise.categories',
-                        data: { text: exercise.categories?.map((category) => category.category?.toUpperCase()).join(', ') },
-                    },
-                ].filter(Boolean),
-            },
-            {
-                headline: 'artemisApp.textExercise.sections.mode',
-                details: [
-                    {
-                        type: DetailType.Text,
-                        title: 'artemisApp.exercise.difficulty',
-                        data: { text: exercise.difficulty },
-                    },
-                    {
-                        type: DetailType.Text,
-                        title: 'artemisApp.exercise.mode',
-                        data: { text: exercise.mode },
-                    },
-                    exercise.teamAssignmentConfig && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.exercise.teamAssignmentConfig.teamSize',
-                        data: { text: `Min. ${exercise.teamAssignmentConfig.minTeamSize}, Max. ${exercise.teamAssignmentConfig.maxTeamSize}` },
-                    },
-                ].filter(Boolean),
-            },
-            {
-                headline: 'artemisApp.textExercise.sections.problem',
-                details: [
-                    {
-                        type: DetailType.Markdown,
-                        data: { innerHtml: this.formattedProblemStatement },
-                    },
-                ],
-            },
-            {
-                headline: 'artemisApp.textExercise.sections.solution',
-                details: [
-                    {
-                        type: DetailType.Markdown,
-                        data: { innerHtml: this.formattedExampleSolution },
-                    },
-                ],
-            },
-            {
-                headline: 'artemisApp.textExercise.sections.grading',
-                details: [
-                    { type: DetailType.Date, title: 'artemisApp.exercise.releaseDate', data: { date: exercise.releaseDate } },
-                    { type: DetailType.Date, title: 'artemisApp.exercise.startDate', data: { date: exercise.startDate } },
-                    { type: DetailType.Date, title: 'artemisApp.exercise.dueDate', data: { date: exercise.dueDate } },
-                    { type: DetailType.Date, title: 'artemisApp.exercise.assessmentDueDate', data: { date: exercise.assessmentDueDate } },
-                    { type: DetailType.Text, title: 'artemisApp.exercise.points', data: { text: exercise.maxPoints } },
-                    exercise.bonusPoints && { type: DetailType.Text, title: 'artemisApp.exercise.bonusPoints', data: { text: exercise.bonusPoints } },
-                    { type: DetailType.Text, title: 'artemisApp.exercise.includedInOverallScore', data: { text: this.exerciseService.isIncludedInScore(exercise) } },
-                    { type: DetailType.Boolean, title: 'artemisApp.exercise.presentationScoreEnabled.title', data: { boolean: exercise.presentationScoreEnabled } },
+                    ...defaultGradingDetails,
                     { type: DetailType.Boolean, title: 'artemisApp.exercise.feedbackSuggestionsEnabled', data: { boolean: exercise.feedbackSuggestionsEnabled } },
-                    exercise.gradingInstructions && {
-                        type: DetailType.Markdown,
-                        title: 'artemisApp.exercise.assessmentInstructions',
-                        data: { innerHtml: this.formattedGradingInstructions },
-                    },
-                    exercise.gradingCriteria && {
-                        type: DetailType.GradingCriteria,
-                        title: 'artemisApp.exercise.structuredAssessmentInstructions',
-                        data: { gradingCriteria: exercise.gradingCriteria },
-                    },
+                    ...gradingInstructionsCriteriaDetails,
                 ].filter(Boolean),
             },
         ] as DetailOverviewSection[];

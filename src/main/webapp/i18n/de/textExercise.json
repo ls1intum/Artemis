@@ -7,13 +7,6 @@
                 "editLabel": "Textaufgabe bearbeiten",
                 "importLabel": "Textaufgabe importieren"
             },
-            "sections": {
-                "general": "Informationen",
-                "mode": "Modus",
-                "grading": "Bewertung",
-                "problem": "Aufgabenstellung",
-                "solution": "Lösung"
-            },
             "submitButton": {
                 "create": "Erstellen",
                 "import": "Importieren",

@@ -21,6 +21,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
 
 @NgModule({
     imports: [
@@ -43,6 +44,7 @@ import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-
         ExerciseCategoriesModule,
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,
+        DetailModule,
     ],
     declarations: [FileUploadExerciseComponent, FileUploadExerciseDetailComponent, FileUploadExerciseUpdateComponent],
     exports: [FileUploadExerciseComponent],

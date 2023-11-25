@@ -10,7 +10,7 @@
                 <jhi-non-programming-exercise-detail-common-actions
                     *ngIf="course"
                     [isExamExercise]="isExamExercise"
-                    [course]="course"
+                    [course]="course!"
                     [exercise]="fileUploadExercise"
                 ></jhi-non-programming-exercise-detail-common-actions>
             </div>
@@ -21,26 +21,8 @@
                     [exerciseType]="ExerciseType.FILE_UPLOAD"
                     class="d-flex justify-content-around"
                 ></jhi-exercise-detail-statistics>
-                <hr />
-                <div>
-                    <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
-                </div>
-                <hr />
             </div>
-            <dl class="row-md jh-entity-details markdown-preview">
-                <jhi-exercise-details [exercise]="fileUploadExercise"></jhi-exercise-details>
-                <dt><span jhiTranslate="artemisApp.fileUploadExercise.filePattern">File Pattern</span></dt>
-                <dd>
-                    <span>{{ fileUploadExercise.filePattern }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.exampleSolution">Example Solution</span></dt>
-                <dd class="editor-outline-background" [innerHTML]="fileUploadExercise.exampleSolution! | htmlForMarkdown"></dd>
-                <dt><span jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDate">Example Solution Publication Date</span></dt>
-                <dd>
-                    <span *ngIf="fileUploadExercise.exampleSolutionPublicationDate">{{ fileUploadExercise.exampleSolutionPublicationDate | artemisDate }}</span>
-                    <span *ngIf="!fileUploadExercise.exampleSolutionPublicationDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-                </dd>
-            </dl>
+            <jhi-detail-overview-list *ngIf="exerciseDetailSections" [sections]="exerciseDetailSections"></jhi-detail-overview-list>
         </div>
     </div>
 </div>
