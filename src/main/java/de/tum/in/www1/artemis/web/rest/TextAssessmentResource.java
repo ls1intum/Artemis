@@ -159,7 +159,6 @@ public class TextAssessmentResource extends AssessmentResource {
             final var textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
             final var feedbacksWithIds = response.getBody().getFeedbacks();
             saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
-            sendFeedbackToAthena(exercise, textSubmission, feedbacksWithIds);
         }
         return response;
     }
@@ -490,7 +489,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
      */
     private void sendFeedbackToAthena(final TextExercise exercise, final TextSubmission textSubmission, final List<Feedback> feedbacks) {
-        if (athenaFeedbackSendingService.isPresent() && exercise.isFeedbackSuggestionsEnabled()) {
+        if (athenaFeedbackSendingService.isPresent() && exercise.getFeedbackSuggestionsEnabled()) {
             athenaFeedbackSendingService.get().sendFeedback(exercise, textSubmission, feedbacks);
         }
     }
