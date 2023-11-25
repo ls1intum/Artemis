@@ -220,8 +220,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const question = await generateDragAndDropQuizExercise(this.course, this.apollonDiagram?.title!, this.apollonEditor?.model!);
-        this.closeEdit.emit(question);
+        if (this.apollonEditor && this.apollonDiagram) {
+            const question = await generateDragAndDropQuizExercise(this.course, this.apollonDiagram.title!, this.apollonEditor.model!);
+            this.closeEdit.emit(question);
+        }
     }
 
     /**
