@@ -235,10 +235,10 @@ public class IrisSubSettingsService {
     public IrisCombinedCodeEditorSubSettingsDTO combineCodeEditorSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
         var actualSettingsList = settingsList.stream().filter(settings -> !(settings instanceof IrisExerciseSettings)).toList();
         var combinedCodeEditorSettings = new IrisCombinedCodeEditorSubSettingsDTO();
-        combinedCodeEditorSettings.setEnabled(getCombinedEnabled(actualSettingsList, IrisSettings::getIrisHestiaSettings));
+        combinedCodeEditorSettings.setEnabled(getCombinedEnabled(actualSettingsList, IrisSettings::getIrisCodeEditorSettings));
         if (!minimal) {
-            combinedCodeEditorSettings.setAllowedModels(getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisHestiaSettings));
-            combinedCodeEditorSettings.setPreferredModel(getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisHestiaSettings));
+            combinedCodeEditorSettings.setAllowedModels(getCombinedAllowedModels(actualSettingsList, IrisSettings::getIrisCodeEditorSettings));
+            combinedCodeEditorSettings.setPreferredModel(getCombinedPreferredModel(actualSettingsList, IrisSettings::getIrisCodeEditorSettings));
 
             combinedCodeEditorSettings
                     .setChatTemplate(getCombinedTemplate(actualSettingsList, IrisSettings::getIrisCodeEditorSettings, IrisCodeEditorSubSettings::getChatTemplate));

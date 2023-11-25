@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement, EventEmitter } from '@angular/core';
 import { NgModel } from '@angular/forms';
@@ -108,7 +108,7 @@ describe('CodeEditorAceComponent', () => {
         expect(comp.editor.getEditor().getReadOnly()).toBeFalse();
     });
 
-    it('should correctly init editor after file change', () => {
+    it('should correctly init editor after file change', waitForAsync(async () => {
         const selectedFile = 'dummy';
         const fileSession = {};
         const loadFileSubject = new Subject();
@@ -119,45 +119,52 @@ describe('CodeEditorAceComponent', () => {
 
         triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
         fixture.detectChanges();
+        await fixture.whenStable();
 
         expect(comp.isLoading).toBeTrue();
         expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
         expect(initEditorSpy).not.toHaveBeenCalled();
         loadFileSubject.next({ fileName: selectedFile, fileContent: 'lorem ipsum' });
         fixture.detectChanges();
+        await fixture.whenStable();
 
         expect(comp.isLoading).toBeFalse();
         expect(comp.fileSession).toEqual({ dummy: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false } });
         expect(initEditorSpy).toHaveBeenCalledWith();
-    });
+    }));
 
     it.each([
         [new ConnectionError(), 'loadingFailedInternetDisconnected'],
         [new Error(), 'loadingFailed'],
-    ])('should correctly init editor after file change in case of error', (error: Error, errorCode: string) => {
-        const selectedFile = 'dummy';
-        const fileSession = {};
-        const loadFileSubject = new Subject();
-        const initEditorSpy = jest.spyOn(comp, 'initEditor');
-        const onErrorSpy = jest.spyOn(comp.onError, 'emit');
-        loadRepositoryFileStub.mockReturnValue(loadFileSubject);
-        comp.selectedFile = selectedFile;
-        comp.fileSession = fileSession;
+    ])(
+        'should correctly init editor after file change in case of error',
+        waitForAsync(async (error: Error, errorCode: string) => {
+            const selectedFile = 'dummy';
+            const fileSession = {};
+            const loadFileSubject = new Subject();
+            const initEditorSpy = jest.spyOn(comp, 'initEditor');
+            const onErrorSpy = jest.spyOn(comp.onError, 'emit');
+            loadRepositoryFileStub.mockReturnValue(loadFileSubject);
+            comp.selectedFile = selectedFile;
+            comp.fileSession = fileSession;
 
-        triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
-        fixture.detectChanges();
+            triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        expect(comp.isLoading).toBeTrue();
-        expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
-        expect(initEditorSpy).not.toHaveBeenCalled();
-        loadFileSubject.error(error);
-        fixture.detectChanges();
+            expect(comp.isLoading).toBeTrue();
+            expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
+            expect(initEditorSpy).not.toHaveBeenCalled();
+            loadFileSubject.error(error);
+            fixture.detectChanges();
+            await fixture.whenStable();
 
-        expect(comp.isLoading).toBeFalse();
-        expect(comp.fileSession).toEqual({ dummy: { code: '', cursor: { column: 0, row: 0 }, loadingError: true } });
-        expect(initEditorSpy).toHaveBeenCalledWith();
-        expect(onErrorSpy).toHaveBeenCalledWith(errorCode);
-    });
+            expect(comp.isLoading).toBeFalse();
+            expect(comp.fileSession).toEqual({ dummy: { code: '', cursor: { column: 0, row: 0 }, loadingError: true } });
+            expect(initEditorSpy).toHaveBeenCalledWith();
+            expect(onErrorSpy).toHaveBeenCalledWith(errorCode);
+        }),
+    );
 
     it('should discard all new feedback after a re-init because of a file change', async () => {
         comp.newFeedbackLines = [1, 2, 3];
@@ -169,7 +176,7 @@ describe('CodeEditorAceComponent', () => {
         const selectedFile = 'dummy';
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false } };
         const initEditorSpy = jest.spyOn(comp, 'initEditor');
-        const loadFileSpy = jest.spyOn(comp, 'loadFile');
+        const loadFileSpy = jest.spyOn(comp, 'fetchFileContent');
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
 
@@ -180,20 +187,23 @@ describe('CodeEditorAceComponent', () => {
         expect(loadFileSpy).not.toHaveBeenCalled();
     });
 
-    it('should load the file from server on selected file change if the file is already in session but there was a loading error', () => {
+    it('should load the file from server on selected file change if the file is already in session but there was a loading error', waitForAsync(async () => {
         const selectedFile = 'dummy';
         const fileSession = { [selectedFile]: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: true } };
         const initEditorSpy = jest.spyOn(comp, 'initEditor');
-        const loadFileSpy = jest.spyOn(comp, 'loadFile');
+        const loadFileSpy = jest.spyOn(comp, 'fetchFileContent');
+        const loadFileSubject = new Subject<{ fileName: 'dummy'; fileContent: 'lorem ipsum' }>();
+        loadRepositoryFileStub.mockReturnValue(loadFileSubject);
         comp.selectedFile = selectedFile;
         comp.fileSession = fileSession;
 
         triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
         fixture.detectChanges();
+        await fixture.whenStable();
 
         expect(initEditorSpy).not.toHaveBeenCalled();
         expect(loadFileSpy).toHaveBeenCalledOnce();
-    });
+    }));
 
     it('should update file session references on file rename', async () => {
         const selectedFile = 'file';

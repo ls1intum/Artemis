@@ -265,7 +265,7 @@ public class IrisSettingsService {
         return switch (type) {
             case CHAT -> settings.irisChatSettings().isEnabled();
             case HESTIA -> settings.irisHestiaSettings().isEnabled();
-            case CODE_EDITOR -> false; // FIXME: Implement this in another PR
+            case CODE_EDITOR -> settings.irisCodeEditorSettings().isEnabled();
         };
     }
 
@@ -328,8 +328,8 @@ public class IrisSettingsService {
     public IrisCombinedSettingsDTO getCombinedIrisSettingsFor(Exercise exercise, boolean minimal) {
         var settingsList = new ArrayList<IrisSettings>();
         settingsList.add(getGlobalSettings());
-        settingsList.add(irisSettingsRepository.findCourseSettings(exercise.getCourseViaExerciseGroupOrCourseMember().getId()).orElse(null));
-        settingsList.add(irisSettingsRepository.findExerciseSettings(exercise.getId()).orElse(null));
+        settingsList.add(getRawIrisSettingsFor(exercise.getCourseViaExerciseGroupOrCourseMember()));
+        settingsList.add(getRawIrisSettingsFor(exercise));
 
         return new IrisCombinedSettingsDTO(irisSubSettingsService.combineChatSettings(settingsList, minimal), irisSubSettingsService.combineHestiaSettings(settingsList, minimal),
                 irisSubSettingsService.combineCodeEditorSettings(settingsList, minimal));

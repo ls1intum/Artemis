@@ -528,9 +528,10 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         const codeEditorAceComp = fixture.debugElement.query(By.directive(CodeEditorAceComponent)).componentInstance;
         codeEditorAceComp.isLoading = false;
-        fixture.detectChanges();
-
-        expect(codeEditorAceComp.markerIds).toHaveLength(1);
+        fixture.whenStable().then(() => {
+            fixture.detectChanges();
+            expect(codeEditorAceComp.markerIds).toHaveLength(1);
+        });
 
         getFilesWithContentStub.mockRestore();
         getFileStub.mockRestore();

@@ -40,8 +40,8 @@ class IrisHestiaIntegrationTest extends AbstractIrisIntegrationTest {
     void updateSolutionEntriesOnSaving() throws Exception {
         addCodeHints();
 
-        irisRequestMockProvider.mockMessageResponse("Hello World Content");
-        irisRequestMockProvider.mockMessageResponse("Hello World Description");
+        irisRequestMockProvider.mockMessageV1Response("Hello World Content");
+        irisRequestMockProvider.mockMessageV1Response("Hello World Description");
 
         var updatedCodeHint = request.postWithResponseBody("/api/programming-exercises/" + exercise.getId() + "/code-hints/" + codeHint.getId() + "/generate-description", null,
                 CodeHint.class, HttpStatus.OK);
