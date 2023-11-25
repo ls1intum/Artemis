@@ -8,7 +8,7 @@
             <hr />
             <div class="button-header">
                 <div class="d-flex flex-wrap gap-2">
-                    <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm">
+                    <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="[baseResource, 'edit']" class="btn btn-warning btn-sm">
                         <fa-icon [icon]="faWrench"></fa-icon>&nbsp;
                         <span jhiTranslate="entity.action.edit"> Edit</span>
                     </a>
@@ -18,7 +18,7 @@
                         *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation"
                         jhiOrionFilter
                         [showInOrionWindow]="false"
-                        [routerLink]="baseResource + 'code-editor/' + programmingExercise.templateParticipation.id"
+                        [routerLink]="[baseResource, 'code-editor', programmingExercise.templateParticipation.id!]"
                         class="btn btn-warning btn-sm"
                     >
                         <fa-icon [icon]="faPencilAlt"></fa-icon>
@@ -31,7 +31,7 @@
                         *ngIf="programmingExercise.isAtLeastEditor && isBuildPlanEditable"
                         jhiOrionFilter
                         [showInOrionWindow]="false"
-                        [routerLink]="baseResource + 'edit-build-plan'"
+                        [routerLink]="[baseResource, 'edit-build-plan']"
                         class="btn btn-warning btn-sm"
                     >
                         <fa-icon [icon]="faPencilAlt"></fa-icon>
@@ -40,20 +40,20 @@
 
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.course && !isExamExercise"
-                        [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
+                        [routerLink]="['/course-management', programmingExercise.course.id!, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
                         class="btn btn-warning btn-sm position-relative"
                     >
                         <fa-icon [icon]="faLightbulb"></fa-icon>
                         <span jhiTranslate="entity.action.hints">Hints</span>
                     </a>
 
-                    <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="baseResource + 'grading/test-cases'" class="btn btn-warning btn-sm">
+                    <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="[baseResource, 'grading', 'test-cases']" class="btn btn-warning btn-sm">
                         <fa-icon [icon]="faFileSignature"></fa-icon>
                         <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                     </a>
                     <a
                         *ngIf="irisEnabled && programmingExercise.isAtLeastInstructor && programmingExercise.course && !isExamExercise"
-                        [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'iris-settings']"
+                        [routerLink]="['/course-management', programmingExercise.course.id!, 'programming-exercises', programmingExercise.id, 'iris-settings']"
                         ngbTooltip="{{ 'artemisApp.iris.settings.button.programmingExercise.tooltip' | artemisTranslate }}"
                         class="btn btn-warning btn-sm me-1"
                         style="margin-bottom: 10px"
@@ -61,18 +61,18 @@
                         <fa-icon [icon]="faRobot"></fa-icon>
                         <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title">Iris</span>
                     </a>
-                    <a *ngIf="programmingExercise.isAtLeastTutor" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm">
+                    <a *ngIf="programmingExercise.isAtLeastTutor" [routerLink]="[baseResource, 'participations']" class="btn btn-primary btn-sm">
                         <fa-icon [icon]="faListAlt"></fa-icon>
                         <span jhiTranslate="artemisApp.exercise.participations">Participations</span>
                     </a>
                     <!-- Teams -->
-                    <a *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor" [routerLink]="teamBaseResource + 'teams'" class="btn btn-primary btn-sm">
+                    <a *ngIf="programmingExercise.teamMode && programmingExercise.isAtLeastTutor" [routerLink]="[teamBaseResource, 'teams']" class="btn btn-primary btn-sm">
                         <fa-icon [icon]="faUsers"></fa-icon>
                         <span jhiTranslate="artemisApp.exercise.teams">Teams</span>
                     </a>
                     <a
                         *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise.allowComplaintsForAutomaticAssessments"
-                        [routerLink]="shortBaseResource + 'assessment-dashboard/' + programmingExercise.id"
+                        [routerLink]="[shortBaseResource, 'assessment-dashboard', programmingExercise.id]"
                         class="btn btn-info btn-sm"
                     >
                         <fa-icon [icon]="faUserCheck"></fa-icon>
@@ -81,10 +81,10 @@
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && plagiarismCheckSupported"
                         [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                        class="btn btn-outline-primary btn-sm"
+                        class="btn btn-info btn-sm"
                         routerLink="plagiarism"
                     >
-                        <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Check Plagiarism</span>
+                        <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism">Plagiarism</span>
                     </a>
                     <a *ngIf="programmingExercise.isAtLeastTutor" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
                         <fa-icon [icon]="faTable"></fa-icon>
@@ -169,6 +169,15 @@
                         <span jhiTranslate="artemisApp.programmingExercise.lockAllRepositories">Lock all repositories</span>
                     </button>
                     <button
+                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                        *ngIf="programmingExercise.isAtLeastEditor"
+                        (click)="checkConsistencies(programmingExercise)"
+                        class="btn btn-outline-primary btn-sm me-1"
+                        style="margin-bottom: 10px"
+                    >
+                        <fa-icon [icon]="faCheckDouble"></fa-icon> <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
+                    </button>
+                    <button
                         *ngIf="programmingExercise.isAtLeastEditor"
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         jhiProgrammingExerciseResetButton
@@ -193,15 +202,6 @@
                         class="me-1"
                     >
                         <fa-icon [icon]="faTimes"></fa-icon>
-                    </button>
-                    <button
-                        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                        *ngIf="programmingExercise.isAtLeastEditor"
-                        (click)="checkConsistencies(programmingExercise)"
-                        class="btn btn-outline-primary btn-sm me-1"
-                        style="margin-bottom: 10px"
-                    >
-                        <fa-icon [icon]="faCheckDouble"></fa-icon> <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
                     </button>
                 </div>
             </div>
