@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.authorization;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,7 +24,7 @@ class AuthorizationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGit
     private AuthorizationTestService authorizationTestService;
 
     @Test
-    void testEndpoints() throws InvocationTargetException, IllegalAccessException {
+    void testEndpoints() {
         var requestMappingHandlerMapping = applicationContext.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping.class);
         Map<RequestMappingInfo, HandlerMethod> endpointMap = requestMappingHandlerMapping.getHandlerMethods();
         // Filter out endpoints that should not be tested.

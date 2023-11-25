@@ -1,10 +1,10 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { HeartbeatDTO, IrisHttpSessionService } from 'app/iris/http-session.service';
+import { HeartbeatDTO, IrisHttpChatSessionService } from 'app/iris/http-chat-session.service';
 import { HttpResponse } from '@angular/common/http';
 import { ConversationErrorOccurredAction, MessageStoreAction, RateLimitUpdatedAction, isSessionReceivedAction } from 'app/iris/state-store.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
-import { Subscription } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 /**
@@ -21,13 +21,14 @@ export class IrisHeartbeatService implements OnDestroy {
 
     /**
      * Creates an instance of IrisHeartbeatService.
+     * @param websocketService The JhiWebsocketService for managing the websocket connection.
      * @param stateStore The IrisStateStore for managing the state of the application.
-     * @param httpSessionService The IrisHttpSessionService for HTTP operations related to sessions.
+     * @param httpSessionService The IrisHttpChatSessionService for HTTP operations related to sessions.
      */
     constructor(
         private websocketService: JhiWebsocketService,
         private stateStore: IrisStateStore,
-        private httpSessionService: IrisHttpSessionService,
+        private httpSessionService: IrisHttpChatSessionService,
     ) {
         // Subscribe to changes in the session ID
         this.sessionIdChangedSub = this.stateStore.getActionObservable().subscribe((newAction: MessageStoreAction) => {
@@ -50,19 +51,16 @@ export class IrisHeartbeatService implements OnDestroy {
      */
     private checkHeartbeat(sessionId: number): void {
         if (this.disconnected) return;
-        this.httpSessionService
-            .getHeartbeat(sessionId)
-            .toPromise()
-            .then((response: HttpResponse<HeartbeatDTO>) => {
-                if (response.body) {
-                    if (!response.body.active) {
-                        this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_NOT_AVAILABLE));
-                    }
-                    this.stateStore.dispatch(new RateLimitUpdatedAction(response.body!.rateLimitInfo));
-                } else {
+        firstValueFrom(this.httpSessionService.getHeartbeat(sessionId)).then((response: HttpResponse<HeartbeatDTO>) => {
+            if (response.body) {
+                if (!response.body.active) {
                     this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_NOT_AVAILABLE));
                 }
-            });
+                this.stateStore.dispatch(new RateLimitUpdatedAction(response.body!.rateLimitInfo));
+            } else {
+                this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_NOT_AVAILABLE));
+            }
+        });
     }
 
     /**

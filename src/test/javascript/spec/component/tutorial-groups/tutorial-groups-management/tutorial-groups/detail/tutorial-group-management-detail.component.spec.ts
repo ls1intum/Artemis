@@ -74,31 +74,4 @@ describe('TutorialGroupManagementDetailComponent', () => {
         expect(findByIdStub).toHaveBeenCalledWith(2, 1);
         expect(findByIdStub).toHaveBeenCalledOnce();
     });
-
-    it('should navigate to course management when course clicked callback called', () => {
-        const router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        fixture.detectChanges();
-        component.onCourseClicked();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 2]);
-        expect(navigateSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should navigate to registrations when registration clicked callback called', () => {
-        const router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        fixture.detectChanges();
-        component.onRegistrationsClicked();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 2, 'tutorial-groups', 1, 'registered-students']);
-        expect(navigateSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should navigate to tutorial group management when tutorial group delete callback called', () => {
-        const router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        fixture.detectChanges();
-        component.onTutorialGroupDeleted();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 2, 'tutorial-groups']);
-        expect(navigateSpy).toHaveBeenCalledOnce();
-    });
 });
