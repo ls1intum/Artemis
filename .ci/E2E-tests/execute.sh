@@ -14,6 +14,9 @@ else
   exit 1
 fi
 
+echo "Compose file:"
+echo $COMPOSE_FILE
+
 # Create libs folder because the Artemis docker compose file expects the .war file there
 mkdir -p build/libs
 mv ./*.war build/libs/
