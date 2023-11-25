@@ -250,8 +250,9 @@ export class Feedback implements BaseEntity {
     }
 
     public static updateFeedbackTypeOnChange(feedback: Feedback) {
-        if (feedback.type === FeedbackType.AUTOMATIC) {
-            feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
+        if (Feedback.isFeedbackSuggestion(feedback)) {
+            // Mark as adapted feedback suggestion
+            feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
         }
     }
 }

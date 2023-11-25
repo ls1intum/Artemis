@@ -10,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
@@ -29,21 +28,18 @@ public class TextSubmissionService extends SubmissionService {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    private final Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService;
-
     private final SubmissionVersionService submissionVersionService;
 
     private final ExerciseDateService exerciseDateService;
 
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, ParticipationService participationService, ResultRepository resultRepository,
-            UserRepository userRepository, Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService, AuthorizationCheckService authCheckService,
-            SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService,
-            CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService) {
+            UserRepository userRepository, AuthorizationCheckService authCheckService, SubmissionVersionService submissionVersionService, FeedbackRepository feedbackRepository,
+            ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
+            ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
         this.textSubmissionRepository = textSubmissionRepository;
-        this.athenaSubmissionSelectionService = athenaSubmissionSelectionService;
         this.submissionVersionService = submissionVersionService;
         this.exerciseDateService = exerciseDateService;
     }
@@ -128,28 +124,8 @@ public class TextSubmissionService extends SubmissionService {
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound) {
-        // If automatic assessment is enabled and available, try to learn the most possible amount during the first correction round
-        if (textExercise.isFeedbackSuggestionsEnabled() && athenaSubmissionSelectionService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
-            var assessableSubmissions = getAssessableSubmissions(textExercise, examMode, correctionRound);
-            var athenaSubmissionId = athenaSubmissionSelectionService.get().getProposedSubmissionId(textExercise, assessableSubmissions.stream().map(Submission::getId).toList());
-            if (athenaSubmissionId.isPresent()) {
-                var submission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(athenaSubmissionId.get());
-                // Test again if it is still assessable (Athena might have taken some time to respond and another assessment might have started in the meantime):
-                if (submission.isPresent() && (submission.get().getLatestResult() == null || !submission.get().getLatestResult().isManual())) {
-                    return submission;
-                }
-                else {
-                    log.debug("Athena proposed submission {} is not assessable anymore", athenaSubmissionId.get());
-                }
-            }
-        }
-
-        var submissionWithoutResult = super.getRandomAssessableSubmission(textExercise, examMode, correctionRound);
-        if (submissionWithoutResult.isPresent()) {
-            TextSubmission textSubmission = (TextSubmission) submissionWithoutResult.get();
-            return Optional.of(textSubmission);
-        }
-        return Optional.empty();
+        return super.getRandomAssessableSubmission(textExercise, skipAssessmentQueue, examMode, correctionRound,
+                textSubmissionRepository::findByIdWithEagerParticipationExerciseResultAssessor);
     }
 
     /**
