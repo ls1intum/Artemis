@@ -152,6 +152,15 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(comp.exercise.assessmentDueDate).toBeUndefined();
     });
 
+    it('should disable feedback suggestions when changing the assessment type to automatic', () => {
+        comp.exercise = exercise;
+        comp.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+        comp.exercise.feedbackSuggestionsEnabled = true;
+        comp.toggleAssessmentType(); // toggle to AUTOMATIC
+
+        expect(comp.exercise.feedbackSuggestionsEnabled).toBeFalse();
+    });
+
     it('should change publication of tests for programming exercise with published solution', () => {
         comp.exercise = { ...exercise, exampleSolutionPublicationDate: dayjs() };
         expect(comp.exercise.releaseTestsWithExampleSolution).toBeFalsy();

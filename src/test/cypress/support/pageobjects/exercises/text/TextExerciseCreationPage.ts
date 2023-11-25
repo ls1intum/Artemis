@@ -31,10 +31,6 @@ export class TextExerciseCreationPage {
         cy.get('#field_points').type(maxPoints.toString());
     }
 
-    checkAutomaticAssessmentSuggestions() {
-        cy.get('#automatic_assessment_enabled').check();
-    }
-
     typeProblemStatement(statement: string) {
         this.typeText('#problemStatement', statement);
     }
