@@ -85,7 +85,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
         verifyWasSentOverWebsocket(irisSession, messageDTO(List.of(new IrisTextMessageContent("Hi there!"))));
-        verifyNothingElseWasSentOverWebsocket(irisSession);
+        verifyNumberOfCallsToWebsocket(irisSession, 2);
     }
 
     @Test
@@ -251,7 +251,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
         verifyWasSentOverWebsocket(irisSession, messageExceptionDTO());
-        verifyNothingElseWasSentOverWebsocket(irisSession);
+        verifyNumberOfCallsToWebsocket(irisSession, 2);
     }
 
     @Test
@@ -267,7 +267,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
         verifyWasSentOverWebsocket(irisSession, messageExceptionDTO());
-        verifyNothingElseWasSentOverWebsocket(irisSession);
+        verifyNumberOfCallsToWebsocket(irisSession, 2);
     }
 
     private void setupExercise() throws Exception {

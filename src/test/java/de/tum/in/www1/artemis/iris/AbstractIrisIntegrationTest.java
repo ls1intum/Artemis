@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.iris;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -135,29 +134,29 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     }
 
     /**
-     * Verify that nothing else was sent through the websocket for the given chat session.
+     * Verify that no more than the given number of messages were sent through the websocket for the given chat session.
      */
-    protected void verifyNothingElseWasSentOverWebsocket(IrisChatSession session) {
+    protected void verifyNumberOfCallsToWebsocket(IrisChatSession session, int numberOfCalls) {
         String userLogin = session.getUser().getLogin();
         String topicSuffix = "sessions/" + session.getId();
-        verifyNothingElseWasSentOverWebsocket(userLogin, topicSuffix);
+        verifyNumberOfCallsToWebsocket(userLogin, topicSuffix, numberOfCalls);
     }
 
     /**
-     * Verify that nothing else was sent through the websocket for the given code editor session.
+     * Verify that no more than the given number of messages were sent through the websocket for the given code editor session.
      */
-    protected void verifyNothingElseWasSentOverWebsocket(IrisCodeEditorSession session) {
+    protected void verifyNumberOfCallsToWebsocket(IrisCodeEditorSession session, int numberOfCalls) {
         String userLogin = session.getUser().getLogin();
         String topicSuffix = "code-editor-sessions/" + session.getId();
-        verifyNothingElseWasSentOverWebsocket(userLogin, topicSuffix);
+        verifyNumberOfCallsToWebsocket(userLogin, topicSuffix, numberOfCalls);
     }
 
     /**
      * Verify that nothing else was sent through the websocket.
      */
-    private void verifyNothingElseWasSentOverWebsocket(String userLogin, String topicSuffix) {
+    private void verifyNumberOfCallsToWebsocket(String userLogin, String topicSuffix, int numberOfCalls) {
         // @formatter:off
-        verify(websocketMessagingService, timeout(TIMEOUT_MS).times(0))
+        verify(websocketMessagingService, times(numberOfCalls))
                 .sendMessageToUser(
                         eq(userLogin),
                         eq("/topic/iris/" + topicSuffix),
