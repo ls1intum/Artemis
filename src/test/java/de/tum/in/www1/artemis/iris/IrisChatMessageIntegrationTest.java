@@ -228,8 +228,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()));
-        verifyWebsocketActivityWasExactly(irisSession, errorDTO());
+        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()), errorDTO());
     }
 
     @Test
@@ -243,8 +242,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()));
-        verifyWebsocketActivityWasExactly(irisSession, errorDTO());
+        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()), errorDTO());
     }
 
     @Test
