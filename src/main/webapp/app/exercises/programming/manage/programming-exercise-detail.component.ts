@@ -213,8 +213,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
                 // the build logs endpoint requires at least editor privileges
                 if (this.programmingExercise.isAtLeastEditor) {
-                    const buildLogStatisticsDto = await firstValueFrom(this.programmingExerciseService.getBuildLogStatistics(exerciseId!));
-                    this.programmingExercise.buildLogStatistics = buildLogStatisticsDto;
+                    this.programmingExercise.buildLogStatistics = await firstValueFrom(this.programmingExerciseService.getBuildLogStatistics(exerciseId!));
                 }
 
                 this.setLatestCoveredLineRatio();
