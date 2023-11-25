@@ -109,6 +109,7 @@
                             ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
                         ></jhi-git-diff-line-stat>
                         <jhi-button
+                            *ngIf="detail.data.addedLineCount > 0 || detail.data.removedLineCount > 0"
                             [featureToggle]="FeatureToggle.ProgrammingExercises"
                             [isLoading]="detail.data.isLoadingDiffReport"
                             [btnSize]="ButtonSize.SMALL"
