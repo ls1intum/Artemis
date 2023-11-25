@@ -230,8 +230,6 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         private StudentExam studentExam;
 
-        private boolean isTestRun;
-
         @BeforeEach
         void initializeTest() {
             userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 0, 0, NUMBER_OF_INSTRUCTORS);
@@ -247,9 +245,8 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         @WithMockUser(username = "student1", roles = "STUDENT")
         void testThrowsExceptionIfNotSubmitted() {
             studentExam.setSubmitted(false);
-            isTestRun = false;
 
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummaryAsStudent(student1, studentExam, isTestRun))
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummaryAsStudent(student1, studentExam))
                     .withMessage("You are not allowed to access the grade summary of a student exam which was NOT submitted!");
         }
 
@@ -257,10 +254,9 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         @WithMockUser(username = "student1", roles = "STUDENT")
         void testThrowsExceptionIfNotPublished() {
             studentExam.setSubmitted(true);
-            isTestRun = false;
             studentExam.getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(5));
 
-            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummaryAsStudent(student1, studentExam, isTestRun))
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> examService.getStudentExamGradesForSummaryAsStudent(student1, studentExam))
                     .withMessage("You are not allowed to access the grade summary of a student exam before the release date of results");
         }
 
@@ -269,10 +265,10 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         void testDoesNotThrowExceptionForTestRuns() {
             studentExam.setSubmitted(false);
             studentExam.getExam().setPublishResultsDate(ZonedDateTime.now().plusDays(5));
+            studentExam.getExam().setTestExam(true);
             studentExam.setUser(instructor1);
-            isTestRun = true;
 
-            examService.getStudentExamGradesForSummaryAsStudent(instructor1, studentExam, isTestRun);
+            examService.getStudentExamGradesForSummaryAsStudent(instructor1, studentExam);
         }
 
     }

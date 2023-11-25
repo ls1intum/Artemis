@@ -426,7 +426,7 @@ public class ExamService {
             StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(targetUser.getId(), examId, IS_TEST_RUN)
                     .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + studentId));
 
-            StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummaryAsStudent(targetUser, studentExam, IS_TEST_RUN);
+            StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummaryAsStudent(targetUser, studentExam);
             var studentResult = studentExamWithGradeDTO.studentResult();
             return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null,
                     Boolean.TRUE.equals(studentResult.submitted())));
@@ -447,18 +447,19 @@ public class ExamService {
      *
      * @param targetUser  the user who submitted the studentExam
      * @param studentExam the student exam to be evaluated
-     * @param isTestRun   set if an instructor executes a test run
      * @return the student exam result with points and grade
      */
-    public StudentExamWithGradeDTO getStudentExamGradesForSummaryAsStudent(User targetUser, StudentExam studentExam, boolean isTestRun) {
+    public StudentExamWithGradeDTO getStudentExamGradesForSummaryAsStudent(User targetUser, StudentExam studentExam) {
 
         loadQuizExercisesForStudentExam(studentExam);
 
+        boolean accessToSummaryAlwaysAllowed = studentExam.isTestRun() || authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), targetUser);
+
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
-        if (!Boolean.TRUE.equals(studentExam.isSubmitted()) && !isTestRun) {
+        if (!Boolean.TRUE.equals(studentExam.isSubmitted()) && !accessToSummaryAlwaysAllowed) {
             throw new AccessForbiddenException(NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY + "which was NOT submitted!");
         }
-        if (!studentExam.areResultsPublishedYet() && !isTestRun) {
+        if (!studentExam.areResultsPublishedYet() && !accessToSummaryAlwaysAllowed) {
             throw new AccessForbiddenException(NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY + "before the release date of results");
         }
 
