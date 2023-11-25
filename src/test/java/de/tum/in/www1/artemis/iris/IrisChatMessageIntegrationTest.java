@@ -88,8 +88,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(2).contains(irisMessage));
 
-        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
-        verifyWasSentOverWebsocket(irisSession, messageDTO("Hello World"));
+        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()), messageDTO("Hello World"));
     }
 
     @Test
@@ -229,8 +228,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
-        verifyWasSentOverWebsocket(irisSession, errorDTO());
+        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()));
+        verifyWebsocketActivityWasExactly(irisSession, errorDTO());
     }
 
     @Test
@@ -244,8 +243,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
-        verifyWasSentOverWebsocket(irisSession, errorDTO());
+        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()));
+        verifyWebsocketActivityWasExactly(irisSession, errorDTO());
     }
 
     @Test
@@ -260,8 +259,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         var irisMessage = irisMessageService.saveMessage(messageToSend, irisSession, IrisMessageSender.USER);
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, IrisMessage.class, HttpStatus.OK);
         await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages().size() == 2);
-        verifyWasSentOverWebsocket(irisSession, messageDTO("Hello World"));
-        verifyNumberOfCallsToWebsocket(irisSession, 1);
+        verifyWebsocketActivityWasExactly(irisSession, messageDTO("Hello World"));
     }
 
     // User needs to be Admin to change settings
@@ -287,9 +285,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages/" + irisMessage.getId() + "/resend", null, IrisMessage.class,
                 HttpStatus.TOO_MANY_REQUESTS);
 
-        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend1.getContent()));
-        verifyWasSentOverWebsocket(irisSession, messageDTO("Hello World"));
-        verifyNumberOfCallsToWebsocket(irisSession, 2);
+        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend1.getContent()), messageDTO("Hello World"));
 
         // Reset to not interfere with other tests
         globalSettings.getIrisChatSettings().setRateLimit(null);

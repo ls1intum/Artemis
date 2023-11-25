@@ -110,19 +110,46 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         return new IrisTemplate("Hello World");
     }
 
-    protected void verifyWasSentOverWebsocket(IrisCodeEditorSession session, ArgumentMatcher<Object> matcher) {
+    /**
+     * Verify that the given messages were sent through the websocket for the given code editor session,
+     * and that there were exactly `matchers.length` messages sent.
+     *
+     * @param session  The code editor session
+     * @param matchers Argument matchers which describe the messages that should have been sent
+     */
+    protected void verifyWebsocketActivityWasExactly(IrisCodeEditorSession session, ArgumentMatcher<?>... matchers) {
         var userLogin = session.getUser().getLogin();
         var topicSuffix = "code-editor-sessions/" + session.getId();
-        verifyWasSentOverWebsocket(userLogin, topicSuffix, matcher);
+        for (ArgumentMatcher<?> callDescriptor : matchers) {
+            verifyMessageWasSentOverWebsocket(userLogin, topicSuffix, callDescriptor);
+        }
+        verifyNumberOfCallsToWebsocket(userLogin, topicSuffix, matchers.length);
     }
 
-    protected void verifyWasSentOverWebsocket(IrisChatSession session, ArgumentMatcher<Object> matcher) {
+    /**
+     * Verify that the given messages were sent through the websocket for the given chat session,
+     * and that there were exactly `matchers.length` messages sent.
+     *
+     * @param session  The chat session
+     * @param matchers Argument matchers which describe the messages that should have been sent
+     */
+    protected void verifyWebsocketActivityWasExactly(IrisChatSession session, ArgumentMatcher<?>... matchers) {
         var userLogin = session.getUser().getLogin();
         var topicSuffix = "sessions/" + session.getId();
-        verifyWasSentOverWebsocket(userLogin, topicSuffix, matcher);
+        for (ArgumentMatcher<?> callDescriptor : matchers) {
+            verifyMessageWasSentOverWebsocket(userLogin, topicSuffix, callDescriptor);
+        }
+        verifyNumberOfCallsToWebsocket(userLogin, topicSuffix, matchers.length);
     }
 
-    private void verifyWasSentOverWebsocket(String userLogin, String topicSuffix, ArgumentMatcher<Object> matcher) {
+    /**
+     * Verify that the given message was sent through the websocket for the given user and topic.
+     *
+     * @param userLogin   The user login
+     * @param topicSuffix The topic suffix, e.g. "sessions/123"
+     * @param matcher     Argument matcher which describes the message that should have been sent
+     */
+    private void verifyMessageWasSentOverWebsocket(String userLogin, String topicSuffix, ArgumentMatcher<?> matcher) {
         // @formatter:off
         verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1))
                 .sendMessageToUser(
@@ -134,25 +161,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     }
 
     /**
-     * Verify that no more than the given number of messages were sent through the websocket for the given chat session.
-     */
-    protected void verifyNumberOfCallsToWebsocket(IrisChatSession session, int numberOfCalls) {
-        String userLogin = session.getUser().getLogin();
-        String topicSuffix = "sessions/" + session.getId();
-        verifyNumberOfCallsToWebsocket(userLogin, topicSuffix, numberOfCalls);
-    }
-
-    /**
-     * Verify that no more than the given number of messages were sent through the websocket for the given code editor session.
-     */
-    protected void verifyNumberOfCallsToWebsocket(IrisCodeEditorSession session, int numberOfCalls) {
-        String userLogin = session.getUser().getLogin();
-        String topicSuffix = "code-editor-sessions/" + session.getId();
-        verifyNumberOfCallsToWebsocket(userLogin, topicSuffix, numberOfCalls);
-    }
-
-    /**
-     * Verify that nothing else was sent through the websocket.
+     * Verify that exactly `numberOfCalls` messages were sent through the websocket for the given user and topic.
      */
     private void verifyNumberOfCallsToWebsocket(String userLogin, String topicSuffix, int numberOfCalls) {
         // @formatter:off

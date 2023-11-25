@@ -83,9 +83,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 .isEqualTo(messageToSend.getContent().stream().map(IrisMessageContent::getContentAsString).toList());
         await().untilAsserted(() -> assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId()).getMessages()).hasSize(2).contains(irisMessage));
 
-        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
-        verifyWasSentOverWebsocket(irisSession, messageDTO(List.of(new IrisTextMessageContent("Hi there!"))));
-        verifyNumberOfCallsToWebsocket(irisSession, 2);
+        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()), messageDTO(List.of(new IrisTextMessageContent("Hi there!"))));
     }
 
     @Test
@@ -187,8 +185,8 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
                 + savedStep.getId() + "/execute", null, HttpStatus.OK);
 
         switch (expectedExecutionResult) {
-            case COMPLETE -> verifyWasSentOverWebsocket(irisSession, stepSuccessDTO(component));
-            case FAILED -> verifyWasSentOverWebsocket(irisSession, stepFailedDTO());
+            case COMPLETE -> verifyWebsocketActivityWasExactly(irisSession, stepSuccessDTO(component));
+            case FAILED -> verifyWebsocketActivityWasExactly(irisSession, stepFailedDTO());
         }
         assertThat(irisExercisePlanStepRepository.findByIdElseThrow(savedStep.getId()).getExecutionStage()).isEqualTo(expectedExecutionResult);
     }
@@ -212,7 +210,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
         request.postWithoutResponseBody("/api/iris/code-editor-sessions/" + irisSession.getId() + "/messages/" + savedMessage.getId() + "/contents/" + savedPlan.getId() + "/steps/"
                 + savedStep.getId() + "/execute", null, HttpStatus.OK);
 
-        verifyWasSentOverWebsocket(irisSession, stepFailedDTO());
+        verifyWebsocketActivityWasExactly(irisSession, stepFailedDTO());
     }
 
     @Test
@@ -249,9 +247,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
-        verifyWasSentOverWebsocket(irisSession, messageExceptionDTO());
-        verifyNumberOfCallsToWebsocket(irisSession, 2);
+        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()), messageExceptionDTO());
     }
 
     @Test
@@ -265,9 +261,7 @@ class IrisCodeEditorMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         request.postWithResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, IrisMessage.class, HttpStatus.CREATED);
 
-        verifyWasSentOverWebsocket(irisSession, messageDTO(messageToSend.getContent()));
-        verifyWasSentOverWebsocket(irisSession, messageExceptionDTO());
-        verifyNumberOfCallsToWebsocket(irisSession, 2);
+        verifyWebsocketActivityWasExactly(irisSession, messageDTO(messageToSend.getContent()), messageExceptionDTO());
     }
 
     private void setupExercise() throws Exception {
