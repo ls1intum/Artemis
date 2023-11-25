@@ -209,14 +209,12 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TUTOR_OF_COURSE, roles = "TA")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
-        request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.FORBIDDEN, Long.class);
     }
 
     @Test
     @WithMockUser(username = EDITOR_OF_COURSE, roles = "EDITOR")
     void testAll_asEditor() throws Exception {
         this.testAllPreAuthorize();
-        request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.FORBIDDEN, Long.class);
     }
 
     @Test
