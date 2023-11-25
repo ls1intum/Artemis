@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
@@ -9,6 +10,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
  * Service to get the URL for an Athena module, depending on the type of exercise.
  */
 @Service
+@Profile("athena")
 public class AthenaModuleUrlHelper {
 
     @Value("${artemis.athena.url}")
