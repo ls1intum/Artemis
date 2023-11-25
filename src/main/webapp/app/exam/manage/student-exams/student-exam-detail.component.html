@@ -209,11 +209,9 @@
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.summary">Student Summary</span></h5>
         <div class="d-flex flex-row">
-            <div *ngIf="course?.isAtLeastInstructor" ngbTooltip="{{ 'artemisApp.exam.examSummary.disabledTooltip' | artemisTranslate }}" [disableTooltip]="studentExam?.submitted!">
-                <button class="btn btn-primary summery ms-4" [routerLink]="'./summary'" [disabled]="!studentExam.submitted">
-                    <span jhiTranslate="artemisApp.exam.summary">Summary</span>
-                </button>
-            </div>
+            <a *ngIf="course?.isAtLeastInstructor" class="btn btn-primary summery ms-4" [routerLink]="'./summary'">
+                <span jhiTranslate="artemisApp.exam.summary">Summary</span>
+            </a>
             <div *ngIf="course?.isAtLeastInstructor" ngbTooltip="{{ 'artemisApp.examTimeline.disabledTooltip' | artemisTranslate }}" [disableTooltip]="studentExam?.submitted!">
                 <button class="btn btn-primary mb-auto ms-5" [routerLink]="'./exam-timeline'" [disabled]="!studentExam.submitted">
                     <span jhiTranslate="artemisApp.examTimeline.breadcrumb">Timeline</span>

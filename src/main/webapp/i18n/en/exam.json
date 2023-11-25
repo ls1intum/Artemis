@@ -102,8 +102,7 @@
                 "intervalPoints": "Interval (Points)",
                 "gradeKeyButton": "View Grading Key",
                 "gradeKeyButtonBonus": "View Bonus Rules",
-                "bonusGradeKeyButton": "View Bonus Grading Key",
-                "disabledTooltip": "You cannot view the summary if the student exam has not been submitted."
+                "bonusGradeKeyButton": "View Bonus Grading Key"
             },
             "title": "Exam",
             "startExam": "Start",
