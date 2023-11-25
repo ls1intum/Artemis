@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.domain.iris.settings.*;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
-import de.tum.in.www1.artemis.service.iris.IrisConstants;
+import de.tum.in.www1.artemis.service.iris.IrisDefaultTemplateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -37,9 +37,41 @@ public class IrisSettingsService {
 
     private final IrisSubSettingsService irisSubSettingsService;
 
-    public IrisSettingsService(IrisSettingsRepository irisSettingsRepository, IrisSubSettingsService irisSubSettingsService) {
+    private final IrisDefaultTemplateService irisDefaultTemplateService;
+
+    public IrisSettingsService(IrisSettingsRepository irisSettingsRepository, IrisSubSettingsService irisSubSettingsService,
+            IrisDefaultTemplateService irisDefaultTemplateService) {
         this.irisSettingsRepository = irisSettingsRepository;
         this.irisSubSettingsService = irisSubSettingsService;
+        this.irisDefaultTemplateService = irisDefaultTemplateService;
+    }
+
+    private IrisTemplate loadDefaultChatTemplate() {
+        return irisDefaultTemplateService.load("chat.hbs");
+    }
+
+    private IrisTemplate loadDefaultHestiaTemplate() {
+        return irisDefaultTemplateService.load("hestia.hbs");
+    }
+
+    private IrisTemplate loadDefaultCodeEditorChatTemplate() {
+        return irisDefaultTemplateService.load("code-editor-chat.hbs");
+    }
+
+    private IrisTemplate loadDefaultCodeEditorProblemStatementGenerationTemplate() {
+        return irisDefaultTemplateService.load("code-editor-problem-statement-generation.hbs");
+    }
+
+    private IrisTemplate loadDefaultCodeEditorTemplateRepoGenerationTemplate() {
+        return irisDefaultTemplateService.load("code-editor-template-repository-generation.hbs");
+    }
+
+    private IrisTemplate loadDefaultCodeEditorSolutionRepoGenerationTemplate() {
+        return irisDefaultTemplateService.load("code-editor-solution-repository-generation.hbs");
+    }
+
+    private IrisTemplate loadDefaultCodeEditorTestRepoGenerationTemplate() {
+        return irisDefaultTemplateService.load("code-editor-test-repository-generation.hbs");
     }
 
     /**
@@ -74,12 +106,12 @@ public class IrisSettingsService {
 
         var chatSettings = new IrisChatSubSettings();
         chatSettings.setEnabled(false);
-        chatSettings.setTemplate(new IrisTemplate(IrisConstants.DEFAULT_CHAT_TEMPLATE));
+        chatSettings.setTemplate(loadDefaultChatTemplate());
         settings.setIrisChatSettings(chatSettings);
 
         var hestiaSettings = new IrisHestiaSubSettings();
         hestiaSettings.setEnabled(false);
-        hestiaSettings.setTemplate(new IrisTemplate(IrisConstants.DEFAULT_HESTIA_TEMPLATE));
+        hestiaSettings.setTemplate(loadDefaultHestiaTemplate());
         settings.setIrisHestiaSettings(hestiaSettings);
 
         updateIrisCodeEditorSettings(settings);
@@ -95,10 +127,10 @@ public class IrisSettingsService {
     private void autoUpdateGlobalSettings(IrisGlobalSettings settings) {
         if (settings.getCurrentVersion() < IrisConstants.GLOBAL_SETTINGS_VERSION) {
             if (settings.isEnableAutoUpdateChat() || settings.getIrisChatSettings() == null) {
-                settings.getIrisChatSettings().setTemplate(new IrisTemplate(IrisConstants.DEFAULT_CHAT_TEMPLATE));
+                settings.getIrisChatSettings().setTemplate(loadDefaultChatTemplate());
             }
             if (settings.isEnableAutoUpdateHestia() || settings.getIrisHestiaSettings() == null) {
-                settings.getIrisHestiaSettings().setTemplate(new IrisTemplate(IrisConstants.DEFAULT_HESTIA_TEMPLATE));
+                settings.getIrisHestiaSettings().setTemplate(loadDefaultHestiaTemplate());
             }
             if (settings.isEnableAutoUpdateCodeEditor() || settings.getIrisCodeEditorSettings() == null) {
                 updateIrisCodeEditorSettings(settings);
@@ -108,17 +140,17 @@ public class IrisSettingsService {
         }
     }
 
-    private static void updateIrisCodeEditorSettings(IrisGlobalSettings settings) {
+    private void updateIrisCodeEditorSettings(IrisGlobalSettings settings) {
         var irisCodeEditorSettings = settings.getIrisCodeEditorSettings();
         if (irisCodeEditorSettings == null) {
             irisCodeEditorSettings = new IrisCodeEditorSubSettings();
             irisCodeEditorSettings.setEnabled(false);
         }
-        irisCodeEditorSettings.setChatTemplate(new IrisTemplate(IrisConstants.DEFAULT_CODE_EDITOR_CHAT_TEMPLATE));
-        irisCodeEditorSettings.setProblemStatementGenerationTemplate(new IrisTemplate(IrisConstants.DEFAULT_CODE_EDITOR_PROBLEM_STATEMENT_GENERATION_TEMPLATE));
-        irisCodeEditorSettings.setTemplateRepoGenerationTemplate(new IrisTemplate(IrisConstants.DEFAULT_CODE_EDITOR_TEMPLATE_REPO_GENERATION_TEMPLATE));
-        irisCodeEditorSettings.setSolutionRepoGenerationTemplate(new IrisTemplate(IrisConstants.DEFAULT_CODE_EDITOR_SOLUTION_REPO_GENERATION_TEMPLATE));
-        irisCodeEditorSettings.setTestRepoGenerationTemplate(new IrisTemplate(IrisConstants.DEFAULT_CODE_EDITOR_TEST_REPO_GENERATION_TEMPLATE));
+        irisCodeEditorSettings.setChatTemplate(loadDefaultCodeEditorChatTemplate());
+        irisCodeEditorSettings.setProblemStatementGenerationTemplate(loadDefaultCodeEditorProblemStatementGenerationTemplate());
+        irisCodeEditorSettings.setTemplateRepoGenerationTemplate(loadDefaultCodeEditorTemplateRepoGenerationTemplate());
+        irisCodeEditorSettings.setSolutionRepoGenerationTemplate(loadDefaultCodeEditorSolutionRepoGenerationTemplate());
+        irisCodeEditorSettings.setTestRepoGenerationTemplate(loadDefaultCodeEditorTestRepoGenerationTemplate());
         settings.setIrisCodeEditorSettings(irisCodeEditorSettings);
     }
 
