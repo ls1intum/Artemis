@@ -42,8 +42,8 @@ examples.forEach((conversation) => {
         let component: ConversationSidebarEntryComponent;
         let fixture: ComponentFixture<ConversationSidebarEntryComponent>;
         let conversationService: ConversationService;
-        let changeHiddenStatusSpy: jest.SpyInstance;
-        let changeFavoriteStatusSpy: jest.SpyInstance;
+        let updateIsHiddenSpy: jest.SpyInstance;
+        let updateIsFavoriteSpy: jest.SpyInstance;
         let location: Location;
         const course = { id: 1 } as any;
         const activeConversation = generateExampleGroupChatDTO({ id: 99 });
@@ -72,8 +72,8 @@ examples.forEach((conversation) => {
         beforeEach(() => {
             fixture = TestBed.createComponent(ConversationSidebarEntryComponent);
             conversationService = TestBed.inject(ConversationService);
-            changeHiddenStatusSpy = jest.spyOn(conversationService, 'changeHiddenStatus').mockReturnValue(of(new HttpResponse<void>()));
-            changeFavoriteStatusSpy = jest.spyOn(conversationService, 'changeFavoriteStatus').mockReturnValue(of(new HttpResponse<void>()));
+            updateIsHiddenSpy = jest.spyOn(conversationService, 'updateIsHidden').mockReturnValue(of(new HttpResponse<void>()));
+            updateIsFavoriteSpy = jest.spyOn(conversationService, 'updateIsFavorite').mockReturnValue(of(new HttpResponse<void>()));
 
             location = TestBed.inject(Location);
 
@@ -89,22 +89,22 @@ examples.forEach((conversation) => {
         });
 
         it('should call changeHiddenStatus when button is clicked', fakeAsync(() => {
-            const conversationHiddenStatusChangeSpy = jest.spyOn(component.conversationHiddenStatusChange, 'emit');
+            const conversationIsHiddenDidChangeSpy = jest.spyOn(component.conversationIsHiddenDidChange, 'emit');
             const button = fixture.debugElement.nativeElement.querySelector('.hide');
             button.click();
             tick(501);
-            expect(changeHiddenStatusSpy).toHaveBeenCalledOnce();
-            expect(changeHiddenStatusSpy).toHaveBeenCalledWith(course.id, conversation.id, true);
-            expect(conversationHiddenStatusChangeSpy).toHaveBeenCalledOnce();
+            expect(updateIsHiddenSpy).toHaveBeenCalledOnce();
+            expect(updateIsHiddenSpy).toHaveBeenCalledWith(course.id, conversation.id, true);
+            expect(conversationIsHiddenDidChangeSpy).toHaveBeenCalledOnce();
         }));
 
         it('should call changeFavoriteStatus when button is clicked', fakeAsync(() => {
-            const conversationFavoriteStatusChangeSpy = jest.spyOn(component.conversationFavoriteStatusChange, 'emit');
+            const conversationFavoriteStatusChangeSpy = jest.spyOn(component.conversationIsFavoriteDidChange, 'emit');
             const button = fixture.debugElement.nativeElement.querySelector('.favorite');
             button.click();
             tick(501);
-            expect(changeFavoriteStatusSpy).toHaveBeenCalledOnce();
-            expect(changeFavoriteStatusSpy).toHaveBeenCalledWith(course.id, conversation.id, true);
+            expect(updateIsFavoriteSpy).toHaveBeenCalledOnce();
+            expect(updateIsFavoriteSpy).toHaveBeenCalledWith(course.id, conversation.id, true);
             expect(conversationFavoriteStatusChangeSpy).toHaveBeenCalledOnce();
         }));
 

@@ -266,7 +266,7 @@ examples.forEach((activeConversation) => {
 
                 const refreshSpy = jest.fn().mockReturnValue(EMPTY);
                 Object.defineProperty(metisConversationService, 'forceRefresh', { value: refreshSpy });
-                component.onSettingsChanged();
+                component.onSettingsDidChange();
                 expect(refreshSpy).toHaveBeenCalledOnce();
             }));
 
@@ -274,7 +274,7 @@ examples.forEach((activeConversation) => {
                 fixture.detectChanges();
                 tick(301);
                 const onConversationsUpdateSpy = jest.spyOn(component, 'onConversationsUpdate');
-                component.onConversationHiddenStatusChange();
+                component.onConversationIsHiddenDidChange();
                 tick(301);
                 expect(onConversationsUpdateSpy).toHaveBeenCalledOnce();
                 expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);
@@ -284,7 +284,7 @@ examples.forEach((activeConversation) => {
                 fixture.detectChanges();
                 tick(301);
                 const onConversationsUpdateSpy = jest.spyOn(component, 'onConversationsUpdate');
-                component.onConversationFavoriteStatusChange();
+                component.onConversationIsFavoriteDidChange();
                 tick(301);
                 expect(onConversationsUpdateSpy).toHaveBeenCalledOnce();
                 expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);

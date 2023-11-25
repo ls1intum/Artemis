@@ -97,7 +97,8 @@ public class ConversationNotificationService {
 
         var conversationParticipants = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(notification.getConversation().getId(),
                 recipients.stream().map(User::getId).collect(Collectors.toSet()));
-        var mutedUsers = conversationParticipants.stream().filter(ConversationParticipant::getIsMuted).map(ConversationParticipant::getUser).collect(Collectors.toSet());
+        var mutedUsers = conversationParticipants.stream().filter(participant -> participant.getIsMuted() != null && participant.getIsMuted()).map(ConversationParticipant::getUser)
+                .collect(Collectors.toSet());
         var unmutedUsers = recipients.stream().filter(user -> !mutedUsers.contains(user)).collect(Collectors.toSet());
         var unmutedAndUnmentionedUsers = unmutedUsers.stream().filter(user -> !mentionedUsers.contains(user)).collect(Collectors.toSet());
 

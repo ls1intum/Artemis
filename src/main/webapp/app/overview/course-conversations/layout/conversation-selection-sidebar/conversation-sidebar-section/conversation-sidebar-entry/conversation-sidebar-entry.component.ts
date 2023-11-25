@@ -80,10 +80,6 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
         return this.activeConversation && this.conversation && this.activeConversation.id! === this.conversation.id!;
     }
 
-    get isMutedConversation() {
-        return this.conversation.isMuted;
-    }
-
     getAsGroupChat = getAsGroupChatDto;
 
     isOneToOneChat = isOneToOneChatDto;
