@@ -12,6 +12,7 @@
     },
     "dependencies": {
         "@playwright/test": "1.39.0",
-        "dotenv": "^16.3.1"
+        "dotenv": "^16.3.1",
+        "dayjs": "^1.11.10"
     }
 }
