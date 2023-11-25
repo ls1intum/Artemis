@@ -150,7 +150,10 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         parameters.put("latestSubmission", "");
         parameters.put("buildFailed", "");
         parameters.put("buildLog", "");
-        var participation = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), chatSession.getUser().getLogin());
+        // TODO: using this method avoids getting an IncorrectResultSizeDataAccessException when the user has started the practice mode, however it means Iris cannot be used in the
+        // practice mode
+        var participation = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
+                chatSession.getUser().getLogin(), false);
         if (participation.isPresent()) {
             var submission = participation.get().getSubmissions().stream().max(Submission::compareTo);
             Optional<ProgrammingSubmission> latestSubmission = Optional.empty();
