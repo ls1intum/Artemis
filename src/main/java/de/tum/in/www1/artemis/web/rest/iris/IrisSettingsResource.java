@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.iris;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisExerciseSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -10,11 +13,13 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
+import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 
 /**
  * REST controller for managing {@link IrisSettings}.
  */
+@Profile("iris")
 @RestController
 @RequestMapping("api/")
 public class IrisSettingsResource {
@@ -61,7 +66,7 @@ public class IrisSettingsResource {
     public ResponseEntity<IrisSettings> getRawCourseSettings(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        var irisSettings = irisSettingsService.getIrisSettingsOrDefault(course);
+        var irisSettings = irisSettingsService.getRawIrisSettingsFor(course);
         return ResponseEntity.ok(irisSettings);
     }
 
@@ -78,7 +83,7 @@ public class IrisSettingsResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        var combinedIrisSettings = irisSettingsService.getIrisSettingsOrDefault(exercise);
+        var combinedIrisSettings = irisSettingsService.getRawIrisSettingsFor(exercise);
         return ResponseEntity.ok(combinedIrisSettings);
     }
 
@@ -90,14 +95,14 @@ public class IrisSettingsResource {
      */
     @GetMapping("courses/{courseId}/iris-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisSettings> getCourseSettings(@PathVariable Long courseId) {
+    public ResponseEntity<IrisCombinedSettingsDTO> getCourseSettings(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         // Editors can see the full settings, students only the reduced settings
         var getReduced = !authCheckService.isAtLeastEditorInCourse(course, user);
-        var irisSettings = irisSettingsService.getCombinedIrisSettings(course, getReduced);
+        var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(course, getReduced);
         return ResponseEntity.ok(irisSettings);
     }
 
@@ -109,14 +114,14 @@ public class IrisSettingsResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/iris-settings")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisSettings> getProgrammingExerciseSettings(@PathVariable Long exerciseId) {
+    public ResponseEntity<IrisCombinedSettingsDTO> getProgrammingExerciseSettings(@PathVariable Long exerciseId) {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
         // Editors can see the full settings, students only the reduced settings
         var getReduced = !authCheckService.isAtLeastEditorForExercise(exercise, user);
-        var combinedIrisSettings = irisSettingsService.getCombinedIrisSettings(exercise, getReduced);
+        var combinedIrisSettings = irisSettingsService.getCombinedIrisSettingsFor(exercise, getReduced);
         return ResponseEntity.ok(combinedIrisSettings);
     }
 
@@ -129,10 +134,11 @@ public class IrisSettingsResource {
      */
     @PutMapping("courses/{courseId}/raw-iris-settings")
     @EnforceAtLeastEditor
-    public ResponseEntity<IrisSettings> updateCourseSettings(@PathVariable Long courseId, @RequestBody IrisSettings settings) {
+    public ResponseEntity<IrisCourseSettings> updateCourseSettings(@PathVariable Long courseId, @RequestBody IrisCourseSettings settings) {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        var updatedSettings = irisSettingsService.saveIrisSettings(course, settings);
+        settings.setCourse(course);
+        var updatedSettings = irisSettingsService.saveIrisSettings(settings);
         return ResponseEntity.ok(updatedSettings);
     }
 
@@ -145,12 +151,13 @@ public class IrisSettingsResource {
      *         found.
      */
     @PutMapping("programming-exercises/{exerciseId}/raw-iris-settings")
-    @EnforceAtLeastEditor
-    public ResponseEntity<IrisSettings> updateProgrammingExerciseSettings(@PathVariable Long exerciseId, @RequestBody IrisSettings settings) {
+    @EnforceAtLeastInstructor
+    public ResponseEntity<IrisExerciseSettings> updateProgrammingExerciseSettings(@PathVariable Long exerciseId, @RequestBody IrisExerciseSettings settings) {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
-        var updatedSettings = irisSettingsService.saveIrisSettings(exercise, settings);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
+        settings.setExercise(exercise);
+        var updatedSettings = irisSettingsService.saveIrisSettings(settings);
         return ResponseEntity.ok(updatedSettings);
     }
 }

@@ -23,6 +23,7 @@ import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular-ivy';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { isExamResultPublished } from 'app/exam/participate/exam.utils';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -156,9 +157,9 @@ export class ExamResultSummaryComponent implements OnInit {
             throw new Error('studentExam.user.id should be present to fetch grade info');
         }
 
-        if (this.isExamResultPublished()) {
+        if (isExamResultPublished(this.isTestRun, this.studentExam.exam, this.serverDateService)) {
             this.examParticipationService
-                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id)
+                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id, this.isTestRun)
                 .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
                     studentExamWithGrade.studentExam = this.studentExam;
                     this.studentExamGradeInfoDTO = studentExamWithGrade;
@@ -208,11 +209,6 @@ export class ExamResultSummaryComponent implements OnInit {
                 this.plagiarismCaseInfos = res.body ?? {};
             });
         }
-    }
-
-    private isExamResultPublished() {
-        const exam = this.studentExam.exam;
-        return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
 
     /**
