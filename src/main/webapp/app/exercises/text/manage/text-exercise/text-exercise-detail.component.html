@@ -33,9 +33,9 @@
             </div>
             <dl class="row-md jh-entity-details markdown-preview">
                 <jhi-exercise-details [exercise]="textExercise"></jhi-exercise-details>
-                <dt><span jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled">Automatic Assessment Enabled</span></dt>
+                <dt><span jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled">Enable feedback suggestions from Athena</span></dt>
                 <dd>
-                    <span>{{ (textExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                    <span>{{ (textExercise.feedbackSuggestionsEnabled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.exercise.exampleSolution">Example Solution</span></dt>
                 <dd class="editor-outline-background" [innerHTML]="formattedExampleSolution"></dd>
