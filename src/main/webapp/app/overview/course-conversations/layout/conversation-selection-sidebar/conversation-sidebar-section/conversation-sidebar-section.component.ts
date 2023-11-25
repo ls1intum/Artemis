@@ -1,6 +1,6 @@
 import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
-import { ConversationDto, ConversationNotificationsSetting } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
@@ -14,10 +14,10 @@ import { LocalStorageService } from 'ngx-webstorage';
 })
 export class ConversationSidebarSectionComponent implements OnInit {
     @Output() conversationSelected = new EventEmitter<ConversationDto>();
-    @Output() settingsChanged = new EventEmitter<void>();
-    @Output() conversationHiddenStatusChange = new EventEmitter<void>();
-    @Output() conversationFavoriteStatusChange = new EventEmitter<void>();
-    @Output() conversationNotificationsSettingChange = new EventEmitter<void>();
+    @Output() settingsDidChange = new EventEmitter<void>();
+    @Output() conversationIsFavoriteDidChange = new EventEmitter<void>();
+    @Output() conversationIsHiddenDidChange = new EventEmitter<void>();
+    @Output() conversationIsMutedDidChange = new EventEmitter<void>();
 
     @Input() label: string;
     @Input() course: Course;
@@ -63,13 +63,10 @@ export class ConversationSidebarSectionComponent implements OnInit {
             if (conversation.isHidden) {
                 this.hiddenConversations.push(conversation);
             } else {
-                switch (conversation.notificationsSetting) {
-                    case ConversationNotificationsSetting.MUTED:
-                        this.mutedConversations.push(conversation);
-                        break;
-                    case ConversationNotificationsSetting.UNMUTED:
-                        this.visibleConversations.push(conversation);
-                        break;
+                if (conversation.isMuted && !conversation.isFavorite) {
+                    this.mutedConversations.push(conversation);
+                } else {
+                    this.visibleConversations.push(conversation);
                 }
             }
         });

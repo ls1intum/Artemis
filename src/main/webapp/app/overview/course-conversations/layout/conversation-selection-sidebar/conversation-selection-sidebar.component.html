@@ -37,12 +37,12 @@
                         [headerKey]="'favorites'"
                         [conversations]="displayedStarredConversations"
                         [activeConversation]="activeConversation"
-                        (conversationSelected)="onConversationSelected($event)"
                         [course]="course"
-                        (settingsChanged)="onSettingsChanged()"
-                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
-                        (conversationNotificationsSettingChange)="onConversationNotificationsSettingChange()"
+                        (conversationSelected)="onConversationSelected($event)"
+                        (settingsDidChange)="onSettingsDidChange()"
+                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
+                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
+                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
                     >
                     </jhi-conversation-sidebar-section>
                     <!-- Channels -->
@@ -53,12 +53,12 @@
                         [conversations]="displayedGeneralChannels"
                         [hideIfEmpty]="false"
                         [activeConversation]="activeConversation"
-                        (conversationSelected)="onConversationSelected($event)"
-                        (settingsChanged)="onSettingsChanged()"
-                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
-                        (conversationNotificationsSettingChange)="onConversationNotificationsSettingChange()"
                         [course]="course"
+                        (conversationSelected)="onConversationSelected($event)"
+                        (settingsDidChange)="onSettingsDidChange()"
+                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
+                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
+                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
                     >
                         <ng-template>
                             <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
@@ -83,12 +83,12 @@
                         [headerKey]="'exerciseChannels'"
                         [conversations]="displayedExerciseChannels"
                         [activeConversation]="activeConversation"
-                        (conversationSelected)="onConversationSelected($event)"
-                        (settingsChanged)="onSettingsChanged()"
-                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
-                        (conversationNotificationsSettingChange)="onConversationNotificationsSettingChange()"
                         [course]="course"
+                        (conversationSelected)="onConversationSelected($event)"
+                        (settingsDidChange)="onSettingsDidChange()"
+                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
+                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
+                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
                     >
                         <ng-template>
                             <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
@@ -110,12 +110,12 @@
                         [headerKey]="'lectureChannels'"
                         [conversations]="displayedLectureChannels"
                         [activeConversation]="activeConversation"
-                        (conversationSelected)="onConversationSelected($event)"
-                        (settingsChanged)="onSettingsChanged()"
-                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
-                        (conversationNotificationsSettingChange)="onConversationNotificationsSettingChange()"
                         [course]="course"
+                        (conversationSelected)="onConversationSelected($event)"
+                        (settingsDidChange)="onSettingsDidChange()"
+                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
+                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
+                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
                     >
                         <ng-template>
                             <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
@@ -137,12 +137,12 @@
                         [headerKey]="'examChannels'"
                         [conversations]="displayedExamChannels"
                         [activeConversation]="activeConversation"
-                        (conversationSelected)="onConversationSelected($event)"
-                        (settingsChanged)="onSettingsChanged()"
-                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
-                        (conversationNotificationsSettingChange)="onConversationNotificationsSettingChange()"
                         [course]="course"
+                        (conversationSelected)="onConversationSelected($event)"
+                        (settingsDidChange)="onSettingsDidChange()"
+                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
+                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
+                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
                     >
                         <ng-template>
                             <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
@@ -166,12 +166,12 @@
                         [conversations]="displayedGroupChats"
                         [hideIfEmpty]="false"
                         [activeConversation]="activeConversation"
-                        (conversationSelected)="onConversationSelected($event)"
-                        (settingsChanged)="onSettingsChanged()"
-                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
-                        (conversationNotificationsSettingChange)="onConversationNotificationsSettingChange()"
                         [course]="course"
+                        (conversationSelected)="onConversationSelected($event)"
+                        (settingsDidChange)="onSettingsDidChange()"
+                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
+                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
+                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
                     >
                         <ng-template>
                             <div class="d-inline-block">
@@ -190,12 +190,12 @@
                         [conversations]="displayedOneToOneChats"
                         [hideIfEmpty]="false"
                         [activeConversation]="activeConversation"
-                        (conversationSelected)="onConversationSelected($event)"
-                        (settingsChanged)="onSettingsChanged()"
-                        (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
-                        (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
-                        (conversationNotificationsSettingChange)="onConversationNotificationsSettingChange()"
                         [course]="course"
+                        (conversationSelected)="onConversationSelected($event)"
+                        (settingsDidChange)="onSettingsDidChange()"
+                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
+                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
+                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
                     >
                         <ng-template>
                             <div class="d-inline-block">

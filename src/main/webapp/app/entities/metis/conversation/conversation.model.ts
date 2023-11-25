@@ -45,17 +45,9 @@ export abstract class ConversationDto {
     public isCreator?: boolean;
     public isFavorite?: boolean;
     public isHidden?: boolean;
-    public notificationsSetting?: ConversationNotificationsSetting;
+    public isMuted?: boolean;
 
     protected constructor(type: ConversationType) {
         this.type = type;
     }
-}
-
-/**
- * Conversation Notifications Setting
- */
-export enum ConversationNotificationsSetting {
-    UNMUTED = 'UNMUTED',
-    MUTED = 'MUTED',
 }

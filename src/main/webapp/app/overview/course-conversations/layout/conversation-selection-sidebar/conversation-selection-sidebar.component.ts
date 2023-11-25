@@ -231,7 +231,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
             });
     }
 
-    onSettingsChanged() {
+    onSettingsDidChange() {
         this.metisConversationService
             .forceRefresh()
             .pipe(takeUntil(this.ngUnsubscribe))
@@ -338,15 +338,15 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         this.metisConversationService.setActiveConversation($event);
     }
 
-    onConversationHiddenStatusChange() {
+    onConversationIsFavoriteDidChange() {
         this.onConversationsUpdate([...this.allConversations]);
     }
 
-    onConversationFavoriteStatusChange() {
+    onConversationIsHiddenDidChange() {
         this.onConversationsUpdate([...this.allConversations]);
     }
 
-    onConversationNotificationsSettingChange() {
+    onConversationIsMutedDidChange() {
         this.onConversationsUpdate([...this.allConversations]);
     }
 

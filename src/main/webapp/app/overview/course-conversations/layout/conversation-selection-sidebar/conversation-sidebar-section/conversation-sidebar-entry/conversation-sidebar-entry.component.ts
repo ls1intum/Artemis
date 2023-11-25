@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
-import { ConversationDto, ConversationNotificationsSetting } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
@@ -31,7 +31,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
 
     favorite$ = new Subject<boolean>();
     hide$ = new Subject<boolean>();
-    notificationsSetting$ = new Subject<ConversationNotificationsSetting>();
+    mute$ = new Subject<boolean>();
 
     @Input()
     course: Course;
@@ -46,13 +46,13 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     settingsChanged = new EventEmitter<void>();
 
     @Output()
-    conversationFavoriteStatusChange = new EventEmitter<void>();
+    conversationIsFavoriteDidChange = new EventEmitter<void>();
 
     @Output()
-    conversationHiddenStatusChange = new EventEmitter<void>();
+    conversationIsHiddenDidChange = new EventEmitter<void>();
 
     @Output()
-    conversationNotificationsSettingChange = new EventEmitter<void>();
+    conversationIsMutedDidChange = new EventEmitter<void>();
 
     conversationAsChannel?: ChannelDTO;
     channelSubTypeReferenceTranslationKey?: string;
@@ -81,7 +81,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     }
 
     get isMutedConversation() {
-        return this.conversation.notificationsSetting == ConversationNotificationsSetting.MUTED;
+        return this.conversation.isMuted;
     }
 
     getAsGroupChat = getAsGroupChatDto;
@@ -98,16 +98,9 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
         this.favorite$.next(!this.conversation.isFavorite);
     }
 
-    onNotificationsSettingClicked($event: MouseEvent) {
+    onMuteClicked($event: MouseEvent) {
         $event.stopPropagation();
-        switch (this.conversation.notificationsSetting) {
-            case ConversationNotificationsSetting.MUTED:
-                this.notificationsSetting$.next(ConversationNotificationsSetting.UNMUTED);
-                break;
-            case ConversationNotificationsSetting.UNMUTED:
-                this.notificationsSetting$.next(ConversationNotificationsSetting.MUTED);
-                break;
-        }
+        this.mute$.next(!this.conversation.isMuted);
     }
 
     openConversationDetailDialog(event: MouseEvent) {
@@ -127,29 +120,29 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
             });
     }
     ngOnInit(): void {
-        this.favorite$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((shouldFavorite) => {
-            this.conversationService.changeFavoriteStatus(this.course.id!, this.conversation.id!, shouldFavorite).subscribe({
+        this.favorite$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isFavorite) => {
+            this.conversationService.updateIsFavorite(this.course.id!, this.conversation.id!, isFavorite).subscribe({
                 next: () => {
-                    this.conversation.isFavorite = shouldFavorite;
-                    this.conversationFavoriteStatusChange.emit();
+                    this.conversation.isFavorite = isFavorite;
+                    this.conversationIsFavoriteDidChange.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         });
-        this.hide$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((shouldHide) => {
-            this.conversationService.changeHiddenStatus(this.course.id!, this.conversation.id!, shouldHide).subscribe({
+        this.hide$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isHidden) => {
+            this.conversationService.updateIsHidden(this.course.id!, this.conversation.id!, isHidden).subscribe({
                 next: () => {
-                    this.conversation.isHidden = shouldHide;
-                    this.conversationHiddenStatusChange.emit();
+                    this.conversation.isHidden = isHidden;
+                    this.conversationIsHiddenDidChange.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
         });
-        this.notificationsSetting$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((notificationsSetting) => {
-            this.conversationService.changeNotificationsSetting(this.course.id!, this.conversation.id!, notificationsSetting).subscribe({
+        this.mute$.pipe(debounceTime(100), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((isMuted) => {
+            this.conversationService.updateIsMuted(this.course.id!, this.conversation.id!, isMuted).subscribe({
                 next: () => {
-                    this.conversation.notificationsSetting = notificationsSetting;
-                    this.conversationNotificationsSettingChange.emit();
+                    this.conversation.isMuted = isMuted;
+                    this.conversationIsMutedDidChange.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
