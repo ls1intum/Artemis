@@ -95,27 +95,27 @@ public class GroupNotificationService {
         for (GroupNotificationType group : groups) {
             GroupNotification resultingGroupNotification = switch (notificationType) {
                 // Post Types
-                case NEW_EXERCISE_POST, NEW_LECTURE_POST, NEW_COURSE_POST, NEW_ANNOUNCEMENT_POST -> createNotification((Post) notificationSubject, author, group, notificationType,
-                        (Course) typeSpecificInformation);
+                case NEW_EXERCISE_POST, NEW_LECTURE_POST, NEW_COURSE_POST, NEW_ANNOUNCEMENT_POST ->
+                    createNotification((Post) notificationSubject, author, group, notificationType, (Course) typeSpecificInformation);
                 // Post Reply Types
                 case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) ((List<Posting>) notificationSubject).get(0),
                         (AnswerPost) ((List<Posting>) notificationSubject).get(1), author, group, notificationType, (Course) typeSpecificInformation);
                 // General Types
                 case ATTACHMENT_CHANGE -> createNotification((Attachment) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
                 case QUIZ_EXERCISE_STARTED -> createNotification((QuizExercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
-                case EXERCISE_UPDATED, EXERCISE_RELEASED, EXERCISE_PRACTICE -> createNotification((Exercise) notificationSubject, author, group, notificationType,
-                        (String) typeSpecificInformation);
+                case EXERCISE_UPDATED, EXERCISE_RELEASED, EXERCISE_PRACTICE ->
+                    createNotification((Exercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
                 // Archive Types
-                case COURSE_ARCHIVE_STARTED, COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FAILED -> createNotification((Course) notificationSubject, author, group, notificationType,
-                        (List<String>) typeSpecificInformation);
-                case EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED -> createNotification((Exam) notificationSubject, author, group, notificationType,
-                        (List<String>) typeSpecificInformation);
+                case COURSE_ARCHIVE_STARTED, COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FAILED ->
+                    createNotification((Course) notificationSubject, author, group, notificationType, (List<String>) typeSpecificInformation);
+                case EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED ->
+                    createNotification((Exam) notificationSubject, author, group, notificationType, (List<String>) typeSpecificInformation);
                 // Critical Types
-                case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, notificationType,
-                        (String) typeSpecificInformation);
+                case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION ->
+                    createNotification((Exercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
                 // Additional Types
-                case PROGRAMMING_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST -> createNotification((Exercise) notificationSubject, author, group, notificationType,
-                        (String) typeSpecificInformation);
+                case PROGRAMMING_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST ->
+                    createNotification((Exercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
                 default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
             };
             saveAndSend(resultingGroupNotification, notificationSubject, author, onlySave);

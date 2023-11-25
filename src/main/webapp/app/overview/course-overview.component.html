@@ -24,7 +24,7 @@
             </a>
             <a
                 class="tab-link"
-                *ngIf="isMessagingEnabled(course)"
+                *ngIf="isMessagingEnabled(course) || isCommunicationEnabled(course)"
                 [ngClass]="{ newMessage: !messagesRouteLoaded && hasUnreadMessages }"
                 jhiOrionFilter
                 [showInOrionWindow]="false"

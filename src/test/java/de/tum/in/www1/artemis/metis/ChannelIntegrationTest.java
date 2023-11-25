@@ -154,15 +154,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 
-    @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void update_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        update_messagingDeactivated(courseInformationSharingConfiguration);
-    }
-
-    void update_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+    void update_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
 
         // given
         var channelDTO = new ChannelDTO();
@@ -177,15 +172,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 
-    @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void delete_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        deleteTest_messagingDeactivated(courseInformationSharingConfiguration);
-    }
-
-    void deleteTest_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+    void delete_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
 
         expectDeleteForbidden(1L);
 
@@ -430,13 +420,11 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(channel.getId());
     }
 
-    @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void archiveAndUnarchiveChannel_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
-            throws Exception {
+    void archiveAndUnarchiveChannel_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         var channel = createChannel(true, TEST_PREFIX);
-        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
 
         // given
         expectArchivalChangeForbidden(channel, true, true);
@@ -469,14 +457,12 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(channel.getId());
     }
 
-    @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void grantRevokeChannelModeratorRole_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
-            throws Exception {
+    void grantRevokeChannelModeratorRole_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         var channel = createChannel(true, TEST_PREFIX);
 
-        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
 
         // given
         expectGrantRevokeChannelModeratorRoleForbidden(channel, true);
