@@ -54,6 +54,8 @@ public class ExamRegistrationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private static final boolean IS_TEST_RUN = false;
+
     public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, ParticipationService participationService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService) {
@@ -258,7 +260,7 @@ public class ExamRegistrationService {
         examUserRepository.delete(registeredExamUser);
 
         // The student exam might already be generated, then we need to delete it
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId());
+        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), IS_TEST_RUN);
         optionalStudentExam.ifPresent(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();

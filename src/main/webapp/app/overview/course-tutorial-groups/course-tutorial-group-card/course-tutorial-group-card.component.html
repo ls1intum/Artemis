@@ -1,4 +1,4 @@
-<ng-container *ngIf="tutorialGroup">
+<a *ngIf="tutorialGroup" [routerLink]="['./', this.tutorialGroup.id]">
     <div class="card-header bg-success">
         <h5 class="text-center text-white">{{ tutorialGroup?.title ?? '' }}</h5>
     </div>
@@ -31,4 +31,4 @@
             </ng-template>
         </div>
     </div>
-</ng-container>
+</a>

@@ -7,18 +7,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractAthenaTest;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
@@ -32,10 +31,19 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     private static final String DEFAULT_SUBMISSION_TEXT = "This is a test submission.";
 
     @Autowired
-    private TextSubmissionRepository textSubmissionRepository;
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
+    private AthenaModuleUrlHelper athenaModuleUrlHelper;
+
+    @Autowired
+    private AthenaDTOConverter athenaDTOConverter;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -47,73 +55,116 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
 
     private TextExercise textExercise;
 
+    private ProgrammingExercise programmingExercise;
+
     @BeforeEach
     void setUp() {
         athenaRequestMockProvider.enableMockingOfRequests();
         // we need to have one student per participation, otherwise the database constraints cannot be fulfilled
         userUtilService.addUsers(TEST_PREFIX, MAX_NUMBER_OF_TOTAL_PARTICIPATIONS, 0, 0, 0);
 
-        athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), textSubmissionRepository);
-        ReflectionTestUtils.setField(athenaSubmissionSendingService, "athenaUrl", athenaUrl);
+        athenaSubmissionSendingService = new AthenaSubmissionSendingService(athenaRequestMockProvider.getRestTemplate(), submissionRepository, athenaModuleUrlHelper,
+                athenaDTOConverter);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
+        textExercise.setFeedbackSuggestionsEnabled(true);
+
+        programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
+        programmingExercise.setFeedbackSuggestionsEnabled(true);
     }
 
     @AfterEach
     void tearDown() {
-        textSubmissionRepository.deleteAll(textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(textExercise.getId()));
+        submissionRepository.deleteAll(submissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(textExercise.getId()));
         studentParticipationRepository.deleteAll(studentParticipationRepository.findByExerciseId(textExercise.getId()));
+        submissionRepository.deleteAll(submissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(programmingExercise.getId()));
+        studentParticipationRepository.deleteAll(studentParticipationRepository.findByExerciseId(programmingExercise.getId()));
     }
 
     private void createTextSubmissionsForSubmissionSending(int totalSubmissions) {
         for (long i = 0; i < totalSubmissions; i++) {
-            var submission = new TextSubmission();
-            submission.setLanguage(DEFAULT_SUBMISSION_LANGUAGE);
-            submission.setText(DEFAULT_SUBMISSION_TEXT);
-            submission.setSubmitted(true);
             var studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise,
                     userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1)));
             studentParticipation.setExercise(textExercise);
             studentParticipationRepository.save(studentParticipation);
+            var submission = new TextSubmission();
+            submission.setLanguage(DEFAULT_SUBMISSION_LANGUAGE);
+            submission.setText(DEFAULT_SUBMISSION_TEXT);
+            submission.setSubmitted(true);
+            // Set a submission date so that the submission is found
+            submission.setSubmissionDate(studentParticipation.getInitializationDate());
             submission.setParticipation(studentParticipation);
-            textSubmissionRepository.save(submission);
+            submissionRepository.save(submission);
         }
     }
 
     @Test
-    void testSendSubmissionsSuccess() {
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testSendTextSubmissionsSuccess() {
         createTextSubmissionsForSubmissionSending(1);
-        athenaRequestMockProvider.mockSendSubmissionsAndExpect(jsonPath("$.exercise.id").value(textExercise.getId()), jsonPath("$.exercise.title").value(textExercise.getTitle()),
-                jsonPath("$.exercise.maxPoints").value(textExercise.getMaxPoints()), jsonPath("$.exercise.bonusPoints").value(textExercise.getBonusPoints()),
-                jsonPath("$.exercise.gradingInstructions").value(textExercise.getGradingInstructions()),
+        athenaRequestMockProvider.mockSendSubmissionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
+                jsonPath("$.exercise.title").value(textExercise.getTitle()), jsonPath("$.exercise.maxPoints").value(textExercise.getMaxPoints()),
+                jsonPath("$.exercise.bonusPoints").value(textExercise.getBonusPoints()), jsonPath("$.exercise.gradingInstructions").value(textExercise.getGradingInstructions()),
                 jsonPath("$.exercise.problemStatement").value(textExercise.getProblemStatement()), jsonPath("$.submissions[0].exerciseId").value(textExercise.getId()),
                 jsonPath("$.submissions[0].text").value(DEFAULT_SUBMISSION_TEXT), jsonPath("$.submissions[0].language").value(DEFAULT_SUBMISSION_LANGUAGE.toString()));
 
         athenaSubmissionSendingService.sendSubmissions(textExercise);
+        athenaRequestMockProvider.verify();
+    }
+
+    private void createProgrammingSubmissionForSubmissionSending() {
+        var studentParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, programmingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        studentParticipation.setExercise(programmingExercise);
+        studentParticipationRepository.save(studentParticipation);
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(studentParticipation);
+        submissionRepository.save(submission);
+        athenaRequestMockProvider.verify();
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testSendSubmissionsSuccessProgramming() {
+        createProgrammingSubmissionForSubmissionSending();
+        athenaRequestMockProvider.mockSendSubmissionsAndExpect("programming", jsonPath("$.exercise.id").value(programmingExercise.getId()),
+                jsonPath("$.exercise.title").value(programmingExercise.getTitle()), jsonPath("$.exercise.maxPoints").value(programmingExercise.getMaxPoints()),
+                jsonPath("$.exercise.bonusPoints").value(programmingExercise.getBonusPoints()),
+                jsonPath("$.exercise.gradingInstructions").value(programmingExercise.getGradingInstructions()),
+                jsonPath("$.exercise.problemStatement").value(programmingExercise.getProblemStatement()),
+                jsonPath("$.submissions[0].exerciseId").value(programmingExercise.getId()), jsonPath("$.submissions[0].repositoryUrl").isString());
+
+        athenaSubmissionSendingService.sendSubmissions(programmingExercise);
+        athenaRequestMockProvider.verify();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendNoSubmissions() {
-        athenaRequestMockProvider.ensureNoRequest();
         athenaSubmissionSendingService.sendSubmissions(textExercise);
+        athenaSubmissionSendingService.sendSubmissions(programmingExercise);
+        athenaRequestMockProvider.verify(); // Ensure that there was no request
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSendMultipleSubmissionBatches() {
         createTextSubmissionsForSubmissionSending(MAX_NUMBER_OF_TOTAL_PARTICIPATIONS); // 190 = almost twice the batch size (100)
         // expect two batches of submissions
-        athenaRequestMockProvider.mockSendSubmissionsAndExpect(jsonPath("$.exercise.id").value(textExercise.getId()),
+        athenaRequestMockProvider.mockSendSubmissionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
                 // We cannot check IDs or similar here because the submissions are not ordered
                 jsonPath("$.submissions[0].text").value(DEFAULT_SUBMISSION_TEXT));
-        athenaRequestMockProvider.mockSendSubmissionsAndExpect(jsonPath("$.exercise.id").value(textExercise.getId()),
+        athenaRequestMockProvider.mockSendSubmissionsAndExpect("text", jsonPath("$.exercise.id").value(textExercise.getId()),
                 jsonPath("$.submissions[0].text").value(DEFAULT_SUBMISSION_TEXT));
 
         athenaSubmissionSendingService.sendSubmissions(textExercise);
+        athenaRequestMockProvider.verify();
     }
 
     @Test
-    void testSendSubmissionsWithFeedbackSuggestionsDisabled() {
-        textExercise.setAssessmentType(AssessmentType.MANUAL); // disable feedback suggestions
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testSendSubmissionsWithFeedbackSuggestionsDisabledText() {
+        textExercise.setFeedbackSuggestionsEnabled(false);
         assertThatThrownBy(() -> athenaSubmissionSendingService.sendSubmissions(textExercise)).isInstanceOf(IllegalArgumentException.class);
     }
 }

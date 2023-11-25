@@ -39,11 +39,11 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             SELECT DISTINCT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
-            WHERE se.testRun = FALSE
+            WHERE se.testRun = :isTestRun
                 AND se.exam.id = :examId
                 AND se.user.id = :userId
             """)
-    Optional<StudentExam> findWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
+    Optional<StudentExam> findWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId, @Param("isTestRun") boolean isTestRun);
 
     // Normally, there should only be one student exam for the same user/exam pair (except test runs for instructors)
     @Query("""

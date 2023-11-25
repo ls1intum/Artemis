@@ -363,7 +363,8 @@ public class ProgrammingSubmissionResource {
             submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
         }
         else {
-            submission = programmingSubmissionService.getRandomAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
+            submission = programmingSubmissionService.getRandomAssessableSubmission(programmingExercise, !lockSubmission, programmingExercise.isExamExercise(), correctionRound)
+                    .orElse(null);
 
             // Check if tutors can start assessing the students submission
             programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
