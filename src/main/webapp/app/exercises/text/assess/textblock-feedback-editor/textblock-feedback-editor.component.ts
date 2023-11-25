@@ -134,11 +134,11 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
      * Hook to indicate changes in the feedback editor
      */
     didChange(): void {
-        const feedbackTypeBefore = this.feedback.type;
+        const feedbackTextBefore = this.feedback.text;
         Feedback.updateFeedbackTypeOnChange(this.feedback);
         this.feedbackChange.emit(this.feedback);
-        // send event to analytics if the feedback type changed
-        if (feedbackTypeBefore !== this.feedback.type) {
+        // send event to analytics if the feedback was adapted (=> title text changes to have prefix with "adapted" in it)
+        if (feedbackTextBefore !== this.feedback.text) {
             this.textAssessmentAnalytics.sendAssessmentEvent(TextAssessmentEventType.EDIT_AUTOMATIC_FEEDBACK, this.feedback.type, this.textBlock.type);
         }
     }

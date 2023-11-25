@@ -3,16 +3,13 @@ package de.tum.in.www1.artemis.service.dto.athena;
 import javax.validation.constraints.NotNull;
 
 import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextBlockRef;
-import de.tum.in.www1.artemis.domain.TextSubmission;
 
 /**
- * A DTO representing a Feedback, for transferring data to Athena
+ * A DTO representing a Feedback on a TextExercise, for transferring data to Athena and receiving suggestions from Athena
  */
-public record TextFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, Long gradingInstructionId, Integer indexStart,
-        Integer indexEnd) {
+public record TextFeedbackDTO(long id, long exerciseId, long submissionId, String title, String description, double credits, Long structuredGradingInstructionId,
+        Integer indexStart, Integer indexEnd) implements FeedbackDTO {
 
     /**
      * Creates a TextFeedbackDTO from a Feedback object
@@ -26,31 +23,11 @@ public record TextFeedbackDTO(long id, long exerciseId, long submissionId, Strin
     public static TextFeedbackDTO of(long exerciseId, long submissionId, @NotNull Feedback feedback, TextBlock feedbackBlock) {
         Integer startIndex = feedbackBlock == null ? null : feedbackBlock.getStartIndex();
         Integer endIndex = feedbackBlock == null ? null : feedbackBlock.getEndIndex();
-        var gradingInstructionId = feedback.getGradingInstruction() == null ? null : feedback.getGradingInstruction().getId();
+        Long gradingInstructionId = null;
+        if (feedback.getGradingInstruction() != null) {
+            gradingInstructionId = feedback.getGradingInstruction().getId();
+        }
         return new TextFeedbackDTO(feedback.getId(), exerciseId, submissionId, feedback.getText(), feedback.getDetailText(), feedback.getCredits(), gradingInstructionId,
                 startIndex, endIndex);
-    }
-
-    /**
-     * Creates a TextBlockRef (feedback + text block combined) from this DTO and a TextSubmission
-     */
-    public TextBlockRef toTextBlockRef(TextSubmission onSubmission, GradingInstruction gradingInstruction) {
-        Feedback feedback = new Feedback();
-        feedback.setId(id());
-        feedback.setText(title());
-        feedback.setDetailText(description());
-        feedback.setCredits(credits());
-        // The given grading instruction should match the one of this DTO:
-        if (gradingInstructionId() != null && !gradingInstructionId().equals(gradingInstruction.getId())) {
-            throw new IllegalArgumentException("The grading instruction of this DTO does not match the given grading instruction");
-        }
-        feedback.setGradingInstruction(gradingInstruction);
-
-        TextBlock textBlock = new TextBlock();
-        textBlock.setStartIndex(indexStart());
-        textBlock.setEndIndex(indexEnd());
-        textBlock.setText(onSubmission.getText().substring(indexStart(), indexEnd()));
-
-        return new TextBlockRef(textBlock, feedback);
     }
 }
