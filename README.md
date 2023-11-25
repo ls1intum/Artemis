@@ -57,7 +57,7 @@ The Artemis development team prioritizes the following issues in the future. We 
 * **Short term**: Add instructor assistance based on Generative AI
 * **Medium term**: Simplify the setup of Artemis
 * **Medium term**: Add feedback assistance based on Generative AI
-* **Medium term**: Add the possibility to use Iris for questions on all exercise types, lectures, and larning performance aspects
+* **Medium term**: Add the possibility to use Iris for questions on all exercise types, lectures, and learning performance aspects
 * **Long term**: Microservices, Kubernetes based deployment, and micro frontends
 * **Long term**: Allow students to take notes on lecture slides and support the automatic updates of lecture slides
 * **Long term**: Develop an exchange platform for exercises
