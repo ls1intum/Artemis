@@ -58,8 +58,7 @@ public class AeolusBuildPlanService {
     }
 
     /**
-     * Returns the internal URL of the CI server for either Jenkins or Bamboo
-     * depending on which one is configured
+     * Returns the internal URL of the CI server for Bamboo
      *
      * @return the internal URL of the CI server
      */
@@ -76,6 +75,10 @@ public class AeolusBuildPlanService {
      */
     public String publishBuildPlan(String buildPlan, String target) {
         String url = getCiUrl();
+        if (url == null) {
+            LOGGER.error("Could not publish build plan {} to Aeolus target {}, no CI URL configured", buildPlan, target);
+            return null;
+        }
         String requestUrl = aeolusUrl + "/publish/" + target;
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
         Map<String, Object> jsonObject = new HashMap<>();
