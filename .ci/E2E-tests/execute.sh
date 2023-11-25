@@ -3,7 +3,7 @@
 DB=$1
 TEST_FRAMEWORK=$2
 
-if [ "$DB" = "mysql" && "$TEST_FRAMEWORK" = "playwright" ]; then
+if [ "$DB" = "mysql"] && ["$TEST_FRAMEWORK" = "playwright" ]; then
   COMPOSE_FILE="playwright-E2E-tests-mysql.yml"
 elif [ "$DB" = "mysql" ]; then
   COMPOSE_FILE="cypress-E2E-tests-mysql.yml"
