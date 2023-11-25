@@ -214,12 +214,6 @@
                 ></jhi-exercise-detail-statistics>
             </div>
             <jhi-detail-overview-list *ngIf="exerciseDetailSections" [sections]="exerciseDetailSections"></jhi-detail-overview-list>
-            <div *ngIf="irisEnabled && irisChatEnabled && programmingExercise.course && !isExamExercise">
-                <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.chat">Iris Chat</span></dt>
-                <dd>
-                    <jhi-iris-enabled [exercise]="programmingExercise" [irisSubSettingsType]="CHAT" [disabled]="!programmingExercise.isAtLeastInstructor"></jhi-iris-enabled>
-                </dd>
-            </div>
         </div>
     </div>
 </div>

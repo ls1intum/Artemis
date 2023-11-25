@@ -10,6 +10,7 @@ import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-r
 import { ArtemisProgrammingExerciseInstructionsEditorModule } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-instructions-editor.module';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
+import { IrisModule } from 'app/iris/iris.module';
 
 @NgModule({
     imports: [
@@ -24,6 +25,7 @@ import { AssessmentInstructionsModule } from 'app/assessment/assessment-instruct
         ArtemisProgrammingExerciseLifecycleModule,
         AssessmentInstructionsModule,
         ArtemisProgrammingExerciseActionsModule,
+        IrisModule,
     ],
     declarations: [DetailOverviewListComponent],
     exports: [DetailOverviewListComponent],

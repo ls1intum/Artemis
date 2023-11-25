@@ -167,13 +167,14 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
                     exercise.bonusPoints && { type: DetailType.Text, title: 'artemisApp.exercise.bonusPoints', data: { text: exercise.bonusPoints } },
                     { type: DetailType.Text, title: 'artemisApp.exercise.includedInOverallScore', data: { text: this.exerciseService.isIncludedInScore(exercise) } },
                     { type: DetailType.Boolean, title: 'artemisApp.exercise.presentationScoreEnabled.title', data: { boolean: exercise.presentationScoreEnabled } },
+                    { type: DetailType.Boolean, title: 'artemisApp.exercise.feedbackSuggestionsEnabled', data: { boolean: exercise.feedbackSuggestionsEnabled } },
                     exercise.gradingInstructions && {
                         type: DetailType.Markdown,
                         title: 'artemisApp.exercise.assessmentInstructions',
                         data: { innerHtml: this.formattedGradingInstructions },
                     },
                     exercise.gradingCriteria && {
-                        type: DetailType.ProgrammingGradingCriteria,
+                        type: DetailType.GradingCriteria,
                         title: 'artemisApp.exercise.structuredAssessmentInstructions',
                         data: { gradingCriteria: exercise.gradingCriteria },
                     },
