@@ -40,7 +40,7 @@ import { RepositoryFileService } from 'app/exercises/shared/result/repository.se
 import { TextChange } from 'app/entities/text-change.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { fromPairs, pickBy } from 'lodash-es';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { faCircleNotch, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
@@ -620,9 +620,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     async acceptSuggestion(feedback: Feedback) {
         this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback); // Remove the suggestion card
         this.removeLineWidget(Feedback.getReferenceLine(feedback)!);
-        // We need to change the feedback type to "manual" because non-manual feedback is never editable in the editor
-        // and will be filtered out in all kinds of places
-        feedback.type = FeedbackType.MANUAL;
         // Change the prefix "FeedbackSuggestion:" to "FeedbackSuggestion:accepted:"
         feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
         await this.updateFeedback(feedback); // Make it "real" feedback

@@ -250,6 +250,10 @@
             </div>
             <dl class="row-md jh-entity-details">
                 <jhi-exercise-details [exercise]="programmingExercise"></jhi-exercise-details>
+                <dt><span jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled">Enable feedback suggestions from Athena</span></dt>
+                <dd>
+                    <span>{{ (programmingExercise.feedbackSuggestionsEnabled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                </dd>
                 <ng-container *ngIf="programmingExercise.dueDate">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
                     <dd>

@@ -17,8 +17,9 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
-import { FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 
 describe('CodeEditorAceComponent', () => {
     let comp: CodeEditorAceComponent;
@@ -35,6 +36,7 @@ describe('CodeEditorAceComponent', () => {
                 CodeEditorAceComponent,
                 TranslatePipeMock,
                 MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
+                MockComponent(CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent),
                 MockComponent(CodeEditorHeaderComponent),
                 MockDirective(NgModel),
             ],
@@ -339,9 +341,15 @@ describe('CodeEditorAceComponent', () => {
         expect(removeLineWidget).toHaveBeenCalledTimes(2);
     });
 
+    it('should only show referenced feedback that is for the current file', () => {
+        comp.selectedFile = 'src/Test.java';
+        const feedbacks = [{ reference: 'file:src/Test.java_line:16' }, { reference: 'file:src/Another.java_line:16' }, { reference: undefined }];
+        expect(comp.filterFeedbackForFile(feedbacks)).toEqual([{ reference: 'file:src/Test.java_line:16' }]);
+    });
+
     it('should convert an accepted feedback suggestion to a marked manual feedback', async () => {
         await comp.initEditor();
-        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.AUTOMATIC };
+        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.MANUAL };
         comp.feedbackSuggestions = [suggestion];
         await comp.acceptSuggestion(suggestion);
         expect(comp.feedbackSuggestions).toBeEmpty();
@@ -350,9 +358,34 @@ describe('CodeEditorAceComponent', () => {
 
     it('should remove discarded suggestions', async () => {
         await comp.initEditor();
-        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.AUTOMATIC };
+        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.MANUAL };
         comp.feedbackSuggestions = [suggestion];
         comp.discardSuggestion(suggestion);
         expect(comp.feedbackSuggestions).toBeEmpty();
+    });
+
+    it('should update the line widget heights when feedbacks or suggestions change', async () => {
+        const updateLineWidgetHeightSpy = jest.spyOn(comp, 'updateLineWidgets');
+
+        await comp.initEditor();
+
+        // Change of feedbacks from the outside
+        await comp.ngOnChanges({ feedbacks: { previousValue: [], currentValue: [new Feedback()], firstChange: true, isFirstChange: () => true } });
+        expect(updateLineWidgetHeightSpy).toHaveBeenCalled();
+
+        // Change of feedback suggestions from the outside
+        await comp.ngOnChanges({ feedbackSuggestions: { previousValue: [], currentValue: [new Feedback()], firstChange: true, isFirstChange: () => true } });
+        expect(updateLineWidgetHeightSpy).toHaveBeenCalled();
+    });
+
+    it('renders line widgets for feedback suggestions', async () => {
+        await comp.initEditor();
+        const addLineWidgetWithFeedbackSpy = jest.spyOn(comp, 'addLineWidgetWithFeedback');
+
+        comp.feedbackSuggestions = [{ text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.MANUAL }];
+        comp.selectedFile = 'src/Test.java';
+        await comp.updateLineWidgets();
+
+        expect(addLineWidgetWithFeedbackSpy).toHaveBeenCalled();
     });
 });
