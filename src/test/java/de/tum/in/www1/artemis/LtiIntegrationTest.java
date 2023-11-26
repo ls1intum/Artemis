@@ -34,6 +34,7 @@ import com.nimbusds.jose.jwk.JWK;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.lti.Claims;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
@@ -428,10 +429,10 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         claims.put("locale", "en-US");
 
         // LTI specific claims
-        claims.put("https://purl.imsglobal.org/spec/lti/claim/deployment_id", "07940580-b309-415e-a37c-914d387c1150");
-        claims.put("https://purl.imsglobal.org/spec/lti/claim/message_type", "LtiDeepLinkingRequest");
-        claims.put("https://purl.imsglobal.org/spec/lti/claim/version", "1.3.0");
-        claims.put("https://purl.imsglobal.org/spec/lti/claim/roles",
+        claims.put(Claims.LTI_DEPLOYMENT_ID, "07940580-b309-415e-a37c-914d387c1150");
+        claims.put(Claims.MESSAGE_TYPE, "LtiDeepLinkingRequest");
+        claims.put(Claims.LTI_VERSION, "1.3.0");
+        claims.put(Claims.ROLES,
                 Arrays.asList("http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor", "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Faculty"));
 
         // Context claim
@@ -440,7 +441,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         contextClaim.put("label", "ECON 101");
         contextClaim.put("title", "Economics as a Social Science");
         contextClaim.put("type", List.of("CourseOffering"));
-        claims.put("https://purl.imsglobal.org/spec/lti/claim/context", contextClaim);
+        claims.put(Claims.CONTEXT, contextClaim);
 
         // Tool platform claim
         Map<String, Object> toolPlatformClaim = new HashMap<>();
@@ -450,19 +451,19 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         toolPlatformClaim.put("url", "https://example.org");
         toolPlatformClaim.put("product_family_code", "example.org");
         toolPlatformClaim.put("version", "1.0");
-        claims.put("https://purl.imsglobal.org/spec/lti/claim/tool_platform", toolPlatformClaim);
+        claims.put(Claims.PLATFORM_INSTANCE, toolPlatformClaim);
 
         // Launch presentation claim
         Map<String, Object> launchPresentationClaim = new HashMap<>();
         launchPresentationClaim.put("document_target", "iframe");
         launchPresentationClaim.put("height", 320);
         launchPresentationClaim.put("width", 240);
-        claims.put("https://purl.imsglobal.org/spec/lti/claim/launch_presentation", launchPresentationClaim);
+        claims.put(Claims.LAUNCH_PRESENTATION, launchPresentationClaim);
 
         // Custom claim
         Map<String, Object> customClaim = new HashMap<>();
         customClaim.put("myCustom", "123");
-        claims.put("https://purl.imsglobal.org/spec/lti/claim/custom", customClaim);
+        claims.put(Claims.CUSTOM, customClaim);
 
         // Deep linking settings claim
         Map<String, Object> deepLinkingSettingsClaim = new HashMap<>();
@@ -475,7 +476,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         deepLinkingSettingsClaim.put("title", "This is the default title");
         deepLinkingSettingsClaim.put("text", "This is the default text");
         deepLinkingSettingsClaim.put("data", "csrftoken:c7fbba78-7b75-46e3-9201-11e6d5f36f53");
-        claims.put("https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings", deepLinkingSettingsClaim);
+        claims.put(Claims.DEEP_LINKING_SETTINGS, deepLinkingSettingsClaim);
 
         return claims;
     }
