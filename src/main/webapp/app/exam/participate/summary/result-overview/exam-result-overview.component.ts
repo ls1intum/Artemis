@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, HostListener, Input, OnChanges, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnInit } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -17,9 +17,6 @@ type ExerciseInfo = {
     achievedPercentage?: number;
     colorClass?: string;
 };
-
-const MINIMUM_SIZE_TO_DISPLAY_GRADING_KEYS_BESIDES_TABLE_IN_PX = 1028;
-const MINIMUM_SIZE_TO_ALIGN_GRADE_RIGHT_IN_PX = 600;
 
 @Component({
     selector: 'jhi-exam-result-overview',
@@ -64,9 +61,6 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      */
     showResultOverview = false;
 
-    displayGradeKeysBesideTable = false;
-    alignFinalGradeRight = true;
-
     constructor(
         private serverDateService: ArtemisServerDateService,
         public exerciseService: ExerciseService,
@@ -79,21 +73,10 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         }
 
         this.updateLocalVariables();
-        this.updateResponsivenessVariables();
-    }
-
-    @HostListener('window:resize', ['$event'])
-    onResize() {
-        this.updateResponsivenessVariables();
     }
 
     ngOnChanges() {
         this.updateLocalVariables();
-    }
-
-    private updateResponsivenessVariables() {
-        this.updateDisplayGradeKeyBesideTable();
-        this.updateAlignFinalGradeRight();
     }
 
     private areResultsPublished() {
@@ -238,19 +221,5 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
 
     toggleBonusGradingKey(): void {
         this.isBonusGradingKeyCollapsed = !this.isBonusGradingKeyCollapsed;
-    }
-
-    private updateDisplayGradeKeyBesideTable() {
-        const windowWidth = window.innerWidth;
-        const isSmallWidth = windowWidth < MINIMUM_SIZE_TO_DISPLAY_GRADING_KEYS_BESIDES_TABLE_IN_PX;
-
-        this.displayGradeKeysBesideTable = !isSmallWidth;
-    }
-
-    private updateAlignFinalGradeRight() {
-        const windowWidth = window.innerWidth;
-        const isWidthWhereTableOverflows = windowWidth < MINIMUM_SIZE_TO_ALIGN_GRADE_RIGHT_IN_PX;
-
-        this.alignFinalGradeRight = !isWidthWhereTableOverflows;
     }
 }
