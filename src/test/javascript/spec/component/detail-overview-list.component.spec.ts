@@ -4,6 +4,9 @@ import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from '
 import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
 import { MockNgbModalService } from '../helpers/mocks/service/mock-ngb-modal.service';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockAlertService } from '../helpers/mocks/service/mock-alert.service';
 
 const sections = [
     {
@@ -28,7 +31,11 @@ describe('DetailOverviewList', () => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [DetailOverviewListComponent, TranslatePipeMock],
-            providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
+            providers: [
+                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: AlertService, useClass: MockAlertService },
+                { provide: ModelingExerciseService, useValue: {} },
+            ],
         })
             .overrideTemplate(DetailOverviewListComponent, '')
             .compileComponents()
