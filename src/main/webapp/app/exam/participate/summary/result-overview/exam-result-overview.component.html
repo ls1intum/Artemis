@@ -89,7 +89,7 @@
             </table>
             <div class="d-flex align-items-center">
                 <div class="you-achieved-container">
-                    <h5 *ngIf="studentExamWithGrade?.maxBonusPoints">
+                    <div *ngIf="studentExamWithGrade?.maxBonusPoints" class="h5">
                         {{
                             'artemisApp.exam.examSummary.points.youAchievedWithBonus'
                                 | artemisTranslate
@@ -98,8 +98,8 @@
                                           normalPoints: maxPoints
                                       }
                         }}
-                    </h5>
-                    <h5 *ngIf="studentExamWithGrade?.maxBonusPoints">
+                    </div>
+                    <div *ngIf="studentExamWithGrade?.maxBonusPoints" class="h5">
                         {{
                             'artemisApp.exam.examSummary.points.youAchieved'
                                 | artemisTranslate
@@ -108,8 +108,8 @@
                                           normalPoints: maxPoints
                                       }
                         }}
-                    </h5>
-                    <h5 *ngIf="studentExamWithGrade.studentResult.gradeWithBonus != undefined">
+                    </div>
+                    <div *ngIf="studentExamWithGrade.studentResult.gradeWithBonus != undefined" class="h5">
                         {{
                             'artemisApp.exam.examSummary.points.youAchievedFromBonus.' + studentExamWithGrade.studentResult.gradeWithBonus.bonusStrategy
                                 | artemisTranslate
@@ -118,7 +118,7 @@
                                           bonusFromTitle: studentExamWithGrade.studentResult.gradeWithBonus.bonusFromTitle
                                       }
                         }}
-                    </h5>
+                    </div>
                 </div>
             </div>
 
