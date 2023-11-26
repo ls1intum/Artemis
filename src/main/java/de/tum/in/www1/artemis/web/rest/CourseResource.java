@@ -515,7 +515,7 @@ public class CourseResource {
             CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
             coursesForDashboard.add(courseForDashboardDTO);
         }
-        logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multipile courses)");
+        logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
         return coursesForDashboard;
     }
 

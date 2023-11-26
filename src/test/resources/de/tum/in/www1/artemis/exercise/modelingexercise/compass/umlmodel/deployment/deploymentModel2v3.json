@@ -1,0 +1,862 @@
+{
+  "version": "3.0.0",
+  "type": "DeploymentDiagram",
+  "size": {
+    "width": 1420,
+    "height": 840
+  },
+  "interactive": {
+    "elements": {},
+    "relationships": {}
+  },
+  "elements": {
+    "b55ec5ea-f138-4b3a-bc68-3653834d0011": {
+      "id": "b55ec5ea-f138-4b3a-bc68-3653834d0011",
+      "name": ":PC",
+      "type": "DeploymentNode",
+      "owner": null,
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1410,
+        "height": 830
+      },
+      "stereotype": "node"
+    },
+    "31f4386e-6026-4f5a-bd0a-7a0349ff84d7": {
+      "id": "31f4386e-6026-4f5a-bd0a-7a0349ff84d7",
+      "name": "View",
+      "type": "DeploymentComponent",
+      "owner": "b55ec5ea-f138-4b3a-bc68-3653834d0011",
+      "bounds": {
+        "x": 90,
+        "y": 580,
+        "width": 600,
+        "height": 220
+      }
+    },
+    "bd078690-adad-4aa1-90fb-7e411ecc1c0e": {
+      "id": "bd078690-adad-4aa1-90fb-7e411ecc1c0e",
+      "name": "PlayingFieldView",
+      "type": "DeploymentComponent",
+      "owner": "31f4386e-6026-4f5a-bd0a-7a0349ff84d7",
+      "bounds": {
+        "x": 270,
+        "y": 681.111083984375,
+        "width": 210,
+        "height": 40
+      }
+    },
+    "cc82c8a4-6782-4d8b-b72f-ef62d9555455": {
+      "id": "cc82c8a4-6782-4d8b-b72f-ef62d9555455",
+      "name": "Controller",
+      "type": "DeploymentComponent",
+      "owner": "b55ec5ea-f138-4b3a-bc68-3653834d0011",
+      "bounds": {
+        "x": 90,
+        "y": 66.66667175292969,
+        "width": 600,
+        "height": 460
+      }
+    },
+    "4b274b24-37c2-41c5-a421-c4232f5e979f": {
+      "id": "4b274b24-37c2-41c5-a421-c4232f5e979f",
+      "name": "ArrowKeySteering",
+      "type": "DeploymentComponent",
+      "owner": "cc82c8a4-6782-4d8b-b72f-ef62d9555455",
+      "bounds": {
+        "x": 430,
+        "y": 461.111083984375,
+        "width": 210,
+        "height": 40
+      }
+    },
+    "fa096a7f-1a86-4f30-8a38-269fad1bca79": {
+      "id": "fa096a7f-1a86-4f30-8a38-269fad1bca79",
+      "name": "PlayingField",
+      "type": "DeploymentComponent",
+      "owner": "cc82c8a4-6782-4d8b-b72f-ef62d9555455",
+      "bounds": {
+        "x": 120,
+        "y": 364.4444122314453,
+        "width": 220,
+        "height": 40
+      }
+    },
+    "a920d1c1-787c-461e-8a1f-9e30c9c7487a": {
+      "id": "a920d1c1-787c-461e-8a1f-9e30c9c7487a",
+      "name": "AudioPlayer",
+      "type": "DeploymentComponent",
+      "owner": "cc82c8a4-6782-4d8b-b72f-ef62d9555455",
+      "bounds": {
+        "x": 120,
+        "y": 117.77774047851562,
+        "width": 220,
+        "height": 40
+      }
+    },
+    "21cf9f19-d62e-49df-a2e3-39dd1a17d36a": {
+      "id": "21cf9f19-d62e-49df-a2e3-39dd1a17d36a",
+      "name": "Collision",
+      "type": "DeploymentComponent",
+      "owner": "cc82c8a4-6782-4d8b-b72f-ef62d9555455",
+      "bounds": {
+        "x": 420,
+        "y": 201.11106872558594,
+        "width": 210,
+        "height": 40
+      }
+    },
+    "a1d98a42-f687-4f0c-8688-b06560e4558b": {
+      "id": "a1d98a42-f687-4f0c-8688-b06560e4558b",
+      "name": "Music Service",
+      "type": "DeploymentInterface",
+      "owner": "cc82c8a4-6782-4d8b-b72f-ef62d9555455",
+      "bounds": {
+        "x": 220,
+        "y": 241,
+        "width": 20,
+        "height": 20
+      }
+    },
+    "eb0dc2f9-e4f2-4d9b-8cdb-a7fe2cbda69e": {
+      "id": "eb0dc2f9-e4f2-4d9b-8cdb-a7fe2cbda69e",
+      "name": "Game Setup",
+      "type": "DeploymentInterface",
+      "owner": "cc82c8a4-6782-4d8b-b72f-ef62d9555455",
+      "bounds": {
+        "x": 220,
+        "y": 484.3333282470703,
+        "width": 20,
+        "height": 20
+      }
+    },
+    "87d0b3ca-c47b-496f-99ec-f82d4ed723e9": {
+      "id": "87d0b3ca-c47b-496f-99ec-f82d4ed723e9",
+      "name": "Collision Detection Service",
+      "type": "DeploymentInterface",
+      "owner": "cc82c8a4-6782-4d8b-b72f-ef62d9555455",
+      "bounds": {
+        "x": 370,
+        "y": 327.6666564941406,
+        "width": 20,
+        "height": 20
+      }
+    },
+    "e3db54f5-cfc0-4887-a4c6-8ee539e8e9b6": {
+      "id": "e3db54f5-cfc0-4887-a4c6-8ee539e8e9b6",
+      "name": "Model",
+      "type": "DeploymentComponent",
+      "owner": "b55ec5ea-f138-4b3a-bc68-3653834d0011",
+      "bounds": {
+        "x": 740,
+        "y": 66.66667175292969,
+        "width": 590,
+        "height": 730
+      }
+    },
+    "50c85aef-910b-4119-b6d8-8ff79ee8f829": {
+      "id": "50c85aef-910b-4119-b6d8-8ff79ee8f829",
+      "name": "Person",
+      "type": "DeploymentComponent",
+      "owner": "e3db54f5-cfc0-4887-a4c6-8ee539e8e9b6",
+      "bounds": {
+        "x": 990,
+        "y": 244.44442749023438,
+        "width": 220,
+        "height": 40
+      }
+    },
+    "b830c184-9e6f-4063-88bc-ac55452cf1dc": {
+      "id": "b830c184-9e6f-4063-88bc-ac55452cf1dc",
+      "name": "Building",
+      "type": "DeploymentComponent",
+      "owner": "e3db54f5-cfc0-4887-a4c6-8ee539e8e9b6",
+      "bounds": {
+        "x": 990,
+        "y": 457.7777557373047,
+        "width": 220,
+        "height": 40
+      }
+    },
+    "c6e6936d-5595-4643-abe5-fd359aa01ef8": {
+      "id": "c6e6936d-5595-4643-abe5-fd359aa01ef8",
+      "name": "Position Service",
+      "type": "DeploymentInterface",
+      "owner": "e3db54f5-cfc0-4887-a4c6-8ee539e8e9b6",
+      "bounds": {
+        "x": 790,
+        "y": 624,
+        "width": 20,
+        "height": 20
+      }
+    },
+    "b94863af-b95f-41f2-a110-e4343c49b5b5": {
+      "id": "b94863af-b95f-41f2-a110-e4343c49b5b5",
+      "name": "Host&DeHost Service",
+      "type": "DeploymentInterface",
+      "owner": "e3db54f5-cfc0-4887-a4c6-8ee539e8e9b6",
+      "bounds": {
+        "x": 1090,
+        "y": 397.3333282470703,
+        "width": 20,
+        "height": 20
+      }
+    },
+    "d678d02e-62f3-48f6-baeb-7c3c4d4c9189": {
+      "id": "d678d02e-62f3-48f6-baeb-7c3c4d4c9189",
+      "name": "Health Status CheckUpdate Service",
+      "type": "DeploymentInterface",
+      "owner": "e3db54f5-cfc0-4887-a4c6-8ee539e8e9b6",
+      "bounds": {
+        "x": 870,
+        "y": 124,
+        "width": 20,
+        "height": 20
+      }
+    },
+    "9d259fda-6e6e-416c-b97f-75a90559ba3a": {
+      "id": "9d259fda-6e6e-416c-b97f-75a90559ba3a",
+      "name": "Moving Service",
+      "type": "DeploymentInterface",
+      "owner": "e3db54f5-cfc0-4887-a4c6-8ee539e8e9b6",
+      "bounds": {
+        "x": 840,
+        "y": 354,
+        "width": 20,
+        "height": 20
+      }
+    }
+  },
+  "relationships": {
+    "e77e03c5-9e73-41e5-ba59-fb21226a35e0": {
+      "id": "e77e03c5-9e73-41e5-ba59-fb21226a35e0",
+      "name": "",
+      "type": "DeploymentAssociation",
+      "owner": null,
+      "bounds": {
+        "x": 230,
+        "y": 157.77774047851562,
+        "width": 1,
+        "height": 83.22225952148438
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 83.22225952148438
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Up",
+        "element": "a1d98a42-f687-4f0c-8688-b06560e4558b"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "a920d1c1-787c-461e-8a1f-9e30c9c7487a"
+      }
+    },
+    "95c12d9a-7f74-4ee1-98f2-d266cf1e4276": {
+      "id": "95c12d9a-7f74-4ee1-98f2-d266cf1e4276",
+      "name": "",
+      "type": "DeploymentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 230,
+        "y": 261,
+        "width": 1,
+        "height": 103.44441223144531
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 103.44441223144531
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Up",
+        "element": "fa096a7f-1a86-4f30-8a38-269fad1bca79"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "a1d98a42-f687-4f0c-8688-b06560e4558b"
+      }
+    },
+    "e7cde67b-a496-4cd2-aab5-cc9d906821b9": {
+      "id": "e7cde67b-a496-4cd2-aab5-cc9d906821b9",
+      "name": "",
+      "type": "DeploymentAssociation",
+      "owner": null,
+      "bounds": {
+        "x": 230,
+        "y": 404.4444122314453,
+        "width": 1,
+        "height": 79.888916015625
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 79.888916015625
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Up",
+        "element": "eb0dc2f9-e4f2-4d9b-8cdb-a7fe2cbda69e"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "fa096a7f-1a86-4f30-8a38-269fad1bca79"
+      }
+    },
+    "55e6d1b9-4181-4412-9ac4-7386f5292a00": {
+      "id": "55e6d1b9-4181-4412-9ac4-7386f5292a00",
+      "name": "",
+      "type": "DeploymentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 230,
+        "y": 504.3333282470703,
+        "width": 40,
+        "height": 196.7777557373047
+      },
+      "path": [
+        {
+          "x": 40,
+          "y": 196.7777557373047
+        },
+        {
+          "x": 0,
+          "y": 196.7777557373047
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Left",
+        "element": "bd078690-adad-4aa1-90fb-7e411ecc1c0e"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "eb0dc2f9-e4f2-4d9b-8cdb-a7fe2cbda69e"
+      }
+    },
+    "9b2fb510-1925-4991-bfe8-80856485409e": {
+      "id": "9b2fb510-1925-4991-bfe8-80856485409e",
+      "name": "",
+      "type": "DeploymentDependency",
+      "owner": null,
+      "bounds": {
+        "x": 455,
+        "y": 501.111083984375,
+        "width": 1,
+        "height": 180
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 180
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "4b274b24-37c2-41c5-a421-c4232f5e979f"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "bd078690-adad-4aa1-90fb-7e411ecc1c0e"
+      }
+    },
+    "3fdbc32c-7053-4502-ac71-f0263e26795f": {
+      "id": "3fdbc32c-7053-4502-ac71-f0263e26795f",
+      "name": "",
+      "type": "DeploymentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 340,
+        "y": 347.6666564941406,
+        "width": 40,
+        "height": 36.77775573730469
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 36.77775573730469
+        },
+        {
+          "x": 40,
+          "y": 36.77775573730469
+        },
+        {
+          "x": 40,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "fa096a7f-1a86-4f30-8a38-269fad1bca79"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "87d0b3ca-c47b-496f-99ec-f82d4ed723e9"
+      }
+    },
+    "a03d2321-4666-4d03-9f03-5c3951d6424f": {
+      "id": "a03d2321-4666-4d03-9f03-5c3951d6424f",
+      "name": "",
+      "type": "DeploymentAssociation",
+      "owner": null,
+      "bounds": {
+        "x": 380,
+        "y": 241.11106872558594,
+        "width": 145,
+        "height": 86.55558776855469
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 86.55558776855469
+        },
+        {
+          "x": 0,
+          "y": 43.277793884277344
+        },
+        {
+          "x": 145,
+          "y": 43.277793884277344
+        },
+        {
+          "x": 145,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Up",
+        "element": "87d0b3ca-c47b-496f-99ec-f82d4ed723e9"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "21cf9f19-d62e-49df-a2e3-39dd1a17d36a"
+      }
+    },
+    "0b5327ab-2d06-4189-929b-97bb9eea8b0e": {
+      "id": "0b5327ab-2d06-4189-929b-97bb9eea8b0e",
+      "name": "",
+      "type": "DeploymentAssociation",
+      "owner": null,
+      "bounds": {
+        "x": 480,
+        "y": 644,
+        "width": 320,
+        "height": 57.111083984375
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 57.111083984375
+        },
+        {
+          "x": 320,
+          "y": 57.111083984375
+        },
+        {
+          "x": 320,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "bd078690-adad-4aa1-90fb-7e411ecc1c0e"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "c6e6936d-5595-4643-abe5-fd359aa01ef8"
+      }
+    },
+    "0a2d33db-afdc-4e55-a6f1-caf3db71d5d2": {
+      "id": "0a2d33db-afdc-4e55-a6f1-caf3db71d5d2",
+      "name": "",
+      "type": "DeploymentAssociation",
+      "owner": null,
+      "bounds": {
+        "x": 810,
+        "y": 497.7777557373047,
+        "width": 290,
+        "height": 136.2222442626953
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 136.2222442626953
+        },
+        {
+          "x": 290,
+          "y": 136.2222442626953
+        },
+        {
+          "x": 290,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "c6e6936d-5595-4643-abe5-fd359aa01ef8"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "b830c184-9e6f-4063-88bc-ac55452cf1dc"
+      }
+    },
+    "4549fecd-f2dd-4533-b684-701125e04c18": {
+      "id": "4549fecd-f2dd-4533-b684-701125e04c18",
+      "name": "",
+      "type": "DeploymentAssociation",
+      "owner": null,
+      "bounds": {
+        "x": 800,
+        "y": 264.4444274902344,
+        "width": 450,
+        "height": 419.5555725097656
+      },
+      "path": [
+        {
+          "x": 410,
+          "y": 0
+        },
+        {
+          "x": 450,
+          "y": 0
+        },
+        {
+          "x": 450,
+          "y": 419.5555725097656
+        },
+        {
+          "x": 0,
+          "y": 419.5555725097656
+        },
+        {
+          "x": 0,
+          "y": 379.5555725097656
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "50c85aef-910b-4119-b6d8-8ff79ee8f829"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "c6e6936d-5595-4643-abe5-fd359aa01ef8"
+      }
+    },
+    "3cf51844-3255-4ac7-9815-6480a7b5615f": {
+      "id": "3cf51844-3255-4ac7-9815-6480a7b5615f",
+      "name": "",
+      "type": "DeploymentAssociation",
+      "owner": null,
+      "bounds": {
+        "x": 1100,
+        "y": 417.3333282470703,
+        "width": 1,
+        "height": 40.444427490234375
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 40.444427490234375
+        },
+        {
+          "x": 0,
+          "y": 0.444427490234375
+        },
+        {
+          "x": 0,
+          "y": 40
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Up",
+        "element": "b830c184-9e6f-4063-88bc-ac55452cf1dc"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "b94863af-b95f-41f2-a110-e4343c49b5b5"
+      }
+    },
+    "f8e23941-caf3-4aef-adc3-91e6894edc02": {
+      "id": "f8e23941-caf3-4aef-adc3-91e6894edc02",
+      "name": "",
+      "type": "DeploymentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 1100,
+        "y": 284.4444274902344,
+        "width": 1,
+        "height": 112.88890075683594
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 112.88890075683594
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "50c85aef-910b-4119-b6d8-8ff79ee8f829"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "b94863af-b95f-41f2-a110-e4343c49b5b5"
+      }
+    },
+    "054bcb63-d60d-462e-9903-482403bf09b1": {
+      "id": "054bcb63-d60d-462e-9903-482403bf09b1",
+      "name": "",
+      "type": "DeploymentAssociation",
+      "owner": null,
+      "bounds": {
+        "x": 880,
+        "y": 144,
+        "width": 220,
+        "height": 100.44442749023438
+      },
+      "path": [
+        {
+          "x": 220,
+          "y": 100.44442749023438
+        },
+        {
+          "x": 220,
+          "y": 50.22221374511719
+        },
+        {
+          "x": 0,
+          "y": 50.22221374511719
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Up",
+        "element": "50c85aef-910b-4119-b6d8-8ff79ee8f829"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "d678d02e-62f3-48f6-baeb-7c3c4d4c9189"
+      }
+    },
+    "ca21befe-9d91-4916-9fdb-a1e559c034f2": {
+      "id": "ca21befe-9d91-4916-9fdb-a1e559c034f2",
+      "name": "",
+      "type": "DeploymentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 380,
+        "y": 134,
+        "width": 490,
+        "height": 87.11106872558594
+      },
+      "path": [
+        {
+          "x": 40,
+          "y": 87.11106872558594
+        },
+        {
+          "x": 0,
+          "y": 87.11106872558594
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 490,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Left",
+        "element": "21cf9f19-d62e-49df-a2e3-39dd1a17d36a"
+      },
+      "target": {
+        "direction": "Left",
+        "element": "d678d02e-62f3-48f6-baeb-7c3c4d4c9189"
+      }
+    },
+    "400ace71-965a-466c-9ad6-6bcd95212870": {
+      "id": "400ace71-965a-466c-9ad6-6bcd95212870",
+      "name": "",
+      "type": "DeploymentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 525,
+        "y": 161.11106872558594,
+        "width": 275,
+        "height": 462.88893127441406
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 40
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 275,
+          "y": 0
+        },
+        {
+          "x": 275,
+          "y": 462.88893127441406
+        }
+      ],
+      "source": {
+        "direction": "Up",
+        "element": "21cf9f19-d62e-49df-a2e3-39dd1a17d36a"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "c6e6936d-5595-4643-abe5-fd359aa01ef8"
+      }
+    },
+    "9a2b7044-445c-4fd3-9c57-eda3dc8e0906": {
+      "id": "9a2b7044-445c-4fd3-9c57-eda3dc8e0906",
+      "name": "",
+      "type": "DeploymentAssociation",
+      "owner": null,
+      "bounds": {
+        "x": 850,
+        "y": 264.4444274902344,
+        "width": 140,
+        "height": 89.55557250976562
+      },
+      "path": [
+        {
+          "x": 140,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 89.55557250976562
+        }
+      ],
+      "source": {
+        "direction": "Left",
+        "element": "50c85aef-910b-4119-b6d8-8ff79ee8f829"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "9d259fda-6e6e-416c-b97f-75a90559ba3a"
+      }
+    },
+    "f79db097-1558-4c81-a815-6d4740fbd542": {
+      "id": "f79db097-1558-4c81-a815-6d4740fbd542",
+      "name": "",
+      "type": "DeploymentAssociation",
+      "owner": null,
+      "bounds": {
+        "x": 535,
+        "y": 364,
+        "width": 305,
+        "height": 97.111083984375
+      },
+      "path": [
+        {
+          "x": 305,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 97.111083984375
+        }
+      ],
+      "source": {
+        "direction": "Left",
+        "element": "9d259fda-6e6e-416c-b97f-75a90559ba3a"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "4b274b24-37c2-41c5-a421-c4232f5e979f"
+      }
+    },
+    "e1bfe2d1-55e0-4221-886e-619f695db2b8": {
+      "id": "e1bfe2d1-55e0-4221-886e-619f695db2b8",
+      "name": "",
+      "type": "DeploymentInterfaceRequired",
+      "owner": null,
+      "bounds": {
+        "x": 340,
+        "y": 374,
+        "width": 510,
+        "height": 55.222206115722656
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 10.444412231445312
+        },
+        {
+          "x": 40,
+          "y": 10.444412231445312
+        },
+        {
+          "x": 40,
+          "y": 55.222206115722656
+        },
+        {
+          "x": 510,
+          "y": 55.222206115722656
+        },
+        {
+          "x": 510,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "fa096a7f-1a86-4f30-8a38-269fad1bca79"
+      },
+      "target": {
+        "direction": "Down",
+        "element": "9d259fda-6e6e-416c-b97f-75a90559ba3a"
+      }
+    }
+  },
+  "assessments": {}
+}
