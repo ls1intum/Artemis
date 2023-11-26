@@ -56,6 +56,9 @@ artemis:
     athena:
         url: http://localhost:5000
         secret: abcdef12345
+        modules:
+            text: module_text_test
+            programming: module_programming_test
     apollon:
         conversion-service-url: http://localhost:8080
     plagiarism-checks:
