@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.iris;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -111,22 +110,48 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         return new IrisTemplate("Hello World");
     }
 
-    protected void verifyWasSentOverWebsocket(IrisCodeEditorSession session, ArgumentMatcher<Object> matcher) {
+    /**
+     * Verify that the given messages were sent through the websocket for the given code editor session,
+     * and that there were exactly `matchers.length` messages sent.
+     *
+     * @param session  The code editor session
+     * @param matchers Argument matchers which describe the messages that should have been sent
+     */
+    protected void verifyWebsocketActivityWasExactly(IrisCodeEditorSession session, ArgumentMatcher<?>... matchers) {
         var userLogin = session.getUser().getLogin();
         var topicSuffix = "code-editor-sessions/" + session.getId();
-        verifyWasSentOverWebsocket(userLogin, topicSuffix, matcher);
+        for (ArgumentMatcher<?> callDescriptor : matchers) {
+            verifyMessageWasSentOverWebsocket(userLogin, topicSuffix, callDescriptor);
+        }
+        verifyNumberOfCallsToWebsocket(userLogin, topicSuffix, matchers.length);
     }
 
-    protected void verifyWasSentOverWebsocket(IrisChatSession session, ArgumentMatcher<Object> matcher) {
+    /**
+     * Verify that the given messages were sent through the websocket for the given chat session,
+     * and that there were exactly `matchers.length` messages sent.
+     *
+     * @param session  The chat session
+     * @param matchers Argument matchers which describe the messages that should have been sent
+     */
+    protected void verifyWebsocketActivityWasExactly(IrisChatSession session, ArgumentMatcher<?>... matchers) {
         var userLogin = session.getUser().getLogin();
         var topicSuffix = "sessions/" + session.getId();
-        verifyWasSentOverWebsocket(userLogin, topicSuffix, matcher);
+        for (ArgumentMatcher<?> callDescriptor : matchers) {
+            verifyMessageWasSentOverWebsocket(userLogin, topicSuffix, callDescriptor);
+        }
+        verifyNumberOfCallsToWebsocket(userLogin, topicSuffix, matchers.length);
     }
 
-    private void verifyWasSentOverWebsocket(String userLogin, String topicSuffix, ArgumentMatcher<Object> matcher) {
+    /**
+     * Verify that the given message was sent through the websocket for the given user and topic.
+     *
+     * @param userLogin   The user login
+     * @param topicSuffix The topic suffix, e.g. "sessions/123"
+     * @param matcher     Argument matcher which describes the message that should have been sent
+     */
+    private void verifyMessageWasSentOverWebsocket(String userLogin, String topicSuffix, ArgumentMatcher<?> matcher) {
         // @formatter:off
-        verify(websocketMessagingService, timeout(TIMEOUT_MS)
-                .times(1))
+        verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1))
                 .sendMessageToUser(
                         eq(userLogin),
                         eq("/topic/iris/" + topicSuffix),
@@ -136,9 +161,16 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     }
 
     /**
-     * Verify that nothing else was sent through the websocket.
+     * Verify that exactly `numberOfCalls` messages were sent through the websocket for the given user and topic.
      */
-    protected void verifyNothingElseWasSentOverWebsocket() {
-        verifyNoMoreInteractions(websocketMessagingService);
+    private void verifyNumberOfCallsToWebsocket(String userLogin, String topicSuffix, int numberOfCalls) {
+        // @formatter:off
+        verify(websocketMessagingService, times(numberOfCalls))
+                .sendMessageToUser(
+                        eq(userLogin),
+                        eq("/topic/iris/" + topicSuffix),
+                        any()
+                );
+        // @formatter:on
     }
 }
