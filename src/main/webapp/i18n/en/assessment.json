@@ -10,14 +10,21 @@
             "feedbackCommentPlaceholder": "You can enter feedback here...",
             "additionalFeedbackCommentPlaceholder": "You can enter additional feedback here...",
             "suggestion": {
-                "suggested": "Suggestion (not accepted)",
+                "default": "Suggestion",
+                "suggested": "Open Suggestion",
                 "accepted": "Accepted Suggestion",
                 "adapted": "Adapted Suggestion"
             },
             "suggestionTitle": {
+                "default": "This is an automatically generated feedback suggestion.",
                 "suggested": "This automatically generated feedback suggestion is not included in the final assessment unless you explicitly accept it.",
-                "accepted": "Automatically generated feedback",
-                "adapted": "Automatically generated feedback, manually adapted"
+                "accepted": "Automatically generated accepted suggestion",
+                "adapted": "Automatically generated suggestion, manually adapted"
+            },
+            "suggestionPendingDialog": {
+                "title": "Pending Feedback Suggestions",
+                "description": "There are pending feedback suggestions available. They will be discarded when submitting. Do you really want to submit?",
+                "discardAndSubmit": "Discard suggestions & submit"
             },
             "subsequentFeedback": "This is subsequent feedback which is not included in the total score.",
             "error": {

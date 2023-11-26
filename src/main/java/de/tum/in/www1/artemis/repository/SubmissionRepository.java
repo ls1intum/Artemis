@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -443,6 +445,34 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     default Submission findByIdWithResultsElseThrow(long submissionId) {
         return findWithEagerResultsAndAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", +submissionId));
     }
+
+    /**
+     * Gets all latest submitted Submissions, only one per participation
+     *
+     * @param exerciseId the ID of the exercise
+     * @param pageable   the pagination information for the query
+     * @return Page of Submissions
+     */
+    @Query("""
+                SELECT s FROM Submission s
+                WHERE s.participation.exercise.id = :exerciseId
+                      AND s.submitted = true
+                      AND s.submissionDate = (
+                        SELECT MAX(s2.submissionDate)
+                        FROM Submission s2
+                        WHERE s2.participation.id = s.participation.id
+                        AND s2.submitted = true
+                      )
+            """)
+    Page<Submission> findLatestSubmittedSubmissionsByExerciseId(@Param("exerciseId") long exerciseId, Pageable pageable);
+
+    /**
+     * Gets all submitted Submissions for the given exercise. Note that you usually only want the latest submissions.
+     *
+     * @param exerciseId the ID of the exercise
+     * @return Set of Submissions
+     */
+    Set<Submission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
 
     default Submission findByIdElseThrow(long submissionId) {
         return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", submissionId));

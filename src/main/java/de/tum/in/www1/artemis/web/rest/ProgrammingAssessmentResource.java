@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 import org.hibernate.Hibernate;
@@ -21,6 +22,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSendingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
@@ -52,11 +54,13 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService;
+
     public ProgrammingAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ProgrammingAssessmentService programmingAssessmentService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository, ExamService examService,
             ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, StudentParticipationRepository studentParticipationRepository,
             ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, SingleUserNotificationService singleUserNotificationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService) {
         super(authCheckService, userRepository, exerciseRepository, programmingAssessmentService, resultRepository, examService, resultWebsocketService,
                 exampleSubmissionRepository, submissionRepository, singleUserNotificationService);
         this.programmingAssessmentService = programmingAssessmentService;
@@ -64,6 +68,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         this.ltiNewResultService = ltiNewResultService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.athenaFeedbackSendingService = athenaFeedbackSendingService;
     }
 
     /**
@@ -206,6 +211,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             if (submission.getParticipation() instanceof StudentParticipation studentParticipation && studentParticipation.getStudent().isPresent()) {
                 singleUserNotificationService.checkNotificationForAssessmentExerciseSubmission(programmingExercise, studentParticipation.getStudent().get(), newManualResult);
             }
+            sendFeedbackToAthena(programmingExercise, submission, newManualResult.getFeedbacks());
         }
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
@@ -245,6 +251,15 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
         return super.deleteAssessment(participationId, submissionId, resultId);
+    }
+
+    /**
+     * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
+     */
+    private void sendFeedbackToAthena(final ProgrammingExercise exercise, final ProgrammingSubmission programmingSubmission, final List<Feedback> feedbacks) {
+        if (athenaFeedbackSendingService.isPresent() && exercise.getFeedbackSuggestionsEnabled()) {
+            athenaFeedbackSendingService.get().sendFeedback(exercise, programmingSubmission, feedbacks);
+        }
     }
 
     @Override
