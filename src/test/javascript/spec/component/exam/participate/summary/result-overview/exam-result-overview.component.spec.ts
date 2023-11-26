@@ -282,4 +282,46 @@ describe('ExamResultOverviewComponent', () => {
             expect(consoleErrorSpy).not.toHaveBeenCalled();
         });
     });
+
+    describe('summedAchievedExerciseScorePercentage', () => {
+        it('should be called when overallScoreAchieved is not defined in DTO from server', () => {
+            //@ts-ignore spying on private method
+            const summedAchievedExerciseScorePercentageSpy = jest.spyOn(component, 'summedAchievedExerciseScorePercentage');
+            component.studentExamWithGrade.studentResult.overallScoreAchieved = undefined;
+            component.exerciseInfos = {};
+
+            component.ngOnInit();
+
+            expect(summedAchievedExerciseScorePercentageSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should be called when overallScoreAchieved is 0 (default value, might be set as initial value because not defined from server DTO)', () => {
+            //@ts-ignore spying on private method
+            const summedAchievedExerciseScorePercentageSpy = jest.spyOn(component, 'summedAchievedExerciseScorePercentage');
+            component.studentExamWithGrade.studentResult.overallScoreAchieved = 0;
+            component.exerciseInfos = {};
+
+            component.ngOnInit();
+
+            expect(summedAchievedExerciseScorePercentageSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should calculate achieved percentage from exercise info properly', () => {
+            //@ts-ignore spying on private method
+            const summedAchievedExerciseScorePercentageSpy = jest.spyOn(component, 'summedAchievedExerciseScorePercentage');
+            const exerciseInfosWithAchievedPercentage = {
+                1: { achievedPercentage: 80 },
+                2: { achievedPercentage: 60 },
+                3: { achievedPercentage: 90 },
+            };
+            //@ts-ignore missing attributes
+            component.exerciseInfos = exerciseInfosWithAchievedPercentage;
+            component.studentExamWithGrade.studentResult.overallScoreAchieved = undefined;
+
+            component.ngOnInit();
+
+            expect(summedAchievedExerciseScorePercentageSpy).toHaveBeenCalledOnce();
+            expect(component.overallAchievedPercentageRoundedByCourseSettings).toBe(76.67);
+        });
+    });
 });
