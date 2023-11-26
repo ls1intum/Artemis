@@ -58,28 +58,34 @@ examples.forEach((activeConversation) => {
             let allConversations: ConversationDto[] = [];
 
             const visibleGroupChat = generateExampleGroupChatDTO({ id: 3 });
-            const hiddenGroupChat = generateExampleGroupChatDTO({ id: 2, isHidden: true });
             const favoriteGroupChat = generateExampleGroupChatDTO({ id: 4, isFavorite: true });
+            const mutedGroupChat = generateExampleGroupChatDTO({ id: 101, isMuted: true });
+            const hiddenGroupChat = generateExampleGroupChatDTO({ id: 2, isHidden: true });
 
             const visibleChannel = generateExampleChannelDTO({ id: 5 });
-            const hiddenChannel = generateExampleChannelDTO({ id: 6, isHidden: true });
             const favoriteChannel = generateExampleChannelDTO({ id: 7, isFavorite: true });
+            const mutedChannel = generateExampleChannelDTO({ id: 102, isMuted: true });
+            const hiddenChannel = generateExampleChannelDTO({ id: 6, isHidden: true });
 
             const visibleExerciseChannel = generateExampleChannelDTO({ id: 8, subType: ChannelSubType.EXERCISE });
-            const hiddenCExercisehannel = generateExampleChannelDTO({ id: 9, isHidden: true, subType: ChannelSubType.EXERCISE });
-            const favoritExerciseeChannel = generateExampleChannelDTO({ id: 10, isFavorite: true, subType: ChannelSubType.EXERCISE });
+            const favoriteExerciseChannel = generateExampleChannelDTO({ id: 10, isFavorite: true, subType: ChannelSubType.EXERCISE });
+            const mutedExerciseChannel = generateExampleChannelDTO({ id: 103, isMuted: true, subType: ChannelSubType.EXERCISE });
+            const hiddenExerciseChannel = generateExampleChannelDTO({ id: 9, isHidden: true, subType: ChannelSubType.EXERCISE });
 
             const visibleLectureChannel = generateExampleChannelDTO({ id: 11, subType: ChannelSubType.LECTURE });
-            const hiddenCLecturehannel = generateExampleChannelDTO({ id: 12, isHidden: true, subType: ChannelSubType.LECTURE });
-            const favoritLectureeChannel = generateExampleChannelDTO({ id: 13, isFavorite: true, subType: ChannelSubType.LECTURE });
+            const favoriteLectureChannel = generateExampleChannelDTO({ id: 13, isFavorite: true, subType: ChannelSubType.LECTURE });
+            const mutedLectureChannel = generateExampleChannelDTO({ id: 104, isMuted: true, subType: ChannelSubType.LECTURE });
+            const hiddenLectureChannel = generateExampleChannelDTO({ id: 12, isHidden: true, subType: ChannelSubType.LECTURE });
 
             const visibleExamChannel = generateExampleChannelDTO({ id: 14, subType: ChannelSubType.EXAM });
-            const hiddenCExamhannel = generateExampleChannelDTO({ id: 15, isHidden: true, subType: ChannelSubType.EXAM });
-            const favoritExameChannel = generateExampleChannelDTO({ id: 16, isFavorite: true, subType: ChannelSubType.EXAM });
+            const hiddenExamChannel = generateExampleChannelDTO({ id: 15, isHidden: true, subType: ChannelSubType.EXAM });
+            const mutedExamChannel = generateExampleChannelDTO({ id: 105, isMuted: true, subType: ChannelSubType.EXAM });
+            const favoriteExamChannel = generateExampleChannelDTO({ id: 16, isFavorite: true, subType: ChannelSubType.EXAM });
 
             const visibleOneToOneChat = generateOneToOneChatDTO({ id: 17 });
-            const hiddenOneToOneChat = generateOneToOneChatDTO({ id: 18, isHidden: true });
             const favoriteOneToOneChat = generateOneToOneChatDTO({ id: 19, isFavorite: true });
+            const mutedOneToOneChat = generateOneToOneChatDTO({ id: 106, isMuted: true });
+            const hiddenOneToOneChat = generateOneToOneChatDTO({ id: 18, isHidden: true });
 
             beforeEach(waitForAsync(() => {
                 TestBed.configureTestingModule({
@@ -112,23 +118,34 @@ examples.forEach((activeConversation) => {
             beforeEach(() => {
                 allConversations = [
                     visibleChannel,
-                    hiddenChannel,
                     favoriteChannel,
+                    mutedChannel,
+                    hiddenChannel,
+
                     visibleExerciseChannel,
-                    hiddenCExercisehannel,
-                    favoritExerciseeChannel,
+                    favoriteExerciseChannel,
+                    mutedExerciseChannel,
+                    hiddenExerciseChannel,
+
                     visibleLectureChannel,
-                    hiddenCLecturehannel,
-                    favoritLectureeChannel,
+                    favoriteLectureChannel,
+                    mutedLectureChannel,
+                    hiddenLectureChannel,
+
                     visibleExamChannel,
-                    hiddenCExamhannel,
-                    favoritExameChannel,
+                    favoriteExamChannel,
+                    mutedExamChannel,
+                    hiddenExamChannel,
+
                     visibleGroupChat,
-                    hiddenGroupChat,
                     favoriteGroupChat,
+                    mutedGroupChat,
+                    hiddenGroupChat,
+
                     visibleOneToOneChat,
-                    hiddenOneToOneChat,
                     favoriteOneToOneChat,
+                    mutedOneToOneChat,
+                    hiddenOneToOneChat,
                 ];
 
                 canCreateChannel.mockReturnValue(true);
@@ -167,19 +184,22 @@ examples.forEach((activeConversation) => {
                 expect(component.starredConversations).toHaveLength(6);
                 expect(component.starredConversations).toEqual(component.displayedStarredConversations);
 
-                expect(component.channelConversations).toContain(hiddenChannel);
                 expect(component.channelConversations).toContain(visibleChannel);
-                expect(component.channelConversations).toHaveLength(8);
+                expect(component.channelConversations).toContain(mutedChannel);
+                expect(component.channelConversations).toContain(hiddenChannel);
+                expect(component.channelConversations).toHaveLength(12);
                 expect(component.channelConversations).toEqual(component.displayedChannelConversations);
 
-                expect(component.groupChats).toContain(hiddenGroupChat);
                 expect(component.groupChats).toContain(visibleGroupChat);
-                expect(component.groupChats).toHaveLength(2);
+                expect(component.groupChats).toContain(mutedGroupChat);
+                expect(component.groupChats).toContain(hiddenGroupChat);
+                expect(component.groupChats).toHaveLength(3);
                 expect(component.groupChats).toEqual(component.displayedGroupChats);
 
-                expect(component.oneToOneChats).toContain(hiddenOneToOneChat);
                 expect(component.oneToOneChats).toContain(visibleOneToOneChat);
-                expect(component.oneToOneChats).toHaveLength(2);
+                expect(component.oneToOneChats).toContain(mutedOneToOneChat);
+                expect(component.oneToOneChats).toContain(hiddenOneToOneChat);
+                expect(component.oneToOneChats).toHaveLength(3);
                 expect(component.oneToOneChats).toEqual(component.displayedOneToOneChats);
             }));
 
@@ -192,7 +212,7 @@ examples.forEach((activeConversation) => {
                 tick(301);
                 expect(component.searchTerm).toEqual(visibleGroupChat.id + '');
                 expect(component.displayedStarredConversations).toHaveLength(1);
-                expect(component.displayedChannelConversations).toHaveLength(0);
+                expect(component.displayedChannelConversations).toHaveLength(1);
                 expect(component.displayedGroupChats).toHaveLength(1);
                 expect(component.displayedGroupChats).toContain(visibleGroupChat);
                 expect(component.displayedOneToOneChats).toHaveLength(0);
@@ -270,6 +290,16 @@ examples.forEach((activeConversation) => {
                 expect(refreshSpy).toHaveBeenCalledOnce();
             }));
 
+            it('should run conversations update when favorite status is changed', fakeAsync(() => {
+                fixture.detectChanges();
+                tick(301);
+                const onConversationsUpdateSpy = jest.spyOn(component, 'onConversationsUpdate');
+                component.onConversationIsFavoriteDidChange();
+                tick(301);
+                expect(onConversationsUpdateSpy).toHaveBeenCalledOnce();
+                expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);
+            }));
+
             it('should run conversations update when hidden status is changed', fakeAsync(() => {
                 fixture.detectChanges();
                 tick(301);
@@ -280,11 +310,11 @@ examples.forEach((activeConversation) => {
                 expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);
             }));
 
-            it('should run conversations update when favorite status is changed', fakeAsync(() => {
+            it('should run conversations update when muted status is changed', fakeAsync(() => {
                 fixture.detectChanges();
                 tick(301);
                 const onConversationsUpdateSpy = jest.spyOn(component, 'onConversationsUpdate');
-                component.onConversationIsFavoriteDidChange();
+                component.onConversationIsMutedDidChange();
                 tick(301);
                 expect(onConversationsUpdateSpy).toHaveBeenCalledOnce();
                 expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);

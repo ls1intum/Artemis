@@ -85,6 +85,17 @@ describe('ConversationService', () => {
         tick();
     }));
 
+    it('updateIsMuted', fakeAsync(() => {
+        service
+            .updateIsMuted(1, 1, false)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual({}));
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush({});
+        tick();
+    }));
+
     it('markAsRead', () => {
         service
             .markAsRead(1, 1)

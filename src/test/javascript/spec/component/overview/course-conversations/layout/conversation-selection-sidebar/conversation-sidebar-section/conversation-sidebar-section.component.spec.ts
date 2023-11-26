@@ -44,8 +44,9 @@ examples.forEach((activeConversation) => {
         let fixture: ComponentFixture<ConversationSidebarSectionComponent>;
         const course = { id: 1 } as Course;
 
-        const hiddenConversation = generateExampleChannelDTO({ isHidden: true });
         const visibleConversation = generateExampleChannelDTO({ isHidden: false });
+        const mutedConversation = generateExampleChannelDTO({ isMuted: true });
+        const hiddenConversation = generateExampleChannelDTO({ isHidden: true });
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
@@ -62,7 +63,7 @@ examples.forEach((activeConversation) => {
             component.activeConversation = activeConversation;
             component.label = 'label';
             component.headerKey = 'headerKey';
-            component.conversations = [hiddenConversation, visibleConversation];
+            component.conversations = [hiddenConversation, mutedConversation, visibleConversation];
             fixture.detectChanges();
         });
 
@@ -70,11 +71,12 @@ examples.forEach((activeConversation) => {
             expect(component).toBeTruthy();
         });
 
-        it('should separate hidden and visible conversations', () => {
-            expect(component.hiddenConversations).toEqual([hiddenConversation]);
+        it('should separate hidden, muted, and visible conversations', () => {
             expect(component.visibleConversations).toEqual([visibleConversation]);
-            expect(component.allConversations).toEqual([hiddenConversation, visibleConversation]);
-            expect(component.numberOfConversations).toBe(2);
+            expect(component.mutedConversations).toEqual([mutedConversation]);
+            expect(component.hiddenConversations).toEqual([hiddenConversation]);
+            expect(component.allConversations).toEqual([hiddenConversation, mutedConversation, visibleConversation]);
+            expect(component.numberOfConversations).toBe(3);
         });
 
         it('should store collapsed status in local storage', () => {
