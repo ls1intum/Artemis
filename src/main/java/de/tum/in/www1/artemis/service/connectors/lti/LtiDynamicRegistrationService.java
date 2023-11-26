@@ -120,7 +120,7 @@ public class LtiDynamicRegistrationService {
         ltiPlatformConfiguration.setAuthorizationUri(platformConfiguration.getAuthorizationEndpoint());
         ltiPlatformConfiguration.setJwkSetUri(platformConfiguration.getJwksUri());
         ltiPlatformConfiguration.setTokenUri(platformConfiguration.getTokenEndpoint());
-        ltiPlatformConfiguration.setIssuer(platformConfiguration.getIssuer());
+        ltiPlatformConfiguration.setOriginalUrl(platformConfiguration.getIssuer());
         return ltiPlatformConfiguration;
     }
 }

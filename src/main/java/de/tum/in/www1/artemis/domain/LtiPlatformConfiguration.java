@@ -21,8 +21,8 @@ public class LtiPlatformConfiguration extends DomainObject {
     @Column(name = "client_id")
     private String clientId;
 
-    @Column(name = "issuer")
-    private String issuer;
+    @Column(name = "original_url")
+    private String originalUrl;
 
     @Column(name = "authorization_uri")
     private String authorizationUri;
@@ -73,12 +73,12 @@ public class LtiPlatformConfiguration extends DomainObject {
         this.tokenUri = tokenUri;
     }
 
-    public String getIssuer() {
-        return issuer;
+    public String getOriginalUrl() {
+        return originalUrl;
     }
 
-    public void setIssuer(String issuer) {
-        this.issuer = issuer;
+    public void setOriginalUrl(String issuer) {
+        this.originalUrl = issuer;
     }
 
 }

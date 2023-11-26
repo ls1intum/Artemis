@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="basak-akan" id="20231126224208">
+        <!-- Create lti_platform_configuration table -->
+        <createTable tableName="lti_platform_configuration">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="original_url" type="varchar(255)"/>
+            <column name="registration_id" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_id" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="authorization_uri" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="jwk_set_uri" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="token_uri" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- Insert original_url, registration_id, client_id, authorization_uri, jkw_set_uri, token_uri from online_course_configuration into lti_platform_configuration -->
+        <sql>
+            <!-- Insert data into lti_platform_configuration -->
+            INSERT INTO lti_platform_configuration (original_url, registration_id, client_id, authorization_uri, jwk_set_uri, token_uri)
+            SELECT occ.original_url, occ.registration_id, occ.client_id, occ.authorization_uri, occ.jkw_set_uri, occ.token_uri
+            FROM online_course_configuration occ;
+        </sql>
+        <!-- Remove the columns that are no longer present in the entity -->
+        <dropColumn tableName="online_course_configuration" columnName="original_url"/>
+        <dropColumn tableName="online_course_configuration" columnName="registration_id"/>
+        <dropColumn tableName="online_course_configuration" columnName="client_id"/>
+        <dropColumn tableName="online_course_configuration" columnName="authorization_uri"/>
+        <dropColumn tableName="online_course_configuration" columnName="jkw_set_uri"/>
+        <dropColumn tableName="online_course_configuration" columnName="token_uri"/>
+    </changeSet>
+</databaseChangeLog>
