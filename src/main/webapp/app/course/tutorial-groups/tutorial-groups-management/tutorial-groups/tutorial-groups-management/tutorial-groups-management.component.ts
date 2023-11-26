@@ -61,10 +61,6 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
         this.ngUnsubscribe.complete();
     }
 
-    onTutorialGroupSelected = (tutorialGroup: TutorialGroup) => {
-        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups', tutorialGroup.id]);
-    };
-
     loadTutorialGroups() {
         this.isLoading = true;
 
