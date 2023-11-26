@@ -1,0 +1,18 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet id="20231121165300-1" author="maximiliansoelch">
+        <!-- Introduced in 20230430235959_changelog.xml -->
+        <modifyDataType tableName="iris_message" columnName="sent_at" newDataType="datetime(3)"/>
+        <!-- Introduced in 20230705141500_changelog.xml -->
+        <modifyDataType tableName="iris_session" columnName="creation_date" newDataType="datetime(3)"/>
+        <!-- Introduced in 20230714012100_changelog.xml -->
+        <modifyDataType tableName="jhi_user" columnName="iris_accepted" newDataType="datetime(3)"/>
+
+        <!--
+        Due to mysql SQL limitations, modifyDataType will lose primary key/autoincrement/not null/comment settings explicitly redefined in the change.
+        Therefore, we have to explicitly set not null again for the affected columns!
+        -->
+        <addNotNullConstraint tableName="iris_session" columnName="creation_date" columnDataType="datetime(3)"/>
+
+    </changeSet>
+</databaseChangeLog>
