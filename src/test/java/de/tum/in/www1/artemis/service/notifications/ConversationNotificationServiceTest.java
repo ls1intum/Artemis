@@ -103,15 +103,6 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void notifyAboutNewMessageInConversation() {
-        {
-            var p1 = new ConversationParticipant();
-            p1.setConversation(oneToOneChat);
-            p1.setUser(user1);
-            var p2 = new ConversationParticipant();
-            p2.setConversation(oneToOneChat);
-            p2.setUser(user2);
-            conversationParticipantRepository.saveAll(List.of(p1, p2));
-        }
         Post post = new Post();
         post.setAuthor(user1);
         post.setCreationDate(ZonedDateTime.now());
