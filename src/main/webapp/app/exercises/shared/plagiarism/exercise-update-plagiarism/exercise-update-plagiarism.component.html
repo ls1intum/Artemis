@@ -1,4 +1,4 @@
-<div class="form-group col-auto border border-warning p-3" *ngIf="exercise.plagiarismDetectionConfig">
+<div class="form-group col-auto border border-warning p-3">
     <div class="row">
         <div>
             <label jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControl">Continuous Plagiarism Control</label>
@@ -12,7 +12,7 @@
                     id="continuous_plagiarism_control_enabled"
                     class="plagiarism-option-checkbox form-check-input"
                     name="exercise.plagiarismDetectionConfig.continuousPlagiarismControlEnabled"
-                    [checked]="exercise.plagiarismDetectionConfig.continuousPlagiarismControlEnabled"
+                    [checked]="exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
                     (click)="toggleCPCEnabled()"
                 />
                 <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlEnabled">Enable Continuous Plagiarism Control</div>
@@ -25,9 +25,9 @@
                     id="continuous_plagiarism_control_post_due_date_checks_enabled"
                     class="plagiarism-option-checkbox form-check-input"
                     name="exercise.plagiarismDetectionConfig.continuousPlagiarismControlPostDueDateChecksEnabled"
-                    [disabled]="!exercise.plagiarismDetectionConfig.continuousPlagiarismControlEnabled"
-                    #exercise.plagiarismDetectionConfig.continuousPlagiarismControlPostDueDateChecksEnabled="ngModel"
-                    [(ngModel)]="exercise.plagiarismDetectionConfig.continuousPlagiarismControlPostDueDateChecksEnabled"
+                    [disabled]="!exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
+                    #exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled="ngModel"
+                    [(ngModel)]="exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled"
                 />
                 <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlPostDueDateChecksEnabled">
                     Run additional checks during the night after exercise's due date.
@@ -50,8 +50,8 @@
                         step="5"
                         id="plagiarism-similarity-threshold"
                         name="plagiarismChecksSimilarityThresholdPercentage"
-                        #exercise.plagiarismDetectionConfig.similarityThreshol="ngModel"
-                        [(ngModel)]="exercise.plagiarismDetectionConfig.similarityThreshold"
+                        #exercise.plagiarismDetectionConfig!.similarityThreshol="ngModel"
+                        [(ngModel)]="exercise.plagiarismDetectionConfig!.similarityThreshold"
                     />
                 </div>
             </div>
@@ -69,8 +69,8 @@
                         max="100"
                         id="plagiarism-minimum-score"
                         name="exercise.plagiarismDetectionConfig.minimumScore"
-                        #exercise.plagiarismDetectionConfig.minimumScore="ngModel"
-                        [(ngModel)]="exercise.plagiarismDetectionConfig.minimumScore"
+                        #exercise.plagiarismDetectionConfig!.minimumScore="ngModel"
+                        [(ngModel)]="exercise.plagiarismDetectionConfig!.minimumScore"
                     />
                 </div>
             </div>
@@ -88,8 +88,8 @@
                         max="100"
                         id="plagiarism-minimum-size"
                         name="exercise.plagiarismDetectionConfig.minimumSize"
-                        #exercise.plagiarismDetectionConfig.minimumSize="ngModel"
-                        [(ngModel)]="exercise.plagiarismDetectionConfig.minimumSize"
+                        #exercise.plagiarismDetectionConfig!.minimumSize="ngModel"
+                        [(ngModel)]="exercise.plagiarismDetectionConfig!.minimumSize"
                     />
                 </div>
             </div>
