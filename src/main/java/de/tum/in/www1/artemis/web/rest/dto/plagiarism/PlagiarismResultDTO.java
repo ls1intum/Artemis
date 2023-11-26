@@ -11,5 +11,5 @@ import de.tum.in.www1.artemis.web.rest.plagiarism.PlagiarismResultStats;
  * @param plagiarismResultStats the statistics regarding the plagiarism result
  * @param <T>                   the type of plagiarism result
  */
-public record PlagiarismResultDTO<T extends PlagiarismResult<? extends PlagiarismSubmissionElement>> (T plagiarismResult, PlagiarismResultStats plagiarismResultStats) {
+public record PlagiarismResultDTO<T extends PlagiarismResult<? extends PlagiarismSubmissionElement>>(T plagiarismResult, PlagiarismResultStats plagiarismResultStats) {
 }

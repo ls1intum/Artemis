@@ -17,17 +17,22 @@
             <fa-icon [icon]="faChartBar"></fa-icon>
             <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
         </a>
-        <a class="tab-link" *ngIf="isCommunicationEnabled(course)" [routerLink]="['/courses', course.id, 'discussion']" routerLinkActive="active">
+        <a class="tab-link" *ngIf="isCommunicationEnabled" [routerLink]="['/courses', course.id, 'discussion']" routerLinkActive="active">
             <fa-icon [icon]="faComment"></fa-icon>
             <span class="tab-link-text" jhiTranslate="artemisApp.metis.communication.label">Communication</span>
             <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>
         </a>
-        <a class="tab-link" *ngIf="course.isAtLeastInstructor && irisEnabled" (click)="showIrisSettings()" routerLinkActive="active">
+        <a
+            class="tab-link"
+            *ngIf="course.isAtLeastInstructor && irisEnabled"
+            [routerLink]="['/course-management', course.id, 'iris-settings']"
+            id="iris-settings"
+            routerLinkActive="active"
+        >
             <fa-icon [icon]="faRobot"></fa-icon>
-            <span jhiTranslate="artemisApp.iris.settings.button.course.title">Iris</span>
-            <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>
+            <span class="tab-link-text" jhiTranslate="artemisApp.iris.settings.button.course.title">Iris</span>
         </a>
-        <a class="tab-link" *ngIf="isMessagingEnabled(course)" [routerLink]="['/courses', course.id, 'messages']" routerLinkActive="active">
+        <a class="tab-link" *ngIf="isMessagingOrCommunicationEnabled" [routerLink]="['/courses', course.id, 'messages']" routerLinkActive="active">
             <fa-icon [icon]="faComments"></fa-icon>
             <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</span>
             <fa-icon [icon]="faArrowUpRightFromSquare"></fa-icon>

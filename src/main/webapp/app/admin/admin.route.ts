@@ -90,7 +90,10 @@ export const adminState: Routes = [
             },
             {
                 path: 'iris',
-                loadChildren: () => import('../iris/settings/iris-settings-update-routing.module').then((module) => module.IrisSettingsUpdateRoutingModule),
+                loadChildren: () =>
+                    import('../iris/settings/iris-global-settings-update/iris-global-settings-update-routing.module').then(
+                        (module) => module.IrisGlobalSettingsUpdateRoutingModule,
+                    ),
             },
             ...organizationMgmtRoute,
             ...userManagementRoute,
