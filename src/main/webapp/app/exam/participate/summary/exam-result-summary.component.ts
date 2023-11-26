@@ -422,7 +422,7 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     /**
-     * This should only be needed when unsubmitted exercises are vieweds
+     * This should only be needed when unsubmitted exercises are viewed, otherwise the results should be set
      */
     private getAchievedPercentageFromExamResults(exerciseId?: number, studentExamWithGrade?: StudentExamWithGradeDTO | undefined, course?: Course) {
         if (exerciseId === undefined) {
