@@ -1,6 +1,0 @@
-<div class="chatbot-button">
-    <button class="btn btn-primary btn-md btn-circle" title="{{ 'artemisApp.exerciseChatbot.buttonTooltip' | artemisTranslate }}" (click)="handleButtonClick()">
-        <fa-icon size="lg" [icon]="closed ? faCommentDots : faChevronDown"></fa-icon>
-        <fa-icon *ngIf="hasNewMessages && !chatOpen" [icon]="faCircle" size="xs" class="unread-indicator"></fa-icon>
-    </button>
-</div>

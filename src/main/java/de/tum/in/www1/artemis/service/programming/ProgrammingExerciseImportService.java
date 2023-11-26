@@ -278,6 +278,11 @@ public class ProgrammingExerciseImportService {
         newExercise.generateAndSetProjectKey();
         programmingExerciseService.checkIfProjectExists(newExercise);
 
+        if (newExercise.isExamExercise()) {
+            // Disable feedback suggestions on exam exercises (currently not supported)
+            newExercise.setFeedbackSuggestionsEnabled(false);
+        }
+
         final var importedProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
         importRepositories(originalProgrammingExercise, importedProgrammingExercise);
 

@@ -1,0 +1,8 @@
+<div class="mb-3 mt-3">
+    <h4 jhiTranslate="artemisApp.iris.settings.subSettings.template.title">Template</h4>
+    <div *ngIf="parentSubSettings" class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="inheritTemplate" [checked]="!subSettings?.template" (change)="onInheritTemplateChanged()" />
+        <label class="form-check-label" for="inheritTemplate" jhiTranslate="artemisApp.iris.settings.subSettings.template.inherit">Inherit</label>
+    </div>
+    <textarea id="template-editor" class="form-control" rows="25" [(ngModel)]="templateContent" (change)="onTemplateChanged()" [disabled]="!subSettings?.template"></textarea>
+</div>
