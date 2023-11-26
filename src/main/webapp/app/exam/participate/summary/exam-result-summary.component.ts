@@ -23,6 +23,7 @@ import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular-ivy';
 import { AlertService } from 'app/core/util/alert.service';
 import { isExamResultPublished } from 'app/exam/participate/exam.utils';
+import { Course } from 'app/entities/course.model';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -343,7 +344,7 @@ export class ExamResultSummaryComponent implements OnInit {
                 icon: getIcon(exercise.type),
                 isCollapsed: false,
                 achievedPoints: this.getPointsByExerciseIdFromExam(exercise.id, studentExamWithGrade),
-                achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
+                achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id, studentExamWithGrade),
                 colorClass: textColorClass,
                 resultIconClass: resultIconClass,
 
@@ -403,23 +404,46 @@ export class ExamResultSummaryComponent implements OnInit {
         this.exerciseInfos[exerciseId].displayExampleSolution = !this.exerciseInfos[exerciseId].displayExampleSolution;
     }
 
-    getAchievedPercentageByExerciseId(exerciseId?: number): number | undefined {
-        const result = this.getExerciseResultByExerciseId(exerciseId);
-        if (result === undefined) {
-            return undefined;
+    private calculateAchievedPercentageFromScoreAndMaxPoints(achievedPoints?: number, maxScore?: number, course?: Course) {
+        const canCalculatePercentage = maxScore !== undefined && achievedPoints !== undefined;
+        if (canCalculatePercentage) {
+            return roundScorePercentSpecifiedByCourseSettings(achievedPoints! / maxScore, course);
         }
 
-        const course = this.studentExamGradeInfoDTO.studentExam?.exam?.course;
+        return undefined;
+    }
+
+    private getAchievedPercentageFromResult(result: ExerciseResult, course?: Course) {
         if (result.achievedScore !== undefined) {
             return roundScorePercentSpecifiedByCourseSettings(result.achievedScore / 100, course);
         }
 
-        const canCalculatePercentage = result.maxScore && result.achievedPoints !== undefined;
-        if (canCalculatePercentage) {
-            return roundScorePercentSpecifiedByCourseSettings(result.achievedPoints! / result.maxScore, course);
+        return this.calculateAchievedPercentageFromScoreAndMaxPoints(result.achievedPoints, result.maxScore, course);
+    }
+
+    /**
+     * This should only be needed when unsubmitted exercises are vieweds
+     */
+    private getAchievedPercentageFromExamResults(exerciseId?: number, studentExamWithGrade?: StudentExamWithGradeDTO | undefined, course?: Course) {
+        if (exerciseId === undefined) {
+            return undefined;
         }
 
-        return undefined;
+        const maxPoints = studentExamWithGrade?.studentExam?.exercises?.find((exercise) => exercise.id === exerciseId)?.maxPoints;
+        const achievedPoints = this.getPointsByExerciseIdFromExam(exerciseId, studentExamWithGrade);
+
+        return this.calculateAchievedPercentageFromScoreAndMaxPoints(achievedPoints, maxPoints, course);
+    }
+
+    getAchievedPercentageByExerciseId(exerciseId?: number, studentExamWithGrade?: StudentExamWithGradeDTO | undefined): number | undefined {
+        const result = this.getExerciseResultByExerciseId(exerciseId);
+        const course = this.studentExamGradeInfoDTO.studentExam?.exam?.course;
+
+        if (result === undefined) {
+            return this.getAchievedPercentageFromExamResults(exerciseId, studentExamWithGrade, course);
+        }
+
+        return this.getAchievedPercentageFromResult(result, course);
     }
 
     getTextColorAndIconClassByExercise(exercise: Exercise) {
