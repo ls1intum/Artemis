@@ -212,6 +212,8 @@ public abstract class ExerciseWithSubmissionsExportService {
         // do not include duplicate information
         exercise.getCourseViaExerciseGroupOrCourseMember().setExercises(null);
         exercise.getCourseViaExerciseGroupOrCourseMember().setExams(null);
+        // do not include related entities ids
+        Optional.ofNullable(exercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
         pathsToBeZipped.add(fileService.writeObjectToJsonFile(exercise, this.objectMapper, exerciseDetailsExportPath));
     }
 
