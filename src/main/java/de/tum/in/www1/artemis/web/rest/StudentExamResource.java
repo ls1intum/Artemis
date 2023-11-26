@@ -538,7 +538,7 @@ public class StudentExamResource {
             throw new AccessForbiddenException("Current user cannot access grade info for target user");
         }
 
-        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.getStudentExamGradesForSummary(targetUser, currentUser, studentExam);
+        StudentExamWithGradeDTO studentExamWithGradeDTO = examService.getStudentExamGradesForSummary(targetUser, studentExam, isAtLeastInstructor);
 
         log.info("getStudentExamGradesForSummary done in {}ms for {} exercises for target user {} by caller user {}", System.currentTimeMillis() - start,
                 studentExam.getExercises().size(), targetUser.getLogin(), currentUser.getLogin());
