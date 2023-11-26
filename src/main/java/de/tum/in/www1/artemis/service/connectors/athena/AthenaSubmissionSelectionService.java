@@ -3,12 +3,9 @@ package de.tum.in.www1.artemis.service.connectors.athena;
 import java.util.List;
 import java.util.Optional;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -17,9 +14,9 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.exception.NetworkingException;
-import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
 
 /**
  * Service for selecting the "best" submission to assess right now using Athena, e.g. by the highest information gain.
@@ -32,21 +29,14 @@ public class AthenaSubmissionSelectionService {
 
     private final Logger log = LoggerFactory.getLogger(AthenaSubmissionSelectionService.class);
 
-    @Value("${artemis.athena.url}")
-    private String athenaUrl;
-
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
-    private static class RequestDTO {
+    private final AthenaModuleUrlHelper athenaModuleUrlHelper;
 
-        public TextExerciseDTO exercise;
+    private final AthenaDTOConverter athenaDTOConverter;
 
-        public List<Long> submissionIds; // Athena just needs submission IDs => quicker request, because less data is sent
-
-        RequestDTO(@NotNull TextExercise exercise, @NotNull List<Long> submissionIds) {
-            this.exercise = TextExerciseDTO.of(exercise);
-            this.submissionIds = submissionIds;
-        }
+    private record RequestDTO(ExerciseDTO exercise, List<Long> submissionIds// Athena just needs submission IDs => quicker request, because less data is sent
+    ) {
     }
 
     private record ResponseDTO(@JsonProperty("data") long submissionId // submission ID to choose, or -1 if no submission was explicitly chosen
@@ -57,12 +47,15 @@ public class AthenaSubmissionSelectionService {
      * Create a new AthenaSubmissionSelectionService
      * Responses should be fast, and it's not too bad if it fails. Therefore, we use a very short timeout for requests.
      */
-    public AthenaSubmissionSelectionService(@Qualifier("veryShortTimeoutAthenaRestTemplate") RestTemplate veryShortTimeoutAthenaRestTemplate) {
+    public AthenaSubmissionSelectionService(@Qualifier("veryShortTimeoutAthenaRestTemplate") RestTemplate veryShortTimeoutAthenaRestTemplate,
+            AthenaModuleUrlHelper athenaModuleUrlHelper, AthenaDTOConverter athenaDTOConverter) {
         connector = new AthenaConnector<>(veryShortTimeoutAthenaRestTemplate, ResponseDTO.class);
+        this.athenaModuleUrlHelper = athenaModuleUrlHelper;
+        this.athenaDTOConverter = athenaDTOConverter;
     }
 
     /**
-     * Fetches the proposedTextSubmission for a given exercise from Athena.
+     * Fetches the proposed submission for a given exercise from Athena.
      * It is not guaranteed that you get a valid submission ID, so you need to check for existence yourself.
      *
      * @param exercise      the exercise to get the proposed Submission for
@@ -70,23 +63,22 @@ public class AthenaSubmissionSelectionService {
      * @return a submission ID suggested by the Athena submission selector (e.g. chosen by the highest information gain)
      * @throws IllegalArgumentException if exercise isn't automatically assessable
      */
-    public Optional<Long> getProposedSubmissionId(TextExercise exercise, List<Long> submissionIds) {
-        if (!exercise.isFeedbackSuggestionsEnabled()) {
+    public Optional<Long> getProposedSubmissionId(Exercise exercise, List<Long> submissionIds) {
+        if (!exercise.getFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The Exercise does not have feedback suggestions enabled.");
         }
         if (submissionIds.isEmpty()) {
             return Optional.empty();
         }
 
-        log.debug("Start Athena Submission Selection Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+        log.debug("Start Athena Submission Selection Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         log.info("Calling Athena to calculate next proposed submissions for {} submissions.", submissionIds.size());
 
         try {
-            final RequestDTO request = new RequestDTO(exercise, submissionIds);
-            // TODO: make module selection dynamic (based on exercise)
+            final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), submissionIds);
             // allow no retries because this should be fast and it's not too bad if it fails
-            ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/select_submission", request, 0);
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/select_submission", request, 0);
             log.info("Athena to calculate next proposes submissions responded: {}", response.submissionId);
             if (response.submissionId == -1) {
                 return Optional.empty();

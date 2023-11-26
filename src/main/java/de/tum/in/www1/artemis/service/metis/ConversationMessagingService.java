@@ -123,6 +123,7 @@ public class ConversationMessagingService extends PostingService {
         conversationParticipantRepository.updateLastReadAsync(author.getId(), conversation.getId(), ZonedDateTime.now());
 
         var createdMessage = conversationMessageRepository.save(newMessage);
+        log.debug("      conversationMessageRepository.save DONE");
         // set the conversation again, because it might have been lost during save
         createdMessage.setConversation(conversation);
         // reduce the payload of the response / websocket message: this is important to avoid overloading the involved subsystems
@@ -155,17 +156,13 @@ public class ConversationMessagingService extends PostingService {
 
             recipientSummaries = getWebSocketRecipients(conversation).collect(Collectors.toSet());
             log.debug("      getWebSocketRecipients DONE");
-            recipientUsers = recipientSummaries.stream()
-                    .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
-                    .collect(Collectors.toSet());
+            recipientUsers = mapToUsers(recipientSummaries);
         }
         else {
             // In all other cases we need the list of participants to send the WS messages to the correct topics. Hence, the db query has to be made before sending WS messages
             recipientSummaries = getWebSocketRecipients(conversation).collect(Collectors.toSet());
             log.debug("      getWebSocketRecipients DONE");
-            recipientUsers = recipientSummaries.stream()
-                    .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
-                    .collect(Collectors.toSet());
+            recipientUsers = mapToUsers(recipientSummaries);
 
             broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, recipientUsers);
             log.debug("      broadcastForPost DONE");
@@ -203,6 +200,18 @@ public class ConversationMessagingService extends PostingService {
             saveAnnouncementNotification(createdMessage, channel, course, recipientUsers);
         }
         log.debug("      notifyAboutMessageCreation DONE");
+    }
+
+    /**
+     * Maps a set of {@link ConversationNotificationRecipientSummary} to a set of {@link User}
+     *
+     * @param webSocketRecipients Set of recipient summaries
+     * @return Set of users meant to receive WebSocket messages
+     */
+    private static Set<User> mapToUsers(Set<ConversationNotificationRecipientSummary> webSocketRecipients) {
+        return webSocketRecipients.stream()
+                .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
+                .collect(Collectors.toSet());
     }
 
     /**
