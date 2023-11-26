@@ -38,7 +38,7 @@
                             : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.favorite' | artemisTranslate)
                     }}
                 </button>
-                <button class="notificationsSetting" ngbDropdownItem (click)="onMuteClicked($event)">
+                <button class="mute" ngbDropdownItem (click)="onMuteClicked($event)">
                     {{
                         conversation.isMuted
                             ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.unmute' | artemisTranslate)
