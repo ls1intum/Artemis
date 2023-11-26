@@ -200,7 +200,7 @@ export const isOnlyCompilationTested = (result: Result | undefined, templateStat
  * @return {string} the css class
  */
 export const getTextColorClass = (result: Result | undefined, templateStatus: ResultTemplateStatus) => {
-    if (!result) {
+    if (result === undefined) {
         return 'text-secondary';
     }
 

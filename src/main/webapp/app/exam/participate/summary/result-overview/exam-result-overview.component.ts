@@ -100,10 +100,33 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         this.isBonusGradingKeyDisplayed = this.studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined;
 
         this.overallAchievedPoints = this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
-        this.overallAchievedPercentageRoundedByCourseSettings = roundScorePercentSpecifiedByCourseSettings(
-            (this.studentExamWithGrade.studentResult.overallScoreAchieved ?? 0) / 100,
-            this.studentExamWithGrade.studentExam?.exam?.course,
-        );
+
+        this.overallAchievedPercentageRoundedByCourseSettings = this.getOverallAchievedPercentageRoundedByCourseSettings();
+    }
+
+    private getOverallAchievedPercentageRoundedByCourseSettings() {
+        let overallScoreAchieved = this.studentExamWithGrade.studentResult.overallScoreAchieved;
+        if (overallScoreAchieved === undefined || overallScoreAchieved === 0) {
+            overallScoreAchieved = this.summedAchievedExerciseScorePercentage();
+        }
+
+        return roundScorePercentSpecifiedByCourseSettings(overallScoreAchieved / 100, this.studentExamWithGrade.studentExam?.exam?.course);
+    }
+
+    private summedAchievedExerciseScorePercentage() {
+        let summedPercentages = 0;
+        let numberOfExercises = 0;
+
+        Object.entries(this.exerciseInfos).forEach(([, exerciseInfo]) => {
+            summedPercentages += exerciseInfo.achievedPercentage ?? 0;
+            numberOfExercises++;
+        });
+
+        if (numberOfExercises === 0) {
+            return 0;
+        }
+
+        return summedPercentages / numberOfExercises;
     }
 
     /**

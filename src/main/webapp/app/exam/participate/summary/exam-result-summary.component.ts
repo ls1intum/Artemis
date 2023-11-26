@@ -437,7 +437,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
     getAchievedPercentageByExerciseId(exerciseId?: number, studentExamWithGrade?: StudentExamWithGradeDTO | undefined): number | undefined {
         const result = this.getExerciseResultByExerciseId(exerciseId);
-        const course = this.studentExamGradeInfoDTO.studentExam?.exam?.course;
+        const course = this.studentExamGradeInfoDTO?.studentExam?.exam?.course;
 
         if (result === undefined) {
             return this.getAchievedPercentageFromExamResults(exerciseId, studentExamWithGrade, course);
