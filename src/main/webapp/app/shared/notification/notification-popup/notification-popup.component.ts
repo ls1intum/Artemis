@@ -44,14 +44,6 @@ const conversationMessageNotificationTitles = [
     NEW_REPLY_FOR_COURSE_POST_TITLE,
 ];
 
-const conversationMessageReplyNotificationTitles = [
-    NEW_REPLY_MESSAGE_TITLE,
-    NEW_REPLY_FOR_EXERCISE_POST_TITLE,
-    NEW_REPLY_FOR_LECTURE_POST_TITLE,
-    NEW_REPLY_FOR_EXAM_POST_TITLE,
-    NEW_REPLY_FOR_COURSE_POST_TITLE,
-];
-
 @Component({
     selector: 'jhi-notification-popup',
     templateUrl: './notification-popup.component.html',
@@ -111,7 +103,7 @@ export class NotificationPopupComponent implements OnInit {
         } else if (notification.title && conversationMessageNotificationTitles.includes(notification.title)) {
             const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
 
-            if (conversationMessageReplyNotificationTitles.includes(notification.title)) {
+            if (conversationMessageNotificationTitles.includes(notification.title)) {
                 queryParams.postId = target.id;
             }
 
