@@ -1,43 +1,40 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.parsers;
+package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v3;
 
 import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import org.apache.commons.lang3.EnumUtils;
 
 import com.google.common.base.CaseFormat;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class ActivityDiagramParser {
 
     /**
-     * Create an activity diagram from the model and control flow elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates an activity
+     * Create an activity diagram from the model and control flow elements given as JSON objects. It parses the JSON objects to corresponding Java objects and creates an activity
      * diagram containing these UML model elements.
      *
-     * @param modelElements     the model elements (UML activities and activity nodes) as JSON array
-     * @param controlFlows      the control flow elements as JSON array
+     * @param modelElements     the model elements (UML activities and activity nodes) as JSON object
+     * @param controlFlows      the control flow elements as JSON object
      * @param modelSubmissionId the ID of the corresponding modeling submission
      * @return a UML activity diagram containing the parsed model elements and control flows
      * @throws IOException when no corresponding model elements could be found for the source and target IDs in the control flow JSON objects
      */
-    protected static UMLActivityDiagram buildActivityDiagramFromJSON(JsonArray modelElements, JsonArray controlFlows, long modelSubmissionId) throws IOException {
+    protected static UMLActivityDiagram buildActivityDiagramFromJSON(JsonObject modelElements, JsonObject controlFlows, long modelSubmissionId) throws IOException {
         Map<String, UMLActivityElement> umlActivityElementMap = new HashMap<>();
         Map<String, UMLActivity> umlActivityMap = new HashMap<>();
         List<UMLActivityNode> umlActivityNodeList = new ArrayList<>();
         List<UMLControlFlow> umlControlFlowList = new ArrayList<>();
 
         // loop over all JSON elements and create activity and activity node objects
-        for (JsonElement elem : modelElements) {
-            JsonObject element = elem.getAsJsonObject();
+        for (var entry : modelElements.entrySet()) {
+            String id = entry.getKey();
+            JsonObject element = entry.getValue().getAsJsonObject();
 
             String elementType = element.get(ELEMENT_TYPE).getAsString();
             String elementTypeUpperUnderscore = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType);
@@ -45,18 +42,18 @@ public class ActivityDiagramParser {
             if (EnumUtils.isValidEnum(UMLActivityNode.UMLActivityNodeType.class, elementTypeUpperUnderscore)) {
                 UMLActivityNode activityNode = parseActivityNode(elementTypeUpperUnderscore, element);
                 umlActivityNodeList.add(activityNode);
-                umlActivityElementMap.put(activityNode.getJSONElementID(), activityNode);
+                umlActivityElementMap.put(id, activityNode);
             }
             else if (UMLActivity.UML_ACTIVITY_TYPE.equals(elementType)) {
                 UMLActivity activity = parseActivity(element);
                 umlActivityMap.put(activity.getJSONElementID(), activity);
-                umlActivityElementMap.put(activity.getJSONElementID(), activity);
+                umlActivityElementMap.put(id, activity);
             }
         }
 
         // loop over all JSON elements again to connect parent activity elements with their child elements
-        for (JsonElement elem : modelElements) {
-            JsonObject element = elem.getAsJsonObject();
+        for (var entry : modelElements.entrySet()) {
+            JsonObject element = entry.getValue().getAsJsonObject();
 
             if (element.has(ELEMENT_OWNER) && !element.get(ELEMENT_OWNER).isJsonNull()) {
                 String parentActivityId = element.get(ELEMENT_OWNER).getAsString();
@@ -71,8 +68,8 @@ public class ActivityDiagramParser {
         }
 
         // loop over all JSON control flow elements and create control flow objects
-        for (JsonElement controlFlow : controlFlows) {
-            UMLControlFlow newControlFlow = parseControlFlow(controlFlow.getAsJsonObject(), umlActivityElementMap);
+        for (var entry : controlFlows.entrySet()) {
+            UMLControlFlow newControlFlow = parseControlFlow(entry.getValue().getAsJsonObject(), umlActivityElementMap);
             umlControlFlowList.add(newControlFlow);
         }
 

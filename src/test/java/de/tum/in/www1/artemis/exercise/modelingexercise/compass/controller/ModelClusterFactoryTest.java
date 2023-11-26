@@ -48,4 +48,32 @@ class ModelClusterFactoryTest {
             assertThat(element.getCluster()).as("created elements keeps the cluster").isEqualTo(modelCluster);
         }
     }
+
+    @Test
+    void testBuildingClustersWithSimilarV3Elements() throws Exception {
+        ModelingSubmission submission1 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/v3/model.54727.json"), true);
+        submission1.setId(1L);
+        ModelingSubmission submission2 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/v3/model.54727.cpy.json"),
+                true);
+        submission2.setId(2L);
+        ModelingSubmission submission3 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/v3/model.54727.cpy.json"),
+                true);
+        submission3.setId(3L);
+        ModelingSubmission submission4 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/v3/model.54727.cpy.json"),
+                true);
+        submission4.setId(4L);
+        ModelingSubmission submission5 = ParticipationFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/v3/model.one-element.json"),
+                true);
+        submission5.setId(5L);
+
+        ModelingExercise exercise = new ModelingExercise();
+        List<ModelCluster> modelClusters = modelClusterFactory.buildClusters(List.of(submission1, submission2, submission3, submission4, submission5), exercise);
+
+        assertThat(modelClusters).as("model clusters created").hasSize(10);
+        ModelCluster modelCluster = modelClusters.get(0);
+        assertThat(modelCluster.getModelElements()).as("all elements are created").hasSize(4);
+        for (ModelElement element : modelCluster.getModelElements()) {
+            assertThat(element.getCluster()).as("created elements keeps the cluster").isEqualTo(modelCluster);
+        }
+    }
 }

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.parsers;
+package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v2;
 
 import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 
@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponent;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentInterface;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponentRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
 public class ComponentDiagramParser {
 
