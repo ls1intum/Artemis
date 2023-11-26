@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.iris.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 
 /**
  * An IrisSession represents a list of messages of Artemis, a user, and an LLM.
@@ -26,7 +26,8 @@ import de.tum.in.www1.artemis.domain.iris.IrisMessage;
 @DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
-@JsonSubTypes({ @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"), @JsonSubTypes.Type(value = IrisHestiaSession.class, name = "hestia") })
+@JsonSubTypes({ @JsonSubTypes.Type(value = IrisChatSession.class, name = "chat"), @JsonSubTypes.Type(value = IrisHestiaSession.class, name = "hestia"),
+        @JsonSubTypes.Type(value = IrisCodeEditorSession.class, name = "codeEditor") })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class IrisSession extends DomainObject {
 
@@ -36,7 +37,14 @@ public abstract class IrisSession extends DomainObject {
     private List<IrisMessage> messages = new ArrayList<>();
 
     @Column(name = "creation_date")
-    private ZonedDateTime creationDate;
+    private ZonedDateTime creationDate = ZonedDateTime.now();
+
+    public IrisMessage newMessage() {
+        var message = new IrisMessage();
+        message.setSession(this);
+        this.messages.add(message);
+        return message;
+    }
 
     public void setCreationDate(ZonedDateTime creationDate) {
         this.creationDate = creationDate;
@@ -49,4 +57,5 @@ public abstract class IrisSession extends DomainObject {
     public List<IrisMessage> getMessages() {
         return messages;
     }
+
 }
