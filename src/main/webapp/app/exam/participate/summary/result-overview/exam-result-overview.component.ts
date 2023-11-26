@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, Input, OnChanges, OnInit } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -17,6 +17,8 @@ type ExerciseInfo = {
     achievedPercentage?: number;
     colorClass?: string;
 };
+
+const MINIMUM_SIZE_TO_DISPLAY_GRADING_KEYS_BESIDES_TABLE_IN_PX = 1028;
 
 @Component({
     selector: 'jhi-exam-result-overview',
@@ -61,6 +63,8 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      */
     showResultOverview = false;
 
+    displayGradeKeysBesideTable = false;
+
     constructor(
         private serverDateService: ArtemisServerDateService,
         public exerciseService: ExerciseService,
@@ -73,6 +77,12 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         }
 
         this.updateLocalVariables();
+        this.updateDisplayGradeKeyBesideTable();
+    }
+
+    @HostListener('window:resize', ['$event'])
+    onResize() {
+        this.updateDisplayGradeKeyBesideTable();
     }
 
     ngOnChanges() {
@@ -174,5 +184,12 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
 
     toggleBonusGradingKey(): void {
         this.isBonusGradingKeyCollapsed = !this.isBonusGradingKeyCollapsed;
+    }
+
+    private updateDisplayGradeKeyBesideTable() {
+        const windowWidth = window.innerWidth;
+        const isSmallWidth = windowWidth < MINIMUM_SIZE_TO_DISPLAY_GRADING_KEYS_BESIDES_TABLE_IN_PX;
+
+        this.displayGradeKeysBesideTable = !isSmallWidth;
     }
 }

@@ -2,9 +2,9 @@
     <h3>
         {{ 'artemisApp.exam.examSummary.points.overview' | artemisTranslate }}
     </h3>
-    <div class="exam-points-summary-container d-flex">
+    <div class="exam-points-summary-container" [class.d-flex]="displayGradeKeysBesideTable">
         <div>
-            <table class="table table-striped table-hover w-auto" id="result-overview-table" style="white-space: nowrap">
+            <table class="table table-striped table-hover w-auto" id="result-overview-table">
                 <thead>
                     <tr>
                         <th scope="col">#</th>
