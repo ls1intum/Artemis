@@ -6,6 +6,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -27,6 +29,7 @@ export enum DetailType {
     Boolean,
     Markdown,
     GradingCriteria,
+    ModelingEditor,
     ProgrammingIrisEnabled,
     ProgrammingRepositoryButtons,
     ProgrammingAuxiliaryRepositoryButtons,
@@ -57,7 +60,11 @@ export class DetailOverviewListComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faEye = faEye;
 
-    constructor(private modalService: NgbModal) {}
+    constructor(
+        private modalService: NgbModal,
+        private modelingExerciseService: ModelingExerciseService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit() {
         this.headlines = this.sections.map((section) => {
@@ -75,5 +82,15 @@ export class DetailOverviewListComponent implements OnInit {
     showGitDiff(gitDiff: ProgrammingExerciseGitDiffReport) {
         const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
         modalRef.componentInstance.report = gitDiff;
+    }
+
+    downloadApollonDiagramAsPDf(umlModel: string, title: string) {
+        if (umlModel) {
+            this.modelingExerciseService.convertToPdf(umlModel, `${title}-example-solution`).subscribe({
+                error: () => {
+                    this.alertService.error('artemisApp.modelingExercise.apollonConversion.error');
+                },
+            });
+        }
     }
 }

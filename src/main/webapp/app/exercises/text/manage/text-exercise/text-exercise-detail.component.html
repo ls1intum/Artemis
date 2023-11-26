@@ -13,10 +13,6 @@
                     [course]="course!"
                     [exercise]="textExercise"
                 ></jhi-non-programming-exercise-detail-common-actions>
-                <!-- Check Plagiarism -->
-                <a *ngIf="textExercise.isAtLeastEditor" class="btn btn-outline-primary btn-sm me-1" id="check-plagiarism-download" routerLink="plagiarism">
-                    <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Check Plagiarism</span>
-                </a>
             </div>
             <div *ngIf="!textExercise.releaseDate || dayjs(textExercise.releaseDate).isBefore(dayjs())" class="mt-3">
                 <jhi-exercise-detail-statistics

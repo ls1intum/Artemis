@@ -17,6 +17,15 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import {
+    getExerciseGeneralDetailsSection,
+    getExerciseGradingDefaultDetails,
+    getExerciseGradingInstructionsCriteriaDetails,
+    getExerciseModeDetailSection,
+    getExerciseProblemDetailSection,
+} from 'app/exercises/shared/utils';
+import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -25,8 +34,8 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly documentationType: DocumentationType = 'Model';
     readonly ExerciseType = ExerciseType;
-
     readonly dayjs = dayjs;
+
     modelingExercise: ModelingExercise;
     course: Course | undefined;
     private subscription: Subscription;
@@ -36,6 +45,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     exampleSolution: SafeHtml;
     exampleSolutionUML: UMLModel;
     numberOfClusters: number;
+    detailOverviewSections: DetailOverviewSection[];
 
     doughnutStats: ExerciseManagementStatisticsDto;
     isExamExercise: boolean;
@@ -46,6 +56,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     constructor(
         private eventManager: EventManager,
         private modelingExerciseService: ModelingExerciseService,
+        private exerciseService: ExerciseService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
         private alertService: AlertService,
@@ -57,15 +68,15 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.isAdmin = this.accountService.isAdmin();
         this.subscription = this.route.params.subscribe((params) => {
-            this.load(params['exerciseId']);
+            // Checks if the current environment includes "apollon" profile
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                if (profileInfo && profileInfo.activeProfiles.includes('apollon')) {
+                    this.isApollonProfileActive = true;
+                }
+                this.load(params['exerciseId']);
+            });
         });
         this.registerChangeInModelingExercises();
-        // Checks if the current environment includes "apollon" profile
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo && profileInfo.activeProfiles.includes('apollon')) {
-                this.isApollonProfileActive = true;
-            }
-        });
     }
 
     load(exerciseId: number) {
@@ -79,6 +90,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             if (this.modelingExercise.exampleSolutionModel && this.modelingExercise.exampleSolutionModel !== '') {
                 this.exampleSolutionUML = JSON.parse(this.modelingExercise.exampleSolutionModel);
             }
+            this.detailOverviewSections = this.getExerciseDetailSections();
         });
         this.statisticsService.getExerciseStatistics(exerciseId).subscribe((statistics: ExerciseManagementStatisticsDto) => {
             this.doughnutStats = statistics;
@@ -88,15 +100,47 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    downloadAsPDf() {
-        const model = this.modelingExercise.exampleSolutionModel;
-        if (model) {
-            this.modelingExerciseService.convertToPdf(model, `${this.modelingExercise.title}-example-solution`).subscribe({
-                error: () => {
-                    this.alertService.error('artemisApp.modelingExercise.apollonConversion.error');
-                },
-            });
-        }
+    getExerciseDetailSections() {
+        const exercise = this.modelingExercise;
+        const generalSection = getExerciseGeneralDetailsSection(exercise);
+        const modeSection = getExerciseModeDetailSection(exercise);
+        const problemSection = getExerciseProblemDetailSection(this.problemStatement);
+        const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise, this.exerciseService);
+        const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.gradingInstructions);
+        return [
+            generalSection,
+            modeSection,
+            problemSection,
+            {
+                headline: 'artemisApp.exercise.sections.solution',
+                details: [
+                    {
+                        type: DetailType.ModelingEditor,
+                        title: 'artemisApp.exercise.sections.solution',
+                        data: { umlModel: this.exampleSolutionUML, diagramType: exercise.diagramType, title: exercise.title, isApollonProfileActive: this.isApollonProfileActive },
+                    },
+                    {
+                        title: 'artemisApp.modelingExercise.exampleSolutionExplanation',
+                        type: DetailType.Markdown,
+                        data: { innerHtml: this.exampleSolution },
+                    },
+                    {
+                        title: 'artemisApp.exercise.exampleSolutionPublicationDate',
+                        type: DetailType.Date,
+                        data: { date: exercise.exampleSolutionPublicationDate },
+                    },
+                ],
+            },
+            {
+                headline: 'artemisApp.exercise.sections.grading',
+                details: [
+                    ...defaultGradingDetails,
+                    { type: DetailType.Text, title: 'artemisApp.modelingExercise.diagramType', data: { text: exercise.diagramType } },
+                    ...gradingInstructionsCriteriaDetails,
+                    this.isAdmin && { type: DetailType.Text, title: 'artemisApp.modelingExercise.checkClusters.text', data: { text: this.numberOfClusters } },
+                ].filter(Boolean),
+            },
+        ] as DetailOverviewSection[];
     }
 
     ngOnDestroy() {
@@ -141,6 +185,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
             this.modelingExerciseService.getNumberOfClusters(exerciseId).subscribe({
                 next: (res) => {
                     this.numberOfClusters = res?.body || 0;
+                    this.detailOverviewSections = this.modelingExercise && this.getExerciseDetailSections();
                 },
                 error: () => {
                     this.alertService.error('artemisApp.modelingExercise.checkClusters.error');

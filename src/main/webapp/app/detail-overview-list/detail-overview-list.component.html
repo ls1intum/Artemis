@@ -180,6 +180,24 @@
                 <dd *ngSwitchCase="DetailType.ProgrammingIrisEnabled">
                     <jhi-iris-enabled [exercise]="detail.data.exercise" [irisSubSettingsType]="CHAT" [disabled]="!detail.data.isAtLeastInstructor"></jhi-iris-enabled>
                 </dd>
+                <dd *ngSwitchCase="DetailType.ModelingEditor">
+                    <button
+                        *ngIf="!!detail.data.umlModel?.elements?.length && detail.data.isApollonProfileActive"
+                        (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"
+                        class="btn btn-primary m-2"
+                        jhiTranslate="entity.action.export"
+                    >
+                        Export
+                    </button>
+                    <jhi-modeling-editor
+                        class="editor-outline-background"
+                        *ngIf="!!detail.data.umlModel?.elements?.length"
+                        [readOnly]="true"
+                        [diagramType]="detail.data.diagramType!"
+                        [umlModel]="detail.data.umlModel!"
+                    />
+                    <span *ngIf="!detail.data.umlModel?.elements?.length">-</span>
+                </dd>
             </ng-container>
         </ng-container>
     </dl>

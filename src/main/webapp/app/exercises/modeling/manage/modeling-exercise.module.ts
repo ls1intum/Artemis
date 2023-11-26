@@ -25,6 +25,7 @@ import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercis
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
 
 @NgModule({
     imports: [
@@ -51,6 +52,7 @@ import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,
         ExerciseUpdatePlagiarismModule,
+        DetailModule,
     ],
     declarations: [ModelingExerciseComponent, ModelingExerciseDetailComponent, ModelingExerciseUpdateComponent],
     exports: [ModelingExerciseComponent],

@@ -1,17 +1,19 @@
 <form name="editForm markdown-preview" role="form" novalidate #editForm="ngForm">
     <div class="d-flex align-items-center">
         <div>
-            <h4 *ngIf="!modelingExercise.id" id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel">
+            <h2 *ngIf="!modelingExercise.id" id="jhi-modeling-exercise-heading-create" jhiTranslate="artemisApp.modelingExercise.home.createLabel">
                 Create a new Modeling Exercise
-            </h4>
-            <h4 *ngIf="!isImport && modelingExercise.id" id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel">
+            </h2>
+            <h2 *ngIf="!isImport && modelingExercise.id" id="jhi-modeling-exercise-heading-edit" jhiTranslate="artemisApp.modelingExercise.home.editLabel">
                 Edit a Modeling Exercise
-            </h4>
-            <h4 *ngIf="isImport" id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel">Import Modeling Exercise</h4>
+            </h2>
+            <h2 *ngIf="isImport" id="jhi-modeling-exercise-heading-import" jhiTranslate="artemisApp.modelingExercise.home.importLabel">Import Modeling Exercise</h2>
         </div>
         <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
     </div>
+    <hr />
     <div>
+        <h3 jhiTranslate="artemisApp.exercise.sections.general">General Information</h3>
         <div class="form-group" [hidden]="!modelingExercise.id">
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id" [(ngModel)]="modelingExercise.id" readonly />
@@ -27,6 +29,7 @@
             <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
             <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
         </div>
+        <h3 jhiTranslate="artemisApp.exercise.sections.mode">Mode</h3>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
             <div>
@@ -34,6 +37,46 @@
             </div>
         </div>
         <jhi-team-config-form-group class="form-element" [exercise]="modelingExercise" [isImport]="isImport"></jhi-team-config-form-group>
+        <h3 jhiTranslate="artemisApp.exercise.sections.problem">Problem Statement</h3>
+        <div class="form-group" name="problemStatement" id="field_problemStatement">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
+            <jhi-markdown-editor
+                class="markdown-editor background-editor-color"
+                [domainCommands]="domainCommandsProblemStatement"
+                [(markdown)]="modelingExercise.problemStatement"
+                [editorMode]="EditorMode.LATEX"
+            ></jhi-markdown-editor>
+        </div>
+        <h3 jhiTranslate="artemisApp.exercise.sections.solution">Example Solution</h3>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolution">Example Solution</label>
+            <jhi-modeling-editor [diagramType]="modelingExercise.diagramType" [umlModel]="exampleSolution" [withExplanation]="false"></jhi-modeling-editor>
+        </div>
+        <div *ngIf="!isImport" class="form-group" name="exampleSolutionExplanation" id="field_exampleSolutionExplanation">
+            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolutionExplanation" for="field_exampleSolutionExplanation">
+                Example Solution Explanation
+            </label>
+            <jhi-markdown-editor
+                class="markdown-editor background-editor-color"
+                [domainCommands]="domainCommandsSampleSolution"
+                [(markdown)]="modelingExercise.exampleSolutionExplanation"
+                [editorMode]="EditorMode.LATEX"
+            ></jhi-markdown-editor>
+        </div>
+        <div class="form-group" *ngIf="!isExamMode">
+            <jhi-date-time-picker
+                class="form-element"
+                name="exampleSolutionPublicationDate"
+                labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
+                [(ngModel)]="modelingExercise.exampleSolutionPublicationDate"
+                [error]="modelingExercise.exampleSolutionPublicationDateError!"
+                (valueChange)="validateDate()"
+            ></jhi-date-time-picker>
+            <span *ngIf="modelingExercise.exampleSolutionPublicationDateError" class="invalid-feedback">
+                {{ 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate }}
+            </span>
+        </div>
+        <h3 jhiTranslate="artemisApp.exercise.sections.grading">Grading</h3>
         <div class="d-flex" *ngIf="!isExamMode">
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker
@@ -175,51 +218,18 @@
                     name="automaticAssessmentEnabled"
                     [disabled]="isImport"
                 />
-                <label class="form-check-label custom-control-label" for="automatic_assessment_enabled" jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled"></label>
+                <label
+                    class="form-check-label custom-control-label"
+                    for="automatic_assessment_enabled"
+                    jhiTranslate="artemisApp.modelingExercise.automaticAssessmentEnabled"
+                ></label>
             </div>
         </div>
         <jhi-exercise-update-plagiarism *ngIf="!isExamMode" [exercise]="modelingExercise"> </jhi-exercise-update-plagiarism>
         <jhi-presentation-score-checkbox [exercise]="modelingExercise"></jhi-presentation-score-checkbox>
-        <div class="form-group" name="problemStatement" id="field_problemStatement">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
-            <jhi-markdown-editor
-                class="markdown-editor background-editor-color"
-                [domainCommands]="domainCommandsProblemStatement"
-                [(markdown)]="modelingExercise.problemStatement"
-                [editorMode]="EditorMode.LATEX"
-            ></jhi-markdown-editor>
-        </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="modelingExercise"></jhi-grading-instructions-details>
-        </div>
-        <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolution">Example Solution</label>
-            <jhi-modeling-editor [diagramType]="modelingExercise.diagramType" [umlModel]="exampleSolution" [withExplanation]="false"></jhi-modeling-editor>
-        </div>
-        <div *ngIf="!isImport" class="form-group" name="exampleSolutionExplanation" id="field_exampleSolutionExplanation">
-            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolutionExplanation" for="field_exampleSolutionExplanation">
-                Example Solution Explanation
-            </label>
-            <jhi-markdown-editor
-                class="markdown-editor background-editor-color"
-                [domainCommands]="domainCommandsSampleSolution"
-                [(markdown)]="modelingExercise.exampleSolutionExplanation"
-                [editorMode]="EditorMode.LATEX"
-            ></jhi-markdown-editor>
-        </div>
-        <div class="form-group" *ngIf="!isExamMode">
-            <jhi-date-time-picker
-                class="form-element"
-                name="exampleSolutionPublicationDate"
-                labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
-                [(ngModel)]="modelingExercise.exampleSolutionPublicationDate"
-                [error]="modelingExercise.exampleSolutionPublicationDateError!"
-                (valueChange)="validateDate()"
-            ></jhi-date-time-picker>
-            <span *ngIf="modelingExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
-                'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
-            }}</span>
         </div>
         <div class="form-group" *ngIf="!isExamMode">
             <jhi-competency-selection

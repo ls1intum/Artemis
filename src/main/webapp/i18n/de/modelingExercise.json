@@ -13,6 +13,7 @@
             "detail": {
                 "title": "Modellierungsaufgabe"
             },
+            "automaticAssessmentEnabled": "Aktiviere automatische Bewertung",
             "diagramType": "Diagrammtyp",
             "problemStatement": "Aufgabenstellung:",
             "exampleSolution": "Beispiellösung",
