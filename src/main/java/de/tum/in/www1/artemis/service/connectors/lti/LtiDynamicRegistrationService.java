@@ -53,7 +53,7 @@ public class LtiDynamicRegistrationService {
         // Get platform's configuration
         Lti13PlatformConfiguration platformConfiguration = getLti13PlatformConfiguration(openIdConfigurationUrl);
 
-        String clientRegistrationId = "artemis" + UUID.randomUUID().toString();
+        String clientRegistrationId = "artemis-" + UUID.randomUUID().toString();
 
         if (platformConfiguration.getAuthorizationEndpoint() == null || platformConfiguration.getTokenEndpoint() == null || platformConfiguration.getJwksUri() == null
                 || platformConfiguration.getRegistrationEndpoint() == null) {

@@ -27,7 +27,7 @@ public class LtiPlatformConfiguration extends DomainObject {
     @Column(name = "authorization_uri")
     private String authorizationUri;
 
-    @Column(name = "jkw_set_uri")
+    @Column(name = "jwk_set_uri")
     private String jwkSetUri;
 
     @Column(name = "token_uri")

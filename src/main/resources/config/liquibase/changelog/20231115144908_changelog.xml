@@ -12,7 +12,7 @@
             <column name="client_id" type="varchar(255)"/>
             <column name="issuer" type="varchar(255)"/>
             <column name="authorization_uri" type="varchar(255)"/>
-            <column name="jkw_set_uri" type="varchar(255)"/>
+            <column name="jwk_set_uri" type="varchar(255)"/>
             <column name="token_uri" type="varchar(255)"/>
         </createTable>
         <!-- Remove the columns that are no longer present in the entity -->
