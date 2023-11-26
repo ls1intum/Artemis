@@ -374,6 +374,17 @@ public class Feedback extends DomainObject {
     }
 
     /**
+     * Checks whether the feedback was given manually by a tutor.
+     * (This includes feedback that is automatically created by Athena and approved by tutors.)
+     *
+     * @return true if it is a manual feedback else false
+     */
+    @JsonIgnore
+    public boolean isManualFeedback() {
+        return this.type == FeedbackType.MANUAL || this.type == FeedbackType.MANUAL_UNREFERENCED;
+    }
+
+    /**
      * Returns the Artemis static code analysis category to which this feedback belongs. The method returns an empty
      * String, if the feedback is not static code analysis feedback.
      *

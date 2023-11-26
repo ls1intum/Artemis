@@ -64,6 +64,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
+    private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
     private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
@@ -124,7 +127,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         exerciseRepo.save(textExercise);
         // every test indirectly uses the submission selection in Athena, so we mock it here
         athenaRequestMockProvider.enableMockingOfRequests();
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(0); // always select the first submission
+        athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", 0); // always select the first submission
     }
 
     @AfterEach
@@ -936,6 +939,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTextBlocksAreConsistentWhenOpeningSameAssessmentTwiceWithAthenaEnabled() throws Exception {
+        textExercise.setFeedbackSuggestionsEnabled(true);
+        textExerciseRepository.save(textExercise);
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         exerciseDueDatePassed();
