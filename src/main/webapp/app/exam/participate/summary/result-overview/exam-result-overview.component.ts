@@ -19,6 +19,7 @@ type ExerciseInfo = {
 };
 
 const MINIMUM_SIZE_TO_DISPLAY_GRADING_KEYS_BESIDES_TABLE_IN_PX = 1028;
+const MINIMUM_SIZE_TO_ALIGN_GRADE_RIGHT_IN_PX = 600;
 
 @Component({
     selector: 'jhi-exam-result-overview',
@@ -64,6 +65,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     showResultOverview = false;
 
     displayGradeKeysBesideTable = false;
+    alignFinalGradeRight = true;
 
     constructor(
         private serverDateService: ArtemisServerDateService,
@@ -77,16 +79,21 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         }
 
         this.updateLocalVariables();
-        this.updateDisplayGradeKeyBesideTable();
+        this.updateResponsivenessVariables();
     }
 
     @HostListener('window:resize', ['$event'])
     onResize() {
-        this.updateDisplayGradeKeyBesideTable();
+        this.updateResponsivenessVariables();
     }
 
     ngOnChanges() {
         this.updateLocalVariables();
+    }
+
+    private updateResponsivenessVariables() {
+        this.updateDisplayGradeKeyBesideTable();
+        this.updateAlignFinalGradeRight();
     }
 
     private areResultsPublished() {
@@ -238,5 +245,12 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         const isSmallWidth = windowWidth < MINIMUM_SIZE_TO_DISPLAY_GRADING_KEYS_BESIDES_TABLE_IN_PX;
 
         this.displayGradeKeysBesideTable = !isSmallWidth;
+    }
+
+    private updateAlignFinalGradeRight() {
+        const windowWidth = window.innerWidth;
+        const isWidthWhereTableOverflows = windowWidth < MINIMUM_SIZE_TO_ALIGN_GRADE_RIGHT_IN_PX;
+
+        this.alignFinalGradeRight = !isWidthWhereTableOverflows;
     }
 }
