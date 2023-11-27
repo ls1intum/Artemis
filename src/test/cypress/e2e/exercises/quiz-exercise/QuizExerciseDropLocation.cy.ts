@@ -38,7 +38,6 @@ describe('Quiz Exercise Drop Location Spec', () => {
 
             quizExerciseDragAndDropQuiz.generateQuizExercise();
             quizExerciseDragAndDropQuiz.waitForQuizExerciseToBeGenerated();
-            quizExerciseCreation.saveQuiz();
 
             cy.visit(`/course-management/${course.id}/exercises`);
             quizExerciseDragAndDropQuiz.previewQuiz();
