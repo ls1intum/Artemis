@@ -21,8 +21,9 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 
-describe('ModelingExercise Management Update Component', () => {
+describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
     let fixture: ComponentFixture<ModelingExerciseUpdateComponent>;
     let service: ModelingExerciseService;
@@ -125,10 +126,10 @@ describe('ModelingExercise Management Update Component', () => {
         modelingExercise.dueDate = dayjs();
         modelingExercise.assessmentDueDate = dayjs();
         modelingExercise.channelName = 'test';
-        const courseId = 1;
+        const courseIdImportingCourse = 1;
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ courseId });
+            route.params = of({ courseId: courseIdImportingCourse });
             route.url = of([{ path: 'import' } as UrlSegment]);
             route.data = of({ modelingExercise });
         });
@@ -144,9 +145,17 @@ describe('ModelingExercise Management Update Component', () => {
             expect(comp.modelingExercise.assessmentDueDate).toBeUndefined();
             expect(comp.modelingExercise.releaseDate).toBeUndefined();
             expect(comp.modelingExercise.dueDate).toBeUndefined();
-            expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(course.id);
+            expect(courseService.findAllCategoriesOfCourse).toHaveBeenLastCalledWith(courseIdImportingCourse);
             expect(comp.existingCategories).toEqual(categories);
         }));
+
+        it('should load exercise categories', () => {
+            const loadExerciseCategoriesSpy = jest.spyOn(Utils, 'loadCourseExerciseCategories');
+
+            comp.ngOnInit();
+
+            expect(loadExerciseCategoriesSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('ngOnInit in import mode: Exam to Course', () => {
@@ -266,5 +275,16 @@ describe('ModelingExercise Management Update Component', () => {
         comp.isExamMode = true;
         comp.diagramTypeChanged();
         expect(comp.modelingExercise.assessmentType).toEqual(AssessmentType.SEMI_AUTOMATIC);
+    });
+
+    it('should updateCategories properly by making category available for selection again when removing it', () => {
+        comp.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        comp.exerciseCategories = [];
+        const newCategories = [{ category: 'Easy' }, { category: 'Hard' }];
+
+        comp.updateCategories(newCategories);
+
+        expect(comp.modelingExercise.categories).toEqual(newCategories);
+        expect(comp.exerciseCategories).toEqual(newCategories);
     });
 });

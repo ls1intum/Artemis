@@ -2,6 +2,7 @@ import { UndoManager, acequire } from 'brace';
 import 'brace/ext/language_tools';
 import 'brace/ext/modelist';
 import 'brace/mode/java';
+import 'brace/mode/sh';
 import 'brace/mode/markdown';
 import 'brace/mode/haskell';
 import 'brace/mode/ocaml';
@@ -31,7 +32,7 @@ import {
     ViewChildren,
     ViewEncapsulation,
 } from '@angular/core';
-import { Subscription, fromEvent } from 'rxjs';
+import { Subscription, firstValueFrom, fromEvent } from 'rxjs';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
@@ -39,7 +40,7 @@ import { RepositoryFileService } from 'app/exercises/shared/result/repository.se
 import { TextChange } from 'app/entities/text-change.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { fromPairs, pickBy } from 'lodash-es';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
 import { faCircleNotch, faPlusSquare } from '@fortawesome/free-solid-svg-icons';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
@@ -193,10 +194,9 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
             (changes.selectedFile && this.selectedFile) ||
             (changes.editorState && changes.editorState.previousValue === EditorState.REFRESHING && this.editorState === EditorState.CLEAN)
         ) {
-            // Current file has changed
-            // Only load the file from server if there is nothing stored in the editorFileSessions
-            if ((this.selectedFile && !this.fileSession[this.selectedFile]) || this.fileSession[this.selectedFile].loadingError) {
-                this.loadFile(this.selectedFile);
+            // Current selected file has changed
+            if (this.selectedFile) {
+                await this.ensureLoadedThenInitEditorIfSelected(this.selectedFile);
             } else {
                 await this.initEditor();
             }
@@ -263,35 +263,67 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     }
 
     /**
-     * Fetches the requested file by filename and opens a new editor session for it (if not yet done)
-     * @param fileName Name of the file to be opened in the editor
+     * Fetches the content of the file with the specified filename from the server.
+     * Errors must be handled by the caller with a catch block.
+     * @param fileName Name of the file to be fetched
      */
-    loadFile(fileName: string) {
-        this.isLoading = true;
-        this.repositoryFileService.getFile(fileName).subscribe({
-            next: (fileObj) => {
-                this.fileSession[fileName] = { code: fileObj.fileContent, cursor: { column: 0, row: 0 }, loadingError: false };
-                this.finalizeLoading(fileName);
-            },
-            error: (error) => {
+    async fetchFileContent(fileName: string): Promise<string> {
+        return firstValueFrom(this.repositoryFileService.getFile(fileName)).then((fileObj) => fileObj.fileContent);
+    }
+
+    /**
+     * Reloads the file with the specified filename from the server and overwrites the file session.
+     * If there is an error loading the file, the file session is still updated, but the loadingError flag is set to true.
+     * @param fileName Name of the file to be reloaded
+     */
+    async forceReloadFileContents(fileName: string) {
+        return this.fetchFileContent(fileName)
+            .then((code) => {
+                this.fileSession[fileName] = { code, cursor: { column: 0, row: 0 }, loadingError: false };
+            })
+            .catch((error) => {
                 this.fileSession[fileName] = { code: '', cursor: { column: 0, row: 0 }, loadingError: true };
                 if (error.message === ConnectionError.message) {
                     this.onError.emit('loadingFailed' + error.message);
                 } else {
                     this.onError.emit('loadingFailed');
                 }
-                this.finalizeLoading(fileName);
-            },
-        });
+            });
     }
 
-    async finalizeLoading(fileName: string) {
-        this.isLoading = false;
+    /**
+     * Ensures that the file with the specified filename exists in the file session.
+     * If it doesn't, it is fetched from the server and added to the file session.
+     * If there is an error loading the file, the file session is still updated, but the loadingError flag is set to true.
+     * @param fileName Name of the file to be loaded
+     */
+    async ensureLoadedThenInitEditorIfSelected(fileName: string): Promise<void> {
+        // If the file is not yet loaded or loading failed, fetch it from the server
+        // If the file is already loaded, we don't need to load it again
+        if (!this.fileSession[fileName] || this.fileSession[fileName].loadingError) {
+            this.isLoading = true;
+            await this.forceReloadFileContents(fileName);
+            this.isLoading = false;
+        }
+
         // Only initialize the editor if the selected file has not changed in between
         // - prevents console errors (see https://github.com/ls1intum/Artemis/pull/603)
         if (this.selectedFile === fileName) {
             await this.initEditor();
         }
+    }
+
+    async forceReloadAll(fileNames: string[]) {
+        this.isLoading = true;
+        await Promise.all(
+            fileNames.map(async (fileName) => {
+                await this.forceReloadFileContents(fileName);
+                if (this.selectedFile === fileName) {
+                    await this.initEditor();
+                }
+            }),
+        );
+        this.isLoading = false;
     }
 
     /**
@@ -411,14 +443,11 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     async onFileChange(fileChange: FileChange) {
         if (fileChange instanceof RenameFileChange) {
             this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
-            this.annotationsArray = this.annotationsArray.map((a) =>
-                a.fileName !== fileChange.oldFileName
-                    ? a
-                    : {
-                          ...a,
-                          fileName: fileChange.newFileName,
-                      },
-            );
+            for (const a of this.annotationsArray) {
+                if (a.fileName === fileChange.oldFileName) {
+                    a.fileName = fileChange.newFileName;
+                }
+            }
             this.storeAnnotations([fileChange.newFileName]);
         } else if (fileChange instanceof DeleteFileChange) {
             this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
@@ -619,9 +648,6 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
     async acceptSuggestion(feedback: Feedback) {
         this.feedbackSuggestions = this.feedbackSuggestions.filter((f) => f !== feedback); // Remove the suggestion card
         this.removeLineWidget(Feedback.getReferenceLine(feedback)!);
-        // We need to change the feedback type to "manual" because non-manual feedback is never editable in the editor
-        // and will be filtered out in all kinds of places
-        feedback.type = FeedbackType.MANUAL;
         // Change the prefix "FeedbackSuggestion:" to "FeedbackSuggestion:accepted:"
         feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_IDENTIFIER).replace(FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER);
         await this.updateFeedback(feedback); // Make it "real" feedback

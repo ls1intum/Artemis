@@ -8,14 +8,14 @@
     ],
     "devDependencies": {
         "@4tw/cypress-drag-drop": "2.2.5",
-        "@types/node": "20.8.2",
+        "@types/node": "20.9.1",
         "cypress": "12.17.4",
         "cypress-cloud": "2.0.0-beta.1",
         "cypress-file-upload": "5.0.8",
         "cypress-wait-until": "2.0.1",
         "typescript": "5.2.2",
         "uuid": "9.0.1",
-        "wait-on": "7.0.1"
+        "wait-on": "7.2.0"
     },
     "overrides": {
         "semver": "7.5.3",
@@ -30,6 +30,7 @@
         "cypress:setup": "cypress install && cypress run --quiet --spec init/ImportUsers.cy.ts",
         "cypress:record:mysql": "npx cypress-cloud run --parallel --record --ci-build-id \"${SORRY_CYPRESS_BRANCH_NAME} #${SORRY_CYPRESS_BUILD_ID} ${SORRY_CYPRESS_RERUN_COUNT} (MySQL)\"",
         "cypress:record:postgres": "npx cypress-cloud run --parallel --record --ci-build-id \"${SORRY_CYPRESS_BRANCH_NAME} #${SORRY_CYPRESS_BUILD_ID} ${SORRY_CYPRESS_RERUN_COUNT} (Postgres)\"",
-        "update": "npm-upgrade"
+        "cypress:record:local": "npx cypress-cloud run --parallel --record --ci-build-id \"${SORRY_CYPRESS_BRANCH_NAME} #${SORRY_CYPRESS_BUILD_ID} ${SORRY_CYPRESS_RERUN_COUNT} (Local)\"",
+        "update": "ncu -i --format group"
     }
 }

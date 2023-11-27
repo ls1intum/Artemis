@@ -36,6 +36,10 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     faTable = faTable;
     farListAlt = faListAlt;
 
+    protected get exercises() {
+        return this.fileUploadExercises;
+    }
+
     constructor(
         public exerciseService: ExerciseService,
         public fileUploadExerciseService: FileUploadExerciseService,

@@ -325,14 +325,21 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         if (this.assessments.length > 0) {
             return;
         }
-        this.feedbackSuggestionsObservable = this.athenaService
-            .getFeedbackSuggestionsForText(this.exercise!.id!, this.submission!.id!)
-            .subscribe((feedbackSuggestions: TextBlockRef[]) => {
-                for (const suggestion of feedbackSuggestions) {
+        this.feedbackSuggestionsObservable = this.athenaService.getTextFeedbackSuggestions(this.exercise!, this.submission!).subscribe((feedbackSuggestions) => {
+            feedbackSuggestions.forEach((suggestion) => {
+                if (suggestion instanceof TextBlockRef) {
+                    // referenced feedback suggestion - add to existing text blocks but avoid conflicts
                     this.addAutomaticTextBlockRef(suggestion);
+                } else {
+                    // unreferenced feedback suggestion - we can just add it
+                    this.result!.feedbacks ??= [];
+                    this.result!.feedbacks = [...this.result!.feedbacks, suggestion];
+                    // the unreferencedFeedback variable does not auto-update and needs to be updated manually
+                    this.unreferencedFeedback = [...this.unreferencedFeedback, suggestion];
                 }
-                this.validateFeedback();
             });
+            this.validateFeedback();
+        });
     }
 
     /**

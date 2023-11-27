@@ -45,6 +45,10 @@
     animation: cssAnimation 5s forwards;
 }
 
+.highlight-pinned {
+    background: var(--metis-pinned-post-highlight-color);
+}
+
 @keyframes cssAnimation {
     0% {
         opacity: 1;
