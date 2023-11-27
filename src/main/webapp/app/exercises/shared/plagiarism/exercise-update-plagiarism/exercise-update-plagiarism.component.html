@@ -25,8 +25,8 @@
                     id="continuous_plagiarism_control_post_due_date_checks_enabled"
                     class="plagiarism-option-checkbox form-check-input"
                     name="exercise.plagiarismDetectionConfig.continuousPlagiarismControlPostDueDateChecksEnabled"
-                    [disabled]="!exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
-                    #exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled="ngModel"
+                    [disabled]="!exercise.plagiarismDetectionConfig?.continuousPlagiarismControlEnabled"
+                    #exercise.plagiarismDetectionConfig.continuousPlagiarismControlPostDueDateChecksEnabled="ngModel"
                     [(ngModel)]="exercise.plagiarismDetectionConfig!.continuousPlagiarismControlPostDueDateChecksEnabled"
                 />
                 <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlPostDueDateChecksEnabled">
