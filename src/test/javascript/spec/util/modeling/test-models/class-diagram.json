@@ -1,16 +1,20 @@
 {
-    "version": "2.0.0",
+    "version": "3.0.0",
     "type": "ClassDiagram",
     "size": {
         "width": 1280,
         "height": 620
     },
     "interactive": {
-        "elements": ["b390a813-dad9-4d6d-b3cd-732ce99d0a23", "6f572312-066b-4678-9c03-5032f3ba9be9", "2f67120e-b491-4222-beb1-79e87c2cf54d"],
-        "relationships": ["5a9a4eb3-8281-4de4-b0f2-3e2f164574bd"]
+        "elements": {
+            "b390a813-dad9-4d6d-b3cd-732ce99d0a23": true,
+            "6f572312-066b-4678-9c03-5032f3ba9be9": true,
+            "2f67120e-b491-4222-beb1-79e87c2cf54d": true
+        },
+        "relationships": {}
     },
-    "elements": [
-        {
+    "elements": {
+        "b234e5cb-33e3-4957-ae04-f7990ce8571a": {
             "id": "b234e5cb-33e3-4957-ae04-f7990ce8571a",
             "name": "Package",
             "type": "Package",
@@ -22,7 +26,7 @@
                 "height": 310
             }
         },
-        {
+        "ccac14e5-c828-4afb-ab97-0fb2a67e77d6": {
             "id": "ccac14e5-c828-4afb-ab97-0fb2a67e77d6",
             "name": "Class In Package",
             "type": "Class",
@@ -36,7 +40,7 @@
             "attributes": ["6f572312-066b-4678-9c03-5032f3ba9be9"],
             "methods": ["11aae531-3244-4d07-8d60-b6210789ffa3"]
         },
-        {
+        "6f572312-066b-4678-9c03-5032f3ba9be9": {
             "id": "6f572312-066b-4678-9c03-5032f3ba9be9",
             "name": "+ attribute: Type",
             "type": "ClassAttribute",
@@ -48,7 +52,7 @@
                 "height": 30
             }
         },
-        {
+        "11aae531-3244-4d07-8d60-b6210789ffa3": {
             "id": "11aae531-3244-4d07-8d60-b6210789ffa3",
             "name": "+ method()",
             "type": "ClassMethod",
@@ -60,7 +64,7 @@
                 "height": 30
             }
         },
-        {
+        "2f67120e-b491-4222-beb1-79e87c2cf54d": {
             "id": "2f67120e-b491-4222-beb1-79e87c2cf54d",
             "name": "Connected Class",
             "type": "Class",
@@ -74,7 +78,7 @@
             "attributes": ["6a6aadfd-a2dd-44d7-b91a-271efba52072"],
             "methods": ["5adfa0d4-e76c-4e98-8960-08abe615ec77"]
         },
-        {
+        "6a6aadfd-a2dd-44d7-b91a-271efba52072": {
             "id": "6a6aadfd-a2dd-44d7-b91a-271efba52072",
             "name": "+ attribute: Type",
             "type": "ClassAttribute",
@@ -86,7 +90,7 @@
                 "height": 30
             }
         },
-        {
+        "5adfa0d4-e76c-4e98-8960-08abe615ec77": {
             "id": "5adfa0d4-e76c-4e98-8960-08abe615ec77",
             "name": "+ method()",
             "type": "ClassMethod",
@@ -98,7 +102,7 @@
                 "height": 30
             }
         },
-        {
+        "e0dad7e7-f67b-4e4a-8845-6c5d801ea9ca": {
             "id": "e0dad7e7-f67b-4e4a-8845-6c5d801ea9ca",
             "name": "Sibling 2",
             "type": "Class",
@@ -112,7 +116,7 @@
             "attributes": ["fea23cbc-8df0-4dcc-9d7a-eb86fbb2ce9d"],
             "methods": ["3e0d47e6-7491-49ce-a8bb-ce1fc4f022d0"]
         },
-        {
+        "fea23cbc-8df0-4dcc-9d7a-eb86fbb2ce9d": {
             "id": "fea23cbc-8df0-4dcc-9d7a-eb86fbb2ce9d",
             "name": "+ attribute: Type",
             "type": "ClassAttribute",
@@ -124,7 +128,7 @@
                 "height": 30
             }
         },
-        {
+        "3e0d47e6-7491-49ce-a8bb-ce1fc4f022d0": {
             "id": "3e0d47e6-7491-49ce-a8bb-ce1fc4f022d0",
             "name": "+ method()",
             "type": "ClassMethod",
@@ -136,7 +140,7 @@
                 "height": 30
             }
         },
-        {
+        "d8b00149-7cf9-466b-8add-8d3274f84010": {
             "id": "d8b00149-7cf9-466b-8add-8d3274f84010",
             "name": "Sibling 1",
             "type": "Class",
@@ -150,7 +154,7 @@
             "attributes": ["593e9ae3-a516-4322-b54f-e07c57729e01"],
             "methods": ["b390a813-dad9-4d6d-b3cd-732ce99d0a23"]
         },
-        {
+        "593e9ae3-a516-4322-b54f-e07c57729e01": {
             "id": "593e9ae3-a516-4322-b54f-e07c57729e01",
             "name": "+ attribute: Type",
             "type": "ClassAttribute",
@@ -162,7 +166,7 @@
                 "height": 30
             }
         },
-        {
+        "b390a813-dad9-4d6d-b3cd-732ce99d0a23": {
             "id": "b390a813-dad9-4d6d-b3cd-732ce99d0a23",
             "name": "+ method()",
             "type": "ClassMethod",
@@ -174,9 +178,9 @@
                 "height": 30
             }
         }
-    ],
-    "relationships": [
-        {
+    },
+    "relationships": {
+        "5a9a4eb3-8281-4de4-b0f2-3e2f164574bd": {
             "id": "5a9a4eb3-8281-4de4-b0f2-3e2f164574bd",
             "name": "",
             "type": "ClassBidirectional",
@@ -218,7 +222,7 @@
                 "role": ""
             }
         },
-        {
+        "7c4746e0-aeaa-444e-9412-0996c24e6479": {
             "id": "7c4746e0-aeaa-444e-9412-0996c24e6479",
             "name": "",
             "type": "ClassBidirectional",
@@ -260,6 +264,6 @@
                 "role": ""
             }
         }
-    ],
-    "assessments": []
+    },
+    "assessments": {}
 }
