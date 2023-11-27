@@ -73,7 +73,7 @@ Re-Configure the `config.ini`
 
 1. Adjust `server_url` and `client_url` according to the test server
 2. Make sure to upate `admin_user` and `admin_password` to valid values for the test server
-3. As we are interacting with the test servers set `is_local_course` in `config.ini` to `False`
+3. As we are interacting with the test servers, set `is_local_course` in `config.ini` to `False`
 
 #### Create a course and assign the default users
 
