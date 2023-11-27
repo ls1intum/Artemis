@@ -218,7 +218,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Nested
-    class GetStudentExamGradesForSummary {
+    class GetStudentExamGradesForSummaryTest {
 
         private static final int NUMBER_OF_STUDENTS = 1;
 
