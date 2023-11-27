@@ -9,6 +9,7 @@ import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
 import { IrisModel } from 'app/entities/iris/settings/iris-model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
+import { IrisChatSubSettings, IrisCodeEditorSubSettings, IrisHestiaSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 
 @Component({
     selector: 'jhi-iris-settings-update',
@@ -80,6 +81,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 this.alertService.error('artemisApp.iris.settings.error.noSettings');
             }
             this.irisSettings = settings;
+            this.fillEmptyIrisSubSettings();
             this.originalIrisSettings = cloneDeep(settings);
             this.isDirty = false;
         });
@@ -91,6 +93,21 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         });
     }
 
+    fillEmptyIrisSubSettings(): void {
+        if (!this.irisSettings) {
+            return;
+        }
+        if (!this.irisSettings.irisChatSettings) {
+            this.irisSettings.irisChatSettings = new IrisChatSubSettings();
+        }
+        if (!this.irisSettings.irisHestiaSettings) {
+            this.irisSettings.irisHestiaSettings = new IrisHestiaSubSettings();
+        }
+        if (!this.irisSettings.irisCodeEditorSettings) {
+            this.irisSettings.irisCodeEditorSettings = new IrisCodeEditorSubSettings();
+        }
+    }
+
     saveIrisSettings(): void {
         this.isSaving = true;
         this.saveIrisSettingsObservable().subscribe(
@@ -98,6 +115,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
                 this.isSaving = false;
                 this.isDirty = false;
                 this.irisSettings = response.body ?? undefined;
+                this.fillEmptyIrisSubSettings();
                 this.originalIrisSettings = cloneDeep(this.irisSettings);
                 this.alertService.success('artemisApp.iris.settings.success');
             },
