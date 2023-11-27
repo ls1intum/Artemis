@@ -40,7 +40,7 @@ public class ConversationParticipant extends DomainObject {
     private Boolean isHidden;
 
     @Column(name = "is_muted")
-    private Boolean isMuted;
+    private boolean isMuted;
 
     @Column(name = "last_read")
     private ZonedDateTime lastRead;
@@ -131,11 +131,11 @@ public class ConversationParticipant extends DomainObject {
         isHidden = hidden;
     }
 
-    public Boolean getIsMuted() {
+    public boolean getIsMuted() {
         return isMuted;
     }
 
-    public void setIsMuted(Boolean isMuted) {
+    public void setIsMuted(boolean isMuted) {
         this.isMuted = isMuted;
     }
 }
