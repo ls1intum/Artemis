@@ -60,7 +60,7 @@ python3 create_users.py
 
 ##### Authenticate users
 
-If the users have already been created they still need to be logged in order to be added to a
+If the users have already been created, they still need to be logged in order to be added to a
 course _(without a first login Artemis does not know that the users exist)_
 
 ```shell
