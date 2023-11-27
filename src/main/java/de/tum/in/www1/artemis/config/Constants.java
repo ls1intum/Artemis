@@ -65,6 +65,8 @@ public final class Constants {
 
     public static final String APOLLON_CONVERSION_API_PATH = "/api/apollon/convert-to-pdf";
 
+    public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/public/athena/programming-exercises/";
+
     // short names should have at least 3 characters and must start with a letter
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
 
@@ -311,6 +313,11 @@ public final class Constants {
      * The name of the topic for notifying the client about changes in the exam working time.
      */
     public static final String STUDENT_WORKING_TIME_CHANGE_DURING_CONDUCTION_TOPIC = "/topic/studentExams/%s/working-time-change-during-conduction";
+
+    /**
+     * The value of the version field we send with each push notification to the native clients (Android & iOS).
+     */
+    public static final int PUSH_NOTIFICATION_VERSION = 1;
 
     private Constants() {
     }

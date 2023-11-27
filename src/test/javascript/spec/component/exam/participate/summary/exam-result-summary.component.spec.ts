@@ -54,10 +54,13 @@ import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/participa
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
+import * as Utils from 'app/shared/util/utils';
+import * as ExamUtils from 'app/exam/participate/exam.utils';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
 let artemisServerDateService: ArtemisServerDateService;
+let examParticipationService: ExamParticipationService;
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -196,6 +199,7 @@ function sharedSetup(url: string[]) {
                 component = fixture.componentInstance;
                 component.studentExam = studentExam;
                 artemisServerDateService = TestBed.inject(ArtemisServerDateService);
+                examParticipationService = TestBed.inject(ExamParticipationService);
             });
     });
 
@@ -237,9 +241,10 @@ describe('ExamResultSummaryComponent', () => {
         fixture.detectChanges();
 
         const courseId = 1;
-        expect(serviceSpy).toHaveBeenCalledOnce();
-        expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.user!.id);
+        const isTestRun = false;
         expect(component.studentExam).toEqual(studentExam);
+        expect(serviceSpy).toHaveBeenCalledOnce();
+        expect(serviceSpy).toHaveBeenCalledWith(courseId, studentExam.exam!.id, studentExam.user!.id, isTestRun);
         expect(component.studentExamGradeInfoDTO).toEqual({ ...gradeInfo, studentExam });
     });
 
@@ -371,6 +376,17 @@ describe('ExamResultSummaryComponent', () => {
         expect(component.resultsArePublished).toBeFalse();
     });
 
+    it('should load exam summary when results are published', () => {
+        component.studentExam = studentExam;
+        const loadStudentExamGradeInfoForSummarySpy = jest.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
+        const isExamResultPublishedSpy = jest.spyOn(ExamUtils, 'isExamResultPublished').mockReturnValue(true);
+
+        component.ngOnInit();
+
+        expect(isExamResultPublishedSpy).toHaveBeenCalledOnce();
+        expect(loadStudentExamGradeInfoForSummarySpy).toHaveBeenCalledOnce();
+    });
+
     it('should correctly determine if it is after student review start', () => {
         const now = dayjs();
         const dateSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
@@ -480,16 +496,16 @@ describe('ExamResultSummaryComponent', () => {
         const EXAM_SUMMARY_RESULT_OVERVIEW_ID = 'exam-summary-result-overview';
 
         it('should scroll to top when overview is not displayed', () => {
-            const scrollToSpy = jest.spyOn(window, 'scrollTo');
+            const scrollToSpy = jest.spyOn(Utils, 'scrollToTopOfPage');
 
             const button = fixture.debugElement.nativeElement.querySelector('#' + BACK_TO_OVERVIEW_BUTTON_ID);
             button.click();
 
-            expect(scrollToSpy).toHaveBeenCalledWith(0, 0);
+            expect(scrollToSpy).toHaveBeenCalledOnce();
         });
 
         it('should scroll to overview when it is displayed', () => {
-            const scrollToSpy = jest.spyOn(window, 'scrollTo');
+            const scrollToSpy = jest.spyOn(Utils, 'scrollToTopOfPage');
             const scrollIntoViewSpy = jest.fn();
 
             const getElementByIdMock = jest.spyOn(document, 'getElementById').mockReturnValue({

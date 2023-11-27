@@ -14,6 +14,8 @@ elif [ "$DB" = "mysql" ]; then
   COMPOSE_FILE="cypress-E2E-tests-mysql.yml"
 elif [ "$DB" = "postgres" ]; then
   COMPOSE_FILE="cypress-E2E-tests-postgres.yml"
+elif [ "$DB" = "local" ]; then
+  COMPOSE_FILE="cypress-E2E-tests-local.yml"
 else
   echo "Invalid database type. Please choose either mysql or postgres."
   exit 1

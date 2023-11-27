@@ -34,6 +34,8 @@ public class ExamSubmissionService {
 
     private final ExamRepository examRepository;
 
+    private static final boolean IS_TEST_RUN = false;
+
     public ExamSubmissionService(StudentExamRepository studentExamRepository, ExamRepository examRepository, ParticipationService participationService,
             AuthorizationCheckService authorizationCheckService) {
         this.studentExamRepository = studentExamRepository;
@@ -70,7 +72,7 @@ public class ExamSubmissionService {
             // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
             // Step 1: Find real exam
-            Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
+            Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId(), IS_TEST_RUN);
             if (optionalStudentExam.isEmpty()) {
                 // Step 2: Find latest (=the highest id) unsubmitted test exam
                 optionalStudentExam = studentExamRepository.findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(exam.getId(), user.getId()).stream()

@@ -215,7 +215,6 @@ public class CourseResource {
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
         courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
-        courseUpdate.setIrisSettings(existingCourse.getIrisSettings());
 
         courseUpdate.validateEnrollmentConfirmationMessage();
         courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();
@@ -453,19 +452,18 @@ public class CourseResource {
      * GET /courses/{courseId}/for-dashboard
      *
      * @param courseId the courseId for which exercises, lectures, exams and competencies should be fetched
-     * @param refresh  if true, this request was initiated by the user clicking on a refresh button
      * @return a DTO containing a course with all exercises, lectures, exams, competencies, etc. visible to the user as well as the total scores for the course, the scores per
      *         exercise type for each exercise, and the participation result for each participation.
      */
     // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
     @EnforceAtLeastStudent
-    public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean refresh) {
+    public ResponseEntity<CourseForDashboardDTO> getCourseForDashboard(@PathVariable long courseId) {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(courseId, user, refresh);
+        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(courseId, user);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             // user might be allowed to enroll in the course
             // We need the course with organizations so that we can check if the user is allowed to enroll
@@ -487,7 +485,7 @@ public class CourseResource {
         GradingScale gradingScale = gradingScaleRepository.findByCourseId(course.getId()).orElse(null);
 
         CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
-        logDuration(List.of(course), user, timeNanoStart);
+        logDuration(List.of(course), user, timeNanoStart, "courses/" + courseId + "/for-dashboard (single course)");
         return ResponseEntity.ok(courseForDashboardDTO);
     }
 
@@ -517,18 +515,18 @@ public class CourseResource {
             CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, gradingScale, user.getId());
             coursesForDashboard.add(courseForDashboardDTO);
         }
-        logDuration(courses, user, timeNanoStart);
+        logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
         return coursesForDashboard;
     }
 
-    private void logDuration(List<Course> courses, User user, long timeNanoStart) {
+    private void logDuration(List<Course> courses, User user, long timeNanoStart, String path) {
         if (log.isInfoEnabled()) {
             Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
             Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
             int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
             int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
             int noOfExams = courses.stream().mapToInt(course -> course.getExams().size()).sum();
-            log.info("/courses/for-dashboard finished in {} for {} courses with {} individual exercise(s), {} team exercise(s), and {} exam(s) for user {}",
+            log.info("{} finished in {} for {} courses with {} individual exercise(s), {} team exercise(s), and {} exam(s) for user {}", path,
                     TimeLogUtil.formatDurationFrom(timeNanoStart), courses.size(), noOfIndividualExercises, noOfTeamExercises, noOfExams, user.getLogin());
         }
     }

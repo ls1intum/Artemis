@@ -213,3 +213,4 @@ data-exports/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/local-ci-scripts

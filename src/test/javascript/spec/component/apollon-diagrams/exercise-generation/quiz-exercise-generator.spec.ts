@@ -68,6 +68,12 @@ describe('QuizExercise Generator', () => {
         // @ts-ignore
         const classDiagram: UMLModel = testClassDiagram as UMLModel;
         const interactiveElements: Selection = classDiagram.interactive;
+        const selectedElements = Object.entries(interactiveElements.elements)
+            .filter(([, include]) => include)
+            .map(([id]) => id);
+        const selectedRelationships = Object.entries(interactiveElements.relationships)
+            .filter(([, include]) => include)
+            .map(([id]) => id);
         const exerciseTitle = 'GenerateDragAndDropExerciseTest';
         const generatedExercise = await generateDragAndDropQuizExercise(course, exerciseTitle, classDiagram, fileUploaderService, quizExerciseService);
         expect(generatedExercise).toBeTruthy();
@@ -75,10 +81,10 @@ describe('QuizExercise Generator', () => {
         expect(generatedExercise.quizQuestions![0].type).toEqual(QuizQuestionType.DRAG_AND_DROP);
         const dragAndDropQuestion = generatedExercise.quizQuestions![0] as DragAndDropQuestion;
         // create one DragItem for each interactive element
-        expect(dragAndDropQuestion.dragItems).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
+        expect(dragAndDropQuestion.dragItems).toHaveLength(selectedElements.length + selectedRelationships.length);
         // each DragItem needs one DropLocation
-        expect(dragAndDropQuestion.dropLocations).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
+        expect(dragAndDropQuestion.dropLocations).toHaveLength(selectedElements.length + selectedRelationships.length);
         // if there are no similar elements -> amount of correct mappings = interactive elements
-        expect(dragAndDropQuestion.correctMappings).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
+        expect(dragAndDropQuestion.correctMappings).toHaveLength(selectedElements.length + selectedRelationships.length);
     });
 });
