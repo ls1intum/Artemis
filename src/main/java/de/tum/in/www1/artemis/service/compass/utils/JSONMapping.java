@@ -11,6 +11,9 @@ public class JSONMapping {
     // model base structure
     public static final String DIAGRAM_TYPE = "type";
 
+    // model schema version
+    public static final String DIAGRAM_VERSION = "version";
+
     public static final String ELEMENTS = "elements";
 
     public static final String RELATIONSHIPS = "relationships";
