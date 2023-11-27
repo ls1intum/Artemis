@@ -105,7 +105,7 @@ Test the Setup
 
 You can now test the setup:
 
-To create a course with registered users you can use the scripts from ``supporting_scripts/course-setup-quickstart``.
+To create a course with registered users, you can use the scripts from ``supporting_scripts/course-setup-quickstart``.
 
 - Create a course and a programming exercise.
 
