@@ -94,6 +94,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @param programmingExerciseId the id of the programming exercises which should be checked
      * @param similarityThreshold   ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
+     * @param minimumSize           consider only submissions whose number of lines in diff to template is greater or equal to this value
      * @return the text plagiarism result container with up to 500 comparisons with the highest similarity values
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
@@ -145,6 +146,7 @@ public class ProgrammingPlagiarismDetectionService {
      * @param programmingExerciseId the id of the programming exercises which should be checked
      * @param similarityThreshold   ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
+     * @param minimumSize           consider only submissions whose number of lines in diff to template is greater or equal to this value
      * @return a zip file that can be returned to the client
      */
     public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) {

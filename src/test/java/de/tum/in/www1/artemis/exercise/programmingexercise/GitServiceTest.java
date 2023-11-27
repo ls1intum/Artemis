@@ -114,7 +114,6 @@ class GitServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @Disabled
     void testCheckoutRepositoryAtCommit(boolean withUrl) throws GitAPIException {
         // first commit
         prepareRepositoryContent();
