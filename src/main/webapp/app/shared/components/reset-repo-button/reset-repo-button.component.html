@@ -13,8 +13,8 @@
         placement="top-left"
         container="body"
         *ngIf="
-            (practiceParticipation?.initializationState === INITIALIZED && isStartPracticeAvailable()) ||
-            (gradedParticipation?.initializationState === INITIALIZED && isStartExerciseAvailable())
+            (practiceParticipation?.initializationState === INITIALIZED && !beforeIndividualDueDate) ||
+            (gradedParticipation?.initializationState === INITIALIZED && beforeIndividualDueDate)
         "
     ></button>
     <ng-template #popContent>
