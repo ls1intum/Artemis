@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    This changeset modifies the iris_message_content table to allow for different types of message content.
+    The current content of the table is moved to a new table iris_text_message_content, and the iris_message_content
+    table is then modified to only contain a discriminator column, by default "TEXT" since that was the only content
+    type until now. Then the two new tables iris_exercise_plan_message_content and iris_exercise_plan_step are created.
+     -->
+    <changeSet id="20231002131313" author="michael_dyer">
+        <!-- Add a discriminator column to the existing iris_message_content table, set all rows to 'TEXT' -->
+        <addColumn tableName="iris_message_content">
+            <column name="discriminator" type="VARCHAR(20)" defaultValue="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+        <!-- Immediately drop again the default value on the new discriminator column, we only needed it to add the column -->
+        <dropDefaultValue tableName="iris_message_content" columnName="discriminator"/>
+
+        <!-- Create the iris_text_message_content table to store all the existing rows in iris_message_content -->
+        <createTable tableName="iris_text_message_content">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true"
+                             primaryKeyName="pk_iris_text_message_content"
+                             referencedTableName="iris_message_content"
+                             referencedColumnNames="id"
+                             foreignKeyName="fk_text_id_to_content_id"
+                             nullable="false"/>
+            </column>
+            <column name="text_content" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Insert IDs and text_content from iris_message_content into iris_text_message_content -->
+        <sql>
+            <!-- Insert data into iris_text_message_content -->
+            INSERT INTO iris_text_message_content (id, text_content)
+            SELECT mc.id, mc.text_content
+            FROM iris_message_content mc;
+        </sql>
+
+        <!-- Drop column text_content from iris_message_content, as it is no longer needed in the parent table -->
+        <dropColumn tableName="iris_message_content" columnName="text_content"/>
+
+        <!-- Create the iris_exercise_plan_message_content table -->
+        <createTable tableName="iris_exercise_plan_message_content">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true"
+                             primaryKeyName="pk_iris_exercise_plan_message_content"
+                             referencedTableName="iris_message_content"
+                             referencedColumnNames="id"
+                             foreignKeyName="fk_exercise_plan_id_to_content_id"
+                             nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- Create the iris_exercise_plan_step table -->
+        <createTable tableName="iris_exercise_plan_step">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true"
+                             primaryKeyName="pk_iris_exercise_plan_step"
+                             nullable="false"/>
+            </column>
+            <column name="exercise_plan_id" type="BIGINT">
+                <constraints nullable="false"
+                             referencedTableName="iris_exercise_plan_message_content"
+                             referencedColumnNames="id"
+                             foreignKeyName="fk_exercise_plan_step_id_to_plan_id"/>
+            </column>
+            <column name="exercise_component" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="instructions" type="TEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="execution_stage" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="exercise_plan_step_order" type="INT"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

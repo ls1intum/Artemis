@@ -27,7 +27,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
-import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
@@ -174,13 +173,5 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     shouldShowControlButtons(): boolean {
         const courseManagementRegex = /course-management\/[0-9]+(\/edit)?$/;
         return courseManagementRegex.test(this.router.url);
-    }
-
-    /**
-     * Shows the iris settings in a modal.
-     */
-    showIrisSettings(): void {
-        const modalRef = this.modalService.open(IrisCourseSettingsUpdateComponent, { size: 'xl' });
-        modalRef.componentInstance.courseId = this.course!.id;
     }
 }

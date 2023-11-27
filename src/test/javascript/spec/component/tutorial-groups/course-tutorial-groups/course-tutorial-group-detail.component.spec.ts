@@ -14,6 +14,7 @@ import { of } from 'rxjs';
 import { mockedActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
+
 describe('CourseTutorialGroupDetailComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupDetailComponent>;
     let component: CourseTutorialGroupDetailComponent;
@@ -75,14 +76,5 @@ describe('CourseTutorialGroupDetailComponent', () => {
         expect(findByIdStub).toHaveBeenCalledOnce();
         expect(findStub).toHaveBeenCalledWith(2);
         expect(findStub).toHaveBeenCalledOnce();
-    });
-
-    it('should navigate to course overview when course clicked callback called', () => {
-        const router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        fixture.detectChanges();
-        component.onCourseClicked();
-        expect(navigateSpy).toHaveBeenCalledWith(['/courses', 2]);
-        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 });

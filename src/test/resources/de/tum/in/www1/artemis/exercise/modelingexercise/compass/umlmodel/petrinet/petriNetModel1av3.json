@@ -1,0 +1,189 @@
+{
+  "version": "3.0.0",
+  "type": "PetriNet",
+  "size": {
+    "width": 580,
+    "height": 480
+  },
+  "interactive": {
+    "elements": {},
+    "relationships": {}
+  },
+  "elements": {
+    "af3e9a50-aa85-4668-b46d-11b0dc407f20": {
+      "id": "af3e9a50-aa85-4668-b46d-11b0dc407f20",
+      "name": "t1",
+      "type": "PetriNetTransition",
+      "owner": null,
+      "bounds": {
+        "x": 0,
+        "y": 90,
+        "width": 20,
+        "height": 60
+      }
+    },
+    "9aa98e8d-d864-4587-b9c8-866dc347cfee": {
+      "id": "9aa98e8d-d864-4587-b9c8-866dc347cfee",
+      "name": "t2",
+      "type": "PetriNetTransition",
+      "owner": null,
+      "bounds": {
+        "x": 290,
+        "y": 90,
+        "width": 20,
+        "height": 60
+      }
+    },
+    "48af145a-8d0a-4a6c-87d2-18cee2f6ad0a": {
+      "id": "48af145a-8d0a-4a6c-87d2-18cee2f6ad0a",
+      "name": "a",
+      "type": "PetriNetPlace",
+      "owner": null,
+      "bounds": {
+        "x": 120,
+        "y": 0,
+        "width": 60,
+        "height": 60
+      },
+      "amountOfTokens": 1,
+      "capacity": 1
+    },
+    "5b32ce17-a779-45b7-bfbe-5563bbed1064": {
+      "id": "5b32ce17-a779-45b7-bfbe-5563bbed1064",
+      "name": "b",
+      "type": "PetriNetPlace",
+      "owner": null,
+      "bounds": {
+        "x": 120,
+        "y": 180,
+        "width": 60,
+        "height": 60
+      },
+      "amountOfTokens": 0,
+      "capacity": "Infinity"
+    }
+  },
+  "relationships": {
+    "22889cf7-b39e-4e7b-a21c-aa39c23daaf8": {
+      "id": "22889cf7-b39e-4e7b-a21c-aa39c23daaf8",
+      "name": "1",
+      "type": "PetriNetArc",
+      "owner": null,
+      "bounds": {
+        "x": 20,
+        "y": 30,
+        "width": 100,
+        "height": 90
+      },
+      "path": [
+        {
+          "x": 100,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 90
+        }
+      ],
+      "source": {
+        "direction": "Left",
+        "element": "48af145a-8d0a-4a6c-87d2-18cee2f6ad0a"
+      },
+      "target": {
+        "direction": "Right",
+        "element": "af3e9a50-aa85-4668-b46d-11b0dc407f20"
+      }
+    },
+    "6e15f9a5-2ab1-4f8f-829b-38dcdbd6f5a8": {
+      "id": "6e15f9a5-2ab1-4f8f-829b-38dcdbd6f5a8",
+      "name": "1",
+      "type": "PetriNetArc",
+      "owner": null,
+      "bounds": {
+        "x": 20,
+        "y": 120,
+        "width": 100,
+        "height": 90
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 100,
+          "y": 90
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "af3e9a50-aa85-4668-b46d-11b0dc407f20"
+      },
+      "target": {
+        "direction": "Left",
+        "element": "5b32ce17-a779-45b7-bfbe-5563bbed1064"
+      }
+    },
+    "5fd53f65-8c9e-47a8-b3d5-2d9962ff4542": {
+      "id": "5fd53f65-8c9e-47a8-b3d5-2d9962ff4542",
+      "name": "1",
+      "type": "PetriNetArc",
+      "owner": null,
+      "bounds": {
+        "x": 180,
+        "y": 120,
+        "width": 110,
+        "height": 90
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 90
+        },
+        {
+          "x": 110,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "5b32ce17-a779-45b7-bfbe-5563bbed1064"
+      },
+      "target": {
+        "direction": "Left",
+        "element": "9aa98e8d-d864-4587-b9c8-866dc347cfee"
+      }
+    },
+    "aa634acd-5245-4bfd-ba17-20815647be05": {
+      "id": "aa634acd-5245-4bfd-ba17-20815647be05",
+      "name": "1",
+      "type": "PetriNetArc",
+      "owner": null,
+      "bounds": {
+        "x": 180,
+        "y": 30,
+        "width": 110,
+        "height": 90
+      },
+      "path": [
+        {
+          "x": 110,
+          "y": 90
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "source": {
+        "direction": "Left",
+        "element": "9aa98e8d-d864-4587-b9c8-866dc347cfee"
+      },
+      "target": {
+        "direction": "Right",
+        "element": "48af145a-8d0a-4a6c-87d2-18cee2f6ad0a"
+      }
+    }
+  },
+  "assessments": {}
+}

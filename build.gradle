@@ -23,7 +23,7 @@ plugins {
     id "com.github.ben-manes.versions" version "0.50.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
-    id "org.owasp.dependencycheck" version "8.4.3"
+    id "org.owasp.dependencycheck" version "9.0.0"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
@@ -236,7 +236,7 @@ dependencies {
         }
     }
 
-    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.21.1"
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.22.0"
 
     implementation "uk.ac.ox.ctl:spring-security-lti13:0.0.4"
 
@@ -249,7 +249,7 @@ dependencies {
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
-    implementation "com.atlassian.bamboo:bamboo-specs:9.3.3"
+    implementation "com.atlassian.bamboo:bamboo-specs:9.3.5"
     implementation ("org.yaml:snakeyaml") {
         version {
             strictly "2.0" // needed for Bamboo-specs and to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml
@@ -318,7 +318,7 @@ dependencies {
 
     implementation "io.netty:netty-all:4.1.101.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.13"
-    implementation "org.springframework:spring-messaging:5.3.30"
+    implementation "org.springframework:spring-messaging:5.3.31"
     implementation "org.springframework.retry:spring-retry:2.0.4"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
@@ -337,7 +337,7 @@ dependencies {
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
     implementation "com.mysql:mysql-connector-j:8.2.0"
-    implementation "org.postgresql:postgresql:42.6.0"
+    implementation "org.postgresql:postgresql:42.7.0"
     implementation "com.h2database:h2:2.2.224"
 
     // zalando problem spring web can only be updated when we support Spring 6
@@ -380,10 +380,10 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.165"
     testImplementation "org.awaitility:awaitility:4.2.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.5-rc-3"
+    testImplementation "org.gradle:gradle-tooling-api:8.5-rc-4"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.2.2"
-    testImplementation "com.opencsv:opencsv:5.8"
-    testImplementation("io.zonky.test:embedded-database-spring-test:2.3.0") {
+    testImplementation "com.opencsv:opencsv:5.9"
+    testImplementation("io.zonky.test:embedded-database-spring-test:2.4.0") {
         exclude group: 'org.testcontainers', module: 'mariadb'
         exclude group: 'org.testcontainers', module: 'mssqlserver'
     }
@@ -391,7 +391,7 @@ dependencies {
     testImplementation "org.skyscreamer:jsonassert:1.5.1"
     testImplementation ("net.bytebuddy:byte-buddy") {
         version {
-            strictly "1.14.9"
+            strictly "1.14.10"
         }
     }
 
@@ -436,7 +436,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.5-rc-3"
+    gradleVersion = "8.5-rc-4"
 }
 
 tasks.register("stage") {

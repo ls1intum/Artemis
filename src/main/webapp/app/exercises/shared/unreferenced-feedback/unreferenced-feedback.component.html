@@ -17,6 +17,7 @@
                     (onFeedbackDelete)="deleteFeedback(feedback)"
                     [readOnly]="readOnly"
                     [highlightDifferences]="highlightDifferences"
+                    [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText"
                 ></jhi-unreferenced-feedback-detail>
             </div>
             <div *ngFor="let suggestion of feedbackSuggestions" class="col-12 col-lg-6 col-xl-6">
@@ -26,6 +27,7 @@
                     [readOnly]="true"
                     (onAcceptSuggestion)="acceptSuggestion($event)"
                     (onDiscardSuggestion)="discardSuggestion($event)"
+                    [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText"
                 ></jhi-unreferenced-feedback-detail>
             </div>
         </div>
