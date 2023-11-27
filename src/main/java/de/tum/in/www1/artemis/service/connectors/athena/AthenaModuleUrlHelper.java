@@ -16,10 +16,10 @@ public class AthenaModuleUrlHelper {
     @Value("${artemis.athena.url}")
     private String athenaUrl;
 
-    @Value("${artemis.athena.modules.text}")
+    @Value("${artemis.athena.modules.text:module_text_cofee}")
     private String textModuleName;
 
-    @Value("${artemis.athena.modules.programming}")
+    @Value("${artemis.athena.modules.programming:module_programming_themisml}")
     private String programmingModuleName;
 
     /**
