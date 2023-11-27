@@ -15,7 +15,6 @@ import { Course } from 'app/entities/course.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import {
     getExerciseGeneralDetailsSection,
     getExerciseGradingDefaultDetails,
@@ -52,7 +51,6 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     constructor(
         private eventManager: EventManager,
         private textExerciseService: TextExerciseService,
-        private exerciseService: ExerciseService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
         private statisticsService: StatisticsService,
@@ -96,7 +94,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         const modeSection = getExerciseModeDetailSection(exercise);
         const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement);
         const solutionSection = getExerciseMarkdownSolution(exercise, this.formattedExampleSolution);
-        const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise, this.exerciseService);
+        const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
         const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.formattedGradingInstructions);
         return [
             generalSection,

@@ -12,7 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -238,6 +238,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     getExerciseDetails() {
         const exercise = this.programmingExercise;
+        const includedInScoreIsBoolean = exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_AS_BONUS;
+        const includedInScore = {
+            type: includedInScoreIsBoolean ? DetailType.Boolean : DetailType.Text,
+            title: 'artemisApp.exercise.includedInOverallScore',
+            data: { text: 'BONUS', boolean: exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY },
+        };
         return [
             {
                 headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
@@ -414,7 +420,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 details: [
                     { type: DetailType.Text, title: 'artemisApp.exercise.points', data: { text: exercise.maxPoints } },
                     exercise.bonusPoints && { type: DetailType.Text, title: 'artemisApp.exercise.bonusPoints', data: { text: exercise.bonusPoints } },
-                    { type: DetailType.Text, title: 'artemisApp.exercise.includedInOverallScore', data: { text: this.exerciseService.isIncludedInScore(exercise) } },
+                    includedInScore,
                     { type: DetailType.Boolean, title: 'artemisApp.exercise.presentationScoreEnabled.title', data: { boolean: exercise.presentationScoreEnabled } },
                     { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.enableStaticCodeAnalysis.title', data: { boolean: exercise.staticCodeAnalysisEnabled } },
                     exercise.staticCodeAnalysisEnabled && {

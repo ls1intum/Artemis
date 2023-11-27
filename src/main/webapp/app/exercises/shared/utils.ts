@@ -1,7 +1,6 @@
 import { SafeHtml } from '@angular/platform-browser';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
-import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 
 export function getExerciseGeneralDetailsSection(exercise: Exercise): DetailOverviewSection {
     return {
@@ -74,7 +73,13 @@ export function getExerciseProblemDetailSection(formattedProblemStatement: SafeH
     } as DetailOverviewSection;
 }
 
-export function getExerciseGradingDefaultDetails(exercise: Exercise, exerciseService: ExerciseService) {
+export function getExerciseGradingDefaultDetails(exercise: Exercise) {
+    const includedInScoreIsBoolean = exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_AS_BONUS;
+    const includedInScore = {
+        type: includedInScoreIsBoolean ? DetailType.Boolean : DetailType.Text,
+        title: 'artemisApp.exercise.includedInOverallScore',
+        data: { text: 'BONUS', boolean: exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY },
+    };
     return [
         { type: DetailType.Date, title: 'artemisApp.exercise.releaseDate', data: { date: exercise.releaseDate } },
         { type: DetailType.Date, title: 'artemisApp.exercise.startDate', data: { date: exercise.startDate } },
@@ -82,7 +87,7 @@ export function getExerciseGradingDefaultDetails(exercise: Exercise, exerciseSer
         { type: DetailType.Date, title: 'artemisApp.exercise.assessmentDueDate', data: { date: exercise.assessmentDueDate } },
         { type: DetailType.Text, title: 'artemisApp.exercise.points', data: { text: exercise.maxPoints } },
         exercise.bonusPoints && { type: DetailType.Text, title: 'artemisApp.exercise.bonusPoints', data: { text: exercise.bonusPoints } },
-        { type: DetailType.Text, title: 'artemisApp.exercise.includedInOverallScore', data: { text: exerciseService.isIncludedInScore(exercise) } },
+        includedInScore,
         { type: DetailType.Boolean, title: 'artemisApp.exercise.presentationScoreEnabled.title', data: { boolean: exercise.presentationScoreEnabled } },
     ];
 }

@@ -25,7 +25,6 @@ import {
     getExerciseProblemDetailSection,
 } from 'app/exercises/shared/utils';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -56,7 +55,6 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     constructor(
         private eventManager: EventManager,
         private modelingExerciseService: ModelingExerciseService,
-        private exerciseService: ExerciseService,
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
         private alertService: AlertService,
@@ -105,7 +103,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
         const problemSection = getExerciseProblemDetailSection(this.problemStatement);
-        const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise, this.exerciseService);
+        const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
         const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.gradingInstructions);
         return [
             generalSection,

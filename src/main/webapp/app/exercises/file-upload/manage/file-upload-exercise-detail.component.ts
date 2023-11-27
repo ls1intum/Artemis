@@ -25,7 +25,6 @@ import {
     getExerciseProblemDetailSection,
 } from 'app/exercises/shared/utils';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-file-upload-exercise-detail',
@@ -55,7 +54,6 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private statisticsService: StatisticsService,
         private artemisMarkdown: ArtemisMarkdownService,
-        private exerciseService: ExerciseService,
     ) {}
 
     /**
@@ -101,7 +99,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         const modeSection = getExerciseModeDetailSection(exercise);
         const problemSection = getExerciseProblemDetailSection(this.formattedProblemStatement);
         const solutionSection = getExerciseMarkdownSolution(exercise, this.formattedExampleSolution);
-        const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise, this.exerciseService);
+        const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
         const gradingInstructionsCriteriaDetails = getExerciseGradingInstructionsCriteriaDetails(exercise, this.formattedGradingInstructions);
         return [
             generalSection,
