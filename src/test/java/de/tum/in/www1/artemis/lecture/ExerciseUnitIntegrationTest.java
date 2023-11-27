@@ -2,9 +2,7 @@ package de.tum.in.www1.artemis.lecture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +42,9 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private FileUploadExerciseRepository fileUploadExerciseRepository;
 
     @Autowired
+    private MathExerciseRepository mathExerciseRepository;
+
+    @Autowired
     private UserUtilService userUtilService;
 
     @Autowired
@@ -58,6 +59,8 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private ModelingExercise modelingExercise;
 
     private ProgrammingExercise programmingExercise;
+
+    private MathExercise mathExercise;
 
     private FileUploadExercise fileUploadExercise;
 
@@ -75,6 +78,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
         this.programmingExercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course1).stream().findFirst().orElseThrow();
         this.quizExercise = quizExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
         this.modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
+        this.mathExercise = mathExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().orElseThrow();
 
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
@@ -183,6 +187,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTe
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
         request.delete("/api/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK);
+        request.delete("/api/math-exercises/" + mathExercise.getId(), HttpStatus.OK);
 
         List<ExerciseUnit> exerciseUnitsOfLecture = request.getList("/api/lectures/" + lecture1.getId() + "/exercise-units", HttpStatus.OK, ExerciseUnit.class);
         assertThat(exerciseUnitsOfLecture).isEmpty();

@@ -23,10 +23,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.BonusSourceResultDTO;
-import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.dto.CourseScoresDTO;
-import de.tum.in.www1.artemis.web.rest.dto.StudentScoresDTO;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 
 class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -243,13 +240,14 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, gradingScale, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(pastCourse);
+
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
         assertThat(totalCourseScores.maxPoints()).isEqualTo(8.0);
         assertThat(totalCourseScores.reachablePoints()).isEqualTo(8.0);
         assertThat(totalCourseScores.reachablePresentationPoints()).isEqualTo(3.0);
-        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(3.0);
-        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(37.5);
-        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(37.5);
+        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(3.6);
+        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(45.0);
+        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(45.0);
 
         CourseScoresDTO programmingExerciseScores = courseForDashboard.programmingScores();
         assertThat(programmingExerciseScores.studentScores().presentationScore()).isZero();

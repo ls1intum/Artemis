@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-import java.util.List;
+import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -18,9 +18,10 @@ import de.tum.in.www1.artemis.domain.Course;
  * @param modelingScores       the scores for just the modeling exercises in the course, including the max and reachable points and the scores of the currently logged in student
  * @param fileUploadScores     the scores for just the file upload exercises in the course, including the max and reachable points and the scores of the currently logged in student
  * @param quizScores           the scores for just the quiz exercises in the course, including the max and reachable points and the scores of the currently logged in student
+ * @param mathScores           the scores for just the math exercises in the course, including the max and reachable points and the scores of the currently logged in student
  * @param participationResults the relevant result for each participation.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseForDashboardDTO(Course course, CourseScoresDTO totalScores, CourseScoresDTO textScores, CourseScoresDTO programmingScores, CourseScoresDTO modelingScores,
-        CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, List<ParticipationResultDTO> participationResults) {
+        CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, CourseScoresDTO mathScores, List<ParticipationResultDTO> participationResults) {
 }

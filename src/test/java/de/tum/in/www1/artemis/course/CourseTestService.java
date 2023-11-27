@@ -808,7 +808,7 @@ public class CourseTestService {
         Course receivedCourse = receivedCourseForDashboard.course();
 
         // Test that the received course has five exercises
-        assertThat(receivedCourse.getExercises()).as("Five exercises are returned").hasSize(5);
+        assertThat(receivedCourse.getExercises()).as("Six exercises are returned").hasSize(6);
         // Test that the received course has two lectures
         assertThat(receivedCourse.getLectures()).as("Two lectures are returned").hasSize(2);
         // Test that the received course has two competencies
@@ -1036,7 +1036,7 @@ public class CourseTestService {
         Course activeCourseNotFiltered = optionalCourse.orElseThrow();
 
         // Test that the remaining course has five exercises
-        assertThat(activeCourseNotFiltered.getExercises()).as("Five exercises are returned").hasSize(5);
+        assertThat(activeCourseNotFiltered.getExercises()).as("Six exercises are returned").hasSize(6);
 
         // Iterate over all exercises of the remaining course
         for (Exercise exercise : activeCourseNotFiltered.getExercises()) {
@@ -1521,7 +1521,7 @@ public class CourseTestService {
             // - Course 1 has 5 exercises in total, 4 exercises with relevant participations
             // - Course 2 has 0 exercises in total, 0 exercises with relevant participations
             boolean isFirstCourse = courseOnly.getId().equals(testCourses.get(0).getId());
-            int numberOfExercises = isFirstCourse ? 5 : 0;
+            int numberOfExercises = isFirstCourse ? 6 : 0;
             assertThat(courseWithExercises.getExercises()).as("Course contains correct number of exercises").hasSize(numberOfExercises);
         }
     }
@@ -1532,7 +1532,7 @@ public class CourseTestService {
         Course course1 = testCourses.get(0);
         Course course2 = testCourses.get(1);
         List<String> categories1 = request.getList("/api/courses/" + course1.getId() + "/categories", HttpStatus.OK, String.class);
-        assertThat(categories1).as("Correct categories in course1").containsExactlyInAnyOrder("Category", "Modeling", "Quiz", "File", "Text", "Programming");
+        assertThat(categories1).as("Correct categories in course1").containsExactlyInAnyOrder("Category", "Modeling", "Math", "Quiz", "File", "Text", "Programming");
         List<String> categories2 = request.getList("/api/courses/" + course2.getId() + "/categories", HttpStatus.OK, String.class);
         assertThat(categories2).as("No categories in course2").isEmpty();
     }
@@ -2524,7 +2524,7 @@ public class CourseTestService {
 
         var exerciseDetails = returnedCourse.getExercises();
         assertThat(exerciseDetails).isNotNull();
-        assertThat(exerciseDetails).hasSize(5);
+        assertThat(exerciseDetails).hasSize(6);
 
         var quizDetailsOptional = exerciseDetails.stream().filter(e -> e instanceof QuizExercise).findFirst();
         assertThat(quizDetailsOptional).isPresent();
@@ -2931,8 +2931,8 @@ public class CourseTestService {
 
         // Average Score
         assertThat(courseDTO.currentPercentageAverageScore()).isEqualTo(60);
-        assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(18);
-        assertThat(courseDTO.currentMaxAverageScore()).isEqualTo(30);
+        assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(21);
+        assertThat(courseDTO.currentMaxAverageScore()).isEqualTo(35);
 
         course2.setStartDate(now.minusWeeks(20));
         course2.setEndDate(null);

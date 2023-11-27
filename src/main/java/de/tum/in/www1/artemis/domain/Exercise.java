@@ -479,7 +479,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 }
                 // this case handles FINISHED participations which typically happen when manual results are involved
                 else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise
-                        || participation.getExercise() instanceof FileUploadExercise
+                        || participation.getExercise() instanceof MathExercise || participation.getExercise() instanceof FileUploadExercise
                         || (participation.getExercise() instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
                     return List.of(participation);
                 }

@@ -305,7 +305,7 @@ public class CourseUtilService {
         course1.addExercises(programmingExercise);
 
         QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(pastTimestamp, futureTimestamp, QuizMode.SYNCHRONIZED, course1);
-        programmingExercise.getCategories().add("Quiz");
+        quizExercise.getCategories().add("Quiz");
         course1.addExercises(quizExercise);
 
         MathExercise mathExercise = MathExerciseFactory.generateMathExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course1);
@@ -383,7 +383,7 @@ public class CourseUtilService {
             Result result3 = generateResult(false, 0D);
             Result result4 = generateResult(true, 12D);
             Result result5 = generateResult(false, 42D);
-            Result result6 = generateResult(false, 10D);
+            Result result6 = generateResult(false, 0D);
 
             participation1 = studentParticipationRepo.save(participation1);
             participation2 = studentParticipationRepo.save(participation2);
@@ -526,7 +526,7 @@ public class CourseUtilService {
         resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
         resultProgramming.setCompletionDate(ZonedDateTime.now());
 
-        Result resultMath = generateResult(true, 10D);
+        Result resultMath = generateResult(true, 0D);
         resultMath.setAssessmentType(AssessmentType.MANUAL);
         resultMath.setCompletionDate(ZonedDateTime.now());
 
