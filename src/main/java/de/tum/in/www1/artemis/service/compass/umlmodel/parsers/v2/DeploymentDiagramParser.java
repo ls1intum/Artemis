@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.parsers;
+package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v2;
 
 import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 
