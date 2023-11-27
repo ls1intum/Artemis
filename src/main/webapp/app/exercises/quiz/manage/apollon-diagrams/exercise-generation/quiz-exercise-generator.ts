@@ -19,8 +19,15 @@ export const MAX_SIZE_UNIT = 200;
  * @param {UMLModel} model The complete UML model the quiz exercise is based on.
  */
 export async function generateDragAndDropQuizExercise(course: Course, title: string, model: UMLModel): Promise<DragAndDropQuestion> {
-    const interactiveElements = [...model.interactive.elements, ...model.interactive.relationships];
-    const elements = [...model.elements, ...model.relationships];
+    const interactiveElements = [
+        ...Object.entries(model.interactive.elements)
+            .filter(([, include]) => include)
+            .map(([id]) => id),
+        ...Object.entries(model.interactive.relationships)
+            .filter(([, include]) => include)
+            .map(([id]) => id),
+    ];
+    const elements = [...Object.values(model.elements), ...Object.values(model.relationships)];
 
     // Render the diagram's background image and store it
     const renderedDiagram = await ApollonEditor.exportModelAsSvg(model, {
@@ -234,7 +241,7 @@ function computeDropLocation(elementLocation: { x: number; y: number; width: num
 function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: Map<string, DropLocation>, model: UMLModel): DragAndDropMapping[] {
     const textualElementTypes: UMLElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
     const mappings = new Map<string, DragAndDropMapping[]>();
-    const textualElements = model.elements.filter((element) => textualElementTypes.includes(element.type));
+    const textualElements = Object.values(model.elements).filter((element) => textualElementTypes.includes(element.type));
 
     // Create all one-on-one mappings
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {

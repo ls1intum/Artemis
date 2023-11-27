@@ -48,12 +48,20 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
     /** Whether some elements are interactive in the apollon editor. */
     get hasInteractive(): boolean {
-        return !!this.apollonEditor && !![...this.apollonEditor.model.interactive.elements, ...this.apollonEditor.model.interactive.relationships].length;
+        return (
+            !!this.apollonEditor &&
+            (Object.entries(this.apollonEditor.model.interactive.elements).some(([, selected]) => selected) ||
+                Object.entries(this.apollonEditor.model.interactive.relationships).some(([, selected]) => selected))
+        );
     }
 
     /** Whether some elements are selected in the apollon editor. */
     get hasSelection(): boolean {
-        return !!this.apollonEditor && !![...this.apollonEditor.selection.elements, ...this.apollonEditor.selection.relationships].length;
+        return (
+            !!this.apollonEditor &&
+            (Object.entries(this.apollonEditor.selection.elements).some(([, selected]) => selected) ||
+                Object.entries(this.apollonEditor.selection.relationships).some(([, selected]) => selected))
+        );
     }
 
     // Icons
@@ -236,7 +244,14 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const selection = [...this.apollonEditor!.selection.elements, ...this.apollonEditor!.selection.relationships];
+        const selection = [
+            ...Object.entries(this.apollonEditor!.selection.elements)
+                .filter(([, selected]) => selected)
+                .map(([id]) => id),
+            ...Object.entries(this.apollonEditor!.selection.relationships)
+                .filter(([, selected]) => selected)
+                .map(([id]) => id),
+        ];
         const svg = await this.apollonEditor!.exportAsSVG({
             keepOriginalSize: !this.crop,
             include: selection,
