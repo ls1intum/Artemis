@@ -10,13 +10,15 @@ package de.tum.in.www1.artemis.domain;
  * @param lastName               the last name of the user
  * @param userLangKey            the language key of the user
  * @param userEmail              the email address of the user
- * @param isConversationHidden   true if the user has hidden the conversation
+ * @param isConversationMuted    whether the user muted the conversation
+ * @param isConversationHidden   whether the user hid the conversation
  * @param isAtLeastTutorInCourse true if the user is at least a tutor in the course
  */
 public record ConversationNotificationRecipientSummary(long userId, String userLogin, String firstName, String lastName, String userLangKey, String userEmail,
-        boolean isConversationHidden, boolean isAtLeastTutorInCourse) {
+        boolean isConversationMuted, boolean isConversationHidden, boolean isAtLeastTutorInCourse) {
 
-    public ConversationNotificationRecipientSummary(User user, boolean isConversationHidden, boolean isAtLeastTutorInCourse) {
-        this(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getLangKey(), user.getEmail(), isConversationHidden, isAtLeastTutorInCourse);
+    public ConversationNotificationRecipientSummary(User user, boolean isConversationMuted, boolean isConversationHidden, boolean isAtLeastTutorInCourse) {
+        this(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getLangKey(), user.getEmail(), isConversationMuted, isConversationHidden,
+                isAtLeastTutorInCourse);
     }
 }

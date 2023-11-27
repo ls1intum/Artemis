@@ -140,22 +140,22 @@ public class ConversationMessagingService extends PostingService {
 
     private void notifyAboutMessageCreation(User author, Conversation conversation, Course course, Post createdMessage, Set<User> mentionedUsers) {
         // Websocket notification 1: this notifies everyone including the author that there is a new message
-        Set<ConversationNotificationRecipientSummary> webSocketRecipients;
+        Set<ConversationNotificationRecipientSummary> notificationRecipients;
         Set<User> broadcastRecipients;
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
             broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, null);
             log.debug("      broadcastForPost DONE");
 
-            webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
-            log.debug("      getWebSocketRecipients DONE");
-            broadcastRecipients = mapToUsers(webSocketRecipients);
+            notificationRecipients = getNotificationRecipients(conversation).collect(Collectors.toSet());
+            log.debug("      getNotificationRecipients DONE");
+            broadcastRecipients = mapToUsers(notificationRecipients);
         }
         else {
             // In all other cases we need the list of participants to send the WS messages to the correct topics. Hence, the db query has to be made before sending WS messages
-            webSocketRecipients = getWebSocketRecipients(conversation).collect(Collectors.toSet());
-            log.debug("      getWebSocketRecipients DONE");
-            broadcastRecipients = mapToUsers(webSocketRecipients);
+            notificationRecipients = getNotificationRecipients(conversation).collect(Collectors.toSet());
+            log.debug("      getNotificationRecipients DONE");
+            broadcastRecipients = mapToUsers(notificationRecipients);
 
             broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, broadcastRecipients);
             log.debug("      broadcastForPost DONE");
@@ -185,8 +185,8 @@ public class ConversationMessagingService extends PostingService {
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
-        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, webSocketRecipients, mentionedUsers);
-        conversationNotificationService.notifyAboutNewMessage(createdMessage, notificationRecipients, course, mentionedUsers);
+        Set<User> newMessageNotificationRecipients = filterNotificationRecipients(author, conversation, notificationRecipients, mentionedUsers);
+        conversationNotificationService.notifyAboutNewMessage(createdMessage, newMessageNotificationRecipients, course, mentionedUsers);
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
 
         if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
@@ -213,13 +213,13 @@ public class ConversationMessagingService extends PostingService {
      * If the conversation is not an announcement channel, the method filters out participants, that have hidden the conversation.
      * If the conversation is not visible to students, the method also filters out students from the provided list of recipients.
      *
-     * @param author              the author of the message
-     * @param conversation        the conversation the new message has been written in
-     * @param webSocketRecipients the list of users that should be filtered
-     * @param mentionedUsers      users mentioend within the message
+     * @param author                 the author of the message
+     * @param conversation           the conversation the new message has been written in
+     * @param notificationRecipients the list of users that should be filtered
+     * @param mentionedUsers         users mentioned within the message
      * @return filtered list of users that are supposed to receive a notification
      */
-    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationNotificationRecipientSummary> webSocketRecipients,
+    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationNotificationRecipientSummary> notificationRecipients,
             Set<User> mentionedUsers) {
         // Initialize filter with check for author
         Predicate<ConversationNotificationRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.userId(), author.getId());
@@ -227,7 +227,7 @@ public class ConversationMessagingService extends PostingService {
         if (conversation instanceof Channel channel) {
             // If a channel is not an announcement channel, filter out users, that hid the conversation
             if (!channel.getIsAnnouncementChannel()) {
-                filter = filter.and(summary -> !summary.isConversationHidden() || mentionedUsers
+                filter = filter.and(summary -> (!summary.isConversationMuted() && !summary.isConversationHidden()) || mentionedUsers
                         .contains(new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail())));
             }
 
@@ -237,10 +237,10 @@ public class ConversationMessagingService extends PostingService {
             }
         }
         else {
-            filter = filter.and(recipientSummary -> !recipientSummary.isConversationHidden());
+            filter = filter.and(recipientSummary -> !recipientSummary.isConversationMuted() && !recipientSummary.isConversationHidden());
         }
 
-        return webSocketRecipients.stream().filter(filter)
+        return notificationRecipients.stream().filter(filter)
                 .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
                 .collect(Collectors.toSet());
     }

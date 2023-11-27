@@ -125,15 +125,16 @@ public abstract class PostingService {
      * @param conversation conversation the participants are supposed be retrieved
      * @return users that should receive the new message
      */
-    protected Stream<ConversationNotificationRecipientSummary> getWebSocketRecipients(Conversation conversation) {
+    protected Stream<ConversationNotificationRecipientSummary> getNotificationRecipients(Conversation conversation) {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             Course course = conversation.getCourse();
-            return userRepository.findAllWebSocketRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
+            return userRepository.findAllNotificationRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),
                     course.getEditorGroupName(), course.getInstructorGroupName()).stream();
         }
 
         return conversationParticipantRepository.findConversationParticipantsWithUserGroupsByConversationId(conversation.getId()).stream()
-                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsHidden() != null && participant.getIsHidden(),
+                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsMuted(),
+                        participant.getIsHidden() != null && participant.getIsHidden(),
                         authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), participant.getUser())));
     }
 
