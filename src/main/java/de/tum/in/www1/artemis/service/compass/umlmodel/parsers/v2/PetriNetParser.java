@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel.parsers;
+package de.tum.in.www1.artemis.service.compass.umlmodel.parsers.v2;
 
 import static de.tum.in.www1.artemis.service.compass.utils.JSONMapping.*;
 
@@ -10,6 +10,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.PetriNet;
 import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.PetriNetArc;
 import de.tum.in.www1.artemis.service.compass.umlmodel.petrinet.PetriNetPlace;
