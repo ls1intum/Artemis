@@ -35,8 +35,11 @@ cd docker
 #just pull everything else than artemis-app as we build it later either way
 if [ "$TEST_FRAMEWORK" = "playwright" ]; then
   echo "Building for playwright"
+  echo "artemis-playwright pull"
   docker compose -f $COMPOSE_FILE pull artemis-playwright $DB nginx
+  echo "artemis-playwright build"
   docker compose -f $COMPOSE_FILE build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app
+  echo "artemis-playwright up"
   docker compose -f $COMPOSE_FILE up --exit-code-from artemis-playwright
 else
   echo "Building for cypress"
