@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.util.List;
 import java.util.concurrent.*;
 
 import org.slf4j.Logger;
@@ -54,13 +55,11 @@ public class LocalCISharedBuildJobQueueService {
 
     private final FencedLock lock;
 
-    private final int threadPoolSize;
-
     @Autowired
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             LocalCIBuildJobManagementService localCIBuildJobManagementService, ParticipationRepository participationRepository,
             ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingMessagingService programmingMessagingService,
-            ProgrammingExerciseRepository programmingExerciseRepository, int threadPoolSize) {
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.localCIBuildJobManagementService = localCIBuildJobManagementService;
@@ -72,25 +71,44 @@ public class LocalCISharedBuildJobQueueService {
         this.lock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.queue.addItemListener(new BuildJobItemListener(), true);
-        this.threadPoolSize = threadPoolSize;
     }
 
     /**
      * Create build job item object and add it to the queue.
      *
+     * @param name            name of the build job
      * @param participationId participation id of the build job
      * @param commitHash      commit hash of the build job
+     * @param submissionDate  submission date of the build job
+     * @param priority        priority of the build job
+     * @param courseId        course id of the build job
      */
-    public void addBuildJobInformation(Long participationId, String commitHash) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(participationId, commitHash, 0);
+    public void addBuildJobInformation(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId) {
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, courseId);
         queue.add(buildJobQueueItem);
+    }
+
+    public List<LocalCIBuildJobQueueItem> getQueuedJobs() {
+        return queue.stream().toList();
+    }
+
+    public List<LocalCIBuildJobQueueItem> getProcessingJobs() {
+        return processingJobs.values().stream().toList();
+    }
+
+    public List<LocalCIBuildJobQueueItem> getQueuedJobsForCourse(long courseId) {
+        return queue.stream().filter(job -> job.getCourseId() == courseId).toList();
+    }
+
+    public List<LocalCIBuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
+        return processingJobs.values().stream().filter(job -> job.getCourseId() == courseId).toList();
     }
 
     /**
      * Get first build job item from the queue. If it exists, process build job and after completion,
      * try to process next item.
      */
-    public void processBuild() {
+    private void processBuild() {
 
         if (queue.isEmpty()) {
             return;
@@ -150,7 +168,7 @@ public class LocalCISharedBuildJobQueueService {
      * it might be because the node crashed. Therefore, the build job is added back to the queue.
      */
     @Scheduled(fixedRate = 60000)
-    public void requeueTimedOutJobs() {
+    protected void requeueTimedOutJobs() {
 
         lock.lock();
         try {
@@ -178,6 +196,7 @@ public class LocalCISharedBuildJobQueueService {
         LocalCIBuildJobQueueItem buildJob = queue.poll();
         if (buildJob != null) {
             Long participationId = buildJob.getParticipationId();
+            buildJob.setBuildStartDate(System.currentTimeMillis());
             buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(180));
             processingJobs.put(participationId, buildJob);
         }
@@ -210,7 +229,7 @@ public class LocalCISharedBuildJobQueueService {
     // getActiveCount() returns an approximation thus we double check with getQueue().size()
     private Boolean nodeIsAvailable() {
         log.info("Current active threads: " + localCIBuildExecutorService.getActiveCount());
-        return localCIBuildExecutorService.getActiveCount() < threadPoolSize && localCIBuildExecutorService.getQueue().size() < 1;
+        return localCIBuildExecutorService.getActiveCount() < localCIBuildExecutorService.getMaximumPoolSize() && localCIBuildExecutorService.getQueue().isEmpty();
     }
 
     private class BuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
