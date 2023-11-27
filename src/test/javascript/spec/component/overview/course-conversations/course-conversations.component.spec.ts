@@ -11,8 +11,7 @@ import { ConversationHeaderComponent } from 'app/overview/course-conversations/l
 import { ConversationMessagesComponent } from 'app/overview/course-conversations/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/overview/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course } from 'app/entities/course.model';
-import { EMPTY } from 'rxjs';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, EMPTY } from 'rxjs';
 import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -166,7 +165,6 @@ examples.forEach((activeConversation) => {
             expect(navigateSpy).toHaveBeenCalledWith([], {
                 relativeTo: activatedRoute,
                 queryParams: { conversationId: activeConversation?.id },
-                queryParamsHandling: 'merge',
                 replaceUrl: true,
             });
         });
