@@ -12,7 +12,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisProgrammingExerciseStatusModule } from 'app/exercises/programming/manage/status/programming-exercise-status.module';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
-import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { OrionModule } from 'app/shared/orion/orion.module';
@@ -29,6 +28,7 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
 import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { IrisModule } from 'app/iris/iris.module';
+import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 
 @NgModule({
     imports: [
@@ -45,7 +45,6 @@ import { IrisModule } from 'app/iris/iris.module';
         ArtemisProgrammingExerciseUpdateModule,
         ArtemisProgrammingExerciseStatusModule,
         FeatureToggleModule,
-        ExerciseDetailsModule,
         AssessmentInstructionsModule,
         OrionModule,
         ArtemisProgrammingExerciseLifecycleModule,
@@ -55,6 +54,7 @@ import { IrisModule } from 'app/iris/iris.module';
         ArtemisCodeHintGenerationOverviewModule,
         AceEditorModule,
         ArtemisCodeEditorModule,
+        ArtemisExerciseModule,
         DetailModule,
         IrisModule,
     ],

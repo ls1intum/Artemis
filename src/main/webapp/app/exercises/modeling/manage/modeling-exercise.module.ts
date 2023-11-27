@@ -14,7 +14,6 @@ import { ModelingExerciseDetailComponent } from 'app/exercises/modeling/manage/m
 import { ArtemisTeamConfigFormGroupModule } from 'app/exercises/shared/team-config-form-group/team-config-form-group.module';
 import { StructuredGradingCriterionModule } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.module';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
-import { ExerciseDetailsModule } from 'app/exercises/shared/exercise/exercise-details/exercise-details.module';
 import { ArtemisPlagiarismModule } from 'app/exercises/shared/plagiarism/plagiarism.module';
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
@@ -26,6 +25,7 @@ import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-ti
 import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
+import { ArtemisExerciseModule } from 'app/exercises/shared/exercise/exercise.module';
 
 @NgModule({
     imports: [
@@ -43,11 +43,11 @@ import { DetailModule } from 'app/detail-overview-list/detail.module';
         FormDateTimePickerModule,
         StructuredGradingCriterionModule,
         AssessmentInstructionsModule,
-        ExerciseDetailsModule,
         ArtemisMarkdownModule,
         NonProgrammingExerciseDetailCommonActionsModule,
         ExampleSubmissionsModule,
         ArtemisSharedComponentModule,
+        ArtemisExerciseModule,
         ExerciseCategoriesModule,
         ExerciseTitleChannelNameModule,
         ExerciseUpdateNotificationModule,

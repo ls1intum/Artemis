@@ -191,12 +191,12 @@
                     </button>
                     <jhi-modeling-editor
                         class="editor-outline-background"
-                        *ngIf="!!detail.data.umlModel?.elements?.length"
+                        *ngIf="!isEmpty(detail.data.umlModel?.elements)"
                         [readOnly]="true"
                         [diagramType]="detail.data.diagramType!"
                         [umlModel]="detail.data.umlModel!"
                     />
-                    <span *ngIf="!detail.data.umlModel?.elements?.length">-</span>
+                    <span *ngIf="!isEmpty(detail.data.umlModel?.elements)">-</span>
                 </dd>
             </ng-container>
         </ng-container>

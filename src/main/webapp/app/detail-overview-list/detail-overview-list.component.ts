@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { faExclamationTriangle, faEye } from '@fortawesome/free-solid-svg-icons';
+import { isEmpty } from 'lodash';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -93,4 +94,6 @@ export class DetailOverviewListComponent implements OnInit {
             });
         }
     }
+
+    protected readonly isEmpty = isEmpty;
 }
