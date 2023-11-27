@@ -10,6 +10,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -31,12 +33,15 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
 
 /**
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
@@ -50,14 +55,17 @@ public class LocalCIContainerService {
 
     private final DockerClient dockerClient;
 
+    private final HostConfig hostConfig;
+
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
     String localCIBuildScriptBasePath;
 
-    public LocalCIContainerService(DockerClient dockerClient) {
+    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig) {
         this.dockerClient = dockerClient;
+        this.hostConfig = hostConfig;
     }
 
     /**
@@ -70,7 +78,7 @@ public class LocalCIContainerService {
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash, String image) {
-        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(HostConfig.newHostConfig().withAutoRemove(true))
+        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig)
                 .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
@@ -95,15 +103,16 @@ public class LocalCIContainerService {
      * Run the script in the container and wait for it to finish before returning.
      *
      * @param containerId the id of the container in which the script should be run
+     * @return a list of {@link BuildLogEntry} that contains the logs of the script execution
      */
 
-    public void runScriptInContainer(String containerId) {
+    public List<BuildLogEntry> runScriptInContainer(String containerId) {
         log.info("Started running the build script for build job in container with id {}", containerId);
         // The "sh script.sh" execution command specified here is run inside the container as an additional process. This command runs in the background, independent of the
         // container's
         // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
         // command has finished before trying to extract the results.
-        executeDockerCommand(containerId, true, true, "sh", "script.sh");
+        return executeDockerCommand(containerId, true, true, "sh", "script.sh");
     }
 
     /**
@@ -279,11 +288,17 @@ public class LocalCIContainerService {
         }
     }
 
-    private void executeDockerCommand(String containerId, boolean attachStdout, boolean attachStderr, String... command) {
+    private List<BuildLogEntry> executeDockerCommand(String containerId, boolean attachStdout, boolean attachStderr, String... command) {
         ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(attachStdout).withAttachStderr(attachStderr).withCmd(command).exec();
-
+        List<BuildLogEntry> buildLogEntries = new ArrayList<>();
         final CountDownLatch latch = new CountDownLatch(1);
         dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
+
+            @Override
+            public void onNext(Frame item) {
+                String text = new String(item.getPayload());
+                buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), text));
+            }
 
             @Override
             public void onComplete() {
@@ -297,6 +312,7 @@ public class LocalCIContainerService {
         catch (InterruptedException e) {
             throw new LocalCIException("Interrupted while executing Docker command: " + String.join(" ", command), e);
         }
+        return buildLogEntries;
     }
 
     /**
@@ -310,6 +326,15 @@ public class LocalCIContainerService {
     public Path createBuildScript(ProgrammingExerciseParticipation participation) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
+
+        List<ScriptAction> actions;
+
+        try {
+            actions = programmingExercise.getWindfile().getScriptActions();
+        }
+        catch (NullPointerException e) {
+            actions = null;
+        }
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
@@ -329,11 +354,16 @@ public class LocalCIContainerService {
                 cd /repositories/test-repository
                 """);
 
-        // programming language specific tasks
-        switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
-            case PYTHON -> scriptForPython(buildScript);
-            default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
+        if (actions != null) {
+            actions.forEach(action -> buildScript.append(action.getScript()).append("\n"));
+        }
+        else {
+            // Windfile actions are not defined, use default build script
+            switch (programmingExercise.getProgrammingLanguage()) {
+                case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
+                case PYTHON -> scriptForPython(buildScript);
+                default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
+            }
         }
 
         try {
@@ -415,4 +445,5 @@ public class LocalCIContainerService {
             throw new LocalCIException("Failed to delete build script file", e);
         }
     }
+
 }
