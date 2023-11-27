@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 
 /**
@@ -8,6 +9,13 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
  * Each iris session sub service handles a specific type of Iris session.
  */
 public interface IrisSessionSubServiceInterface {
+
+    /**
+     * Sends a message over the websocket to a specific user
+     *
+     * @param message that should be sent over the websocket
+     */
+    void sendOverWebsocket(IrisMessage message);
 
     /**
      * Sends a request to Iris to get a message for the given session.
@@ -23,6 +31,8 @@ public interface IrisSessionSubServiceInterface {
      * @param user        The user to check
      */
     void checkHasAccessToIrisSession(IrisSession irisSession, User user);
+
+    void checkRateLimit(User user);
 
     /**
      * Checks if the exercise connected to the session has Iris activated.

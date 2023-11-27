@@ -55,7 +55,10 @@ public class TextExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
-        disableFeedbackSuggestionsForExamExercises(newExercise);
+        if (newExercise.isExamExercise()) {
+            // Disable feedback suggestions on exam exercises (currently not supported)
+            newExercise.setFeedbackSuggestionsEnabled(false);
+        }
 
         TextExercise newTextExercise = textExerciseRepository.save(newExercise);
 
@@ -80,17 +83,6 @@ public class TextExerciseImportService extends ExerciseImportService {
         super.copyExerciseBasis(newExercise, importedExercise, gradingInstructionCopyTracker);
         newExercise.setExampleSolution(importedExercise.getExampleSolution());
         return newExercise;
-    }
-
-    /**
-     * Disable feedback suggestions on exam exercises (currently not supported)
-     *
-     * @param exercise the exercise to disable feedback suggestions for
-     */
-    private void disableFeedbackSuggestionsForExamExercises(TextExercise exercise) {
-        if (exercise.isExamExercise()) {
-            exercise.disableFeedbackSuggestions();
-        }
     }
 
     /**
