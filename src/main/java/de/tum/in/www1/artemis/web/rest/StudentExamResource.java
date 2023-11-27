@@ -576,9 +576,10 @@ public class StudentExamResource {
      * <p>
      * See {@link StudentExamWithGradeDTO} for more explanation.
      *
-     * @param courseId the course to which the student exam belongs to
-     * @param examId   the exam to which the student exam belongs to
-     * @param userId   the user id of the student whose grade summary is requested
+     * @param courseId  the course to which the student exam belongs to
+     * @param examId    the exam to which the student exam belongs to
+     * @param userId    the user id of the student whose grade summary is requested
+     * @param isTestRun whether the student exam belongs to a test run by an instructor or not
      * @return the ResponseEntity with status 200 (OK) and with the StudentExamWithGradeDTO instance without the student exam as body
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/grade-summary")
