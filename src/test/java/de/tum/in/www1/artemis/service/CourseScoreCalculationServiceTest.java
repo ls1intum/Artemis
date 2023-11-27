@@ -185,7 +185,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         assertThat(totalCourseScores.studentScores().relativeScore()).isZero();
         assertThat(totalCourseScores.studentScores().currentRelativeScore()).isZero();
 
-        assertThat(courseForDashboard.participationResults().size()).isEqualTo(5);
+        assertThat(courseForDashboard.participationResults().size()).isEqualTo(6);
     }
 
     @Test
