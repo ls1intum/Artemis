@@ -312,14 +312,31 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should update selected entities with given elements', () => {
-        const relationships = ['relationShip1', 'relationShip2'];
-        const selection = { elements: ['ownerId1', 'ownerId2'], relationships };
+        const selection = {
+            elements: {
+                ownerId1: true,
+                ownerId2: true,
+            },
+            relationships: {
+                relationShip1: true,
+                relationShip2: true,
+            },
+        };
         comp.umlModel = <UMLModel>(<unknown>{
-            elements: [<UMLElement>(<unknown>{ owner: 'ownerId1', id: 'elementId1' }), <UMLElement>(<unknown>{ owner: 'ownerId2', id: 'elementId2' })],
+            elements: {
+                elementId1: <UMLElement>(<unknown>{
+                    owner: 'ownerId1',
+                    id: 'elementId1',
+                }),
+                elementId2: <UMLElement>(<unknown>{
+                    owner: 'ownerId2',
+                    id: 'elementId2',
+                }),
+            },
         });
         fixture.detectChanges();
         comp.onSelectionChanged(selection);
-        expect(comp.selectedRelationships).toEqual(relationships);
+        expect(comp.selectedRelationships).toEqual(['relationShip1', 'relationShip2']);
         expect(comp.selectedEntities).toEqual(['ownerId1', 'ownerId2', 'elementId1', 'elementId2']);
     });
 
