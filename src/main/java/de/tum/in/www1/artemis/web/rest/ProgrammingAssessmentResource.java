@@ -160,7 +160,6 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
 
         newManualResult = programmingAssessmentService.saveAndSubmitManualAssessment(participation, newManualResult, existingManualResult, user, submit);
-
         // remove information about the student for tutors to ensure double-blind assessment
         if (!isAtLeastInstructor) {
             newManualResult.getParticipation().filterSensitiveInformation();

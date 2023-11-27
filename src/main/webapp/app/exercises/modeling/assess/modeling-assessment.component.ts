@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
-import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType, addOrUpdateAssessment } from '@ls1intum/apollon';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ModelElementCount } from 'app/entities/modeling-submission.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -209,10 +209,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         if (this.apollonEditor != undefined) {
             await this.apollonEditor.nextRender;
             const model: UMLModel = this.apollonEditor!.model;
-            for (const element of model!.elements) {
+            for (const element of Object.values(model!.elements)) {
                 element.highlight = newElements.get(element.id);
             }
-            for (const relationship of model!.relationships) {
+            for (const relationship of Object.values(model!.relationships)) {
                 relationship.highlight = newElements.get(relationship.id);
             }
             this.apollonEditor!.model = model!;
@@ -236,10 +236,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         if (this.apollonEditor != undefined) {
             await this.apollonEditor.nextRender;
             const model: UMLModel = this.apollonEditor.model;
-            for (const element of model.elements) {
+            for (const element of Object.values(model.elements)) {
                 element.assessmentNote = this.calculateNote(elementCountMap.get(element.id));
             }
-            for (const relationship of model.relationships) {
+            for (const relationship of Object.values(model.relationships)) {
                 relationship.assessmentNote = this.calculateNote(elementCountMap.get(relationship.id));
             }
             this.apollonEditor.model = model;
@@ -255,16 +255,19 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
             return;
         }
 
-        this.umlModel.assessments = feedbacks.map<Assessment>((feedback) => ({
-            modelElementId: feedback.referenceId!,
-            elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
-            score: feedback.credits!,
-            feedback: feedback.text || undefined,
-            label: this.calculateLabel(feedback),
-            labelColor: this.calculateLabelColor(feedback),
-            correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
-            dropInfo: this.calculateDropInfo(feedback),
-        }));
+        feedbacks.forEach((feedback) => {
+            addOrUpdateAssessment(this.umlModel, {
+                modelElementId: feedback.referenceId!,
+                elementType: feedback.referenceType! as UMLElementType | UMLRelationshipType,
+                score: feedback.credits!,
+                feedback: feedback.text || undefined,
+                label: this.calculateLabel(feedback),
+                labelColor: this.calculateLabelColor(feedback),
+                correctionStatus: this.calculateCorrectionStatusForFeedback(feedback),
+                dropInfo: this.calculateDropInfo(feedback),
+            });
+        });
+
         if (this.apollonEditor) {
             await this.apollonEditor.nextRender;
             this.apollonEditor.model = this.umlModel;

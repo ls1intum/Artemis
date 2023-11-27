@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSendingService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
@@ -21,14 +23,17 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
+    private final Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService;
+
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, ExamDateService examDateService, UserRepository userRepository, GradingCriterionRepository gradingCriterionRepository,
             Optional<LtiNewResultService> ltiNewResultService, SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
                 submissionRepository, examDateService, gradingCriterionRepository, userRepository, ltiNewResultService, singleUserNotificationService, resultWebsocketService);
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        this.athenaFeedbackSendingService = athenaFeedbackSendingService;
     }
 
     /**
@@ -66,7 +71,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
     public Result saveAndSubmitManualAssessment(StudentParticipation participation, Result newManualResult, Result existingManualResult, User assessor, boolean submit) {
         // make sure that the submission cannot be manipulated on the client side
         var submission = (ProgrammingSubmission) existingManualResult.getSubmission();
-        var exercise = participation.getExercise();
+        ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
 
         newManualResult.setSubmission(submission);
         newManualResult.setHasComplaint(existingManualResult.getHasComplaint().orElse(false));
@@ -82,12 +87,12 @@ public class ProgrammingAssessmentService extends AssessmentService {
         newManualResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(newManualResult.getId());
 
         if (submit) {
-            return submitManualAssessment(newManualResult, participation, exercise);
+            return submitManualAssessment(newManualResult, submission, participation, exercise);
         }
         return newManualResult;
     }
 
-    private Result submitManualAssessment(Result newManualResult, StudentParticipation participation, Exercise exercise) {
+    private Result submitManualAssessment(Result newManualResult, ProgrammingSubmission submission, StudentParticipation participation, ProgrammingExercise exercise) {
         newManualResult = resultRepository.submitManualAssessment(newManualResult);
 
         if (participation.getStudent().isPresent()) {
@@ -103,10 +108,20 @@ public class ProgrammingAssessmentService extends AssessmentService {
             resultWebsocketService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
         }
 
+        sendFeedbackToAthena(exercise, submission, newManualResult.getFeedbacks());
         handleResolvedFeedbackRequest(participation);
         newManualResult.setParticipation(participation);
 
         return newManualResult;
+    }
+
+    /**
+     * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
+     */
+    private void sendFeedbackToAthena(final ProgrammingExercise exercise, final ProgrammingSubmission programmingSubmission, final List<Feedback> feedbacks) {
+        if (athenaFeedbackSendingService.isPresent() && exercise.getFeedbackSuggestionsEnabled()) {
+            athenaFeedbackSendingService.get().sendFeedback(exercise, programmingSubmission, feedbacks);
+        }
     }
 
     private void handleResolvedFeedbackRequest(StudentParticipation participation) {
