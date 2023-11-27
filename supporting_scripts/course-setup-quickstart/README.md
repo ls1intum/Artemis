@@ -8,26 +8,26 @@ Scripts in this folder help to configure and setup your first Artemis course to 
 
 2. Enable Python support in your IntelliJ
 
-   `File > Project Structure > Facets > Add - Python` (press the plus and add a Python environment there,
-   make sure that you have configured the python interpreter)
+   `File > Project Structure > Facets > Add - Python` (press the + and add a Python environment there,
+   make sure that you have configured the Python interpreter)
 
    ![IntelliJ Python Facet Configuration](./images/facets-config.png)
 
-   If not added automatically by IntelliJ add a Module:
+   If not added automatically by IntelliJ, add a module:
    `File > Project Structure > Modules > Add - Python`
 
    ![IntelliJ Module Configuration](./images/module-config.png)
 
-_Tested on python 3.7 & 3.9, other versions might work as well._
+_Tested on Python 3.7 & 3.9, other versions might work as well._
 
 ## Usage
 
 1. Start your local Artemis instance
 2. Configure the values in `config.ini` according to your setup
-3. Install the missing packages of the python scripts that you want to execute
+3. Install the missing packages of the Python scripts that you want to execute
 
-   _Make sure to install it for the python version that was configured in [Setup](#setup). 
-   Installing packages for a certain python version can be done with_
+   _Make sure to install it for the Python version that was configured in [Setup](#setup). 
+   Installing packages for a certain Python version can be done with_
    ```shell
    python3.9 -m pip install <packageName>
    ```
