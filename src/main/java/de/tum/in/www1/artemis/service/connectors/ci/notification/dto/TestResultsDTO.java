@@ -10,7 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.BuildLogParseUtils;
@@ -175,7 +174,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     }
 
     @Override
-    public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
+    public List<BuildLogEntry> extractBuildLogs() {
         var buildLogs = BuildLogParseUtils.parseBuildLogsFromLogs(getLogs());
         return filterBuildLogs(buildLogs);
     }
