@@ -8,6 +8,7 @@
             "accountInformation": "Account Informationen",
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
+            "scienceSettings": "Forschung",
             "accountInformationPage": {
                 "registrationNumber": "Matrikelnummer",
                 "fullName": "Vollständiger Name",

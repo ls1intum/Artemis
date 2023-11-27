@@ -8,6 +8,7 @@
             "accountInformation": "Account Information",
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
+            "scienceSettings": "Science",
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",
                 "fullName": "Full Name",
