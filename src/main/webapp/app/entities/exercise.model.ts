@@ -54,6 +54,14 @@ export interface PlagiarismDetectionConfig {
     minimumSize?: number;
 }
 
+export const DEFAULT_PLAGIARISM_DETECTION_CONFIG: PlagiarismDetectionConfig = {
+    continuousPlagiarismControlEnabled: false,
+    continuousPlagiarismControlPostDueDateChecksEnabled: false,
+    similarityThreshold: 90,
+    minimumSize: 50,
+    minimumScore: 0,
+};
+
 export const exerciseTypes: ExerciseType[] = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING, ExerciseType.FILE_UPLOAD, ExerciseType.QUIZ];
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
@@ -62,14 +70,6 @@ export enum IncludedInOverallScore {
     INCLUDED_AS_BONUS = 'INCLUDED_AS_BONUS',
     NOT_INCLUDED = 'NOT_INCLUDED',
 }
-
-export const DEFAULT_PLAGIARISM_DETECTION_CONFIG: PlagiarismDetectionConfig = {
-    continuousPlagiarismControlEnabled: false,
-    continuousPlagiarismControlPostDueDateChecksEnabled: false,
-    similarityThreshold: 90,
-    minimumSize: 50,
-    minimumScore: 0,
-};
 
 export abstract class Exercise implements BaseEntity {
     public id?: number;
