@@ -62,9 +62,9 @@ export class DragAndDropQuiz {
 
     generateQuizExercise() {
         cy.get('#generate-quiz-exercise').click();
-        cy.get('#generate-quiz-exercise-save').should('be.visible');
+        cy.get('#quiz-save').should('be.visible');
         cy.wait(100);
-        cy.get('#generate-quiz-exercise-save').click();
+        cy.get('#quiz-save').click();
     }
 
     waitForQuizExerciseToBeGenerated() {
