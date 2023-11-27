@@ -8,7 +8,7 @@ services:
         hostname: jira
         extra_hosts:
             - "host.docker.internal:host-gateway"
-        image: ghcr.io/ls1intum/artemis-jira:9.4.3
+        image: ghcr.io/ls1intum/artemis-jira:9.11.3
         pull_policy: if_not_present
         volumes:
             - artemis-jira-data:/var/atlassian/application-data/jira
@@ -24,7 +24,7 @@ services:
         hostname: bitbucket
         extra_hosts:
             - "host.docker.internal:host-gateway"
-        image: ghcr.io/ls1intum/artemis-bitbucket:8.13.1
+        image: ghcr.io/ls1intum/artemis-bitbucket:8.15.1
         pull_policy: if_not_present
         volumes:
             - artemis-bitbucket-data:/var/atlassian/application-data/bitbucket
@@ -44,7 +44,7 @@ services:
         hostname: bamboo
         extra_hosts:
             - "host.docker.internal:host-gateway"
-        image: ghcr.io/ls1intum/artemis-bamboo:9.3.3
+        image: ghcr.io/ls1intum/artemis-bamboo:9.3.5
         pull_policy: if_not_present
         volumes:
             - artemis-bamboo-data:/var/atlassian/application-data/bamboo
@@ -69,7 +69,7 @@ services:
         hostname: bamboo-build-agent
         extra_hosts:
             - "host.docker.internal:host-gateway"
-        image: ghcr.io/ls1intum/artemis-bamboo-build-agent:9.3.3
+        image: ghcr.io/ls1intum/artemis-bamboo-build-agent:9.3.5
         pull_policy: if_not_present
         volumes:
             # The following path needs to be the same absolute path on the host because of the docker socket:
