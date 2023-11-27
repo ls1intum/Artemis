@@ -39,7 +39,7 @@ describe('MessageReplyInlineInputComponent', () => {
     });
 
     it('should invoke metis service with created message reply', fakeAsync(() => {
-        component.posting = metisPostToCreateUser1;
+        component.posting = { ...metisPostToCreateUser1 };
         component.ngOnChanges();
 
         const newContent = 'new content';
@@ -50,7 +50,6 @@ describe('MessageReplyInlineInputComponent', () => {
         component.confirm();
         expect(metisServiceCreateStub).toHaveBeenCalledWith({
             ...component.posting,
-            content: newContent,
             title: undefined,
             courseWideContext: undefined,
             exercise: undefined,
@@ -58,7 +57,7 @@ describe('MessageReplyInlineInputComponent', () => {
         });
         tick();
         expect(component.isLoading).toBeFalse();
-        expect(onCreateSpy).toHaveBeenCalledOnce();
+        expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith({ ...component.posting, content: newContent });
     }));
 
     it('should stop loading when metis service throws error during replying to message', fakeAsync(() => {
