@@ -1,7 +1,13 @@
 package de.tum.in.www1.artemis.service.plagiarism;
 
+import static java.util.function.Predicate.isEqual;
+import static java.util.function.Predicate.not;
+
+import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
 
@@ -41,13 +47,26 @@ public class PlagiarismService {
      * @param submission the submission to anonymize.
      * @param userLogin  the user login of the student asking to see his plagiarism comparison.
      */
-    public void checkAccessAndAnonymizeSubmissionForStudent(Submission submission, String userLogin) {
-        if (!wasUserNotifiedByInstructor(submission.getId(), userLogin)) {
+    public void checkAccessAndAnonymizeSubmissionForStudent(Submission submission, String userLogin, ZonedDateTime exerciseDueDate) {
+        if (!hasAccessToSubmission(submission.getId(), userLogin, exerciseDueDate)) {
             throw new AccessForbiddenException("This plagiarism submission is not related to the requesting user or the user has not been notified yet.");
         }
         submission.setParticipation(null);
         submission.setResults(null);
         submission.setSubmissionDate(null);
+    }
+
+    public boolean hasAccessToSubmission(Long submissionId, String userLogin, ZonedDateTime exerciseDueDate) {
+        var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
+        return comparisonOptional.filter(not(Set::isEmpty)).isPresent()
+                && isOwnSubmissionOrIsAfterExerciseDueDate(submissionId, userLogin, comparisonOptional.get(), exerciseDueDate)
+                && wasUserNotifiedByInstructor(submissionId, userLogin, comparisonOptional.get());
+    }
+
+    private boolean isOwnSubmissionOrIsAfterExerciseDueDate(Long submissionId, String userLogin, Set<PlagiarismComparison<?>> comparisons, ZonedDateTime exerciseDueDate) {
+        var isOwnSubmission = comparisons.stream().flatMap(it -> Stream.of(it.getSubmissionA(), it.getSubmissionB())).filter(Objects::nonNull)
+                .filter(it -> it.getSubmissionId() == submissionId).findFirst().map(PlagiarismSubmission::getStudentLogin).filter(isEqual(userLogin)).isPresent();
+        return isOwnSubmission || exerciseDueDate.isBefore(ZonedDateTime.now());
     }
 
     /**
@@ -58,21 +77,15 @@ public class PlagiarismService {
      * @return true if the student with user login owns one of the submissions in a PlagiarismComparison which contains the given submissionId and is notified by the instructor,
      *         otherwise false
      */
-    public boolean wasUserNotifiedByInstructor(Long submissionId, String userLogin) {
-        var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
-
+    private boolean wasUserNotifiedByInstructor(Long submissionId, String userLogin, Set<PlagiarismComparison<?>> comparisons) {
         // disallow requests from users who are not notified about this case:
-        if (comparisonOptional.isPresent()) {
-            var comparisons = comparisonOptional.get();
-            return comparisons.stream()
-                    .anyMatch(comparison -> (comparison.getSubmissionA().getPlagiarismCase() != null
-                            && (comparison.getSubmissionA().getPlagiarismCase().getPost() != null || comparison.getSubmissionA().getPlagiarismCase().getVerdict() != null)
-                            && (comparison.getSubmissionA().getStudentLogin().equals(userLogin)))
-                            || (comparison.getSubmissionB().getPlagiarismCase() != null
-                                    && (comparison.getSubmissionB().getPlagiarismCase().getPost() != null || comparison.getSubmissionB().getPlagiarismCase().getVerdict() != null)
-                                    && (comparison.getSubmissionB().getStudentLogin().equals(userLogin))));
-        }
-        return false;
+        return comparisons.stream()
+                .anyMatch(comparison -> (comparison.getSubmissionA().getPlagiarismCase() != null
+                        && (comparison.getSubmissionA().getPlagiarismCase().getPost() != null || comparison.getSubmissionA().getPlagiarismCase().getVerdict() != null)
+                        && (comparison.getSubmissionA().getStudentLogin().equals(userLogin)))
+                        || (comparison.getSubmissionB().getPlagiarismCase() != null
+                                && (comparison.getSubmissionB().getPlagiarismCase().getPost() != null || comparison.getSubmissionB().getPlagiarismCase().getVerdict() != null)
+                                && (comparison.getSubmissionB().getStudentLogin().equals(userLogin))));
     }
 
     /**
