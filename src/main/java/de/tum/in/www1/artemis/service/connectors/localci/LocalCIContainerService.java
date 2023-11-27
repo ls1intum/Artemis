@@ -35,7 +35,9 @@ import com.github.dockerjava.api.model.HostConfig;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
 
 /**
  * This service contains methods that are used to interact with the Docker containers when executing build jobs in the local CI system.
@@ -49,14 +51,17 @@ public class LocalCIContainerService {
 
     private final DockerClient dockerClient;
 
+    private final HostConfig hostConfig;
+
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
     String localCIBuildScriptBasePath;
 
-    public LocalCIContainerService(DockerClient dockerClient) {
+    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig) {
         this.dockerClient = dockerClient;
+        this.hostConfig = hostConfig;
     }
 
     /**
@@ -69,7 +74,7 @@ public class LocalCIContainerService {
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
     public CreateContainerResponse configureContainer(String containerName, String branch, String commitHash, String image) {
-        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(HostConfig.newHostConfig().withAutoRemove(true))
+        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig)
                 .withEnv("ARTEMIS_BUILD_TOOL=gradle", "ARTEMIS_DEFAULT_BRANCH=" + branch, "ARTEMIS_ASSIGNMENT_REPOSITORY_COMMIT_HASH=" + (commitHash != null ? commitHash : ""))
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
@@ -303,12 +308,21 @@ public class LocalCIContainerService {
      * The build script is stored in a file in the local-ci-scripts directory.
      * The build script is used to build the programming exercise in a Docker container.
      *
-     * @param programmingExercise the programming exercise for which to create the build script
+     * @param participation the participation for which to create the build script
      * @return the path to the build script file
      */
-    public Path createBuildScript(ProgrammingExercise programmingExercise) {
-        Long programmingExerciseId = programmingExercise.getId();
+    public Path createBuildScript(ProgrammingExerciseParticipation participation) {
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
+
+        List<ScriptAction> actions;
+
+        try {
+            actions = programmingExercise.getWindfile().getScriptActions();
+        }
+        catch (NullPointerException e) {
+            actions = null;
+        }
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
@@ -321,18 +335,23 @@ public class LocalCIContainerService {
             }
         }
 
-        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(programmingExerciseId.toString() + "-build.sh");
+        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(participation.getId().toString() + "-build.sh");
 
         StringBuilder buildScript = new StringBuilder("""
                 #!/bin/bash
                 cd /repositories/test-repository
                 """);
 
-        // programming language specific tasks
-        switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
-            case PYTHON -> scriptForPython(buildScript);
-            default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
+        if (actions != null) {
+            actions.forEach(action -> buildScript.append(action.getScript()).append("\n"));
+        }
+        else {
+            // Windfile actions are not defined, use default build script
+            switch (programmingExercise.getProgrammingLanguage()) {
+                case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
+                case PYTHON -> scriptForPython(buildScript);
+                default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
+            }
         }
 
         try {
@@ -402,11 +421,11 @@ public class LocalCIContainerService {
      * Deletes the build script for a given programming exercise.
      * The build script is stored in a file in the local-ci-scripts directory.
      *
-     * @param exerciseID the ID of the programming exercise for which to delete the build script
+     * @param patricipationID the ID of the participation for which to delete the build script
      */
-    public void deleteScriptFile(String exerciseID) {
+    public void deleteScriptFile(String patricipationID) {
         Path scriptsPath = Path.of("local-ci-scripts");
-        Path buildScriptPath = scriptsPath.resolve(exerciseID + "-build.sh").toAbsolutePath();
+        Path buildScriptPath = scriptsPath.resolve(patricipationID + "-build.sh").toAbsolutePath();
         try {
             Files.deleteIfExists(buildScriptPath);
         }

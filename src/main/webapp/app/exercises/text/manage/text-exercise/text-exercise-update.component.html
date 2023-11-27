@@ -20,11 +20,7 @@
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
             <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
-            <jhi-category-selector
-                [categories]="exerciseCategories"
-                [existingCategories]="existingCategories"
-                (selectedCategories)="updateCategories($event)"
-            ></jhi-category-selector>
+            <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
@@ -138,17 +134,18 @@
                 </div>
             </div>
         </div>
-        <div class="form-group" *ngIf="!isExamMode">
+        <div class="form-group" *ngIf="(isAthenaEnabled$ | async) && !isExamMode">
             <div class="form-check custom-control custom-checkbox">
                 <input
                     type="checkbox"
-                    id="automatic_assessment_enabled"
-                    [ngModel]="textExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC"
-                    (ngModelChange)="textExercise.assessmentType = $event ? AssessmentType.SEMI_AUTOMATIC : AssessmentType.MANUAL"
+                    id="feedbackSuggestionsEnabled"
+                    [ngModel]="textExercise.feedbackSuggestionsEnabled"
+                    (ngModelChange)="textExercise.feedbackSuggestionsEnabled = !!$event"
                     class="form-check-input custom-control-input"
-                    name="automaticAssessmentEnabled"
+                    name="feedbackSuggestionsEnabled"
                 />
-                <label class="form-check-label custom-control-label" for="automatic_assessment_enabled" jhiTranslate="artemisApp.textExercise.automaticAssessmentEnabled"></label>
+                <label class="form-check-label custom-control-label" for="feedbackSuggestionsEnabled" jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"></label>
+                <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'"></jhi-help-icon>
             </div>
         </div>
         <jhi-exercise-update-plagiarism *ngIf="!isExamMode" [exercise]="textExercise"> </jhi-exercise-update-plagiarism>

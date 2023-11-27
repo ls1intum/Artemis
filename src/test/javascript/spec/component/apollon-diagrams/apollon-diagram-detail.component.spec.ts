@@ -124,7 +124,7 @@ describe('ApollonDiagramDetail Component', () => {
     });
 
     it('validateGeneration', async () => {
-        const nonInteractiveModel = { ...model, interactive: { ...model.interactive, elements: [], relationships: [] } };
+        const nonInteractiveModel = { ...model, interactive: { ...model.interactive, elements: {}, relationships: {} } };
 
         // setup
         const div = document.createElement('div');
@@ -155,7 +155,10 @@ describe('ApollonDiagramDetail Component', () => {
         expect(div.children).toHaveLength(1);
 
         // set selection
-        fixture.componentInstance.apollonEditor!.selection = { elements: model.elements.map((element) => element.id), relationships: [] };
+        fixture.componentInstance.apollonEditor!.selection = {
+            elements: Object.fromEntries(Object.keys(model.elements).map((key) => [key, true])),
+            relationships: {},
+        };
         fixture.detectChanges();
         // test
         await fixture.componentInstance.downloadSelection();
