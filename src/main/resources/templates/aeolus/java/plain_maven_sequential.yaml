@@ -4,13 +4,15 @@ metadata:
     id: java-windfile
     description: Build Plan for a java Exercise with maven
 actions:
-    - name: maven
-      script: |
-          cd structural
-          mvn clean test
-          if [ $? -eq 0 ]; then
-            cd ..
-            cd behavior
-            mvn clean test
-          fi
-          cd ..
+    - name: structural
+      script: mvn clean test
+      runAlways: false
+      workdir: structural
+    - name: behavior
+      script: mvn clean test
+      runAlways: false
+      workdir: behavior
+      results:
+          - name: junit
+            path: '**/target/surefire-reports/*.xml'
+            type: junit

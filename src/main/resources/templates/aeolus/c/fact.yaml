@@ -1,64 +1,50 @@
 api: v0.0.1
 metadata:
     name: c with fact - regular runs
-    id: c-windfile
+    id: c-fact
     description: This is a windfile for c exercises using fact
-    author: Andreas Resch
-    docker:
-        image: sharingcodeability/fact
-        tag: latest
-        volumes:
-            - ${WORKDIR}:${WORKDIR}
-            - ${TMPDIR}:${TMPDIR}
-        parameters:
-            - --cpus
-            - '"2"'
-            - --memory
-            - '"2g"'
-            - --memory-swap
-            - '"2g"'
-            - --pids-limit
-            - '"1000"'
 actions:
-    job11:
-        setup-the-build-environment: |
+    - name: setup_the_build_environment
+      script: |
           #!/usr/bin/env bash
+
           # ------------------------------
           # Task Description:
           # Build and run all tests
           # ------------------------------
+
           # Updating assignment and test-reports ownership...
           sudo chown artemis_user:artemis_user assignment/ -R
           sudo rm -rf test-reports
           sudo mkdir test-reports
           sudo chown artemis_user:artemis_user test-reports/ -R
-        run_always: false
-    build-and-run-all-tests:
-        script: |
+      runAlways: false
+    - name: build_and_run_all_tests
+      script: |
           #!/usr/bin/env bash
+
           # ------------------------------
           # Task Description:
           # Build and run all tests
           # ------------------------------
+
           rm -f assignment/GNUmakefile
           rm -f assignment/Makefile
           cp -f tests/Makefile assignment/Makefile || exit 2
+
           cd tests
           python3 Tests.py
           rm Tests.py
           rm -rf ./tests
           exit 0
-        run_always: false
-    junit-parser:
-        parameters:
-            ignore_time: false
-            test_results: test-reports/*results.xml
-        platform: bamboo
-        kind: junit
-        run_always: true
-    cleanup:
-        script: |
+      runAlways: false
+    - name: cleanup
+      script: |-
           sudo rm -rf tests/
           sudo rm -rf assignment/
           sudo rm -rf test-reports/
-        run_always: true
+      runAlways: true
+      results:
+          - name: junit_test-reports/*results.xml
+            path: test-reports/*results.xml
+            type: junit

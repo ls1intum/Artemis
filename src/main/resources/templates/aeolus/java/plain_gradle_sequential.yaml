@@ -9,23 +9,14 @@ actions:
       runAlways: false
     - name: behavior_tests
       script: ./gradlew behaviorTests
-    - name: gradle
-      script: |
-          chmod +x gradlew
-          ./gradlew clean structuralTests
-          if [ $? -eq 0 ]; then
-              ./gradlew behaviorTests
-          fi
       runAlways: false
-    - name: junit
-      parameters:
-          ignore_time: false
-          test_results:
-              - '**/test-results/structuralTests/*.xml'
-              - '**/test-results/behaviorTests/*.xml'
-      platform: bamboo
-      kind: junit
-      runAlways: true
     - name: setup_working_directory_for_cleanup
       script: chmod -R 777 ${WORKDIR}
       runAlways: true
+      results:
+          - name: junit_**/test-results/structuralTests/*.xml
+            path: '**/test-results/structuralTests/*.xml'
+            type: junit
+          - name: junit_**/test-results/behaviorTests/*.xml
+            path: '**/test-results/behaviorTests/*.xml'
+            type: junit

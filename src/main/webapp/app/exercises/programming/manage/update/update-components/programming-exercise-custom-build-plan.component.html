@@ -8,18 +8,35 @@
         <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
     </div>
     <div class="row m-1" *ngIf="programmingExercise.customizeBuildPlanWithAeolus">
-        <div *ngIf="programmingExercise.windFile && programmingExercise.windFile.metadata && programmingExercise.windFile.metadata.docker" class="mb-2">
+        <div
+            *ngIf="programmingExercise.windFile && programmingExercise.windFile.metadata && programmingExercise.windFile.metadata.docker"
+            (change)="generatePreview()"
+            class="mb-2"
+        >
             <label>
                 <span jhiTranslate="artemisApp.programmingExercise.dockerImage">Docker Image</span>
             </label>
-            <input required type="text" class="form-control" name="dockerImage" id="field_dockerImage" [(ngModel)]="programmingExercise.windFile.metadata.docker.image" />
+            <input
+                required
+                type="text"
+                class="form-control"
+                name="dockerImage"
+                id="field_dockerImage"
+                [(ngModel)]="programmingExercise.windFile.metadata.docker.image"
+                (change)="generatePreview()"
+            />
         </div>
         <div class="col-3 col-md-3">
             <div class="d-flex flex-column h-100 justify-content-between">
                 <div class="list-group">
                     <ng-container *ngFor="let action of this.programmingExercise.windFile?.actions">
                         <ng-container *ngIf="isScriptAction(action)">
-                            <div class="list-group-item mb-1" [ngClass]="{ active: active?.name === action.name }" (click)="changeActiveAction(action.name)">
+                            <div
+                                class="list-group-item mb-1"
+                                [ngClass]="{ active: active?.name === action.name }"
+                                (click)="changeActiveAction(action.name)"
+                                (change)="generatePreview()"
+                            >
                                 <div class="d-flex w-100 justify-content-between">
                                     <p class="mb-0">{{ action.name }}</p>
                                     <div>
@@ -38,7 +55,7 @@
         <div class="card col-4 col-md-4" *ngIf="active">
             <div class="card-header">
                 <div class="form-group">
-                    <input required type="text" class="form-control" name="actionName" id="field_actionName" [(ngModel)]="active.name" />
+                    <input required type="text" class="form-control" name="actionName" id="field_actionName" [(ngModel)]="active.name" (change)="generatePreview()" />
                     <input
                         class="form-control mt-2"
                         type="text"
@@ -46,10 +63,11 @@
                         id="field_workdir"
                         [placeholder]="'artemisApp.programmingExercise.workdir' | artemisTranslate"
                         [(ngModel)]="active.workdir"
+                        (change)="generatePreview()"
                     />
                     <div class="form-check mt-2">
                         <label class="form-check-label" for="field_alwaysrun" *ngIf="active">
-                            <input class="form-check-input" type="checkbox" name="runAlways" id="field_alwaysrun" [(ngModel)]="active.runAlways" />
+                            <input class="form-check-input" type="checkbox" name="runAlways" id="field_alwaysrun" [(ngModel)]="active.runAlways" (change)="generatePreview()" />
                             <label class="form-check-label custom-control-label" for="field_alwaysrun" jhiTranslate="artemisApp.programmingExercise.runActionAlways">
                                 Always run, even if other actions fail
                             </label>

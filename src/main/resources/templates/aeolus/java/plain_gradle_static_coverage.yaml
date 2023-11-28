@@ -10,13 +10,6 @@ actions:
     - name: static_code_analysis
       script: ./gradlew check -x test
       runAlways: true
-    - name: junit
-      parameters:
-          ignore_time: false
-          test_results: '**/test-results/test/*.xml'
-      platform: bamboo
-      kind: junit
-      runAlways: true
     - name: setup_working_directory_for_cleanup
       script: chmod -R 777 ${WORKDIR}
       runAlways: true
@@ -31,3 +24,6 @@ actions:
             path: target/cpd.xml
           - name: testwiseCoverageReport
             path: build/reports/testwise-coverage/tiaTests/tiaTests.json
+          - name: junit_**/test-results/test/*.xml
+            path: '**/test-results/test/*.xml'
+            type: junit

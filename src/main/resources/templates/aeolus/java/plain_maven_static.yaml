@@ -19,10 +19,6 @@ actions:
             path: target/pmd.xml
           - name: pmd_cpd
             path: target/cpd.xml
-    - name: junit
-      parameters:
-          ignore_time: false
-          test_results: '**/target/surefire-reports/*.xml'
-      platform: bamboo
-      kind: junit
-      runAlways: true
+          - name: junit
+            path: '**/target/surefire-reports/*.xml'
+            type: junit

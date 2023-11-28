@@ -4,21 +4,13 @@ metadata:
     id: java-windfile
     description: Build Plan for a java Exercise
 actions:
-    - name: gradle
-      script: |
-        chmod +x gradlew
-        ./gradlew clean test
+    - name: tests
+      script: ./gradlew clean test
       runAlways: false
-      parameters:
-          ignore_time: false
-          test_results: '**/test-results/test/*.xml'
-    - name: junit
-      parameters:
-          ignore_time: false
-          test_results: '**/test-results/test/*.xml'
-      platform: bamboo
-      kind: junit
-      runAlways: true
     - name: setup_working_directory_for_cleanup
       script: chmod -R 777 ${WORKDIR}
       runAlways: true
+      results:
+          - name: junit_**/test-results/test/*.xml
+            path: '**/test-results/test/*.xml'
+            type: junit

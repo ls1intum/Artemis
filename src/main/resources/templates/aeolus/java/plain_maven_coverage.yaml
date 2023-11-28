@@ -13,12 +13,6 @@ actions:
       results:
           - name: testwiseCoverageReport
             path: target/tia/reports/tiaTests.json
-    - name: junit
-      parameters:
-          ignore_time: false
-          test_results:
-              - '**/target/surefire-reports/*.xml'
-              - 'target/tia/reports/tiaTests.json'
-      platform: bamboo
-      kind: junit
-      runAlways: true
+          - name: junit
+            path: '**/target/surefire-reports/*.xml'
+            type: junit
