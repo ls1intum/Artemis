@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 
@@ -36,7 +37,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) {
+    public void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException {
         triggerBuild(participation, null);
     }
 
@@ -47,6 +48,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @param commitHash    the commit hash of the commit that triggers the build. If it is null, the latest commit of the default branch will be built.
      * @throws LocalCIException if the build job could not be added to the queue.
      */
+    @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) {
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();

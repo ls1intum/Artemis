@@ -155,7 +155,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
         // TODO: there might be cases in which Artemis should NOT trigger the build
         try {
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation);
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild(participation, commit.getCommitHash());
         }
         catch (ContinuousIntegrationException ex) {
             // TODO: This case is currently not handled. The correct handling would be creating the submission and informing the user that the build trigger failed.
