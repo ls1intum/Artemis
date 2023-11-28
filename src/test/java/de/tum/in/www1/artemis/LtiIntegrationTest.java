@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.doReturn;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -12,6 +13,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,6 +45,7 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -411,6 +414,14 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
                 .andExpect(status().isOk());
 
         verify(ltiPlatformConfigurationRepository).save(platformToUpdate);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student3")
+    void testRepositoryMethods() {
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> ltiPlatformConfigurationRepository.findByIdElseThrow(Long.MAX_VALUE));
+
+        assertThat(ltiPlatformConfigurationRepository.findByRegistrationId("")).isEqualTo(Optional.empty());
     }
 
     private void assertParametersExistingStudent(MultiValueMap<String, String> parameters) {
