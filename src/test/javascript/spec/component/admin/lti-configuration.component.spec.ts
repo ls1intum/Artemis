@@ -5,13 +5,14 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
+import { NgModule } from '@angular/core';
+import { SortDirective } from 'app/shared/sort/sort.directive';
 
 describe('LTI Configuration Component', () => {
     let comp: LtiConfigurationComponent;
@@ -19,13 +20,14 @@ describe('LTI Configuration Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbNavModule, MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, NgbNavModule, MockModule(NgbTooltipModule), NgModule],
             declarations: [
                 LtiConfigurationComponent,
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(HelpIconComponent),
                 MockComponent(CopyIconButtonComponent),
+                MockDirective(SortDirective),
                 MockRouterLinkDirective,
             ],
             providers: [MockProvider(CourseManagementService), MockProvider(SortService)],
@@ -43,7 +45,7 @@ describe('LTI Configuration Component', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(CourseLtiConfigurationComponent).not.toBeNull();
+        expect(comp).not.toBeNull();
     });
 
     describe('OnInit', () => {
@@ -56,6 +58,7 @@ describe('LTI Configuration Component', () => {
             expect(comp.getKeysetUrl()).toBe(`${location.origin}/.well-known/jwks.json`);
             expect(comp.getInitiateLoginUrl()).toBe(`${location.origin}/api/public/lti13/initiate-login`);
             expect(comp.getRedirectUri()).toBe(`${location.origin}/api/public/lti13/auth-callback`);
+            expect(comp.predicate).toBe('id');
         });
     });
 });

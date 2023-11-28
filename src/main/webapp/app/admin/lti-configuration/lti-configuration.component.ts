@@ -18,7 +18,7 @@ export class LtiConfigurationComponent implements OnInit {
 
     activeTab = 1;
 
-    predicate = 'type';
+    predicate = 'id';
     reverse = false;
 
     // Icons

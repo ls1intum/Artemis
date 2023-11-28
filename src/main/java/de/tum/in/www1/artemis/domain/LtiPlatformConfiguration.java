@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -15,25 +17,32 @@ public class LtiPlatformConfiguration extends DomainObject {
 
     public static final String ENTITY_NAME = "ltiPlatformConfiguration";
 
-    @Column(name = "registration_id")
+    @NotNull
+    @Column(name = "registration_id", nullable = false)
     private String registrationId;
 
-    @Column(name = "client_id")
+    @NotNull
+    @Column(name = "client_id", nullable = false)
     private String clientId;
 
+    @Nullable
     @Column(name = "original_url")
     private String originalUrl;
 
+    @Nullable
     @Column(name = "custom_name")
     private String customName;
 
-    @Column(name = "authorization_uri")
+    @NotNull
+    @Column(name = "authorization_uri", nullable = false)
     private String authorizationUri;
 
-    @Column(name = "jwk_set_uri")
+    @NotNull
+    @Column(name = "jwk_set_uri", nullable = false)
     private String jwkSetUri;
 
-    @Column(name = "token_uri")
+    @NotNull
+    @Column(name = "token_uri", nullable = false)
     private String tokenUri;
 
     public String getRegistrationId() {
