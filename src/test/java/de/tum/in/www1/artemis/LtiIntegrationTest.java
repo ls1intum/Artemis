@@ -2,11 +2,16 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,9 +29,13 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
@@ -60,6 +69,9 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
     @Value("${artemis.user-management.external.user}")
     private String jiraUser;
@@ -330,13 +342,75 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void getAllConfiguredLtiPlatformsAsAdmin() throws Exception {
-        request.get("/api/admin/ltiplatforms", HttpStatus.OK, Object.class);
+        LtiPlatformConfiguration platform1 = new LtiPlatformConfiguration();
+        platform1.setId(1L);
+        fillLtiPlatformConfig(platform1);
+
+        LtiPlatformConfiguration platform2 = new LtiPlatformConfiguration();
+        platform1.setId(2L);
+        fillLtiPlatformConfig(platform2);
+
+        List<LtiPlatformConfiguration> expectedPlatforms = Arrays.asList(platform1, platform2);
+        doReturn(expectedPlatforms).when(ltiPlatformConfigurationRepository).findAll();
+
+        MvcResult mvcResult = request.getMvc().perform(get("/api/admin/lti-platforms")).andExpect(status().isOk()).andReturn();
+
+        String jsonContent = mvcResult.getResponse().getContentAsString();
+        List<LtiPlatformConfiguration> actualPlatforms = objectMapper.readValue(jsonContent, new TypeReference<>() {
+        });
+
+        assertThat(actualPlatforms).hasSize(expectedPlatforms.size());
+        assertThat(actualPlatforms).usingRecursiveComparison().isEqualTo(expectedPlatforms);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void getAllConfiguredLtiPlatformsAsInstructor() throws Exception {
-        request.get("/api/admin/ltiplatforms", HttpStatus.FORBIDDEN, Object.class);
+        request.get("/api/admin/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void getLtiPlatformConfigurationByIdAsAdmin() throws Exception {
+        Long platformId = 1L;
+        LtiPlatformConfiguration expectedPlatform = new LtiPlatformConfiguration();
+        expectedPlatform.setId(platformId);
+        fillLtiPlatformConfig(expectedPlatform);
+
+        doReturn(expectedPlatform).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
+
+        MvcResult mvcResult = request.getMvc().perform(get("/api/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk()).andReturn();
+
+        String jsonContent = mvcResult.getResponse().getContentAsString();
+        LtiPlatformConfiguration actualPlatform = objectMapper.readValue(jsonContent, LtiPlatformConfiguration.class);
+
+        assertThat(actualPlatform).usingRecursiveComparison().isEqualTo(expectedPlatform);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void deleteLtiPlatformConfigurationByIdAsAdmin() throws Exception {
+        Long platformId = 1L;
+        doReturn(new LtiPlatformConfiguration()).when(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
+        doNothing().when(ltiPlatformConfigurationRepository).delete(any(LtiPlatformConfiguration.class));
+
+        request.getMvc().perform(delete("/api/admin/lti-platform/{platformId}", platformId)).andExpect(status().isOk());
+
+        verify(ltiPlatformConfigurationRepository).findByIdElseThrow(platformId);
+        verify(ltiPlatformConfigurationRepository).delete(any(LtiPlatformConfiguration.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void updateLtiPlatformConfigurationAsAdmin() throws Exception {
+        LtiPlatformConfiguration platformToUpdate = new LtiPlatformConfiguration();
+        platformToUpdate.setId(1L);
+        fillLtiPlatformConfig(platformToUpdate);
+
+        request.getMvc().perform(put("/api/admin/lti-platform").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(platformToUpdate)))
+                .andExpect(status().isOk());
+
+        verify(ltiPlatformConfigurationRepository).save(platformToUpdate);
     }
 
     private void assertParametersExistingStudent(MultiValueMap<String, String> parameters) {
@@ -347,5 +421,14 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     private void assertParametersNewStudent(MultiValueMap<String, String> parameters) {
         assertThat(parameters.getFirst("initialize")).isNotNull();
         assertThat(parameters.getFirst("ltiSuccessLoginRequired")).isNull();
+    }
+
+    private void fillLtiPlatformConfig(LtiPlatformConfiguration ltiPlatformConfiguration) {
+
+        ltiPlatformConfiguration.setRegistrationId("registrationId");
+        ltiPlatformConfiguration.setClientId("clientId");
+        ltiPlatformConfiguration.setAuthorizationUri("authUri");
+        ltiPlatformConfiguration.setTokenUri("tokenUri");
+        ltiPlatformConfiguration.setJwkSetUri("jwkUri");
     }
 }
