@@ -1,3 +1,4 @@
+import { AlertService } from 'app/core/util/alert.service';
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -26,6 +27,7 @@ export class EditLtiConfigurationComponent implements OnInit {
         private ltiConfigurationService: LtiConfigurationService,
         private router: Router,
         private http: HttpClient,
+        private alertService: AlertService,
     ) {}
 
     /**
@@ -48,7 +50,7 @@ export class EditLtiConfigurationComponent implements OnInit {
                 });
             },
             error: (error) => {
-                console.error(error);
+                this.alertService.error(error);
             },
         });
     }

@@ -90,10 +90,20 @@ export class LtiConfigurationComponent implements OnInit {
         return `${location.origin}/api/public/lti13/auth-callback`; // Needs to match uri in CustomLti13Configurer
     }
 
+    /**
+     * Sorts the `platforms` array by the current `predicate` in `reverse` order.
+     */
     sortRows() {
         this.sortService.sortByProperty(this.platforms, this.predicate, this.reverse);
     }
 
+    /**
+     * Initiates the deletion of an LTI platform configuration.
+     * Upon successful deletion, navigates to the LTI configuration admin page.
+     * If an error occurs, emits the error message to `dialogErrorSource`.
+     *
+     * @param platformId The unique identifier of the LTI platform to be deleted.
+     */
     deleteLtiPlatform(platformId: number): void {
         this.ltiConfigurationService.deleteLtiPlatform(platformId).subscribe({
             next: () => {

@@ -70,6 +70,12 @@ public class AdminLtiConfigurationResource {
         return new ResponseEntity<>(platform, HttpStatus.OK);
     }
 
+    /**
+     * Deletes the LTI platform configuration for the given platform ID.
+     *
+     * @param platformId the ID of the platform configuration to delete.
+     * @return a {@code ResponseEntity<Void>} with status {@code 200 (OK)} and a header indicating the deletion.
+     */
     @DeleteMapping("lti-platform/{platformId}")
     @EnforceAdmin
     public ResponseEntity<Void> deleteLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
@@ -79,6 +85,11 @@ public class AdminLtiConfigurationResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, platformId)).build();
     }
 
+    /**
+     * Updates an existing LTI platform configuration.
+     *
+     * @param platform the updated LTI platform configuration to be saved.
+     */
     @PutMapping("lti-platform")
     @EnforceAdmin
     public void updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
