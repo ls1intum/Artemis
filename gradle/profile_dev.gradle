@@ -5,9 +5,12 @@ configurations {
     }
 }
 
+//Causes issues with build job priority queue, disable for now
+/*
 dependencies {
     developmentOnly "org.springframework.boot:spring-boot-devtools:${spring_boot_version}"
 }
+*/
 
 def profiles = 'dev'
 if (project.hasProperty('no-liquibase')) {
