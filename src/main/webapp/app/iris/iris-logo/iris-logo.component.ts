@@ -23,9 +23,6 @@ export class IrisLogoComponent implements OnInit {
     @Input()
     look: IrisLogoLookDirection = IrisLogoLookDirection.RIGHT;
 
-    @Input()
-    shadow = false;
-
     logoUrl: string;
     classList: string;
 
@@ -39,10 +36,6 @@ export class IrisLogoComponent implements OnInit {
         } else {
             this.logoUrl = `public/images/iris/iris-logo-big-${this.look}.png`;
             this.classList = 'big img-fluid';
-        }
-
-        if (this.shadow) {
-            this.classList += ' shadow';
         }
     }
 }
