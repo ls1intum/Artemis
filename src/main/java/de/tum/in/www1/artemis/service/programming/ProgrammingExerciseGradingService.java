@@ -147,7 +147,7 @@ public class ProgrammingExerciseGradingService {
             if (buildResult.hasLogs()) {
                 var programmingLanguage = exercise.getProgrammingLanguage();
                 var projectType = exercise.getProjectType();
-                var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
+                var buildLogs = buildResult.extractBuildLogs();
 
                 ciResultService.extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
