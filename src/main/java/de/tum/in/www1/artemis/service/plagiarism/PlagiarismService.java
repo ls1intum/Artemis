@@ -56,11 +56,18 @@ public class PlagiarismService {
         submission.setSubmissionDate(null);
     }
 
+    /**
+     * A student should not see both answers from both students for the comparison before the due date
+     *
+     * @param submissionId    the id of the submission to check.
+     * @param userLogin       the user login of the student asking to see his plagiarism comparison.
+     * @param exerciseDueDate due date of the exercise.
+     */
     public boolean hasAccessToSubmission(Long submissionId, String userLogin, ZonedDateTime exerciseDueDate) {
         var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
         return comparisonOptional.filter(not(Set::isEmpty)).isPresent()
                 && isOwnSubmissionOrIsAfterExerciseDueDate(submissionId, userLogin, comparisonOptional.get(), exerciseDueDate)
-                && wasUserNotifiedByInstructor(submissionId, userLogin, comparisonOptional.get());
+                && wasUserNotifiedByInstructor(userLogin, comparisonOptional.get());
     }
 
     private boolean isOwnSubmissionOrIsAfterExerciseDueDate(Long submissionId, String userLogin, Set<PlagiarismComparison<?>> comparisons, ZonedDateTime exerciseDueDate) {
@@ -72,12 +79,11 @@ public class PlagiarismService {
     /**
      * Checks whether the student with the given user login is involved in a plagiarism case which contains the given submissionId and the student is notified by the instructor.
      *
-     * @param submissionId the id of a submissions that will be checked in plagiarism cases
-     * @param userLogin    the user login of the student
+     * @param userLogin the user login of the student
      * @return true if the student with user login owns one of the submissions in a PlagiarismComparison which contains the given submissionId and is notified by the instructor,
      *         otherwise false
      */
-    private boolean wasUserNotifiedByInstructor(Long submissionId, String userLogin, Set<PlagiarismComparison<?>> comparisons) {
+    private boolean wasUserNotifiedByInstructor(String userLogin, Set<PlagiarismComparison<?>> comparisons) {
         // disallow requests from users who are not notified about this case:
         return comparisons.stream()
                 .anyMatch(comparison -> (comparison.getSubmissionA().getPlagiarismCase() != null
