@@ -1,25 +1,26 @@
 <form name="editForm" role="form" novalidate>
     <div class="modal-header" style="margin-bottom: 20px">
-        <h4 class="modal-title" jhiTranslate="global.menu.admin.lti">LTI 1.3 Configuration</h4>
+        <h4 class="modal-title" jhiTranslate="artemisApp.lti.version13Configuration">LTI 1.3 Configuration</h4>
     </div>
     <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs mt-4">
         <ng-container ngbNavItem [ngbNavItem]="1">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.generalConfiguration">General Configuration</a>
+            <a ngbNavLink jhiTranslate="artemisApp.lti.platformRegistration">Platform Registration</a>
             <ng-template ngbNavContent>
                 <dt></dt>
-                <dt>
-                    <span>{{ 'artemisApp.lti.dynamicRegistrationUrl' | artemisTranslate }}</span>
+                <dt style="display: flex; align-items: center">
+                    <h4 class="modal-title">{{ 'artemisApp.lti.dynamicRegistrationUrl' | artemisTranslate }}</h4>
                     <jhi-help-icon text="artemisApp.lti.dynamicRegistrationTooltip"></jhi-help-icon>
                 </dt>
                 <dd>
                     <span>{{ getDynamicRegistrationUrl() }}</span>
                     <jhi-copy-icon-button [copyText]="getDynamicRegistrationUrl()"></jhi-copy-icon-button>
                 </dd>
-                <dd>
+                <dt style="display: flex; align-items: center">
                     <div class="modal-header" style="margin-bottom: 20px">
-                        <h4 class="modal-title" jhiTranslate="artemisApp.lti.configuredPlatforms">Configured Platforms</h4>
+                        <h4 class="modal-title" style="margin-right: 2px">{{ 'artemisApp.lti.configuredPlatforms' | artemisTranslate }}</h4>
+                        <jhi-help-icon text="artemisApp.lti.configuredPlatformsTooltip"></jhi-help-icon>
                     </div>
-                </dd>
+                </dt>
                 <div class="row">
                     <div class="col-12 mx-auto">
                         <div class="table-responsive">
@@ -101,7 +102,7 @@
             </ng-template>
         </ng-container>
         <ng-container ngbNavItem [ngbNavItem]="2">
-            <a ngbNavLink jhiTranslate="artemisApp.lti.version13">LTI 1.3</a>
+            <a ngbNavLink jhiTranslate="artemisApp.lti.serviceUrls">Service URLs</a>
             <ng-template ngbNavContent>
                 <dt>
                     <span>{{ 'artemisApp.lti.deepLinkingUrl' | artemisTranslate }}</span>
