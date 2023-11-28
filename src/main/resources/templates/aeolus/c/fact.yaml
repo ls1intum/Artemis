@@ -7,12 +7,10 @@ actions:
     - name: setup_the_build_environment
       script: |
           #!/usr/bin/env bash
-
           # ------------------------------
           # Task Description:
           # Build and run all tests
           # ------------------------------
-
           # Updating assignment and test-reports ownership...
           sudo chown artemis_user:artemis_user assignment/ -R
           sudo rm -rf test-reports
@@ -22,7 +20,6 @@ actions:
     - name: build_and_run_all_tests
       script: |
           #!/usr/bin/env bash
-
           # ------------------------------
           # Task Description:
           # Build and run all tests
@@ -36,7 +33,6 @@ actions:
           python3 Tests.py
           rm Tests.py
           rm -rf ./tests
-          exit 0
       runAlways: false
     - name: cleanup
       script: |-
@@ -48,3 +44,4 @@ actions:
           - name: junit_test-reports/*results.xml
             path: test-reports/*results.xml
             type: junit
+

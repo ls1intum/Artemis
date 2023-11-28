@@ -4,18 +4,15 @@ metadata:
     id: kotlin-sequential
     description: Build Plan for Kotlin Exercises
 actions:
-    - name: structural
+    - name: maven
       script: mvn clean test
       runAlways: false
       workdir: structural
-    - name: behavior
+    - name: maven
       script: mvn clean test
       runAlways: false
       workdir: behavior
-    - name: junit
-      parameters:
-          ignore_time: false
-          test_results: '**/target/surefire-reports/*.xml'
-      platform: bamboo
-      kind: junit
-      runAlways: true
+      results:
+          - name: junit
+            path: '**/target/surefire-reports/*.xml'
+            type: junit

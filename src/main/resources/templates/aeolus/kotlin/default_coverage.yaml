@@ -10,12 +10,9 @@ actions:
     - name: move_report_file
       script: mv target/tia/reports/*/testwise-coverage-*.json target/tia/reports/tiaTests.json
       runAlways: false
-    - name: junit
-      parameters:
-          ignore_time: false
-          test_results:
-              - '**/target/surefire-reports/*.xml'
-              - 'target/tia/reports/tiaTests.json'
-      platform: bamboo
-      kind: junit
-      runAlways: true
+      results:
+          - name: junit
+            path: '**/target/surefire-reports/*.xml'
+            type: junit
+          - name: testwiseCoverageReport
+            path: target/tia/reports/tiaTests.json

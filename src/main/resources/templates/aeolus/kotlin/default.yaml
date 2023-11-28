@@ -7,10 +7,7 @@ actions:
     - name: maven
       script: mvn clean test
       runAlways: false
-    - name: junit
-      parameters:
-          ignore_time: false
-          test_results: '**/target/surefire-reports/*.xml'
-      platform: bamboo
-      kind: junit
-      runAlways: true
+      results:
+          - name: junit
+            path: '**/target/surefire-reports/*.xml'
+            type: junit
