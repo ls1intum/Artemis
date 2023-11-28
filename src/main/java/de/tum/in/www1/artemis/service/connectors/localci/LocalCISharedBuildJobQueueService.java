@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +54,11 @@ public class LocalCISharedBuildJobQueueService {
 
     private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
 
-    private final FencedLock lock;
+    // lock to prevent multiple nodes from processing the same build job
+    private final FencedLock fLock;
+
+    // lock for operations on single instance
+    private final ReentrantLock lock = new ReentrantLock();
 
     @Autowired
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
@@ -68,7 +73,7 @@ public class LocalCISharedBuildJobQueueService {
         this.programmingMessagingService = programmingMessagingService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
-        this.lock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
+        this.fLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.queue.addItemListener(new BuildJobItemListener(), true);
     }
@@ -108,23 +113,7 @@ public class LocalCISharedBuildJobQueueService {
      * Get first build job item from the queue. If it exists, process build job and after completion,
      * try to process next item.
      */
-    private void processBuild() {
-
-        if (queue.isEmpty()) {
-            return;
-        }
-        // need to add the build job to processingJobs before taking it from the queue,
-        // so it can be later added back to the queue if the node fails
-        LocalCIBuildJobQueueItem buildJob;
-
-        // lock the queue to prevent multiple nodes from processing the same build job
-        lock.lock();
-        try {
-            buildJob = addToProcessingJobs();
-        }
-        finally {
-            lock.unlock();
-        }
+    private void processBuild(LocalCIBuildJobQueueItem buildJob) {
 
         if (buildJob == null) {
             return;
@@ -159,7 +148,7 @@ public class LocalCISharedBuildJobQueueService {
             processingJobs.remove(buildJob.getParticipationId());
 
             // process next build job
-            processBuild();
+            processNextBuildJob();
         });
     }
 
@@ -170,7 +159,7 @@ public class LocalCISharedBuildJobQueueService {
     @Scheduled(fixedRate = 60000)
     protected void requeueTimedOutJobs() {
 
-        lock.lock();
+        fLock.lock();
         try {
             for (Long participationId : processingJobs.keySet()) {
                 LocalCIBuildJobQueueItem buildJob = processingJobs.get(participationId);
@@ -188,7 +177,7 @@ public class LocalCISharedBuildJobQueueService {
             }
         }
         finally {
-            lock.unlock();
+            fLock.unlock();
         }
     }
 
@@ -225,11 +214,38 @@ public class LocalCISharedBuildJobQueueService {
         throw new IllegalStateException("Could not retrieve participation with id " + participationId + " from database after " + maxRetries + " retries");
     }
 
+    private void processNextBuildJob() {
+        lock.lock();
+
+        if (!nodeIsAvailable()) {
+            log.info("Node has no available threads currently");
+            return;
+        }
+
+        if (queue.isEmpty()) {
+            return;
+        }
+        // need to add the build job to processingJobs before taking it from the queue,
+        // so it can be later added back to the queue if the node fails
+        LocalCIBuildJobQueueItem buildJob;
+
+        // lock the queue to prevent multiple nodes from processing the same build job
+        fLock.lock();
+        try {
+            buildJob = addToProcessingJobs();
+        }
+        finally {
+            fLock.unlock();
+        }
+
+        lock.unlock();
+        processBuild(buildJob);
+    }
+
     // Checks whether the node has at least one thread available for a new build job
-    // getActiveCount() returns an approximation thus we double check with getQueue().size()
     private Boolean nodeIsAvailable() {
         log.info("Current active threads: " + localCIBuildExecutorService.getActiveCount());
-        return localCIBuildExecutorService.getActiveCount() < localCIBuildExecutorService.getMaximumPoolSize() && localCIBuildExecutorService.getQueue().isEmpty();
+        return processingJobs.size() < localCIBuildExecutorService.getMaximumPoolSize();
     }
 
     private class BuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
@@ -237,12 +253,7 @@ public class LocalCISharedBuildJobQueueService {
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> item) {
             log.info("Item added to queue: " + item.getItem());
-            if (nodeIsAvailable()) {
-                processBuild();
-            }
-            else {
-                log.info("Node has no available threads currently");
-            }
+            processNextBuildJob();
         }
 
         @Override
