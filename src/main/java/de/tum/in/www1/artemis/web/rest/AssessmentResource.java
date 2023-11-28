@@ -121,9 +121,9 @@ public abstract class AssessmentResource {
     /**
      * @param exampleSubmissionId id of the example submission
      * @param feedbacks           list of feedbacks
-     * @return the ResponseEntity with result as body
+     * @return result after saving example assessment
      */
-    protected ResponseEntity<Result> saveExampleAssessment(long exampleSubmissionId, List<Feedback> feedbacks) {
+    protected Result saveExampleAssessment(long exampleSubmissionId, List<Feedback> feedbacks) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         final var exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
         Submission submission = exampleSubmission.getSubmission();
@@ -137,8 +137,7 @@ public abstract class AssessmentResource {
         else {
             result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId());
         }
-        result = resultRepository.submitResult(result, exercise);
-        return ResponseEntity.ok(result);
+        return resultRepository.submitResult(result, exercise);
     }
 
     /**

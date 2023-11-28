@@ -149,15 +149,13 @@ public class TextAssessmentResource extends AssessmentResource {
             TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
         }
-        final var response = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
-        if (response.getStatusCode().is2xxSuccessful()) {
-            final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
-            final Submission submission = response.getBody().getSubmission();
-            final var textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
-            final var feedbacksWithIds = response.getBody().getFeedbacks();
-            saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
-        }
-        return response;
+        final Result result = super.saveExampleAssessment(exampleSubmissionId, textAssessment.getFeedbacks());
+        final TextExercise exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        final Submission submission = result.getSubmission();
+        final TextSubmission textSubmission = textSubmissionService.findOneWithEagerResultFeedbackAndTextBlocks(submission.getId());
+        final List<Feedback> feedbacksWithIds = result.getFeedbacks();
+        saveTextBlocks(textAssessment.getTextBlocks(), textSubmission, exercise, feedbacksWithIds);
+        return ResponseEntity.ok(result);
     }
 
     /**

@@ -114,7 +114,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @EnforceAtLeastTutor
     public ResponseEntity<Result> saveModelingExampleAssessment(@PathVariable long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
         log.debug("REST request to save modeling example assessment : {}", exampleSubmissionId);
-        return super.saveExampleAssessment(exampleSubmissionId, feedbacks);
+        Result result = saveExampleAssessment(exampleSubmissionId, feedbacks);
+        return ResponseEntity.ok(result);
     }
 
     /**
