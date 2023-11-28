@@ -44,8 +44,9 @@ public class PlagiarismService {
      * Anonymize the submission for the student view.
      * A student should not see sensitive information but be able to retrieve both answers from both students for the comparison
      *
-     * @param submission the submission to anonymize.
-     * @param userLogin  the user login of the student asking to see his plagiarism comparison.
+     * @param submission      the submission to anonymize.
+     * @param userLogin       the user login of the student asking to see his plagiarism comparison.
+     * @param exerciseDueDate due date of the exercise.
      */
     public void checkAccessAndAnonymizeSubmissionForStudent(Submission submission, String userLogin, ZonedDateTime exerciseDueDate) {
         if (!hasAccessToSubmission(submission.getId(), userLogin, exerciseDueDate)) {
@@ -62,6 +63,7 @@ public class PlagiarismService {
      * @param submissionId    the id of the submission to check.
      * @param userLogin       the user login of the student asking to see his plagiarism comparison.
      * @param exerciseDueDate due date of the exercise.
+     * @return true is the user has access to the submission
      */
     public boolean hasAccessToSubmission(Long submissionId, String userLogin, ZonedDateTime exerciseDueDate) {
         var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
