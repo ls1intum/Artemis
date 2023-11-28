@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,11 +15,17 @@ import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
 @RequestMapping("api/admin/")
 @Profile("lti")
 public class AdminLtiConfigurationResource {
+
+    private static final String ENTITY_NAME = "lti-platform";
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private final Logger log = LoggerFactory.getLogger(AdminLtiConfigurationResource.class);
 
@@ -36,11 +43,11 @@ public class AdminLtiConfigurationResource {
     }
 
     /**
-     * GET organizations : Get all configured lti platforms
+     * GET lti platforms : Get all configured lti platforms
      *
      * @return ResponseEntity containing a list of all lti platforms with status 200 (OK)
      */
-    @GetMapping("ltiplatforms")
+    @GetMapping("lti-platforms")
     @EnforceAdmin
     public ResponseEntity<List<LtiPlatformConfiguration>> getAllConfiguredLtiPlatforms() {
         log.debug("REST request to get all configured lti platforms");
@@ -48,6 +55,44 @@ public class AdminLtiConfigurationResource {
         return new ResponseEntity<>(platforms, HttpStatus.OK);
     }
 
+    /**
+     * Fetches LTI platform configuration based on the given platform ID.
+     * Returns {@code ResponseEntity} with status OK if found, or NOT_FOUND if no configuration exists.
+     *
+     * @param platformId The ID of the LTI platform to retrieve configuration for.
+     * @return a {@code ResponseEntity} with an {@code Optional<LtiPlatformConfiguration>} and HTTP status.
+     */
+    @GetMapping("lti-platform/{platformId}")
+    @EnforceAdmin
+    public ResponseEntity<LtiPlatformConfiguration> getLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
+        log.debug("REST request to configured lti platform");
+        LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(Long.parseLong(platformId));
+        return new ResponseEntity<>(platform, HttpStatus.OK);
+    }
+
+    @DeleteMapping("lti-platform/{platformId}")
+    @EnforceAdmin
+    public ResponseEntity<Void> deleteLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
+        log.debug("REST request to configured lti platform");
+        LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(Long.parseLong(platformId));
+        ltiPlatformConfigurationRepository.delete(platform);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, platformId)).build();
+    }
+
+    @PutMapping("lti-platform")
+    @EnforceAdmin
+    public void updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
+        log.debug("REST request to update  configured lti platform");
+        ltiPlatformConfigurationRepository.save(platform);
+    }
+
+    /**
+     * Handles the dynamic registration process for LTI 1.3 platforms. It uses the provided OpenID
+     * configuration and an optional registration token.
+     *
+     * @param openIdConfiguration The OpenID Connect discovery configuration URL.
+     * @param registrationToken   Optional token for the registration process.
+     */
     @PostMapping("/lti13/dynamic-registration")
     @EnforceAdmin
     public void lti13DynamicRegistration(@RequestParam(name = "openid_configuration") String openIdConfiguration,

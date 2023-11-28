@@ -1,9 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faPencilAlt, faSort, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
+import { SortService } from 'app/shared/service/sort.service';
+import { Subject } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-lti-configuration',
@@ -22,10 +25,16 @@ export class LtiConfigurationComponent implements OnInit {
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faWrench = faWrench;
+    faPencilAlt = faPencilAlt;
+    faTrash = faTrash;
+
+    private dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     constructor(
-        private route: ActivatedRoute,
+        private router: Router,
         private ltiConfigurationService: LtiConfigurationService,
+        private sortService: SortService,
     ) {}
 
     /**
@@ -79,5 +88,19 @@ export class LtiConfigurationComponent implements OnInit {
      */
     getRedirectUri(): string {
         return `${location.origin}/api/public/lti13/auth-callback`; // Needs to match uri in CustomLti13Configurer
+    }
+
+    sortRows() {
+        this.sortService.sortByProperty(this.platforms, this.predicate, this.reverse);
+    }
+
+    deleteLtiPlatform(platformId: number): void {
+        this.ltiConfigurationService.deleteLtiPlatform(platformId).subscribe({
+            next: () => {
+                this.dialogErrorSource.next('');
+                this.router.navigate(['admin', 'lti-configuration']);
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 }

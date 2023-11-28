@@ -24,6 +24,9 @@ public class LtiPlatformConfiguration extends DomainObject {
     @Column(name = "original_url")
     private String originalUrl;
 
+    @Column(name = "custom_name")
+    private String customName;
+
     @Column(name = "authorization_uri")
     private String authorizationUri;
 
@@ -79,6 +82,14 @@ public class LtiPlatformConfiguration extends DomainObject {
 
     public void setOriginalUrl(String issuer) {
         this.originalUrl = issuer;
+    }
+
+    public String getCustomName() {
+        return customName;
+    }
+
+    public void setCustomName(String customName) {
+        this.customName = customName;
     }
 
 }

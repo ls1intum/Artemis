@@ -99,7 +99,7 @@ export const adminState: Routes = [
             ...userManagementRoute,
             ...systemNotificationManagementRoute,
             upcomingExamsAndExercisesRoute,
-            ltiConfigurationRoute,
+            ...ltiConfigurationRoute,
         ],
     },
 ];

@@ -2,14 +2,15 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet author="basak-akan" id="20231126224208">
+    <changeSet author="basak-akan" id="20231127155308">
         <!-- Create lti_platform_configuration table -->
         <createTable tableName="lti_platform_configuration">
             <column name="id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="original_url" type="varchar(255)"/>
-            <column name="registration_id" type="varchar(50)">
+            <column name="custom_name" type="varchar(50)"/>
+            <column name="registration_id" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
             <column name="client_id" type="varchar(255)">
@@ -30,7 +31,12 @@
             <!-- Insert data into lti_platform_configuration -->
             INSERT INTO lti_platform_configuration (original_url, registration_id, client_id, authorization_uri, jwk_set_uri, token_uri)
             SELECT occ.original_url, occ.registration_id, occ.client_id, occ.authorization_uri, occ.jkw_set_uri, occ.token_uri
-            FROM online_course_configuration occ;
+            FROM online_course_configuration occ
+            WHERE occ.registration_id IS NOT NULL
+              AND occ.client_id IS NOT NULL
+              AND occ.authorization_uri IS NOT NULL
+              AND occ.jkw_set_uri IS NOT NULL
+              AND occ.token_uri IS NOT NULL;
         </sql>
         <!-- Remove the columns that are no longer present in the entity -->
         <dropColumn tableName="online_course_configuration" columnName="original_url"/>
