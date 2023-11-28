@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
@@ -30,7 +29,7 @@ describe('LTI Configuration Component', () => {
                 MockDirective(SortDirective),
                 MockRouterLinkDirective,
             ],
-            providers: [MockProvider(CourseManagementService), MockProvider(SortService)],
+            providers: [MockProvider(SortService)],
         })
             .compileComponents()
             .then(() => {
