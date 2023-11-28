@@ -10,6 +10,7 @@ import java.util.Optional;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +34,7 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.*;
  * image for the programming language and project type for the artemis instance.
  */
 @RestController
+@Profile("aeolus | localci")
 @RequestMapping("/api/aeolus")
 public class AeolusTemplateResource {
 
