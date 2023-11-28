@@ -311,6 +311,12 @@ public class Lti13Service {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);
     }
 
+    /**
+     * Builds a response indicating the need for successful login with the associated username.
+     *
+     * @param response   The HttpServletResponse object.
+     * @param ltiIdToken The OIDC ID token with the LTI email address.
+     */
     public void buildLtiEmailInUseResponse(HttpServletResponse response, OidcIdToken ltiIdToken) {
         Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail());
 
