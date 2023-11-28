@@ -22,7 +22,7 @@
     >
     </jhi-doughnut-chart>
     <jhi-doughnut-chart
-        *ngIf="isCommunicationEnabled(course)"
+        *ngIf="isCommunicationEnabled(course) && exercise.type !== ExerciseType.QUIZ"
         class="col-md-4"
         [course]="course"
         [contentType]="DoughnutChartType.QUESTIONS"

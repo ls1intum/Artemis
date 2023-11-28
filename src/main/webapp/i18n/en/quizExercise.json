@@ -9,6 +9,9 @@
                 "exportLabel": "Export Quiz Exercises",
                 "createModelDragAndDrop": "Create Drag and Drop Model Quiz"
             },
+            "detail": {
+                "title": "Quiz Exercise"
+            },
             "created": "Created new Quiz Exercise with identifier {{ param }}",
             "updated": "Updated Quiz Exercise with identifier {{ param }}",
             "deleted": "Deleted Quiz Exercise with identifier {{ param }}",
