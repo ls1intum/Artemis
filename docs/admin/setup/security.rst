@@ -6,7 +6,7 @@ Passwords
 ---------
 
 The Artemis configuration files contain a few default passwords and secrets
-that have to be overriden in your own configuration files or via environment
+that have to be overridden in your own configuration files or via environment
 variables (`Spring relaxed binding <https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0>`_).
 
 .. code-block:: yaml
