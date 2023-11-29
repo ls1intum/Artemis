@@ -194,8 +194,7 @@ public class LocalCIContainerService {
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
-        ExecCreateCmdResponse createStopContainerFileCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("touch", "stop_container.txt").exec();
-        dockerClient.execStartCmd(createStopContainerFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
+        executeDockerCommandWithoutAwaitingResponse(containerId, "touch", "stop_container.txt");
     }
 
     /**
@@ -211,7 +210,6 @@ public class LocalCIContainerService {
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths,
             String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath, ProgrammingLanguage programmingLanguage) {
-
         String testCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
@@ -300,11 +298,18 @@ public class LocalCIContainerService {
         }
     }
 
+    private void executeDockerCommandWithoutAwaitingResponse(String containerId, String... command) {
+        ExecCreateCmdResponse createCmdResponse = dockerClient.execCreateCmd(containerId).withCmd(command).exec();
+        dockerClient.execStartCmd(createCmdResponse.getId()).withDetach(true).exec(new ResultCallback.Adapter<>());
+    }
+
     private List<BuildLogEntry> executeDockerCommand(String containerId, boolean attachStdout, boolean attachStderr, String... command) {
+        boolean detach = !attachStdout && !attachStderr;
+
         ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(attachStdout).withAttachStderr(attachStderr).withCmd(command).exec();
         List<BuildLogEntry> buildLogEntries = new ArrayList<>();
         final CountDownLatch latch = new CountDownLatch(1);
-        dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
+        dockerClient.execStartCmd(execCreateCmdResponse.getId()).withDetach(detach).exec(new ResultCallback.Adapter<>() {
 
             @Override
             public void onNext(Frame item) {
