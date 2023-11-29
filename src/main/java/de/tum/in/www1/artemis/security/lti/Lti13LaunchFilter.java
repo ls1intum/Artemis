@@ -98,7 +98,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
     private void sendErrorResponse(HttpServletResponse response, LtiAuthenticationResponseDTO errorResponse) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         PrintWriter out = response.getWriter();
-        out.print(new Gson().toJson(errorResponse)); // Using Gson to convert the object to JSON
+        out.print(new Gson().toJson(errorResponse));
         out.flush();
     }
 

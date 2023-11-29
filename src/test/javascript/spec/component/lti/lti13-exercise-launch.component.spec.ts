@@ -201,8 +201,8 @@ describe('Lti13ExerciseLaunchComponent', () => {
         const httpStub = jest.spyOn(http, 'post').mockReturnValue(
             throwError(() => ({
                 status,
-                headers: { get: () => 'mockTargetLinkUri', ...headers },
-                error,
+                headers: { get: () => 'lti_user', ...headers },
+                error: { targetLinkUri: 'mockTargetLinkUri', ...error },
             })),
         );
         return httpStub;

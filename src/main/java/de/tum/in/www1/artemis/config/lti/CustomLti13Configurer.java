@@ -22,18 +22,25 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticati
 @Profile("lti")
 public class CustomLti13Configurer extends Lti13Configurer {
 
+    /** Path for login. **/
     private static final String LOGIN_PATH = "/auth-login";
 
+    /** Path for initiating login process. */
     private static final String LOGIN_INITIATION_PATH = "/initiate-login";
 
+    /** Base path for LTI 1.3 API endpoints. */
     public static final String LTI13_BASE_PATH = "/api/public/lti13";
 
+    /** Full path for LTI 1.3 login. */
     public static final String LTI13_LOGIN_PATH = LTI13_BASE_PATH + LOGIN_PATH;
 
+    /** Full path for LTI 1.3 login initiation. */
     public static final String LTI13_LOGIN_INITIATION_PATH = LTI13_BASE_PATH + LOGIN_INITIATION_PATH;
 
+    /** Redirect proxy path for LTI 1.3 login. */
     public static final String LTI13_LOGIN_REDIRECT_PROXY_PATH = LTI13_BASE_PATH + "/auth-callback";
 
+    /** Path for LTI 1.3 deep linking. */
     public static final String LTI13_DEEPLINKING_PATH = "/lti/deep-linking/";
 
     public CustomLti13Configurer() {
