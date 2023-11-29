@@ -47,45 +47,39 @@ export class QuizExerciseLifecycleButtonsComponent {
 
     /**
      * Set the quiz open for practice
-     *
-     * @param quizExerciseId the quiz exercise id to start
      */
-    openForPractice(quizExerciseId: number) {
-        this.quizExerciseService.openForPractice(quizExerciseId).subscribe({
+    openForPractice() {
+        this.quizExerciseService.openForPractice(this.quizExercise.id!).subscribe({
             next: (res: HttpResponse<QuizExercise>) => {
                 this.handleNewQuizExercise.emit(res.body!);
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
-                this.loadOne.emit(quizExerciseId);
+                this.loadOne.emit(this.quizExercise.id!);
             },
         });
     }
 
     /**
      * Start the given quiz-exercise immediately
-     *
-     * @param quizExerciseId the quiz exercise id to start
      */
-    startQuiz(quizExerciseId: number) {
-        this.quizExerciseService.start(quizExerciseId).subscribe({
+    startQuiz() {
+        this.quizExerciseService.start(this.quizExercise.id!).subscribe({
             next: (res: HttpResponse<QuizExercise>) => {
                 this.handleNewQuizExercise.emit(res.body!);
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
-                this.loadOne.emit(quizExerciseId);
+                this.loadOne.emit(this.quizExercise.id!);
             },
         });
     }
 
     /**
      * End the given quiz-exercise immediately
-     *
-     * @param quizExerciseId the quiz exercise id to end
      */
-    endQuiz(quizExerciseId: number) {
-        return this.quizExerciseService.end(quizExerciseId).subscribe({
+    endQuiz() {
+        return this.quizExerciseService.end(this.quizExercise.id!).subscribe({
             next: (res: HttpResponse<QuizExercise>) => {
                 this.handleNewQuizExercise.emit(res.body!);
                 this.dialogErrorSource.next('');
@@ -97,51 +91,46 @@ export class QuizExerciseLifecycleButtonsComponent {
     /**
      * Start the given quiz-batch immediately
      *
-     * @param quizExerciseId the quiz exercise id the batch belongs to
      * @param quizBatchId the quiz batch id to start
      */
-    startBatch(quizExerciseId: number, quizBatchId: number) {
+    startBatch(quizBatchId: number) {
         this.quizExerciseService.startBatch(quizBatchId).subscribe({
             next: () => {
-                this.loadOne.emit(quizExerciseId);
+                this.loadOne.emit(this.quizExercise.id!);
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
-                this.loadOne.emit(quizExerciseId);
+                this.loadOne.emit(this.quizExercise.id!);
             },
         });
     }
 
     /**
      * Adds a new batch to the given quiz
-     *
-     * @param quizExerciseId the quiz exercise id to add a batch to
      */
-    addBatch(quizExerciseId: number) {
-        this.quizExerciseService.addBatch(quizExerciseId).subscribe({
+    addBatch() {
+        this.quizExerciseService.addBatch(this.quizExercise.id!).subscribe({
             next: () => {
-                this.loadOne.emit(quizExerciseId);
+                this.loadOne.emit(this.quizExercise.id!);
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
-                this.loadOne.emit(quizExerciseId);
+                this.loadOne.emit(this.quizExercise.id!);
             },
         });
     }
 
     /**
      * Make the given quiz-exercise visible to students
-     *
-     * @param quizExerciseId the quiz exercise id to start
      */
-    showQuiz(quizExerciseId: number) {
-        this.quizExerciseService.setVisible(quizExerciseId).subscribe({
+    showQuiz() {
+        this.quizExerciseService.setVisible(this.quizExercise.id!).subscribe({
             next: (res: HttpResponse<QuizExercise>) => {
                 this.handleNewQuizExercise.emit(res.body!);
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
-                this.loadOne.emit(quizExerciseId);
+                this.loadOne.emit(this.quizExercise.id!);
             },
         });
     }

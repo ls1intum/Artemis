@@ -47,6 +47,7 @@ export enum DetailType {
     styleUrls: ['./detail-overview-list.component.scss'],
 })
 export class DetailOverviewListComponent implements OnInit {
+    protected readonly isEmpty = isEmpty;
     protected readonly DetailType = DetailType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
@@ -94,6 +95,4 @@ export class DetailOverviewListComponent implements OnInit {
             });
         }
     }
-
-    protected readonly isEmpty = isEmpty;
 }

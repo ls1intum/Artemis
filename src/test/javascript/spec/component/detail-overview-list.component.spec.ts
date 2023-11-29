@@ -7,6 +7,8 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../helpers/mocks/service/mock-alert.service';
+import { of, throwError } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 
 const sections = [
     {
@@ -26,6 +28,8 @@ describe('DetailOverviewList', () => {
     let component: DetailOverviewListComponent;
     let fixture: ComponentFixture<DetailOverviewListComponent>;
     let modalService: NgbModal;
+    let modelingService: ModelingExerciseService;
+    let alertServide: AlertService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -34,13 +38,15 @@ describe('DetailOverviewList', () => {
             providers: [
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useClass: MockAlertService },
-                { provide: ModelingExerciseService, useValue: {} },
+                { provide: ModelingExerciseService, useValue: { convertToPdf: jest.fn() } },
             ],
         })
             .overrideTemplate(DetailOverviewListComponent, '')
             .compileComponents()
             .then(() => {
                 modalService = fixture.debugElement.injector.get(NgbModal);
+                modelingService = fixture.debugElement.injector.get(ModelingExerciseService);
+                alertServide = fixture.debugElement.injector.get(AlertService);
             });
 
         fixture = TestBed.createComponent(DetailOverviewListComponent);
@@ -63,5 +69,18 @@ describe('DetailOverviewList', () => {
         const modalSpy = jest.spyOn(modalService, 'open');
         component.showGitDiff(undefined as unknown as ProgrammingExerciseGitDiffReport);
         expect(modalSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should download apollon Diagram', () => {
+        const downloadSpy = jest.spyOn(modelingService, 'convertToPdf').mockReturnValue(of(new HttpResponse({ body: new Blob() })));
+        component.downloadApollonDiagramAsPDf('{}', 'title');
+        expect(downloadSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should error on download apollon Diagram fail', () => {
+        jest.spyOn(modelingService, 'convertToPdf').mockReturnValue(throwError(new HttpResponse({ body: new Blob() })));
+        const errorSpy = jest.spyOn(alertServide, 'error');
+        component.downloadApollonDiagramAsPDf('{}', 'title');
+        expect(errorSpy).toHaveBeenCalledOnce();
     });
 });
