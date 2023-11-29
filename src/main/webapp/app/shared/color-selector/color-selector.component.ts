@@ -56,7 +56,7 @@ export class ColorSelectorComponent implements OnInit {
             if (this.showColorSelector) {
                 const target = event.target as HTMLElement;
 
-                const isClickOutsideOfComponent = !this.elementRef.nativeElement.contains(target);
+                const isClickOutsideOfComponent = this.elementRef.nativeElement.parentElement !== target;
                 if (isClickOutsideOfComponent) {
                     this.showColorSelector = false;
                 }
@@ -87,8 +87,8 @@ export class ColorSelectorComponent implements OnInit {
      * @param {string} selectedColor
      */
     selectColorForTag(selectedColor: string) {
-        this.showColorSelector = false;
         this.selectedColor.emit(selectedColor);
+        this.showColorSelector = false;
     }
 
     /**
