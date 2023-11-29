@@ -110,49 +110,6 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     /**
-     * Get first build job item from the queue. If it exists, process build job and after completion,
-     * try to process next item.
-     */
-    private void processBuild(LocalCIBuildJobQueueItem buildJob) {
-
-        if (buildJob == null) {
-            return;
-        }
-
-        log.info("Processing build job: " + buildJob);
-
-        String commitHash = buildJob.getCommitHash();
-        // participation might not be persisted in the database yet
-        ProgrammingExerciseParticipation participation = retrieveParticipationWithRetry(buildJob.getParticipationId());
-
-        // For some reason, it is possible that the participation object does not have the programming exercise
-        if (participation.getProgrammingExercise() == null) {
-            participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
-        }
-
-        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash);
-        futureResult.thenAccept(buildResult -> {
-            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-            // Therefore, a mock auth object has to be created.
-            SecurityUtils.setAuthorizationObject();
-            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
-            if (result != null) {
-                programmingMessagingService.notifyUserAboutNewResult(result, participation);
-            }
-            else {
-                programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                        new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
-            }
-
-            // after processing a build job, remove it from the processing jobs
-            processingJobs.remove(buildJob.getParticipationId());
-
-            // process next build job
-            processNextBuildJob();
-        });
-    }
-
-    /**
      * Requeue timed out build jobs only once. If a build job is still in processedJobs after the expiration time,
      * it might be because the node crashed. Therefore, the build job is added back to the queue.
      */
@@ -181,17 +138,6 @@ public class LocalCISharedBuildJobQueueService {
         }
     }
 
-    private LocalCIBuildJobQueueItem addToProcessingJobs() {
-        LocalCIBuildJobQueueItem buildJob = queue.poll();
-        if (buildJob != null) {
-            Long participationId = buildJob.getParticipationId();
-            buildJob.setBuildStartDate(System.currentTimeMillis());
-            buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(180));
-            processingJobs.put(participationId, buildJob);
-        }
-        return buildJob;
-    }
-
     private ProgrammingExerciseParticipation retrieveParticipationWithRetry(Long participationId) {
         int maxRetries = 5;
         int retries = 0;
@@ -214,7 +160,7 @@ public class LocalCISharedBuildJobQueueService {
         throw new IllegalStateException("Could not retrieve participation with id " + participationId + " from database after " + maxRetries + " retries");
     }
 
-    private void processNextBuildJob() {
+    private void checkAvailabilityAndProcessNextBuild() {
         lock.lock();
 
         if (!nodeIsAvailable()) {
@@ -244,10 +190,64 @@ public class LocalCISharedBuildJobQueueService {
         processBuild(buildJob);
     }
 
+    private LocalCIBuildJobQueueItem addToProcessingJobs() {
+        LocalCIBuildJobQueueItem buildJob = queue.poll();
+        if (buildJob != null) {
+            Long participationId = buildJob.getParticipationId();
+            buildJob.setBuildStartDate(System.currentTimeMillis());
+            buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(180));
+            processingJobs.put(participationId, buildJob);
+        }
+        return buildJob;
+    }
+
     // Checks whether the node has at least one thread available for a new build job
     private Boolean nodeIsAvailable() {
         log.info("Current active threads: " + localCIBuildExecutorService.getActiveCount());
         return processingJobs.size() < localCIBuildExecutorService.getMaximumPoolSize();
+    }
+
+    /**
+     * Process a build job by adding it to the local CI executor service.
+     * On completetion, check for next job.
+     */
+    private void processBuild(LocalCIBuildJobQueueItem buildJob) {
+
+        if (buildJob == null) {
+            return;
+        }
+
+        log.info("Processing build job: " + buildJob);
+        String commitHash = buildJob.getCommitHash();
+
+        // participation might not be persisted in the database yet
+        ProgrammingExerciseParticipation participation = retrieveParticipationWithRetry(buildJob.getParticipationId());
+
+        // For some reason, it is possible that the participation object does not have the programming exercise
+        if (participation.getProgrammingExercise() == null) {
+            participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
+        }
+
+        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash);
+        futureResult.thenAccept(buildResult -> {
+            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+            // Therefore, a mock auth object has to be created.
+            SecurityUtils.setAuthorizationObject();
+            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
+            if (result != null) {
+                programmingMessagingService.notifyUserAboutNewResult(result, participation);
+            }
+            else {
+                programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
+                        new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
+            }
+
+            // after processing a build job, remove it from the processing jobs
+            processingJobs.remove(buildJob.getParticipationId());
+
+            // process next build job if node is available
+            checkAvailabilityAndProcessNextBuild();
+        });
     }
 
     private class BuildJobItemListener implements ItemListener<LocalCIBuildJobQueueItem> {
@@ -255,7 +255,7 @@ public class LocalCISharedBuildJobQueueService {
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> item) {
             log.info("Item added to queue: " + item.getItem());
-            processNextBuildJob();
+            checkAvailabilityAndProcessNextBuild();
         }
 
         @Override
