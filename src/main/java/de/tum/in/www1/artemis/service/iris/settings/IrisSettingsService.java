@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
@@ -44,6 +45,10 @@ public class IrisSettingsService {
         this.irisSettingsRepository = irisSettingsRepository;
         this.irisSubSettingsService = irisSubSettingsService;
         this.irisDefaultTemplateService = irisDefaultTemplateService;
+    }
+
+    private Optional<Integer> loadGlobalTemplateVersion() {
+        return irisDefaultTemplateService.loadGlobalTemplateVersion();
     }
 
     private IrisTemplate loadDefaultChatTemplate() {
@@ -102,7 +107,7 @@ public class IrisSettingsService {
      */
     private void createInitialGlobalSettings() {
         var settings = new IrisGlobalSettings();
-        settings.setCurrentVersion(IrisConstants.GLOBAL_SETTINGS_VERSION);
+        settings.setCurrentVersion(loadGlobalTemplateVersion().orElse(0));
 
         var chatSettings = new IrisChatSubSettings();
         chatSettings.setEnabled(false);
@@ -125,7 +130,8 @@ public class IrisSettingsService {
      * @param settings The global IrisSettings object to update
      */
     private void autoUpdateGlobalSettings(IrisGlobalSettings settings) {
-        if (settings.getCurrentVersion() < IrisConstants.GLOBAL_SETTINGS_VERSION) {
+        Optional<Integer> globalVersion = loadGlobalTemplateVersion();
+        if (globalVersion.isEmpty() || settings.getCurrentVersion() < globalVersion.get()) {
             if (settings.isEnableAutoUpdateChat() || settings.getIrisChatSettings() == null) {
                 settings.getIrisChatSettings().setTemplate(loadDefaultChatTemplate());
             }
@@ -135,7 +141,7 @@ public class IrisSettingsService {
             if (settings.isEnableAutoUpdateCodeEditor() || settings.getIrisCodeEditorSettings() == null) {
                 updateIrisCodeEditorSettings(settings);
             }
-            settings.setCurrentVersion(IrisConstants.GLOBAL_SETTINGS_VERSION);
+            globalVersion.ifPresent(settings::setCurrentVersion);
             saveIrisSettings(settings);
         }
     }

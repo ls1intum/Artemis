@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.iris;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -45,5 +46,22 @@ public final class IrisDefaultTemplateService {
             log.error("Error while loading Iris template from file: {}", filePath, e);
             return new IrisTemplate("");
         }
+    }
+
+    public Optional<Integer> loadGlobalTemplateVersion() {
+        Path filePath = Path.of("templates", "iris", "template-version.txt");
+        Resource resource = resourceLoaderService.getResource(filePath);
+        try {
+            String fileContent = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);
+            int version = Integer.parseInt(fileContent.trim());
+            return Optional.of(version);
+        }
+        catch (IOException e) {
+            log.error("Error while loading global template version from file: {}", filePath, e);
+        }
+        catch (NumberFormatException e) {
+            log.error("Content of {} was not a parseable int!", filePath, e);
+        }
+        return Optional.empty();
     }
 }
