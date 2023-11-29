@@ -162,10 +162,6 @@
             </button>
         </div>
     </ng-template>
-    <button class="btn btn-danger mb-3" *ngIf="course?.isAtLeastInstructor && isExamOver" type="button" (click)="openConfirmationModal(toggleSubmitPopUp)" [disabled]="isSaving">
-        <span *ngIf="!studentExam.submitted" jhiTranslate="entity.action.toggleToSubmitted"></span>
-        <span *ngIf="studentExam.submitted" jhiTranslate="entity.action.toggleToUnsubmitted"></span>
-    </button>
 
     <div class="mb-3">
         <h5><span jhiTranslate="artemisApp.studentExams.summary">Student Summary</span></h5>
