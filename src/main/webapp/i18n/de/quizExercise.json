@@ -10,7 +10,11 @@
                 "exportLabel": "Quizübungen exportieren"
             },
             "detail": {
-                "title": "Quiz Aufgabe"
+                "title": "Quiz Aufgabe",
+                "questionCount": {
+                    "title": "Fragenanzahl",
+                    "value": "Multiple Choice: {{ mcCount }}, Drag And Drop: {{ dndCount }}, Kurz Antwort: {{ shortCount }}"
+                }
             },
             "created": "Quiz erstellt mit ID {{ param }}",
             "updated": "Quiz aktualisiert mit ID {{ param }}",

@@ -1,5 +1,5 @@
-<div class="btn-group {{ !isDetailPage && 'flex-btn-group-container' }}">
-    <div class="{{ this.isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
+<div class="btn-group {{ isDetailPage ? 'flex-wrap' : 'flex-btn-group-container' }}">
+    <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
         <a id="preview-quiz" *ngIf="quizExercise.isAtLeastTutor" [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'preview']" class="btn btn-success btn-sm me-1 mb-1">
             <fa-icon [icon]="faEye"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview">Preview</span>
@@ -9,7 +9,7 @@
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
         </a>
     </div>
-    <div class="{{ this.isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
+    <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
         <a *ngIf="quizExercise.isAtLeastTutor" [routerLink]="[baseUrl, 'quiz-exercises', quizExercise.id, 'quiz-point-statistic']" class="btn btn-info btn-sm me-1 mb-1">
             <span>
                 <fa-icon [icon]="faSignal"></fa-icon>
@@ -25,7 +25,7 @@
             <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
         </a>
     </div>
-    <div class="{{ this.isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
+    <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
         <button *ngIf="quizExercise.isAtLeastInstructor" type="submit" (click)="exportQuizExercise(true)" class="btn btn-warning btn-sm me-1 mb-1">
             <fa-icon [icon]="faFileExport"></fa-icon>
             <span class="d-none d-md-inline" jhiTranslate="entity.action.export">Export</span>
@@ -52,7 +52,7 @@
             <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
         </a>
     </div>
-    <div class="{{ this.isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
+    <div class="{{ isDetailPage ? 'd-flex' : 'btn-group-vertical me-1 mb-1' }} ">
         <button
             *ngIf="quizExercise.isAtLeastInstructor"
             jhiDeleteButton

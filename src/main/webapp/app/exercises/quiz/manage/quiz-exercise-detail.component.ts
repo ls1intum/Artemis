@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -12,6 +11,8 @@ import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.servi
 import { firstValueFrom } from 'rxjs';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { TranslateService } from '@ngx-translate/core';
+import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -34,8 +35,8 @@ export class QuizExerciseDetailComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private quizExerciseService: QuizExerciseService,
-        private courseService: CourseManagementService,
         private statisticsService: StatisticsService,
+        private translateService: TranslateService,
     ) {}
 
     /**
@@ -58,7 +59,7 @@ export class QuizExerciseDetailComponent implements OnInit {
             this.quizExercise.quizBatches = this.quizExercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
             this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
             this.quizExercise.status = this.quizExerciseService.getStatus(this.quizExercise);
-            this.quizExercise.startDate = dayjs(this.quizExercise.dueDate).subtract(this.quizExercise.duration ?? 0, 'second');
+            this.quizExercise.startDate = this.quizExercise.dueDate && dayjs(this.quizExercise.dueDate).subtract(this.quizExercise.duration ?? 0, 'second');
             this.statistics = await firstValueFrom(this.statisticsService.getExerciseStatistics(this.quizId));
             console.log(this.quizExercise);
             this.detailOverviewSections = this.getExerciseDetailSections();
@@ -67,6 +68,9 @@ export class QuizExerciseDetailComponent implements OnInit {
 
     getExerciseDetailSections() {
         const exercise = this.quizExercise;
+        const mcCount = this.quizExercise.quizQuestions?.filter((question) => question.type === QuizQuestionType.MULTIPLE_CHOICE)?.length ?? 0;
+        const dndCount = this.quizExercise.quizQuestions?.filter((question) => question.type === QuizQuestionType.DRAG_AND_DROP)?.length ?? 0;
+        const shortCount = this.quizExercise.quizQuestions?.filter((question) => question.type === QuizQuestionType.SHORT_ANSWER)?.length ?? 0;
         const generalSection = getExerciseGeneralDetailsSection(exercise);
         const modeSection = getExerciseModeDetailSection(exercise);
         const defaultGradingDetails = getExerciseGradingDefaultDetails(exercise);
@@ -77,18 +81,21 @@ export class QuizExerciseDetailComponent implements OnInit {
                 details: [
                     ...modeSection.details,
                     { type: DetailType.Boolean, title: 'artemisApp.quizExercise.randomizeQuestionOrder', data: { boolean: exercise.randomizeQuestionOrder } },
-                    { type: DetailType.Text, title: 'artemisApp.quizExercise.quizMode.title', data: { text: exercise.quizMode?.toUpperCase() } },
+                    {
+                        type: DetailType.Text,
+                        title: 'artemisApp.quizExercise.quizMode.title',
+                        data: { text: this.translateService.instant('artemisApp.quizExercise.quizMode.' + exercise.quizMode?.toLowerCase()).toUpperCase() },
+                    },
+                    {
+                        type: DetailType.Text,
+                        title: 'artemisApp.quizExercise.detail.questionCount.title',
+                        data: { text: this.translateService.instant('artemisApp.quizExercise.detail.questionCount.value', { mcCount, dndCount, shortCount }) },
+                    },
                 ],
             },
-            // problemSection,
-            // solutionSection,
             {
                 headline: 'artemisApp.exercise.sections.grading',
-                details: [
-                    ...defaultGradingDetails,
-                    // { type: DetailType.Boolean, title: 'artemisApp.exercise.feedbackSuggestionsEnabled', data: { boolean: exercise.feedbackSuggestionsEnabled } },
-                    // ...gradingInstructionsCriteriaDetails,
-                ].filter(Boolean),
+                details: [...defaultGradingDetails].filter(Boolean),
             },
         ] as DetailOverviewSection[];
     }

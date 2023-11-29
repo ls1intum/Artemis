@@ -9,8 +9,6 @@ import { Course, isCommunicationEnabled } from 'app/entities/course.model';
     templateUrl: './exercise-detail-statistics.component.html',
 })
 export class ExerciseDetailStatisticsComponent implements OnInit {
-    protected readonly ExerciseType = ExerciseType;
-
     @Input() exercise: Exercise;
     @Input() doughnutStats: ExerciseManagementStatisticsDto;
     @Input() exerciseType: ExerciseType;

@@ -1,6 +1,6 @@
 import { SafeHtml } from '@angular/platform-browser';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 
 export function getExerciseGeneralDetailsSection(exercise: Exercise): DetailOverviewSection {
     return {
@@ -84,11 +84,15 @@ export function getExerciseGradingDefaultDetails(exercise: Exercise) {
         { type: DetailType.Date, title: 'artemisApp.exercise.releaseDate', data: { date: exercise.releaseDate } },
         { type: DetailType.Date, title: 'artemisApp.exercise.startDate', data: { date: exercise.startDate } },
         { type: DetailType.Date, title: 'artemisApp.exercise.dueDate', data: { date: exercise.dueDate } },
-        { type: DetailType.Date, title: 'artemisApp.exercise.assessmentDueDate', data: { date: exercise.assessmentDueDate } },
+        exercise.type !== ExerciseType.QUIZ && { type: DetailType.Date, title: 'artemisApp.exercise.assessmentDueDate', data: { date: exercise.assessmentDueDate } },
         { type: DetailType.Text, title: 'artemisApp.exercise.points', data: { text: exercise.maxPoints } },
         exercise.bonusPoints && { type: DetailType.Text, title: 'artemisApp.exercise.bonusPoints', data: { text: exercise.bonusPoints } },
         includedInScore,
-        { type: DetailType.Boolean, title: 'artemisApp.exercise.presentationScoreEnabled.title', data: { boolean: exercise.presentationScoreEnabled } },
+        exercise.type !== ExerciseType.QUIZ && {
+            type: DetailType.Boolean,
+            title: 'artemisApp.exercise.presentationScoreEnabled.title',
+            data: { boolean: exercise.presentationScoreEnabled },
+        },
     ];
 }
 

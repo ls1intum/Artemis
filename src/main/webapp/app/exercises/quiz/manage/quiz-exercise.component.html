@@ -26,16 +26,18 @@
                 <td *ngIf="quizExercise.isAtLeastInstructor" class="d-md-table-cell">
                     <input class="form-check-input" type="checkbox" (change)="toggleExercise(quizExercise)" [ngModel]="isExerciseSelected(quizExercise)" />
                 </td>
-                <td *ngIf="!quizExercise.quizEnded || !quizExercise.isAtLeastEditor">
-                    <a *ngIf="quizExercise.isEditable; else readOnlyId" [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
+                <td>
+                    <a *ngIf="quizExercise.isAtLeastTutor; else readOnlyId" [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id]"
                         >{{ quizExercise.id }}
                     </a>
                     <ng-template #readOnlyId>{{ quizExercise.id }}</ng-template>
                 </td>
-                <td *ngIf="quizExercise.quizEnded && quizExercise.isAtLeastEditor">
-                    <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>
+                <td>
+                    <a *ngIf="quizExercise.isAtLeastTutor; else showTitle" [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id]">
+                        {{ quizExercise.title }}
+                    </a>
+                    <ng-template #showTitle>{{ quizExercise.title }}</ng-template>
                 </td>
-                <td>{{ quizExercise.title }}</td>
                 <td>
                     <span *ngIf="quizExercise.status === QuizStatus.CLOSED">{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
                     <span *ngIf="quizExercise.status === QuizStatus.INVISIBLE">{{ 'artemisApp.quizExercise.quizStatus.invisible' | artemisTranslate }}</span>
