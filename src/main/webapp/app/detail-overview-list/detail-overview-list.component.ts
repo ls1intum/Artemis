@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { faExclamationTriangle, faEye } from '@fortawesome/free-solid-svg-icons';
-import { isEmpty } from 'lodash';
+import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

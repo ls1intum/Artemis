@@ -26,7 +26,7 @@
                     <ng-template #noText><span #noText>-</span></ng-template>
                 </dd>
                 <dd *ngSwitchCase="DetailType.Boolean">
-                    <jhi-boolean-icon [iconBoolean]="detail.data.boolean"></jhi-boolean-icon>
+                    <jhi-checklist-check [checkAttribute]="detail.data.boolean"></jhi-checklist-check>
                 </dd>
                 <dd *ngSwitchCase="DetailType.ProgrammingRepositoryButtons">
                     <div class="clone-buttons" *ngIf="detail.data.participation?.repositoryUrl">

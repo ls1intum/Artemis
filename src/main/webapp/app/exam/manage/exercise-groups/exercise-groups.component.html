@@ -212,24 +212,24 @@
                     <tr *ngFor="let exercise of exerciseGroup.exercises">
                         <td class="align-middle">
                             <a
-                                *ngIf="course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ"
+                                *ngIf="course.isAtLeastEditor"
                                 [routerLink]="['/course-management', course.id, 'exams', examId, 'exercise-groups', exerciseGroup.id, exercise.type + '-exercises', exercise.id]"
                             >
                                 <span>{{ exercise.id }}</span>
                             </a>
-                            <span *ngIf="!course.isAtLeastEditor || exercise.type === exerciseType.QUIZ">{{ exercise.id }}</span>
+                            <span *ngIf="!course.isAtLeastEditor">{{ exercise.id }}</span>
                         </td>
                         <td class="align-middle" style="font-size: 1.35rem">
                             <fa-icon [icon]="exerciseIcon(exercise)"></fa-icon>
                         </td>
                         <td class="align-middle">
                             <a
-                                *ngIf="course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ"
+                                *ngIf="course.isAtLeastEditor"
                                 [routerLink]="['/course-management', course.id, 'exams', examId, 'exercise-groups', exerciseGroup.id, exercise.type + '-exercises', exercise.id]"
                             >
                                 <span>{{ exercise.title }}</span>
                             </a>
-                            <span *ngIf="!course.isAtLeastEditor || exercise.type === exerciseType.QUIZ">{{ exercise.title }}</span>
+                            <span *ngIf="!course.isAtLeastEditor">{{ exercise.title }}</span>
                         </td>
                         <td class="align-middle">
                             {{ exercise.maxPoints }}

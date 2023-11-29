@@ -608,7 +608,6 @@ export const examManagementRoute: Routes = [
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/plagiarism',

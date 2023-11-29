@@ -40,7 +40,6 @@ export const quizManagementRoute: Routes = [
             pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
-        canDeactivate: [PendingChangesGuard],
     },
     {
         path: ':courseId/quiz-exercises/:exerciseId/re-evaluate',
