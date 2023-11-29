@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.collection.IQueue;
@@ -52,7 +51,10 @@ public class LocalCISharedBuildJobQueueService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    // map of build jobs currently being processed accross all nodes
     private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
+
+    private int localProcessingJobs = 0;
 
     // lock to prevent multiple nodes from processing the same build job
     private final FencedLock fLock;
@@ -107,35 +109,6 @@ public class LocalCISharedBuildJobQueueService {
 
     public List<LocalCIBuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
         return processingJobs.values().stream().filter(job -> job.getCourseId() == courseId).toList();
-    }
-
-    /**
-     * Requeue timed out build jobs only once. If a build job is still in processedJobs after the expiration time,
-     * it might be because the node crashed. Therefore, the build job is added back to the queue.
-     */
-    @Scheduled(fixedRate = 60000)
-    protected void requeueTimedOutJobs() {
-
-        fLock.lock();
-        try {
-            for (Long participationId : processingJobs.keySet()) {
-                LocalCIBuildJobQueueItem buildJob = processingJobs.get(participationId);
-                if (buildJob != null && buildJob.getExpirationTime() < System.currentTimeMillis()) {
-                    if (buildJob.getRetryCount() > 0) {
-                        log.error("Build job timed out for the second time: " + buildJob + ". Removing it from the queue.");
-                        processingJobs.delete(participationId);
-                        continue;
-                    }
-                    log.warn("Requeueing timed out build job: " + buildJob);
-                    processingJobs.delete(participationId);
-                    buildJob.setRetryCount(buildJob.getRetryCount() + 1);
-                    queue.add(buildJob);
-                }
-            }
-        }
-        finally {
-            fLock.unlock();
-        }
     }
 
     private ProgrammingExerciseParticipation retrieveParticipationWithRetry(Long participationId) {
@@ -197,6 +170,7 @@ public class LocalCISharedBuildJobQueueService {
             buildJob.setBuildStartDate(System.currentTimeMillis());
             buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(180));
             processingJobs.put(participationId, buildJob);
+            localProcessingJobs++;
         }
         return buildJob;
     }
@@ -204,7 +178,7 @@ public class LocalCISharedBuildJobQueueService {
     // Checks whether the node has at least one thread available for a new build job
     private Boolean nodeIsAvailable() {
         log.info("Current active threads: " + localCIBuildExecutorService.getActiveCount());
-        return processingJobs.size() < localCIBuildExecutorService.getMaximumPoolSize();
+        return localProcessingJobs < localCIBuildExecutorService.getMaximumPoolSize();
     }
 
     /**
@@ -244,9 +218,25 @@ public class LocalCISharedBuildJobQueueService {
 
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.getParticipationId());
+            localProcessingJobs--;
 
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
+        }).exceptionally(ex -> {
+            log.error("Error while processing build job: " + buildJob, ex);
+
+            processingJobs.remove(buildJob.getParticipationId());
+            localProcessingJobs--;
+
+            if (buildJob.getRetryCount() > 0) {
+                log.error("Build job failed for the second time: " + buildJob);
+                return null;
+            }
+            log.warn("Requeueing failed build job: " + buildJob);
+            buildJob.setRetryCount(buildJob.getRetryCount() + 1);
+            queue.add(buildJob);
+
+            return null;
         });
     }
 
