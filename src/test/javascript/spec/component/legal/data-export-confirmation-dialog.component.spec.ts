@@ -1,5 +1,5 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component';
@@ -13,6 +13,7 @@ import { DebugElement, EventEmitter } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { Observable, Subject } from 'rxjs';
+import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
 
 describe('DataExportConfirmationDialogComponent', () => {
     let comp: DataExportConfirmationDialogComponent;
@@ -20,19 +21,22 @@ describe('DataExportConfirmationDialogComponent', () => {
     let debugElement: DebugElement;
     let ngbActiveModal: NgbActiveModal;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, FormsModule, NgbModule],
-            declarations: [DataExportConfirmationDialogComponent, AlertOverlayComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ReactiveFormsModule, FormsModule, NgbModule],
+            declarations: [
+                DataExportConfirmationDialogComponent,
+                AlertOverlayComponent,
+                ConfirmEntityNameComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+            ],
             providers: [JhiLanguageHelper, AlertService],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(DataExportConfirmationDialogComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                ngbActiveModal = TestBed.inject(NgbActiveModal);
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(DataExportConfirmationDialogComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        ngbActiveModal = TestBed.inject(NgbActiveModal);
     });
 
     it('should initialize dialog correctly', () => {
@@ -42,8 +46,8 @@ describe('DataExportConfirmationDialogComponent', () => {
         comp.expectedLoginOfOtherUser = 'other login';
         comp.dialogError = new Observable<string>();
         fixture.detectChanges();
-        const cancelButton = fixture.debugElement.query(By.css('.btn.btn-secondary'));
-        const closeButton = fixture.debugElement.query(By.css('.btn-close'));
+        const cancelButton = debugElement.query(By.css('.btn.btn-secondary'));
+        const closeButton = debugElement.query(By.css('.btn-close'));
         expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
         expect(closeSpy).toHaveBeenCalledOnce();
@@ -55,27 +59,33 @@ describe('DataExportConfirmationDialogComponent', () => {
         expect(inputFormGroup).not.toBeNull();
     });
 
-    it('should correctly enable and disable request button', () => {
+    it('should correctly enable and disable request button', fakeAsync(async () => {
         // Form can't be submitted if the expected login doesn't match the entered login
         comp.expectedLogin = 'login';
         comp.enteredLogin = '';
         comp.dialogError = new Observable<string>();
         fixture.detectChanges();
-        let submitButton = debugElement.query(By.css('.btn.btn-primary'));
-        expect(submitButton.nativeElement.disabled).toBeTrue();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(comp.dataExportConfirmationForm.invalid).toBeTrue();
+        expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
 
         // User entered incorrect login --> button is disabled
         comp.enteredLogin = 'my login';
         fixture.detectChanges();
-        submitButton = debugElement.query(By.css('.btn.btn-primary'));
-        expect(submitButton.nativeElement.disabled).toBeTrue();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(comp.dataExportConfirmationForm.invalid).toBeTrue();
+        expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeTrue();
 
         // User entered correct login --> button is enabled
         comp.enteredLogin = 'login';
         fixture.detectChanges();
-        submitButton = debugElement.query(By.css('.btn.btn-primary'));
-        expect(submitButton.nativeElement.disabled).toBeFalse();
-    });
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(comp.dataExportConfirmationForm.invalid).toBeFalse();
+        expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBeFalse();
+    }));
 
     it('should handle dialog error events correctly', () => {
         comp.enteredLogin = 'login';
