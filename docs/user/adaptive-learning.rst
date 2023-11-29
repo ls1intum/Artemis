@@ -82,16 +82,16 @@ Students can use the up and down buttons to navigate to the previous or next rec
 Students can access their learning path graph via the eye icon on the top left. The graph displays all competencies, lecture units, exercises, and their relations. Each competency consists of a start node, visualized by the competency rings displaying progress, confidence, and overall mastery, and an end node represented by a checkered flag. Edges link learning resources to a competency via the respective start and end nodes. If the resource is still pending, it displays as a play symbol. Upon completion of the task, it appears as a checkmark.
 Users can read the graph from top to bottom, starting with the competencies that have no prerequisites, continuing downwards toward competencies that build upon prior knowledge. Students can zoom, pan, and drag the graph to navigate. For better orientation, the top right corner contains a mini-map.
 On the bottom right of the graph, users can view a legend describing the different types of nodes.
-Hovering over any node, e.g. exercise or competency, opens a popover containing essential information about the item, e.g. the type of exercise and title, or for competencies the details including the description.
+Hovering over any node, e.g. exercise or competency, opens a popover containing essential information about the item, e.g. the type of exercise and title, or for competencies, the details, including the description.
 
 |students-learning-path-graph|
 
 Learning Paths for Instructors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Instructors can enable learning paths for their course either by editing the course or on the dedicated learning path management page. This will generate individualized learning paths for all course participants.
+Instructors can enable learning paths for their courses either by editing the course or on the dedicated learning path management page. This will generate individualized learning paths for all course participants.
 
-Once the feature is enabled, instructors get access to each student's learning path. Instructors can search for students by name or login and view their respective learning path graph.
+Once the feature is enabled, instructors get access to each student's learning path. Instructors can search for students by login or name and view their respective learning path graph.
 
 |instructors-learning-path-management|
 
