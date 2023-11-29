@@ -358,7 +358,7 @@ describe('StudentExamDetailComponent', () => {
         });
 
         it('should be disabled when student exam is abandoned', () => {
-            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver').mockReturnValue(true);
+            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver', 'get').mockReturnValue(true);
             studentExamDetailComponent.studentExam.abandoned = true;
             studentExamDetailComponentFixture.detectChanges();
 
