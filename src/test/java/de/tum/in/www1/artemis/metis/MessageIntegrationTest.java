@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -64,6 +65,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatReposito
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -182,7 +184,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(1);
 
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), eq(new PostDTO(createdPost, MetisCrudAction.CREATE)));
     }
 
     @ParameterizedTest
@@ -228,10 +230,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(channel);
 
         // then
-        // expected are 8 database calls independent of the number of students in the course.
-        // 4 calls are for user authentication checks, 4 calls to update database
+        // expected are 7 database calls independent of the number of students in the course.
+        // 4 calls are for user authentication checks, 3 calls to update database
         // further database calls are made in async code
-        assertThatDb(() -> request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED)).hasBeenCalledTimes(8);
+        assertThatDb(() -> request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED)).hasBeenCalledTimes(7);
     }
 
     @ParameterizedTest
@@ -712,7 +714,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      */
     private Post createPostAndAwaitAsyncCode(Post postToSave) throws Exception {
         Post savedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
-        verify(conversationNotificationRepository, timeout(10000).times(1)).save(any());
+        await().until(() -> conversationNotificationRepository.findAll().stream().map(ConversationNotification::getMessage).collect(Collectors.toSet()).contains(savedPost));
         return savedPost;
     }
 

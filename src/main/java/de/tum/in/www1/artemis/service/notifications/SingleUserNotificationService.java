@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.WEBAPP;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -127,40 +126,6 @@ public class SingleUserNotificationService {
 
         // notify all relevant users
         relevantStudents.forEach(student -> notifyUserAboutAssessedExerciseSubmission(exercise, student));
-    }
-
-    /**
-     * Notify author of a post for an exercise that there is a new reply.
-     *
-     * @param post       that is replied
-     * @param answerPost that is replied with
-     * @param course     that the post belongs to
-     */
-    public void notifyUserAboutNewReplyForExercise(Post post, AnswerPost answerPost, Course course) {
-        notifyRecipientWithNotificationType(Arrays.asList(post, answerPost), NEW_REPLY_FOR_EXERCISE_POST, course, post.getAuthor());
-    }
-
-    /**
-     * Notify author of a post for a lecture that there is a new reply.
-     *
-     * @param post       that is replied
-     * @param answerPost that is replied with
-     * @param course     that the post belongs to
-     */
-    public void notifyUserAboutNewReplyForLecture(Post post, AnswerPost answerPost, Course course) {
-        notifyRecipientWithNotificationType(Arrays.asList(post, answerPost), NEW_REPLY_FOR_LECTURE_POST, course, post.getAuthor());
-    }
-
-    /**
-     * Notify author of a course-wide that there is a new reply.
-     * Also creates and sends an email.
-     *
-     * @param post       that is replied
-     * @param answerPost that is replied with
-     * @param course     that the post belongs to
-     */
-    public void notifyUserAboutNewReplyForCoursePost(Post post, AnswerPost answerPost, Course course) {
-        notifyRecipientWithNotificationType(Arrays.asList(post, answerPost), NEW_REPLY_FOR_COURSE_POST, course, post.getAuthor());
     }
 
     /**
@@ -432,7 +397,7 @@ public class SingleUserNotificationService {
      */
     private void saveAndSend(SingleUserNotification notification, Object notificationSubject, User author) {
         // do not save notifications that are not relevant for the user
-        if (shouldNotificationBeSaved(notification) && !Objects.equals(notification.getRecipient().getId(), author.getId())) {
+        if (shouldNotificationBeSaved(notification)) {
             singleUserNotificationRepository.save(notification);
         }
         // we only want to notify one individual user therefore we can check the settings and filter preemptively
@@ -484,7 +449,9 @@ public class SingleUserNotificationService {
                 || Objects.equals(notification.getTitle(), CONVERSATION_ADD_USER_CHANNEL_TITLE) || Objects.equals(notification.getTitle(), CONVERSATION_ADD_USER_GROUP_CHAT_TITLE)
                 || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_CHANNEL_TITLE)
                 || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE)
-                || Objects.equals(notification.getTitle(), MESSAGE_REPLY_IN_CONVERSATION_TITLE) || Objects.equals(notification.getTitle(), MENTIONED_IN_MESSAGE_TITLE)) {
+                || Objects.equals(notification.getTitle(), MESSAGE_REPLY_IN_CONVERSATION_TITLE) || Objects.equals(notification.getTitle(), MENTIONED_IN_MESSAGE_TITLE)
+                || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_COURSE_POST) || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_EXAM_POST)
+                || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_LECTURE_POST) || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_EXERCISE_POST)) {
             return (!Objects.equals(notification.getAuthor().getLogin(), notification.getRecipient().getLogin()));
         }
         return true;

@@ -85,7 +85,6 @@ public class AnswerPostService extends PostingService {
         postRepository.save(post);
 
         preparePostAndBroadcast(savedAnswerPost, course);
-        sendNotification(post, answerPost, course);
 
         return savedAnswerPost;
     }
@@ -183,34 +182,6 @@ public class AnswerPostService extends PostingService {
         answerPostRepository.deleteById(answerPostId);
 
         broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course, null);
-    }
-
-    /**
-     * Sends notification to affected groups
-     *
-     * @param post       which is answered
-     * @param answerPost which is created
-     */
-    void sendNotification(Post post, AnswerPost answerPost, Course course) {
-        // notify via course
-        if (post.getCourseWideContext() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForCoursePost(post, answerPost, course);
-            singleUserNotificationService.notifyUserAboutNewReplyForCoursePost(post, answerPost, course);
-            return;
-        }
-        // notify via exercise
-        if (post.getExercise() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(post, answerPost, course);
-            singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, answerPost, course);
-            // protect Sample Solution, Grading Instructions, etc.
-            post.getExercise().filterSensitiveInformation();
-            return;
-        }
-        // notify via lecture
-        if (post.getLecture() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, answerPost, course);
-            singleUserNotificationService.notifyUserAboutNewReplyForLecture(post, answerPost, course);
-        }
     }
 
     /**
