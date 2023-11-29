@@ -29,7 +29,7 @@
                     <td>
                         &nbsp;
                         <div *ngIf="exercise?.type" class="icon-container">
-                            <fa-icon [icon]="exerciseInfos[exercise.id!].icon" class="icon"></fa-icon>
+                            <fa-icon [icon]="exerciseInfos[exercise.id!]?.icon" class="icon"></fa-icon>
                         </div>
                         &nbsp;
                         <span>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
@@ -45,10 +45,10 @@
                     </td>
                     <td>
                         <span
-                            *ngIf="exerciseInfos[exercise.id!].achievedPercentage !== undefined; else noPercentageKnownPlaceholder"
-                            [class]="exerciseInfos[exercise.id!].colorClass"
+                            *ngIf="exerciseInfos[exercise.id!]?.achievedPercentage !== undefined; else noPercentageKnownPlaceholder"
+                            [class]="exerciseInfos[exercise.id!]?.colorClass"
                         >
-                            {{ exerciseInfos[exercise.id!].achievedPercentage }}%
+                            {{ exerciseInfos[exercise.id!]?.achievedPercentage }}%
                         </span>
                         <ng-template #noPercentageKnownPlaceholder> - </ng-template>
                     </td>

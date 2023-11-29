@@ -168,6 +168,7 @@ describe('ExamResultOverviewComponent', () => {
                 exam.course = course;
                 component.gradingScaleExists = false;
                 component.studentExamWithGrade = studentExamWithGrade;
+                component.exerciseInfos = {};
             });
     });
 
