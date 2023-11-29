@@ -237,16 +237,16 @@ describe('ModelingExamSubmissionComponent', () => {
         jest.replaceProperty(comp, 'modelingEditor', { apollonEditor: { nextRender: () => {} } as unknown as ApollonEditor } as unknown as ModelingEditorComponent);
         const submissionVersion = {
             content:
-                'Model: {"version":"2.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":[],"relationships":[]},"elements":[],"relationships":[],"assessments":[]}; Explanation: explanation',
+                'Model: {"version":"3.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":{},"relationships":{}},"elements":{},"relationships":{},"assessments":{}}; Explanation: explanation',
         } as unknown as SubmissionVersion;
         const parsedModel = {
-            version: '2.0.0',
+            version: '3.0.0',
             type: 'ClassDiagram',
             size: { width: 220, height: 420 },
-            interactive: { elements: [], relationships: [] },
-            elements: [],
-            relationships: [],
-            assessments: [],
+            interactive: { elements: {}, relationships: {} },
+            elements: {},
+            relationships: {},
+            assessments: {},
         } as UMLModel;
         await comp.setSubmissionVersion(submissionVersion);
         await fixture.whenStable();

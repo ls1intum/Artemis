@@ -89,7 +89,10 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
         parameters.add("repository.git.repositoryUrl", newRepoUrl);
         parameters.add("repository.git.authenticationType", "PASSWORD");
         parameters.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");
+        parameters.add("___advancedOptionsPresent___", "true");
         parameters.add("repository.git.useShallowClones", "true");
+        parameters.add("checkBoxFields", "repository.git.useRemoteAgentCache");
+        parameters.add("repository.git.useRemoteAgentCache", "false");
         parameters.add("repository.git.commandTimeout", "180");
 
         try {

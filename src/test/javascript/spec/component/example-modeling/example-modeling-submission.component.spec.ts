@@ -432,8 +432,16 @@ describe('Example Modeling Submission Component', () => {
     it('should show assessment', () => {
         // GIVEN
         const model = {
-            version: '2.0.0',
+            version: '3.0.0',
             type: 'ClassDiagram',
+            elements: {},
+            relationships: {},
+            assessments: {},
+            interactive: {
+                elements: {},
+                relationships: {},
+            },
+            size: { width: 0, height: 0 },
         } as UMLModel;
 
         const result = { id: 1 } as Result;

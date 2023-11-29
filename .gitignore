@@ -211,3 +211,8 @@ data-exports/
 /src/main/resources/known_hosts
 /.nx
 /local-ci-scripts
+
+##############################
+# Supporting scripts config
+##############################
+/supporting_scripts/**/*.ini

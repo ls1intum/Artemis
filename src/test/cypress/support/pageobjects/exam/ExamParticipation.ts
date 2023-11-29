@@ -77,13 +77,17 @@ export class ExamParticipation {
         quizExerciseMultipleChoice.tickAnswerOption(exerciseID, 2, quizExerciseID);
     }
 
-    startParticipation(student: CypressCredentials, course: Course, exam: Exam) {
+    openExam(student: CypressCredentials, course: Course, exam: Exam) {
         cy.login(student, '/');
         cy.visit('/courses');
         courseList.openCourse(course.id!);
         courseOverview.openExamsTab();
         courseOverview.openExam(exam.id!);
         cy.url().should('contain', `/exams/${exam.id}`);
+    }
+
+    startParticipation(student: CypressCredentials, course: Course, exam: Exam) {
+        this.openExam(student, course, exam);
         examStartEnd.startExam(true);
     }
 
