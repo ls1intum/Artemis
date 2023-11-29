@@ -52,6 +52,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
         ProjectType projectType = programmingExercise.getProjectType();
+        long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
 
@@ -59,6 +60,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             throw new LocalCIException("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
         }
 
-        localCISharedBuildJobQueueService.addBuildJobInformation(participation.getId(), commitHash);
+        // Exam exercises have a higher priority than normal exercises
+        int priority = programmingExercise.isExamExercise() ? 1 : 2;
+
+        localCISharedBuildJobQueueService.addBuildJobInformation(participation.getBuildPlanId(), participation.getId(), commitHash, System.currentTimeMillis(), priority, courseId);
     }
 }
