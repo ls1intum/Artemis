@@ -19,9 +19,10 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.google.gson.JsonObject;
+import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.domain.lti.Claims;
+import de.tum.in.www1.artemis.domain.lti.LtiAuthenticationResponseDTO;
 import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
@@ -86,12 +87,19 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         }
     }
 
-    private static void handleLtiEmailAlreadyInUseException(HttpServletResponse response, String targetLink, OidcIdToken ltiIdToken, OidcAuthenticationToken authToken)
+    private void handleLtiEmailAlreadyInUseException(HttpServletResponse response, String targetLink, OidcIdToken ltiIdToken, OidcAuthenticationToken authToken)
             throws IOException {
-        response.setHeader("TargetLinkUri", targetLink);
-        response.setHeader("ltiIdToken", ltiIdToken.getTokenValue());
-        response.setHeader("clientRegistrationId", authToken.getAuthorizedClientRegistrationId());
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "LTI 1.3 user authentication failed");
+        this.lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken);
+        LtiAuthenticationResponseDTO errorResponse = new LtiAuthenticationResponseDTO(targetLink, ltiIdToken.getTokenValue(), authToken.getAuthorizedClientRegistrationId());
+        response.setContentType("application/json");
+        sendErrorResponse(response, errorResponse);
+    }
+
+    private void sendErrorResponse(HttpServletResponse response, LtiAuthenticationResponseDTO errorResponse) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        PrintWriter out = response.getWriter();
+        out.print(new Gson().toJson(errorResponse)); // Using Gson to convert the object to JSON
+        out.flush();
     }
 
     private OidcAuthenticationToken finishOidcFlow(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -115,18 +123,11 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLinkUri);
         lti13Service.buildLtiResponse(uriBuilder, response);
-
-        JsonObject json = new JsonObject();
-        json.addProperty("targetLinkUri", uriBuilder.build().toUriString());
-
-        if (ltiIdToken != null && clientRegistrationId != null) {
-            json.addProperty("ltiIdToken", ltiIdToken.getTokenValue());
-            json.addProperty("clientRegistrationId", clientRegistrationId);
-        }
+        LtiAuthenticationResponseDTO jsonResponse = new LtiAuthenticationResponseDTO(uriBuilder.build().toUriString(), ltiIdToken.getTokenValue(), clientRegistrationId);
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        writer.print(json);
+        writer.print(new Gson().toJson(jsonResponse));
         writer.flush();
     }
 }

@@ -70,23 +70,30 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     }
 
     authenticateUserThenRedirect(error: any): void {
+        const loginName = error.headers.get('ltiSuccessLoginRequired');
         this.accountService.identity().then((user) => {
             if (user) {
                 this.redirectUserToTargetLink(error);
             } else {
+                if (loginName) {
+                    this.accountService.setPrefilledUsername(loginName);
+                }
                 this.redirectUserToLoginThenTargetLink(error);
             }
         });
     }
 
-    redirectUserToTargetLink(error: any): void {
-        const ltiIdToken = error.headers.get('ltiIdToken');
-        const clientRegistrationId = error.headers.get('clientRegistrationId');
+    redirectUserToTargetLink(data: any): void {
+        // const ltiIdToken = error.headers.get('ltiIdToken');
+        // const clientRegistrationId = error.headers.get('clientRegistrationId');
+
+        const ltiIdToken = data.error['ltiIdToken'];
+        const clientRegistrationId = data.error['clientRegistrationId'];
 
         this.storeLtiSessionData(ltiIdToken, clientRegistrationId);
 
         // Redirect to target link since the user is already logged in
-        window.location.replace(error.headers.get('TargetLinkUri').toString());
+        window.location.replace(data.error['targetLinkUri'].toString());
     }
 
     redirectUserToLoginThenTargetLink(error: any): void {
