@@ -219,10 +219,12 @@ public class LocalCISharedBuildJobQueueService {
 
         if (!nodeIsAvailable()) {
             log.info("Node has no available threads currently");
+            lock.unlock();
             return;
         }
 
         if (queue.isEmpty()) {
+            lock.unlock();
             return;
         }
         // need to add the build job to processingJobs before taking it from the queue,
