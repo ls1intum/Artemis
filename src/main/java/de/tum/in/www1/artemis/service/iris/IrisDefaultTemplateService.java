@@ -48,6 +48,11 @@ public final class IrisDefaultTemplateService {
         }
     }
 
+    /**
+     * Loads the global template version from the "resources/templates/iris/template-version.txt" file.
+     *
+     * @return an Optional containing the version loaded from the file, or an empty Optional if there was an error.
+     */
     public Optional<Integer> loadGlobalTemplateVersion() {
         Path filePath = Path.of("templates", "iris", "template-version.txt");
         Resource resource = resourceLoaderService.getResource(filePath);
