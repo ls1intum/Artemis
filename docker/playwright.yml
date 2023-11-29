@@ -35,6 +35,9 @@ services:
             - ..:/app/artemis
         networks:
             - artemis
+        stdin_open: true
+        tty: true
+        ipc: host
 
 networks:
     artemis:
