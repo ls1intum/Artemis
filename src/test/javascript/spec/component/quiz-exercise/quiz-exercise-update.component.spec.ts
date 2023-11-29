@@ -40,7 +40,7 @@ import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
 
-describe('QuizExercise Management Detail Component', () => {
+describe('QuizExercise Update Detail Component', () => {
     let comp: QuizExerciseUpdateComponent;
     let exerciseGroupService: ExerciseGroupService;
     let courseManagementService: CourseManagementService;

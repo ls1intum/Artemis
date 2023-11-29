@@ -61,7 +61,6 @@ export class QuizExerciseDetailComponent implements OnInit {
             this.quizExercise.status = this.quizExerciseService.getStatus(this.quizExercise);
             this.quizExercise.startDate = this.quizExercise.dueDate && dayjs(this.quizExercise.dueDate).subtract(this.quizExercise.duration ?? 0, 'second');
             this.statistics = await firstValueFrom(this.statisticsService.getExerciseStatistics(this.quizId));
-            console.log(this.quizExercise);
             this.detailOverviewSections = this.getExerciseDetailSections();
         });
     }
