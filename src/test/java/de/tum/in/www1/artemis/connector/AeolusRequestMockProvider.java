@@ -25,7 +25,7 @@ import com.google.gson.Gson;
  * Mocks requests to Aeolus
  */
 @Component
-@Profile("aeolus")
+@Profile("aeolus | localci")
 public class AeolusRequestMockProvider {
 
     private final RestTemplate restTemplate;
