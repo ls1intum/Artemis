@@ -7,7 +7,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,11 +38,16 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.nimbusds.jose.jwk.JWK;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lti.Claims;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -397,7 +407,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     private LinkedMultiValueMap<String, String> getDeepLinkingRequestParams() {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("exerciseId", programmingExercise.getId().toString());
-        params.add("ltiIdToken", createJwtForTest().toString());
+        params.add("ltiIdToken", createJwtForTest());
         params.add("clientRegistrationId", "registration-id");
         return params;
     }
@@ -413,6 +423,18 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     private Map<String, Object> prepareTokenClaims() {
         Map<String, Object> claims = new HashMap<>();
 
+        addUserClaims(claims);
+        addLTISpecificClaims(claims);
+        addContextClaim(claims);
+        addToolPlatformClaim(claims);
+        addLaunchPresentationClaim(claims);
+        addCustomClaim(claims);
+        addDeepLinkingSettingsClaim(claims);
+
+        return claims;
+    }
+
+    private void addUserClaims(Map<String, Object> claims) {
         claims.put("iss", "https://platform.example.org");
         claims.put("sub", "a6d5c443-1f51-4783-ba1a-7686ffe3b54a");
         claims.put("aud", List.of("962fa4d8-bcbf-49a0-94b2-2de05ad274af"));
@@ -427,23 +449,27 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         claims.put("picture", "https://example.org/jane.jpg");
         claims.put("email", "jane@example.org");
         claims.put("locale", "en-US");
+    }
 
-        // LTI specific claims
+    private void addLTISpecificClaims(Map<String, Object> claims) {
         claims.put(Claims.LTI_DEPLOYMENT_ID, "07940580-b309-415e-a37c-914d387c1150");
         claims.put(Claims.MESSAGE_TYPE, "LtiDeepLinkingRequest");
         claims.put(Claims.LTI_VERSION, "1.3.0");
         claims.put(Claims.ROLES,
                 Arrays.asList("http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor", "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Faculty"));
 
-        // Context claim
+    }
+
+    private void addContextClaim(Map<String, Object> claims) {
         Map<String, Object> contextClaim = new HashMap<>();
         contextClaim.put("id", "c1d887f0-a1a3-4bca-ae25-c375edcc131a");
         contextClaim.put("label", "ECON 101");
         contextClaim.put("title", "Economics as a Social Science");
         contextClaim.put("type", List.of("CourseOffering"));
         claims.put(Claims.CONTEXT, contextClaim);
+    }
 
-        // Tool platform claim
+    private void addToolPlatformClaim(Map<String, Object> claims) {
         Map<String, Object> toolPlatformClaim = new HashMap<>();
         toolPlatformClaim.put("contact_email", "support@example.org");
         toolPlatformClaim.put("description", "An Example Tool Platform");
@@ -452,20 +478,23 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         toolPlatformClaim.put("product_family_code", "example.org");
         toolPlatformClaim.put("version", "1.0");
         claims.put(Claims.PLATFORM_INSTANCE, toolPlatformClaim);
+    }
 
-        // Launch presentation claim
+    private void addLaunchPresentationClaim(Map<String, Object> claims) {
         Map<String, Object> launchPresentationClaim = new HashMap<>();
         launchPresentationClaim.put("document_target", "iframe");
         launchPresentationClaim.put("height", 320);
         launchPresentationClaim.put("width", 240);
         claims.put(Claims.LAUNCH_PRESENTATION, launchPresentationClaim);
+    }
 
-        // Custom claim
+    private void addCustomClaim(Map<String, Object> claims) {
         Map<String, Object> customClaim = new HashMap<>();
         customClaim.put("myCustom", "123");
         claims.put(Claims.CUSTOM, customClaim);
+    }
 
-        // Deep linking settings claim
+    private void addDeepLinkingSettingsClaim(Map<String, Object> claims) {
         Map<String, Object> deepLinkingSettingsClaim = new HashMap<>();
         deepLinkingSettingsClaim.put("deep_link_return_url", "https://platform.example/deep_links");
         deepLinkingSettingsClaim.put("accept_types", Arrays.asList("link", "file", "html", "ltiResourceLink", "image"));
@@ -477,7 +506,5 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         deepLinkingSettingsClaim.put("text", "This is the default text");
         deepLinkingSettingsClaim.put("data", "csrftoken:c7fbba78-7b75-46e3-9201-11e6d5f36f53");
         claims.put(Claims.DEEP_LINKING_SETTINGS, deepLinkingSettingsClaim);
-
-        return claims;
     }
 }

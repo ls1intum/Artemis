@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.connectors.lti;
+package de.tum.in.www1.artemis.service.connectors.lti;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -17,10 +17,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.lti.Lti13TokenRetriever;
-import de.tum.in.www1.artemis.service.connectors.lti.LtiDeepLinkingService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 

@@ -185,7 +185,7 @@ class Lti13LaunchFilterTest {
     }
 
     @Test
-    void emailAddressAlreadyInUse_serviceLaunchFailed() throws ServletException, IOException {
+    void emailAddressAlreadyInUseServiceLaunchFailed() throws ServletException, IOException {
         doReturn(false).when(authentication).isAuthenticated();
         doThrow(new LtiEmailAlreadyInUseException()).when(lti13Service).performLaunch(any(), any());
 
@@ -202,7 +202,7 @@ class Lti13LaunchFilterTest {
     }
 
     @Test
-    void emailAddressAlreadyInUse_serviceDeepLinkingFailed() throws ServletException, IOException {
+    void emailAddressAlreadyInUseServiceDeepLinkingFailed() throws ServletException, IOException {
         doReturn(false).when(authentication).isAuthenticated();
         doThrow(new LtiEmailAlreadyInUseException()).when(lti13Service).startDeepLinking(any(), any());
 

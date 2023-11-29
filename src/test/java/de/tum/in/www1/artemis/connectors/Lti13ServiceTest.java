@@ -105,7 +105,7 @@ class Lti13ServiceTest {
 
     @Test
     void performLaunch_exerciseFound() {
-        mockExercise result = getMockExercise();
+        MockExercise result = getMockExercise(true);
 
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
         when(oidcIdToken.getClaim("iss")).thenReturn("http://otherDomain.com");
@@ -123,18 +123,8 @@ class Lti13ServiceTest {
 
     @Test
     void performLaunch_invalidToken() {
-        long exerciseId = 134;
-        Exercise exercise = new TextExercise();
-        exercise.setId(exerciseId);
-
-        long courseId = 12;
-        Course course = new Course();
-        course.setId(courseId);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
-        exercise.setCourse(course);
-        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
-        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
-        prepareForPerformLaunch(courseId, exerciseId);
+        MockExercise exercise = this.getMockExercise(true);
+        prepareForPerformLaunch(exercise.courseId, exercise.exerciseId);
 
         assertThatIllegalArgumentException().isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
 
@@ -202,19 +192,9 @@ class Lti13ServiceTest {
 
     @Test
     void performLaunch_notOnlineCourse() {
-        long exerciseId = 134;
-        Exercise exercise = new TextExercise();
-        exercise.setId(exerciseId);
-
-        long courseId = 12;
-        Course course = new Course();
-        course.setId(courseId);
-        exercise.setCourse(course);
-        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
-        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
-
+        MockExercise exercise = this.getMockExercise(false);
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
-        doReturn("https://some-artemis-domain.org/courses/" + courseId + "/exercises/" + exerciseId).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
+        doReturn("https://some-artemis-domain.org/courses/" + exercise.courseId + "/exercises/" + exercise.exerciseId).when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.performLaunch(oidcIdToken, clientRegistrationId));
     }
@@ -459,21 +439,11 @@ class Lti13ServiceTest {
 
     @Test
     void startDeepLinkingCourseFound() {
-        long exerciseId = 134;
-        Exercise exercise = new TextExercise();
-        exercise.setId(exerciseId);
-
-        long courseId = 12;
-        Course course = new Course();
-        course.setId(courseId);
-        course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
-        exercise.setCourse(course);
-        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
-        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        MockExercise mockExercise = this.getMockExercise(true);
 
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
         when(oidcIdToken.getClaim(Claims.MESSAGE_TYPE)).thenReturn("LtiDeepLinkingRequest");
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/" + courseId);
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/" + mockExercise.courseId);
 
         when(oidcIdToken.getEmail()).thenReturn("testuser@email.com");
 
@@ -487,19 +457,10 @@ class Lti13ServiceTest {
 
     @Test
     void startDeepLinkingNotOnlineCourse() {
-        long exerciseId = 134;
-        Exercise exercise = new TextExercise();
-        exercise.setId(exerciseId);
-
-        long courseId = 12;
-        Course course = new Course();
-        course.setId(courseId);
-        exercise.setCourse(course);
-        doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
-        doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        MockExercise exercise = this.getMockExercise(false);
 
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
-        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/" + courseId);
+        when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/" + exercise.courseId);
 
         assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
 
@@ -560,7 +521,7 @@ class Lti13ServiceTest {
             ClientRegistration clientRegistration) {
     }
 
-    private mockExercise getMockExercise() {
+    private MockExercise getMockExercise(boolean isOnlineCourse) {
         long exerciseId = 134;
         Exercise exercise = new TextExercise();
         exercise.setId(exerciseId);
@@ -568,15 +529,17 @@ class Lti13ServiceTest {
         long courseId = 12;
         Course course = new Course();
         course.setId(courseId);
-        course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
+        if (isOnlineCourse) {
+            course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
+        }
         exercise.setCourse(course);
         doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
-        mockExercise result = new mockExercise(exerciseId, courseId);
+        MockExercise result = new MockExercise(exerciseId, courseId);
         return result;
     }
 
-    private record mockExercise(long exerciseId, long courseId) {
+    private record MockExercise(long exerciseId, long courseId) {
     }
 
     private void prepareForPerformLaunch(long courseId, long exerciseId) {
