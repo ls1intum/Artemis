@@ -3,9 +3,11 @@ package de.tum.in.www1.artemis.repository;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 
@@ -22,6 +24,15 @@ public interface CompetencyRelationRepository extends JpaRepository<CompetencyRe
                 OR relation.tailCompetency.id = :competencyId
             """)
     Set<CompetencyRelation> findAllByCompetencyId(@Param("competencyId") Long competencyId);
+
+    @Transactional
+    @Modifying
+    @Query("""
+            DELETE FROM CompetencyRelation relation
+            WHERE relation.headCompetency.id = :competencyId
+                OR relation.tailCompetency.id = :competencyId
+            """)
+    void deleteAllByCompetencyId(@Param("competencyId") long competencyId);
 
     @Query("""
             SELECT relation

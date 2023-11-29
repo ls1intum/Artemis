@@ -1,0 +1,11 @@
+api: v0.0.1
+metadata:
+    name: java-gradle
+    id: java-windfile
+    description: Build Plan for a java Exercise
+actions:
+    - name: gradle
+      script: |
+         chmod +x gradlew
+         ./gradlew clean test
+      runAlways: false

@@ -39,16 +39,19 @@ describe('CourseDetailDoughnutChartComponent', () => {
 
     it('should initialize', () => {
         component.ngOnChanges();
-        const expected = [absolute, max - absolute];
+        const expected = [absolute, max - absolute, 0];
         expect(component.stats).toEqual(expected);
         expect(component.ngxData[0].value).toBe(expected[0]);
         expect(component.ngxData[1].value).toBe(expected[1]);
+        expect(component.ngxData[2].value).toBe(expected[2]);
 
         component.currentMax = 0;
         component.ngOnChanges();
 
-        expect(component.ngxData[0].value).toBe(1);
+        // display grey color when currentMax = 0
+        expect(component.ngxData[0].value).toBe(0);
         expect(component.ngxData[1].value).toBe(0);
+        expect(component.ngxData[2].value).toBe(1);
     });
 
     it('should set the right title and link', () => {

@@ -111,13 +111,13 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
         post.setContent("hi test");
         post = conversationMessageRepository.save(post);
 
-        conversationNotificationService.notifyAboutNewMessage(post, Set.of(user2), course);
+        conversationNotificationService.notifyAboutNewMessage(post, Set.of(user2), course, Set.of());
         verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user2.getId() + "/notifications/conversations"), (Object) any());
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
 
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 
-        verify(generalInstantNotificationService).sendNotification(sentNotification, Set.of(user2), null);
+        verify(generalInstantNotificationService).sendNotification(sentNotification, Set.of(user2), post);
 
         var participants = conversationParticipantRepository.findConversationParticipantByConversationId(oneToOneChat.getId());
         // make sure that objects can be deleted after notification is saved

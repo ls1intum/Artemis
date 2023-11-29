@@ -26,15 +26,15 @@ public class ProgrammingAssessmentService extends AssessmentService {
      * This function is used for saving a manual assessment/result. It sets the assessment type to SEMI_AUTOMATIC and sets the assessor attribute.
      * Furthermore, it saves the result in the database.
      *
-     * @param result the new result of a programming exercise
+     * @param result   the new result of a programming exercise
+     * @param assessor the user who created the assessment
      * @return result that was saved in the database
      */
-    public Result saveManualAssessment(Result result) {
+    public Result saveManualAssessment(Result result, User assessor) {
         var participation = result.getParticipation();
-        User user = userRepository.getUserWithGroupsAndAuthorities();
 
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        result.setAssessor(user);
+        result.setAssessor(assessor);
         result.setCompletionDate(null);
 
         Result finalResult = resultService.storeFeedbackInResult(result, result.getFeedbacks(), true);

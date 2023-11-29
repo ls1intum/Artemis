@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
@@ -47,8 +46,6 @@ public class LocalCIBuildJobManagementService {
 
     private final LocalCIDockerService localCIDockerService;
 
-    private final LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService;
-
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     @Value("${artemis.continuous-integration.timeout-seconds:120}")
@@ -59,15 +56,13 @@ public class LocalCIBuildJobManagementService {
 
     public LocalCIBuildJobManagementService(LocalCIBuildJobExecutionService localCIBuildJobExecutionService, ExecutorService localCIBuildExecutorService,
             ProgrammingMessagingService programmingMessagingService, LocalCIBuildPlanService localCIBuildPlanService, LocalCIContainerService localCIContainerService,
-            LocalCIDockerService localCIDockerService, LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+            LocalCIDockerService localCIDockerService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.localCIBuildJobExecutionService = localCIBuildJobExecutionService;
         this.localCIBuildExecutorService = localCIBuildExecutorService;
         this.programmingMessagingService = programmingMessagingService;
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.localCIContainerService = localCIContainerService;
         this.localCIDockerService = localCIDockerService;
-        this.localCIProgrammingLanguageFeatureService = localCIProgrammingLanguageFeatureService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
@@ -82,18 +77,9 @@ public class LocalCIBuildJobManagementService {
     public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation, String commitHash) {
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
-
         ProjectType projectType = programmingExercise.getProjectType();
-
         String dockerImage = programmingLanguageConfiguration.getImage(programmingLanguage, Optional.ofNullable(projectType));
-
-        List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
-
-        if (projectType != null && !supportedProjectTypes.contains(programmingExercise.getProjectType())) {
-            throw new LocalCIException("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
-        }
 
         // Check if the Docker image is available. It should be available, because it is pulled during the creation of the programming exercise.
         localCIDockerService.pullDockerImage(dockerImage);
@@ -186,7 +172,7 @@ public class LocalCIBuildJobManagementService {
      * @param buildJobCallable The build job that should be called.
      * @param timeoutSeconds   The number of seconds after which the build job is cancelled.
      */
-    private record BuildJobTimeoutCallable<LocalCIBuildResult> (Callable<LocalCIBuildResult> buildJobCallable, long timeoutSeconds) implements Callable<LocalCIBuildResult> {
+    private record BuildJobTimeoutCallable<LocalCIBuildResult>(Callable<LocalCIBuildResult> buildJobCallable, long timeoutSeconds) implements Callable<LocalCIBuildResult> {
 
         /**
          * Calls the buildJobCallable and waits for the result or for the timeout to pass.

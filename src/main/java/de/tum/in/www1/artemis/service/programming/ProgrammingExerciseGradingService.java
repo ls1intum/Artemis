@@ -147,7 +147,7 @@ public class ProgrammingExerciseGradingService {
             if (buildResult.hasLogs()) {
                 var programmingLanguage = exercise.getProgrammingLanguage();
                 var projectType = exercise.getProjectType();
-                var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
+                var buildLogs = buildResult.extractBuildLogs();
 
                 ciResultService.extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
@@ -291,9 +291,12 @@ public class ProgrammingExerciseGradingService {
 
         // workaround to avoid org.hibernate.HibernateException: null index column for collection: de.tum.in.www1.artemis.domain.Submission.results
         processedResult.setSubmission(null);
+        // workaround to avoid scheduling the participant score update twice. The update will only run when a participation is present.
+        processedResult.setParticipation(null);
 
         processedResult = resultRepository.save(processedResult);
         processedResult.setSubmission(programmingSubmission);
+        processedResult.setParticipation((Participation) participation);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
 

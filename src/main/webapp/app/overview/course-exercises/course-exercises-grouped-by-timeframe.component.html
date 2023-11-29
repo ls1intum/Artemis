@@ -1,0 +1,38 @@
+<div *ngIf="!filteredAndSortedExercises?.length; else exercisesWithAppliedSearchAndFilters">
+    {{ 'artemisApp.courseOverview.exerciseList.noExerciseMatchesSearchAndFilters' | artemisTranslate }}
+</div>
+<ng-template #exercisesWithAppliedSearchAndFilters>
+    <div class="guided-tour exercise-row-container mb-3" *ngFor="let exerciseGroupKey of Object.keys(exerciseGroups)">
+        <ng-container *ngIf="exerciseGroups[exerciseGroupKey].exercises.length">
+            <div class="control-label d-flex align-items-center" (click)="toggleGroupCategoryCollapse(exerciseGroupKey)">
+                <div class="icon-container pe-3">
+                    <fa-icon
+                        [icon]="faChevronRight"
+                        class="rotate-icon chevron-position"
+                        [class.rotated]="!exerciseGroups[exerciseGroupKey].isCollapsed"
+                        [class.text-primary]="exerciseGroupKey === 'current'"
+                    ></fa-icon>
+                </div>
+
+                <ng-container [ngSwitch]="exerciseGroupKey">
+                    <h3 *ngSwitchCase="'past'" class="mb-0">{{ 'artemisApp.courseOverview.exerciseList.past' | artemisTranslate }}</h3>
+                    <h3 *ngSwitchCase="'current'" class="text-primary mb-0">{{ 'artemisApp.courseOverview.exerciseList.current' | artemisTranslate }}</h3>
+                    <h3 *ngSwitchCase="'future'" class="mb-0">{{ 'artemisApp.courseOverview.exerciseList.future' | artemisTranslate }}</h3>
+                    <h3 *ngSwitchCase="'noDueDate'" class="mb-0">{{ 'artemisApp.courseOverview.exerciseList.noDueDate' | artemisTranslate }}</h3>
+                </ng-container>
+            </div>
+
+            <div [ngbCollapse]="exerciseGroups[exerciseGroupKey].isCollapsed">
+                <jhi-course-exercise-row
+                    class="pb-1"
+                    [exercise]="exercise"
+                    [course]="course!"
+                    [hasGuidedTour]="exercise === exerciseForGuidedTour"
+                    *ngFor="let exercise of exerciseGroups[exerciseGroupKey].exercises"
+                />
+            </div>
+
+            <div class="collapsed"></div>
+        </ng-container>
+    </div>
+</ng-template>

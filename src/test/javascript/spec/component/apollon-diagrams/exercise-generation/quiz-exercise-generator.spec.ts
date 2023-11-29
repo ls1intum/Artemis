@@ -19,7 +19,6 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
-import { addDelay } from '../../../helpers/utils/general.utils';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -69,18 +68,23 @@ describe('QuizExercise Generator', () => {
         // @ts-ignore
         const classDiagram: UMLModel = testClassDiagram as UMLModel;
         const interactiveElements: Selection = classDiagram.interactive;
+        const selectedElements = Object.entries(interactiveElements.elements)
+            .filter(([, include]) => include)
+            .map(([id]) => id);
+        const selectedRelationships = Object.entries(interactiveElements.relationships)
+            .filter(([, include]) => include)
+            .map(([id]) => id);
         const exerciseTitle = 'GenerateDragAndDropExerciseTest';
-        await addDelay(300);
         const generatedExercise = await generateDragAndDropQuizExercise(course, exerciseTitle, classDiagram, fileUploaderService, quizExerciseService);
         expect(generatedExercise).toBeTruthy();
         expect(generatedExercise.title).toEqual(exerciseTitle);
         expect(generatedExercise.quizQuestions![0].type).toEqual(QuizQuestionType.DRAG_AND_DROP);
         const dragAndDropQuestion = generatedExercise.quizQuestions![0] as DragAndDropQuestion;
         // create one DragItem for each interactive element
-        expect(dragAndDropQuestion.dragItems).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
+        expect(dragAndDropQuestion.dragItems).toHaveLength(selectedElements.length + selectedRelationships.length);
         // each DragItem needs one DropLocation
-        expect(dragAndDropQuestion.dropLocations).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
+        expect(dragAndDropQuestion.dropLocations).toHaveLength(selectedElements.length + selectedRelationships.length);
         // if there are no similar elements -> amount of correct mappings = interactive elements
-        expect(dragAndDropQuestion.correctMappings).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
+        expect(dragAndDropQuestion.correctMappings).toHaveLength(selectedElements.length + selectedRelationships.length);
     });
 });
