@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
@@ -33,6 +34,7 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.post.ConversationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 /**
@@ -101,6 +103,9 @@ public class ExamUtilService {
 
     @Autowired
     private ExamSessionRepository examSessionRepository;
+
+    @Autowired
+    private QuizPoolService quizPoolService;
 
     /**
      * Creates and saves a course with an exam and an exercise group with all exercise types excluding programming exercises.
@@ -1054,5 +1059,19 @@ public class ExamUtilService {
             }
         }
         return count;
+    }
+
+    /**
+     * Creates and saves an Exam with a quiz pool
+     *
+     * @param course course in which the exam belongs to
+     * @return Exam with a quiz pool
+     */
+    public Exam addExamWithQuizPool(Course course) {
+        Exam exam = addExam(course);
+        QuizPool quizPool = new QuizPool();
+        quizPool.setExam(exam);
+        quizPoolService.save(quizPool);
+        return exam;
     }
 }

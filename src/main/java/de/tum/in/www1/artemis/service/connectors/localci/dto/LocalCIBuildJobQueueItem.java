@@ -8,26 +8,47 @@ public class LocalCIBuildJobQueueItem implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private Long participationId;
+    private String name;
+
+    private long participationId;
 
     private String commitHash;
 
-    private Long expirationTime;
+    private long expirationTime;
+
+    private long submissionDate;
 
     private int retryCount;
 
-    public LocalCIBuildJobQueueItem(Long participationId, String commitHash, int retryCount) {
+    private long buildStartDate;
+
+    // 1-5, 1 is highest priority
+    private int priority;
+
+    private long courseId;
+
+    public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId) {
+        this.name = name;
         this.participationId = participationId;
         this.commitHash = commitHash;
-        this.expirationTime = 0L;
-        this.retryCount = retryCount;
+        this.submissionDate = submissionDate;
+        this.priority = priority;
+        this.courseId = courseId;
     }
 
-    public Long getParticipationId() {
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public long getParticipationId() {
         return participationId;
     }
 
-    public void setParticipationId(Long participationId) {
+    public void setParticipationId(long participationId) {
         this.participationId = participationId;
     }
 
@@ -39,12 +60,36 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         this.commitHash = commitHash;
     }
 
-    public Long getExpirationTime() {
+    public long getExpirationTime() {
         return expirationTime;
     }
 
-    public void setExpirationTime(Long expirationTime) {
+    public void setExpirationTime(long expirationTime) {
         this.expirationTime = expirationTime;
+    }
+
+    public long getSubmissionDate() {
+        return submissionDate;
+    }
+
+    public void setSubmissionDate(long submissionDate) {
+        this.submissionDate = submissionDate;
+    }
+
+    public long getBuildStartDate() {
+        return buildStartDate;
+    }
+
+    public void setBuildStartDate(long buildStartDate) {
+        this.buildStartDate = buildStartDate;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
 
     public int getRetryCount() {
@@ -55,10 +100,17 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         this.retryCount = retryCount;
     }
 
+    public long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(long courseId) {
+        this.courseId = courseId;
+    }
+
     @Override
     public String toString() {
-        return "LocalCIBuildJobQueueItem{" + "participationId='" + participationId + '\'' + ", commitHash='" + commitHash + '\'' + ", expirationTime='" + expirationTime + '\''
-                + ", retryCount='" + retryCount + '\'' + '}';
-
+        return "LocalCIBuildJobQueueItem{" + "name='" + name + '\'' + ", participationId=" + participationId + ", commitHash='" + commitHash + '\'' + ", submissionDate="
+                + submissionDate + ", retryCount=" + retryCount + ", priority=" + priority + ", buildStartDate=" + buildStartDate + '}';
     }
 }
