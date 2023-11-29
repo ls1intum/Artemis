@@ -215,6 +215,7 @@ public class LocalCIContainerService {
         String testCheckoutPath = "repositories/" + RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         String assignmentCheckoutPath = "repositories/" + RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
+        addDirectory(buildJobContainerId, "/repositories", true);
         addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, testCheckoutPath);
         addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, assignmentCheckoutPath);
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
@@ -233,6 +234,11 @@ public class LocalCIContainerService {
 
     private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
         executeDockerCommand(containerId, false, false, "mv", oldName, newName);
+    }
+
+    private void addDirectory(String containerId, String directoryName, boolean createParentsIfNecessary) {
+        String[] command = createParentsIfNecessary ? new String[] { "mkdir", "-p", directoryName } : new String[] { "mkdir", directoryName };
+        executeDockerCommand(containerId, false, false, command);
     }
 
     private void convertDosFilesToUnix(String path, String containerId) {
@@ -359,7 +365,12 @@ public class LocalCIContainerService {
                 """);
 
         if (actions != null) {
-            actions.forEach(action -> buildScript.append(action.getScript()).append("\n"));
+            actions.forEach(action -> {
+                if (action.getWorkdir() != null) {
+                    buildScript.append("cd ").append(action.getWorkdir()).append("\n");
+                }
+                buildScript.append(action.getScript()).append("\n");
+            });
         }
         else {
             // Windfile actions are not defined, use default build script
