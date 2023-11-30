@@ -9,6 +9,7 @@
         "dayjs": "^1.11.10",
         "dotenv": "^16.3.1",
         "playwright": "1.40.0",
+        "request": "^2.88.2",
         "uuid": "9.0.1"
     },
     "scripts": {
