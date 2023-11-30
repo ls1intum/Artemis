@@ -8,9 +8,6 @@ import java.util.stream.Collectors;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.jplag.JPlagComparison;
@@ -60,8 +57,6 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      */
     @CollectionTable(name = "plagiarism_comparison_matches", joinColumns = @JoinColumn(name = "plagiarism_comparison_id"))
     @ElementCollection(fetch = FetchType.EAGER)
-    @JoinColumn(name = "plagiarism_comparison_id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
     protected Set<PlagiarismMatch> matches;
 
     /**
