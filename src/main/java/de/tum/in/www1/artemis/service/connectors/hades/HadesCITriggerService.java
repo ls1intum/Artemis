@@ -63,15 +63,15 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         cloneMetadata.put("HADES_TEST_USERNAME", gitUsername);
         cloneMetadata.put("HADES_TEST_PASSWORD", gitPassword);
         cloneMetadata.put("HADES_TEST_URL", participation.getProgrammingExercise().getTestRepositoryUrl());
-        cloneMetadata.put("HADES_TEST_PATH", "./test");
+        cloneMetadata.put("HADES_TEST_PATH", "./example");
         cloneMetadata.put("HADES_ASSIGNMENT_USERNAME", gitUsername);
         cloneMetadata.put("HADES_ASSIGNMENT_PASSWORD", gitPassword);
         cloneMetadata.put("HADES_ASSIGNMENT_URL", participation.getRepositoryUrl());
-        cloneMetadata.put("HADES_ASSIGNMENT_PATH", "./test/assignment");
+        cloneMetadata.put("HADES_ASSIGNMENT_PATH", "./example/assignment");
 
         var steps = new ArrayList<HadesBuildStepDTO>();
         steps.add(new HadesBuildStepDTO(1, "Clone", "ghcr.io/mtze/hades/hades-clone-container:pr-28", cloneMetadata));
-        steps.add(new HadesBuildStepDTO(2, "Execute", "ubuntu", "cd ./example && ls -lah && ./gradlew clean test && /bin/bash -c 'sleep 10000'"));
+        steps.add(new HadesBuildStepDTO(2, "Execute", "ls1tum/artemis-maven-template:java17-18", "cd ./example && ls -lah && ./gradlew clean test"));
 
         return new HadesBuildJobDTO("Test", null, "2021-01-01T00:00:00.000Z", 1, steps);
     }
