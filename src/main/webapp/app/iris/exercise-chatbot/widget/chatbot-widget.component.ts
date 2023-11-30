@@ -366,7 +366,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
                 // will be cleared by the store automatically
                 this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
                 this.scrollToBottom('smooth');
-            }, 20000);
+            }, 60000);
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
                 .then(() => this.sessionService.sendMessage(this.sessionId, message))
@@ -386,7 +386,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             // will be cleared by the store automatically
             this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
             this.scrollToBottom('smooth');
-        }, 2000000);
+        }, 60000);
         this.stateStore
             .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
             .then(() => {
