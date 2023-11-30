@@ -1,7 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import interact from 'interactjs';
-import { faChevronLeft, faChevronRight, faComments, faCompress, faExpand, faFilter, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
-
+import { faChevronLeft, faChevronRight, faComments, faFilter, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
@@ -25,6 +24,7 @@ interface SearchQuery {
     searchTerm: string;
     force: boolean;
 }
+
 @Component({
     selector: 'jhi-conversation-selection-sidebar',
     styleUrls: ['./conversation-selection-sidebar.component.scss'],
@@ -39,14 +39,19 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
 
     activeConversation?: ConversationDto;
     allConversations: ConversationDto[] = [];
+
     starredConversations: ConversationDto[] = [];
     displayedStarredConversations: ConversationDto[] = [];
+
     channelConversations: ChannelDTO[] = [];
     displayedChannelConversations: ChannelDTO[] = [];
+
     oneToOneChats: OneToOneChatDTO[] = [];
     displayedOneToOneChats: OneToOneChatDTO[] = [];
+
     groupChats: GroupChatDto[] = [];
     displayedGroupChats: GroupChatDto[] = [];
+
     collapsed: boolean;
     // Icons
     faChevronLeft = faChevronLeft;
@@ -55,8 +60,6 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     faConversation = faComments;
     faPlus = faPlus;
     faFilter = faFilter;
-    faExpand = faExpand;
-    faCompress = faCompress;
     numberOfConversationsPassingFilter = 0;
 
     canCreateChannel = canCreateChannel;
@@ -85,6 +88,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         this.subscribeToActiveConversation();
         this.subscribeToConversationsOfUser();
     }
+
     private subscribeToSearch() {
         this.search$
             .pipe(
@@ -260,6 +264,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 });
             });
     }
+
     openCreateGroupChatDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(GroupChatCreateDialogComponent, defaultFirstLayerDialogOptions);
@@ -280,6 +285,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 });
             });
     }
+
     openCreateOneToOneChatDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(OneToOneChatCreateDialogComponent, defaultFirstLayerDialogOptions);

@@ -2,7 +2,6 @@ import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateR
 import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { Course } from 'app/entities/course.model';
 import { LocalStorageService } from 'ngx-webstorage';
 
@@ -26,34 +25,6 @@ export class ConversationSidebarSectionComponent implements OnInit {
     @Input() searchTerm: string;
     @Input() hideIfEmpty = true;
 
-    @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
-
-    readonly prefix = 'collapsed.';
-
-    isCollapsed: boolean;
-
-    hiddenConversations: ConversationDto[] = [];
-    mutedConversations: ConversationDto[] = [];
-    visibleConversations: ConversationDto[] = [];
-    allConversations: ConversationDto[] = [];
-    numberOfConversations = 0;
-
-    getAsChannel = getAsChannelDto;
-
-    // icon imports
-    faChevronRight = faChevronRight;
-    faMessage = faMessage;
-
-    constructor(
-        public conversationService: ConversationService,
-        public localStorageService: LocalStorageService,
-    ) {}
-
-    ngOnInit(): void {
-        this.isCollapsed = !!this.localStorageService.retrieve(this.storageKey);
-        this.localStorageService.store(this.storageKey, this.isCollapsed);
-    }
-
     @Input() set conversations(conversations: ConversationDto[]) {
         this.hiddenConversations = [];
         this.mutedConversations = [];
@@ -71,6 +42,37 @@ export class ConversationSidebarSectionComponent implements OnInit {
             }
         });
         this.numberOfConversations = this.allConversations.length;
+    }
+
+    @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
+
+    readonly prefix = 'collapsed.';
+
+    isCollapsed: boolean;
+    isHiddenConversationListPresented = false;
+
+    numberOfConversations = 0;
+    allConversations: ConversationDto[] = [];
+    visibleConversations: ConversationDto[] = [];
+    mutedConversations: ConversationDto[] = [];
+    hiddenConversations: ConversationDto[] = [];
+
+    // icon imports
+    faChevronRight = faChevronRight;
+    faMessage = faMessage;
+
+    constructor(
+        public conversationService: ConversationService,
+        public localStorageService: LocalStorageService,
+    ) {}
+
+    ngOnInit(): void {
+        this.isCollapsed = !!this.localStorageService.retrieve(this.storageKey);
+        this.localStorageService.store(this.storageKey, this.isCollapsed);
+    }
+
+    get storageKey() {
+        return this.prefix + this.headerKey;
     }
 
     get anyConversationUnread(): boolean {
@@ -98,7 +100,7 @@ export class ConversationSidebarSectionComponent implements OnInit {
                 conversation.unreadMessagesCount &&
                 conversation.unreadMessagesCount > 0 &&
                 !(this.activeConversation && this.activeConversation.id === conversation.id) &&
-                !this.showHiddenConversations
+                !this.isHiddenConversationListPresented
             ) {
                 containsUnreadConversation = true;
                 break;
@@ -107,16 +109,19 @@ export class ConversationSidebarSectionComponent implements OnInit {
         return containsUnreadConversation;
     }
 
-    toggleCollapsed() {
-        this.isCollapsed = !this.isCollapsed;
-        this.localStorageService.store(this.storageKey, this.isCollapsed);
+    get isConversationListVisible() {
+        return this.visibleConversations.length + this.mutedConversations.length > 0 || this.hiddenConversations.length > 0;
+    }
+
+    get isHiddenConversationListVisible() {
+        return this.hiddenConversations && this.hiddenConversations.length > 0;
     }
 
     conversationsTrackByFn = (index: number, conversation: ConversationDto): number => conversation.id!;
-    showHiddenConversations = false;
 
-    get storageKey() {
-        return this.prefix + this.headerKey;
+    toggleCollapsed() {
+        this.isCollapsed = !this.isCollapsed;
+        this.localStorageService.store(this.storageKey, this.isCollapsed);
     }
 
     hide() {

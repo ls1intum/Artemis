@@ -13,7 +13,7 @@
         </div>
     </div>
     <div [(ngbCollapse)]="isCollapsed">
-        <ul class="conversation-list" *ngIf="visibleConversations.length > 0 || hiddenConversations.length > 0">
+        <ul class="conversation-list" *ngIf="isConversationListVisible">
             <li
                 *ngFor="let conversation of visibleConversations; trackBy: conversationsTrackByFn"
                 [conversation]="conversation"
@@ -38,11 +38,11 @@
                 (conversationIsHiddenDidChange)="conversationIsHiddenDidChange.emit()"
                 (conversationIsMutedDidChange)="conversationIsMutedDidChange.emit()"
             ></li>
-            <ng-container *ngIf="hiddenConversations && hiddenConversations.length > 0">
-                <li (click)="showHiddenConversations = !showHiddenConversations" class="hidden-conversation-divider text-center">
+            <ng-container *ngIf="isHiddenConversationListVisible">
+                <li (click)="isHiddenConversationListPresented = !isHiddenConversationListPresented" class="hidden-conversation-divider text-center">
                     {{ hiddenConversations.length }}
                     {{
-                        showHiddenConversations
+                        isHiddenConversationListPresented
                             ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.shown' | artemisTranslate)
                             : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hidden' | artemisTranslate)
                     }}
@@ -50,7 +50,7 @@
                         <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
                     </span>
                 </li>
-                <ng-container *ngIf="showHiddenConversations">
+                <ng-container *ngIf="isHiddenConversationListPresented">
                     <li
                         *ngFor="let conversation of hiddenConversations; trackBy: conversationsTrackByFn"
                         [conversation]="conversation"
