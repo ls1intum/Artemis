@@ -50,7 +50,7 @@ export class CourseManagementPage {
     deleteCourse(course: Course) {
         cy.get('#delete-course').click();
         cy.get('#delete').should('be.disabled');
-        cy.get('#confirm-exercise-name').type(course.title!);
+        cy.get('#confirm-entity-name').type(course.title!);
         cy.intercept(DELETE, BASE_API + 'admin/courses/' + course.id).as('deleteCourse');
         cy.get('#delete').click();
         cy.wait('@deleteCourse');
