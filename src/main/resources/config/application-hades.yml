@@ -1,4 +1,4 @@
 artemis:
     hades:
         token: ""
-        url: "localhost:3002"
+        url: "http://localhost:8081"
