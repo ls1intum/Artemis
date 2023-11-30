@@ -71,6 +71,7 @@ public class LocalCIBuildJobManagementService {
      *
      * @param participation The participation of the repository for which the build job should be executed.
      * @param commitHash    The commit hash of the submission that led to this build. If it is "null", the latest commit of the repository will be used.
+     * @param isRetry       Whether this build job is a retry of a previous build job.
      * @return A future that will be completed with the build result.
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
