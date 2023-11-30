@@ -64,21 +64,14 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
                 LEFT JOIN competency.userProgress progress
                     ON competency.id = progress.learningGoal.id AND progress.user.id = :userId
                 LEFT JOIN FETCH competency.exercises exercises
-                LEFT JOIN exercises.studentParticipations participations
-                    ON participations.student.id = :userId
-                LEFT JOIN participations.submissions submissions
-                    ON submissions.participation.id = participations.id
-                LEFT JOIN participations.results results
-                    ON results.submission.id = submissions.id
                 LEFT JOIN FETCH competency.lectureUnits lectureUnits
                 LEFT JOIN lectureUnits.completedUsers completedUsers
                     ON lectureUnits.id = completedUsers.lectureUnit.id AND completedUsers.user.id = :userId
                 LEFT JOIN FETCH lectureUnits.lecture
             WHERE competency.id = :competencyId
             """)
-    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "exercises.studentParticipations", "exercises.studentParticipations.submissions",
-            "exercises.studentParticipations.results", "lectureUnits.completedUsers" })
-    Optional<Competency> findByIdWithExercisesAndParticipationsAndLectureUnitsAndProgressForUser(@Param("competencyId") long competencyId, @Param("userId") long userId);
+    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "lectureUnits.completedUsers" })
+    Optional<Competency> findByIdWithExercisesAndLectureUnitsAndProgressForUser(@Param("competencyId") long competencyId, @Param("userId") long userId);
 
     @Query("""
             SELECT c
@@ -183,9 +176,8 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
         return findByIdWithLectureUnits(competencyId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
-    default Competency findByIdWithExercisesAndParticipationsAndLectureUnitsAndProgressForUserElseThrow(long competencyId, long userId) {
-        return findByIdWithExercisesAndParticipationsAndLectureUnitsAndProgressForUser(competencyId, userId)
-                .orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
+    default Competency findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(long competencyId, long userId) {
+        return findByIdWithExercisesAndLectureUnitsAndProgressForUser(competencyId, userId).orElseThrow(() -> new EntityNotFoundException("Competency", competencyId));
     }
 
     long countByCourse(Course course);

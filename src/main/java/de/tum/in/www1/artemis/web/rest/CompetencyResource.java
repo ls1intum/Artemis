@@ -25,9 +25,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CompetencyProgressService;
-import de.tum.in.www1.artemis.service.CompetencyService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -70,10 +68,12 @@ public class CompetencyResource {
 
     private final LearningPathService learningPathService;
 
+    private final ExerciseService exerciseService;
+
     public CompetencyResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             CompetencyRepository competencyRepository, CompetencyRelationRepository competencyRelationRepository, LectureUnitRepository lectureUnitRepository,
             CompetencyService competencyService, CompetencyProgressRepository competencyProgressRepository, ExerciseRepository exerciseRepository,
-            CompetencyProgressService competencyProgressService, LearningPathService learningPathService) {
+            CompetencyProgressService competencyProgressService, LearningPathService learningPathService, ExerciseService exerciseService) {
         this.courseRepository = courseRepository;
         this.competencyRelationRepository = competencyRelationRepository;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -85,6 +85,7 @@ public class CompetencyResource {
         this.exerciseRepository = exerciseRepository;
         this.competencyProgressService = competencyProgressService;
         this.learningPathService = learningPathService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -146,13 +147,17 @@ public class CompetencyResource {
         long start = System.nanoTime();
         var currentUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        var competency = competencyRepository.findByIdWithExercisesAndParticipationsAndLectureUnitsAndProgressForUserElseThrow(competencyId, currentUser.getId());
+        var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(competencyId, currentUser.getId());
         checkAuthorizationForCompetency(Role.STUDENT, course, competency);
 
         competency.setLectureUnits(competency.getLectureUnits().stream().filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, currentUser))
                 .peek(lectureUnit -> lectureUnit.setCompleted(lectureUnit.isCompletedFor(currentUser))).collect(Collectors.toSet()));
-        competency.setExercises(
-                competency.getExercises().stream().filter(exercise -> authorizationCheckService.isAllowedToSeeExercise(exercise, currentUser)).collect(Collectors.toSet()));
+
+        Set<Exercise> exercisesUserIsAllowedToSee = exerciseService.filterOutExercisesThatUserShouldNotSee(competency.getExercises(), currentUser);
+        Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
+                .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), currentUser);
+        competency.setExercises(exercisesWithAllInformationNeeded);
+
         log.info("getCompetency took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().body(competency);
     }
