@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
@@ -17,6 +18,10 @@ import javax.xml.stream.XMLStreamReader;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,6 +166,18 @@ public class LocalCIBuildJobExecutionService {
 
         Path assignmentRepositoryPath = assignmentRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
         Path testsRepositoryPath = testsRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
+
+        if (commitHash != null) {
+            // If a commit hash is given, we need to checkout the commit hash in the assignment repository.
+            FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
+            try (Repository repository = repositoryBuilder.setGitDir(new File(assignmentRepositoryPath + "/.git")).readEnvironment().findGitDir().build()) {
+                Git git = new Git(repository);
+                git.checkout().setName(commitHash).call();
+            }
+            catch (IOException | GitAPIException e) {
+                e.printStackTrace();
+            }
+        }
 
         String branch;
         try {
