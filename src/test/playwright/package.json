@@ -4,11 +4,12 @@
     "private": true,
     "license": "MIT",
     "devDependencies": {
-        "playwright": "1.40.0",
-        "uuid": "9.0.1",
         "@playwright/test": "1.40.0",
+        "@types/request": "^2.48.12",
         "dayjs": "^1.11.10",
-        "dotenv": "^16.3.1"
+        "dotenv": "^16.3.1",
+        "playwright": "1.40.0",
+        "uuid": "9.0.1"
     },
     "scripts": {
         "playwright:test": "npx playwright test",

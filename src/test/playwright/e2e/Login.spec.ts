@@ -4,7 +4,8 @@ import { studentOne } from '../support/users';
 import { BASE_API } from '../../cypress/support/constants';
 
 test.describe('Login page tests', () => {
-    test('Logs in via the UI', async ({ page, loginPage }) => {
+    test('Logs in via the UI', async ({ context, loginPage }) => {
+        const page = await context.newPage();
         await page.goto('/');
         await loginPage.login(studentOne);
         await page.waitForURL('**/courses**');
@@ -16,7 +17,8 @@ test.describe('Login page tests', () => {
         expect(jwtCookie?.sameSite).toBe('Lax');
     });
 
-    test('Logs in programmatically and logs out via the UI', async ({ page, login, navigationBar }) => {
+    test('Logs in programmatically and logs out via the UI', async ({ context, login, navigationBar }) => {
+        const page = await context.newPage();
         await login(studentOne, '/courses');
         await page.waitForURL('**/courses**');
 
@@ -29,7 +31,8 @@ test.describe('Login page tests', () => {
         expect(jwtCookie).toBeUndefined();
     });
 
-    test('Displays error messages on wrong password', async ({ page, loginPage }) => {
+    test('Displays error messages on wrong password', async ({ context, loginPage }) => {
+        const page = await context.newPage();
         await page.goto('/');
         await loginPage.login({ username: 'some_user_name', password: 'lorem-ipsum' });
 
@@ -44,12 +47,14 @@ test.describe('Login page tests', () => {
         await page.click('#login-button');
     });
 
-    test('Fails to access protected resource without login', async ({ page }) => {
+    test('Fails to access protected resource without login', async ({ context }) => {
+        const page = await context.newPage();
         await page.goto('/course-management');
         await page.waitForURL('/');
     });
 
-    test('Verify footer content', async ({ page, loginPage }) => {
+    test('Verify footer content', async ({ context, loginPage }) => {
+        const page = await context.newPage();
         await page.goto('/');
         await loginPage.shouldShowFooter();
         await loginPage.shouldShowAboutUsInFooter();
