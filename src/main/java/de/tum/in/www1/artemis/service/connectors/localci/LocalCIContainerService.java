@@ -11,9 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -152,10 +150,10 @@ public class LocalCIContainerService {
         TarArchiveInputStream repositoryTarInputStream;
 
         if (repositoryCheckoutPath == null) {
-            repositoryTarInputStream = getArchiveFromContainer(containerId, "/repositories/.git/refs/heads/" + branchName);
+            repositoryTarInputStream = getArchiveFromContainer(containerId, "/testing-dir/.git/refs/heads/" + branchName);
         }
         else {
-            repositoryTarInputStream = getArchiveFromContainer(containerId, "/repositories/" + repositoryCheckoutPath + "/.git/refs/heads/" + branchName);
+            repositoryTarInputStream = getArchiveFromContainer(containerId, "/testing-dir/" + repositoryCheckoutPath + "/.git/refs/heads/" + branchName);
         }
 
         repositoryTarInputStream.getNextTarEntry();
@@ -212,16 +210,18 @@ public class LocalCIContainerService {
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths,
             String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath, ProgrammingLanguage programmingLanguage) {
 
-        String testCheckoutPath = "repositories/" + RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
-        String assignmentCheckoutPath = "repositories/" + RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
+        String testCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
+        String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
-        addDirectory(buildJobContainerId, "/repositories", true);
-        addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, testCheckoutPath);
-        addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, assignmentCheckoutPath);
-        for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
-            addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], "repositories/" + auxiliaryRepositoryCheckoutDirectories[i]);
+        if (!Objects.equals(testCheckoutPath, "")) {
+            addDirectory(buildJobContainerId, "/testing-dir", true);
         }
-        convertDosFilesToUnix("repositories/", buildJobContainerId);
+        addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, "testing-dir/" + testCheckoutPath);
+        addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, "testing-dir/" + assignmentCheckoutPath);
+        for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
+            addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], "testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
+        }
+        convertDosFilesToUnix("testing-dir/", buildJobContainerId);
 
         addAndPrepareDirectory(buildJobContainerId, buildScriptPath, "script.sh");
         convertDosFilesToUnix("script.sh", buildJobContainerId);
@@ -361,16 +361,11 @@ public class LocalCIContainerService {
 
         StringBuilder buildScript = new StringBuilder("""
                 #!/bin/bash
-                cd /repositories
+                cd /testing-dir
                 """);
 
         if (actions != null) {
-            actions.forEach(action -> {
-                if (action.getWorkdir() != null) {
-                    buildScript.append("cd ").append(action.getWorkdir()).append("\n");
-                }
-                buildScript.append(action.getScript()).append("\n");
-            });
+            actions.forEach(action -> buildScript.append(action.getScript()).append("\n"));
         }
         else {
             // Windfile actions are not defined, use default build script

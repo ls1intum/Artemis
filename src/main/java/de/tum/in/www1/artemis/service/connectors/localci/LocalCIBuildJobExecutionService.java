@@ -283,9 +283,6 @@ public class LocalCIBuildJobExecutionService {
             case PYTHON -> {
                 return getPythonTestResultPaths();
             }
-            case ASSEMBLER -> {
-                return List.of("/repositories/assignment");
-            }
             default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
         }
     }
@@ -294,20 +291,20 @@ public class LocalCIBuildJobExecutionService {
         List<String> testResultPaths = new ArrayList<>();
         if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
             if (programmingExercise.hasSequentialTestRuns()) {
-                testResultPaths.add("/repositories/structural/target/surefire-reports");
-                testResultPaths.add("/repositories/behavior/target/surefire-reports");
+                testResultPaths.add("/testing-dir/structural/target/surefire-reports");
+                testResultPaths.add("/testing-dir/behavior/target/surefire-reports");
             }
             else {
-                testResultPaths.add("/repositories/target/surefire-reports");
+                testResultPaths.add("/testing-dir/target/surefire-reports");
             }
         }
         else {
             if (programmingExercise.hasSequentialTestRuns()) {
-                testResultPaths.add("/repositories/build/test-results/behaviorTests");
-                testResultPaths.add("/repositories/build/test-results/structuralTests");
+                testResultPaths.add("/testing-dir/build/test-results/behaviorTests");
+                testResultPaths.add("/testing-dir/build/test-results/structuralTests");
             }
             else {
-                testResultPaths.add("/repositories/build/test-results/test");
+                testResultPaths.add("/testing-dir/build/test-results/test");
             }
         }
         return testResultPaths;
@@ -315,7 +312,7 @@ public class LocalCIBuildJobExecutionService {
 
     private List<String> getPythonTestResultPaths() {
         List<String> testResultPaths = new ArrayList<>();
-        testResultPaths.add("/repositories/test-reports");
+        testResultPaths.add("/testing-dir/test-reports");
         return testResultPaths;
     }
 
