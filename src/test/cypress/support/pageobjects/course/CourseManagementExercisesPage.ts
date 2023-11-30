@@ -24,7 +24,7 @@ export class CourseManagementExercisesPage {
 
     deleteTextExercise(exercise: Exercise) {
         this.getExercise(exercise.id!).find('#delete-exercise').click();
-        cy.get('#confirm-exercise-name').type(exercise.title!);
+        cy.get('#confirm-entity-name').type(exercise.title!);
         cy.intercept(DELETE, BASE_API + 'text-exercises/*').as('deleteTextExercise');
         cy.get('#delete').click();
         cy.wait('@deleteTextExercise');
@@ -32,7 +32,7 @@ export class CourseManagementExercisesPage {
 
     deleteModelingExercise(exercise: Exercise) {
         this.getExercise(exercise.id!).find('#delete-exercise').click();
-        cy.get('#confirm-exercise-name').type(exercise.title!);
+        cy.get('#confirm-entity-name').type(exercise.title!);
         cy.intercept(DELETE, BASE_API + 'modeling-exercises/*').as('deleteModelingExercise');
         cy.get('#delete').click();
         cy.wait('@deleteModelingExercise');
@@ -40,7 +40,7 @@ export class CourseManagementExercisesPage {
 
     deleteQuizExercise(exercise: Exercise) {
         this.getExercise(exercise.id!).find(`#delete-quiz-${exercise.id}`).click();
-        cy.get('#confirm-exercise-name').type(exercise.title!);
+        cy.get('#confirm-entity-name').type(exercise.title!);
         cy.intercept(DELETE, BASE_API + 'quiz-exercises/*').as('deleteQuizExercise');
         cy.get('#delete').click();
         cy.wait('@deleteQuizExercise');
@@ -50,7 +50,7 @@ export class CourseManagementExercisesPage {
         this.getExercise(exercise.id!).find('#delete-exercise').click();
         cy.get('#additional-check-0').check();
         cy.get('#additional-check-1').check();
-        cy.get('#confirm-exercise-name').type(exercise.title!);
+        cy.get('#confirm-entity-name').type(exercise.title!);
         cy.intercept(DELETE, BASE_API + 'programming-exercises/*').as('deleteProgrammingExercise');
         cy.get('#delete').click();
         cy.wait('@deleteProgrammingExercise');
@@ -58,7 +58,7 @@ export class CourseManagementExercisesPage {
 
     deleteFileUploadExercise(exercise: Exercise) {
         this.getExercise(exercise.id!).find('#delete-exercise').click();
-        cy.get('#confirm-exercise-name').type(exercise.title!);
+        cy.get('#confirm-entity-name').type(exercise.title!);
         cy.intercept(DELETE, BASE_API + 'file-upload-exercises/*').as('deleteFileUploadExercise');
         cy.get('#delete').click();
         cy.wait('@deleteFileUploadExercise');
