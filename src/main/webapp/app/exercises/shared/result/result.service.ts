@@ -134,7 +134,6 @@ export class ResultService implements IResultService {
 
         let resultString = this.getBaseResultStringProgrammingExercise(result, relativeScore, points, buildAndTestMessage, short);
 
-        console.log(isStudentParticipation(result));
         if (isStudentParticipation(result) && isResultPreliminary(result, exercise)) {
             resultString += ' (' + this.translateService.instant('artemisApp.result.preliminary') + ')';
         }

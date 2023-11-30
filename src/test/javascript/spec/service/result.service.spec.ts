@@ -70,7 +70,12 @@ describe('ResultService', () => {
         completionDate: dayjs().add(4, 'hours'),
         score: 50,
     };
-    const result5: Result = { feedbacks: [{ text: 'Manual feedback', type: FeedbackType.MANUAL }], completionDate: dayjs().subtract(5, 'minutes'), score: 80 };
+    const result5: Result = {
+        feedbacks: [{ text: 'Manual feedback', type: FeedbackType.MANUAL }],
+        participation: { type: ParticipationType.PROGRAMMING },
+        completionDate: dayjs().subtract(5, 'minutes'),
+        score: 80,
+    };
 
     const modelingExercise: ModelingExercise = {
         maxPoints: 50,
