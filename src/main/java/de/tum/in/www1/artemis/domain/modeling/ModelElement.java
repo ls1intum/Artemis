@@ -3,13 +3,13 @@ package de.tum.in.www1.artemis.domain.modeling;
 import java.io.Serial;
 import java.io.Serializable;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
+
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "model_element")

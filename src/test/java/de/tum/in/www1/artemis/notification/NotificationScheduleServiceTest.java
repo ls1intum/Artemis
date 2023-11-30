@@ -8,6 +8,8 @@ import static org.mockito.Mockito.*;
 
 import java.time.temporal.ChronoUnit;
 
+import jakarta.mail.internet.MimeMessage;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +24,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import jakarta.mail.internet.MimeMessage;
 
 class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

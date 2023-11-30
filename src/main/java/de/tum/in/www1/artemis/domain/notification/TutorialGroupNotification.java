@@ -6,12 +6,13 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.TUTORIA
 import java.time.ZonedDateTime;
 import java.util.Set;
 
+import jakarta.persistence.*;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
-import jakarta.persistence.*;
 
 /**
  * A Notification concerning all students and the assigned tutor of a tutorial group.

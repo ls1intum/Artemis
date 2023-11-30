@@ -5,9 +5,12 @@ configurations {
     }
 }
 
+//Causes issues with build job priority queue, disable for now
+/*
 dependencies {
     developmentOnly "org.springframework.boot:spring-boot-devtools:${spring_boot_version}"
 }
+*/
 
 def profiles = 'dev'
 if (project.hasProperty('no-liquibase')) {
@@ -33,25 +36,25 @@ bootJar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
-task webapp(type: NpmTask) {
+tasks.register('webapp', NpmTask) {
     inputs.property('appVersion', project.version)
     inputs.files("package-lock.json")
-            .withPropertyName('package-lock')
-            .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName('package-lock')
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files("build.gradle")
-            .withPropertyName('build.gradle')
-            .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName('build.gradle')
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files("angular.json")
-            .withPropertyName('angular.json')
-            .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName('angular.json')
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files("tsconfig.json", "tsconfig.app.json")
-            .withPropertyName("tsconfig")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("tsconfig")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir("src/main/webapp/")
-            .withPropertyName("webapp-source-dir")
-            .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("webapp-source-dir")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir("build/resources/main/static/")
-            .withPropertyName("webapp-build-dir")
+        .withPropertyName("webapp-build-dir")
 
     dependsOn npmInstall
 

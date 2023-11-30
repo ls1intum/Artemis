@@ -3,13 +3,13 @@ package de.tum.in.www1.artemis.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import jakarta.persistence.*;
 
 /**
  * A Grading Criterion that consists of structured grading instructions.

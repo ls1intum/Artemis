@@ -13,11 +13,11 @@ import static org.eclipse.jgit.http.server.ServletUtils.getRepository;
 
 import java.io.IOException;
 
-import org.eclipse.jgit.internal.storage.file.ObjectDirectory;
-import org.eclipse.jgit.lib.Repository;
-
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.eclipse.jgit.internal.storage.file.ObjectDirectory;
+import org.eclipse.jgit.lib.Repository;
 
 /**
  * Requires the target {@link Repository} to be available via local filesystem.

@@ -4,6 +4,8 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.Optional;
 
+import jakarta.annotation.Nullable;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -11,7 +13,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
-import jakarta.annotation.Nullable;
 
 /**
  * Spring Data JPA repository for the PlagiarismResult entity.

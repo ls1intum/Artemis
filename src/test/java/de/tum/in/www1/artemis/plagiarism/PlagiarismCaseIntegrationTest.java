@@ -27,8 +27,8 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseInfoDTO;
-import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismCaseInfoDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismVerdictDTO;
 
 class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -209,7 +209,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         Exam exam = examTextExercise.getExerciseGroup().getExam();
         var plagiarismCasesResponse = request.getList("/api/courses/" + examCourse.getId() + "/exams/" + exam.getId() + "/plagiarism-cases/for-instructor", HttpStatus.OK,
                 PlagiarismCase.class);
-        assertThat(plagiarismCasesResponse).as("should get exam plagiarism cases for instructor").isEqualTo(examPlagiarismCases);
+        assertThat(plagiarismCasesResponse).as("should get exam plagiarism cases for instructor").containsExactlyInAnyOrderElementsOf(examPlagiarismCases);
         for (var submission : plagiarismCasesResponse.get(0).getPlagiarismSubmissions()) {
             assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should remove unneeded elements from the response").isNull();
             assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should filter out submission A").isNull();

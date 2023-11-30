@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -7,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
-import jakarta.persistence.*;
 
 /**
  * Entity for storing static code analysis categories and their settings.

@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.repository;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +15,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data repository for the Lecture entity.

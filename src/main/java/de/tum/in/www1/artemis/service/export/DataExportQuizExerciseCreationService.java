@@ -7,6 +7,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +19,6 @@ import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.service.DragAndDropQuizAnswerConversionService;
 import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * A service to create the data export for quiz exercise participations.

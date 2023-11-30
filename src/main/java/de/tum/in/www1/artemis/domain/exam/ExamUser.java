@@ -2,14 +2,6 @@ package de.tum.in.www1.artemis.domain.exam;
 
 import java.nio.file.Path;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.service.EntityFileService;
-import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -22,6 +14,15 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.service.EntityFileService;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
 
 @Entity
 @Table(name = "exam_user")

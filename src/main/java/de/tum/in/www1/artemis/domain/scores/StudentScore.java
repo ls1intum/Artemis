@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.domain.scores;
 
+import jakarta.persistence.*;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.Participant;
-import jakarta.persistence.*;
 
 @Entity
 @DiscriminatorValue("SS")

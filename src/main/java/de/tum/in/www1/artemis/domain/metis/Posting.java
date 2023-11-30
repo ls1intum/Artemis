@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.domain.metis;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.CreatedDate;
@@ -15,8 +18,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 
 /**
  * A METIS Posting.

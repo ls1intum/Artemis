@@ -1,11 +1,14 @@
 package de.tum.in.www1.artemis.domain;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import de.tum.in.www1.artemis.config.Constants;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 
 @Entity
 @Table(name = "long_feedback_text")
@@ -18,6 +21,7 @@ public class LongFeedbackText extends DomainObject {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "feedback_id", nullable = false)
+    @JsonIgnore
     private Feedback feedback;
 
     public String getText() {

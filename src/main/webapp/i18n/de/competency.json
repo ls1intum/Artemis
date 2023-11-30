@@ -205,10 +205,6 @@
                     "center": "Zentrieren"
                 },
                 "legend": {
-                    "competencyStart": {
-                        "title": "Kompetenzbeginn",
-                        "tooltip": "Hier beginnt eine Kompetenz. Die Knoten zwischen Kompetenzbeginn und -ende sind Inhalte die dir beim erreichen dieser Kompetenz helfen."
-                    },
                     "competencyEnd": {
                         "title": "Kompetenzende",
                         "tooltip": "Hier endet eine Kompetenz. Die Knoten zwischen Kompetenzbeginn und -ende sind Inhalte die dir beim erreichen dieser Kompetenz helfen."
@@ -226,7 +222,7 @@
                         "tooltip": "Eine Lerneinheit oder Aufgabe die noch nicht hinreichend gelöst wurde."
                     },
                     "completedLearningObject": {
-                        "title": "Abgeschlossene Lerneinheit/Aufgabe",
+                        "title": "Abgeschlossene Lerneinheit / Aufgabe",
                         "tooltip": "Eine Lerneinheit oder Aufgabe die hinreichend gelöst wurde."
                     }
                 }

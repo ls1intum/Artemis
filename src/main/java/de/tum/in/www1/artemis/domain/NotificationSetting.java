@@ -2,13 +2,13 @@ package de.tum.in.www1.artemis.domain;
 
 import java.util.Objects;
 
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import jakarta.persistence.*;
 
 /**
  * Individual Notification Setting which combined make the Notification Settings (inside the hierarchical structure on the client side)

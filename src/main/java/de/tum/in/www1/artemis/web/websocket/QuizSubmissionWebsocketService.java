@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.websocket;
 
 import java.security.Principal;
 
+import jakarta.validation.Valid;
+
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -12,7 +14,6 @@ import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import jakarta.validation.Valid;
 
 @Controller
 public class QuizSubmissionWebsocketService {

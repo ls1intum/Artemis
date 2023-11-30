@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -19,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -102,6 +103,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             @Param("teamShortName") String teamShortName);
 
     List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseId(Long exerciseId);

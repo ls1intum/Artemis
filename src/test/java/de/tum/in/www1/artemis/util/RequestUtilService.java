@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
+import jakarta.annotation.Nullable;
+
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -35,7 +37,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
-import jakarta.annotation.Nullable;
 
 @Service
 public class RequestUtilService {
@@ -566,7 +567,12 @@ public class RequestUtilService {
     }
 
     public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params, @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
-        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(new HttpHeaders())).andExpect(status().is(expectedStatus.value())).andReturn();
+        return getFile(path, expectedStatus, params, new HttpHeaders(), expectedResponseHeaders);
+    }
+
+    public File getFile(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params, HttpHeaders headers, @Nullable Map<String, String> expectedResponseHeaders)
+            throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params).headers(headers)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
         if (!expectedStatus.is2xxSuccessful()) {
             assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();

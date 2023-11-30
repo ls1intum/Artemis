@@ -8,6 +8,8 @@
 
 package org.eclipse.jgit.http.server.resolver;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
@@ -15,8 +17,6 @@ import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
 import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
 import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Create and configure {@link ReceivePack} service

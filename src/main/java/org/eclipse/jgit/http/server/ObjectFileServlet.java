@@ -18,13 +18,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.Instant;
 
-import org.eclipse.jgit.internal.storage.file.ObjectDirectory;
-import org.eclipse.jgit.lib.Repository;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.eclipse.jgit.internal.storage.file.ObjectDirectory;
+import org.eclipse.jgit.lib.Repository;
 
 /** Sends any object from {@code GIT_DIR/objects/??/0 38}, or any pack file. */
 abstract class ObjectFileServlet extends HttpServlet {

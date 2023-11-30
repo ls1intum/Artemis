@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.Set;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -9,7 +11,6 @@ import de.tum.in.www1.artemis.domain.LearningObject;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Service implementation for interactions with learning objects.

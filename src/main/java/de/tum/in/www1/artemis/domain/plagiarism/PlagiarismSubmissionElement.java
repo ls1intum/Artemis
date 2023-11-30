@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
 import jakarta.persistence.*;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)

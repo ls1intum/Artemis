@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.domain.scores;
 
 import java.time.Instant;
 
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -17,7 +19,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
-import jakarta.persistence.*;
 
 /**
  * Participant scores store the last (rated) result for each student/team and exercise combination.

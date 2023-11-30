@@ -7,9 +7,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.ValidatorFactory;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -19,20 +27,15 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
-import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.validation.ValidatorFactory;
 
 class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -56,6 +59,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ConversationUtilService conversationUtilService;
 
+    @Autowired
+    private CourseRepository courseRepository;
+
     private List<Post> existingPostsWithAnswers;
 
     private List<Post> existingConversationPosts;
@@ -63,6 +69,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private List<AnswerPost> existingAnswerPosts;
 
     private Long courseId;
+
+    private Course course;
 
     private Validator validator;
 
@@ -90,7 +98,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // get all answerPosts
         existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
 
-        courseId = existingPostsWithAnswers.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
+        course = existingPostsWithAnswers.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        courseId = course.getId();
     }
 
     @AfterEach
@@ -102,12 +111,21 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     // CREATE
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("courseConfigurationProvider")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateOwnPostReaction() throws Exception {
+    void testCreateOwnPostReaction(CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean shouldBeAllowed) throws Exception {
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
+
+        course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        courseRepository.save(course);
+
+        if (!shouldBeAllowed) {
+            request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.BAD_REQUEST);
+            return;
+        }
 
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnPost, createdReaction);
@@ -128,12 +146,22 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount() + 1);
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("courseConfigurationProvider")
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
-    void testCreateOwnPostReactionOnAnotherUsersConversationMessage() throws Exception {
+    void testCreateOwnPostReactionOnAnotherUsersConversationMessage(CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean shouldBeAllowed)
+            throws Exception {
         // tutor1 is the author of the message and tutor2 reacts on this post
         Post messageReactedOn = existingConversationPosts.get(0);
         Reaction reactionToSaveOnMessage = createReactionOnPost(messageReactedOn);
+
+        course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        courseRepository.save(course);
+
+        if (!shouldBeAllowed) {
+            request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnMessage, Reaction.class, HttpStatus.BAD_REQUEST);
+            return;
+        }
 
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnMessage, Reaction.class, HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnMessage, createdReaction);
@@ -169,12 +197,21 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(response).isNull();
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("courseConfigurationProvider")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateOwnAnswerPostReaction() throws Exception {
+    void testCreateOwnAnswerPostReaction(CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean shouldBeAllowed) throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
+
+        course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        courseRepository.save(course);
+
+        if (!shouldBeAllowed) {
+            request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.BAD_REQUEST);
+            return;
+        }
 
         Reaction createdReaction = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
@@ -343,16 +380,25 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     // DELETE
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("courseConfigurationProvider")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDeleteOwnPostReaction() throws Exception {
+    void testDeleteOwnPostReaction(CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean shouldBeAllowed) throws Exception {
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
 
         Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
 
+        course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        courseRepository.save(course);
+
         // student 1 deletes their reaction on this post
+        if (!shouldBeAllowed) {
+            request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.BAD_REQUEST);
+            return;
+        }
+
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
 
         assertThat(postReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(postReactedOn.getId()));
@@ -379,16 +425,25 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount());
     }
 
-    @Test
+    @ParameterizedTest
+    @MethodSource("courseConfigurationProvider")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDeleteOwnAnswerPostReaction() throws Exception {
+    void testDeleteOwnAnswerPostReaction(CourseInformationSharingConfiguration courseInformationSharingConfiguration, boolean shouldBeAllowed) throws Exception {
         // student 1 is the author of the post and reacts on this post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
         Reaction reactionToSaveOnPost = createReactionOnAnswerPost(answerPostReactedOn);
 
         Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
 
+        course.setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        courseRepository.save(course);
+
         // student 1 deletes their reaction on this post
+        if (!shouldBeAllowed) {
+            request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.BAD_REQUEST);
+            return;
+        }
+
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
         assertThat(answerPostReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(answerPostReactedOn.getId()));
         assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
@@ -489,5 +544,10 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(createdReaction.getAnswerPost()).isEqualTo(expectedReaction.getAnswerPost());
 
         conversationUtilService.assertSensitiveInformationHidden(createdReaction);
+    }
+
+    private static List<Arguments> courseConfigurationProvider() {
+        return List.of(Arguments.of(CourseInformationSharingConfiguration.DISABLED, false), Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING, true),
+                Arguments.of(CourseInformationSharingConfiguration.COMMUNICATION_ONLY, true), Arguments.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, true));
     }
 }

@@ -6,6 +6,9 @@ import static de.tum.in.www1.artemis.config.Constants.MAX_SUBMISSION_TEXT_LENGTH
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
+
 import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,8 +17,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.tum.in.www1.artemis.domain.Submission;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 
 /**
  * A ModelingSubmission.

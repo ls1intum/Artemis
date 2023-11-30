@@ -5,17 +5,19 @@ import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsC
 
 import java.util.Set;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.in.www1.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * A Handler for InstantNotifications such as MailService and PushNotifications.
@@ -89,6 +91,11 @@ public class GeneralInstantNotificationService implements InstantNotificationSer
 
         NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
         if (notificationSettingsService.checkNotificationTypeForEmailSupport(type)) {
+            // Add the author of the post to the email recipients, if they have email notifications enabled for the notification type
+            if (notificationSubject instanceof Post post && post.getConversation() != null && !filterRecipients(notification, Set.of(post.getAuthor()), EMAIL).isEmpty()) {
+                emailRecipients.add(post.getAuthor());
+            }
+
             mailService.sendNotification(notification, emailRecipients, notificationSubject);
         }
     }

@@ -2,13 +2,13 @@ package de.tum.in.www1.artemis.service.connectors.gitlab;
 
 import java.io.IOException;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
-
-import jakarta.validation.constraints.NotNull;
 
 public abstract class AbstractGitLabAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 

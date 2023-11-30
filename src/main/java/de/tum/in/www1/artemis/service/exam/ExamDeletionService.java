@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -22,12 +24,12 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
-import jakarta.validation.constraints.NotNull;
 
 @Service
 public class ExamDeletionService {
@@ -58,10 +60,12 @@ public class ExamDeletionService {
 
     private final ExamLiveEventRepository examLiveEventRepository;
 
+    private final QuizPoolRepository quizPoolRepository;
+
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationService participationService, CacheManager cacheManager, UserRepository userRepository,
             ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, GradingScaleRepository gradingScaleRepository,
             StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository, ChannelService channelService,
-            ExamLiveEventRepository examLiveEventRepository) {
+            ExamLiveEventRepository examLiveEventRepository, QuizPoolRepository quizPoolRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
         this.cacheManager = cacheManager;
@@ -74,6 +78,7 @@ public class ExamDeletionService {
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.examLiveEventRepository = examLiveEventRepository;
+        this.quizPoolRepository = quizPoolRepository;
     }
 
     /**
@@ -100,6 +105,9 @@ public class ExamDeletionService {
 
         Channel examChannel = channelRepository.findChannelByExamId(examId);
         channelService.deleteChannel(examChannel);
+
+        Optional<QuizPool> quizPoolOptional = quizPoolRepository.findByExamId(examId);
+        quizPoolOptional.ifPresent(quizPool -> quizPoolRepository.deleteById(quizPool.getId()));
 
         // first delete test runs to avoid issues later
         List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);

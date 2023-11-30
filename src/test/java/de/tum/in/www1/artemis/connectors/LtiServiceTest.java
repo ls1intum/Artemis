@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +32,6 @@ import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
-import jakarta.servlet.http.HttpServletResponse;
 
 class LtiServiceTest {
 

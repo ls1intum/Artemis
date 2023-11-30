@@ -3,10 +3,11 @@ package de.tum.in.www1.artemis.repository.specs;
 import java.util.Arrays;
 import java.util.Set;
 
+import jakarta.persistence.criteria.*;
+
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.in.www1.artemis.domain.*;
-import jakarta.persistence.criteria.*;
 
 /**
  * This class contains possible specifications to query for specified users.

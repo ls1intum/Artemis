@@ -1,12 +1,13 @@
 package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
+import jakarta.persistence.Persistence;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import jakarta.persistence.Persistence;
 
 @Service
 public class ConversationAuthorizationService {

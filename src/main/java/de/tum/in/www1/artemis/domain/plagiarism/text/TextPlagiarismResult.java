@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.domain.plagiarism.text;
 
+import jakarta.persistence.Entity;
+
 import de.jplag.JPlagResult;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
-import jakarta.persistence.Entity;
 
 /**
  * Result of the automatic plagiarism detection for text or programming exercises.

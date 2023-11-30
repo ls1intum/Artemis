@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
-import com.fasterxml.jackson.annotation.*;
-
 import jakarta.persistence.*;
+
+import com.fasterxml.jackson.annotation.*;
 
 @Entity
 @DiscriminatorValue(value = "Q")

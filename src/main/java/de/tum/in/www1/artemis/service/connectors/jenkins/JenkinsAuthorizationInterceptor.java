@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 import java.io.IOException;
 import java.net.URL;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,8 +18,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
-import jakarta.validation.constraints.NotNull;
 
 @Profile("jenkins")
 @Component

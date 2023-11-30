@@ -11,11 +11,11 @@ package org.eclipse.jgit.http.server.glue;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.jgit.http.server.HttpServerText;
-
 import jakarta.servlet.Filter;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.eclipse.jgit.http.server.HttpServerText;
 
 abstract class ServletBinderImpl implements ServletBinder {
 

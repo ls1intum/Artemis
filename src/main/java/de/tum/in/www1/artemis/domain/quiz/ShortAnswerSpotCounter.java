@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import jakarta.persistence.*;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import jakarta.persistence.*;
 
 /**
  * A ShortAnswerSpotCounter.

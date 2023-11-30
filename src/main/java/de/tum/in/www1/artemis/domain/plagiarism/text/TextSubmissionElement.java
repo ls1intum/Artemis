@@ -2,13 +2,14 @@ package de.tum.in.www1.artemis.domain.plagiarism.text;
 
 import java.io.File;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+
 import de.jplag.Token;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
 
 @Entity
 // TODO: use @DiscriminatorValue(value = "T") or even better use integers (because they use less space in the database)

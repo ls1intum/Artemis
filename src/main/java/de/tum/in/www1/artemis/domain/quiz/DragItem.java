@@ -4,6 +4,8 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
@@ -19,7 +21,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
-import jakarta.persistence.*;
 
 /**
  * A DragItem.

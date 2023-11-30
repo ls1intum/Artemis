@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.hestia;
 
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -8,7 +10,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import jakarta.persistence.*;
 
 /**
  * A single entry from testwise coverage report by file path and consecutive executed code block.

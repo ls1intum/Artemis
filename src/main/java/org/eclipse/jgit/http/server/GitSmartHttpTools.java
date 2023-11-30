@@ -21,12 +21,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.eclipse.jgit.internal.transport.parser.FirstCommand;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.*;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Utility functions for handling the Git-over-HTTP protocol.

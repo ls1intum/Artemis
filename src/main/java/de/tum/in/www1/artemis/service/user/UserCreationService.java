@@ -8,6 +8,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,8 +30,6 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 import tech.jhipster.security.RandomUtil;
 
 @Service

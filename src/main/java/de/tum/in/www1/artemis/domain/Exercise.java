@@ -5,6 +5,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -28,8 +31,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import jakarta.annotation.Nullable;
-import jakarta.persistence.*;
 
 /**
  * An Exercise.
@@ -99,6 +100,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Nullable
     @Column(name = "second_correction_enabled")
     private Boolean secondCorrectionEnabled = false;
+
+    @Column(name = "feedback_suggestions_enabled") // enables Athena
+    private Boolean feedbackSuggestionsEnabled = false;
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
@@ -777,6 +781,14 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     public void setSecondCorrectionEnabled(boolean secondCorrectionEnabled) {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
+    }
+
+    public boolean getFeedbackSuggestionsEnabled() {
+        return Boolean.TRUE.equals(feedbackSuggestionsEnabled);
+    }
+
+    public void setFeedbackSuggestionsEnabled(boolean feedbackSuggestionsEnabled) {
+        this.feedbackSuggestionsEnabled = feedbackSuggestionsEnabled;
     }
 
     public List<GradingCriterion> getGradingCriteria() {

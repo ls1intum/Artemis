@@ -18,6 +18,11 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.List;
 
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.eclipse.jgit.annotations.Nullable;
 import org.eclipse.jgit.errors.PackProtocolException;
 import org.eclipse.jgit.http.server.UploadPackErrorHandler.UploadPackRunnable;
@@ -27,11 +32,6 @@ import org.eclipse.jgit.transport.RefAdvertiser.PacketLineOutRefAdvertiser;
 import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
 import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 import org.eclipse.jgit.transport.resolver.UploadPackFactory;
-
-import jakarta.servlet.*;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 /** Server side implementation of smart fetch over HTTP. */
 class UploadPackServlet extends HttpServlet {

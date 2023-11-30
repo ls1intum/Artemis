@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/entities/metis/posting.model';
+import { isCommunicationEnabled } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-posting-content',
@@ -96,8 +97,10 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // if not, we do not want to fetch the post from the DB and rather always navigate to the course discussion page with the referenceStr as search text
                     const referencedPostInLoadedPosts = this.currentlyLoadedPosts.find((post: Post) => post.id! === +referencedId);
                     referenceStr = this.content.substring(patternMatch.startIndex, patternMatch.endIndex);
-                    linkToReference = this.metisService.getLinkForPost(referencedPostInLoadedPosts);
-                    queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
+                    if (isCommunicationEnabled(this.metisService.getCourse())) {
+                        linkToReference = this.metisService.getLinkForPost(referencedPostInLoadedPosts);
+                        queryParams = referencedPostInLoadedPosts ? this.metisService.getQueryParamsForPost(referencedPostInLoadedPosts) : ({ searchText: referenceStr } as Params);
+                    }
                 } else if (
                     ReferenceType.LECTURE === referenceType ||
                     ReferenceType.PROGRAMMING === referenceType ||

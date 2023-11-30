@@ -3,13 +3,14 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 import java.io.Serializable;
 import java.util.List;
 
+import jakarta.annotation.Nullable;
+
 import com.google.common.base.CaseFormat;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
-import jakarta.annotation.Nullable;
 
 public class UMLClass extends UMLElement implements Serializable {
 

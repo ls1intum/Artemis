@@ -144,6 +144,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
     Optional<Result> findWithEagerSubmissionAndFeedbackById(long resultId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks", "feedbacks.testCase" })
+    Optional<Result> findWithEagerSubmissionAndFeedbackAndTestCasesById(long resultId);
+
     /**
      * Gets the number of assessments with a rated result set by an assessor for an exercise
      *
@@ -511,14 +514,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
 
     /**
-     * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date.
-     * It saves the updated result in the database again.
+     * This function is used for submitting a manual assessment/result.
+     * It updates the completion date and saves the updated result in the database.
      *
-     * @param resultId the id of the result that should be submitted
-     * @return the ResponseEntity with result as body
+     * @param result the result that should be submitted
+     * @return the updated result
      */
-    default Result submitManualAssessment(long resultId) {
-        Result result = findWithEagerSubmissionAndFeedbackAndAssessorByIdElseThrow(resultId);
+    default Result submitManualAssessment(Result result) {
         result.setCompletionDate(ZonedDateTime.now());
         save(result);
         return result;
@@ -680,6 +682,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      */
     default Result findByIdWithEagerSubmissionAndFeedbackElseThrow(long resultId) {
         return findWithEagerSubmissionAndFeedbackById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
+    }
+
+    default Result findByIdWithEagerSubmissionAndFeedbackAndTestCasesElseThrow(long resultId) {
+        return findWithEagerSubmissionAndFeedbackAndTestCasesById(resultId).orElseThrow(() -> new EntityNotFoundException("Result", resultId));
     }
 
     /**

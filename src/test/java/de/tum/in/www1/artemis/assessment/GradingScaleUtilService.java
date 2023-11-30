@@ -6,6 +6,8 @@ import java.io.FileReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
@@ -15,7 +17,6 @@ import com.opencsv.CSVReader;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Service responsible for initializing the database with specific testdata related to grading for use in integration tests.
@@ -26,6 +27,13 @@ public class GradingScaleUtilService {
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
 
+    /**
+     * Creates a set of three grade steps. The second grade step is valid or invalid, depending on the {@code valid} parameter.
+     *
+     * @param gradingScale the grading scale to which the grade steps belong
+     * @param valid        whether the second grade step is valid (i.e. the upper bound of the second grade step is equal to the lower bound of the third grade step)
+     * @return a set of grade steps
+     */
     @NotNull
     public Set<GradeStep> generateGradeStepSet(GradingScale gradingScale, boolean valid) {
         GradeStep gradeStep1 = new GradeStep();
@@ -60,6 +68,19 @@ public class GradingScaleUtilService {
         return Set.of(gradeStep1, gradeStep2, gradeStep3);
     }
 
+    /**
+     * Creates a grading scale with the given parameters.
+     *
+     * @param gradeStepCount        The number of grade steps to generate
+     * @param intervals             The intervals to use for the grade steps. The length of this array must be gradeStepCount + 1.
+     * @param lowerBoundInclusivity Whether the lower bound of the first grade step should be inclusive.
+     * @param firstPassingIndex     The index of the first passing grade step.
+     * @param gradeNames            The names of the grade steps.
+     * @param course                The course to which the grading scale belongs.
+     * @param presentationsNumber   The number of presentations for the course.
+     * @param presentationsWeight   The weight of the presentations for the course.
+     * @return The generated grading scale.
+     */
     public GradingScale generateGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames,
             Course course, Integer presentationsNumber, Double presentationsWeight) {
         GradingScale gradingScale = generateGradingScale(gradeStepCount, intervals, lowerBoundInclusivity, firstPassingIndex, gradeNames);
@@ -70,7 +91,7 @@ public class GradingScaleUtilService {
     }
 
     /**
-     * Generates a grading scale with the given parameters and saves it to the database.
+     * Creates and saves a grading scale with the given parameters.
      *
      * @param gradeStepCount        The number of grade steps to generate.
      * @param intervals             The intervals to use for the grade steps. The length of this array must be gradeStepCount + 1.
@@ -87,6 +108,17 @@ public class GradingScaleUtilService {
         return gradingScaleRepository.save(gradingScale);
     }
 
+    /**
+     * Creates a grading scale with the given parameters. Fails if {@code gradeStepCount + 1} does not equal {@code intervals.length} or if {@code firstPassingIndex} is not in [0;
+     * gradeStepCount).
+     *
+     * @param gradeStepCount        The number of grade steps to generate.
+     * @param intervals             The intervals to use for the grade steps. The length of this array must be gradeStepCount + 1.
+     * @param lowerBoundInclusivity Whether the lower bound of the first grade step should be inclusive.
+     * @param firstPassingIndex     The index of the first passing grade step.
+     * @param gradeNames            The names of the grade steps.
+     * @return The generated grading scale.
+     */
     public GradingScale generateGradingScale(int gradeStepCount, double[] intervals, boolean lowerBoundInclusivity, int firstPassingIndex, Optional<String[]> gradeNames) {
         if (gradeStepCount != intervals.length - 1 || firstPassingIndex >= gradeStepCount || firstPassingIndex < 0) {
             fail("Invalid grading scale parameters");
@@ -109,6 +141,15 @@ public class GradingScaleUtilService {
         return gradingScale;
     }
 
+    /**
+     * Creates a grading scale with a sticky grade step. Fails if {@code firstPassingIndex} is not in [0; gradeStepCount).
+     *
+     * @param intervalSizes         The sizes of the intervals to use for the grade steps.
+     * @param gradeNames            The names of the grade steps.
+     * @param lowerBoundInclusivity Whether the lower bound of the first grade step should be inclusive.
+     * @param firstPassingIndex     The index of the first passing grade step.
+     * @return The generated grading scale.
+     */
     public GradingScale generateGradingScaleWithStickyStep(double[] intervalSizes, Optional<String[]> gradeNames, boolean lowerBoundInclusivity, int firstPassingIndex) {
         // This method has a different signature from the one above to define intervals from sizes to be consistent with
         // the instructor UI at interval-grading-system.component.ts and client tests at bonus.service.spec.ts.
@@ -148,6 +189,13 @@ public class GradingScaleUtilService {
         return gradingScale;
     }
 
+    /**
+     * Creates a list of String arrays containing the percentages[0], whether the student has submitted[1], and their grade[2] given the path to a csv file.
+     *
+     * @param path The path to the csv file.
+     * @return The list of String arrays.
+     * @throws Exception if an error occurs while reading the csv file.
+     */
     public List<String[]> loadPercentagesAndGrades(String path) throws Exception {
         try (CSVReader reader = new CSVReader(new FileReader(ResourceUtils.getFile("classpath:" + path), StandardCharsets.UTF_8))) {
             List<String[]> rows = reader.readAll();

@@ -17,11 +17,11 @@ import java.text.MessageFormat;
 import java.time.Instant;
 import java.util.Enumeration;
 
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.util.FS;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.util.FS;
 
 /**
  * Dumps a file over HTTP GET (or its information via HEAD).

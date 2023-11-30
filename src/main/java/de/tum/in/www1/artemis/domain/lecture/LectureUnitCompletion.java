@@ -5,10 +5,11 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
+import jakarta.persistence.*;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import de.tum.in.www1.artemis.domain.User;
-import jakarta.persistence.*;
 
 /**
  * This class models the 'completion' association between a user and a lecture unit.

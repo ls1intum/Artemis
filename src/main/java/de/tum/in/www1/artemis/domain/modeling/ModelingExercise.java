@@ -4,13 +4,14 @@ import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.MODELING;
 
 import java.time.ZonedDateTime;
 
+import jakarta.persistence.*;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
-import jakarta.persistence.*;
 
 /**
  * A ModelingExercise.

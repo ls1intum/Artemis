@@ -1,12 +1,13 @@
 package de.tum.in.www1.artemis.web.rest.open;
 
+import jakarta.ws.rs.BadRequestException;
+
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Imprint;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.LegalDocumentService;
-import jakarta.ws.rs.BadRequestException;
 
 /**
  * REST controller for retrieving the imprint.

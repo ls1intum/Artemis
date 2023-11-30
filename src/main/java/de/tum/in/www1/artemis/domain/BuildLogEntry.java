@@ -2,13 +2,13 @@ package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
 
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import jakarta.persistence.*;
 
 /**
  * Created by Josias Montag on 11.11.16.

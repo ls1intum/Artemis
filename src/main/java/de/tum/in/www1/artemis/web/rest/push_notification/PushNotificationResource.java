@@ -5,8 +5,12 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Date;
 
+import jakarta.validation.Valid;
+
 import javax.crypto.KeyGenerator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,8 +24,8 @@ import de.tum.in.www1.artemis.domain.push_notification.PushNotificationDeviceCon
 import de.tum.in.www1.artemis.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import io.jsonwebtoken.*;
-import jakarta.validation.Valid;
 
 /**
  * Rest Controller for managing push notification device tokens for native clients.
@@ -30,7 +34,11 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/push_notification")
 public class PushNotificationResource {
 
+    private final Logger log = LoggerFactory.getLogger(PushNotificationResource.class);
+
     private static final KeyGenerator aesKeyGenerator;
+
+    private final TokenProvider tokenProvider;
 
     static {
         try {
@@ -46,7 +54,9 @@ public class PushNotificationResource {
 
     private final UserRepository userRepository;
 
-    public PushNotificationResource(PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository, UserRepository userRepository) {
+    public PushNotificationResource(TokenProvider tokenProvider, PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository,
+            UserRepository userRepository) {
+        this.tokenProvider = tokenProvider;
         this.pushNotificationDeviceConfigurationRepository = pushNotificationDeviceConfigurationRepository;
         this.userRepository = userRepository;
     }
@@ -64,19 +74,20 @@ public class PushNotificationResource {
 
         String token = getToken();
 
-        String jwtWithoutSignature = token.substring(0, token.lastIndexOf('.') + 1);
-
-        Jwt<Header, Claims> headerClaimsJwt;
+        Date expirationDate;
 
         // This cannot throw an error as it must have been valid to even call this method
         try {
-            headerClaimsJwt = Jwts.parser().build().parseUnsecuredClaims(jwtWithoutSignature);
+            expirationDate = tokenProvider.getExpirationDate(token);
         }
         catch (ExpiredJwtException e) {
+            log.error("Expired token {}", token, e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        Date expirationDate = headerClaimsJwt.getPayload().getExpiration();
+        catch (Exception ex) {
+            log.error("Cannot parse token {}", token, ex);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         User user = userRepository.getUser();
 
@@ -110,6 +121,7 @@ public class PushNotificationResource {
     }
 
     private String getToken() {
+        // TODO: we should rather get the token from the cookie, e.g. something like Cookie jwtCookie = WebUtils.getCookie(httpServletRequest, JWT_COOKIE_NAME);
         UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         return (String) auth.getCredentials();
     }

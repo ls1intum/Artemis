@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.domain;
 
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import jakarta.persistence.*;
 
 /**
  * A bonus source for an exam that maps bonus from another course or exam to the target exam

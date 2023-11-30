@@ -29,6 +29,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -123,7 +124,7 @@ public class LocalCIBuildJobExecutionService {
         }
 
         // Prepare script
-        Path buildScriptPath = localCIContainerService.createBuildScript(participation.getProgrammingExercise(), auxiliaryRepositories);
+        Path buildScriptPath = localCIContainerService.createBuildScript(participation);
 
         // Retrieve the paths to the repositories that the build job needs.
         // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
@@ -202,7 +203,7 @@ public class LocalCIBuildJobExecutionService {
         localCIContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, auxiliaryRepositoriesPaths, auxiliaryRepositoryNames,
                 buildScriptPath);
 
-        localCIContainerService.runScriptInContainer(containerId);
+        List<BuildLogEntry> buildLogEntries = localCIContainerService.runScriptInContainer(containerId);
 
         log.info("Finished running the build script in container {}", containerName);
 
@@ -224,7 +225,7 @@ public class LocalCIBuildJobExecutionService {
             // empty list for successful tests).
             localCIContainerService.stopContainer(containerName);
             // Delete script file from host system
-            localCIContainerService.deleteScriptFile(participation.getProgrammingExercise().getId().toString());
+            localCIContainerService.deleteScriptFile(participation.getId().toString());
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
@@ -242,18 +243,19 @@ public class LocalCIBuildJobExecutionService {
             // Stop the container and return a build results that indicates that the build failed.
             localCIContainerService.stopContainer(containerName);
             // Delete script file from host system
-            localCIContainerService.deleteScriptFile(participation.getProgrammingExercise().getId().toString());
+            localCIContainerService.deleteScriptFile(participation.getId().toString());
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
         localCIContainerService.stopContainer(containerName);
 
         // Delete script file from host system
-        localCIContainerService.deleteScriptFile(participation.getProgrammingExercise().getId().toString());
+        localCIContainerService.deleteScriptFile(participation.getId().toString());
 
         LocalCIBuildResult buildResult;
         try {
             buildResult = parseTestResults(testResultsTarInputStreams, branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
+            buildResult.setBuildLogEntries(buildLogEntries);
         }
         catch (IOException | XMLStreamException | IllegalStateException e) {
             throw new LocalCIException("Error while parsing test results", e);

@@ -13,11 +13,11 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import org.eclipse.jgit.http.server.HttpServerText;
-
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.eclipse.jgit.http.server.HttpServerText;
 
 /**
  * Generic container filter to manage routing to different pipelines.

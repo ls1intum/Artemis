@@ -226,6 +226,11 @@ spring:
         phone:
             home:
                 enabled: false
+        slow:
+            operation:
+                detector:
+                    enabled: true
+
     autoconfigure:
         # These AutoConfiguration are excluded as they include metrics which are not evaluated and only cause unnecessary network load
         # They can be included once they are processed

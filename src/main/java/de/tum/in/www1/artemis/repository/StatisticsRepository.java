@@ -7,6 +7,8 @@ import java.time.temporal.TemporalField;
 import java.time.temporal.WeekFields;
 import java.util.*;
 
+import jakarta.annotation.Nullable;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,7 +21,6 @@ import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.domain.statistics.CourseStatisticsAverageScore;
 import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
-import jakarta.annotation.Nullable;
 
 /**
  * Spring Data JPA repository for the statistics pages
@@ -79,6 +80,18 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
             order by s.submissionDate asc
             """)
     List<StatisticsEntry> getActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
+
+    @Query("""
+            SELECT DISTINCT u.login
+            FROM User u, Submission s, StudentParticipation p
+            WHERE
+                s.participation.id = p.id AND
+                p.student.id = u.id AND
+                s.submissionDate >= :startDate AND
+                s.submissionDate <= :endDate AND
+                u.login NOT LIKE '%test%'
+            """)
+    List<String> getActiveUserNames(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     /**
      * Count users that were active within the given date range.

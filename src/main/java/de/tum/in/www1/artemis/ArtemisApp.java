@@ -5,6 +5,8 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 
+import jakarta.annotation.PostConstruct;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +19,6 @@ import org.springframework.boot.info.GitProperties;
 import org.springframework.core.env.Environment;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
-import jakarta.annotation.PostConstruct;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 

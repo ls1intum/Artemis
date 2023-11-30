@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,7 +22,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Service for calculating the progress of a student in a competency.
@@ -103,24 +104,6 @@ public class CompetencyProgressService {
         competencyProgressRepository.findAllByCompetencyId(competency.getId()).stream().map(CompetencyProgress::getUser).forEach(user -> {
             updateCompetencyProgress(competency.getId(), user);
         });
-    }
-
-    /**
-     * Update the existing progress for a specific user in a course
-     *
-     * @param user   The user for whom to update the existing competency progress
-     * @param course The course for which to fetch the competencies from
-     * @return All competencies of the course with the updated progress for the user
-     */
-    public Set<Competency> getCompetenciesAndUpdateProgressByUserInCourse(User user, Course course) {
-        var competencies = competencyRepository.findAllForCourse(course.getId());
-        competencies.forEach(competency -> {
-            var updatedProgress = updateCompetencyProgress(competency.getId(), user);
-            if (updatedProgress != null) {
-                competency.setUserProgress(Set.of(updatedProgress));
-            }
-        });
-        return competencies;
     }
 
     /**

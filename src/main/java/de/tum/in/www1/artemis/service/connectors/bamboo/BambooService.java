@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -48,7 +50,6 @@ import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegratio
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationUpdateService;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
-import jakarta.annotation.Nullable;
 
 @Service
 @Profile("bamboo")

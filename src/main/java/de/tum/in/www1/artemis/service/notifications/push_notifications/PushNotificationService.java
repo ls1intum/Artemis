@@ -142,7 +142,8 @@ public abstract class PushNotificationService implements InstantNotificationServ
         }
 
         final String date = Instant.now().toString();
-        final String payload = gson.toJson(new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date));
+        final String payload = gson.toJson(
+                new PushNotificationData(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date, Constants.PUSH_NOTIFICATION_VERSION));
 
         final byte[] initializationVector = new byte[16];
 
@@ -170,7 +171,7 @@ public abstract class PushNotificationService implements InstantNotificationServ
 
     abstract void sendSpecificNotificationRequestsToEndpoint(List<RelayNotificationRequest> requests, String relayServerBaseUrl);
 
-    record PushNotificationData(String[] notificationPlaceholders, String target, String type, String date) {
+    record PushNotificationData(String[] notificationPlaceholders, String target, String type, String date, int version) {
     }
 
     /**

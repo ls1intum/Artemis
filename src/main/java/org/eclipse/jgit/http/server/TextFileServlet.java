@@ -14,12 +14,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import org.eclipse.jgit.util.HttpSupport;
-import org.eclipse.jgit.util.IO;
-
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.eclipse.jgit.util.HttpSupport;
+import org.eclipse.jgit.util.IO;
 
 /** Sends a small text meta file from the repository. */
 class TextFileServlet extends HttpServlet {

@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,7 +16,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring JPA repository for Organization entities

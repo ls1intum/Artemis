@@ -4,7 +4,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
-import java.util.List;
+import java.util.*;
+
+import jakarta.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,6 +23,7 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.MockDelegate;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
+import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.*;
@@ -34,7 +37,6 @@ import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleServi
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.user.UserFactory;
-import jakarta.mail.internet.MimeMessage;
 
 /**
  * this test should be completely independent of any profiles or configurations (e.g. VCS, CIS)
@@ -50,6 +52,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     // NOTE: we prefer SpyBean over MockBean, because it is more lightweight, we can mock method, but we can also invoke actual methods during testing
     @SpyBean
     protected Lti10Service lti10Service;
+
+    @SpyBean
+    protected Lti13Service lti13Service;
 
     @SpyBean
     protected GitService gitService;
@@ -188,7 +193,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
      *
      * @param courseMemberLogin1 login of one course member
      * @param courseMemberLogin2 login of another course member
-     *
      * @return list of user mentions and validity flags
      */
     protected static List<Arguments> userMentionProvider(String courseMemberLogin1, String courseMemberLogin2) {

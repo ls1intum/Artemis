@@ -3,12 +3,13 @@ package de.tum.in.www1.artemis.service.connectors.vcs;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import jakarta.annotation.Nullable;
 
 public interface VersionControlService {
 

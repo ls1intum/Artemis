@@ -6,6 +6,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.PostConstruct;
+
 import javax.crypto.SecretKey;
 
 import org.slf4j.Logger;
@@ -23,7 +25,6 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
-import jakarta.annotation.PostConstruct;
 import tech.jhipster.config.JHipsterProperties;
 
 @Component
@@ -160,4 +161,9 @@ public class TokenProvider {
     private Claims parseClaims(String authToken) {
         return Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken).getPayload();
     }
+
+    public Date getExpirationDate(String authToken) {
+        return parseClaims(authToken).getExpiration();
+    }
+
 }

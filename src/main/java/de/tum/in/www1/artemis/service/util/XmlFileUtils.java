@@ -6,6 +6,9 @@ import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.util.Map;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -22,9 +25,6 @@ import org.springframework.util.StreamUtils;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 public class XmlFileUtils {
 

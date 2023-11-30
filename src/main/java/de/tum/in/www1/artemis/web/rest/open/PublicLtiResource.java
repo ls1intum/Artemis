@@ -1,7 +1,13 @@
 package de.tum.in.www1.artemis.web.rest.open;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.time.Instant;
+import java.util.Date;
 import java.util.Optional;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.glassfish.jersey.uri.UriComponent;
 import org.slf4j.Logger;
@@ -16,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.nimbusds.jwt.SignedJWT;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
@@ -24,12 +32,6 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti10Service;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.security.SignatureException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * REST controller for receiving LTI requests.
@@ -170,16 +172,15 @@ public class PublicLtiResource {
      * @return Whether the token is valid or not
      */
     private boolean isValidJwtIgnoreSignature(String token) {
-        String strippedToken = token.substring(0, token.lastIndexOf(".") + 1);
         try {
-            Jwts.parser().build().parse(strippedToken);
+            SignedJWT parsedToken = SignedJWT.parse(token);
+            if (parsedToken.getJWTClaimsSet().getExpirationTime().before(Date.from(Instant.now()))) {
+                return false;
+            }
             return true;
         }
-        catch (SignatureException e) {
-            // We ignore the signature
-            return true;
-        }
-        catch (ExpiredJwtException | MalformedJwtException | IllegalArgumentException e) {
+        catch (ParseException e) {
+            log.info("LTI request: JWT token is invalid: {}", token, e);
             return false;
         }
     }

@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.repository.tutorialgroups;
 import java.util.Optional;
 import java.util.Set;
 
+import jakarta.validation.constraints.NotNull;
+
 import javax.transaction.Transactional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,7 +16,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
-import jakarta.validation.constraints.NotNull;
 
 @Repository
 public interface TutorialGroupRegistrationRepository extends JpaRepository<TutorialGroupRegistration, Long> {

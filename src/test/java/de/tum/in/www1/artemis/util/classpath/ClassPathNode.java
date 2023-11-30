@@ -6,9 +6,9 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.assertj.core.util.TriFunction;
-
 import jakarta.validation.constraints.NotNull;
+
+import org.assertj.core.util.TriFunction;
 
 /**
  * Abstract node of the java class path with additional information, preserving the package tree structure.

@@ -8,6 +8,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +39,6 @@ import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 @Service
 public class ProgrammingExerciseGradingService {
@@ -146,7 +147,7 @@ public class ProgrammingExerciseGradingService {
             if (buildResult.hasLogs()) {
                 var programmingLanguage = exercise.getProgrammingLanguage();
                 var projectType = exercise.getProjectType();
-                var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
+                var buildLogs = buildResult.extractBuildLogs();
 
                 ciResultService.extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
@@ -290,9 +291,12 @@ public class ProgrammingExerciseGradingService {
 
         // workaround to avoid org.hibernate.HibernateException: null index column for collection: de.tum.in.www1.artemis.domain.Submission.results
         processedResult.setSubmission(null);
+        // workaround to avoid scheduling the participant score update twice. The update will only run when a participation is present.
+        processedResult.setParticipation(null);
 
         processedResult = resultRepository.save(processedResult);
         processedResult.setSubmission(programmingSubmission);
+        processedResult.setParticipation((Participation) participation);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
 

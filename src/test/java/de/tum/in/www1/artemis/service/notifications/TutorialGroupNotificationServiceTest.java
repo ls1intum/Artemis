@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import jakarta.mail.internet.MimeMessage;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,7 +37,6 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupNotificatio
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import jakarta.mail.internet.MimeMessage;
 
 class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {
 

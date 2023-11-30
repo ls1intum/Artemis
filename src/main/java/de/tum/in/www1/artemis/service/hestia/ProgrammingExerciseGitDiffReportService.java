@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
@@ -33,7 +35,6 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReport
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * The service handling ProgrammingExerciseGitDiffReport and their ProgrammingExerciseGitDiffEntries.

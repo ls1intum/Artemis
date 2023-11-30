@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.websocket.team;
 
 import java.util.*;
 
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -12,7 +14,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.web.websocket.dto.TeamAssignmentPayload;
-import jakarta.annotation.Nullable;
 
 @Controller
 public class TeamWebsocketService {

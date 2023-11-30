@@ -4,6 +4,9 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -12,8 +15,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.participation.Participant;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * A Team of students.

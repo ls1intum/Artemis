@@ -2,10 +2,11 @@ package de.tum.in.www1.artemis.domain.notification;
 
 import java.time.ZonedDateTime;
 
+import jakarta.persistence.*;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.SystemNotificationType;
-import jakarta.persistence.*;
 
 /**
  * A SystemNotification.

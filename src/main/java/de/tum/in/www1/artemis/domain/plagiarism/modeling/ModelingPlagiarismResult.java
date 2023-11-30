@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.domain.plagiarism.modeling;
 
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import jakarta.persistence.Entity;
+
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 
 /**
  * Result of the automatic plagiarism detection for modeling exercises.

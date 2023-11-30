@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 
+import jakarta.persistence.*;
+
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -24,7 +26,6 @@ import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfigu
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
@@ -33,7 +34,6 @@ import de.tum.in.www1.artemis.service.EntityFileService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import jakarta.persistence.*;
 
 /**
  * A Course.
@@ -253,10 +253,6 @@ public class Course extends DomainObject {
     @JoinColumn(name = "tutorial_groups_configuration_id")
     @JsonIgnoreProperties("course")
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
-
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(name = "iris_settings_id")
-    private IrisSettings irisSettings;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -1028,13 +1024,5 @@ public class Course extends DomainObject {
 
     public void setCourseInformationSharingMessagingCodeOfConduct(String courseInformationSharingMessagingCodeOfConduct) {
         this.courseInformationSharingMessagingCodeOfConduct = courseInformationSharingMessagingCodeOfConduct;
-    }
-
-    public IrisSettings getIrisSettings() {
-        return irisSettings;
-    }
-
-    public void setIrisSettings(IrisSettings irisSettings) {
-        this.irisSettings = irisSettings;
     }
 }

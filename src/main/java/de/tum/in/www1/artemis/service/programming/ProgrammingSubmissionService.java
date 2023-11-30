@@ -6,6 +6,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,13 +27,13 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSelectionService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import jakarta.annotation.Nullable;
 
 // TODO: this class has too many dependencies to other services. We should reduce this
 @Service
@@ -78,9 +80,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService,
-            FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository) {
+            FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository, Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingMessagingService = programmingMessagingService;
@@ -519,17 +521,15 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
+     * @param skipAssessmentQueue flag to determine if the submission should be retrieved from the assessment queue
      * @param correctionRound     - the correction round we want our submission to have results for
      * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<ProgrammingSubmission> getRandomAssessableSubmission(ProgrammingExercise programmingExercise, boolean examMode, int correctionRound) {
-        var submissionWithoutResult = super.getRandomAssessableSubmission(programmingExercise, examMode, correctionRound);
-        if (submissionWithoutResult.isPresent()) {
-            ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) submissionWithoutResult.get();
-            return Optional.of(programmingSubmission);
-        }
-        return Optional.empty();
+    public Optional<ProgrammingSubmission> getRandomAssessableSubmission(ProgrammingExercise programmingExercise, boolean skipAssessmentQueue, boolean examMode,
+            int correctionRound) {
+        return super.getRandomAssessableSubmission(programmingExercise, skipAssessmentQueue, examMode, correctionRound,
+                programmingSubmissionRepository::findWithEagerResultsAndFeedbacksById);
     }
 
     /**

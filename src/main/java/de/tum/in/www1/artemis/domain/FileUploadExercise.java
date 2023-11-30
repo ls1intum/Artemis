@@ -2,10 +2,11 @@ package de.tum.in.www1.artemis.domain;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.FILE_UPLOAD;
 
+import jakarta.persistence.*;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
-import jakarta.persistence.*;
 
 /**
  * A FileUploadExercise.

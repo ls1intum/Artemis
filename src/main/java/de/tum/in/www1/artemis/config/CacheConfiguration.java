@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.config;
 import java.nio.file.Path;
 import java.util.Collections;
 
+import jakarta.annotation.PreDestroy;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +29,6 @@ import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.in.www1.artemis.service.HazelcastPathSerializer;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
-import jakarta.annotation.PreDestroy;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
@@ -160,6 +161,12 @@ public class CacheConfiguration {
         }
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.in.www1.artemis.domain.*", initializeDomainMapConfig(jHipsterProperties));
+
+        // add queue config for local ci shared queue
+        QueueConfig queueConfig = new QueueConfig("buildJobQueue");
+        queueConfig.setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount());
+        queueConfig.setPriorityComparatorClassName("de.tum.in.www1.artemis.service.connectors.localci.LocalCIPriorityQueueComparator");
+        config.addQueueConfig(queueConfig);
 
         QuizScheduleService.configureHazelcast(config);
         return Hazelcast.newHazelcastInstance(config);

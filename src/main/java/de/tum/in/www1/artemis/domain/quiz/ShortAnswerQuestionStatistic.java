@@ -4,12 +4,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import jakarta.persistence.*;
 
 /**
  * A ShortAnswerQuestionStatistic.

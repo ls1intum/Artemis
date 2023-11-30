@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import jakarta.servlet.http.Cookie;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseCookie;
@@ -12,7 +14,6 @@ import org.springframework.test.web.servlet.ResultActions;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.web.rest.ClientForwardResource;
-import jakarta.servlet.http.Cookie;
 
 /**
  * Test class for the ClientForwardController REST controller.

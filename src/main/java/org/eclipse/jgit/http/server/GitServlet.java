@@ -10,14 +10,14 @@ package org.eclipse.jgit.http.server;
 
 import java.util.Enumeration;
 
+import jakarta.servlet.*;
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.eclipse.jgit.http.server.glue.MetaServlet;
 import org.eclipse.jgit.http.server.resolver.AsIsFileService;
 import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
 import org.eclipse.jgit.transport.resolver.RepositoryResolver;
 import org.eclipse.jgit.transport.resolver.UploadPackFactory;
-
-import jakarta.servlet.*;
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Handles Git repository access over HTTP.

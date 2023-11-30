@@ -12,6 +12,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +36,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -43,10 +44,9 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportSer
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import jakarta.validation.constraints.NotNull;
 
 @Service
-class ProgrammingPlagiarismDetectionService {
+public class ProgrammingPlagiarismDetectionService {
 
     @Value("${artemis.repo-download-clone-path}")
     private Path repoDownloadClonePath;
@@ -65,8 +65,6 @@ class ProgrammingPlagiarismDetectionService {
 
     private final ProgrammingExerciseExportService programmingExerciseExportService;
 
-    private final PlagiarismResultRepository plagiarismResultRepository;
-
     private final PlagiarismWebsocketService plagiarismWebsocketService;
 
     private final PlagiarismCacheService plagiarismCacheService;
@@ -76,15 +74,14 @@ class ProgrammingPlagiarismDetectionService {
     private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
 
     public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, PlagiarismResultRepository plagiarismResultRepository,
-            ProgrammingExerciseExportService programmingExerciseExportService, PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService,
-            UrlService urlService, ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
+            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
+            PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, UrlService urlService,
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
-        this.plagiarismResultRepository = plagiarismResultRepository;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
         this.urlService = urlService;
@@ -97,6 +94,7 @@ class ProgrammingPlagiarismDetectionService {
      * @param programmingExerciseId the id of the programming exercises which should be checked
      * @param similarityThreshold   ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
+     * @param minimumSize           consider only submissions whose number of lines in diff to template is greater or equal to this value
      * @return the text plagiarism result container with up to 500 comparisons with the highest similarity values
      * @throws ExitException is thrown if JPlag exits unexpectedly
      * @throws IOException   is thrown for file handling errors
@@ -125,7 +123,6 @@ class ProgrammingPlagiarismDetectionService {
 
                 log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons in {}", textPlagiarismResult.getComparisons().size(),
                         TimeLogUtil.formatDurationFrom(start));
-                limitAndSavePlagiarismResult(textPlagiarismResult);
                 log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
                 return textPlagiarismResult;
             }
@@ -136,7 +133,6 @@ class ProgrammingPlagiarismDetectionService {
 
             log.info("JPlag programming comparison done in {}", TimeLogUtil.formatDurationFrom(start));
             plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
-            limitAndSavePlagiarismResult(textPlagiarismResult);
             return textPlagiarismResult;
         }
         finally {
@@ -150,6 +146,7 @@ class ProgrammingPlagiarismDetectionService {
      * @param programmingExerciseId the id of the programming exercises which should be checked
      * @param similarityThreshold   ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore          consider only submissions whose score is greater or equal to this value
+     * @param minimumSize           consider only submissions whose number of lines in diff to template is greater or equal to this value
      * @return a zip file that can be returned to the client
      */
     public File checkPlagiarismWithJPlagReport(long programmingExerciseId, float similarityThreshold, int minimumScore, int minimumSize) {
@@ -226,19 +223,6 @@ class ProgrammingPlagiarismDetectionService {
         }
 
         return result;
-    }
-
-    /**
-     * Sorts and limits the text plagiarism result amount to 500 and saves it into the database.
-     * Removes the previously saved result.
-     *
-     * @param textPlagiarismResult the plagiarism result to save
-     */
-    private void limitAndSavePlagiarismResult(TextPlagiarismResult textPlagiarismResult) {
-        // TODO: limit the amount temporarily because of database issues
-        textPlagiarismResult.sortAndLimit(100);
-        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", textPlagiarismResult.getComparisons().size());
-        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(textPlagiarismResult);
     }
 
     /**

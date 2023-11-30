@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +27,6 @@ import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationUpdateService;
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 @Service
 @Profile("bamboo")
@@ -88,7 +89,10 @@ public class BambooBuildPlanUpdateService implements ContinuousIntegrationUpdate
         parameters.add("repository.git.repositoryUrl", newRepoUrl);
         parameters.add("repository.git.authenticationType", "PASSWORD");
         parameters.add("repository.git.passwordCredentialsSource", "SHARED_CREDENTIALS");
+        parameters.add("___advancedOptionsPresent___", "true");
         parameters.add("repository.git.useShallowClones", "true");
+        parameters.add("checkBoxFields", "repository.git.useRemoteAgentCache");
+        parameters.add("repository.git.useRemoteAgentCache", "false");
         parameters.add("repository.git.commandTimeout", "180");
 
         try {

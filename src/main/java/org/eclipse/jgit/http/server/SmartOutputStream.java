@@ -16,10 +16,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
 
-import org.eclipse.jgit.util.TemporaryBuffer;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.eclipse.jgit.util.TemporaryBuffer;
 
 /**
  * Buffers a response, trying to gzip it if the user agent supports that.

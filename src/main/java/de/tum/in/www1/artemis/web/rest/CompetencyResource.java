@@ -5,6 +5,9 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,8 +36,6 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 
 @RestController
 @RequestMapping("/api")
@@ -278,11 +279,7 @@ public class CompetencyResource {
         var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
 
-        var relations = competencyRelationRepository.findAllByCompetencyId(competency.getId());
-        if (!relations.isEmpty()) {
-            throw new BadRequestException("Can not delete a competency that has active relations");
-        }
-
+        competencyRelationRepository.deleteAllByCompetencyId(competencyId);
         competencyProgressRepository.deleteAllByCompetencyId(competency.getId());
 
         competency.getExercises().forEach(exercise -> {

@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.jvnet.hk2.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import de.jplag.exceptions.ExitException;
@@ -37,6 +38,9 @@ public class PlagiarismDetectionService {
     private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService;
 
     private final PlagiarismResultRepository plagiarismResultRepository;
+
+    @Value("${artemis.plagiarism-checks.plagiarism-results-limit:100}")
+    private int plagiarismResultsLimit;
 
     public PlagiarismDetectionService(TextPlagiarismDetectionService textPlagiarismDetectionService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             ProgrammingPlagiarismDetectionService programmingPlagiarismDetectionService, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
@@ -77,10 +81,9 @@ public class PlagiarismDetectionService {
                 exercise.getPlagiarismDetectionConfig().getMinimumScore(), exercise.getPlagiarismDetectionConfig().getMinimumSize());
         log.info("Finished programmingExerciseExportService.checkPlagiarism call for {} comparisons", plagiarismResult.getComparisons().size());
 
-        plagiarismResultRepository.prepareResultForClient(plagiarismResult);
-
         // make sure that participation is included in the exercise
         plagiarismResult.setExercise(exercise);
+        trimAndSavePlagiarismResult(plagiarismResult);
         return plagiarismResult;
     }
 
@@ -113,7 +116,7 @@ public class PlagiarismDetectionService {
 
     private void trimAndSavePlagiarismResult(PlagiarismResult<?> plagiarismResult) {
         // Limit the amount temporarily because of database issues
-        plagiarismResult.sortAndLimit(100);
+        plagiarismResult.sortAndLimit(plagiarismResultsLimit);
         plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(plagiarismResult);
 
         plagiarismResultRepository.prepareResultForClient(plagiarismResult);

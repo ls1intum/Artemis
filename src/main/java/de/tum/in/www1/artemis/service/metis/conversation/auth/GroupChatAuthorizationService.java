@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
 import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings.MAX_GROUP_CHATS_PER_USER_PER_COURSE;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -13,7 +15,6 @@ import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import jakarta.validation.constraints.NotNull;
 
 @Service
 public class GroupChatAuthorizationService extends ConversationAuthorizationService {

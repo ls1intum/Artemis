@@ -2,12 +2,12 @@ package de.tum.in.www1.artemis.web.filter;
 
 import java.io.IOException;
 
-import org.springframework.web.filter.OncePerRequestFilter;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.web.filter.OncePerRequestFilter;
 
 public class SpaWebFilter extends OncePerRequestFilter {
 

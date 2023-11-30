@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletResponse;
+
 import tech.jhipster.config.JHipsterProperties;
 
 /**

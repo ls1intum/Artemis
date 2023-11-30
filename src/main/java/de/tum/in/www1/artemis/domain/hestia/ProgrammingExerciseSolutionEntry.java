@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.domain.hestia;
 
 import java.util.Objects;
 
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -11,7 +13,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
-import jakarta.persistence.*;
 
 /**
  * A ProgrammingExerciseSolutionEntry represents a single change in a file that a students has to make in order to pass the related test.

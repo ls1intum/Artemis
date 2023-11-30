@@ -7,6 +7,9 @@ import static org.springframework.ldap.query.LdapQueryBuilder.query;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,8 +18,6 @@ import org.springframework.ldap.query.SearchScope;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 @Service
 @Profile("ldap | ldap-only")

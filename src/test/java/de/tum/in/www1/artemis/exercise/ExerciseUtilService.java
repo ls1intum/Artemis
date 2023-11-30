@@ -6,6 +6,8 @@ import static org.assertj.core.api.Assertions.fail;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +39,6 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Service responsible for initializing the database with specific testdata related to exercises for use in integration tests.
@@ -93,6 +94,12 @@ public class ExerciseUtilService {
     @Autowired
     private ConversationUtilService conversationUtilService;
 
+    /**
+     * Sets the max points of an exercise to 100 and sets bonus points to 10. IncludedInOverallScore of the exercise is set to INCLUDED_COMPLETELY.
+     *
+     * @param exercise The exercise to be updated.
+     * @return The saved exercise.
+     */
     public Exercise addMaxScoreAndBonusPointsToExercise(Exercise exercise) {
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         exercise.setMaxPoints(100.0);
@@ -100,6 +107,12 @@ public class ExerciseUtilService {
         return exerciseRepo.save(exercise);
     }
 
+    /**
+     * Adds grading instructions from three different grading criteria to an exercise. One criterion does not have a title.
+     *
+     * @param exercise The exercise to which the grading instructions should be added.
+     * @return The list of grading criteria.
+     */
     public List<GradingCriterion> addGradingInstructionsToExercise(Exercise exercise) {
         GradingCriterion emptyCriterion = ExerciseFactory.generateGradingCriterion(null);
         List<GradingInstruction> instructionWithNoCriteria = ExerciseFactory.generateGradingInstructions(emptyCriterion, 1, 0);
@@ -125,40 +138,63 @@ public class ExerciseUtilService {
         return exercise.getGradingCriteria();
     }
 
+    /**
+     * Accesses the first found exercise of a course with the passed type. The course stores exercises in a set, therefore any
+     * exercise with the corresponding type could be accessed.
+     *
+     * @param course The course which should be searched for the exercise.
+     * @param clazz  The class (type) of the exercise to look for.
+     * @return The first exercise which was found in the course and is of the expected type.
+     */
     public <T extends Exercise> T getFirstExerciseWithType(Course course, Class<T> clazz) {
         var exercise = course.getExercises().stream().filter(ex -> ex.getClass().equals(clazz)).findFirst().orElseThrow();
         return (T) exercise;
     }
 
+    /**
+     * Accesses the first found exercise of an exam with the passed type. The course stores exercises in a set, therefore any
+     * exercise with the corresponding type could be accessed.
+     *
+     * @param exam  The exam which should be searched for the exercise.
+     * @param clazz The class (type) of the exercise to look for.
+     * @return The first exercise which was found in the course and is of the expected type.
+     */
     public <T extends Exercise> T getFirstExerciseWithType(Exam exam, Class<T> clazz) {
         var exercise = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).filter(ex -> ex.getClass().equals(clazz)).findFirst()
                 .orElseThrow();
         return (T) exercise;
     }
 
+    /**
+     * Accesses the first exercise of a student exam with the passed type.
+     *
+     * @param studentExam The student exam which should be searched for the exercise.
+     * @param clazz       The class (type) of the exercise to look for.
+     * @return The first exercise which was found in the course and is of the expected type.
+     */
     public <T extends Exercise> T getFirstExerciseWithType(StudentExam studentExam, Class<T> clazz) {
         var exercise = studentExam.getExercises().stream().filter(ex -> ex.getClass().equals(clazz)).findFirst().orElseThrow();
         return (T) exercise;
     }
 
     /**
-     * Generates a course with one specific exercise, and an arbitrare amount of submissions.
+     * Generates a course with one specific exercise and the passed amount of submissions.
      *
-     * @param exerciseType        - the type of exercise which should be generated: programming, file-pload or text
-     * @param numberOfSubmissions - the amount of submissions which should be generated for an exercise
-     * @return a course with an exercise with submissions
+     * @param exerciseType        The type of exercise which should be generated: programming, file-upload or text.
+     * @param numberOfSubmissions The amount of submissions which should be generated for an exercise.
+     * @return A course containing an exercise with submissions
      */
     public Course addCourseWithOneExerciseAndSubmissions(String userPrefix, String exerciseType, int numberOfSubmissions) {
         return addCourseWithOneExerciseAndSubmissions(userPrefix, exerciseType, numberOfSubmissions, Optional.empty());
     }
 
     /**
-     * Generates a course with one specific exercise, and an arbitrare amount of submissions.
+     * Generates a course with one specific exercise and the passed amount of submissions.
      *
-     * @param exerciseType             - the type of exercise which should be generated: modeling, programming, file-pload or text
-     * @param numberOfSubmissions      - the amount of submissions which should be generated for an exercise
-     * @param modelForModelingExercise - the model string for a modeling exercise
-     * @return a course with an exercise with submissions
+     * @param exerciseType             The type of exercise which should be generated: modeling, programming, file-upload or text.
+     * @param numberOfSubmissions      The amount of submissions which should be generated for an exercise.
+     * @param modelForModelingExercise The model string for a modeling exercise.
+     * @return A course containing an exercise with submissions.
      */
     public Course addCourseWithOneExerciseAndSubmissions(String userPrefix, String exerciseType, int numberOfSubmissions, Optional<String> modelForModelingExercise) {
         Course course;
@@ -211,9 +247,9 @@ public class ExerciseUtilService {
     }
 
     /**
-     * Adds an automatic assessment to all submissions of an exercise
+     * Adds an automatic assessment to all submissions of an exercise.
      *
-     * @param exercise - the exercise of which the submissions are assessed
+     * @param exercise The exercise of which the submissions are assessed.
      */
     public void addAutomaticAssessmentToExercise(Exercise exercise) {
         var participations = studentParticipationRepo.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exercise.getId(), false);
@@ -231,10 +267,10 @@ public class ExerciseUtilService {
     }
 
     /**
-     * Adds a result to all submissions of an exercise
+     * Adds a result to all submissions of an exercise.
      *
-     * @param exercise - the exercise of which the submissions are assessed
-     * @param assessor - the assessor which is set for the results of the submission
+     * @param exercise The exercise of which the submissions are assessed.
+     * @param assessor The assessor that is set for the results of the submission.
      */
     public void addAssessmentToExercise(Exercise exercise, User assessor) {
         var participations = studentParticipationRepo.findByExerciseIdAndTestRunWithEagerSubmissionsResultAssessor(exercise.getId(), false);
@@ -250,6 +286,12 @@ public class ExerciseUtilService {
         });
     }
 
+    /**
+     * Updates the due date of the exercise with the passed id. The updated exercise is saved in the repository.
+     *
+     * @param exerciseId The id of the exercise which should be updated. It is used to access the exercise.
+     * @param newDueDate The new due date of the exercise.
+     */
     public void updateExerciseDueDate(long exerciseId, ZonedDateTime newDueDate) {
         Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
         exercise.setDueDate(newDueDate);
@@ -259,12 +301,24 @@ public class ExerciseUtilService {
         exerciseRepo.save(exercise);
     }
 
+    /**
+     * Updates the assessment due date of the exercise with the passed id. The updated exercise is saved in the repository.
+     *
+     * @param exerciseId The id of the exercise which should be updated. It is used to access the exercise.
+     * @param newDueDate The new assessment due date of the exercise.
+     */
     public void updateAssessmentDueDate(long exerciseId, ZonedDateTime newDueDate) {
         Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
         exercise.setAssessmentDueDate(newDueDate);
         exerciseRepo.save(exercise);
     }
 
+    /**
+     * Updates the result completion date using the new passed completion date.
+     *
+     * @param resultId          The id of the result, used to access the result from the repository.
+     * @param newCompletionDate The new completion date which is set.
+     */
     public void updateResultCompletionDate(long resultId, ZonedDateTime newCompletionDate) {
         Result result = resultRepo.findById(resultId).orElseThrow(() -> new IllegalArgumentException("Result with given ID " + resultId + " could not be found"));
         result.setCompletionDate(newCompletionDate);
@@ -273,6 +327,13 @@ public class ExerciseUtilService {
 
     // TODO: find some generic solution for the following duplicated code
 
+    /**
+     * Looks for a file upload exercise with the passed title within an exercise collection. If the exercise is not found, the test fails.
+     *
+     * @param exercises Collection in which the file upload exercise with the title should be located.
+     * @param title     The title of the exercise to look for.
+     * @return The found file upload exercise.
+     */
     @NotNull
     public FileUploadExercise findFileUploadExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
@@ -289,6 +350,13 @@ public class ExerciseUtilService {
         return new FileUploadExercise();
     }
 
+    /**
+     * Looks for a modeling exercise with the passed title within an exercise collection. If the exercise is not found, the test fails.
+     *
+     * @param exercises Collection in which the modeling exercise with the title should be located.
+     * @param title     The title of the exercise to look for.
+     * @return The found modeling exercise.
+     */
     @NotNull
     public ModelingExercise findModelingExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
@@ -305,6 +373,13 @@ public class ExerciseUtilService {
         return new ModelingExercise();
     }
 
+    /**
+     * Looks for a text exercise with the passed title within an exercise collection. If the exercise is not found, the test fails.
+     *
+     * @param exercises Collection in which the text exercise with the title should be located.
+     * @param title     The title of the exercise to look for.
+     * @return The found text exercise.
+     */
     @NotNull
     public TextExercise findTextExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
@@ -321,6 +396,13 @@ public class ExerciseUtilService {
         return new TextExercise();
     }
 
+    /**
+     * Looks for a programming exercise with the passed title within an exercise collection. If the exercise is not found, the test fails.
+     *
+     * @param exercises Collection in which the programming exercise with the title should be located.
+     * @param title     The title of the exercise to look for.
+     * @return The found programming exercise.
+     */
     @NotNull
     public ProgrammingExercise findProgrammingExerciseWithTitle(Collection<Exercise> exercises, String title) {
         Optional<Exercise> exercise = exercises.stream().filter(e -> e.getTitle().equals(title)).findFirst();
@@ -337,7 +419,15 @@ public class ExerciseUtilService {
         return new ProgrammingExercise();
     }
 
-    public PlagiarismCase createPlagiarismCaseForUserForExercise(Exercise exercise, User user, String userPrefix, PlagiarismVerdict verdict) {
+    /**
+     * Creates a plagiarism case for the passed exercise.
+     *
+     * @param exercise   The exercise to which a plagiarism case should be added.
+     * @param user       The user with plagiarism, who responds to the plagiarism case.
+     * @param userPrefix The prefix of test users.
+     * @param verdict    The verdict of the plagiarism case.
+     */
+    public void createPlagiarismCaseForUserForExercise(Exercise exercise, User user, String userPrefix, PlagiarismVerdict verdict) {
         PlagiarismCase plagiarismCase = new PlagiarismCase();
         plagiarismCase.setExercise(exercise);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
@@ -360,9 +450,15 @@ public class ExerciseUtilService {
         else if (verdict == PlagiarismVerdict.POINT_DEDUCTION) {
             plagiarismCase.setVerdictPointDeduction(1);
         }
-        return plagiarismCaseRepository.save(plagiarismCase);
+        plagiarismCaseRepository.save(plagiarismCase);
     }
 
+    /**
+     * Creates a channel and adds it to an exercise.
+     *
+     * @param exercise The exercise to which a channel should be added.
+     * @return The newly created and saved channel.
+     */
     public Channel addChannelToExercise(Exercise exercise) {
         Channel channel = ConversationFactory.generateCourseWideChannel(exercise.getCourseViaExerciseGroupOrCourseMember());
         channel.setExercise(exercise);

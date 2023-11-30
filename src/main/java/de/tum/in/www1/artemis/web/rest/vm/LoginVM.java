@@ -2,10 +2,10 @@ package de.tum.in.www1.artemis.web.rest.vm;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * View Model object for storing a user's credentials.

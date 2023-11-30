@@ -3,11 +3,12 @@ package de.tum.in.www1.artemis.domain;
 import java.net.URI;
 import java.nio.file.Path;
 
+import jakarta.persistence.*;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
-import jakarta.persistence.*;
 
 /**
  * A FileUploadSubmission.

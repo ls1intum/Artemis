@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.dto.lectureunit;
 
-import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import jakarta.validation.constraints.NotNull;
+
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 
 public record LectureUnitForLearningPathNodeDetailsDTO(long id, @NotNull String name, @NotNull String type) {
 

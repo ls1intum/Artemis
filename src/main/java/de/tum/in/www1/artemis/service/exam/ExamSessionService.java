@@ -4,6 +4,8 @@ import java.security.SecureRandom;
 import java.util.*;
 import java.util.function.BiFunction;
 
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
@@ -15,7 +17,6 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
-import jakarta.annotation.Nullable;
 
 /**
  * Service Implementation for managing ExamSession.

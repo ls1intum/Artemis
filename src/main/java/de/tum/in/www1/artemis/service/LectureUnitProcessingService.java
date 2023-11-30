@@ -1,9 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import jakarta.validation.constraints.NotNull;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -22,7 +27,6 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
-import jakarta.validation.constraints.NotNull;
 
 @Service
 public class LectureUnitProcessingService {
@@ -37,6 +41,11 @@ public class LectureUnitProcessingService {
 
     private final AttachmentUnitService attachmentUnitService;
 
+    private final PDFTextStripper pdfTextStripper = new PDFTextStripper();
+
+    // A pdf splitter that should be used to split a file into single pages
+    private final Splitter pdfSinglePageSplitter = new Splitter();
+
     public LectureUnitProcessingService(SlideSplitterService slideSplitterService, FileService fileService, LectureRepository lectureRepository,
             AttachmentUnitService attachmentUnitService) {
         this.fileService = fileService;
@@ -49,15 +58,14 @@ public class LectureUnitProcessingService {
      * Split units from given file according to given split information and saves them.
      *
      * @param lectureUnitInformationDTO The split information
-     * @param file                      The file (lecture slide) to be split
+     * @param fileBytes                 The byte content of the file (lecture slides) to be split
      * @param lecture                   The lecture that the attachment unit belongs to
      * @return The prepared units to be saved
      */
-    public List<AttachmentUnit> splitAndSaveUnits(LectureUnitInformationDTO lectureUnitInformationDTO, MultipartFile file, Lecture lecture) throws IOException {
+    public List<AttachmentUnit> splitAndSaveUnits(LectureUnitInformationDTO lectureUnitInformationDTO, byte[] fileBytes, Lecture lecture) throws IOException {
 
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = Loader.loadPDF(file.getBytes())) {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = Loader.loadPDF(fileBytes)) {
             List<AttachmentUnit> units = new ArrayList<>();
-            Splitter pdfSplitter = new Splitter();
 
             for (LectureUnitSplitDTO lectureUnit : lectureUnitInformationDTO.units()) {
                 // make sure output stream doesn't contain old data
@@ -66,7 +74,7 @@ public class LectureUnitProcessingService {
                 AttachmentUnit attachmentUnit = new AttachmentUnit();
                 Attachment attachment = new Attachment();
                 PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
-
+                Splitter pdfSplitter = new Splitter();
                 pdfSplitter.setStartPage(lectureUnit.startPage());
                 pdfSplitter.setEndPage(lectureUnit.endPage());
                 // split only based on start and end page
@@ -100,27 +108,59 @@ public class LectureUnitProcessingService {
     }
 
     /**
+     * Gets the slides that should be removed by the given keyphrase
+     *
+     * @param fileBytes                The byte content of the file (lecture slides) to be split
+     * @param commaSeparatedKeyphrases key phrases that identify slides about to be removed
+     * @return list of the number of slides that will be removed
+     */
+    public List<Integer> getSlidesToRemoveByKeyphrase(byte[] fileBytes, String commaSeparatedKeyphrases) {
+        List<Integer> slidesToRemove = new ArrayList<>();
+        if (commaSeparatedKeyphrases.isEmpty()) {
+            return slidesToRemove;
+        }
+        try (PDDocument document = Loader.loadPDF(fileBytes)) {
+            List<PDDocument> pages = pdfSinglePageSplitter.split(document);
+            List<String> keyphrasesList = getKeyphrasesFromString(commaSeparatedKeyphrases);
+
+            for (int index = 0; index < pages.size(); index++) {
+                try (PDDocument currentPage = pages.get(index)) {
+                    String slideText = pdfTextStripper.getText(currentPage);
+
+                    if (slideContainsKeyphrase(slideText, keyphrasesList)) {
+                        slidesToRemove.add(index);
+                    }
+                }
+            }
+        }
+        catch (IOException e) {
+            log.error("Error while retrieving slides to remove from document", e);
+            throw new InternalServerErrorException("Error while retrieving slides to remove from document");
+        }
+        return slidesToRemove;
+    }
+
+    /**
      * Removes the slides containing any of the key phrases from the given document.
      *
-     * @param document                             document to remove slides from
-     * @param removeSlidesCommaSeparatedKeyPhrases key phrases that identify slides about to be removed
+     * @param document                 document to remove slides from
+     * @param commaSeparatedKeyphrases keyphrases that identify slides about to be removed
      */
-    private void removeSlidesContainingAnyKeyPhrases(PDDocument document, String removeSlidesCommaSeparatedKeyPhrases) {
+    private void removeSlidesContainingAnyKeyPhrases(PDDocument document, String commaSeparatedKeyphrases) {
         try {
-            PDFTextStripper pdfTextStripper = new PDFTextStripper();
-            Splitter pdfSplitter = new Splitter();
-            List<PDDocument> pages = pdfSplitter.split(document);
+            List<PDDocument> pages = pdfSinglePageSplitter.split(document);
+            List<String> keyphrasesList = getKeyphrasesFromString(commaSeparatedKeyphrases);
 
             // Uses a decrementing loop (starting from the last index) to ensure that the
             // index values are adjusted correctly when removing pages.
             for (int index = pages.size() - 1; index >= 0; index--) {
-                PDDocument currentPage = pages.get(index);
-                String slideText = pdfTextStripper.getText(currentPage);
+                try (PDDocument currentPage = pages.get(index)) {
+                    String slideText = pdfTextStripper.getText(currentPage);
 
-                if (slideContainsKeyphrase(slideText, removeSlidesCommaSeparatedKeyPhrases)) {
-                    document.removePage(index);
+                    if (slideContainsKeyphrase(slideText, keyphrasesList)) {
+                        document.removePage(index);
+                    }
                 }
-                currentPage.close(); // make sure to close the document
             }
         }
         catch (IOException e) {
@@ -129,22 +169,22 @@ public class LectureUnitProcessingService {
         }
     }
 
-    private boolean slideContainsKeyphrase(String slideText, String removeSlidesCommaSeparatedKeyPhrases) {
+    private boolean slideContainsKeyphrase(String slideText, List<String> keyphrasesList) {
         String lowerCaseSlideText = slideText.toLowerCase();
-        return Arrays.stream(removeSlidesCommaSeparatedKeyPhrases.split(",")).anyMatch(keyphrase -> lowerCaseSlideText.contains(keyphrase.strip().toLowerCase()));
+        return keyphrasesList.stream().anyMatch(keyphrase -> lowerCaseSlideText.contains(keyphrase.strip().toLowerCase()));
     }
 
     /**
      * Prepare information of split units for client
      *
-     * @param file The file (lecture slide) to be split
+     * @param fileBytes The byte content of the file (lecture slides) to be split
      * @return The prepared information of split units LectureUnitInformationDTO
      */
-    public LectureUnitInformationDTO getSplitUnitData(MultipartFile file) {
+    public LectureUnitInformationDTO getSplitUnitData(byte[] fileBytes) {
 
         try {
-            log.debug("Start preparing information of split units for the file {}", file);
-            Outline unitsInformation = separateIntoUnits(file);
+            log.debug("Start preparing information of split units.");
+            Outline unitsInformation = separateIntoUnits(fileBytes);
             Map<Integer, LectureUnitSplit> unitsDocumentMap = unitsInformation.splits;
             int numberOfPages = unitsInformation.totalPages;
 
@@ -161,20 +201,47 @@ public class LectureUnitProcessingService {
     }
 
     /**
+     * Temporarily saves a file that will be processed into lecture units.
+     *
+     * @param lectureId            the id of the lecture the file belongs to
+     * @param file                 the file to be saved
+     * @param minutesUntilDeletion duration the file gets saved for
+     * @return the last part of the filename. Use {@link LectureUnitProcessingService#getPathForTempFilename(long, String) getPathForTempFilename}
+     *         to get the full file path again.
+     */
+    public String saveTempFileForProcessing(long lectureId, MultipartFile file, int minutesUntilDeletion) throws IOException {
+        String prefix = "Temp_" + lectureId + "_";
+        Path filePath = fileService.generateFilePath(prefix, FilenameUtils.getExtension(file.getOriginalFilename()), FilePathService.getTempFilePath());
+        FileUtils.copyInputStreamToFile(file.getInputStream(), filePath.toFile());
+        fileService.schedulePathForDeletion(filePath, minutesUntilDeletion);
+        return filePath.getFileName().toString().substring(prefix.length());
+    }
+
+    /**
+     * Gets the path of the temporary file for a give lectureId and filename
+     *
+     * @param lectureId the id of the lecture the file belongs to
+     * @param filename  the last part of the filename (timestamp and extension)
+     * @return Path of the file
+     */
+    public Path getPathForTempFilename(long lectureId, String filename) {
+        String fullFilename = "Temp_" + lectureId + "_" + FileService.sanitizeFilename(filename);
+        return FilePathService.getTempFilePath().resolve(fullFilename);
+    }
+
+    /**
      * This method prepares a map with information on how the slide
      * is going to be split. The map looks like the following:
      * Map<OutlineNumber, (UnitName, StartPage, EndPage)>
      *
-     * @param file The file (lecture pdf) to be split
+     * @param fileBytes The byte content of the file (lecture pdf) to be split
      * @return The prepared map
      */
-    private Outline separateIntoUnits(MultipartFile file) throws IOException {
-        try (PDDocument document = Loader.loadPDF(file.getBytes())) {
+    private Outline separateIntoUnits(byte[] fileBytes) throws IOException {
+        try (PDDocument document = Loader.loadPDF(fileBytes)) {
             Map<Integer, LectureUnitSplit> outlineMap = new HashMap<>();
-            Splitter pdfSplitter = new Splitter();
-            PDFTextStripper pdfStripper = new PDFTextStripper();
             // split the document into single pages
-            List<PDDocument> pages = pdfSplitter.split(document);
+            List<PDDocument> pages = pdfSinglePageSplitter.split(document);
             int numberOfPages = document.getNumberOfPages();
             ListIterator<PDDocument> iterator = pages.listIterator();
 
@@ -182,7 +249,7 @@ public class LectureUnitProcessingService {
             int index = 1;
             while (iterator.hasNext()) {
                 PDDocument currentPage = iterator.next();
-                String slideText = pdfStripper.getText(currentPage);
+                String slideText = pdfTextStripper.getText(currentPage);
 
                 if (isOutlineSlide(slideText)) {
                     outlineCount++;
@@ -229,5 +296,12 @@ public class LectureUnitProcessingService {
      * Map contains unit number as key and unit information as value
      */
     private record Outline(Map<Integer, LectureUnitSplit> splits, int totalPages) {
+    }
+
+    /**
+     * parses a string containing comma-seperated keyphrases into a list of keyphrases.
+     */
+    private List<String> getKeyphrasesFromString(String commaSeparatedKeyphrases) {
+        return Arrays.stream(commaSeparatedKeyphrases.split(",")).filter(s -> !s.isBlank()).toList();
     }
 }

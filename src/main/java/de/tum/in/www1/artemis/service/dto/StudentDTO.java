@@ -2,11 +2,12 @@ package de.tum.in.www1.artemis.service.dto;
 
 import java.util.Objects;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Size;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.User;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Size;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record StudentDTO(@Size(max = 50) String login, @Size(max = 50) String firstName, @Size(max = 50) String lastName, @Size(max = 10) String registrationNumber,

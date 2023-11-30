@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.*;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +13,6 @@ import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
-import jakarta.validation.constraints.NotNull;
 
 @Service
 public class CompetencyService {
@@ -26,25 +27,6 @@ public class CompetencyService {
         this.competencyRepository = competencyRepository;
         this.authCheckService = authCheckService;
         this.competencyProgressService = competencyProgressService;
-    }
-
-    /**
-     * Get all competencies for a course, including the progress for the user.
-     *
-     * @param course         The course for which the competencies should be retrieved.
-     * @param user           The user for whom to filter the visible lecture units attached to the competency.
-     * @param updateProgress Whether the competency progress should be updated or taken from the database.
-     * @return A list of competencies with their lecture units (filtered for the user) and user progress.
-     */
-    public Set<Competency> findAllForCourse(@NotNull Course course, @NotNull User user, boolean updateProgress) {
-        if (updateProgress) {
-            // Get the competencies with the updated progress for the specified user.
-            return competencyProgressService.getCompetenciesAndUpdateProgressByUserInCourse(user, course);
-        }
-        else {
-            // Fetch the competencies with the user progress from the database.
-            return competencyRepository.findAllForCourseWithProgressForUser(course.getId(), user.getId());
-        }
     }
 
     /**

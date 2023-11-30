@@ -5,6 +5,8 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,13 +16,23 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data JPA repository for the ProgrammingSubmission entity.
  */
 @Repository
 public interface ProgrammingSubmissionRepository extends JpaRepository<ProgrammingSubmission, Long> {
+
+    /**
+     * Load programming submission only
+     *
+     * @param submissionId the submissionId
+     * @return programming submission
+     */
+    @NotNull
+    default ProgrammingSubmission findByIdElseThrow(long submissionId) {
+        return findById(submissionId).orElseThrow(() -> new EntityNotFoundException("ProgrammingSubmission", submissionId));
+    }
 
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks" })
     ProgrammingSubmission findFirstByParticipationIdAndCommitHashOrderByIdDesc(Long participationId, String commitHash);
@@ -51,17 +63,11 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     @Query("select s from ProgrammingSubmission s left join s.participation p left join p.exercise e where p.id = :#{#participationId} and (s.type = 'INSTRUCTOR' or s.type = 'TEST' or e.dueDate is null or s.submissionDate <= e.dueDate) order by s.submissionDate desc")
     List<ProgrammingSubmission> findGradedByParticipationIdOrderBySubmissionDateDesc(@Param("participationId") Long participationId, Pageable pageable);
 
-    @Query("""
-            SELECT s
-            FROM ProgrammingSubmission s
-            WHERE s.participation.id = :participationId
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
-            ORDER BY s.submissionDate DESC
-            """)
-    List<ProgrammingSubmission> findLatestLegalSubmissionForParticipation(@Param("participationId") Long participationId, Pageable pageable);
-
     @EntityGraph(type = LOAD, attributePaths = "results")
     Optional<ProgrammingSubmission> findWithEagerResultsById(Long submissionId);
+
+    @EntityGraph(type = LOAD, attributePaths = "results.feedbacks")
+    Optional<ProgrammingSubmission> findWithEagerResultsAndFeedbacksById(Long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.feedbacks.testCase", "results.assessor" })
     Optional<ProgrammingSubmission> findWithEagerResultsFeedbacksTestCasesAssessorById(long submissionId);

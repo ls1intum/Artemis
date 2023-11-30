@@ -15,6 +15,9 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.ws.rs.BadRequestException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,8 +52,6 @@ import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDT
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiParam;
-import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -229,7 +230,7 @@ public class ExamResource {
         }
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
-        if (!originalExam.getEndDate().equals(savedExam.getEndDate())) {
+        if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
             int workingTimeChange = savedExam.getDuration() - originalExamDuration;
             updateStudentExamsAndRescheduleExercises(examWithExercises, originalExamDuration, workingTimeChange);
         }
@@ -1135,6 +1136,7 @@ public class ExamResource {
     public ResponseEntity<StudentExam> getOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
         StudentExam exam = examAccessService.getExamInCourseElseThrow(courseId, examId);
+        exam.getUser().setVisibleRegistrationNumber();
         return ResponseEntity.ok(exam);
     }
 

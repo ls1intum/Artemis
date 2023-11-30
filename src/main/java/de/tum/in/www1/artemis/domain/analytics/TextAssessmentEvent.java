@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.domain.analytics;
 
 import java.time.Instant;
 
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.CreatedDate;
@@ -12,7 +14,6 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.TextBlockType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.TextAssessmentEventType;
-import jakarta.persistence.*;
 
 /**
  * A TextAssessmentEvent.

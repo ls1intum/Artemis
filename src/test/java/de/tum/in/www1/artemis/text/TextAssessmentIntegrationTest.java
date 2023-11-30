@@ -8,6 +8,8 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +46,6 @@ import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
-import jakarta.validation.constraints.NotNull;
 
 class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -61,6 +62,9 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
+
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
 
     @Autowired
     private TextSubmissionRepository textSubmissionRepository;
@@ -123,7 +127,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         exerciseRepo.save(textExercise);
         // every test indirectly uses the submission selection in Athena, so we mock it here
         athenaRequestMockProvider.enableMockingOfRequests();
-        athenaRequestMockProvider.mockSelectSubmissionsAndExpect(0); // always select the first submission
+        athenaRequestMockProvider.mockSelectSubmissionsAndExpect("text", 0); // always select the first submission
     }
 
     @AfterEach
@@ -331,7 +335,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void getResult_studentHidden() throws Exception {
         int submissionCount = 5;
         int submissionSize = 4;
-        var textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
+        var textBlocks = TextExerciseFactory.generateTextBlocks(submissionCount * submissionSize);
         TextExercise textExercise = textExerciseUtilService.createSampleTextExerciseWithSubmissions(course, new ArrayList<>(textBlocks), submissionCount, submissionSize);
         textBlocks.forEach(TextBlock::computeId);
         textBlockRepository.saveAll(textBlocks);
@@ -407,7 +411,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void getDataForTextEditor_hasTextBlocks() throws Exception {
         exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), null);
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
-        var textBlocks = textExerciseUtilService.generateTextBlocks(1);
+        var textBlocks = TextExerciseFactory.generateTextBlocks(1);
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
 
@@ -935,6 +939,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTextBlocksAreConsistentWhenOpeningSameAssessmentTwiceWithAthenaEnabled() throws Exception {
+        textExercise.setFeedbackSuggestionsEnabled(true);
+        textExerciseRepository.save(textExercise);
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         exerciseDueDatePassed();

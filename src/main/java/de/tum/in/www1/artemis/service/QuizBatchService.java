@@ -4,6 +4,8 @@ import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import jakarta.annotation.Nullable;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +18,6 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exception.QuizJoinException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
-import jakarta.annotation.Nullable;
 
 @Service
 public class QuizBatchService {
@@ -91,8 +92,8 @@ public class QuizBatchService {
     public QuizBatch joinBatch(QuizExercise quizExercise, User user, @Nullable String password) throws QuizJoinException {
         QuizBatch quizBatch = switch (quizExercise.getQuizMode()) {
             case SYNCHRONIZED -> throw new QuizJoinException("quizBatchJoinSynchronized", "Cannot join batch in synchronized quiz");
-            case BATCHED -> quizBatchRepository.findByQuizExerciseAndPassword(quizExercise, password)
-                    .orElseThrow(() -> new QuizJoinException("quizBatchNotFound", "Batch does not exist"));
+            case BATCHED ->
+                quizBatchRepository.findByQuizExerciseAndPassword(quizExercise, password).orElseThrow(() -> new QuizJoinException("quizBatchNotFound", "Batch does not exist"));
             case INDIVIDUAL -> createIndividualBatch(quizExercise, user);
         };
 

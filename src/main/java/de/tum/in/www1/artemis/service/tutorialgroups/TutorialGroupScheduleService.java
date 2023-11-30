@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUt
 import java.time.*;
 import java.util.*;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -17,7 +19,6 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRep
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.ScheduleOverlapsWithSessionException;
-import jakarta.validation.constraints.NotNull;
 
 @Service
 public class TutorialGroupScheduleService {

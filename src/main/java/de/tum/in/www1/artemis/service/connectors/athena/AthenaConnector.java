@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -11,7 +13,6 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Connector to Athena, a remote Artemis service that can create semi-automatic feedback suggestions for tutors.

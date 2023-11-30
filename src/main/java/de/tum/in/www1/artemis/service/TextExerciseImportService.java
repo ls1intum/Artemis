@@ -4,6 +4,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -11,7 +13,6 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
-import jakarta.validation.constraints.NotNull;
 
 @Service
 public class TextExerciseImportService extends ExerciseImportService {
@@ -54,7 +55,10 @@ public class TextExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
-        disableFeedbackSuggestionsForExamExercises(newExercise);
+        if (newExercise.isExamExercise()) {
+            // Disable feedback suggestions on exam exercises (currently not supported)
+            newExercise.setFeedbackSuggestionsEnabled(false);
+        }
 
         TextExercise newTextExercise = textExerciseRepository.save(newExercise);
 
@@ -79,17 +83,6 @@ public class TextExerciseImportService extends ExerciseImportService {
         super.copyExerciseBasis(newExercise, importedExercise, gradingInstructionCopyTracker);
         newExercise.setExampleSolution(importedExercise.getExampleSolution());
         return newExercise;
-    }
-
-    /**
-     * Disable feedback suggestions on exam exercises (currently not supported)
-     *
-     * @param exercise the exercise to disable feedback suggestions for
-     */
-    private void disableFeedbackSuggestionsForExamExercises(TextExercise exercise) {
-        if (exercise.isExamExercise()) {
-            exercise.disableFeedbackSuggestions();
-        }
     }
 
     /**

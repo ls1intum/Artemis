@@ -7,6 +7,10 @@ import static de.tum.in.www1.artemis.config.Constants.LONG_FEEDBACK_MAX_LENGTH;
 
 import java.util.*;
 
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
+
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -17,9 +21,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
-import jakarta.annotation.Nullable;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 
 /**
  * A Feedback.
@@ -370,6 +371,17 @@ public class Feedback extends DomainObject {
     @JsonIgnore
     public boolean isTestFeedback() {
         return this.type == FeedbackType.AUTOMATIC && !isStaticCodeAnalysisFeedback() && !isSubmissionPolicyFeedback();
+    }
+
+    /**
+     * Checks whether the feedback was given manually by a tutor.
+     * (This includes feedback that is automatically created by Athena and approved by tutors.)
+     *
+     * @return true if it is a manual feedback else false
+     */
+    @JsonIgnore
+    public boolean isManualFeedback() {
+        return this.type == FeedbackType.MANUAL || this.type == FeedbackType.MANUAL_UNREFERENCED;
     }
 
     /**

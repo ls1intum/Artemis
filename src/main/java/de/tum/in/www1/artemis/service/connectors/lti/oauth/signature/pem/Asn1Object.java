@@ -95,7 +95,9 @@ class Asn1Object {
     public String getString() throws IOException {
         var charset = switch (type) {
             // Not all are Latin-1 but it's the closest thing
-            case DerParser.NUMERIC_STRING, DerParser.PRINTABLE_STRING, DerParser.VIDEOTEX_STRING, DerParser.IA5_STRING, DerParser.GRAPHIC_STRING, DerParser.ISO646_STRING, DerParser.GENERAL_STRING -> StandardCharsets.ISO_8859_1;
+            case DerParser.NUMERIC_STRING, DerParser.PRINTABLE_STRING, DerParser.VIDEOTEX_STRING, DerParser.IA5_STRING, DerParser.GRAPHIC_STRING, DerParser.ISO646_STRING,
+                    DerParser.GENERAL_STRING ->
+                StandardCharsets.ISO_8859_1;
             case DerParser.BMP_STRING -> StandardCharsets.UTF_16BE;
             case DerParser.UTF8_STRING -> StandardCharsets.UTF_8;
             case DerParser.UNIVERSAL_STRING -> throw new IOException("Invalid DER: can't handle UCS-4 string");

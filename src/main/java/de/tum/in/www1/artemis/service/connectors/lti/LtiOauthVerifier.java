@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.lti;
 
-import de.tum.in.www1.artemis.service.connectors.lti.oauth.*;
 import jakarta.servlet.http.HttpServletRequest;
+
+import de.tum.in.www1.artemis.service.connectors.lti.oauth.*;
 
 public class LtiOauthVerifier {
 

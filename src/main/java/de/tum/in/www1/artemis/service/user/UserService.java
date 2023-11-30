@@ -14,6 +14,8 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.Nullable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,7 +47,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.PasswordViolatesRequirementsException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
-import jakarta.annotation.Nullable;
 import tech.jhipster.security.RandomUtil;
 
 /**

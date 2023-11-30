@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.domain.exam;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.*;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -12,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
-import jakarta.persistence.*;
 
 @Entity
 @Table(name = "exam_session")

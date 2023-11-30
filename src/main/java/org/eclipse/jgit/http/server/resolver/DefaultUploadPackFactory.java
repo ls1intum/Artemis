@@ -10,14 +10,14 @@ package org.eclipse.jgit.http.server.resolver;
 
 import java.util.Arrays;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.UploadPack;
 import org.eclipse.jgit.transport.resolver.ServiceNotAuthorizedException;
 import org.eclipse.jgit.transport.resolver.ServiceNotEnabledException;
 import org.eclipse.jgit.transport.resolver.UploadPackFactory;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Create and configure {@link UploadPack} service

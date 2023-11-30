@@ -13,6 +13,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.health.*;
@@ -33,7 +35,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry;
-import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -42,7 +43,6 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import io.micrometer.core.instrument.*;
-import jakarta.annotation.PostConstruct;
 
 @Component
 public class MetricsBean {
@@ -89,6 +89,12 @@ public class MetricsBean {
     private final UserRepository userRepository;
 
     private final StatisticsRepository statisticsRepository;
+
+    /**
+     * List that stores active usernames (users with a submission within the last 14 days) which is refreshed
+     * every 60 minutes.
+     */
+    private List<String> cachedActiveUserNames;
 
     // Public metrics
     private final AtomicInteger activeCoursesGauge = new AtomicInteger(0);
@@ -156,6 +162,9 @@ public class MetricsBean {
         if (this.env.acceptsProfiles(Profiles.of("scheduling"))) {
             // Should only be activated if the scheduling profile is present, because these metrics are the same for all instances
             this.scheduledMetricsEnabled = true;
+
+            // Initial calculation is done in constructor to ensure the values are present before the first metrics are calculated
+            calculateCachedActiveUserNames();
 
             registerExerciseAndExamMetrics();
             registerPublicArtemisMetrics();
@@ -279,6 +288,24 @@ public class MetricsBean {
     }
 
     /**
+     * Calculate active users (active within the last 14 days) and store them in a List.
+     * The calculation is performed every 60 minutes.
+     * The initial calculation is done in the constructor to ensure it is done BEFORE {@link #recalculateMetrics()}
+     * is called.
+     */
+    @Scheduled(fixedRate = 60 * 60 * 1000, initialDelay = 60 * 60 * 1000) // Every 60 minutes
+    public void calculateCachedActiveUserNames() {
+        var startDate = System.currentTimeMillis();
+
+        // The authorization object has to be set because this method is not called by a user but by the scheduler
+        SecurityUtils.setAuthorizationObject();
+
+        cachedActiveUserNames = statisticsRepository.getActiveUserNames(ZonedDateTime.now().minusDays(14), ZonedDateTime.now());
+
+        log.info("calculateCachedActiveUserLogins took {}ms", System.currentTimeMillis() - startDate);
+    }
+
+    /**
      * Update exams & exercise metrics.
      * The update (and recalculation) is performed every 5 minutes.
      * Only executed if the "scheduling"-profile is present.
@@ -293,22 +320,21 @@ public class MetricsBean {
         // The authorization object has to be set because this method is not called by a user but by the scheduler
         SecurityUtils.setAuthorizationObject();
 
-        var activeUsers = statisticsRepository.getActiveUsers(ZonedDateTime.now().minusDays(14), ZonedDateTime.now());
-        var activeUserNames = activeUsers.stream().map(StatisticsEntry::getUsername).toList();
+        // The active users are cached and updated every 60 minutes to reduce the database load
 
         // Exercise metrics
-        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseGauge, activeUserNames,
+        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseGauge, cachedActiveUserNames,
                 (now, endDate, activeUserNamesUnused) -> exerciseRepository.countExercisesWithEndDateBetweenGroupByExerciseType(now, endDate));
-        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierGauge, activeUserNames,
+        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierGauge, cachedActiveUserNames,
                 (now, endDate, activeUserNamesUnused) -> exerciseRepository.countStudentsInExercisesWithDueDateBetweenGroupByExerciseType(now, endDate));
-        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierActive14DaysGauge, activeUserNames,
+        updateMultiGaugeMetricsEntryForMinuteRanges(dueExerciseStudentMultiplierActive14DaysGauge, cachedActiveUserNames,
                 exerciseRepository::countActiveStudentsInExercisesWithDueDateBetweenGroupByExerciseType);
 
-        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseGauge, activeUserNames,
+        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseGauge, cachedActiveUserNames,
                 (now, endDate, activeUserNamesUnused) -> exerciseRepository.countExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
-        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierGauge, activeUserNames,
+        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierGauge, cachedActiveUserNames,
                 (now, endDate, activeUserNamesUnused) -> exerciseRepository.countStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType(now, endDate));
-        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierActive14DaysGauge, activeUserNames,
+        updateMultiGaugeMetricsEntryForMinuteRanges(releaseExerciseStudentMultiplierActive14DaysGauge, cachedActiveUserNames,
                 exerciseRepository::countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType);
 
         // Exam metrics

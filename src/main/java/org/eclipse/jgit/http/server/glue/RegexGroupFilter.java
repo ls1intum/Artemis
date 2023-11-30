@@ -11,9 +11,9 @@ package org.eclipse.jgit.http.server.glue;
 import java.io.IOException;
 import java.text.MessageFormat;
 
-import org.eclipse.jgit.http.server.HttpServerText;
-
 import jakarta.servlet.*;
+
+import org.eclipse.jgit.http.server.HttpServerText;
 
 /**
  * Switch servlet path and path info to use another regex match group.

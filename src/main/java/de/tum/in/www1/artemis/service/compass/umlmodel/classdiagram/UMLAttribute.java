@@ -3,11 +3,12 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 import java.io.Serializable;
 import java.util.Objects;
 
+import jakarta.validation.constraints.NotNull;
+
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
-import jakarta.validation.constraints.NotNull;
 
 public class UMLAttribute extends UMLElement implements Serializable {
 

@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.web.rest.metis;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -12,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.metis.ReactionService;
-import jakarta.validation.Valid;
 
 /**
  * REST controller for Reaction on Postings.

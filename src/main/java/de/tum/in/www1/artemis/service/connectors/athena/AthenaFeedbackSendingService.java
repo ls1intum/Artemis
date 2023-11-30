@@ -5,22 +5,16 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.NetworkingException;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import de.tum.in.www1.artemis.service.dto.athena.TextExerciseDTO;
-import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
-import de.tum.in.www1.artemis.service.dto.athena.TextSubmissionDTO;
-import jakarta.validation.constraints.NotNull;
+import de.tum.in.www1.artemis.service.dto.athena.ExerciseDTO;
+import de.tum.in.www1.artemis.service.dto.athena.FeedbackDTO;
+import de.tum.in.www1.artemis.service.dto.athena.SubmissionDTO;
 
 /**
  * Service for publishing feedback to the Athena service for further processing
@@ -32,48 +26,23 @@ public class AthenaFeedbackSendingService {
 
     private final Logger log = LoggerFactory.getLogger(AthenaFeedbackSendingService.class);
 
-    @Value("${artemis.athena.url}")
-    private String athenaUrl;
-
     private final AthenaConnector<RequestDTO, ResponseDTO> connector;
 
-    private final TextBlockRepository textBlockRepository;
+    private final AthenaModuleUrlHelper athenaModuleUrlHelper;
+
+    private final AthenaDTOConverter athenaDTOConverter;
 
     /**
      * Creates a new service to send feedback to the Athena service
-     *
-     * @param textBlockRepository Needed to get start and end indexes of feedbacks
-     * @param athenaRestTemplate  The rest template to use for sending requests to Athena
      */
-    public AthenaFeedbackSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, TextBlockRepository textBlockRepository) {
+    public AthenaFeedbackSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleUrlHelper athenaModuleUrlHelper,
+            AthenaDTOConverter athenaDTOConverter) {
         connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
-        this.textBlockRepository = textBlockRepository;
+        this.athenaModuleUrlHelper = athenaModuleUrlHelper;
+        this.athenaDTOConverter = athenaDTOConverter;
     }
 
-    private static class RequestDTO {
-
-        public TextExerciseDTO exercise;
-
-        public TextSubmissionDTO submission;
-
-        public List<TextFeedbackDTO> feedbacks;
-
-        /**
-         * Connect feedback and text block to find the correct start and end indexes for transfer when constructing the DTO:
-         */
-        RequestDTO(@NotNull TextExercise exercise, @NotNull TextSubmission submission, @NotNull List<Feedback> feedbacks, TextBlockRepository textBlockRepository) {
-            this.exercise = TextExerciseDTO.of(exercise);
-            this.submission = TextSubmissionDTO.of(exercise.getId(), submission);
-            this.feedbacks = feedbacks.stream().map(feedback -> {
-                // Give the DTO the text block the feedback is referring to.
-                // => It will figure out start and end index of the feedback in the text
-                TextBlock feedbackTextBlock = null;
-                if (feedback.getReference() != null) {
-                    feedbackTextBlock = textBlockRepository.findById(feedback.getReference()).orElse(null);
-                }
-                return TextFeedbackDTO.of(exercise.getId(), submission.getId(), feedback, feedbackTextBlock);
-            }).toList();
-        }
+    private record RequestDTO(ExerciseDTO exercise, SubmissionDTO submission, List<FeedbackDTO> feedbacks) {
     }
 
     private record ResponseDTO(String data) {
@@ -88,7 +57,7 @@ public class AthenaFeedbackSendingService {
      * @param feedbacks  the feedback given by the tutor
      */
     @Async
-    public void sendFeedback(TextExercise exercise, TextSubmission submission, List<Feedback> feedbacks) {
+    public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks) {
         sendFeedback(exercise, submission, feedbacks, 1);
     }
 
@@ -102,12 +71,12 @@ public class AthenaFeedbackSendingService {
      * @param maxRetries number of retries before the request will be canceled
      */
     @Async
-    public void sendFeedback(TextExercise exercise, TextSubmission submission, List<Feedback> feedbacks, int maxRetries) {
-        if (!exercise.isFeedbackSuggestionsEnabled()) {
+    public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks, int maxRetries) {
+        if (!exercise.getFeedbackSuggestionsEnabled()) {
             throw new IllegalArgumentException("The exercise does not have feedback suggestions enabled.");
         }
 
-        log.debug("Start Athena Feedback Sending Service for Text Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
+        log.debug("Start Athena Feedback Sending Service for Exercise '{}' (#{}).", exercise.getTitle(), exercise.getId());
 
         if (feedbacks.isEmpty()) {
             log.debug("No feedback given for submission #{}.", submission.getId());
@@ -117,9 +86,10 @@ public class AthenaFeedbackSendingService {
         log.info("Calling Athena with given feedback.");
 
         try {
-            final RequestDTO request = new RequestDTO(exercise, submission, feedbacks, textBlockRepository);
-            // TODO: make module selection dynamic (based on exercise)
-            ResponseDTO response = connector.invokeWithRetry(athenaUrl + "/modules/text/module_text_cofee/feedbacks", request, maxRetries);
+            // Only send manual feedback from tutors to Athena
+            final RequestDTO request = new RequestDTO(athenaDTOConverter.ofExercise(exercise), athenaDTOConverter.ofSubmission(exercise.getId(), submission),
+                    feedbacks.stream().filter(Feedback::isManualFeedback).map((feedback) -> athenaDTOConverter.ofFeedback(exercise, submission.getId(), feedback)).toList());
+            ResponseDTO response = connector.invokeWithRetry(athenaModuleUrlHelper.getAthenaModuleUrl(exercise.getExerciseType()) + "/feedbacks", request, maxRetries);
             log.info("Athena responded to feedback: {}", response.data);
         }
         catch (NetworkingException networkingException) {

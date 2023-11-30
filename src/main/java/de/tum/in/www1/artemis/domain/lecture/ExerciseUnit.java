@@ -4,6 +4,9 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.*;
 import org.hibernate.annotations.Cache;
@@ -12,8 +15,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.competency.Competency;
-import jakarta.persistence.*;
-import jakarta.persistence.Entity;
 
 @Entity
 @DiscriminatorValue("E")

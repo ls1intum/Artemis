@@ -7,6 +7,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -18,17 +20,13 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import de.tum.in.www1.artemis.domain.ConversationWebSocketRecipientSummary;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Organization;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.web.rest.dto.UserPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data JPA repository for the User entity.<br>
@@ -121,9 +119,13 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Set<User> findAllInGroup(@Param("groupName") String groupName);
 
     @Query("""
-            SELECT NEW de.tum.in.www1.artemis.domain.ConversationWebSocketRecipientSummary (
+            SELECT NEW de.tum.in.www1.artemis.domain.ConversationNotificationRecipientSummary (
                 user.id,
                 user.login,
+                user.firstName,
+                user.lastName,
+                user.langKey,
+                user.email,
                 CASE WHEN cp.isHidden = true THEN true ELSE false END,
                 CASE WHEN ug.group = :teachingAssistantGroupName OR ug.group = :editorGroupName OR ug.group = :instructorGroupName THEN true ELSE false END
             )
@@ -132,7 +134,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             LEFT JOIN ConversationParticipant cp ON cp.user.id = user.id AND cp.conversation.id = :conversationId
             WHERE user.isDeleted = false AND (ug.group = :studentGroupName OR ug.group = :teachingAssistantGroupName OR ug.group = :editorGroupName OR ug.group = :instructorGroupName)
             """)
-    Set<ConversationWebSocketRecipientSummary> findAllWebSocketRecipientsInCourseForConversation(@Param("conversationId") Long conversationId,
+    Set<ConversationNotificationRecipientSummary> findAllWebSocketRecipientsInCourseForConversation(@Param("conversationId") Long conversationId,
             @Param("studentGroupName") String studentGroupName, @Param("teachingAssistantGroupName") String teachingAssistantGroupName,
             @Param("editorGroupName") String editorGroupName, @Param("instructorGroupName") String instructorGroupName);
 

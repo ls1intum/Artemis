@@ -13,6 +13,12 @@ import java.text.MessageFormat;
 import java.util.LinkedList;
 import java.util.List;
 
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.eclipse.jgit.http.server.glue.*;
 import org.eclipse.jgit.http.server.resolver.AsIsFileService;
 import org.eclipse.jgit.http.server.resolver.DefaultReceivePackFactory;
@@ -20,12 +26,6 @@ import org.eclipse.jgit.http.server.resolver.DefaultUploadPackFactory;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.resolver.*;
 import org.eclipse.jgit.util.StringUtils;
-
-import jakarta.servlet.Filter;
-import jakarta.servlet.FilterConfig;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Handles Git repository access over HTTP.

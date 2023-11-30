@@ -6,6 +6,8 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,7 +18,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data JPA repository for the Exercise entity.
@@ -526,6 +527,24 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                   OR students.id = :userId
              """)
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(long userId);
+
+    /**
+     * Finds all exercises filtered by feedback suggestions and due date.
+     *
+     * @param feedbackSuggestionsEnabled - filter by feedback suggestions enabled
+     * @param dueDate                    - filter by due date
+     * @return Set of Exercises
+     */
+    Set<Exercise> findByFeedbackSuggestionsEnabledAndDueDateIsAfter(boolean feedbackSuggestionsEnabled, ZonedDateTime dueDate);
+
+    /**
+     * Find all exercises feedback suggestions (Athena) and with *Due Date* in the future.
+     *
+     * @return Set of Exercises
+     */
+    default Set<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
+        return findByFeedbackSuggestionsEnabledAndDueDateIsAfter(true, ZonedDateTime.now());
+    }
 
     /**
      * For an explanation, see {@link de.tum.in.www1.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long,long)}

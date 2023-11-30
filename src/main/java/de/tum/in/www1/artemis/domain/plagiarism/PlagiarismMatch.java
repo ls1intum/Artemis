@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import de.jplag.Match;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+
+import de.jplag.Match;
 
 /**
  * A `PlagiarismMatch` is a sequence of identical elements of both submissions.

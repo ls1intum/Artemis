@@ -6,6 +6,9 @@ import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
+
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -19,8 +22,6 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data JPA repository for the StudentExam entity.
@@ -38,11 +39,11 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             SELECT DISTINCT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
-            WHERE se.testRun = FALSE
+            WHERE se.testRun = :isTestRun
                 AND se.exam.id = :examId
                 AND se.user.id = :userId
             """)
-    Optional<StudentExam> findWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
+    Optional<StudentExam> findWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId, @Param("isTestRun") boolean isTestRun);
 
     // Normally, there should only be one student exam for the same user/exam pair (except test runs for instructors)
     @Query("""

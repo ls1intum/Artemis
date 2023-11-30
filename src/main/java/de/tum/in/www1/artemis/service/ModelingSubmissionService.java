@@ -4,6 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -21,9 +23,9 @@ import de.tum.in.www1.artemis.domain.modeling.SimilarElementCount;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSelectionService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import jakarta.validation.constraints.NotNull;
 
 @Service
 public class ModelingSubmissionService extends SubmissionService {
@@ -44,9 +46,10 @@ public class ModelingSubmissionService extends SubmissionService {
             CompassService compassService, UserRepository userRepository, SubmissionVersionService submissionVersionService, ParticipationService participationService,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository,
             ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ModelElementRepository modelElementRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService) {
+            ModelElementRepository modelElementRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
+            Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.compassService = compassService;
         this.submissionVersionService = submissionVersionService;

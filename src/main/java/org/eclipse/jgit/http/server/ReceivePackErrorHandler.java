@@ -9,11 +9,11 @@ package org.eclipse.jgit.http.server;
 
 import java.io.IOException;
 
-import org.eclipse.jgit.transport.ReceivePack;
-import org.eclipse.jgit.transport.ServiceMayNotContinueException;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import org.eclipse.jgit.transport.ReceivePack;
+import org.eclipse.jgit.transport.ServiceMayNotContinueException;
 
 /**
  * Handle git-receive-pack errors.

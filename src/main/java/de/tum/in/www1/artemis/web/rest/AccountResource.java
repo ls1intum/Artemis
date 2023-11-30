@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.Optional;
 
+import jakarta.validation.Valid;
+
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.User;
@@ -13,7 +15,6 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
-import jakarta.validation.Valid;
 
 /**
  * REST controller for managing the current user's account.

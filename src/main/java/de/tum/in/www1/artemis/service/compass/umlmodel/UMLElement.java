@@ -4,8 +4,9 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
-import de.tum.in.www1.artemis.service.compass.assessment.Context;
 import jakarta.annotation.Nullable;
+
+import de.tum.in.www1.artemis.service.compass.assessment.Context;
 
 public abstract class UMLElement implements Similarity<UMLElement>, Serializable {
 

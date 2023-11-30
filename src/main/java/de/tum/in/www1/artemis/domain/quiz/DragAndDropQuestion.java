@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.domain.quiz;
 import java.net.URI;
 import java.util.*;
 
+import jakarta.persistence.*;
+
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -19,7 +21,6 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
-import jakarta.persistence.*;
 
 /**
  * A DragAndDropQuestion.

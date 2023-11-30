@@ -2,8 +2,9 @@ package de.tum.in.www1.artemis.authentication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import jakarta.servlet.http.Cookie;
+
+import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
 public class AuthenticationIntegrationTestHelper {
 

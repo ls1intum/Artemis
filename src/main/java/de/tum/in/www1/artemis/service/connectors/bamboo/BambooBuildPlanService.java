@@ -8,6 +8,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.*;
 
+import jakarta.annotation.Nullable;
+
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -52,7 +54,6 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
-import jakarta.annotation.Nullable;
 
 @Service
 @Profile("bamboo")
@@ -113,9 +114,9 @@ public class BambooBuildPlanService {
 
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryUrl, testRepositoryUrl, programmingExercise.getCheckoutSolutionRepository(),
                 solutionRepositoryUrl, auxiliaryRepositories)
-                        .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
-                                programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository(),
-                                recordTestwiseCoverage, programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
+                .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
+                        programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository(),
+                        recordTestwiseCoverage, programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
 
         bambooServer.publish(plan);
         setBuildPlanPermissionsForExercise(programmingExercise, plan.getKey().toString());

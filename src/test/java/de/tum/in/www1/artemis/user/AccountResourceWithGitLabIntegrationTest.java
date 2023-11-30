@@ -5,6 +5,8 @@ import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.gitlab4j.api.UserApi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +21,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
-import jakarta.validation.constraints.NotNull;
 
 class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

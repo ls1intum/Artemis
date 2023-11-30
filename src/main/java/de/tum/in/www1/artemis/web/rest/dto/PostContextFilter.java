@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
-import jakarta.validation.constraints.NotBlank;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class PostContextFilter {
@@ -18,6 +19,8 @@ public class PostContextFilter {
     private Long[] exerciseIds;
 
     private Long[] lectureIds;
+
+    private long[] courseWideChannelIds;
 
     private Long plagiarismCaseId;
 
@@ -74,6 +77,14 @@ public class PostContextFilter {
 
     public void setLectureIds(Long[] lectureIds) {
         this.lectureIds = lectureIds;
+    }
+
+    public long[] getCourseWideChannelIds() {
+        return courseWideChannelIds;
+    }
+
+    public void setCourseWideChannelIds(long[] courseWideChannelIds) {
+        this.courseWideChannelIds = courseWideChannelIds;
     }
 
     public Long getPlagiarismCaseId() {
