@@ -1,0 +1,587 @@
+{
+  "version": "3.0.0",
+  "type": "Flowchart",
+  "size": {
+    "width": 560,
+    "height": 1120
+  },
+  "interactive": {
+    "elements": {},
+    "relationships": {}
+  },
+  "elements": {
+    "216eedd7-d050-42b1-8b5e-7882e0d70a31": {
+      "id": "216eedd7-d050-42b1-8b5e-7882e0d70a31",
+      "name": "Start",
+      "type": "FlowchartTerminal",
+      "owner": null,
+      "bounds": {
+        "x": 140,
+        "y": 0,
+        "width": 70,
+        "height": 35
+      }
+    },
+    "8feecb77-df4e-4624-b56c-ab9840568fe2": {
+      "id": "8feecb77-df4e-4624-b56c-ab9840568fe2",
+      "name": "r = 1;",
+      "type": "FlowchartProcess",
+      "owner": null,
+      "bounds": {
+        "x": 140,
+        "y": 70,
+        "width": 70,
+        "height": 35
+      }
+    },
+    "17f63f66-68eb-4753-a1fe-96c649ae15bf": {
+      "id": "17f63f66-68eb-4753-a1fe-96c649ae15bf",
+      "name": "n = 1;",
+      "type": "FlowchartProcess",
+      "owner": null,
+      "bounds": {
+        "x": 140,
+        "y": 140,
+        "width": 70,
+        "height": 40
+      }
+    },
+    "3b3b4fbf-129c-4c86-b00f-b49cfd50122a": {
+      "id": "3b3b4fbf-129c-4c86-b00f-b49cfd50122a",
+      "name": "x = readInt();",
+      "type": "FlowchartInputOutput",
+      "owner": null,
+      "bounds": {
+        "x": 120,
+        "y": 220,
+        "width": 110,
+        "height": 35
+      }
+    },
+    "d9fc37ac-0073-401e-ab4a-ded352c6e13f": {
+      "id": "d9fc37ac-0073-401e-ab4a-ded352c6e13f",
+      "name": "n <= x",
+      "type": "FlowchartDecision",
+      "owner": null,
+      "bounds": {
+        "x": 120,
+        "y": 320,
+        "width": 110,
+        "height": 55
+      }
+    },
+    "08fa7efd-02bf-4e4e-a9f4-ec0c5acb97b2": {
+      "id": "08fa7efd-02bf-4e4e-a9f4-ec0c5acb97b2",
+      "name": "r % 1 == 0",
+      "type": "FlowchartDecision",
+      "owner": null,
+      "bounds": {
+        "x": 270,
+        "y": 400,
+        "width": 110,
+        "height": 55
+      }
+    },
+    "34fe78a0-d398-4f30-9dbf-ce4580f86cb5": {
+      "id": "34fe78a0-d398-4f30-9dbf-ce4580f86cb5",
+      "name": "write(r);",
+      "type": "FlowchartInputOutput",
+      "owner": null,
+      "bounds": {
+        "x": 0,
+        "y": 410,
+        "width": 90,
+        "height": 35
+      }
+    },
+    "10517e18-33ec-4527-bc85-4bd0cf20041d": {
+      "id": "10517e18-33ec-4527-bc85-4bd0cf20041d",
+      "name": "Stop",
+      "type": "FlowchartTerminal",
+      "owner": null,
+      "bounds": {
+        "x": 10,
+        "y": 490,
+        "width": 70,
+        "height": 35
+      }
+    },
+    "7ce25b82-a5c9-4e26-a260-378145a2d664": {
+      "id": "7ce25b82-a5c9-4e26-a260-378145a2d664",
+      "name": "r = r * (-n);",
+      "type": "FlowchartProcess",
+      "owner": null,
+      "bounds": {
+        "x": 180,
+        "y": 510,
+        "width": 90,
+        "height": 35
+      }
+    },
+    "e5f44e25-8cd5-4f71-adc8-f18f9fe12f82": {
+      "id": "e5f44e25-8cd5-4f71-adc8-f18f9fe12f82",
+      "name": "r = r * n;",
+      "type": "FlowchartProcess",
+      "owner": null,
+      "bounds": {
+        "x": 380,
+        "y": 510,
+        "width": 90,
+        "height": 35
+      }
+    },
+    "a9e109a1-d239-4e70-8496-ae0dde3dac12": {
+      "id": "a9e109a1-d239-4e70-8496-ae0dde3dac12",
+      "name": "write(r);",
+      "type": "FlowchartInputOutput",
+      "owner": null,
+      "bounds": {
+        "x": 180,
+        "y": 620,
+        "width": 90,
+        "height": 35
+      }
+    },
+    "0e797e2b-efba-4ad6-83f8-b7b8465702d6": {
+      "id": "0e797e2b-efba-4ad6-83f8-b7b8465702d6",
+      "name": "n = n + 1;",
+      "type": "FlowchartProcess",
+      "owner": null,
+      "bounds": {
+        "x": 380,
+        "y": 740,
+        "width": 90,
+        "height": 35
+      }
+    }
+  },
+  "relationships": {
+    "3cf62b34-c5f9-4f53-b5ac-81ae5d382adf": {
+      "id": "3cf62b34-c5f9-4f53-b5ac-81ae5d382adf",
+      "name": "",
+      "type": "FlowchartFlowline",
+      "owner": null,
+      "bounds": {
+        "x": 175,
+        "y": 35,
+        "width": 1,
+        "height": 35
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 35
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "216eedd7-d050-42b1-8b5e-7882e0d70a31"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "8feecb77-df4e-4624-b56c-ab9840568fe2"
+      }
+    },
+    "80b1f6c0-7806-422d-a5ab-41263d320d9a": {
+      "id": "80b1f6c0-7806-422d-a5ab-41263d320d9a",
+      "name": "",
+      "type": "FlowchartFlowline",
+      "owner": null,
+      "bounds": {
+        "x": 175,
+        "y": 105,
+        "width": 1,
+        "height": 35
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 35
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "8feecb77-df4e-4624-b56c-ab9840568fe2"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "17f63f66-68eb-4753-a1fe-96c649ae15bf"
+      }
+    },
+    "7108141c-bf83-479b-812b-29a9a1ff9fd8": {
+      "id": "7108141c-bf83-479b-812b-29a9a1ff9fd8",
+      "name": "",
+      "type": "FlowchartFlowline",
+      "owner": null,
+      "bounds": {
+        "x": 175,
+        "y": 180,
+        "width": 1,
+        "height": 40
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 40
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "17f63f66-68eb-4753-a1fe-96c649ae15bf"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "3b3b4fbf-129c-4c86-b00f-b49cfd50122a"
+      }
+    },
+    "9d8339f3-7275-4f86-b6d6-d21b1579118d": {
+      "id": "9d8339f3-7275-4f86-b6d6-d21b1579118d",
+      "name": "",
+      "type": "FlowchartFlowline",
+      "owner": null,
+      "bounds": {
+        "x": 175,
+        "y": 255,
+        "width": 1,
+        "height": 65
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 65
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "3b3b4fbf-129c-4c86-b00f-b49cfd50122a"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "d9fc37ac-0073-401e-ab4a-ded352c6e13f"
+      }
+    },
+    "a4d87152-890e-41ea-b0ce-21db96ae0cd5": {
+      "id": "a4d87152-890e-41ea-b0ce-21db96ae0cd5",
+      "name": "yes",
+      "type": "FlowchartFlowline",
+      "owner": null,
+      "bounds": {
+        "x": 230,
+        "y": 347.5,
+        "width": 95,
+        "height": 52.5
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 95,
+          "y": 0
+        },
+        {
+          "x": 95,
+          "y": 52.5
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "d9fc37ac-0073-401e-ab4a-ded352c6e13f"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "08fa7efd-02bf-4e4e-a9f4-ec0c5acb97b2"
+      }
+    },
+    "a16a91fd-dd89-408e-bb5d-f81854fa8a3b": {
+      "id": "a16a91fd-dd89-408e-bb5d-f81854fa8a3b",
+      "name": "no",
+      "type": "FlowchartFlowline",
+      "owner": null,
+      "bounds": {
+        "x": 45,
+        "y": 347.5,
+        "width": 75,
+        "height": 62.5
+      },
+      "path": [
+        {
+          "x": 75,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 62.5
+        }
+      ],
+      "source": {
+        "direction": "Left",
+        "element": "d9fc37ac-0073-401e-ab4a-ded352c6e13f"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "34fe78a0-d398-4f30-9dbf-ce4580f86cb5"
+      }
+    },
+    "8997af73-299e-47a9-b553-bb6a12ff4247": {
+      "id": "8997af73-299e-47a9-b553-bb6a12ff4247",
+      "name": "",
+      "type": "FlowchartFlowline",
+      "owner": null,
+      "bounds": {
+        "x": 45,
+        "y": 445,
+        "width": 1,
+        "height": 45
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 45
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "34fe78a0-d398-4f30-9dbf-ce4580f86cb5"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "10517e18-33ec-4527-bc85-4bd0cf20041d"
+      }
+    },
+    "4677d6bf-4a48-472f-be7d-a5830521d166": {
+      "id": "4677d6bf-4a48-472f-be7d-a5830521d166",
+      "name": "no",
+      "type": "FlowchartFlowline",
+      "owner": null,
+      "bounds": {
+        "x": 225,
+        "y": 427.5,
+        "width": 45,
+        "height": 82.5
+      },
+      "path": [
+        {
+          "x": 45,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 82.5
+        }
+      ],
+      "source": {
+        "direction": "Left",
+        "element": "08fa7efd-02bf-4e4e-a9f4-ec0c5acb97b2"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "7ce25b82-a5c9-4e26-a260-378145a2d664"
+      }
+    },
+    "5f97b8f3-37fa-4e22-bdb9-f5fd2deb98f6": {
+      "id": "5f97b8f3-37fa-4e22-bdb9-f5fd2deb98f6",
+      "name": "yes",
+      "type": "FlowchartFlowline",
+      "owner": null,
+      "bounds": {
+        "x": 380,
+        "y": 427.5,
+        "width": 45,
+        "height": 82.5
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 45,
+          "y": 0
+        },
+        {
+          "x": 45,
+          "y": 82.5
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "08fa7efd-02bf-4e4e-a9f4-ec0c5acb97b2"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "e5f44e25-8cd5-4f71-adc8-f18f9fe12f82"
+      }
+    },
+    "5e6e8306-1e01-4284-b629-0645842d0d64": {
+      "id": "5e6e8306-1e01-4284-b629-0645842d0d64",
+      "name": "",
+      "type": "FlowchartFlowline",
+      "owner": null,
+      "bounds": {
+        "x": 225,
+        "y": 545,
+        "width": 1,
+        "height": 75
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 75
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "7ce25b82-a5c9-4e26-a260-378145a2d664"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "a9e109a1-d239-4e70-8496-ae0dde3dac12"
+      }
+    },
+    "77d8c608-fa21-493b-8329-1e091e45816a": {
+      "id": "77d8c608-fa21-493b-8329-1e091e45816a",
+      "name": "",
+      "type": "FlowchartFlowline",
+      "owner": null,
+      "bounds": {
+        "x": 225,
+        "y": 655,
+        "width": 200,
+        "height": 85
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 42.5
+        },
+        {
+          "x": 200,
+          "y": 42.5
+        },
+        {
+          "x": 200,
+          "y": 85
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "a9e109a1-d239-4e70-8496-ae0dde3dac12"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "0e797e2b-efba-4ad6-83f8-b7b8465702d6"
+      }
+    },
+    "e2a15f7a-b710-4dbe-bf89-981cefae7d1b": {
+      "id": "e2a15f7a-b710-4dbe-bf89-981cefae7d1b",
+      "name": "",
+      "type": "FlowchartFlowline",
+      "owner": null,
+      "bounds": {
+        "x": 425,
+        "y": 545,
+        "width": 1,
+        "height": 195
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 195
+        }
+      ],
+      "source": {
+        "direction": "Down",
+        "element": "e5f44e25-8cd5-4f71-adc8-f18f9fe12f82"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "0e797e2b-efba-4ad6-83f8-b7b8465702d6"
+      }
+    },
+    "f3f1ded9-87a3-4613-9de5-684f67b839db": {
+      "id": "f3f1ded9-87a3-4613-9de5-684f67b839db",
+      "name": "",
+      "type": "FlowchartFlowline",
+      "owner": null,
+      "bounds": {
+        "x": 175,
+        "y": 280,
+        "width": 335,
+        "height": 477.5
+      },
+      "path": [
+        {
+          "x": 295,
+          "y": 477.5
+        },
+        {
+          "x": 335,
+          "y": 477.5
+        },
+        {
+          "x": 335,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 40
+        }
+      ],
+      "source": {
+        "direction": "Right",
+        "element": "0e797e2b-efba-4ad6-83f8-b7b8465702d6"
+      },
+      "target": {
+        "direction": "Up",
+        "element": "d9fc37ac-0073-401e-ab4a-ded352c6e13f"
+      }
+    }
+  },
+  "assessments": {}
+}
