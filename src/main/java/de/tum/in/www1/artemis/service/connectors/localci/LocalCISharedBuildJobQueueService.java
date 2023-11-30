@@ -193,6 +193,7 @@ public class LocalCISharedBuildJobQueueService {
 
         log.info("Processing build job: " + buildJob);
         String commitHash = buildJob.getCommitHash();
+        boolean isRetry = buildJob.getRetryCount() == 1;
 
         // participation might not be persisted in the database yet
         ProgrammingExerciseParticipation participation = retrieveParticipationWithRetry(buildJob.getParticipationId());
@@ -202,7 +203,7 @@ public class LocalCISharedBuildJobQueueService {
             participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
         }
 
-        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash);
+        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash, isRetry);
         futureResult.thenAccept(buildResult -> {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore, a mock auth object has to be created.
