@@ -8,6 +8,7 @@ import { SharedService } from 'app/iris/shared.service';
 import { IrisHeartbeatService } from 'app/iris/heartbeat.service';
 import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { IrisChatbotButtonComponent } from 'app/iris/exercise-chatbot/chatbot-button.component';
+import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/iris-logo/iris-logo.component';
 
 @Component({
     selector: 'jhi-tutor-chatbot-button',
@@ -16,6 +17,9 @@ import { IrisChatbotButtonComponent } from 'app/iris/exercise-chatbot/chatbot-bu
     providers: [IrisChatWebsocketService, IrisChatSessionService, IrisHeartbeatService],
 })
 export class IrisTutorChatbotButtonComponent extends IrisChatbotButtonComponent {
+    protected readonly IrisLogoSize = IrisLogoSize;
+    protected readonly IrisLogoLookDirection = IrisLogoLookDirection;
+
     constructor(
         dialog: MatDialog,
         overlay: Overlay,
