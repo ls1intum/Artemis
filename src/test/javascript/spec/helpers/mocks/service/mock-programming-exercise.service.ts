@@ -23,4 +23,6 @@ export class MockProgrammingExerciseService {
     getLatestTestwiseCoverageReport = (exerciseId: number) => of({});
     combineTemplateRepositoryCommits = (exerciseId: number) => of({});
     delete = (programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean) => of({});
+    generateStructureOracle = (exerciseId: number) => of({});
+    unlockAllRepositories = (exerciseId: number) => of({});
 }

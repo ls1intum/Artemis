@@ -52,6 +52,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
 
     const mockProgrammingExercise = {
         id: 1,
+        categories: [{ category: 'Important' }],
         templateParticipation: {
             id: 1,
         } as TemplateProgrammingExerciseParticipation,
@@ -329,11 +330,70 @@ describe('ProgrammingExercise Management Detail Component', () => {
         expect(routerNavigateSpy).toHaveBeenCalledOnce();
     });
 
-    it('should handle unlock all Repsitories', () => {
+    it('should delete exam programming exercise', () => {
+        const routerNavigateSpy = jest.spyOn(router, 'navigateByUrl');
+        jest.spyOn(exerciseService, 'delete').mockReturnValue(of(new HttpResponse({ body: null })));
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.isExamExercise = true;
+        comp.deleteProgrammingExercise({});
+        expect(routerNavigateSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should handle unlock all repsitories', () => {
         const modalSpy = jest.spyOn(modalService, 'open');
         comp.programmingExercise = mockProgrammingExercise;
 
         comp.handleUnlockAllRepositories();
         expect(modalSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should unlock all repositories', () => {
+        const unlockSpy = jest.spyOn(exerciseService, 'unlockAllRepositories').mockReturnValue(of(new HttpResponse({ body: 2 })));
+        const successSpy = jest.spyOn(alertService, 'addAlert');
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.unlockAllRepositories();
+        expect(unlockSpy).toHaveBeenCalledOnce();
+        expect(successSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should error on unlock all repositories', () => {
+        const unlockSpy = jest.spyOn(exerciseService, 'unlockAllRepositories').mockReturnValue(throwError(new HttpResponse({ body: 2 })));
+        const errorSpy = jest.spyOn(alertService, 'error');
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.unlockAllRepositories();
+        expect(unlockSpy).toHaveBeenCalledOnce();
+        expect(errorSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should handle lock all Repsitories', () => {
+        const modalSpy = jest.spyOn(modalService, 'open');
+        comp.programmingExercise = mockProgrammingExercise;
+
+        comp.handleLockAllRepositories();
+        expect(modalSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should generate structure oracle', async () => {
+        const alertSpy = jest.spyOn(alertService, 'addAlert');
+        jest.spyOn(exerciseService, 'generateStructureOracle').mockReturnValue(of('success'));
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.generateStructureOracle();
+        expect(alertSpy).toHaveBeenCalledWith({
+            type: AlertType.SUCCESS,
+            message: 'success',
+            disableTranslation: true,
+        });
+    });
+
+    it('should error on generate structure oracle', () => {
+        const alertSpy = jest.spyOn(alertService, 'addAlert');
+        jest.spyOn(exerciseService, 'generateStructureOracle').mockReturnValue(throwError({ headers: { get: () => 'error' } }));
+        comp.programmingExercise = mockProgrammingExercise;
+        comp.generateStructureOracle();
+        expect(alertSpy).toHaveBeenCalledWith({
+            type: AlertType.DANGER,
+            message: 'error',
+            disableTranslation: true,
+        });
     });
 });
