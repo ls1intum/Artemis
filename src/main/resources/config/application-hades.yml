@@ -1,0 +1,4 @@
+artemis:
+    hades:
+        token: ""
+        url: "localhost:3002"
