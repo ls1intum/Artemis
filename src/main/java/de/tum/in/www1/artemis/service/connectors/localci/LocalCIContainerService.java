@@ -136,9 +136,10 @@ public class LocalCIContainerService {
      * Retrieve the commit hash of the latest commit to a given repository on a given container for a given branch.
      * This is the commit hash that was checked out by the build job.
      *
-     * @param containerId    the id of the container in which the repository is located
-     * @param repositoryType the type of the repository, either "assignment" or "test"
-     * @param branchName     the name of the branch for which the commit hash should be retrieved
+     * @param containerId         the id of the container in which the repository is located
+     * @param repositoryType      the type of the repository, either "assignment" or "test"
+     * @param branchName          the name of the branch for which the commit hash should be retrieved
+     * @param programmingLanguage the programming language of the exercise
      * @return the commit hash of the latest commit to the repository on the container for the given branch
      * @throws IOException if no commit hash could be retrieved
      */
@@ -149,7 +150,7 @@ public class LocalCIContainerService {
         String repositoryCheckoutPath = RepositoryCheckoutPath.valueOf(repositoryType.toString().toUpperCase()).forProgrammingLanguage(programmingLanguage);
         TarArchiveInputStream repositoryTarInputStream;
 
-        if (repositoryCheckoutPath == null) {
+        if (Objects.equals(repositoryCheckoutPath, "")) {
             repositoryTarInputStream = getArchiveFromContainer(containerId, "/testing-dir/.git/refs/heads/" + branchName);
         }
         else {
@@ -206,6 +207,7 @@ public class LocalCIContainerService {
      * @param auxiliaryRepositoriesPaths             the paths to the auxiliary repositories
      * @param auxiliaryRepositoryCheckoutDirectories the names of the auxiliary repositories
      * @param buildScriptPath                        the path to the build script
+     * @param programmingLanguage                    the programming language of the exercise
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths,
             String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath, ProgrammingLanguage programmingLanguage) {
