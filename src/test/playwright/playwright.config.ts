@@ -22,11 +22,11 @@ export default defineConfig({
     /* Opt out of parallel tests on CI. */
     workers: process.env.CI ? 1 : undefined,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-    reporter: process.env.CI ? [['junit', { outputFile: './test-reports/results.xml' }]] : [['list'], ['html']],
+    reporter: [['junit', { outputFile: './test-reports/results.xml' }]],
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */
-        baseURL: process.env.CI ? 'https://artemis-nginx' : 'http://localhost:9000',
+        baseURL: 'https://artemis-nginx',
 
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: 'on-first-retry',
