@@ -377,7 +377,6 @@ dependencies {
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.24.2"
-    testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "org.junit.platform:junit-platform-launcher:1.10.0"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
@@ -402,6 +401,8 @@ dependencies {
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20231013"
 }
+
+ext['junit-jupiter.version'] = junit_version
 
 dependencyManagement {
     imports {

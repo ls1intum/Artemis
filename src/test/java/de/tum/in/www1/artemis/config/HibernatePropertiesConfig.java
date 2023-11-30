@@ -1,25 +1,18 @@
 package de.tum.in.www1.artemis.config;
 
-import java.util.Map;
-
+import org.hibernate.cfg.AvailableSettings;
+import org.hibernate.resource.jdbc.spi.StatementInspector;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
-import de.tum.in.www1.artemis.util.HibernateQueryInterceptor;
-
 @Configuration
 @ComponentScan
-class HibernatePropertiesConfig implements HibernatePropertiesCustomizer {
+class HibernatePropertiesConfig {
 
-    private final HibernateQueryInterceptor hibernateQueryInterceptor;
-
-    public HibernatePropertiesConfig(HibernateQueryInterceptor hibernateQueryInterceptor) {
-        this.hibernateQueryInterceptor = hibernateQueryInterceptor;
-    }
-
-    @Override
-    public void customize(Map<String, Object> hibernateProperties) {
-        hibernateProperties.put("hibernate.session_factory.interceptor", hibernateQueryInterceptor);
+    @Bean
+    public HibernatePropertiesCustomizer hibernateCustomizer(StatementInspector statementInspector) {
+        return (properties) -> properties.put(AvailableSettings.STATEMENT_INSPECTOR, statementInspector);
     }
 }
