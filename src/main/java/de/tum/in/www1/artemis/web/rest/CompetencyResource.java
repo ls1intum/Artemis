@@ -284,11 +284,7 @@ public class CompetencyResource {
         var competency = competencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(competencyId);
         checkAuthorizationForCompetency(Role.INSTRUCTOR, course, competency);
 
-        var relations = competencyRelationRepository.findAllByCompetencyId(competency.getId());
-        if (!relations.isEmpty()) {
-            throw new BadRequestException("Can not delete a competency that has active relations");
-        }
-
+        competencyRelationRepository.deleteAllByCompetencyId(competencyId);
         competencyProgressRepository.deleteAllByCompetencyId(competency.getId());
 
         competency.getExercises().forEach(exercise -> {
