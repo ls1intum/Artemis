@@ -240,7 +240,9 @@ dependencies {
 
     implementation "org.apache.logging.log4j:log4j-to-slf4j:2.22.0"
 
-    implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.7"
+    // Note: spring-security-lti13 does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
+//    implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.7"
+    implementation files("libs/spring-security-lti13-0.1.4.jar")
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
@@ -310,6 +312,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-websocket:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-thymeleaf:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:3.1.1"
     implementation "org.springframework.data:spring-data-ldap:3.1.4"
