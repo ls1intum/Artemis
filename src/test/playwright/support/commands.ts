@@ -14,6 +14,7 @@ export class Commands {
             .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt'));
         if (!jwtCookie) {
             await new Promise((resolve, reject) => {
+                console.log('Login URL: ' + process.env.baseURL + '/' + BASE_API + 'public/authenticate');
                 const req = https.request(
                     {
                         hostname: process.env.baseURL,
