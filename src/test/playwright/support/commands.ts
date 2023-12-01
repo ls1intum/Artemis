@@ -18,7 +18,6 @@ export class Commands {
                 const req = https.request(
                     {
                         hostname: process.env.baseURL,
-                        port: 8080,
                         path: BASE_API + 'public/authenticate',
                         method: 'POST',
                         agent: new https.Agent({
@@ -41,6 +40,14 @@ export class Commands {
                     },
                 );
 
+                console.log(
+                    'Request: ' +
+                        JSON.stringify({
+                            username,
+                            password,
+                            rememberMe: true,
+                        }),
+                );
                 req.on('error', reject);
                 req.write(
                     JSON.stringify({
