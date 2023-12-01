@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
@@ -51,16 +53,22 @@ public class LocalCISharedBuildJobQueueService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    // map of build jobs currently being processed accross all nodes
+    /**
+     * Map of build jobs currently being processed across all nodes
+     */
     private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
 
-    private int localProcessingJobs = 0;
+    private AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
-    // lock to prevent multiple nodes from processing the same build job
-    private final FencedLock fLock;
+    /**
+     * Lock to prevent multiple nodes from processing the same build job.
+     */
+    private final FencedLock sharedLock;
 
-    // lock for operations on single instance
-    private final ReentrantLock lock = new ReentrantLock();
+    /**
+     * Lock for operations on single instance.
+     */
+    private final ReentrantLock instanceLock = new ReentrantLock();
 
     @Autowired
     public LocalCISharedBuildJobQueueService(HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
@@ -75,7 +83,7 @@ public class LocalCISharedBuildJobQueueService {
         this.programmingMessagingService = programmingMessagingService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
-        this.fLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
+        this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.queue.addItemListener(new BuildJobItemListener(), true);
     }
@@ -111,22 +119,32 @@ public class LocalCISharedBuildJobQueueService {
         return processingJobs.values().stream().filter(job -> job.getCourseId() == courseId).toList();
     }
 
+    /**
+     * Retrieve participation from database with retries.
+     * This is necessary because the participation might not be persisted in the database yet.
+     *
+     * @param participationId id of the participation
+     */
     private ProgrammingExerciseParticipation retrieveParticipationWithRetry(Long participationId) {
         int maxRetries = 5;
         int retries = 0;
+        ProgrammingExerciseParticipation participation;
+        Optional<Participation> tempParticipation;
         while (retries < maxRetries) {
-            try {
-                return (ProgrammingExerciseParticipation) participationRepository.findByIdElseThrow(participationId);
+            tempParticipation = participationRepository.findById(participationId);
+            if (tempParticipation.isPresent()) {
+                participation = (ProgrammingExerciseParticipation) tempParticipation.get();
+                return participation;
             }
-            catch (Exception e) {
-                log.debug("Error while retrieving participation with id " + participationId + " from database: " + e.getMessage());
-                log.info("Retrying to retrieve participation with id " + participationId + " from database");
+            else {
+                log.debug("Could not retrieve participation with id {} from database", participationId);
+                log.info("Retrying to retrieve participation with id {} from database", participationId);
                 retries++;
                 try {
                     Thread.sleep(1000);
                 }
                 catch (InterruptedException e1) {
-                    log.error("Error while waiting for participation with id " + participationId + " to be persisted in database: " + e1.getMessage());
+                    log.error("Error while waiting for participation with id {} to be persisted in database", participationId, e1);
                 }
             }
         }
@@ -134,16 +152,16 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     private void checkAvailabilityAndProcessNextBuild() {
-        lock.lock();
+        instanceLock.lock();
 
         if (!nodeIsAvailable()) {
             log.info("Node has no available threads currently");
-            lock.unlock();
+            instanceLock.unlock();
             return;
         }
 
         if (queue.isEmpty()) {
-            lock.unlock();
+            instanceLock.unlock();
             return;
         }
         // need to add the build job to processingJobs before taking it from the queue,
@@ -151,15 +169,15 @@ public class LocalCISharedBuildJobQueueService {
         LocalCIBuildJobQueueItem buildJob;
 
         // lock the queue to prevent multiple nodes from processing the same build job
-        fLock.lock();
+        sharedLock.lock();
         try {
             buildJob = addToProcessingJobs();
         }
         finally {
-            fLock.unlock();
+            sharedLock.unlock();
         }
 
-        lock.unlock();
+        instanceLock.unlock();
         processBuild(buildJob);
     }
 
@@ -170,20 +188,20 @@ public class LocalCISharedBuildJobQueueService {
             buildJob.setBuildStartDate(System.currentTimeMillis());
             buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(180));
             processingJobs.put(participationId, buildJob);
-            localProcessingJobs++;
+            localProcessingJobs.incrementAndGet();
         }
         return buildJob;
     }
 
     // Checks whether the node has at least one thread available for a new build job
-    private Boolean nodeIsAvailable() {
-        log.info("Current active threads: " + localCIBuildExecutorService.getActiveCount());
-        return localProcessingJobs < localCIBuildExecutorService.getMaximumPoolSize();
+    private boolean nodeIsAvailable() {
+        log.info("Current active threads: {}", localCIBuildExecutorService.getActiveCount());
+        return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
     }
 
     /**
      * Process a build job by adding it to the local CI executor service.
-     * On completetion, check for next job.
+     * On completion, check for next job.
      */
     private void processBuild(LocalCIBuildJobQueueItem buildJob) {
 
@@ -193,7 +211,7 @@ public class LocalCISharedBuildJobQueueService {
 
         log.info("Processing build job: " + buildJob);
         String commitHash = buildJob.getCommitHash();
-        boolean isRetry = buildJob.getRetryCount() == 1;
+        boolean isRetry = buildJob.getRetryCount() >= 1;
 
         // participation might not be persisted in the database yet
         ProgrammingExerciseParticipation participation = retrieveParticipationWithRetry(buildJob.getParticipationId());
@@ -219,21 +237,21 @@ public class LocalCISharedBuildJobQueueService {
 
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.getParticipationId());
-            localProcessingJobs--;
+            localProcessingJobs.decrementAndGet();
 
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
         }).exceptionally(ex -> {
-            log.error("Error while processing build job: " + buildJob, ex);
+            log.error("Error while processing build job: {}", buildJob, ex);
 
             processingJobs.remove(buildJob.getParticipationId());
-            localProcessingJobs--;
+            localProcessingJobs.decrementAndGet();
 
             if (buildJob.getRetryCount() > 0) {
-                log.error("Build job failed for the second time: " + buildJob);
+                log.error("Build job failed for the second time: {}", buildJob);
                 return null;
             }
-            log.warn("Requeueing failed build job: " + buildJob);
+            log.warn("Requeueing failed build job: {}", buildJob);
             buildJob.setRetryCount(buildJob.getRetryCount() + 1);
             queue.add(buildJob);
 
@@ -245,13 +263,13 @@ public class LocalCISharedBuildJobQueueService {
 
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> item) {
-            log.info("Item added to queue: " + item.getItem());
+            log.info("Item added to queue: {}", item.getItem());
             checkAvailabilityAndProcessNextBuild();
         }
 
         @Override
         public void itemRemoved(ItemEvent<LocalCIBuildJobQueueItem> item) {
-            log.info("Item removed from queue: " + item.getItem());
+            log.info("Item removed from queue: {}", item.getItem());
         }
     }
 }
