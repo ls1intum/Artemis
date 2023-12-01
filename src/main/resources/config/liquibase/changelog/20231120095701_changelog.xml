@@ -2,18 +2,17 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet author="andreas (generated)" id="1700470627638-3">
-        <createTable tableName="math_exercise_details">
-            <column name="example_solution" type="VARCHAR(255)"/>
-            <column name="id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="math_exercise_detailsPK"/>
-            </column>
-        </createTable>
-    </changeSet>
+    <!--    <changeSet author="andreas (generated)" id="1700470627638-3">-->
+    <!--        <createTable tableName="math_exercise_details">-->
+    <!--            <column name="example_solution" type="VARCHAR(255)"/>-->
+    <!--            <column name="id" type="BIGINT">-->
+    <!--                <constraints nullable="false" primaryKey="true" primaryKeyName="math_exercise_detailsPK"/>-->
+    <!--            </column>-->
+    <!--        </createTable>-->
+    <!--    </changeSet>-->
     <changeSet author="andreas (generated)" id="1700470627638-4">
         <createTable tableName="math_submission_details">
-            <column name="language" type="VARCHAR(255)"/>
-            <column name="text" type="VARCHAR(30000)"/>
+            <column name="text" type="LONGTEXT"/>
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="math_submission_detailsPK"/>
             </column>
