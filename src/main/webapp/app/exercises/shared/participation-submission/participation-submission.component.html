@@ -29,7 +29,8 @@
         [scrollbarH]="true"
     >
         <ngx-datatable-column name="Id" prop="id" [minWidth]="60" [width]="60">
-            <ng-template ngx-datatable-cell-template let-value="value">
+            <ng-template ngx-datatable-cell-template let-value="value"
+                >ex
                 {{ value }}
             </ng-template>
         </ngx-datatable-column>
@@ -83,7 +84,7 @@
                             (delete)="deleteResult(result.submission, result)"
                             [dialogError]="dialogError$"
                         >
-                            <fa-icon [icon]="faTimes"></fa-icon>
+                            <fa-icon [icon]="faTrash"></fa-icon>
                             {{ 'artemisApp.result.delete.buttonText' | artemisTranslate }}
                         </span>
                     </div>
@@ -147,7 +148,7 @@
                     (delete)="deleteSubmission(value)"
                     [dialogError]="dialogError$"
                 >
-                    <fa-icon [icon]="faTimes"></fa-icon>
+                    <fa-icon [icon]="faTrash"></fa-icon>
                 </button>
             </ng-template>
         </ngx-datatable-column>

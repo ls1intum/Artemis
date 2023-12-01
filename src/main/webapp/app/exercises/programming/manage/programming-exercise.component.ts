@@ -33,6 +33,7 @@ import {
     faSort,
     faTable,
     faTimes,
+    faTrash,
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
@@ -69,6 +70,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faCheckDouble = faCheckDouble;
     faUsers = faUsers;
     faTable = faTable;
+    faTrash = faTrash;
     faListAlt = faListAlt;
     faLightbulb = faLightbulb;
     faPencilAlt = faPencilAlt;

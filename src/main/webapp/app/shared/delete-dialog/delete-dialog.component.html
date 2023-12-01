@@ -44,7 +44,13 @@
             [ngSwitch]="actionType"
         >
             <span *ngIf="submitDisabled"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
-            <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>&nbsp;
+            <fa-icon *ngSwitchCase="actionTypes.Delete" [icon]="useFaCheckIcon ? faCheck : faTrash"></fa-icon>&nbsp;
+            <fa-icon *ngSwitchCase="actionTypes.Reset" [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>
+            <fa-icon *ngSwitchCase="actionTypes.Cleanup" [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>
+            <fa-icon *ngSwitchCase="actionTypes.Remove" [icon]="useFaCheckIcon ? faCheck : faTrash"></fa-icon>
+            <fa-icon *ngSwitchCase="actionTypes.Unlink" [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>
+            <fa-icon *ngSwitchCase="actionTypes.NoButtonTextDelete" [icon]="useFaCheckIcon ? faCheck : faTrash"></fa-icon>
+            <fa-icon *ngSwitchCase="actionTypes.EndNow" [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>&nbsp;
             <span *ngSwitchCase="actionTypes.Delete" jhiTranslate="entity.action.delete">Delete</span>
             <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.action.reset">Reset</span>
             <span *ngSwitchCase="actionTypes.Cleanup" jhiTranslate="entity.action.cleanup">Cleanup</span>

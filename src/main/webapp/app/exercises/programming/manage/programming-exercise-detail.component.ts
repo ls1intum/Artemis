@@ -40,6 +40,7 @@ import {
     faRobot,
     faTable,
     faTimes,
+    faTrash,
     faUserCheck,
     faUsers,
     faWrench,
@@ -105,6 +106,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     // Icons
     faTimes = faTimes;
+    faTrash = faTrash;
     faBook = faBook;
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;

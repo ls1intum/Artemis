@@ -201,7 +201,7 @@
                             (delete)="deleteCompetency(competency.id!)"
                             [dialogError]="dialogError$"
                         >
-                            <fa-icon [icon]="faTimes"></fa-icon>
+                            <fa-icon [icon]="faTrash"></fa-icon>
                         </button>
                     </td>
                 </tr>
@@ -253,7 +253,7 @@
                     </td>
                     <td class="text-end">
                         <button id="removeButton" class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
-                            <fa-icon [icon]="faTimes"></fa-icon> {{ 'artemisApp.competency.competencyCard.remove' | artemisTranslate }}
+                            <fa-icon [icon]="faTrash"></fa-icon> {{ 'artemisApp.competency.competencyCard.remove' | artemisTranslate }}
                         </button>
                     </td>
                 </tr>
