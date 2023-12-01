@@ -63,7 +63,7 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             FROM Competency competency
                 LEFT JOIN competency.userProgress progress
                     ON competency.id = progress.learningGoal.id AND progress.user.id = :userId
-                LEFT JOIN FETCH competency.exercises exercises
+                LEFT JOIN FETCH competency.exercises
                 LEFT JOIN FETCH competency.lectureUnits lectureUnits
                 LEFT JOIN lectureUnits.completedUsers completedUsers
                     ON lectureUnits.id = completedUsers.lectureUnit.id AND completedUsers.user.id = :userId
