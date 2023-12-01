@@ -432,8 +432,6 @@ public class ProgrammingExerciseTaskService {
         Matcher matcher = TASK_PATTERN.matcher(problemStatement);
 
         return matcher.replaceAll(matchResult -> {
-            // matchResult is fa full task, e.g., [task][Bubble Sort](testBubbleSort,testClass[BubbleSort])
-            String fullMatch = matchResult.group();
             // group 1: task name, group 2: test names, e.g, testBubbleSort,testClass[BubbleSort]
             String taskName = matchResult.group(1);
             String testNames = matchResult.group(2);
