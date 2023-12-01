@@ -228,6 +228,12 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseTestService.importFromFile_embeddedFiles_embeddedFilesCopied();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importExerciseFromFile_buildPlanPresent_buildPlanSet() throws Exception {
+        programmingExerciseTestService.importFromFile_buildPlanPresent_buildPlanUsed();
+    }
+
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "PYTHON" }, mode = EnumSource.Mode.INCLUDE)

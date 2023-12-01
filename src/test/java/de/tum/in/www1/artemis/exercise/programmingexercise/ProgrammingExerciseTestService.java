@@ -520,6 +520,19 @@ public class ProgrammingExerciseTestService {
 
     }
 
+    void importFromFile_buildPlanPresent_buildPlanUsed() throws Exception {
+        mockDelegate.mockConnectorRequestForImportFromFile(exercise);
+        var resource = new ClassPathResource("test-data/import-from-file/import-with-build-plan.zip");
+        var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
+        exercise.setChannelName("testchannel-pe");
+        var importedExercise = request.postWithMultipartFile(ROOT + "/courses/" + course.getId() + "/programming-exercises/import-from-file", exercise, "programmingExercise", file,
+                ProgrammingExercise.class, HttpStatus.OK);
+        var buildPlan = buildPlanRepository.findByProgrammingExercises_Id(importedExercise.getId());
+        assertThat(buildPlan).isPresent();
+        assertThat(buildPlan.orElseThrow().getBuildPlan()).isEqualTo("my super cool build plan");
+
+    }
+
     void importFromFile_missingExerciseDetailsJson_badRequest() throws Exception {
         Resource resource = new ClassPathResource("test-data/import-from-file/missing-json.zip");
         var file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());

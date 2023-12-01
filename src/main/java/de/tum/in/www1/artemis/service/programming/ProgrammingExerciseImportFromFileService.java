@@ -99,12 +99,13 @@ public class ProgrammingExerciseImportFromFileService {
             if (Boolean.TRUE.equals(programmingExerciseForImport.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(importedProgrammingExercise);
             }
-            copyEmbeddedFiles(exerciseFilePath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(exerciseFilePath.toString())));
+            Path pathToDirectoryWithImportedContent = exerciseFilePath.toAbsolutePath().getParent().resolve(FileNameUtils.getBaseName(exerciseFilePath.toString()));
+            copyEmbeddedFiles(pathToDirectoryWithImportedContent);
             importRepositoriesFromFile(importedProgrammingExercise, importExerciseDir, oldShortName, user);
             importedProgrammingExercise.setCourse(course);
             // It doesn't make sense to import a build plan on a bamboo or local CI setup.
             if (profileService.isGitlabCiOrJenkins()) {
-                importBuildPlanIfExisting(importedProgrammingExercise, importExerciseDir);
+                importBuildPlanIfExisting(importedProgrammingExercise, pathToDirectoryWithImportedContent);
             }
         }
         finally {
