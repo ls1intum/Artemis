@@ -33,8 +33,7 @@ export class Commands {
                         let data = '';
                         res.on('data', (chunk) => (data += chunk));
                         res.on('end', () => {
-                            const response = JSON.parse(data);
-                            console.log('Response:', response);
+                            console.log('Response:', data);
 
                             expect(res.statusCode).toBe(200);
                         });
