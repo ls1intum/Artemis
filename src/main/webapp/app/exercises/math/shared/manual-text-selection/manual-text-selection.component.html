@@ -1,0 +1,4 @@
+<div>
+    <!-- DO NOT ADD LINEBREAKS INSIDE div.manual-text-selection-area -->
+    <span class="manual-text-selection-area" tabindex="-1" *ngFor="let word of submissionWords; let i = index" (click)="calculateIndex(i); selectWord(word)">{{ ' ' + word }}</span>
+</div>
