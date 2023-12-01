@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
@@ -320,6 +321,9 @@ public class LocalCIBuildJobExecutionService {
             case PYTHON -> {
                 return getPythonTestResultPaths();
             }
+            case C -> {
+                return getCTestResultPaths(programmingExercise);
+            }
             default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
         }
     }
@@ -350,6 +354,15 @@ public class LocalCIBuildJobExecutionService {
     private List<String> getPythonTestResultPaths() {
         List<String> testResultPaths = new ArrayList<>();
         testResultPaths.add("/testing-dir/test-reports");
+        return testResultPaths;
+    }
+
+    private List<String> getCTestResultPaths(ProgrammingExercise programmingExercise) {
+        List<String> testResultPaths = new ArrayList<>();
+        for (AeolusResult testResultPath : programmingExercise.getWindfile().getResults()) {
+            testResultPaths.add("/repositories/test-repository" + testResultPath.getPath());
+            System.out.println("/repositories/test-repository" + testResultPath.getPath());
+        }
         return testResultPaths;
     }
 
