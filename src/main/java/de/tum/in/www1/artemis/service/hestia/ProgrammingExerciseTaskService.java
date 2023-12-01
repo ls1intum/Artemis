@@ -435,13 +435,14 @@ public class ProgrammingExerciseTaskService {
             // matchResult is fa full task, e.g., [task][Bubble Sort](testBubbleSort,testClass[BubbleSort])
             String fullMatch = matchResult.group();
             // group 1: task name, group 2: test names, e.g, testBubbleSort,testClass[BubbleSort]
+            String taskName = matchResult.group(1);
             String testNames = matchResult.group(2);
 
             // converted testids, e.g., <testid>10</testid>,<testid>12</testid>
             String testIds = replacer.apply(testNames, testCases);
 
-            // replace the names with their ids
-            return fullMatch.replace(testNames, testIds);
+            // construct a new task using the testids
+            return "[task][%s](%s)".formatted(taskName, testIds);
         });
     }
 

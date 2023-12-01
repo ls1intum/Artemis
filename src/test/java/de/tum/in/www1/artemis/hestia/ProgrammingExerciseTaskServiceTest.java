@@ -381,8 +381,28 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
         programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
         String problemStatement = programmingExercise.getProblemStatement();
 
-        assertThat(problemStatement).contains("[task][Taskname](<testid>%s</testid>,<testid>%s</testid>".formatted(test1.getId(), test2.getId()))
+        assertThat(problemStatement).contains("[task][Taskname](<testid>%s</testid>,<testid>%s</testid>)".formatted(test1.getId(), test2.getId()))
                 .contains("This description contains the words test and taskTest, which should not be replaced.");
+    }
+
+    @Test
+    void testNameReplacementTaskNameSameAsTestName() {
+        var sort = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "sort");
+
+        updateProblemStatement("""
+                [task][sort](sort)
+                Sort using the method sort.
+                @startuml
+                class LinkedList<T> {
+                    <color:testsColor(sort)>+ sort()</color>
+                }
+                @enduml""");
+
+        programmingExerciseTaskService.replaceTestNamesWithIds(programmingExercise);
+        String problemStatement = programmingExercise.getProblemStatement();
+
+        assertThat(problemStatement).contains("[task][sort](<testid>%s</testid>)".formatted(sort.getId())).contains("Sort using the method sort.")
+                .contains("<color:testsColor(<testid>%s</testid>)>+ sort</color>".formatted(sort.getId()));
     }
 
     @Test
