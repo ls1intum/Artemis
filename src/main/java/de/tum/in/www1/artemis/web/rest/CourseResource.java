@@ -297,6 +297,7 @@ public class CourseResource {
         if (onlineCourseConfigurationService.isPresent()) {
             onlineCourseConfigurationService.get().validateOnlineCourseConfiguration(onlineCourseConfiguration);
             course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+            onlineCourseConfigurationService.get().addOnlineCourseConfigurationToLtiConfigurations(onlineCourseConfiguration);
         }
 
         courseRepository.save(course);

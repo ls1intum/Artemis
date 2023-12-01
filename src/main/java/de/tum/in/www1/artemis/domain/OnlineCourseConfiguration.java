@@ -32,6 +32,10 @@ public class OnlineCourseConfiguration extends DomainObject {
     @Column(name = "require_existing_user")
     private boolean requireExistingUser;
 
+    @ManyToOne
+    @JoinColumn(name = "lti_platform_id", referencedColumnName = "id")
+    private LtiPlatformConfiguration ltiPlatformConfiguration;
+
     public Course getCourse() {
         return course;
     }
@@ -70,6 +74,14 @@ public class OnlineCourseConfiguration extends DomainObject {
 
     public void setRequireExistingUser(boolean requireExistingUser) {
         this.requireExistingUser = requireExistingUser;
+    }
+
+    public LtiPlatformConfiguration getLtiPlatformConfiguration() {
+        return ltiPlatformConfiguration;
+    }
+
+    public void setLtiPlatformConfiguration(LtiPlatformConfiguration ltiPlatformConfiguration) {
+        this.ltiPlatformConfiguration = ltiPlatformConfiguration;
     }
 
 }

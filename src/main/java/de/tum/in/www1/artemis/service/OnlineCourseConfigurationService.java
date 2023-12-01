@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
-import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -35,16 +34,12 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
 
     private final Logger log = LoggerFactory.getLogger(OnlineCourseConfigurationService.class);
 
-    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
-
     private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    public OnlineCourseConfigurationService(OnlineCourseConfigurationRepository onlineCourseConfigurationRepository,
-            LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
-        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
+    public OnlineCourseConfigurationService(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
     }
 
@@ -87,6 +82,14 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
         if (StringUtils.isBlank(ocConfiguration.getUserPrefix()) || !ocConfiguration.getUserPrefix().matches(LOGIN_REGEX)) {
             throw new BadRequestAlertException("Invalid user prefix, must match login regex defined in Constants.java", ENTITY_NAME, "invalidUserPrefix");
         }
+
+        if (ocConfiguration.getLtiPlatformConfiguration() != null) {
+            Optional<LtiPlatformConfiguration> existingLtiPlatformConfiguration = ltiPlatformConfigurationRepository
+                    .findByRegistrationId(ocConfiguration.getLtiPlatformConfiguration().getRegistrationId());
+            if (existingLtiPlatformConfiguration.isPresent() && !Objects.equals(existingLtiPlatformConfiguration.get().getId(), ocConfiguration.getId())) {
+                throw new BadRequestAlertException("Registration ID must be unique", ENTITY_NAME, "invalidRegistrationId");
+            }
+        }
     }
 
     /**
@@ -114,6 +117,23 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
             // Log a warning for rare scenarios i.e. ClientId is empty. This can occur when online courses lack an external LMS connection or use LTI v1.0.
             log.warn("Could not build Client Registration from ltiPlatformConfiguration. Reason: {}", e.getMessage());
             return null;
+        }
+    }
+
+    /**
+     * Associates an online course configuration with an LTI platform configuration.
+     *
+     * If the provided online course configuration has a linked LTI platform configuration,
+     * it is added to the platform's list of online course configurations.
+     *
+     * @param onlineCourseConfiguration The online course configuration to be associated.
+     */
+    public void addOnlineCourseConfigurationToLtiConfigurations(OnlineCourseConfiguration onlineCourseConfiguration) {
+        if (onlineCourseConfiguration.getLtiPlatformConfiguration() != null) {
+            Long platformId = onlineCourseConfiguration.getLtiPlatformConfiguration().getId();
+            LtiPlatformConfiguration platformConfiguration = ltiPlatformConfigurationRepository.findByIdElseThrow(platformId);
+            platformConfiguration.getOnlineCourseConfigurations().add(onlineCourseConfiguration);
+            onlineCourseConfiguration.setLtiPlatformConfiguration(platformConfiguration);
         }
     }
 }
