@@ -64,6 +64,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // Exam exercises have a higher priority than normal exercises
         int priority = programmingExercise.isExamExercise() ? 1 : 2;
 
-        localCISharedBuildJobQueueService.addBuildJobInformation(participation.getBuildPlanId(), participation.getId(), commitHash, System.currentTimeMillis(), priority, courseId);
+        localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), commitHash, System.currentTimeMillis(), priority, courseId);
     }
 }

@@ -74,7 +74,7 @@ public class LocalCIBuildJobManagementService {
      * @return A future that will be completed with the build result.
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
-    public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation, String commitHash) {
+    public CompletableFuture<LocalCIBuildResult> executeBuildJob(ProgrammingExerciseParticipation participation, String commitHash) {
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
