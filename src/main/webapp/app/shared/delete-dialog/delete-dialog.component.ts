@@ -4,7 +4,7 @@ import { mapValues } from 'lodash-es';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
-import { faBan, faCheck, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faSpinner, faTimes, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { NgForm } from '@angular/forms';
 
@@ -42,6 +42,7 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faTrash = faTrash;
     faCheck = faCheck;
+    faUndo = faUndo;
     warningTextColor: string;
 
     constructor(

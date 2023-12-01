@@ -45,7 +45,7 @@
         >
             <span *ngIf="submitDisabled"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
             <fa-icon *ngSwitchCase="actionTypes.Delete" [icon]="useFaCheckIcon ? faCheck : faTrash"></fa-icon>&nbsp;
-            <fa-icon *ngSwitchCase="actionTypes.Reset" [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>
+            <fa-icon *ngSwitchCase="actionTypes.Reset" [icon]="useFaCheckIcon ? faCheck : faUndo"></fa-icon>
             <fa-icon *ngSwitchCase="actionTypes.Cleanup" [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>
             <fa-icon *ngSwitchCase="actionTypes.Remove" [icon]="useFaCheckIcon ? faCheck : faTrash"></fa-icon>
             <fa-icon *ngSwitchCase="actionTypes.Unlink" [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>
