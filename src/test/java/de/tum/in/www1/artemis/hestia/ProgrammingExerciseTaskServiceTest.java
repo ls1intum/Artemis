@@ -402,7 +402,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndepe
         String problemStatement = programmingExercise.getProblemStatement();
 
         assertThat(problemStatement).contains("[task][sort](<testid>%s</testid>)".formatted(sort.getId())).contains("Sort using the method sort.")
-                .contains("<color:testsColor(<testid>%s</testid>)>+ sort</color>".formatted(sort.getId()));
+                .contains("<color:testsColor(<testid>%s</testid>)>+ sort()</color>".formatted(sort.getId()));
     }
 
     @Test
