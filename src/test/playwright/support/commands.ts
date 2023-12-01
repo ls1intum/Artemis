@@ -18,6 +18,7 @@ export class Commands {
                 const req = https.request(
                     {
                         hostname: process.env.baseURL,
+                        port: 8080,
                         path: BASE_API + 'public/authenticate',
                         method: 'POST',
                         agent: new https.Agent({
