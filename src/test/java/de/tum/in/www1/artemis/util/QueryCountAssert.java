@@ -45,7 +45,7 @@ public class QueryCountAssert<T, E extends Exception> extends AbstractAssert<Que
         return result.result;
     }
 
-    private record CallResult<T> (T result, long callCount) {
+    private record CallResult<T>(T result, long callCount) {
     }
 
     private CallResult<T> performCall() throws E {

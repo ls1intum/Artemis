@@ -172,7 +172,7 @@ public class LocalCIBuildJobManagementService {
      * @param buildJobCallable The build job that should be called.
      * @param timeoutSeconds   The number of seconds after which the build job is cancelled.
      */
-    private record BuildJobTimeoutCallable<LocalCIBuildResult> (Callable<LocalCIBuildResult> buildJobCallable, long timeoutSeconds) implements Callable<LocalCIBuildResult> {
+    private record BuildJobTimeoutCallable<LocalCIBuildResult>(Callable<LocalCIBuildResult> buildJobCallable, long timeoutSeconds) implements Callable<LocalCIBuildResult> {
 
         /**
          * Calls the buildJobCallable and waits for the result or for the timeout to pass.
