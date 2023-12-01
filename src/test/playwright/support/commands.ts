@@ -30,7 +30,14 @@ export class Commands {
                         },
                     },
                     (res) => {
-                        expect(res.statusCode).toBe(200);
+                        let data = '';
+                        res.on('data', (chunk) => (data += chunk));
+                        res.on('end', () => {
+                            const response = JSON.parse(data);
+                            console.log('Response:', response);
+
+                            expect(res.statusCode).toBe(200);
+                        });
                     },
                 );
 
