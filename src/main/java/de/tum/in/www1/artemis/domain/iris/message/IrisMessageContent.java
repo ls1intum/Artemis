@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.domain.iris.message;
 
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
-
-import javax.annotation.Nullable;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;

@@ -4,9 +4,9 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
@@ -210,7 +210,7 @@ public class GradingScale extends DomainObject {
     }
 
     @JsonIgnore
-    @Nonnull
+    @NotNull
     public String getPlagiarismGradeOrDefault() {
         return Objects.requireNonNullElse(plagiarismGrade, DEFAULT_PLAGIARISM_GRADE);
     }
@@ -224,7 +224,7 @@ public class GradingScale extends DomainObject {
     }
 
     @JsonIgnore
-    @Nonnull
+    @NotNull
     public String getNoParticipationGradeOrDefault() {
         return Objects.requireNonNullElse(noParticipationGrade, DEFAULT_NO_PARTICIPATION_GRADE);
     }

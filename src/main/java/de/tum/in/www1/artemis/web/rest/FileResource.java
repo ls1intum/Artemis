@@ -9,8 +9,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import jakarta.validation.constraints.NotNull;
+
 import javax.activation.MimetypesFileTypeMap;
-import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -596,7 +597,7 @@ public class FileResource {
         }
     }
 
-    private Path getActualPathFromPublicPathString(@Nullable String publicPath) {
+    private Path getActualPathFromPublicPathString(@NotNull String publicPath) {
         if (publicPath == null) {
             throw new EntityNotFoundException("No file linked");
         }
