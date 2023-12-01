@@ -4,52 +4,27 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-/**
- * DTO for a Hades build job.
- *
- * Example Json
- * {
- * "name": "Example Job",
- * "metadata": {},
- * "timestamp": "2021-01-01T00:00:00.000Z",
- * "priority": 1, // optional, default 3
- * "steps": [
- * {
- * "id": 1, // mandatory to declare the order of execution
- * "name": "Clone",
- * "image": "ghcr.io/mtze/hades/hades-clone-container:pr-28", // mandatory
- * "metadata": {
- * "REPOSITORY_DIR": "/shared",
- * "HADES_TEST_USERNAME": "artemis_test_user_11",
- * "HADES_TEST_PASSWORD": "pw",
- * "HADES_TEST_URL": "https://bitbucket-prelive.ase.in.tum.de/scm/staginglinhubertcadsfae3wafsd/staginglinhubertcadsfae3wafsd-tests.git",
- * "HADES_TEST_PATH": "./example",
- * "HADES_ASSIGNMENT_USERNAME": "artemis_test_user_11",
- * "HADES_ASSIGNMENT_PASSWORD": "pw",
- * "HADES_ASSIGNMENT_URL": "https://bitbucket-prelive.ase.in.tum.de/scm/staginglinhubertcadsfae3wafsd/staginglinhubertcadsfae3wafsd-solution.git",
- * "HADES_ASSIGNMENT_PATH": "./example/assignment"
- * }
- * },
- * {
- * "id": 2, // mandatory to declare the order of execution
- * "name": "Execute",
- * "image": "ls1tum/artemis-maven-template:java17-18", // mandatory
- * "script": "cd ./example && ls -lah && ./gradlew clean test"
- * }
- * ]
- * }
- *
+/*
+ * DTO for a build job in Hades
+ * This DTO wraps a build request for Hades. It contains the name of the job, the metadata, the timestamp, the priority and the steps.
+ * The steps are a list of HadesBuildStepDTOs which contain the actual build commands and the respective docker image.
+ * The metadata is a hashmap containing key-value pairs for the metadata which should be shared between all build steps.
+ * The API Specification for Hades can be found here: https://github.com/Mtze/hades/blob/main/shared/payload/payload.go
  */
 public class HadesBuildJobDTO implements Serializable {
 
     private String name;
 
+    /* The shared metadata (key-value pairs) which are injected into all container environments of all build steps */
     private HashMap<String, String> metadata;
 
+    /* The timestamp of the build job sumbission */
     private String timestamp;
 
+    /* The priority of the build job - used to select more important build jobs first */
     private Integer priority;
 
+    /* The list of build steps which should be executed sequentially */
     private ArrayList<HadesBuildStepDTO> steps;
 
     public HadesBuildJobDTO() {
