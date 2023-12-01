@@ -23,6 +23,7 @@ export class AeolusResult {
     path: string;
     ignore: string;
     type?: string;
+    before?: boolean;
 }
 
 export class ScriptAction extends BuildAction {

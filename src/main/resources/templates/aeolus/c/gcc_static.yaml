@@ -19,7 +19,7 @@ actions:
           cd tests
           REQ_FILE=requirements.txt
           if [ -f "$REQ_FILE" ]; then
-              pip3 install --user -r requirements.txt
+              pip3 install --user -r requirements.txt || true
           else
               echo "$REQ_FILE does not exist"
           fi
@@ -59,7 +59,7 @@ actions:
           if [ ! $error ]
           then
               cd tests || exit 0
-              python3 Tests.py
+              python3 Tests.py || true
           else
               exit 1
           fi
@@ -68,6 +68,7 @@ actions:
       script: |-
           sudo rm -rf tests/
           sudo rm -rf assignment/
+          sudo rm -rf test-reports/
       runAlways: true
       results:
           - name: gcc
@@ -75,3 +76,4 @@ actions:
           - name: junit_test-reports/*results.xml
             path: test-reports/*results.xml
             type: junit
+            before: true

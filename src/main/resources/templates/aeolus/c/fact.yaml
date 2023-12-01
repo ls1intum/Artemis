@@ -34,6 +34,7 @@ actions:
       script: |-
           sudo rm -rf tests/
           sudo rm -rf assignment/
+          sudo rm -rf test-reports/
       runAlways: true
       results:
           - name: junit_test-reports/*results.xml
