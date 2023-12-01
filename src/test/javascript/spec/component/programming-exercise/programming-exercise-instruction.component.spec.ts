@@ -592,7 +592,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
     it('should update the markdown on a theme change', () => {
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
-        themeService.currentThemeSubject.next(Theme.DARK);
+        themeService.applyThemeExplicitly(Theme.DARK);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
     });
 

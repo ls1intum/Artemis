@@ -62,7 +62,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnIni
     public renderedMarkdown: SafeHtml;
     private injectableContentForMarkdownCallbacks: Array<() => void> = [];
 
-    private markdownExtensions: ShowdownExtension[];
+    markdownExtensions: ShowdownExtension[];
     private injectableContentFoundSubscription: Subscription;
     private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;
