@@ -12,7 +12,7 @@ export class LectureManagementPage {
     deleteLecture(lecture: Lecture) {
         this.getLecture(lecture.id!).find('#delete-lecture').click();
         cy.get('#delete').should('be.disabled');
-        cy.get('#confirm-exercise-name').type(lecture.title!);
+        cy.get('#confirm-entity-name').type(lecture.title!);
         cy.intercept(DELETE, `${BASE_API}lectures/*`).as('deleteLecture');
         cy.get('#delete').click();
         return cy.wait('@deleteLecture');
