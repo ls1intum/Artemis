@@ -77,8 +77,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             writeResponse(targetLink, ltiIdToken, authToken.getAuthorizedClientRegistrationId(), response);
         }
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
-            log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
+            handleLtiError(response, ex);
         }
         catch (LtiEmailAlreadyInUseException ex) {
             // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
@@ -87,10 +86,14 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
                 handleLtiEmailAlreadyInUseException(response, targetLink, ltiIdToken, authToken);
             }
             else {
-                log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
+                handleLtiError(response, ex);
             }
         }
+    }
+
+    private void handleLtiError(HttpServletResponse response, Exception ex) throws IOException {
+        log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
+        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
     }
 
     private void handleLtiEmailAlreadyInUseException(HttpServletResponse response, String targetLink, OidcIdToken ltiIdToken, OidcAuthenticationToken authToken)
