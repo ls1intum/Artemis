@@ -291,8 +291,8 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             return;
         }
 
-        const initX = this.fullSize ? (cntRect.width * (1 - this.fullWidthFactor)) / 2.0 : cntRect.width - this.initialWidth - 50;
-        const initY = this.fullSize ? (cntRect.height * (1 - this.fullHeightFactor)) / 2.0 : cntRect.height - this.initialHeight - 100;
+        const initX = this.fullSize ? (cntRect.width * (1 - this.fullWidthFactor)) / 2.0 : cntRect.width - this.initialWidth - 20;
+        const initY = this.fullSize ? (cntRect.height * (1 - this.fullHeightFactor)) / 2.0 : cntRect.height - this.initialHeight - 20;
 
         const nE = this.document.querySelector('.chat-widget') as HTMLElement;
         nE.style.transform = `translate(${initX}px, ${initY}px)`;
