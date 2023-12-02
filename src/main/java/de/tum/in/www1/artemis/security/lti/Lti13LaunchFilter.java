@@ -57,43 +57,32 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             return;
         }
 
-        OidcAuthenticationToken authToken = null;
-        OidcIdToken ltiIdToken = null;
-        String targetLink = "";
-
         try {
-            authToken = finishOidcFlow(request, response);
-            ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
-            targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
+            OidcAuthenticationToken authToken = finishOidcFlow(request, response);
+            OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
+            String targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
 
-            // here we need to check if this is a deep-linking request or a launch request
-            if ("LtiDeepLinkingRequest".equals(ltiIdToken.getClaim(Claims.MESSAGE_TYPE))) {
-                lti13Service.startDeepLinking(ltiIdToken);
+            try {
+                // here we need to check if this is a deep-linking request or a launch request
+                if ("LtiDeepLinkingRequest".equals(ltiIdToken.getClaim(Claims.MESSAGE_TYPE))) {
+                    lti13Service.startDeepLinking(ltiIdToken);
+                }
+                else {
+                    lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
+                }
             }
-            else {
-                lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
+            catch (LtiEmailAlreadyInUseException ex) {
+                // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
+                // We need targetLink to redirect user on the client-side after successful authentication
+                handleLtiEmailAlreadyInUseException(response, targetLink, ltiIdToken, authToken);
             }
 
             writeResponse(targetLink, ltiIdToken, authToken.getAuthorizedClientRegistrationId(), response);
         }
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
-            handleLtiError(response, ex);
+            log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
         }
-        catch (LtiEmailAlreadyInUseException ex) {
-            // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
-            // We need targetLink to redirect user on the client-side after successful authentication
-            if (ltiIdToken != null && !targetLink.isEmpty()) {
-                handleLtiEmailAlreadyInUseException(response, targetLink, ltiIdToken, authToken);
-            }
-            else {
-                handleLtiError(response, ex);
-            }
-        }
-    }
-
-    private void handleLtiError(HttpServletResponse response, Exception ex) throws IOException {
-        log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
-        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
     }
 
     private void handleLtiEmailAlreadyInUseException(HttpServletResponse response, String targetLink, OidcIdToken ltiIdToken, OidcAuthenticationToken authToken)
