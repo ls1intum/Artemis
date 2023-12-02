@@ -98,6 +98,16 @@
                     <span>{{ 'artemisApp.lti13.externalToolSettings' | artemisTranslate }}</span>
                     <jhi-help-icon text="artemisApp.lti13.externalToolSettingsTooltip"></jhi-help-icon>
                 </dt>
+                <dd></dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.customName' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.ltiPlatformConfiguration?.customName }}</span>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiPlatformConfiguration?.customName ?? ''"></jhi-copy-icon-button>
+                </dd>
+
                 <dt>
                     <span>{{ 'artemisApp.lti.registrationId' | artemisTranslate }}</span>
                 </dt>
