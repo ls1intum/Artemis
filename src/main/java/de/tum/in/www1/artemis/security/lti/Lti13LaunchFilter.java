@@ -83,7 +83,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         catch (LtiEmailAlreadyInUseException ex) {
             // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
             // We need targetLink to redirect user on the client-side after successful authentication
-            if (ltiIdToken != null && authToken != null && !targetLink.isEmpty()) {
+            if (ltiIdToken != null && !targetLink.isEmpty()) {
                 handleLtiEmailAlreadyInUseException(response, targetLink, ltiIdToken, authToken);
             }
             else {

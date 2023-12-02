@@ -251,9 +251,7 @@ class Lti13LaunchFilterTest {
         verify(responseWriter).print(argument.capture());
 
         String jsonResponseString = argument.getValue();
-        JsonParser parser = new JsonParser();
-        JsonObject responseJsonBody = parser.parse(jsonResponseString).getAsJsonObject();
 
-        return responseJsonBody;
+        return JsonParser.parseString(jsonResponseString).getAsJsonObject();
     }
 }

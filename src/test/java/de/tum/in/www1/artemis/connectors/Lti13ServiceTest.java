@@ -3,10 +3,12 @@ package de.tum.in.www1.artemis.connectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.ArgumentCaptor.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletResponse;
@@ -108,7 +110,7 @@ class Lti13ServiceTest {
         MockExercise result = getMockExercise(true);
 
         when(oidcIdToken.getClaim("sub")).thenReturn("1");
-        when(oidcIdToken.getClaim("iss")).thenReturn("http://otherDomain.com");
+        when(oidcIdToken.getClaim("iss")).thenReturn("https://otherDomain.com");
         when(oidcIdToken.getClaim(Claims.LTI_DEPLOYMENT_ID)).thenReturn("1");
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("id", "resourceLinkUrl");
@@ -117,7 +119,7 @@ class Lti13ServiceTest {
 
         lti13Service.performLaunch(oidcIdToken, clientRegistrationId);
 
-        verify(launchRepository).findByIssAndSubAndDeploymentIdAndResourceLinkId("http://otherDomain.com", "1", "1", "resourceLinkUrl");
+        verify(launchRepository).findByIssAndSubAndDeploymentIdAndResourceLinkId("https://otherDomain.com", "1", "1", "resourceLinkUrl");
         verify(launchRepository).save(any());
     }
 
@@ -413,18 +415,21 @@ class Lti13ServiceTest {
 
         lti13Service.onNewResult(participation);
 
-        ArgumentCaptor<String> urlCapture = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<HttpEntity<String>> httpEntityCapture = ArgumentCaptor.forClass(HttpEntity.class);
+        ArgumentCaptor<String> urlCapture = forClass(String.class);
+        var httpEntityCapture = forClass(HttpEntity.class);
 
         verify(restTemplate).postForEntity(urlCapture.capture(), httpEntityCapture.capture(), any());
 
-        HttpEntity<String> httpEntity = httpEntityCapture.getValue();
+        HttpEntity<?> capturedHttpEntity = httpEntityCapture.getValue();
+        assertThat(capturedHttpEntity.getBody()).isInstanceOf(String.class);
+
+        HttpEntity<String> httpEntity = new HttpEntity<>((String) capturedHttpEntity.getBody(), capturedHttpEntity.getHeaders());
 
         List<String> authHeaders = httpEntity.getHeaders().get("Authorization");
         assertThat(authHeaders).as("Score publish request must contain an Authorization header").isNotNull();
         assertThat(authHeaders).as("Score publish request must contain the corresponding Authorization Bearer token").contains("Bearer " + accessToken);
 
-        JsonObject body = JsonParser.parseString(httpEntity.getBody()).getAsJsonObject();
+        JsonObject body = JsonParser.parseString(Objects.requireNonNull(httpEntity.getBody())).getAsJsonObject();
         assertThat(body.get("userId").getAsString()).as("Invalid parameter in score publish request: userId").isEqualTo(launch.getSub());
         assertThat(body.get("timestamp").getAsString()).as("Parameter missing in score publish request: timestamp").isNotNull();
         assertThat(body.get("activityProgress").getAsString()).as("Parameter missing in score publish request: activityProgress").isNotNull();
@@ -435,6 +440,7 @@ class Lti13ServiceTest {
         assertThat(body.get("scoreMaximum").getAsDouble()).as("Invalid parameter in score publish request: scoreMaximum").isEqualTo(100d);
 
         assertThat(launch.getScoreLineItemUrl() + "/scores").as("Score publish request was sent to a wrong URI").isEqualTo(urlCapture.getValue());
+
     }
 
     @Test
@@ -535,8 +541,7 @@ class Lti13ServiceTest {
         exercise.setCourse(course);
         doReturn(Optional.of(exercise)).when(exerciseRepository).findById(exerciseId);
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
-        MockExercise result = new MockExercise(exerciseId, courseId);
-        return result;
+        return new MockExercise(exerciseId, courseId);
     }
 
     private record MockExercise(long exerciseId, long courseId) {
