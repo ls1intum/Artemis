@@ -94,8 +94,10 @@
                 ></fa-icon>
             </a>
             <ng-template ngbNavContent>
-                <!--                here we should add a span to explain what is this-->
-                <span>External Tool Configuration Settings</span>
+                <dt>
+                    <span>{{ 'artemisApp.lti13.externalToolSettings' | artemisTranslate }}</span>
+                    <jhi-help-icon text="artemisApp.lti13.externalToolSettingsTooltip"></jhi-help-icon>
+                </dt>
                 <dt>
                     <span>{{ 'artemisApp.lti.registrationId' | artemisTranslate }}</span>
                 </dt>

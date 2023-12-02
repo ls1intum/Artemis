@@ -41,10 +41,16 @@
         <input required type="text" class="form-control" name="ltiSecret" id="field_ltiSecret" formControlName="ltiSecret" />
     </div>
     <h4 class="modal-title mt-4" id="lti13" jhiTranslate="artemisApp.lti.version13">LTI 1.3</h4>
+    <div class="form-group">
+        <span>{{ 'artemisApp.lti13.externalToolSettings' | artemisTranslate }}</span>
+        <jhi-help-icon text="artemisApp.lti13.editExternalToolSettingsTooltip"></jhi-help-icon>
+    </div>
     <div class="form-group mt-2">
         <div ngbDropdown class="d-inline-block me-2">
             <button class="btn btn-outline-primary" ngbDropdownToggle type="button">
-                {{ onlineCourseConfiguration.ltiPlatformConfiguration ? getLtiPlatform(onlineCourseConfiguration.ltiPlatformConfiguration) : 'No platform is configured' }}
+                {{
+                    onlineCourseConfiguration.ltiPlatformConfiguration ? getLtiPlatform(onlineCourseConfiguration.ltiPlatformConfiguration) : 'artemisApp.lti13.selectExternalTool'
+                }}
             </button>
             <div ngbDropdownMenu>
                 <button

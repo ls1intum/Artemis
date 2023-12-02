@@ -84,7 +84,11 @@
                 "registeredSuccessfully": "Registered course successfully",
                 "registerFailed": "Error during dynamic registration"
             },
-            "missingConfigurationWarning": "Missing values in the LTI1.3 configuration. Launches will not work."
+            "missingConfigurationWarning": "Missing values in the LTI1.3 configuration. Launches will not work.",
+            "externalToolSettings": "External Tool Settings",
+            "externalToolSettingsTooltip": "An External Tool is required for exercise linking and participation, allowing seamless integration with external resources and activities",
+            "editExternalToolSettingsTooltip": "Please select an External Tool for this course to enable successful LTI communication. Once a pre-configured External Tool is chosen, this online course will become available for exercise linking and participation.",
+            "selectExternalTool": "Select an External Tool"
         }
     }
 }
