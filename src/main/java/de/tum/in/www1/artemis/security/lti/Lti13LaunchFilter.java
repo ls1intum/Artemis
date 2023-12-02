@@ -74,7 +74,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             catch (LtiEmailAlreadyInUseException ex) {
                 // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
                 // We need targetLink to redirect user on the client-side after successful authentication
-                handleLtiEmailAlreadyInUseException(response, targetLink, ltiIdToken, authToken);
+                handleLtiEmailAlreadyInUseException(response, ltiIdToken);
             }
 
             writeResponse(targetLink, ltiIdToken, authToken.getAuthorizedClientRegistrationId(), response);
@@ -85,19 +85,9 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         }
     }
 
-    private void handleLtiEmailAlreadyInUseException(HttpServletResponse response, String targetLink, OidcIdToken ltiIdToken, OidcAuthenticationToken authToken)
-            throws IOException {
+    private void handleLtiEmailAlreadyInUseException(HttpServletResponse response, OidcIdToken ltiIdToken) {
         this.lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken);
-        LtiAuthenticationResponseDTO errorResponse = new LtiAuthenticationResponseDTO(targetLink, ltiIdToken.getTokenValue(), authToken.getAuthorizedClientRegistrationId());
-        response.setContentType("application/json");
-        sendErrorResponse(response, errorResponse);
-    }
-
-    private void sendErrorResponse(HttpServletResponse response, LtiAuthenticationResponseDTO errorResponse) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        PrintWriter out = response.getWriter();
-        out.print(new Gson().toJson(errorResponse));
-        out.flush();
     }
 
     private OidcAuthenticationToken finishOidcFlow(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
