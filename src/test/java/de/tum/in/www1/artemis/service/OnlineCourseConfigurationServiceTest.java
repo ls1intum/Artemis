@@ -56,7 +56,7 @@ class OnlineCourseConfigurationServiceTest {
 
         ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(onlineCourseConfiguration);
 
-        assertThat(clientRegistration.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.AUTHORIZATION_CODE);
+        assertThat(clientRegistration.getAuthorizationGrantType()).isEqualTo(AuthorizationGrantType.CLIENT_CREDENTIALS);
         assertThat(clientRegistration.getScopes()).hasSize(1).contains("openid");
         assertThat(clientRegistration.getRegistrationId()).isEqualTo("reg");
         assertThat(clientRegistration.getRedirectUri()).isEqualTo(artemisServerUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH);
