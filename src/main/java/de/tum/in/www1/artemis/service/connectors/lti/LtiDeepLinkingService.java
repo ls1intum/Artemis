@@ -102,7 +102,7 @@ public class LtiDeepLinkingService {
     private JsonObject setContentItem(String courseId, String exerciseId) {
         Optional<Exercise> exerciseOpt = exerciseRepository.findById(Long.valueOf(exerciseId));
         String launchUrl = String.format(artemisServerUrl + "/courses/%s/exercises/%s", courseId, exerciseId);
-        return createContentItem(exerciseOpt.get().getType(), exerciseOpt.get().getTitle(), launchUrl);
+        return exerciseOpt.map(exercise -> createContentItem(exercise.getType(), exercise.getTitle(), launchUrl)).orElse(null);
     }
 
     private JsonObject createContentItem(String type, String title, String url) {

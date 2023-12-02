@@ -68,7 +68,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
             // here we need to check if this is a deep-linking request or a launch request
             if ("LtiDeepLinkingRequest".equals(ltiIdToken.getClaim(Claims.MESSAGE_TYPE))) {
-                lti13Service.startDeepLinking(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
+                lti13Service.startDeepLinking(ltiIdToken);
             }
             else {
                 lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
@@ -83,7 +83,13 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         catch (LtiEmailAlreadyInUseException ex) {
             // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
             // We need targetLink to redirect user on the client-side after successful authentication
-            handleLtiEmailAlreadyInUseException(response, targetLink, ltiIdToken, authToken);
+            if (ltiIdToken != null && authToken != null && !targetLink.isEmpty()) {
+                handleLtiEmailAlreadyInUseException(response, targetLink, ltiIdToken, authToken);
+            }
+            else {
+                log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
+            }
         }
     }
 

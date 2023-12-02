@@ -452,7 +452,7 @@ class Lti13ServiceTest {
         doNothing().when(ltiService).authenticateLtiUser(any(), any(), any(), any(), anyBoolean());
         doNothing().when(ltiService).onSuccessfulLtiAuthentication(any(), any());
 
-        lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId);
+        lti13Service.startDeepLinking(oidcIdToken);
     }
 
     @Test
@@ -462,27 +462,27 @@ class Lti13ServiceTest {
         OidcIdToken oidcIdToken = mock(OidcIdToken.class);
         when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/" + exercise.courseId);
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken));
 
     }
 
     @Test
     void startDeepLinkingCourseNotFound() {
         when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/lti/deep-linking/100000");
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken));
     }
 
     @Test
     void startDeepLinkingInvalidPath() {
         when(oidcIdToken.getClaim(Claims.TARGET_LINK_URI)).thenReturn("https://some-artemis-domain.org/with/invalid/path/to/deeplinking/11");
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken));
     }
 
     @Test
     void startDeepLinkingMalformedUrl() {
         doReturn("path").when(oidcIdToken).getClaim(Claims.TARGET_LINK_URI);
 
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken, clientRegistrationId));
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> lti13Service.startDeepLinking(oidcIdToken));
     }
 
     private State getValidStateForNewResult(Result result) {

@@ -147,7 +147,7 @@ class Lti13LaunchFilterTest {
     void authenticatedLoginForDeepLinking() throws Exception {
         doReturn(true).when(authentication).isAuthenticated();
         JsonObject responseJsonBody = getMockJsonObject(true);
-        verify(lti13Service).startDeepLinking(any(), any());
+        verify(lti13Service).startDeepLinking(any());
         verify(httpResponse, never()).setStatus(HttpStatus.UNAUTHORIZED.value());
         assertThat((responseJsonBody.get("targetLinkUri").toString())).as("Response body contains the expected targetLinkUri")
                 .contains("https://any-artemis-domain.org/lti/deep-linking/121");
@@ -165,7 +165,7 @@ class Lti13LaunchFilterTest {
 
         verify(httpResponse).sendError(eq(HttpStatus.INTERNAL_SERVER_ERROR.value()), any());
         verify(lti13Service, never()).performLaunch(any(), any());
-        verify(lti13Service, never()).startDeepLinking(any(), any());
+        verify(lti13Service, never()).startDeepLinking(any());
     }
 
     @Test
@@ -178,7 +178,7 @@ class Lti13LaunchFilterTest {
 
         verify(httpResponse).sendError(eq(HttpStatus.INTERNAL_SERVER_ERROR.value()), any());
         verify(lti13Service, never()).performLaunch(any(), any());
-        verify(lti13Service, never()).startDeepLinking(any(), any());
+        verify(lti13Service, never()).startDeepLinking(any());
     }
 
     @Test
@@ -216,7 +216,7 @@ class Lti13LaunchFilterTest {
     @Test
     void emailAddressAlreadyInUseServiceDeepLinkingFailed() throws ServletException, IOException {
         doReturn(false).when(authentication).isAuthenticated();
-        doThrow(new LtiEmailAlreadyInUseException()).when(lti13Service).startDeepLinking(any(), any());
+        doThrow(new LtiEmailAlreadyInUseException()).when(lti13Service).startDeepLinking(any());
 
         doReturn(CustomLti13Configurer.LTI13_LOGIN_PATH).when(httpRequest).getServletPath();
         doReturn(oidcToken).when(defaultFilter).attemptAuthentication(any(), any());

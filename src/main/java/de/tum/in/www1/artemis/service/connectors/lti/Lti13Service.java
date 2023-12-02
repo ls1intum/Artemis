@@ -306,9 +306,7 @@ public class Lti13Service {
 
         String courseId = pathVariables.get("courseId");
 
-        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(Long.valueOf(courseId));
-
-        return course;
+        return courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(Long.parseLong(courseId));
     }
 
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {
@@ -361,11 +359,10 @@ public class Lti13Service {
     /**
      * Initiates the deep linking process for a course based on the provided LTI ID token and client registration ID.
      *
-     * @param ltiIdToken           The ID token containing the deep linking information.
-     * @param clientRegistrationId The client registration ID of the LTI platform.
+     * @param ltiIdToken The ID token containing the deep linking information.
      * @throws BadRequestAlertException if the course is not found or LTI is not configured for the course.
      */
-    public void startDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId) {
+    public void startDeepLinking(OidcIdToken ltiIdToken) {
 
         String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
         Course targetCourse = getCourseFromTargetLink(targetLinkUrl);
