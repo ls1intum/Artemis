@@ -49,7 +49,7 @@ public class LtiPlatformConfiguration extends DomainObject {
     @Column(name = "token_uri", nullable = false)
     private String tokenUri;
 
-    @OneToMany(mappedBy = "ltiPlatformConfiguration", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "ltiPlatformConfiguration", fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "ltiPlatformConfiguration", allowSetters = true)
     private Set<OnlineCourseConfiguration> onlineCourseConfigurations = new HashSet<>();
 
