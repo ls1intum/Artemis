@@ -95,7 +95,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     void testJustForInstructorEndpoints() throws Exception {
         var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, firstAugustMonday, firstSeptemberMonday);
-        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId) + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), configuration, TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
         this.deleteExampleConfiguration();
         request.postWithResponseBody(getTutorialGroupsConfigurationPath(courseId), buildExampleConfiguration(courseId), TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
     }
@@ -154,7 +154,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
         // when
         configuration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
-        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId) + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
         // then
         configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
         this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday, courseId, true, true);
@@ -196,7 +196,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
         // when
         configuration.setUseTutorialGroupChannels(false);
-        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId) + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
         // then
         configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
         this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday, courseId, false, true);
@@ -213,7 +213,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupWithSchedule);
         // when
         configuration.setUsePublicTutorialGroupChannels(false);
-        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId) + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId()), configuration, TutorialGroupsConfiguration.class, HttpStatus.OK);
         // then
         configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
         this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday, courseId, true, false);

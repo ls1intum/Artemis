@@ -48,7 +48,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         // given
         var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
         // when
-        var sessionFromRequest = request.get(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId(), HttpStatus.OK, TutorialGroupSession.class);
+        var sessionFromRequest = request.get(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, session.getId()), HttpStatus.OK, TutorialGroupSession.class);
         // then
         assertThat(sessionFromRequest).isEqualTo(session);
 
@@ -87,7 +87,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
         var dto = createSessionDTO(firstAugustMonday);
         // when
-        request.postWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId), dto, TutorialGroupSession.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId), dto, TutorialGroupSession.class, HttpStatus.BAD_REQUEST);
         // then
         assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(exampleTutorialGroupId)).containsExactly(session);
 
@@ -102,7 +102,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         tutorialGroupUtilService.addTutorialGroupFreeDay(exampleConfigurationId, firstAugustMonday, "Holiday");
         var dto = createSessionDTO(firstAugustMonday);
         // when
-        var sessionId = request.postWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId), dto, TutorialGroupSession.class, HttpStatus.CREATED).getId();
+        var sessionId = request.postWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId), dto, TutorialGroupSession.class, HttpStatus.CREATED).getId();
         // then
         var persistedSession = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         assertThat(persistedSession.getTutorialGroupFreePeriod()).isNotNull();
@@ -129,7 +129,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         // when
         // change first august monday session to fourth monday august session
         var updatedSessionId = request
-                .putWithResponseBody(getSessionsPathOfTutorialGroup(tutorialGroup.getId()) + firstAugustMondaySession.getId(), dto, TutorialGroupSession.class, HttpStatus.OK)
+                .putWithResponseBody(getSessionsPathOfTutorialGroup(tutorialGroup.getId(), firstAugustMondaySession.getId()), dto, TutorialGroupSession.class, HttpStatus.OK)
                 .getId();
 
         // then
@@ -147,8 +147,8 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
 
         // when
         // change first august monday session to second monday august session
-        var updatedSessionId = request
-                .putWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId(), dto, TutorialGroupSession.class, HttpStatus.OK).getId();
+        var updatedSessionId = request.putWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, session.getId()), dto, TutorialGroupSession.class, HttpStatus.OK)
+                .getId();
 
         // then
         var updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(updatedSessionId);
@@ -169,7 +169,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
 
         // when
         var updatedSessionId = request
-                .patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + 20, null,
+                .patchWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, session.getId()) + "/attendance-count" + "?attendanceCount=" + 20, null,
                         TutorialGroupSession.class, HttpStatus.OK)
                 .getId();
 
@@ -179,7 +179,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         assertThat(updatedSession.getAttendanceCount()).isEqualTo(20);
 
         // when
-        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count", null, TutorialGroupSession.class,
+        request.patchWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, session.getId()) + "/attendance-count", null, TutorialGroupSession.class,
                 HttpStatus.OK).getId();
         updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(updatedSessionId);
         assertThat(updatedSession.getAttendanceCount()).isNull();
@@ -195,7 +195,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
         assertThat(session.getAttendanceCount()).isNull();
         // when
-        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + 20, null,
+        request.patchWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, session.getId()) + "/attendance-count" + "?attendanceCount=" + 20, null,
                 TutorialGroupSession.class, HttpStatus.FORBIDDEN);
         // then
         session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
@@ -213,14 +213,14 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         assertThat(session.getAttendanceCount()).isNull();
 
         // when
-        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + 3001, null,
+        request.patchWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + 3001, null,
                 TutorialGroupSession.class, HttpStatus.INTERNAL_SERVER_ERROR);
         // then
         session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
         assertThat(session.getAttendanceCount()).isNull();
 
         // when
-        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + -1, null,
+        request.patchWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + -1, null,
                 TutorialGroupSession.class, HttpStatus.INTERNAL_SERVER_ERROR);
         // then
         session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
@@ -240,7 +240,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var dto = createSessionDTO(secondAugustMonday);
         // when
         // change first august monday session to second monday august session
-        request.putWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + firstAugustMondaySession.getId(), dto, TutorialGroupSession.class,
+        request.putWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, firstAugustMondaySession.getId()), dto, TutorialGroupSession.class,
                 HttpStatus.BAD_REQUEST);
 
         // then
@@ -260,8 +260,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var dto = createSessionDTO(firstAugustMonday, LocalTime.of(this.defaultSessionStartHour - 1, 0, 0), LocalTime.of(this.defaultSessionEndHour + 1, 0, 0));
 
         // when
-        var updatedSessionId = request.putWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + firstAugustMondaySession.getId(), dto,
-                TutorialGroupSession.class, HttpStatus.OK).getId();
+        var updatedSessionId = request
+                .putWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, firstAugustMondaySession.getId()), dto, TutorialGroupSession.class, HttpStatus.OK)
+                .getId();
 
         // then
         assertThat(updatedSessionId).isEqualTo(firstAugustMondaySession.getId());
@@ -285,8 +286,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var dto = createSessionDTO(thirdAugustMonday);
 
         // when
-        var updatedSessionId = request.putWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + firstAugustMondaySession.getId(), dto,
-                TutorialGroupSession.class, HttpStatus.OK).getId();
+        var updatedSessionId = request
+                .putWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, firstAugustMondaySession.getId()), dto, TutorialGroupSession.class, HttpStatus.OK)
+                .getId();
         assertThat(updatedSessionId).isEqualTo(firstAugustMondaySession.getId());
 
         // then
@@ -308,8 +310,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
 
         var dto = createSessionDTO(thirdAugustMonday);
         // when
-        var updatedSessionId = request.putWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + firstAugustMondaySession.getId(), dto,
-                TutorialGroupSession.class, HttpStatus.OK).getId();
+        var updatedSessionId = request
+                .putWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, firstAugustMondaySession.getId()), dto, TutorialGroupSession.class, HttpStatus.OK)
+                .getId();
         assertThat(updatedSessionId).isEqualTo(firstAugustMondaySession.getId());
 
         // then
@@ -343,7 +346,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var firstAugustMondaySession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
         assertThat(tutorialGroupSessionRepository.existsById(firstAugustMondaySession.getId())).isTrue();
         // when
-        request.delete(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + firstAugustMondaySession.getId(), HttpStatus.NO_CONTENT);
+        request.delete(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, firstAugustMondaySession.getId()), HttpStatus.NO_CONTENT);
         // then
         assertThat(tutorialGroupSessionRepository.existsById(firstAugustMondaySession.getId())).isFalse();
     }
@@ -359,7 +362,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         assertThat(tutorialGroupSessionRepository.existsById(firstAugustMondaySession.getId())).isTrue();
 
         // when
-        request.delete(getSessionsPathOfTutorialGroup(tutorialGroup.getId()) + firstAugustMondaySession.getId(), HttpStatus.NO_CONTENT);
+        request.delete(getSessionsPathOfTutorialGroup(tutorialGroup.getId(), firstAugustMondaySession.getId()), HttpStatus.NO_CONTENT);
 
         // then
         assertThat(tutorialGroupSessionRepository.existsById(firstAugustMondaySession.getId())).isFalse();
@@ -435,7 +438,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         tutorialGroupSessionRepository.save(firstAugustMondaySession);
 
         // when
-        request.postWithoutLocation(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + firstAugustMondaySession.getId() + "/activate", null, HttpStatus.OK, null);
+        request.postWithoutLocation(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, firstAugustMondaySession.getId()) + "/activate", null, HttpStatus.OK, null);
 
         // then
         var updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(firstAugustMondaySession.getId());
@@ -453,8 +456,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         tutorialGroupSessionRepository.save(firstAugustMondaySession);
 
         // when
-        request.postWithoutLocation(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + firstAugustMondaySession.getId() + "/activate", null, HttpStatus.FORBIDDEN,
-                null);
+        request.postWithoutLocation(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, firstAugustMondaySession.getId()) + "/activate", null, HttpStatus.FORBIDDEN, null);
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
@@ -481,7 +483,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var dto = createSessionDTO(thirdAugustMonday);
 
         // when
-        request.put(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + firstAugustMondaySession.getId(), dto, HttpStatus.FORBIDDEN);
+        request.put(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, firstAugustMondaySession.getId()), dto, HttpStatus.FORBIDDEN);
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
@@ -491,7 +493,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         // given
         var dto = createSessionDTO(firstAugustMonday);
         // when
-        var sessionId = request.postWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId), dto, TutorialGroupSession.class, HttpStatus.CREATED).getId();
+        var sessionId = request.postWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId), dto, TutorialGroupSession.class, HttpStatus.CREATED).getId();
         // then
         var persistedSession = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         assertSessionCreatedCorrectlyFromDTO(persistedSession, dto);
@@ -505,14 +507,14 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         // given
         var dto = createSessionDTO(firstAugustMonday);
         // when
-        request.postWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId), dto, TutorialGroupSession.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody(getSessionsPathOfTutorialGroup(exampleTutorialGroupId), dto, TutorialGroupSession.class, HttpStatus.FORBIDDEN);
     }
 
     private void deleteSessionForbiddenTest() throws Exception {
         // given
         var firstAugustMondaySession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
         // when
-        request.delete(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + firstAugustMondaySession.getId(), HttpStatus.FORBIDDEN);
+        request.delete(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, firstAugustMondaySession.getId()), HttpStatus.FORBIDDEN);
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
@@ -524,7 +526,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         assertIndividualSessionIsActiveOnDate(firstAugustMondaySession, firstAugustMonday, exampleTutorialGroupId);
         var statusDTO = new TutorialGroupSessionResource.TutorialGroupStatusDTO("Holiday");
         // when
-        request.postWithoutLocation(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + firstAugustMondaySession.getId() + "/cancel", statusDTO, HttpStatus.OK, null);
+        request.postWithoutLocation(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, firstAugustMondaySession.getId()) + "/cancel", statusDTO, HttpStatus.OK, null);
         // then
         var updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(firstAugustMondaySession.getId());
         assertIndividualSessionIsCancelledOnDate(updatedSession, firstAugustMonday, exampleTutorialGroupId, "Holiday");
@@ -539,8 +541,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         assertIndividualSessionIsActiveOnDate(firstAugustMondaySession, firstAugustMonday, exampleTutorialGroupId);
         var statusDTO = new TutorialGroupSessionResource.TutorialGroupStatusDTO("Holiday");
         // when
-        request.postWithoutLocation(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + firstAugustMondaySession.getId() + "/cancel", statusDTO, HttpStatus.FORBIDDEN,
-                null);
+        request.postWithoutLocation(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, firstAugustMondaySession.getId()) + "/cancel", statusDTO, HttpStatus.FORBIDDEN, null);
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());

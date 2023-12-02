@@ -106,7 +106,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(javaNormalAeolusTemplate).isNotEmpty();
         javaSequentialAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_MAVEN?sequentialRuns=true", HttpStatus.OK, String.class);
         assertThat(javaSequentialAeolusTemplate).isNotEmpty();
-        String pythonTemplate = request.get("/api/files/aeolus/templates/PYTHON/", HttpStatus.OK, String.class);
+        String pythonTemplate = request.get("/api/files/aeolus/templates/PYTHON", HttpStatus.OK, String.class);
         assertThat(pythonTemplate).isNotEmpty();
     }
 

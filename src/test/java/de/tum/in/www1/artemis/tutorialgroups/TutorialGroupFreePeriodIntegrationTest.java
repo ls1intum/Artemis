@@ -70,12 +70,12 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
     void testJustForInstructorEndpoints() throws Exception {
         var freePeriod = tutorialGroupUtilService.addTutorialGroupFreeDay(exampleConfigurationId, firstAugustMonday, "Holiday");
-        request.get(getTutorialGroupFreePeriodsPath() + freePeriod.getId(), HttpStatus.FORBIDDEN, TutorialGroupFreePeriod.class);
+        request.get(getTutorialGroupFreePeriodsPath(freePeriod.getId()), HttpStatus.FORBIDDEN, TutorialGroupFreePeriod.class);
         request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), createTutorialGroupFreePeriodDTO(firstAugustMonday, "Holiday"), TutorialGroupFreePeriod.class,
                 HttpStatus.FORBIDDEN);
-        request.putWithResponseBody(getTutorialGroupFreePeriodsPath() + freePeriod.getId(), createTutorialGroupFreePeriodDTO(secondAugustMonday, "Another Holiday"),
+        request.putWithResponseBody(getTutorialGroupFreePeriodsPath(freePeriod.getId()), createTutorialGroupFreePeriodDTO(secondAugustMonday, "Another Holiday"),
                 TutorialGroupFreePeriod.class, HttpStatus.FORBIDDEN);
-        request.delete(getTutorialGroupFreePeriodsPath() + freePeriod.getId(), HttpStatus.FORBIDDEN);
+        request.delete(getTutorialGroupFreePeriodsPath(freePeriod.getId()), HttpStatus.FORBIDDEN);
 
         // cleanup
         tutorialGroupFreePeriodRepository.deleteById(freePeriod.getId());
@@ -87,7 +87,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         // given
         var freePeriod = tutorialGroupUtilService.addTutorialGroupFreeDay(exampleConfigurationId, firstAugustMonday, "Holiday");
         // when
-        var freePeriodFromRequest = request.get(getTutorialGroupFreePeriodsPath() + freePeriod.getId(), HttpStatus.OK, TutorialGroupFreePeriod.class);
+        var freePeriodFromRequest = request.get(getTutorialGroupFreePeriodsPath(freePeriod.getId()), HttpStatus.OK, TutorialGroupFreePeriod.class);
         // then
         assertThat(freePeriodFromRequest).isEqualTo(freePeriod);
 
@@ -192,7 +192,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         var secondOfAugustFreeDayDTO = createTutorialGroupFreePeriodDTO(secondAugustMonday, "Another Holiday");
         // when
-        request.putWithResponseBody(getTutorialGroupFreePeriodsPath() + periodId, secondOfAugustFreeDayDTO, TutorialGroupFreePeriod.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupFreePeriodsPath(periodId), secondOfAugustFreeDayDTO, TutorialGroupFreePeriod.class, HttpStatus.OK);
 
         // then
         firstMondayOfAugustSession = tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
@@ -218,7 +218,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         var numberOfFreePeriods = tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId).size();
         // when
-        request.putWithResponseBody(getTutorialGroupFreePeriodsPath() + firstMondayOfAugustFreeDay.getId(), dto, TutorialGroupFreePeriod.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody(getTutorialGroupFreePeriodsPath(firstMondayOfAugustFreeDay.getId()), dto, TutorialGroupFreePeriod.class, HttpStatus.BAD_REQUEST);
 
         // then
         assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId)).hasSize(numberOfFreePeriods);
@@ -239,7 +239,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         var numberOfFreePeriods = tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId).size();
 
         // when
-        request.putWithResponseBody(getTutorialGroupFreePeriodsPath() + firstMondayOfAugustFreeDay.getId(), dto, TutorialGroupFreePeriod.class, HttpStatus.OK);
+        request.putWithResponseBody(getTutorialGroupFreePeriodsPath(firstMondayOfAugustFreeDay.getId()), dto, TutorialGroupFreePeriod.class, HttpStatus.OK);
 
         // then
         assertThat(tutorialGroupFreePeriodRepository.findAllByTutorialGroupsConfigurationCourseId(exampleCourseId)).hasSize(numberOfFreePeriods);
@@ -266,7 +266,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod()).isNotNull();
 
         // when
-        request.delete(getTutorialGroupFreePeriodsPath() + periodId, HttpStatus.NO_CONTENT);
+        request.delete(getTutorialGroupFreePeriodsPath(periodId), HttpStatus.NO_CONTENT);
 
         // then
         firstMondayOfAugustSession = tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());

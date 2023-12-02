@@ -125,23 +125,35 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     // === Paths ===
     String getTutorialGroupsPath(Long courseId) {
-        return "/api/courses/" + courseId + "/tutorial-groups/";
+        return "/api/courses/" + courseId + "/tutorial-groups";
+    }
+
+    String getTutorialGroupsPath(Long courseId, Long tutorialGroupId) {
+        return this.getTutorialGroupsPath(courseId) + "/" + tutorialGroupId;
     }
 
     String getTutorialGroupsConfigurationPath(Long courseId) {
-        return "/api/courses/" + courseId + "/tutorial-groups-configuration/";
+        return "/api/courses/" + courseId + "/tutorial-groups-configuration";
+    }
+
+    String getTutorialGroupsConfigurationPath(Long courseId, Long configurationId) {
+        return this.getTutorialGroupsConfigurationPath(courseId) + "/" + configurationId;
     }
 
     String getTutorialGroupFreePeriodsPath() {
-        return this.getTutorialGroupsConfigurationPath(exampleCourseId) + exampleConfigurationId + "/tutorial-free-periods/";
+        return this.getTutorialGroupsConfigurationPath(exampleCourseId, exampleConfigurationId) + "/tutorial-free-periods/";
     }
 
-    String getSessionsPathOfDefaultTutorialGroup(Long tutorialGroupId) {
-        return this.getTutorialGroupsPath(this.exampleCourseId) + tutorialGroupId + "/sessions/";
+    String getTutorialGroupFreePeriodsPath(Long freePeriodId) {
+        return this.getTutorialGroupFreePeriodsPath() + "/" + freePeriodId;
     }
 
     String getSessionsPathOfTutorialGroup(Long tutorialGroupId) {
-        return this.getTutorialGroupsPath(this.exampleCourseId) + tutorialGroupId + "/sessions/";
+        return this.getTutorialGroupsPath(this.exampleCourseId, tutorialGroupId) + "/sessions";
+    }
+
+    String getSessionsPathOfTutorialGroup(Long tutorialGroupId, Long sessionId) {
+        return this.getSessionsPathOfTutorialGroup(tutorialGroupId) + "/" + sessionId;
     }
 
     // === UTILS ===
