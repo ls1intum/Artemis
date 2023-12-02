@@ -22,6 +22,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.google.gson.JsonObject;
 
 import de.tum.in.www1.artemis.domain.lti.Claims;
+import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
@@ -55,10 +56,17 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Initialize targetLink as an empty string here to ensure it has a value even if an exception is caught later.
+        String targetLink = "";
+        OidcIdToken ltiIdToken = null;
+
         try {
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
 
-            OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
+            ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
+
+            targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
+
             lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
 
             writeResponse(ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
@@ -66,6 +74,14 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
             log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
+        }
+        catch (LtiEmailAlreadyInUseException ex) {
+            // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
+            // We need targetLink to redirect user on the client-side after successful authentication
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLink);
+            lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken);
+            response.setHeader("TargetLinkUri", uriBuilder.build().toUriString());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "LTI 1.3 user authentication failed");
         }
     }
 
