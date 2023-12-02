@@ -332,20 +332,20 @@ public class LocalCIBuildJobExecutionService {
         List<String> testResultPaths = new ArrayList<>();
         if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
             if (programmingExercise.hasSequentialTestRuns()) {
-                testResultPaths.add("/testing-dir/structural/target/surefire-reports");
-                testResultPaths.add("/testing-dir/behavior/target/surefire-reports");
+                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/structural/target/surefire-reports");
+                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/behavior/target/surefire-reports");
             }
             else {
-                testResultPaths.add("/testing-dir/target/surefire-reports");
+                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/target/surefire-reports");
             }
         }
         else {
             if (programmingExercise.hasSequentialTestRuns()) {
-                testResultPaths.add("/testing-dir/build/test-results/behaviorTests");
-                testResultPaths.add("/testing-dir/build/test-results/structuralTests");
+                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/build/test-results/behaviorTests");
+                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/build/test-results/structuralTests");
             }
             else {
-                testResultPaths.add("/testing-dir/build/test-results/test");
+                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/build/test-results/test");
             }
         }
         return testResultPaths;
@@ -353,15 +353,14 @@ public class LocalCIBuildJobExecutionService {
 
     private List<String> getPythonTestResultPaths() {
         List<String> testResultPaths = new ArrayList<>();
-        testResultPaths.add("/testing-dir/test-reports");
+        testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/test-reports");
         return testResultPaths;
     }
 
     private List<String> getCTestResultPaths(ProgrammingExercise programmingExercise) {
         List<String> testResultPaths = new ArrayList<>();
         for (AeolusResult testResultPath : programmingExercise.getWindfile().getResults()) {
-            testResultPaths.add("/repositories/test-repository" + testResultPath.getPath());
-            System.out.println("/repositories/test-repository" + testResultPath.getPath());
+            testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/" + testResultPath.getPath());
         }
         return testResultPaths;
     }
