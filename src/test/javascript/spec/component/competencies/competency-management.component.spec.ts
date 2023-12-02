@@ -229,6 +229,21 @@ describe('CompetencyManagementComponent', () => {
         expect(component.relationError).toBe(CompetencyRelationError.CIRCULAR);
     });
 
+    it('should not detect circles on relations', () => {
+        const node1 = { id: '16', label: 'competency1' } as Node;
+        const node2 = { id: '17', label: 'competency2' } as Node;
+        component.nodes = [node1, node2];
+        component.edges = [];
+
+        component.tailCompetency = 17;
+        component.headCompetency = 16;
+        component.relationType = 'ASSUMES';
+
+        component.validate();
+
+        expect(component.relationError).toBe(CompetencyRelationError.NONE);
+    });
+
     it('should prevent creating already existing relations', () => {
         const node1 = { id: '16', label: 'competency1' } as Node;
         const node2 = { id: '17', label: 'competency2' } as Node;
