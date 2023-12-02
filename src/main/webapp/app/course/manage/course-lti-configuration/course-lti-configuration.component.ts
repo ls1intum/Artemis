@@ -66,4 +66,11 @@ export class CourseLtiConfigurationComponent implements OnInit {
     sortRows() {
         this.sortService.sortByProperty(this.exercises, this.predicate, this.reverse);
     }
+
+    /**
+     * Returns true if any required LTI 1.3 fields are missing
+     */
+    missingLti13ConfigurationField(): boolean {
+        return !this.onlineCourseConfiguration.ltiPlatformConfiguration;
+    }
 }

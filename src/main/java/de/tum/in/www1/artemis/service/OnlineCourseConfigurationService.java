@@ -86,8 +86,9 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
         if (ocConfiguration.getLtiPlatformConfiguration() != null) {
             Optional<LtiPlatformConfiguration> existingLtiPlatformConfiguration = ltiPlatformConfigurationRepository
                     .findByRegistrationId(ocConfiguration.getLtiPlatformConfiguration().getRegistrationId());
-            if (existingLtiPlatformConfiguration.isPresent() && !Objects.equals(existingLtiPlatformConfiguration.get().getId(), ocConfiguration.getId())) {
-                throw new BadRequestAlertException("Registration ID must be unique", ENTITY_NAME, "invalidRegistrationId");
+            if (!existingLtiPlatformConfiguration.isPresent()
+                    && !Objects.equals(existingLtiPlatformConfiguration.get().getId(), ocConfiguration.getLtiPlatformConfiguration().getId())) {
+                throw new BadRequestAlertException("No platform registration found", ENTITY_NAME, "invalidRegistrationId");
             }
         }
     }
