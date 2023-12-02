@@ -1,28 +1,32 @@
 package de.tum.in.www1.artemis.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.util.Optional;
 import java.util.Set;
+
+import jakarta.persistence.criteria.Fetch;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.competency.Competency;
+import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the Competency entity.
  */
 @Repository
-public interface CompetencyRepository extends JpaRepository<Competency, Long> {
+public interface CompetencyRepository extends JpaRepository<Competency, Long>, JpaSpecificationExecutor<Competency> {
 
     @Query("""
             SELECT c
@@ -49,29 +53,38 @@ public interface CompetencyRepository extends JpaRepository<Competency, Long> {
             """)
     Optional<Competency> findByIdWithLectureUnits(@Param("competencyId") long competencyId);
 
+    class CompetencySpecification {
+
+        static public Specification<Competency> getCompetencyWithFetchesAndConditionalJoins(Long competencyId, Long userId) {
+            return (root, query, builder) -> {
+                root.fetch("userProgress", JoinType.LEFT);
+                root.fetch("exercises", JoinType.LEFT);
+                Fetch<Competency, LectureUnit> lectureUnitFetch = root.fetch("lectureUnits", JoinType.LEFT);
+                lectureUnitFetch.fetch("completedUsers", JoinType.LEFT);
+                lectureUnitFetch.fetch("lecture", JoinType.LEFT);
+
+                Join<LectureUnit, LectureUnitCompletion> completionJoin = root.join("lectureUnits", JoinType.LEFT).join("completedUsers", JoinType.LEFT);
+                completionJoin.on(completionJoin.get("user").get("id").in(userId));
+
+                Join<LectureUnit, CompetencyProgress> progressJoin = root.join("userProgress", JoinType.LEFT);
+                progressJoin.on(progressJoin.get("user").get("id").in(userId));
+                return builder.and(builder.equal(root.get("id"), competencyId));
+            };
+        }
+    }
+
     /**
      * Fetches a competency with all linked exercises, lecture units, the associated progress, and completion of the specified user.
      * <p>
-     * IMPORTANT: We use the entity graph to fetch the lazy loaded data. The fetched data is limited by joining on the user id.
+     * IMPORTANT: We use the {@link Specification} to fetch the lazy loaded data. The fetched data is limited by joining on the user id.
      *
      * @param competencyId the id of the competency that should be fetched
      * @param userId       the id of the user whose progress should be fetched
      * @return the competency
      */
-    @Query("""
-            SELECT competency
-            FROM Competency competency
-                LEFT JOIN competency.userProgress progress
-                    ON competency.id = progress.learningGoal.id AND progress.user.id = :userId
-                LEFT JOIN FETCH competency.exercises
-                LEFT JOIN FETCH competency.lectureUnits lectureUnits
-                LEFT JOIN lectureUnits.completedUsers completedUsers
-                    ON lectureUnits.id = completedUsers.lectureUnit.id AND completedUsers.user.id = :userId
-                LEFT JOIN FETCH lectureUnits.lecture
-            WHERE competency.id = :competencyId
-            """)
-    @EntityGraph(type = LOAD, attributePaths = { "userProgress", "lectureUnits.completedUsers" })
-    Optional<Competency> findByIdWithExercisesAndLectureUnitsAndProgressForUser(@Param("competencyId") long competencyId, @Param("userId") long userId);
+    default Optional<Competency> findByIdWithExercisesAndLectureUnitsAndProgressForUser(Long competencyId, Long userId) {
+        return findOne(CompetencySpecification.getCompetencyWithFetchesAndConditionalJoins(competencyId, userId));
+    }
 
     @Query("""
             SELECT c
