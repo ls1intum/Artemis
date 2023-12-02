@@ -126,7 +126,7 @@ describe('Course LTI Configuration Component', () => {
             ),
         );
         comp.ngOnInit();
-        comp.activeTab = 3;
+        comp.activeTab = 4;
 
         fixture.detectChanges();
 
