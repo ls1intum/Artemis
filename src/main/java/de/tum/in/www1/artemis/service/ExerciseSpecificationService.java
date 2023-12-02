@@ -46,7 +46,7 @@ public class ExerciseSpecificationService {
             Join<ExerciseGroup, Exam> joinExam = joinExerciseGroup.join(ExerciseGroup_.EXAM, JoinType.LEFT);
             Join<Exam, Course> joinExamCourse = joinExam.join(Exam_.COURSE, JoinType.LEFT);
 
-            Predicate idMatchesSearch = criteriaBuilder.equal(criteriaBuilder.concat(root.get(Exercise_.ID), ""), searchTerm);
+            Predicate idMatchesSearch = criteriaBuilder.equal(root.get(Exercise_.ID).as(String.class), searchTerm);
             Predicate exerciseTitleMatches = criteriaBuilder.like(root.get(Exercise_.TITLE), "%" + searchTerm + "%");
             Predicate courseTitleMatches = criteriaBuilder.like(joinCourse.get(Course_.TITLE), "%" + searchTerm + "%");
             Predicate examCourseTitleMatches = criteriaBuilder.like(joinExamCourse.get(Course_.TITLE), "%" + searchTerm + "%");

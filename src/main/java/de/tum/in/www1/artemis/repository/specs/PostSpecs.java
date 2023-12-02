@@ -175,7 +175,7 @@ public class PostSpecs {
 
                 Predicate searchInPostTitle = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.TITLE)), searchTextLiteral);
                 Predicate searchInPostContent = criteriaBuilder.like(criteriaBuilder.lower(root.get(Post_.CONTENT)), searchTextLiteral);
-                Predicate searchInPostTags = criteriaBuilder.like(criteriaBuilder.lower(criteriaBuilder.concat(root.join(Post_.TAGS, JoinType.LEFT), " ")), searchTextLiteral);
+                Predicate searchInPostTags = criteriaBuilder.like(criteriaBuilder.lower(root.join(Post_.TAGS, JoinType.LEFT).as(String.class)), searchTextLiteral);
 
                 return criteriaBuilder.or(searchInPostTitle, searchInPostContent, searchInPostTags);
             }
