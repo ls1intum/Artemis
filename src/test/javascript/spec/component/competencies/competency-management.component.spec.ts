@@ -210,6 +210,11 @@ describe('CompetencyManagementComponent', () => {
         expect(createCompetencyRelationSpy).toHaveBeenCalledWith(123, 456, 'assumes', 1);
     });
 
+    it.each([CompetencyRelationError.SELF, CompetencyRelationError.EXISTING, CompetencyRelationError.CIRCULAR])('should error on create competency relation', (error) => {
+        component.relationError = error;
+        expect(() => component.createRelation()).toThrow(TypeError);
+    });
+
     it('should detect circles on relations', () => {
         const node1 = { id: '16', label: 'competency1' } as Node;
         const node2 = { id: '17', label: 'competency2' } as Node;
@@ -283,5 +288,13 @@ describe('CompetencyManagementComponent', () => {
         component.removeRelation({ source: '123', data: { id: 456 } } as Edge);
         expect(removeCompetencyRelationSpy).toHaveBeenCalledOnce();
         expect(removeCompetencyRelationSpy).toHaveBeenCalledWith(123, 456, 1);
+    });
+
+    it.each([CompetencyRelationError.SELF, CompetencyRelationError.EXISTING, CompetencyRelationError.CIRCULAR])('should return error message', (error) => {
+        expect(component.getErrorMessage(error)).toBeDefined();
+    });
+
+    it('should throw error on no error', () => {
+        expect(() => component.getErrorMessage(CompetencyRelationError.NONE)).toThrow(TypeError);
     });
 });
