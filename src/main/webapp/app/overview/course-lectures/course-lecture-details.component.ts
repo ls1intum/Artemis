@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
@@ -14,8 +14,10 @@ import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { Router } from '@angular/router';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { AbstractScienceComponent } from 'app/shared/science/science.component';
+import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -27,7 +29,7 @@ export interface LectureUnitCompletionEvent {
     templateUrl: './course-lecture-details.component.html',
     styleUrls: ['../course-overview.scss', './course-lectures.scss'],
 })
-export class CourseLectureDetailsComponent implements OnInit {
+export class CourseLectureDetailsComponent extends AbstractScienceComponent implements OnInit {
     lectureId?: number;
     isLoading = false;
     lecture?: Lecture;
@@ -50,7 +52,10 @@ export class CourseLectureDetailsComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private fileService: FileService,
         private router: Router,
-    ) {}
+        protected scienceService: ScienceService,
+    ) {
+        super(scienceService, ScienceEventType.LECTURE__OPEN);
+    }
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {
