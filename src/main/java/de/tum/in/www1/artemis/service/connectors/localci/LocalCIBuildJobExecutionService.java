@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
 
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
@@ -33,15 +34,20 @@ import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
+import de.tum.in.www1.artemis.service.connectors.localci.scaParser.strategy.ParserPolicy;
+import de.tum.in.www1.artemis.service.connectors.localci.scaParser.strategy.ParserStrategy;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
+import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 /**
  * This service contains the logic to execute a build job for a programming exercise participation in the local CI system.
@@ -307,6 +313,9 @@ public class LocalCIBuildJobExecutionService {
                 testResultPaths.add("/testing-dir/build/test-results/test");
             }
         }
+        if (programmingExercise.isStaticCodeAnalysisEnabled()) {
+            testResultPaths.add("/testing-dir/target");
+        }
         return testResultPaths;
     }
 
@@ -321,6 +330,7 @@ public class LocalCIBuildJobExecutionService {
 
         List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+        List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
         TarArchiveEntry tarEntry;
         for (TarArchiveInputStream testResultsTarInputStream : testResultsTarInputStreams) {
@@ -332,16 +342,22 @@ public class LocalCIBuildJobExecutionService {
                 if (!isValidTestResultFile(tarEntry)) {
                     continue;
                 }
-
                 // Read the contents of the tar entry as a string.
                 String xmlString = readTarEntryContent(testResultsTarInputStream);
+                // Get the file name of the tar entry.
+                String fileName = getFileName(tarEntry);
 
-                processTestResultFile(xmlString, failedTests, successfulTests);
+                // Check if the file is a static code analysis report file
+                if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
+                    processStaticCodeAnalysisReportFile(fileName, xmlString, staticCodeAnalysisReports);
+                }
+                else {
+                    processTestResultFile(xmlString, failedTests, successfulTests);
+                }
             }
         }
-
         return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, !failedTests.isEmpty(),
-                buildCompletedDate);
+                buildCompletedDate, staticCodeAnalysisReports);
     }
 
     private boolean isValidTestResultFile(TarArchiveEntry tarArchiveEntry) {
@@ -351,6 +367,40 @@ public class LocalCIBuildJobExecutionService {
 
         // Java test result files are named "TEST-*.xml", Python test result files are named "*results.xml".
         return !tarArchiveEntry.isDirectory() && ((result.endsWith(".xml") && !result.equals("pom.xml")));
+    }
+
+    /**
+     * Get the file name of the tar entry.
+     *
+     * @param tarEntry the tar entry
+     * @return the file name of the tar entry
+     */
+    private String getFileName(TarArchiveEntry tarEntry) {
+        String filePath = tarEntry.getName();
+        // Find the index of the last '/'
+        int lastIndex = filePath.lastIndexOf('/');
+        // If '/' is found, extract the substring after it; otherwise, keep the original string
+        return lastIndex != -1 ? filePath.substring(lastIndex + 1) : filePath;
+    }
+
+    /**
+     * Processes a static code analysis report file and adds the report to the corresponding list.
+     *
+     * @param fileName                  the file name of the static code analysis report file
+     * @param xmlString                 the content of the static code analysis report file
+     * @param staticCodeAnalysisReports the list of static code analysis reports
+     */
+    private void processStaticCodeAnalysisReportFile(String fileName, String xmlString, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
+        Document document = XmlFileUtils.readFromString(xmlString);
+        document.setDocumentURI(fileName);
+        try {
+            ParserPolicy parserPolicy = new ParserPolicy();
+            ParserStrategy parserStrategy = parserPolicy.configure(document);
+            staticCodeAnalysisReports.add(parserStrategy.parse(document));
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Failed to parse static code analysis report for " + fileName, e);
+        }
     }
 
     private String readTarEntryContent(TarArchiveInputStream tarArchiveInputStream) throws IOException {
@@ -392,7 +442,6 @@ public class LocalCIBuildJobExecutionService {
             if (!xmlStreamReader.isStartElement() || !("testcase".equals(xmlStreamReader.getLocalName()))) {
                 continue;
             }
-
             // Now we are at the start of a "testcase" node.
             processTestCaseNode(xmlStreamReader, failedTests, successfulTests);
         }
@@ -439,7 +488,7 @@ public class LocalCIBuildJobExecutionService {
      */
     private LocalCIBuildResult constructFailedBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash,
             ZonedDateTime buildRunDate) {
-        return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate);
+        return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate, List.of());
     }
 
     /**
@@ -455,9 +504,11 @@ public class LocalCIBuildJobExecutionService {
      * @return a {@link LocalCIBuildResult}
      */
     private LocalCIBuildResult constructBuildResult(List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests,
-            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate) {
+            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
+            List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
         LocalCIBuildResult.LocalCIJobDTO job = new LocalCIBuildResult.LocalCIJobDTO(failedTests, successfulTests);
 
-        return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job));
+        return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job),
+                staticCodeAnalysisReports);
     }
 }

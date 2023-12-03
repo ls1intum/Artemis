@@ -427,6 +427,10 @@ public class LocalCIContainerService {
                         """);
             }
         }
+        buildScript.append("""
+                chmod +x gradlew
+                ./gradlew check -x test
+                """);
     }
 
     private void scriptForPython(StringBuilder buildScript) {
