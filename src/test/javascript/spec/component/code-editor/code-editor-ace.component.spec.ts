@@ -459,8 +459,8 @@ describe('CodeEditorAceComponent', () => {
     });
 
     describe('feedback deletion', () => {
-        let f1;
-        let f2;
+        let f1: Feedback;
+        let f2: Feedback;
         beforeEach(() => {
             f1 = new Feedback();
             f1.text = 'File src/abc/BubbleSort.java at line 6';
