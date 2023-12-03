@@ -637,7 +637,7 @@ export class CodeEditorAceComponent implements AfterViewInit, OnChanges, OnDestr
      * @param feedback Feedback to be removed
      */
     deleteFeedback(feedback: Feedback) {
-        this.feedbacks = this.feedbacks.filter((f) => f.text !== feedback.text);
+        this.feedbacks = this.feedbacks.filter((f) => !Feedback.areIdentical(f, feedback));
         this.removeLineWidget(Feedback.getReferenceLine(feedback)!);
         this.onUpdateFeedback.emit(this.feedbacks);
     }
