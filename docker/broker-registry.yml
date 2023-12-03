@@ -1,7 +1,7 @@
 services:
     jhipster-registry:
         container_name: artemis-jhipster-registry
-        image: docker.io/jhipster/jhipster-registry:v6.1.2
+        image: docker.io/jhipster/jhipster-registry:v7.4.0
         pull_policy: if_not_present
         volumes:
             - ./registry:/central-config
@@ -12,8 +12,8 @@ services:
         environment:
             _JAVA_OPTIONS: -Xmx512m -Xms256m
             SPRING_PROFILES_ACTIVE: dev,openapi
-            SPRING_SECURITY_USER_PASSWORD: admin
-            JHIPSTER_REGISTRY_PASSWORD: admin
+            SPRING_SECURITY_USER_PASSWORD: ${REGISTRY_PASSWORD:-admin}
+            JHIPSTER_REGISTRY_PASSWORD: ${REGISTRY_PASSWORD:-admin}
             SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_TYPE: native
             SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_SEARCH_LOCATIONS: file:./central-config/localhost-config/
         ports:
@@ -21,16 +21,24 @@ services:
         # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "8761"
+        healthcheck:
+            test: wget -nv -t1 --spider http://localhost:8761/actuator/health || exit 1
+            start_period: 600s
+            interval: 1s
 
     activemq-broker:
         container_name: artemis-activemq-broker
-        image: docker.io/vromero/activemq-artemis:latest
+        image: docker.io/apache/activemq-artemis:2.31.2-alpine
         pull_policy: if_not_present
         environment:
-            ARTEMIS_USERNAME: guest
-            ARTEMIS_PASSWORD: guest
+            ARTEMIS_USER: ${BROKER_USER:-guest}
+            ARTEMIS_PASSWORD: ${BROKER_PASSWORD:-guest}
+            # "--http-host 0.0.0.0 --relax-jolokia" is the default
+            # "--nio" is apparently required to make it work on ARM CPUs
+            EXTRA_ARGS: --http-host 0.0.0.0 --relax-jolokia --nio
         ports:
-            - "61613:61613"
-        # expose the port to make it reachable docker internally even if the external port mapping changes
-        expose:
-            - "61613"
+            - "61613:61616"
+        healthcheck:
+            test: wget -nv -t1 --spider http://localhost:8161/ || exit 1
+            start_period: 600s
+            interval: 1s

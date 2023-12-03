@@ -235,7 +235,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/modeling-submission-without-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId, @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+            @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
 
         log.debug("REST request to get a modeling submission without assessment");
         final var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -254,8 +255,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         modelingSubmissionService.checkSubmissionLockLimit(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        var submission = modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode)
-            .orElse(null);
+        var submission = modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode).orElse(null);
 
         if (submission != null) {
             // needed to show the grading criteria in the assessment view

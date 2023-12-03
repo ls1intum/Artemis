@@ -11,14 +11,21 @@
             "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
             "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
             "suggestion": {
-                "suggested": "Feedback-Vorschlag (nicht akzeptiert)",
-                "accepted": "Akzeptierter Feedback-Vorschlag",
-                "adapted": "Angepasster Feedback-Vorschlag"
+                "default": "Vorschlag",
+                "suggested": "Offener Vorschlag",
+                "accepted": "Angenommener Vorschlag",
+                "adapted": "Angepasster Vorschlag"
             },
             "suggestionTitle": {
-                "suggested": "Dieser automatisch erstellte Feedback-Vorschlag ist nicht in der Gesamtbewertung enthalten, solange er nicht explizit akzeptiert wird.",
-                "accepted": "Automatisch erstellter Feedback-Vorschlag",
-                "adapted": "Automatisch erstellter Feedback-Vorschlag, bearbeitet"
+                "default": "Dieser Vorschlag wurde automatisch erstellt.",
+                "suggested": "Dieser automatisch erstellte Vorschlag ist nicht in der Gesamtbewertung enthalten, solange er nicht explizit akzeptiert wird.",
+                "accepted": "Automatisch erstellter angenommener Vorschlag",
+                "adapted": "Automatisch erstellter bearbeiteter Vorschlag"
+            },
+            "suggestionPendingDialog": {
+                "title": "Ausstehende Feedback-Vorschläge",
+                "description": "Es sind ausstehende Feedback-Vorschläge verfügbar. Diese werden beim Absenden verworfen. Wirklich absenden?",
+                "discardAndSubmit": "Vorschläge verwerfen & absenden"
             },
             "subsequentFeedback": "Dies ist ein zusätzliches Feedback, das nicht in die Gesamtbewertung eingeht.",
             "error": {

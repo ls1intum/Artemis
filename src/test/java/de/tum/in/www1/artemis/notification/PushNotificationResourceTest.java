@@ -36,7 +36,7 @@ class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentT
     @Autowired
     private UserUtilService userUtilService;
 
-    private static final String FAKE_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJhdXRoIjoiUk9MRV9BRE1JTiIsImV4cCI6MjU5MzY5ODYwODg0MH0.52mSTsxFbIxqx0OmRJuy1lohq41GAKtUBO1bAY4Y_RKNW0exsmopaV_0J7iIQpfYySCNS5-37LIG_HX1tVuvxA";
+    private static final String FAKE_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ4eDQ0eHh4IiwiYXV0aCI6IlJPTEVfVEEsUk9MRV9JTlNUUlVDVE9SLFJPTEVfVVNFUiIsImV4cCI6MjUzNDAyMjU3NjAwfQ.mm9sUblgWLp97xC5ML2z6KZ0rQucKOyP7zmmI_bINlfu_axQ1dmw7A60gzOH7kzArWtx7ZmHYQZN3RMwlKHRIA";
 
     private static final String USER_LOGIN = "test-user";
 
