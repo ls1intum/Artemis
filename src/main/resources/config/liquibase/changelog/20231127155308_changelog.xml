@@ -26,6 +26,19 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+        <!-- Add a lti_platform_id column to 'online_course_configuration' table -->
+        <addColumn tableName="online_course_configuration">
+            <column name="lti_platform_id" type="bigint"/>
+        </addColumn>
+        <!-- Add a foreign key constraint to 'lti_platform_configuration' table -->
+        <addForeignKeyConstraint
+          baseTableName="online_course_configuration"
+          baseColumnNames="lti_platform_id"
+          constraintName="fk_online_course_config_lti_platform"
+          referencedTableName="lti_platform_configuration"
+          referencedColumnNames="id"
+          onDelete="SET NULL"
+        />
         <!-- Insert original_url, registration_id, client_id, authorization_uri, jkw_set_uri, token_uri from online_course_configuration into lti_platform_configuration -->
         <sql>
             <!-- Insert data into lti_platform_configuration -->
@@ -37,6 +50,16 @@
               AND occ.authorization_uri IS NOT NULL
               AND occ.jkw_set_uri IS NOT NULL
               AND occ.token_uri IS NOT NULL;
+        </sql>
+        <!-- Update the online_course_configuration with the foreign key reference -->
+        <sql>
+            UPDATE online_course_configuration occ
+            SET occ.lti_platform_id = (
+                SELECT lpc.id
+                FROM lti_platform_configuration lpc
+                WHERE lpc.registration_id = occ.registration_id
+                  AND lpc.client_id = occ.client_id
+            );
         </sql>
         <!-- Remove the columns that are no longer present in the entity -->
         <dropColumn tableName="online_course_configuration" columnName="original_url"/>
