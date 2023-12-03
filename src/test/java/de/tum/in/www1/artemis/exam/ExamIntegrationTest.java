@@ -138,10 +138,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private ExamUserRepository examUserRepository;
 
     @Autowired
-    private QuizPoolRepository quizPoolRepository;
+    private QuizPoolService quizPoolService;
 
     @Autowired
-    private QuizPoolService quizPoolService;
+    private QuizPoolRepository quizPoolRepository;
 
     private Course course1;
 
