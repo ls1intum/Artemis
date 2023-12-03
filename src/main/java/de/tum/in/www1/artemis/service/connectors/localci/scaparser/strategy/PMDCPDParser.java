@@ -1,6 +1,6 @@
-package de.tum.in.www1.artemis.service.connectors.localci.scaParser.strategy;
+package de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy;
 
-import static de.tum.in.www1.artemis.service.connectors.localci.scaParser.utils.XmlUtils.getChildElements;
+import static de.tum.in.www1.artemis.service.connectors.localci.scaparser.utils.XmlUtils.getChildElements;
 
 import java.io.File;
 import java.util.ArrayList;

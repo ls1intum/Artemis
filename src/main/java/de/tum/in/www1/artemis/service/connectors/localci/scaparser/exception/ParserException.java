@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localci.scaParser.exception;
+package de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception;
 
 public class ParserException extends Exception {
 

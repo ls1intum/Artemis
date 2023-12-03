@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localci.scaParser.strategy;
+package de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,8 +9,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-import de.tum.in.www1.artemis.service.connectors.localci.scaParser.exception.UnsupportedToolException;
-import de.tum.in.www1.artemis.service.connectors.localci.scaParser.utils.XmlUtils;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.utils.XmlUtils;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ParserContext {

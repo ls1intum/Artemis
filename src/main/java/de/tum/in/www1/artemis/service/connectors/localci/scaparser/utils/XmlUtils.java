@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localci.scaParser.utils;
+package de.tum.in.www1.artemis.service.connectors.localci.scaparser.utils;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localci.scaParser.strategy;
+package de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy;
 
 import org.w3c.dom.Document;
 
