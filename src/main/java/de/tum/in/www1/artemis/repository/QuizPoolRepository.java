@@ -15,6 +15,12 @@ import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 @Repository
 public interface QuizPoolRepository extends JpaRepository<QuizPool, Long> {
 
+    /**
+     * Get the quiz pool for the given exam id with eager quiz questions.
+     *
+     * @param examId the id of the exam
+     * @return the quiz pool for the given exam id with eager quiz questions
+     */
     @Query("""
                     SELECT qp
                     FROM QuizPool qp
@@ -25,6 +31,12 @@ public interface QuizPoolRepository extends JpaRepository<QuizPool, Long> {
             """)
     Optional<QuizPool> findWithEagerQuizQuestionsByExamId(Long examId);
 
+    /**
+     * Get the quiz pool for the given exam id.
+     *
+     * @param examId the id of the exam
+     * @return the quiz pool for the given exam id
+     */
     @Query("""
                     SELECT qp
                     FROM QuizPool qp JOIN qp.exam e
