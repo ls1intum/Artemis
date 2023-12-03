@@ -140,6 +140,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private QuizPoolService quizPoolService;
 
+    @Autowired
+    private QuizPoolRepository quizPoolRepository;
+
     private Course course1;
 
     private Course course2;
@@ -824,6 +827,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Optional<Channel> examChannelAfterDelete = channelRepository.findById(examChannel.getId());
         assertThat(examChannelAfterDelete).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteExamWithQuizPool() throws Exception {
+        Exam exam = examUtilService.addExamWithQuizPool(course1);
+
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        Optional<QuizPool> quizPool = quizPoolRepository.findByExamId(exam.getId());
+        assertThat(quizPool.isPresent()).isFalse();
     }
 
     @Test
