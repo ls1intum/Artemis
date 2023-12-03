@@ -34,6 +34,9 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<StudentExam> findWithExercisesById(Long studentExamId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "quizQuestions" })
+    Optional<StudentExam> findWithExercisesAndQuizQuestionsById(Long studentExamId);
+
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "examSessions" })
     Optional<StudentExam> findWithExercisesAndSessionsById(Long studentExamId);
 
@@ -350,6 +353,17 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @NotNull
     default StudentExam findByIdWithExercisesElseThrow(Long studentExamId) {
         return findWithExercisesById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
+    }
+
+    /**
+     * Get one student exam by id with exercises and quizQuestions.
+     *
+     * @param studentExamId the id of the student exam
+     * @return the student exam with exercises and quizQuestions
+     */
+    @NotNull
+    default StudentExam findByIdWithExercisesAndQuizQuestionsElseThrow(Long studentExamId) {
+        return findWithExercisesAndQuizQuestionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
     }
 
     /**

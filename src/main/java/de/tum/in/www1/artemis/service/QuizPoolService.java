@@ -1,12 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -100,13 +95,28 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
      * @param examId the id of the exam to be searched
      * @return quiz pool that belongs to the given exam id
      */
+    public QuizPool findWithQuizQuestionsByExamId(Long examId) {
+        Optional<QuizPool> quizPoolOptional = quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId);
+        if (quizPoolOptional.isPresent()) {
+            QuizPool quizPool = quizPoolOptional.get();
+            List<Long> quizGroupIds = quizPool.getQuizQuestions().stream().map(QuizQuestion::getQuizGroupId).filter(Objects::nonNull).toList();
+            List<QuizGroup> quizGroups = quizGroupRepository.findAllById(quizGroupIds);
+            quizPool.setQuizGroups(quizGroups);
+            reassignQuizQuestion(quizPool, quizGroups);
+            return quizPool;
+        }
+        return null;
+    }
+
+    /**
+     * Find a quiz pool (if exists) that belongs to the given exam id
+     *
+     * @param examId the id of the exam to be searched
+     * @return quiz pool that belongs to the given exam id
+     */
     public QuizPool findByExamId(Long examId) {
-        QuizPool quizPool = quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, "examId=" + examId));
-        List<Long> quizGroupIds = quizPool.getQuizQuestions().stream().map(QuizQuestion::getQuizGroupId).filter(Objects::nonNull).toList();
-        List<QuizGroup> quizGroups = quizGroupRepository.findAllById(quizGroupIds);
-        quizPool.setQuizGroups(quizGroups);
-        reassignQuizQuestion(quizPool, quizGroups);
-        return quizPool;
+        Optional<QuizPool> quizPoolOptional = quizPoolRepository.findByExamId(examId);
+        return quizPoolOptional.orElse(null);
     }
 
     /**
@@ -143,15 +153,15 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
 
     @Override
     public List<QuizQuestion> generateQuizQuestionsForExam(long examId) {
-        try {
-            QuizPool quizPool = findByExamId(examId);
+        QuizPool quizPool = findWithQuizQuestionsByExamId(examId);
+        if (quizPool != null) {
             List<QuizGroup> quizGroups = quizPool.getQuizGroups();
             List<QuizQuestion> quizQuestions = quizPool.getQuizQuestions();
 
             Map<Long, List<QuizQuestion>> quizGroupQuestionsMap = getQuizQuestionsGroup(quizGroups, quizQuestions);
             return generateQuizQuestions(quizGroupQuestionsMap, quizGroups, quizQuestions);
         }
-        catch (EntityNotFoundException ignored) {
+        else {
             return new ArrayList<>();
         }
     }

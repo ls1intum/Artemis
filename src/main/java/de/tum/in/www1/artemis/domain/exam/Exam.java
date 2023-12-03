@@ -150,6 +150,12 @@ public class Exam extends DomainObject {
     @Transient
     private String channelNameTransient;
 
+    @Transient
+    private Integer quizExamMaxPoints;
+
+    @Transient
+    private Boolean randomizeQuizExamQuestionsOrder;
+
     public String getTitle() {
         return title;
     }
@@ -481,6 +487,26 @@ public class Exam extends DomainObject {
 
     public void setChannelName(String channelNameTransient) {
         this.channelNameTransient = channelNameTransient;
+    }
+
+    @JsonProperty(value = "quizExamMaxPoints", access = JsonProperty.Access.READ_ONLY)
+    public Integer getQuizExamMaxPoints() {
+        return quizExamMaxPoints;
+    }
+
+    @JsonProperty(value = "quizExamMaxPoints", access = JsonProperty.Access.WRITE_ONLY)
+    public void setQuizExamMaxPoints(Integer quizExamMaxPoints) {
+        this.quizExamMaxPoints = quizExamMaxPoints;
+    }
+
+    @JsonProperty(value = "randomizeQuizExamQuestionsOrder", access = JsonProperty.Access.READ_ONLY)
+    public Boolean getRandomizeQuizExamQuestionsOrder() {
+        return randomizeQuizExamQuestionsOrder;
+    }
+
+    @JsonProperty(value = "randomizeQuizExamQuestionsOrder", access = JsonProperty.Access.WRITE_ONLY)
+    public void setRandomizeQuizExamQuestionsOrder(Boolean randomizeQuizExamQuestionOrder) {
+        this.randomizeQuizExamQuestionsOrder = randomizeQuizExamQuestionOrder;
     }
 
     @JsonIgnore

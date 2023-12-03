@@ -1,8 +1,8 @@
-import { Exercise } from 'app/entities/exercise.model';
+import { ExamExercise } from 'app/entities/exam-exercise';
 
 export class ExamPage {
     public isOverviewPage?: boolean;
-    public exercise?: Exercise;
+    public exercise?: ExamExercise;
 
     constructor() {
         this.isOverviewPage = false;

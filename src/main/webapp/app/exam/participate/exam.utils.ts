@@ -3,6 +3,9 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
 import { ServerDateService } from 'app/shared/server-date.service';
+import { ExamExercise } from 'app/entities/exam-exercise';
+import { Exercise } from 'app/entities/exercise.model';
+import { QuizExamExercise } from 'app/entities/quiz-exam-exercise';
 
 /**
  * Calculates the individual end time based on the studentExam
@@ -91,4 +94,27 @@ export function isExamResultPublished(isTestRun: boolean, exam: Exam | undefined
     }
 
     return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(serverDateService.now());
+}
+
+export function getExamExercises(studentExam: StudentExam) {
+    let examExercises: ExamExercise[] = [];
+    if (studentExam.exercises) {
+        examExercises = studentExam.exercises.map((exercise: Exercise, index: number) => {
+            exercise.navigationTitle = `${index + 1}`;
+            return exercise;
+        });
+    }
+    const hasQuizExam = (studentExam.exam?.quizExamMaxPoints ?? 0) > 0;
+    if (hasQuizExam) {
+        examExercises = [createQuizExamExercise(studentExam), ...examExercises];
+    }
+    return examExercises;
+}
+
+function createQuizExamExercise(studentExam: StudentExam): QuizExamExercise {
+    const quizExamExercise = new QuizExamExercise();
+    quizExamExercise.quizQuestions = studentExam.quizQuestions;
+    quizExamExercise.randomizeQuestionOrder = studentExam.exam?.randomizeQuizExamQuestionsOrder;
+    quizExamExercise.maxPoints = studentExam.exam?.quizExamMaxPoints;
+    return quizExamExercise;
 }

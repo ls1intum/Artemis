@@ -822,8 +822,9 @@ describe('ExamParticipationComponent', () => {
             exercise1.id = 15;
             const exercise2 = new ProgrammingExercise(new Course(), undefined);
             exercise2.id = 42;
-            comp.studentExam = new StudentExam();
-            comp.studentExam.exercises = [exercise1, exercise2];
+            const studentExam = new StudentExam();
+            studentExam.exercises = [exercise1, exercise2];
+            comp.studentExam = studentExam;
             const triggerSpy = jest.spyOn(comp, 'triggerSave');
             const exerciseChange = { overViewChange: false, exercise: exercise2, forceSave: true };
             const createParticipationForExerciseSpy = jest.spyOn(comp, 'createParticipationForExercise').mockReturnValue(of(new StudentParticipation()));
@@ -847,8 +848,9 @@ describe('ExamParticipationComponent', () => {
             comp.exam = new Exam();
             comp.activeExamPage = new ExamPage();
             comp.activeExamPage.exercise = exercise;
-            comp.studentExam = new StudentExam();
-            comp.studentExam.exercises = [exercise];
+            const studentExam = new StudentExam();
+            studentExam.exercises = [exercise];
+            comp.studentExam = studentExam;
             comp.pageComponentVisited = [true];
             comp.examStartConfirmed = true;
             fixture.detectChanges();
@@ -878,8 +880,9 @@ describe('ExamParticipationComponent', () => {
 
             // Set initial component state
             comp.handInEarly = true;
-            comp.studentExam = new StudentExam();
-            comp.studentExam.exercises = [exercise1, exercise2, exercise3];
+            const studentExam = new StudentExam();
+            studentExam.exercises = [exercise1, exercise2, exercise3];
+            comp.studentExam = studentExam;
             comp.activeExamPage = {
                 isOverviewPage: false,
                 exercise: exercise2,
@@ -926,8 +929,9 @@ describe('ExamParticipationComponent', () => {
             comp.activeExamPage = new ExamPage();
             comp.activeExamPage.exercise = exercise1;
 
-            comp.studentExam = new StudentExam();
-            comp.studentExam.exercises = [exercise0, exercise1];
+            const studentExam = new StudentExam();
+            studentExam.exercises = [exercise0, exercise1];
+            comp.studentExam = studentExam;
 
             expect(comp.activePageIndex).toBe(1);
         });

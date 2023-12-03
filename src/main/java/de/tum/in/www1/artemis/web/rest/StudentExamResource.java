@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.domain.exam.ExamSession;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.repository.ExamLiveEventRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -53,6 +54,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
@@ -121,6 +123,8 @@ public class StudentExamResource {
 
     private final ExamLiveEventRepository examLiveEventRepository;
 
+    private final QuizPoolService quizPoolService;
+
     private static final boolean IS_TEST_RUN = false;
 
     @Value("${info.student-exam-store-session-data:#{true}}")
@@ -137,7 +141,7 @@ public class StudentExamResource {
             StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
             AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService,
             WebsocketMessagingService websocketMessagingService, SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService,
-            ExamLiveEventRepository examLiveEventRepository) {
+            ExamLiveEventRepository examLiveEventRepository, QuizPoolService quizPoolService) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -157,6 +161,7 @@ public class StudentExamResource {
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.examLiveEventsService = examLiveEventsService;
         this.examLiveEventRepository = examLiveEventRepository;
+        this.quizPoolService = quizPoolService;
     }
 
     /**
@@ -363,7 +368,7 @@ public class StudentExamResource {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
 
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndQuizQuestionsElseThrow(studentExamId);
 
         if (!currentUser.equals(studentExam.getUser())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
@@ -792,8 +797,24 @@ public class StudentExamResource {
             }
         }
 
+        setQuizExamProperties(studentExam);
+
         // Create new exam session
         createNewExamSession(request, studentExam);
+    }
+
+    /**
+     * Sets the quiz exam properties for the given student exam
+     *
+     * @param studentExam the student exam for which the quiz exam properties should be set
+     */
+    private void setQuizExamProperties(StudentExam studentExam) {
+        Exam exam = studentExam.getExam();
+        QuizPool quizPool = quizPoolService.findByExamId(exam.getId());
+        if (quizPool != null) {
+            exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
+            exam.setRandomizeQuizExamQuestionsOrder(quizPool.getRandomizeQuestionOrder());
+        }
     }
 
     /**

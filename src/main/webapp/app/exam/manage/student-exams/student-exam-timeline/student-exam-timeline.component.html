@@ -11,14 +11,13 @@
         (onPageChanged)="onPageChange($event)"
     ></jhi-exam-navigation-bar>
     <!-- exercises -->
-    <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
+    <ng-container *ngFor="let exercise of examExercises; let i = index">
         <ng-container *ngIf="exercise && exercise.studentParticipations && exercise.studentParticipations[0]">
             <ng-container *ngIf="pageComponentVisited[i]">
                 <ng-container [ngSwitch]="exercise.type">
                     <div [hidden]="i !== activePageIndex">
                         <jhi-quiz-submission-exam
                             *ngSwitchCase="ExerciseType.QUIZ"
-                            [exercise]="exercise"
                             [quizConfiguration]="exercise"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                             [readonly]="true"
@@ -26,28 +25,28 @@
                         ></jhi-quiz-submission-exam>
                         <jhi-file-upload-submission-exam
                             *ngSwitchCase="ExerciseType.FILE_UPLOAD"
-                            [exercise]="exercise"
+                            [exercise]="asFileUploadExercise(exercise)"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                             [readonly]="true"
                             [examTimeline]="true"
                         ></jhi-file-upload-submission-exam>
                         <jhi-text-editor-exam
                             *ngSwitchCase="ExerciseType.TEXT"
-                            [exercise]="exercise"
+                            [exercise]="asTextExercise(exercise)"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                             [readonly]="true"
                             [examTimeline]="true"
                         ></jhi-text-editor-exam>
                         <jhi-modeling-submission-exam
                             *ngSwitchCase="ExerciseType.MODELING"
-                            [exercise]="exercise"
+                            [exercise]="asModelingExercise(exercise)"
                             [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
                             [readonly]="true"
                             [examTimeline]="true"
                         ></jhi-modeling-submission-exam>
                         <jhi-programming-exam-diff
                             *ngSwitchCase="ExerciseType.PROGRAMMING"
-                            [exercise]="exercise"
+                            [exercise]="asProgrammingExercise(exercise)"
                             [studentParticipation]="exercise.studentParticipations[0]"
                             [(cachedDiffReports)]="cachedDiffReports"
                         ></jhi-programming-exam-diff>

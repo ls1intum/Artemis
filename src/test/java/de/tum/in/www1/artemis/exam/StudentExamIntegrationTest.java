@@ -98,6 +98,8 @@ import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceQuestion;
 import de.tum.in.www1.artemis.domain.quiz.MultipleChoiceSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizGroup;
+import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.ShortAnswerQuestion;
@@ -107,6 +109,7 @@ import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BonusRepository;
@@ -125,6 +128,7 @@ import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
@@ -221,6 +225,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private GradingScaleUtilService gradingScaleUtilService;
+
+    @Autowired
+    private QuizPoolService quizPoolService;
 
     private User student1;
 
@@ -491,6 +498,69 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
 
         deleteExamWithInstructor(exam1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetStudentExamWithQuizQuestionsForConduction() throws Exception {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Exam exam = examUtilService.addActiveExamWithRegisteredUser(course1, student);
+        int maxQuizExamPoints = prepareQuizPoolForExam(exam, 2, 1);
+        StudentExam studentExam = prepareStudentExamWithQuizQuestionsForConduction(exam);
+
+        StudentExam responseStudentExam = getStudentExamForConduction(student, exam, studentExam);
+
+        verifyStudentExamWithQuizQuestionsConduction(responseStudentExam, studentExam);
+        verifyQuizExamConduction(responseStudentExam.getExam(), maxQuizExamPoints);
+    }
+
+    private StudentExam prepareStudentExamWithQuizQuestionsForConduction(Exam exam) {
+        List<QuizQuestion> quizQuestions = quizPoolService.generateQuizQuestionsForExam(exam.getId());
+        StudentExam studentExam = studentExamRepository.findByExamId(exam.getId()).stream().findFirst().get();
+        studentExam.setQuizQuestions(quizQuestions);
+        return studentExamRepository.save(studentExam);
+    }
+
+    private int prepareQuizPoolForExam(Exam exam, int numberOfGroup, int numberOfQuestionPerGroup) {
+        QuizPool quizPool = new QuizPool();
+        List<QuizGroup> quizGroups = new ArrayList<>();
+        List<QuizQuestion> quizQuestions = new ArrayList<>();
+
+        for (int i = 0; i < numberOfGroup; i++) {
+            QuizGroup quizGroup = QuizExerciseFactory.createQuizGroup(String.valueOf(i));
+            quizGroups.add(quizGroup);
+
+            for (int j = 0; j < numberOfQuestionPerGroup; j++) {
+                QuizQuestion quizQuestion = QuizExerciseFactory.createMultipleChoiceQuestionWithTitleAndGroup(i + "|" + j, quizGroup);
+                quizQuestions.add(quizQuestion);
+            }
+        }
+        int maxPoints = quizQuestions.stream().reduce(0, (sum, question) -> sum + question.getPoints(), Integer::sum);
+
+        quizPool.setQuizGroups(quizGroups);
+        quizPool.setQuizQuestions(quizQuestions);
+        quizPool.setMaxPoints(maxPoints);
+        quizPool.setRandomizeQuestionOrder(true);
+        quizPoolService.update(exam.getId(), quizPool);
+        return quizQuestions.stream().reduce(0, (sum, question) -> sum + question.getPoints(), Integer::sum);
+    }
+
+    private StudentExam getStudentExamForConduction(User student, Exam exam, StudentExam savedStudentExam) throws Exception {
+        userUtilService.changeUser(student.getLogin());
+        HttpHeaders headers = getHttpHeadersForExamSession();
+        return request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/" + savedStudentExam.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class, headers);
+    }
+
+    private static void verifyStudentExamWithQuizQuestionsConduction(StudentExam responseStudentExam, StudentExam savedStudentExam) {
+        assertThat(responseStudentExam).isEqualTo(savedStudentExam);
+        assertThat(responseStudentExam.isStarted()).isTrue();
+        assertThat(responseStudentExam.getQuizQuestions()).hasSize(savedStudentExam.getQuizQuestions().size());
+    }
+
+    private static void verifyQuizExamConduction(Exam exam, int maxQuizExamPoints) {
+        assertThat(exam.getQuizExamMaxPoints()).isEqualTo(maxQuizExamPoints);
+        assertThat(exam.getRandomizeQuizExamQuestionsOrder()).isTrue();
     }
 
     private static HttpHeaders getHttpHeadersForExamSession() {

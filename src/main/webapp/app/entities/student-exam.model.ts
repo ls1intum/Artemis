@@ -4,6 +4,7 @@ import { Exam } from 'app/entities/exam.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { ExamSession } from 'app/entities/exam-session.model';
+import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 
 export class StudentExam implements BaseEntity {
     public id?: number;
@@ -21,6 +22,7 @@ export class StudentExam implements BaseEntity {
     public exercises?: Exercise[];
     public examSessions?: ExamSession[];
     public startedDate?: dayjs.Dayjs;
+    public quizQuestions?: QuizQuestion[];
 
     // helper attribute
     public ended?: boolean;
