@@ -271,8 +271,8 @@
 
                 <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="100">
                     <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper w-100 text-center" (click)="controls.onSort('results?.[0]?.assessmentNote?.note')">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.assessment.assessmentNote' | artemisTranslate }}</span>
+                        <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('results?.[0]?.assessmentNote?.note')">
+                            <fa-icon [icon]="faComment" [ngbTooltip]="'artemisApp.assessment.assessmentNote' | artemisTranslate"></fa-icon>
                             <fa-icon [icon]="controls.iconForSortPropField('results?.[0]?.assessmentNote?.note')"></fa-icon>
                         </span>
                     </ng-template>
