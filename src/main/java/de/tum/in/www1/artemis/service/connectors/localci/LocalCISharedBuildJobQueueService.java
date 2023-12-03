@@ -152,33 +152,39 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     private void checkAvailabilityAndProcessNextBuild() {
-        instanceLock.lock();
-
+        // Check conditions before acquiring the lock to avoid unnecessary locking
         if (!nodeIsAvailable()) {
             log.info("Node has no available threads currently");
-            instanceLock.unlock();
             return;
         }
 
         if (queue.isEmpty()) {
-            instanceLock.unlock();
             return;
         }
-        // need to add the build job to processingJobs before taking it from the queue,
-        // so it can be later added back to the queue if the node fails
-        LocalCIBuildJobQueueItem buildJob;
 
-        // lock the queue to prevent multiple nodes from processing the same build job
-        sharedLock.lock();
+        instanceLock.lock();
         try {
-            buildJob = addToProcessingJobs();
+            // Recheck conditions after acquiring the lock to ensure they are still valid
+            if (!nodeIsAvailable() || queue.isEmpty()) {
+                return;
+            }
+
+            LocalCIBuildJobQueueItem buildJob;
+
+            // Lock the queue to prevent multiple nodes from processing the same build job
+            sharedLock.lock();
+            try {
+                buildJob = addToProcessingJobs();
+            }
+            finally {
+                sharedLock.unlock();
+            }
+
+            processBuild(buildJob);
         }
         finally {
-            sharedLock.unlock();
+            instanceLock.unlock();
         }
-
-        instanceLock.unlock();
-        processBuild(buildJob);
     }
 
     private LocalCIBuildJobQueueItem addToProcessingJobs() {
