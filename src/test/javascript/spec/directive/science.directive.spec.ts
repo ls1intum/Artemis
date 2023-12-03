@@ -14,7 +14,7 @@ class ScienceDirectiveComponent {
 }
 
 describe('ScienceDirective', () => {
-    let fixture: ComponentFixture<ScienceDirective>;
+    let fixture: ComponentFixture<ScienceDirectiveComponent>;
     let scienceService: ScienceService;
     let logEventStub: jest.SpyInstance;
 
