@@ -44,13 +44,13 @@ variables (`Spring relaxed binding <https://github.com/spring-projects/spring-bo
 .. note::
 
     The usernames/passwords for external systems (Bamboo, Bitbucket, GitLab,
-    Jenkins, …) are not listed here since the general setup documentation
+    Jenkins, …) are not listed here, since the general setup documentation
     describes how to set up those systems.
-    Without replacing the default values the connection to them will not work.
+    Without replacing the default values, the connection to them will not work.
 
 
 .. note::
 
-    Ensure restrictive access to the configuration files so that access is only
+    Ensure restrictive access to the configuration files, so that access is only
     possible for the system account that runs Artemis and administrators.
 
