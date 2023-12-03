@@ -316,4 +316,25 @@ public class Lti13Service {
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);
     }
+
+    /**
+     * Builds a response indicating the need for successful login with the associated username.
+     *
+     * @param response   The HttpServletResponse object.
+     * @param ltiIdToken The OIDC ID token with the LTI email address.
+     */
+    public void buildLtiEmailInUseResponse(HttpServletResponse response, OidcIdToken ltiIdToken) {
+        Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail());
+
+        if (optionalUsername.isPresent()) {
+            String sanitizedUsername = getSanitizedUsername(optionalUsername.get());
+            response.addHeader("ltiSuccessLoginRequired", sanitizedUsername);
+        }
+    }
+
+    private String getSanitizedUsername(String username) {
+        // Remove \r and LF \n characters to prevent HTTP response splitting
+        return username.replaceAll("[\r\n]", "");
+    }
+
 }
