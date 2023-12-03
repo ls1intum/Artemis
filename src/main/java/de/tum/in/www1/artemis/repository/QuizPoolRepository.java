@@ -32,15 +32,10 @@ public interface QuizPoolRepository extends JpaRepository<QuizPool, Long> {
     Optional<QuizPool> findWithEagerQuizQuestionsByExamId(Long examId);
 
     /**
-     * Get the quiz pool for the given exam id.
+     * Find the quiz pool for the given exam id
      *
-     * @param examId the id of the exam
-     * @return the quiz pool for the given exam id
+     * @param examId exam id to which the quiz pool belongs to
+     * @return quiz pool for the given exam id
      */
-    @Query("""
-                    SELECT qp
-                    FROM QuizPool qp JOIN qp.exam e
-                    WHERE e.id = :examId
-            """)
-    Optional<QuizPool> findByExamId(Long examId);
+    Optional<QuizPool> findByExamId(long examId);
 }

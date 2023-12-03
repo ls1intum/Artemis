@@ -21,7 +21,7 @@ export class ExamExerciseGroupsPage {
     clickDeleteGroup(groupID: number, groupName: string) {
         cy.get(`#group-${groupID} .delete-group`).click();
         cy.get('#delete').should('be.disabled');
-        cy.get('#confirm-exercise-name').type(groupName);
+        cy.get('#confirm-entity-name').type(groupName);
         cy.get('#delete').should('not.be.disabled').click();
     }
 
