@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.science;
 
-import java.security.Principal;
 import java.time.ZonedDateTime;
 
 import org.springframework.security.core.Authentication;
@@ -30,8 +29,7 @@ public class ScienceEventService {
      */
     public void logEvent(ScienceEventType type) {
         final Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        final Principal principal = (Principal) auth.getPrincipal();
-        logEvent(type, principal);
+        logEvent(type, auth.getPrincipal());
     }
 
     /**
@@ -40,7 +38,7 @@ public class ScienceEventService {
      * @param type      the type of the event that should be logged
      * @param principal the principal for whom the event should be logged
      */
-    private void logEvent(ScienceEventType type, Principal principal) {
+    private void logEvent(ScienceEventType type, Object principal) {
         logEvent(type, principal, ZonedDateTime.now());
     }
 
@@ -51,12 +49,11 @@ public class ScienceEventService {
      * @param principal the principal for whom the event should be logged
      * @param timestamp the time when the event happened
      */
-    private void logEvent(ScienceEventType type, Principal principal, ZonedDateTime timestamp) {
+    private void logEvent(ScienceEventType type, Object principal, ZonedDateTime timestamp) {
         ScienceEvent event = new ScienceEvent();
         event.setIdentity(principal.hashCode());
-        event.setTimestamp(ZonedDateTime.now());
+        event.setTimestamp(timestamp);
         event.setType(type);
-
         scienceEventRepository.save(event);
     }
 }
