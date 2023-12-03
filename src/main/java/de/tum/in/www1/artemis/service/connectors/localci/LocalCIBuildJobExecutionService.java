@@ -250,6 +250,7 @@ public class LocalCIBuildJobExecutionService {
 
         // Get an input stream of the test result files.
         List<TarArchiveInputStream> testResultsTarInputStreams = new ArrayList<>();
+        boolean errorOccurred = false;
         try {
             for (String testResultsPath : testResultsPaths) {
                 testResultsTarInputStreams.add(localCIContainerService.getArchiveFromContainer(containerId, testResultsPath));
@@ -257,17 +258,19 @@ public class LocalCIBuildJobExecutionService {
         }
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
-            // Stop the container and return a build results that indicates that the build failed.
+            errorOccurred = true;
+        }
+        finally {
             localCIContainerService.stopContainer(containerName);
+
             // Delete script file from host system
             localCIContainerService.deleteScriptFile(participation.getId().toString());
-            return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
-        localCIContainerService.stopContainer(containerName);
-
-        // Delete script file from host system
-        localCIContainerService.deleteScriptFile(participation.getId().toString());
+        if (errorOccurred) {
+            // If the test results are not found, this means that something went wrong during the build and testing of the submission.
+            return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
+        }
 
         LocalCIBuildResult buildResult;
         try {
@@ -281,6 +284,7 @@ public class LocalCIBuildJobExecutionService {
         // Set the build status to "INACTIVE" to indicate that the build is not running anymore.
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.INACTIVE);
 
+        // TODO: why is commitHash null here?
         log.info("Building and testing submission for repository {} and commit hash {} took {}", participation.getRepositoryUrl(), commitHash,
                 TimeLogUtil.formatDurationFrom(timeNanoStart));
 

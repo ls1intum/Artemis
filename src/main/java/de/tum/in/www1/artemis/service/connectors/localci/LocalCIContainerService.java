@@ -200,8 +200,8 @@ public class LocalCIContainerService {
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths,
             String[] auxiliaryRepositoriesNames, Path buildScriptPath) {
 
-        ExecCreateCmdResponse createDirectoryCmdReponse = dockerClient.execCreateCmd(buildJobContainerId).withCmd("mkdir", "/repositories").exec();
-        dockerClient.execStartCmd(createDirectoryCmdReponse.getId()).exec(new ResultCallback.Adapter<>());
+        ExecCreateCmdResponse createDirectoryCmdResponse = dockerClient.execCreateCmd(buildJobContainerId).withCmd("mkdir", "/repositories").exec();
+        dockerClient.execStartCmd(createDirectoryCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
 
         addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, "repositories/test-repository", true);
         addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, "repositories/assignment-repository", true);
@@ -327,14 +327,7 @@ public class LocalCIContainerService {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
 
-        List<ScriptAction> actions;
-
-        try {
-            actions = programmingExercise.getWindfile().getScriptActions();
-        }
-        catch (NullPointerException e) {
-            actions = null;
-        }
+        List<ScriptAction> actions = programmingExercise.getWindfile() != null ? programmingExercise.getWindfile().getScriptActions() : List.of();
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
@@ -354,10 +347,12 @@ public class LocalCIContainerService {
                 cd /repositories/test-repository
                 """);
 
-        if (actions != null) {
-            actions.forEach(action -> buildScript.append(action.getScript()).append("\n"));
-        }
-        else {
+        actions.forEach(action -> buildScript.append(action.getScript()).append("\n"));
+
+        // Fall back to hardcoded scripts for old exercises without windfile
+        // *****************
+        // TODO: delete
+        if (actions.isEmpty()) {
             // Windfile actions are not defined, use default build script
             switch (programmingExercise.getProgrammingLanguage()) {
                 case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
@@ -365,6 +360,7 @@ public class LocalCIContainerService {
                 default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
             }
         }
+        // *****************
 
         try {
             FileUtils.writeStringToFile(buildScriptPath.toFile(), buildScript.toString(), StandardCharsets.UTF_8);
@@ -433,11 +429,11 @@ public class LocalCIContainerService {
      * Deletes the build script for a given programming exercise.
      * The build script is stored in a file in the local-ci-scripts directory.
      *
-     * @param patricipationID the ID of the participation for which to delete the build script
+     * @param participationId the ID of the participation for which to delete the build script
      */
-    public void deleteScriptFile(String patricipationID) {
+    public void deleteScriptFile(String participationId) {
         Path scriptsPath = Path.of("local-ci-scripts");
-        Path buildScriptPath = scriptsPath.resolve(patricipationID + "-build.sh").toAbsolutePath();
+        Path buildScriptPath = scriptsPath.resolve(participationId + "-build.sh").toAbsolutePath();
         try {
             Files.deleteIfExists(buildScriptPath);
         }
