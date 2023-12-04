@@ -18,6 +18,7 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
@@ -178,9 +179,8 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Error while getting branch of participation", e);
         }
 
-        // Todo: Clone assignment repository to a temporary folder and checkout the commit hash
         if (commitHash != null) {
-            String cloneRepoPath = createCloneToCheckoutCommit(participation.getId().toString(), assignmentRepositoryPath.toString(), commitHash, branch);
+            String cloneRepoPath = createCloneToCheckoutCommit(assignmentRepositoryPath.toString(), commitHash, branch);
             assignmentRepositoryPath = Path.of(cloneRepoPath);
         }
 
@@ -264,6 +264,11 @@ public class LocalCIBuildJobExecutionService {
 
             // Delete script file from host system
             localCIContainerService.deleteScriptFile(participation.getId().toString());
+
+            // Delete cloned repository
+            if (commitHash != null) {
+                deleteCloneRepo(commitHash);
+            }
         }
 
         if (errorOccurred) {
@@ -478,7 +483,7 @@ public class LocalCIBuildJobExecutionService {
         return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job));
     }
 
-    private String createCloneToCheckoutCommit(String participationId, String sourceRepoPath, String commitHash, String branch) {
+    private String createCloneToCheckoutCommit(String sourceRepoPath, String commitHash, String branch) {
         Path cloneRepoBasePath = Path.of("checked-out-repos");
 
         if (!Files.exists(cloneRepoBasePath)) {
@@ -490,7 +495,7 @@ public class LocalCIBuildJobExecutionService {
             }
         }
 
-        String cloneRepoPath = cloneRepoBasePath.resolve(participationId).toString();
+        String cloneRepoPath = cloneRepoBasePath.resolve(commitHash).toString();
 
         // Clone the repository to a temporary folder
         try {
@@ -513,5 +518,17 @@ public class LocalCIBuildJobExecutionService {
         }
 
         return cloneRepoPath;
+    }
+
+    private void deleteCloneRepo(String commitHash) {
+
+        Path cloneRepoBasePath = Path.of("checked-out-repos");
+        Path cloneRepoPath = cloneRepoBasePath.resolve(commitHash).toAbsolutePath();
+        try {
+            FileUtils.deleteDirectory(cloneRepoPath.toFile());
+        }
+        catch (IOException e) {
+            throw new LocalCIException("Failed to delete cloned Repo", e);
+        }
     }
 }
