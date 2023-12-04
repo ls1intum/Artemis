@@ -21,6 +21,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.Gson;
 
+import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
+
 /**
  * Mocks requests to Aeolus
  */
@@ -57,8 +59,8 @@ public class AeolusRequestMockProvider {
      * @param target      the target to publish to
      * @param expectedKey the expected key
      */
-    public void mockSuccessfulPublishBuildPlan(String target, String expectedKey) {
-        final var uriPattern = Pattern.compile(aeolusUrl + "/publish/" + target);
+    public void mockSuccessfulPublishBuildPlan(AeolusTarget target, String expectedKey) {
+        final var uriPattern = Pattern.compile(aeolusUrl + "/publish/" + target.getName());
 
         Map<String, String> responseBody = new HashMap<>();
         responseBody.put("key", expectedKey);
@@ -74,8 +76,8 @@ public class AeolusRequestMockProvider {
      *
      * @param target the target to publish to
      */
-    public void mockFailedPublishBuildPlan(String target) {
-        final var uriPattern = Pattern.compile(aeolusUrl + "/publish/" + target);
+    public void mockFailedPublishBuildPlan(AeolusTarget target) {
+        final var uriPattern = Pattern.compile(aeolusUrl + "/publish/" + target.getName());
 
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
     }

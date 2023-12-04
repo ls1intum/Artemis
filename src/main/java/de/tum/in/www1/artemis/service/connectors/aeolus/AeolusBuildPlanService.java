@@ -15,10 +15,13 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.google.gson.Gson;
+
+import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService;
 
 /**
@@ -69,17 +72,18 @@ public class AeolusBuildPlanService {
     /**
      * Publishes a build plan using Aeolus
      *
-     * @param buildPlan the build plan to publish
-     * @param target    the target to publish to, either bamboo or jenkins
+     * @param windfile the build plan to publish
+     * @param target   the target to publish to, either bamboo or jenkins
      * @return the key of the published build plan
      */
-    public String publishBuildPlan(String buildPlan, String target) {
+    public String publishBuildPlan(Windfile windfile, AeolusTarget target) {
         String url = getCiUrl();
+        String buildPlan = new Gson().toJson(windfile);
         if (url == null) {
             LOGGER.error("Could not publish build plan {} to Aeolus target {}, no CI URL configured", buildPlan, target);
             return null;
         }
-        String requestUrl = aeolusUrl + "/publish/" + target;
+        String requestUrl = aeolusUrl + "/publish/" + target.getName();
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
         Map<String, Object> jsonObject = new HashMap<>();
         jsonObject.put("url", url);
@@ -95,7 +99,7 @@ public class AeolusBuildPlanService {
                 return response.getBody().get("key");
             }
         }
-        catch (HttpServerErrorException e) {
+        catch (RestClientException e) {
             LOGGER.error("Error while publishing build plan {} to Aeolus target {}", buildPlan, target, e);
         }
         return null;

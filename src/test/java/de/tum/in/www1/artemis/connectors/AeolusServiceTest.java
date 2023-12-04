@@ -13,10 +13,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
-import com.google.gson.Gson;
-
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.AeolusRequestMockProvider;
+import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 
@@ -61,10 +60,8 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         var expectedPlanKey = "PLAN";
         mockWindfile.setId("PROJECT-" + expectedPlanKey);
 
-        String request = new Gson().toJson(mockWindfile);
-
-        aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan("bamboo", expectedPlanKey);
-        String key = aeolusBuildPlanService.publishBuildPlan(request, "bamboo");
+        aeolusRequestMockProvider.mockSuccessfulPublishBuildPlan(AeolusTarget.BAMBOO, expectedPlanKey);
+        String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.BAMBOO);
         assertThat(key).isEqualTo(expectedPlanKey);
     }
 
@@ -77,10 +74,8 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         var expectedPlanKey = "PLAN";
         mockWindfile.setId("PROJECT-" + expectedPlanKey);
 
-        String request = new Gson().toJson(mockWindfile);
-
-        aeolusRequestMockProvider.mockFailedPublishBuildPlan("bamboo");
-        String key = aeolusBuildPlanService.publishBuildPlan(request, "bamboo");
+        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.BAMBOO);
+        String key = aeolusBuildPlanService.publishBuildPlan(mockWindfile, AeolusTarget.BAMBOO);
         assertThat(key).isEqualTo(null);
     }
 
