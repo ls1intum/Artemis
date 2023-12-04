@@ -26,7 +26,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -99,10 +98,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private CourseUtilService courseUtilService;
 
-    @SpyBean
+    @Autowired
     private ConversationNotificationRepository conversationNotificationRepository;
-
-    private List<Post> existingPostsAndConversationPosts;
 
     private List<Post> existingConversationPosts;
 
@@ -137,7 +134,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // initialize test setup and get all existing posts
         // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with conversation initialized): 14 posts in total
-        existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
+        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
 
         List<Post> existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList();
 
