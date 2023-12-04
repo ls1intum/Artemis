@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import javax.xml.stream.XMLStreamReader;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
@@ -167,24 +169,18 @@ public class LocalCIBuildJobExecutionService {
         Path assignmentRepositoryPath = assignmentRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
         Path testsRepositoryPath = testsRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
 
-        if (commitHash != null) {
-            // If a commit hash is given, we need to checkout the commit hash in the assignment repository.
-            FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
-            try (Repository repository = repositoryBuilder.setGitDir(new File(assignmentRepositoryPath + "/.git")).readEnvironment().findGitDir().build()) {
-                Git git = new Git(repository);
-                git.checkout().setName(commitHash).call();
-            }
-            catch (IOException | GitAPIException e) {
-                e.printStackTrace();
-            }
-        }
-
         String branch;
         try {
             branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
         }
         catch (LocalVCInternalException e) {
             throw new LocalCIException("Error while getting branch of participation", e);
+        }
+
+        // Todo: Clone assignment repository to a temporary folder and checkout the commit hash
+        if (commitHash != null) {
+            String cloneRepoPath = createCloneToCheckoutCommit(participation.getId().toString(), assignmentRepositoryPath.toString(), commitHash, branch);
+            assignmentRepositoryPath = Path.of(cloneRepoPath);
         }
 
         // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. Also give the
@@ -477,5 +473,42 @@ public class LocalCIBuildJobExecutionService {
         LocalCIBuildResult.LocalCIJobDTO job = new LocalCIBuildResult.LocalCIJobDTO(failedTests, successfulTests);
 
         return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job));
+    }
+
+    private String createCloneToCheckoutCommit(String participationId, String sourceRepoPath, String commitHash, String branch) {
+        Path cloneRepoBasePath = Path.of("checked-out-repos");
+
+        if (!Files.exists(cloneRepoBasePath)) {
+            try {
+                Files.createDirectory(cloneRepoBasePath);
+            }
+            catch (IOException e) {
+                throw new LocalCIException("Failed to create directory for temporary cloned repositories", e);
+            }
+        }
+
+        String cloneRepoPath = cloneRepoBasePath.resolve(participationId).toString();
+
+        // Clone the repository to a temporary folder
+        try {
+            CloneCommand cloneCommand = Git.cloneRepository().setURI(sourceRepoPath).setDirectory(new File(cloneRepoPath)).setBranch(branch).setCloneAllBranches(false);
+            try (Git git = cloneCommand.call()) {
+                log.info("Cloned repository {} to {}", sourceRepoPath, cloneRepoPath);
+            }
+        }
+        catch (GitAPIException e) {
+            log.error("Error while cloning repository {} to {}", sourceRepoPath, cloneRepoPath, e);
+        }
+
+        try (Repository clonedRepository = new FileRepositoryBuilder().setGitDir(new File(cloneRepoPath + "/.git")).build(); Git git = new Git(clonedRepository)) {
+
+            git.checkout().setName(commitHash).call();
+            log.info("Checked out commit {} of repository {}", commitHash, cloneRepoPath);
+        }
+        catch (IOException | GitAPIException e) {
+            log.error("Error while checking out commit {} of repository {}", commitHash, cloneRepoPath, e);
+        }
+
+        return cloneRepoPath;
     }
 }
