@@ -7,7 +7,12 @@ export interface Link {
     href: string;
     start?: number;
     end?: number;
+    isLinkPreviewRemoved?: boolean;
 }
+
+// Regular expression pattern to match URLs
+// eslint-disable-next-line no-useless-escape
+export const urlRegex = /https?:\/\/[^\s/$.?#>][^\s>]*?(?=\s|[\]\)]|$)/g;
 
 @Injectable()
 export class LinkifyService {
@@ -19,9 +24,6 @@ export class LinkifyService {
     find(text: string): Link[] {
         const linkableItems: Link[] = [];
 
-        // Regular expression pattern to match URLs
-        const urlRegex = /https?:\/\/[^\s/$.?#].[^\s]*/g;
-
         // Find all URL matches in the text (in the content of the post)
         let match;
         while ((match = urlRegex.exec(text)) !== null) {
@@ -29,18 +31,22 @@ export class LinkifyService {
             const start = match.index;
             const end = start + url.length;
 
-            const linkableItem = {
+            // Check if url is wrapped in <> tags
+            const isRemoved = text[start - 1] === '<' && text[end] === '>';
+            const linkableItem: Link = {
                 type: 'url',
                 value: url,
                 isLink: true,
                 href: url,
                 start,
                 end,
+                isLinkPreviewRemoved: isRemoved,
             };
 
-            linkableItems.push(linkableItem);
+            if (!isRemoved) {
+                linkableItems.push(linkableItem);
+            }
         }
-
         return linkableItems;
     }
 }

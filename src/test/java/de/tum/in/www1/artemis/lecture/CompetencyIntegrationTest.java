@@ -20,6 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.in.www1.artemis.competency.CompetencyProgressUtilService;
 import de.tum.in.www1.artemis.competency.CompetencyUtilService;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
@@ -102,6 +103,12 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
+
+    @Autowired
+    private CompetencyProgressUtilService competencyProgressUtilService;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
 
     private Course course;
 
@@ -285,6 +292,29 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getCompetency_shouldOnlySendUserSpecificData() throws Exception {
+
+        User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        competencyProgressUtilService.createCompetencyProgress(competency, student1, 0, 0);
+
+        User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
+        competencyProgressUtilService.createCompetencyProgress(competency, student2, 0, 0);
+
+        final var textUnit = textUnitRepository.findById(idOfTextUnitOfLectureOne).get();
+        lectureUtilService.completeLectureUnitForUser(textUnit, student2);
+
+        Competency competency = request.get("/api/courses/" + course.getId() + "/competencies/" + this.competency.getId(), HttpStatus.OK, Competency.class);
+        assertThat(competency.getId()).isEqualTo(this.competency.getId());
+
+        // only progress of student1 is fetched
+        assertThat(competency.getUserProgress()).hasSize(1);
+
+        // only student2 has completed the textUnit
+        assertThat(competency.getLectureUnits().stream().findFirst().get().getCompletedUsers()).isEmpty();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void getCompetency_asUserNotInCourse_shouldReturnForbidden() throws Exception {
         request.get("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.FORBIDDEN, Competency.class);
@@ -357,7 +387,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteCompetency_withRelatedCompetencies_shouldReturnBadRequest() throws Exception {
+    void deleteCompetency_withRelatedCompetencies_shouldDeleteCompetencyAndRelations() throws Exception {
         Competency competency1 = competencyUtilService.createCompetency(course);
 
         var relation = new CompetencyRelation();
@@ -366,8 +396,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         relation.setType(CompetencyRelation.RelationType.EXTENDS);
         competencyRelationRepository.save(relation);
 
-        // Should return bad request, as the competency still has relations
-        request.delete("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.BAD_REQUEST);
+        request.delete("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.OK);
+        Set<CompetencyRelation> relations = competencyRelationRepository.findAllByCompetencyId(competency.getId());
+        assertThat(relations).isEmpty();
     }
 
     @Test

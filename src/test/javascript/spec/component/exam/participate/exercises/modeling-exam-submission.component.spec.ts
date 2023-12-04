@@ -1,7 +1,7 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By, SafeHtml } from '@angular/platform-browser';
-import { UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, UMLModel } from '@ls1intum/apollon';
 import { Course } from 'app/entities/course.model';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -17,6 +17,7 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 describe('ModelingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;
@@ -229,5 +230,28 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(comp.studentSubmission.isSynced).toBeFalse();
             expect(comp.explanationText).toEqual(explanationText);
         });
+    });
+
+    it('should update the model on submission version change', async () => {
+        jest.replaceProperty(comp, 'modelingEditor', { apollonEditor: { nextRender: () => {} } as unknown as ApollonEditor } as unknown as ModelingEditorComponent);
+        const submissionVersion = {
+            content:
+                'Model: {"version":"3.0.0","type":"ClassDiagram","size":{"width":220,"height":420},"interactive":{"elements":{},"relationships":{}},"elements":{},"relationships":{},"assessments":{}}; Explanation: explanation',
+        } as unknown as SubmissionVersion;
+        const parsedModel = {
+            version: '3.0.0',
+            type: 'ClassDiagram',
+            size: { width: 220, height: 420 },
+            interactive: { elements: {}, relationships: {} },
+            elements: {},
+            relationships: {},
+            assessments: {},
+        } as UMLModel;
+        await comp.setSubmissionVersion(submissionVersion);
+        await fixture.whenStable();
+
+        expect(comp.submissionVersion).toEqual(submissionVersion);
+        expect(comp.umlModel).toEqual(parsedModel);
+        expect(comp.explanationText).toBe('explanation');
     });
 });

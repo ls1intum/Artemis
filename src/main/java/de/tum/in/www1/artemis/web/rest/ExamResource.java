@@ -6,6 +6,7 @@ import static java.time.ZonedDateTime.now;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -229,7 +230,7 @@ public class ExamResource {
         }
 
         // NOTE: if the end date was changed, we need to update student exams and re-schedule exercises
-        if (!originalExam.getEndDate().equals(savedExam.getEndDate())) {
+        if (comparator.compare(originalExam.getEndDate(), savedExam.getEndDate()) != 0) {
             int workingTimeChange = savedExam.getDuration() - originalExamDuration;
             updateStudentExamsAndRescheduleExercises(examWithExercises, originalExamDuration, workingTimeChange);
         }
@@ -353,7 +354,7 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exam-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException {
+    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException, IOException {
         log.debug("REST request to import an exam : {}", examToBeImported);
 
         // Step 1: Check if Exam has an ID
@@ -1135,6 +1136,7 @@ public class ExamResource {
     public ResponseEntity<StudentExam> getOwnStudentExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
         StudentExam exam = examAccessService.getExamInCourseElseThrow(courseId, examId);
+        exam.getUser().setVisibleRegistrationNumber();
         return ResponseEntity.ok(exam);
     }
 

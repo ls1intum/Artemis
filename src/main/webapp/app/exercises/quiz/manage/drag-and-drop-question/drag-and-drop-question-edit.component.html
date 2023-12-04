@@ -192,7 +192,6 @@
                     #markdownEditor
                     [markdown]="questionEditorText"
                     [showPreviewButton]="false"
-                    [enableResize]="true"
                     [domainCommands]="dragAndDropQuestionDomainCommands"
                     (markdownChange)="changesInMarkdown($event)"
                     (textWithDomainCommandsFound)="domainCommandsFound($event)"
@@ -207,7 +206,6 @@
                             #markdownEditor
                             [markdown]="questionEditorText"
                             [showPreviewButton]="false"
-                            [enableResize]="true"
                             [domainCommands]="dragAndDropQuestionDomainCommands"
                             (markdownChange)="changesInMarkdown($event)"
                             (textWithDomainCommandsFound)="domainCommandsFound($event)"
@@ -233,18 +231,15 @@
         <hr />
         <!--    TODO: Fix the background change for reevaluation -->
         <div class="question-options row d-flex justify-content-start" *ngIf="!reEvaluationInProgress">
-            <div class="col-lg-2 col-md-2 col-sm-2 overflow-ellipsis" style="width: max-content !important">
-                <span jhiTranslate="artemisApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="!reEvaluationInProgress"></span>
-                <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="colon-suffix no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
-            </div>
-            <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file" id="background-image-input-form">
-                <input id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" class="form-control" (change)="setBackgroundFile($event)" />
+            <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
                 <div class="input-group-prepend">
-                    <button class="btn btn-outline-primary" (click)="uploadBackground()" [disabled]="isUploadingBackgroundFile || !backgroundFile">
-                        <span *ngIf="isUploadingBackgroundFile" jhiTranslate="artemisApp.dragAndDropQuestion.uploading"></span>
-                        <span *ngIf="!isUploadingBackgroundFile" jhiTranslate="artemisApp.dragAndDropQuestion.upload"></span>
+                    <button class="btn btn-outline-secondary" (click)="backgroundFileInput.click()">
+                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <span jhiTranslate="artemisApp.dragAndDropQuestion.selectBackgroundPicture" class="no-flex-shrink" *ngIf="!reEvaluationInProgress"></span>
+                        <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
                     </button>
                 </div>
+                <input #backgroundFileInput id="backgroundFileInput{{ questionIndex }}" type="file" accept="image/*" [hidden]="true" (change)="setBackgroundFile($event)" />
             </div>
             <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetBackground()" *ngIf="reEvaluationInProgress">
                 <fa-icon [icon]="faUndo"></fa-icon>
@@ -261,7 +256,7 @@
                 <div class="background-area">
                     <jhi-secured-image
                         #backgroundImage
-                        [src]="backgroundFilePath"
+                        [src]="filePreviewPaths.get(question.backgroundFilePath!) || ''"
                         [alt]="'artemisApp.dragAndDropQuestion.noBackgroundPicture' | artemisTranslate"
                         style="visibility: hidden"
                     >
@@ -328,7 +323,7 @@
             <div cdkDropList cdkDropListOrientation="horizontal" class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
                 <div class="drag-item" id="drag-item-{{ i }}" *ngFor="let dragItem of question.dragItems; let i = index" cdkDrag [cdkDragDisabled]="false" [cdkDragData]="dragItem">
                     <div *ngIf="dragItem.pictureFilePath">
-                        <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
+                        <jhi-secured-image [src]="filePreviewPaths.get(dragItem.pictureFilePath)!"></jhi-secured-image>
                     </div>
                     <div *ngIf="!dragItem.pictureFilePath">
                         <textarea id="drag-item-{{ i }}-text" [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
@@ -340,12 +335,8 @@
                         <div class="re-evaluate-button" title="Change to Text Drag Item" *ngIf="dragItem.pictureFilePath" (click)="changeToTextDragItem(dragItem)">
                             <fa-icon [icon]="faFont" size="lg"></fa-icon>
                         </div>
-                        <div
-                            class="re-evaluate-button"
-                            title="Change to Picture Drag Item and use uploaded picture"
-                            [hidden]="dragItemFile == null"
-                            (click)="changeToPictureDragItem(dragItem)"
-                        >
+                        <div class="re-evaluate-button" title="Change to Picture Drag Item" (click)="reevalChangeToImageInput.click()">
+                            <input #reevalChangeToImageInput [hidden]="true" type="file" accept="image/*" (change)="changeToPictureDragItem(dragItem, $event)" />
                             <fa-icon [icon]="farFileImage" size="lg"></fa-icon>
                         </div>
                         <div class="re-evaluate-button" title="Set invalid" *ngIf="!dragItem.invalid" (click)="dragItem.invalid = true">
@@ -382,7 +373,7 @@
                                 <fa-icon [icon]="faBars" size="lg"></fa-icon>
                             </div>
                             <div *ngIf="dragItem.pictureFilePath">
-                                <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
+                                <jhi-secured-image [src]="filePreviewPaths.get(dragItem.pictureFilePath) || ''"></jhi-secured-image>
                             </div>
                             <div *ngIf="!dragItem.pictureFilePath">
                                 <textarea disabled [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
@@ -395,31 +386,18 @@
 
         <!--    TODO: Fix the item input for reevaluation -->
         <div class="question-options row d-flex justify-content-start" *ngIf="!reEvaluationInProgress">
-            <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
-                <div class="input-group-prepend">
-                    <button class="btn btn-outline-secondary" [disabled]="isUploadingDragItemFile || !dragItemFile" (click)="uploadDragItem()">
-                        <fa-icon [icon]="reEvaluationInProgress ? faUpload : faPlus"></fa-icon>
-                        <span *ngIf="isUploadingDragItemFile" jhiTranslate="artemisApp.dragAndDropQuestion.uploading"></span>
-                        <span *ngIf="!isUploadingDragItemFile && !reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemPicture"> </span>
-                        <span *ngIf="!isUploadingDragItemFile && reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.changeDragItemPicture"> </span>
-                    </button>
-                </div>
-                <input
-                    id="dragItemFileInput{{ questionIndex }}"
-                    type="file"
-                    accept="image/*"
-                    class="form-control"
-                    (change)="setDragItemFile($event)"
-                    placeholder="Upload file..."
-                />
-            </div>
-            <div class="question-options">
-                <div class="col">
-                    <button class="btn btn-outline-secondary" id="add-text-drag-item" (click)="addTextDragItem()">
-                        <fa-icon [icon]="faPlus"></fa-icon>
-                        <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
-                    </button>
-                </div>
+            <div class="col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
+                <button class="btn btn-outline-secondary me-2" (click)="dragItemFileInput.click()">
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <span *ngIf="reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.changeDragItemPicture"></span>
+                    <span *ngIf="!reEvaluationInProgress" jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemPicture"></span>
+                </button>
+                <input #dragItemFileInput id="dragItemFileInput{{ questionIndex }}" type="file" accept="image/*" [hidden]="true" (change)="createImageDragItem($event)" />
+
+                <button class="btn btn-outline-secondary" id="add-text-drag-item" (click)="addTextDragItem()">
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
+                </button>
             </div>
         </div>
         <ng-container *ngIf="!reEvaluationInProgress">
@@ -436,7 +414,7 @@
     </div>
 </div>
 <div class="preview-dnd-question" *ngIf="!reEvaluationInProgress && showPreview">
-    <jhi-drag-and-drop-question [question]="question" [mappings]="[]" [questionIndex]="questionIndex"></jhi-drag-and-drop-question>
+    <jhi-drag-and-drop-question [question]="question" [mappings]="[]" [questionIndex]="questionIndex" [filePreviewPaths]="filePreviewPaths"></jhi-drag-and-drop-question>
     <hr />
     <div class="btn btn-outline-secondary" (click)="togglePreview()">
         <fa-icon [icon]="faPencilAlt"></fa-icon>

@@ -8,6 +8,7 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -49,6 +50,10 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     getExerciseId(): number | undefined {
         return this.exercise.id;
+    }
+
+    getExercise(): Exercise {
+        return this.exercise;
     }
 
     updateProblemStatement(newProblemStatement: string): void {
@@ -98,5 +103,19 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     onTextEditorInput(event: Event) {
         this.studentSubmission.isSynced = false;
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
+    }
+
+    private updateViewFromSubmissionVersion() {
+        if (this.submissionVersion?.content) {
+            this.answer = this.submissionVersion.content;
+        } else {
+            // the content of the submission version can be undefined if an empty submission was saved
+            this.answer = '';
+        }
+    }
+
+    setSubmissionVersion(submissionVersion: SubmissionVersion): void {
+        this.submissionVersion = submissionVersion;
+        this.updateViewFromSubmissionVersion();
     }
 }

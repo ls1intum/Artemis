@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,7 +15,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -35,7 +33,8 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies" })
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(Long exerciseId);
 
-    List<TextExercise> findByAssessmentTypeAndDueDateIsAfter(AssessmentType assessmentType, ZonedDateTime dueDate);
+    @EntityGraph(type = LOAD, attributePaths = { "teamAssignmentConfig", "categories", "competencies", "plagiarismDetectionConfig" })
+    Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(Long exerciseId);
 
     @Query("select textExercise from TextExercise textExercise left join fetch textExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results result left join fetch result.feedbacks left join fetch submission.blocks left join fetch result.assessor left join fetch textExercise.teamAssignmentConfig where textExercise.id = :#{#exerciseId}")
     Optional<TextExercise> findByIdWithExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
@@ -48,6 +47,18 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
     }
 
+    @Query("""
+            SELECT DISTINCT e FROM TextExercise e
+            LEFT JOIN FETCH e.gradingCriteria
+            WHERE e.id = :exerciseId
+            """)
+    Optional<TextExercise> findByIdWithGradingCriteria(long exerciseId);
+
+    @NotNull
+    default TextExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
+        return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
+    }
+
     @NotNull
     default TextExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
         return findByIdWithExampleSubmissionsAndResults(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
@@ -56,14 +67,5 @@ public interface TextExerciseRepository extends JpaRepository<TextExercise, Long
     @NotNull
     default TextExercise findByIdWithStudentParticipationsAndSubmissionsElseThrow(long exerciseId) {
         return findWithStudentParticipationsAndSubmissionsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Text Exercise", exerciseId));
-    }
-
-    /**
-     * Find all exercises with *Due Date* in the future.
-     *
-     * @return List of Text Exercises
-     */
-    default List<TextExercise> findAllAutomaticAssessmentTextExercisesWithFutureDueDate() {
-        return findByAssessmentTypeAndDueDateIsAfter(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now());
     }
 }

@@ -19,7 +19,10 @@
             class="col-auto btn btn-danger btn-sm me-2"
             [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]"
         >
-            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
+            <span *ngIf="!plagiarismCaseInfo?.createdByContinuousPlagiarismControl" jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
+            <span *ngIf="plagiarismCaseInfo?.createdByContinuousPlagiarismControl" jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCaseSignificantSimilarity"
+                >Significant Similarity</span
+            >
         </a>
 
         <div class="d-flex flex-column gap-2">
@@ -180,7 +183,7 @@
                             [umlModel]="exampleSolutionInfo?.exampleSolutionUML"
                             [withExplanation]="!!exampleSolutionInfo?.modelingExercise?.exampleSolutionExplanation"
                             [explanation]="exampleSolutionInfo?.modelingExercise?.exampleSolutionExplanation || ''"
-                        ></jhi-modeling-editor>
+                        />
                     </dd>
                     <dd *ngIf="exampleSolutionInfo?.exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolutionInfo?.exampleSolution"></dd>
                     <ng-container *ngIf="exercise?.type === PROGRAMMING">
@@ -253,5 +256,5 @@
         </div>
     </div>
     <jhi-lti-initializer></jhi-lti-initializer>
-    <jhi-exercise-chatbot *ngIf="exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled"></jhi-exercise-chatbot>
+    <jhi-tutor-chatbot-button *ngIf="exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled"></jhi-tutor-chatbot-button>
 </div>

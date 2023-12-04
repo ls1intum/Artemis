@@ -22,6 +22,7 @@ export class ResizeableContainerComponent implements AfterViewInit {
     @HostBinding('class.flex-grow-1') flexGrow1 = true;
     @Input() collapsed = false;
     @Input() isExerciseParticipation = false;
+    @Input() examTimeline = false;
 
     /**
      * Expected to be set to true while the component is printed as PDF.

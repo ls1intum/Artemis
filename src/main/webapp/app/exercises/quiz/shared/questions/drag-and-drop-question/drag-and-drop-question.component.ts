@@ -76,6 +76,8 @@ export class DragAndDropQuestionComponent implements OnChanges, OnInit {
     }
     @Input()
     onMappingUpdate: any;
+    @Input()
+    filePreviewPaths: Map<string, string> = new Map<string, string>();
 
     @Output()
     mappingsChange = new EventEmitter<DragAndDropMapping[]>();

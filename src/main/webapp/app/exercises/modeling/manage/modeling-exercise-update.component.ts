@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -24,6 +24,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { scrollToTopOfPage } from 'app/shared/util/utils';
+import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -34,6 +36,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     modelingEditor?: ModelingEditorComponent;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly documentationType: DocumentationType = 'Model';
 
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
@@ -53,8 +56,6 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     isExamMode: boolean;
     semiAutomaticAssessmentAvailable = true;
     goBackAfterSaving = false;
-
-    documentationType = DocumentationType.Model;
 
     // Icons
     faSave = faSave;
@@ -86,10 +87,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      * Initializes all relevant data for creating or editing modeling exercise
      */
     ngOnInit(): void {
-        // This is used to scroll page to the top of the page, because the routing keeps the position for the
-        // new page from previous page.
-
-        window.scroll(0, 0);
+        scrollToTopOfPage();
 
         // Get the modelingExercise
         this.activatedRoute.data.subscribe(({ modelingExercise }) => {
@@ -111,22 +109,14 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                 ),
                 switchMap(() => this.activatedRoute.params),
                 tap((params) => {
+                    let courseId;
+
                     if (!this.isExamMode) {
                         this.exerciseCategories = this.modelingExercise.categories || [];
                         if (this.modelingExercise.course) {
-                            this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id!).subscribe({
-                                next: (categoryRes: HttpResponse<string[]>) => {
-                                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                                },
-                                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                            });
+                            courseId = this.modelingExercise.course!.id!;
                         } else {
-                            this.courseService.findAllCategoriesOfCourse(this.modelingExercise.exerciseGroup!.exam!.course!.id!).subscribe({
-                                next: (categoryRes: HttpResponse<string[]>) => {
-                                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                                },
-                                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                            });
+                            courseId = this.modelingExercise.exerciseGroup!.exam!.course!.id!;
                         }
                     } else {
                         // Lock individual mode for exam exercises
@@ -139,24 +129,28 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                         }
                     }
                     if (this.isImport) {
+                        // The target course where we want to import into
+                        courseId = params['courseId'];
+
                         if (this.isExamMode) {
                             // The target exerciseGroupId where we want to import into
                             const exerciseGroupId = params['exerciseGroupId'];
-                            const courseId = params['courseId'];
                             const examId = params['examId'];
 
                             this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => (this.modelingExercise.exerciseGroup = res.body!));
                             // We reference exam exercises by their exercise group, not their course. Having both would lead to conflicts on the server
                             this.modelingExercise.course = undefined;
                         } else {
-                            // The target course where we want to import into
-                            const targetCourseId = params['courseId'];
-                            this.courseService.find(targetCourseId).subscribe((res) => (this.modelingExercise.course = res.body!));
+                            this.courseService.find(courseId).subscribe((res) => (this.modelingExercise.course = res.body!));
                             // We reference normal exercises by their course, having both would lead to conflicts on the server
                             this.modelingExercise.exerciseGroup = undefined;
                         }
                         resetDates(this.modelingExercise);
                     }
+
+                    loadCourseExerciseCategories(courseId, this.courseService, this.exerciseService, this.alertService).subscribe((existingCategories) => {
+                        this.existingCategories = existingCategories;
+                    });
                 }),
             )
             .subscribe();
@@ -177,6 +171,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
      */
     updateCategories(categories: ExerciseCategory[]): void {
         this.modelingExercise.categories = categories;
+        this.exerciseCategories = categories;
     }
 
     /**

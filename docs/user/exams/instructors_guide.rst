@@ -202,6 +202,8 @@ During the exam creation and configuration, you can create your exam and configu
 
         Configure the Grading of a Programming Exercise
 
+    - The *Configure Grading* screen also allows the configuration of :ref:`submission policies <configure_submission_policies>`.
+
 .. _register_students:
 
 1.5 Register Students
@@ -447,6 +449,15 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 You can check for specific suspicious behavior in the suspicious behavior dashboard. You find the suspicious behavior as the first step in the exam correction on the exam checklist page.
 To open the suspicious behavior dashboard click on the |suspicious_behavior| button.
 
+To get a better understanding of the feature, you can watch the following video:
+
+.. raw:: html
+
+    <iframe src="https://tum.live/w/artemisintro/40566?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
+
+
 .. figure:: instructor/suspicious_behavior_exam_checklist.png
     :alt: Suspicious Behavior Exam Checklist
     :align: center
@@ -508,6 +519,14 @@ Once the instructor has confirmed at least one case, the |view_cases| button is 
 - The exam timeline is available on the details page of a student exam when the student exam has been submitted by clicking on the button |exam_timeline|. If the exam has not been submitted yet, the exam timeline button is disabled and shows an explanatory tooltip.
 - The exam timeline shows all submissions of the student in chronological order. You can navigate between the different timestamps on the slider or navigate between different exercises using the navigation bar below the timeline
 - For programming exercises, you can view a git diff between the currently selected submission and the previous submission or the template of this exercise.
+
+To get a better understanding of the feature, you can watch the following video:
+
+.. raw:: html
+
+    <iframe src="https://tum.live/w/artemisintro/40565?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
+        Watch this video on TUM-Live.
+    </iframe>
 
 .. figure:: instructor/exam_timeline_example.png
      :alt: Exam timeline

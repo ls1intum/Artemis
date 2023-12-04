@@ -13,11 +13,11 @@
 
         .doughnut-chart-text {
             position: absolute;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             min-height: 50px;
-
-            .spinner {
-                z-index: 1;
-            }
         }
     }
 

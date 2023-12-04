@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
@@ -11,8 +13,14 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.metis.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -76,9 +84,9 @@ public class AnswerMessageService extends PostingService {
         if (answerMessage.getId() != null) {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
-        conversationService.isMemberElseThrow(answerMessage.getPost().getConversation().getId(), author.getId());
 
-        Conversation conversation = conversationRepository.findByIdElseThrow(answerMessage.getPost().getConversation().getId());
+        Conversation conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(answerMessage.getPost().getConversation().getId(), author, Optional.empty())
+                .orElse(conversationRepository.findByIdElseThrow(answerMessage.getPost().getConversation().getId()));
 
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
@@ -97,6 +105,7 @@ public class AnswerMessageService extends PostingService {
         answerMessage.setResolvesPost(false);
         AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
         savedAnswerMessage.getPost().setConversation(conversation);
+        setAuthorRoleForPosting(savedAnswerMessage, course);
         this.preparePostAndBroadcast(savedAnswerMessage, course);
         this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, mentionedUsers, savedAnswerMessage, author);
         return savedAnswerMessage;
@@ -142,6 +151,7 @@ public class AnswerMessageService extends PostingService {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer message or at least tutor
             mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
             existingAnswerMessage.setContent(answerMessage.getContent());
+            existingAnswerMessage.setUpdatedDate(ZonedDateTime.now());
         }
 
         updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
@@ -176,13 +186,17 @@ public class AnswerMessageService extends PostingService {
         Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
-        // delete
-        answerPostRepository.deleteById(answerMessageId);
-
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         Post updatedMessage = answerMessage.getPost();
         updatedMessage.removeAnswerPost(answerMessage);
+        updatedMessage.setResolved(updatedMessage.getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
         updatedMessage.setConversation(conversation);
+        // update on the message properties
+        conversationMessageRepository.save(updatedMessage);
+
+        // delete
+        answerPostRepository.deleteById(answerMessageId);
+
         broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course, null);
     }
 

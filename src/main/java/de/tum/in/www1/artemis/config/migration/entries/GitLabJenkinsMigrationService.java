@@ -74,7 +74,7 @@ public class GitLabJenkinsMigrationService implements CIVCSMigrationService {
             jenkinsJobService.updateJob(projectKey, buildPlanKey, newConfig);
         }
         catch (IOException | TransformerException e) {
-            log.error("Could not fix build plan notification for build plan " + buildPlanKey + " in project " + projectKey, e);
+            log.error("Could not fix build plan notification for build plan {} in project {}", buildPlanKey, projectKey, e);
             throw new JenkinsException(e);
         }
     }

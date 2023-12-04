@@ -12,6 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -90,11 +92,16 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
         try {
             String mvnExecutable = Os.isFamily(Os.FAMILY_WINDOWS) ? "mvn.cmd" : "mvn";
-            Process mvn = Runtime.getRuntime().exec(mvnExecutable + " -version");
-            mvn.waitFor();
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(mvn.getInputStream()))) {
+            ProcessBuilder processBuilder = new ProcessBuilder(mvnExecutable, "-version");
+            Process mvn = processBuilder.start();
+            boolean finished = mvn.waitFor(120, TimeUnit.SECONDS);
+
+            if (!finished) {
+                throw new TimeoutException("Maven version command timed out.");
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(mvn.getInputStream()))) {
                 String prefix = "maven home:";
-                Optional<String> home = br.lines().filter(line -> line.toLowerCase().startsWith(prefix)).findFirst();
+                Optional<String> home = reader.lines().filter(line -> line.toLowerCase().startsWith(prefix)).findFirst();
                 if (home.isPresent()) {
                     System.setProperty("maven.home", home.get().substring(prefix.length()).strip());
                 }
@@ -254,7 +261,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
         }
         catch (Exception e) {
             // printing the cause because this contains the relevant error message (and not a generic one from the connector)
-            log.error("Error occurred while executing Gradle build: " + e.getCause());
+            log.error("Error occurred while executing Gradle build.", e.getCause());
             return -1;
         }
         return 0;

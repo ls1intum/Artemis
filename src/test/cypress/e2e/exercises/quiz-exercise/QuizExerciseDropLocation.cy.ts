@@ -6,7 +6,7 @@ import { convertModelAfterMultiPart } from '../../../support/utils';
 
 let course: Course;
 
-describe.skip('Quiz Exercise Drop Location Spec', () => {
+describe('Quiz Exercise Drop Location Spec', () => {
     before('Create course', () => {
         cy.login(admin);
         courseManagementAPIRequest.createCourse().then((response) => {
@@ -35,11 +35,11 @@ describe.skip('Quiz Exercise Drop Location Spec', () => {
             quizExerciseDragAndDropQuiz.markElementAsInteractive(2, 4);
 
             quizExerciseDragAndDropQuiz.generateQuizExercise();
-            cy.wait(500);
+            quizExerciseDragAndDropQuiz.waitForQuizExerciseToBeGenerated();
 
             cy.visit(`/course-management/${course.id}/exercises`);
             quizExerciseDragAndDropQuiz.previewQuiz();
-            cy.wait(1000);
+            quizExerciseDragAndDropQuiz.waitForQuizPreviewToLoad();
 
             cy.get('.click-layer').then(($el) => {
                 containerBounds = $el[0].getBoundingClientRect();

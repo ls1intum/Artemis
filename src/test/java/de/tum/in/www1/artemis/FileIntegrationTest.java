@@ -26,20 +26,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
-import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
-import de.tum.in.www1.artemis.domain.quiz.DragItem;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
-import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseUtilService;
 import de.tum.in.www1.artemis.lecture.LectureFactory;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
-import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
@@ -55,28 +47,10 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private AttachmentUnitRepository attachmentUnitRepo;
 
     @Autowired
-    private QuizExerciseRepository quizExerciseRepository;
-
-    @Autowired
-    private QuizQuestionRepository quizQuestionRepository;
-
-    @Autowired
     private LectureRepository lectureRepo;
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
-    private QuizExerciseUtilService quizExerciseUtilService;
-
-    @Autowired
-    private FileUploadExerciseUtilService fileUploadExerciseUtilService;
-
-    @Autowired
-    private ExerciseUtilService exerciseUtilService;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -85,7 +59,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private UserRepository userRepository;
+    private CourseUtilService courseUtilService;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -112,17 +86,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testSaveTempFile() throws Exception {
-        MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
-        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
-        String responsePath = response.get("path").asText();
-
-        String responseFile = request.get(responsePath, HttpStatus.OK, String.class);
-        assertThat(responseFile).isEqualTo("some data");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetTemplateFile() throws Exception {
         String javaReadme = request.get("/api/files/templates/JAVA/PLAIN_MAVEN", HttpStatus.OK, String.class);
         assertThat(javaReadme).isNotEmpty();
@@ -134,13 +97,17 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetCourseIcon() throws Exception {
-        Course course = courseUtilService.addEmptyCourse();
-        MockMultipartFile file = new MockMultipartFile("file", "icon.png", "application/json", "some data".getBytes());
-        Course savedCourse = request.putWithMultipartFiles("/api/courses/" + course.getId(), course, "course", List.of(file), Course.class, HttpStatus.OK, null);
-
-        String receivedIcon = request.get(savedCourse.getCourseIcon(), HttpStatus.OK, String.class);
-        assertThat(receivedIcon).isEqualTo("some data");
+    void testGetAeolusTemplateFile() throws Exception {
+        String javaDefaultAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_GRADLE", HttpStatus.OK, String.class);
+        assertThat(javaDefaultAeolusTemplate).isNotEmpty();
+        String javaSequentialAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_GRADLE?sequentialRuns=true", HttpStatus.OK, String.class);
+        assertThat(javaSequentialAeolusTemplate).isNotEmpty();
+        String javaNormalAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_MAVEN", HttpStatus.OK, String.class);
+        assertThat(javaNormalAeolusTemplate).isNotEmpty();
+        javaSequentialAeolusTemplate = request.get("/api/files/aeolus/templates/JAVA/PLAIN_MAVEN?sequentialRuns=true", HttpStatus.OK, String.class);
+        assertThat(javaSequentialAeolusTemplate).isNotEmpty();
+        String pythonTemplate = request.get("/api/files/aeolus/templates/PYTHON/", HttpStatus.OK, String.class);
+        assertThat(pythonTemplate).isNotEmpty();
     }
 
     @Test
@@ -148,148 +115,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetCodeOfConductTemplate() throws Exception {
         var template = request.get("/api/files/templates/code-of-conduct", HttpStatus.OK, String.class);
         assertThat(template).startsWith("<!-- Code of Conduct Template");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetDragAndDropBackgroundFile() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
-        DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
-        quizExerciseRepository.save(quizExercise);
-
-        MockMultipartFile file = new MockMultipartFile("file", "background.png", "application/json", "some data".getBytes());
-        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
-        String responsePath = response.get("path").asText();
-
-        dragAndDropQuestion.setBackgroundFilePath(responsePath);
-        dragAndDropQuestion = quizQuestionRepository.save(dragAndDropQuestion);
-
-        String receivedPath = request.get(dragAndDropQuestion.getBackgroundFilePath(), HttpStatus.OK, String.class);
-        assertThat(receivedPath).isEqualTo("some data");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetDragItemFile() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
-        DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
-        quizExerciseRepository.save(quizExercise);
-
-        DragItem dragItem = dragAndDropQuestion.getDragItems().get(0);
-        MockMultipartFile file = new MockMultipartFile("file", "background.png", "application/json", "some data".getBytes());
-        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=false", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
-        String responsePath = response.get("path").asText();
-
-        dragItem.setPictureFilePath(responsePath);
-        dragAndDropQuestion = quizQuestionRepository.save(dragAndDropQuestion);
-        dragItem = dragAndDropQuestion.getDragItems().get(0);
-
-        String receivedPath = request.get(dragItem.getPictureFilePath(), HttpStatus.OK, String.class);
-        assertThat(receivedPath).isEqualTo("some data");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetFileUploadSubmission() throws Exception {
-        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFile();
-        String receivedFile = request.get(fileUploadSubmission.getFilePath(), HttpStatus.OK, String.class);
-        assertThat(receivedFile).isEqualTo("some data");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetFileUploadSubmissionAsTutor() throws Exception {
-        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFile();
-
-        String receivedFile = request.get(fileUploadSubmission.getFilePath(), HttpStatus.OK, String.class);
-        assertThat(receivedFile).isEqualTo("some data");
-    }
-
-    private FileUploadSubmission createFileUploadSubmissionWithRealFile() throws Exception {
-        Course course = fileUploadExerciseUtilService.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = exerciseUtilService.findFileUploadExerciseWithTitle(course.getExercises(), "released");
-        FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
-        MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
-
-        userUtilService.changeUser(TEST_PREFIX + "student1");
-        FileUploadSubmission savedSubmission = request.postWithMultipartFiles("/api/exercises/" + fileUploadExercise.getId() + "/file-upload-submissions", fileUploadSubmission,
-                "submission", List.of(file), FileUploadSubmission.class, HttpStatus.OK);
-        userUtilService.changeUser(TEST_PREFIX + "tutor1");
-
-        return savedSubmission;
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetLectureAttachment() throws Exception {
-        Attachment attachment = createLectureWithAttachment("attachment.pdf", HttpStatus.CREATED);
-        String attachmentPath = attachment.getLink();
-        String receivedAttachment = request.get(attachmentPath, HttpStatus.OK, String.class);
-        assertThat(receivedAttachment).isEqualTo("some data");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetUnreleasedLectureAttachmentAsTutor() throws Exception {
-        Attachment attachment = createLectureWithAttachment("attachment.pdf", HttpStatus.CREATED);
-        String attachmentPath = attachment.getLink();
-        attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
-        String receivedAttachment = request.get(attachmentPath, HttpStatus.OK, String.class);
-        assertThat(receivedAttachment).isEqualTo("some data");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetLectureAttachment_unsupportedFileType() throws Exception {
-        // this should return Unsupported file type
-        createLectureWithAttachment("attachment.abc", HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetLectureAttachment_mimeType() throws Exception {
-        Attachment attachment = createLectureWithAttachment("attachment.svg", HttpStatus.CREATED);
-        String attachmentPath = attachment.getLink();
-        String receivedAttachment = request.get(attachmentPath, HttpStatus.OK, String.class);
-        assertThat(receivedAttachment).isEqualTo("some data");
-    }
-
-    private Attachment createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
-        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
-        lecture.setTitle("Test title");
-        lecture.setDescription("Test");
-        lecture.setStartDate(ZonedDateTime.now().minusHours(1));
-
-        Attachment attachment = LectureFactory.generateAttachment(ZonedDateTime.now());
-        attachment.setLecture(lecture);
-
-        User currentUser = userRepository.getUser();
-        userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        // create file
-        MockMultipartFile file = new MockMultipartFile("file", filename, "application/json", "some data".getBytes());
-        Attachment createdAttachment = request.postWithMultipartFile("/api/attachments", attachment, "attachment", file, Attachment.class, expectedStatus);
-        if (expectedStatus != HttpStatus.CREATED) {
-            return null;
-        }
-        lecture.addAttachments(createdAttachment);
-        userUtilService.changeUser(currentUser.getLogin());
-
-        lectureRepo.save(lecture);
-        return createdAttachment;
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAttachmentUnit() throws Exception {
-        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
-
-        MockMultipartFile file = new MockMultipartFile("file", "filename2.png", "application/json", "some data".getBytes());
-        AttachmentUnit attachmentUnit = uploadAttachmentUnit(lecture, file, HttpStatus.CREATED);
-
-        String attachmentPath = attachmentUnit.getAttachment().getLink();
-        String receivedAttachment = request.get(attachmentPath, HttpStatus.OK, String.class);
-        assertThat(receivedAttachment).isEqualTo("some data");
     }
 
     @Test
@@ -340,35 +165,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         MockMultipartFile file = new MockMultipartFile("file", "image.txt", "application/json", "some data".getBytes());
         // upload file
         request.postWithMultipartFile("/api/markdown-file-upload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void uploadFileAsStudentForbidden() throws Exception {
-        // create file
-        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
-        // upload file
-        request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "TA")
-    void uploadFileAsTutor() throws Exception {
-        // create file
-        MockMultipartFile file = new MockMultipartFile("file", "image.png", "application/json", "some data".getBytes());
-        // upload file
-        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
-        String responsePath = response.get("path").asText();
-        assertThat(responsePath).contains("temp");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void uploadFileUnsupportedFileExtension() throws Exception {
-        // create file
-        MockMultipartFile file = new MockMultipartFile("file", "something.exotic", "application/json", "some data".getBytes());
-        // upload file
-        request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

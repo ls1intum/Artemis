@@ -3,6 +3,7 @@ import { Result } from 'app/entities/result.model';
 import { TextBlock } from 'app/entities/text-block.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { convertToHtmlLinebreaks, escapeString } from 'app/utils/text.utils';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 
 export enum FeedbackHighlightColor {
     RED = 'rgba(219, 53, 69, 0.6)',
@@ -72,6 +73,7 @@ export class Feedback implements BaseEntity {
     public type?: FeedbackType;
     public result?: Result;
     public positive?: boolean;
+    public testCase?: ProgrammingExerciseTestCase;
 
     // Specifies whether the tutor feedback is correct relative to the instructor feedback (during tutor training) or if there is a validation error.
     // Client only property.
@@ -96,10 +98,7 @@ export class Feedback implements BaseEntity {
         if (feedback.type !== FeedbackType.AUTOMATIC) {
             return false;
         }
-        if (!feedback.text) {
-            return true;
-        }
-        return !feedback.text.startsWith(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER) && !feedback.text.startsWith(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER);
+        return !!feedback.testCase;
     }
 
     public static isStaticCodeAnalysisFeedback(that: Feedback): boolean {
@@ -147,7 +146,7 @@ export class Feedback implements BaseEntity {
 
     public static hasContent(that: Feedback): boolean {
         // if the feedback is associated with the grading instruction, the detail text is optional
-        return Feedback.hasDetailText(that) || !!(that.gradingInstruction && that.gradingInstruction.feedback);
+        return Feedback.hasDetailText(that) || !!that.gradingInstruction?.feedback;
     }
 
     /**
@@ -222,7 +221,7 @@ export class Feedback implements BaseEntity {
         that.referenceType = referenceType;
         that.credits = credits;
         that.text = text;
-        if (dropInfo && dropInfo.instruction?.id) {
+        if (dropInfo?.instruction?.id) {
             that.gradingInstruction = dropInfo.instruction;
         }
         if (referenceType && referenceId) {
@@ -251,8 +250,9 @@ export class Feedback implements BaseEntity {
     }
 
     public static updateFeedbackTypeOnChange(feedback: Feedback) {
-        if (feedback.type === FeedbackType.AUTOMATIC) {
-            feedback.type = FeedbackType.AUTOMATIC_ADAPTED;
+        if (Feedback.isFeedbackSuggestion(feedback)) {
+            // Mark as adapted feedback suggestion
+            feedback.text = (feedback.text ?? FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER).replace(FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
         }
     }
 }
@@ -269,7 +269,7 @@ export class Feedback implements BaseEntity {
  */
 export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText = true): string => {
     let feedbackText = '';
-    if (feedback.gradingInstruction && feedback.gradingInstruction.feedback) {
+    if (feedback.gradingInstruction?.feedback) {
         feedbackText = feedback.gradingInstruction.feedback;
         if (feedback.detailText) {
             feedbackText = feedbackText + '\n' + feedback.detailText;

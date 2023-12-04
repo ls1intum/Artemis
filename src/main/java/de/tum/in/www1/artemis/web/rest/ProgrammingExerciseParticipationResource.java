@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -8,6 +9,7 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -18,6 +20,8 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -25,6 +29,7 @@ import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -211,4 +216,36 @@ public class ProgrammingExerciseParticipationResource {
 
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * GET /programming-exercise-participations/{participationId}/commits-info : Get the commits information (author, timestamp, message, hash) of a programming exercise
+     * participation.
+     *
+     * @param participationId the id of the participation for which to retrieve the commits information
+     * @return A list of commitInfo DTOs with the commits information of the participation
+     */
+    @GetMapping("programming-exercise-participations/{participationId}/commits-info")
+    @EnforceAtLeastInstructor
+    List<CommitInfoDTO> getCommitInfosForParticipationRepo(@PathVariable long participationId) {
+        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, participation.getProgrammingExercise(), null);
+        return programmingExerciseParticipationService.getCommitInfos(participation);
+    }
+
+    /**
+     * GET /programming-exercise-participations/{participationId}/files-content : Get the content of the files of a programming exercise participation.
+     *
+     * @param participationId the id of the participation for which to retrieve the files content
+     * @param commitId        the id of the commit for which to retrieve the files content
+     * @return a redirect to the endpoint returning the files with content
+     */
+    @GetMapping("programming-exercise-participations/{participationId}/files-content/{commitId}")
+    @EnforceAtLeastInstructor
+    public ModelAndView redirectGetParticipationRepositoryFiles(@PathVariable long participationId, @PathVariable String commitId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByParticipationId(participationId).orElseThrow();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content/" + commitId);
+    }
+
 }

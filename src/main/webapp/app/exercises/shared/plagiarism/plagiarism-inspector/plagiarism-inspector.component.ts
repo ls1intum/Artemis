@@ -24,6 +24,7 @@ import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plag
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { PlagiarismResultDTO, PlagiarismResultStats } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
 
 export type PlagiarismCheckState = {
     state: 'COMPLETED' | 'RUNNING';
@@ -45,6 +46,11 @@ export class PlagiarismInspectorComponent implements OnInit {
      * Result of the automated plagiarism detection
      */
     plagiarismResult?: TextPlagiarismResult | ModelingPlagiarismResult;
+
+    /**
+     * Statistics for the automated plagiarism detection result
+     */
+    plagiarismResultStats?: PlagiarismResultStats;
 
     /**
      * True, if an automated plagiarism detection is running; false otherwise.
@@ -76,7 +82,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     /**
      * Minimum similarity (%) of the comparisons to return.
      */
-    similarityThreshold = 50;
+    similarityThreshold = 90;
 
     /**
      * Ignore submissions with a score less than `minimumScore` in plagiarism detection.
@@ -86,7 +92,7 @@ export class PlagiarismInspectorComponent implements OnInit {
     /**
      * Ignore submissions with a size less than `minimumSize` in plagiarism detection.
      */
-    minimumSize = 0;
+    minimumSize = 50;
 
     /**
      * The minimumScore option is only configurable, if this value is true.
@@ -306,21 +312,22 @@ export class PlagiarismInspectorComponent implements OnInit {
         this.detectionInProgress = true;
 
         this.modelingExerciseService.checkPlagiarism(this.exercise.id!, options).subscribe({
-            next: (result: ModelingPlagiarismResult) => this.handlePlagiarismResult(result),
+            next: (result: PlagiarismResultDTO<ModelingPlagiarismResult>) => this.handlePlagiarismResult(result),
             error: () => this.handleError(),
         });
     }
 
-    handlePlagiarismResult(result: ModelingPlagiarismResult | TextPlagiarismResult) {
+    handlePlagiarismResult(result: PlagiarismResultDTO<ModelingPlagiarismResult | TextPlagiarismResult>) {
         this.detectionInProgress = false;
 
-        if (result?.comparisons) {
-            this.sortComparisonsForResult(result);
+        if (result?.plagiarismResult?.comparisons) {
+            this.sortComparisonsForResult(result.plagiarismResult);
             this.showRunDetails = true;
         }
 
-        this.plagiarismResult = result;
-        this.visibleComparisons = result?.comparisons;
+        this.plagiarismResult = result.plagiarismResult;
+        this.plagiarismResultStats = result.plagiarismResultStats;
+        this.visibleComparisons = result?.plagiarismResult?.comparisons;
     }
 
     sortComparisonsForResult(result: PlagiarismResult<any>) {

@@ -1,7 +1,7 @@
 <!--resizable container-->
-<jhi-resizeable-container *ngIf="exercise">
+<jhi-resizeable-container *ngIf="exercise" [examTimeline]="examTimeline">
     <!--region Left Panel-->
-    <span class="exercise-title" left-header>{{ exercise?.exerciseGroup?.title ?? '-' }}</span>
+    <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : exercise?.exerciseGroup?.title ?? '-' }}</span>
     <!-- prettier-ignore -->
     <span left-header>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
         *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
@@ -11,7 +11,7 @@
     <!--region Left Panel-->
     <div left-body class="px-2 pb-2 w-100">
         <div class="row">
-            <div class="col-12 col-md-10" *ngIf="isActive && !result && exercise && studentSubmission">
+            <div class="col-12 col-md-10" *ngIf="isActive && !result && exercise && studentSubmission && !readonly">
                 <div class="form-group">
                     <label for="fileUploadInput" class="form-control-label" jhiTranslate="artemisApp.fileUploadSubmission.selectFile">Please select </label>
                     <div class="input-group background-file">
@@ -42,6 +42,11 @@
             <span class="ms-2 badge bg-info" *ngIf="submittedFileExtension">
                 {{ submittedFileExtension | uppercase }}
             </span>
+        </div>
+        <div *ngIf="!submittedFileName && examTimeline">
+            <h6>
+                {{ 'artemisApp.timeline.fileUploadNotSubmitted' | artemisTranslate }}
+            </h6>
         </div>
     </div>
     <!--endregion-->

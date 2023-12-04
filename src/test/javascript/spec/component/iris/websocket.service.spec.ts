@@ -2,7 +2,7 @@ import { TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { IrisStateStore } from 'app/iris/state-store.service';
-import { IrisWebsocketService } from 'app/iris/websocket.service';
+import { IrisChatWebsocketService } from 'app/iris/chat-websocket.service';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,10 +16,10 @@ import {
     mockWebsocketUnknownError,
 } from '../../helpers/sample/iris-sample-data';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
-import { IrisClientMessage } from 'app/entities/iris/iris-message.model';
+import { IrisUserMessage } from 'app/entities/iris/iris-message.model';
 
-describe('IrisWebsocketService', () => {
-    let irisWebsocketService: IrisWebsocketService;
+describe('IrisChatWebsocketService', () => {
+    let irisWebsocketService: IrisChatWebsocketService;
     let jhiWebsocketService: JhiWebsocketService;
     let irisStateStore: IrisStateStore;
 
@@ -29,9 +29,9 @@ describe('IrisWebsocketService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
-            providers: [IrisWebsocketService, MockProvider(JhiWebsocketService), IrisStateStore, { provide: AccountService, useClass: MockAccountService }],
+            providers: [IrisChatWebsocketService, MockProvider(JhiWebsocketService), IrisStateStore, { provide: AccountService, useClass: MockAccountService }],
         });
-        irisWebsocketService = TestBed.inject(IrisWebsocketService);
+        irisWebsocketService = TestBed.inject(IrisChatWebsocketService);
         jhiWebsocketService = TestBed.inject(JhiWebsocketService);
         irisStateStore = TestBed.inject(IrisStateStore);
     });
@@ -133,7 +133,7 @@ describe('IrisWebsocketService', () => {
 
         expect(dispatchSpy).toHaveBeenNthCalledWith(2, {
             ...new StudentMessageSentAction(
-                mockWebsocketClientMessage.message as IrisClientMessage,
+                mockWebsocketClientMessage.message as IrisUserMessage,
                 setTimeout(() => {}),
             ),
             timeoutId: expect.any(Number),

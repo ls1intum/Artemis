@@ -230,19 +230,19 @@
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.text">Exam Texts</h5>
             <div class="form-group">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.startText">>Start Text</label>
-                <jhi-markdown-editor id="startText" class="markdown-editor" [(markdown)]="exam.startText" [enableResize]="true"></jhi-markdown-editor>
+                <jhi-markdown-editor id="startText" class="markdown-editor" [(markdown)]="exam.startText"></jhi-markdown-editor>
             </div>
             <div class="form-group">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.endText">End Text</label>
-                <jhi-markdown-editor id="endText" class="markdown-editor" [(markdown)]="exam.endText" [enableResize]="true"></jhi-markdown-editor>
+                <jhi-markdown-editor id="endText" class="markdown-editor" [(markdown)]="exam.endText"></jhi-markdown-editor>
             </div>
             <div class="form-group">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.confirmationStartText">Confirmation Start Text</label>
-                <jhi-markdown-editor id="confirmationStartText" class="markdown-editor" [(markdown)]="exam.confirmationStartText" [enableResize]="true"></jhi-markdown-editor>
+                <jhi-markdown-editor id="confirmationStartText" class="markdown-editor" [(markdown)]="exam.confirmationStartText"></jhi-markdown-editor>
             </div>
             <div class="form-group">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.confirmationEndText">Confirmation End Text</label>
-                <jhi-markdown-editor id="confirmationEndText" class="markdown-editor" [(markdown)]="exam.confirmationEndText" [enableResize]="true"></jhi-markdown-editor>
+                <jhi-markdown-editor id="confirmationEndText" class="markdown-editor" [(markdown)]="exam.confirmationEndText"></jhi-markdown-editor>
             </div>
             <div>
                 <button type="button" class="btn btn-secondary" (click)="resetToPreviousState()">

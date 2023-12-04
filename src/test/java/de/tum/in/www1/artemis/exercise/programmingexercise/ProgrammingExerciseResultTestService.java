@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.*;
@@ -122,6 +123,7 @@ public class ProgrammingExerciseResultTestService {
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
@@ -191,29 +193,49 @@ public class ProgrammingExerciseResultTestService {
     }
 
     private ProgrammingExerciseTestCase createTest(String testName, long testId, ProgrammingExerciseTestCaseType testCaseType) {
-        var testCase = new ProgrammingExerciseTestCase().exercise(programmingExercise).testName(testName).active(true).weight(1.0).id(testId).bonusMultiplier(1D).bonusPoints(0D)
-                .visibility(Visibility.ALWAYS);
+        return createTest(testName, testId, testCaseType, Visibility.ALWAYS);
+    }
+
+    private ProgrammingExerciseTestCase createTest(String testName, long testId, ProgrammingExerciseTestCaseType testCaseType, Visibility visibility) {
+        var testCase = new ProgrammingExerciseTestCase().exercise(programmingExercise).testName(testName).active(true).weight(1.).id(testId).bonusMultiplier(1.).bonusPoints(0.)
+                .visibility(visibility);
         testCase.setType(testCaseType);
         return testCase;
     }
 
     // Test
     public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(Object resultNotification, boolean withFailedTest) {
+        // reset saved test weights to be all 1
+        var test2 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "test2").orElseThrow();
+        var test3 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "test3").orElseThrow();
+        test2.setWeight(1.);
+        test3.setWeight(1.);
+        programmingExerciseTestCaseRepository.saveAll(List.of(test2, test3));
+
         programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
 
         Set<ProgrammingExerciseTestCase> expectedTestCases = new HashSet<>();
-        expectedTestCases.add(createTest("test1", 1L, ProgrammingExerciseTestCaseType.BEHAVIORAL));
+        expectedTestCases.add(createTest("test1", 1L, ProgrammingExerciseTestCaseType.DEFAULT));
         expectedTestCases.add(createTest("test2", 2L, ProgrammingExerciseTestCaseType.BEHAVIORAL));
         expectedTestCases.add(createTest("test4", 4L, ProgrammingExerciseTestCaseType.BEHAVIORAL));
-        if (withFailedTest) {
-            expectedTestCases.add(createTest("test3", 3L, ProgrammingExerciseTestCaseType.BEHAVIORAL));
+        test3 = createTest("test3", 3L, ProgrammingExerciseTestCaseType.DEFAULT, Visibility.AFTER_DUE_DATE);
+        if (!withFailedTest) {
+            // test3 should still exist but set to active = false since it's no longer part of the solution result
+            // during this the test case type should also be updated
+            test3.setActive(false);
+            test3.setType(ProgrammingExerciseTestCaseType.BEHAVIORAL);
         }
+        expectedTestCases.add(test3);
 
         final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+
+        // test1 - test3 already exist, test4 should be newly created now.
+        // All tests must have active = true since they are now used in the new solution result
         assertThat(testCases).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(expectedTestCases);
+
         assertThat(result).isNotNull();
         if (withFailedTest) {
             assertThat(result.getScore()).isEqualTo(75L);
@@ -285,6 +307,8 @@ public class ProgrammingExerciseResultTestService {
 
     // Test
     public void shouldGenerateNewManualResultIfManualAssessmentExists(Object resultNotification) {
+        activateFourTests();
+
         var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, userPrefix + "student1",
                 userPrefix + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
@@ -307,6 +331,14 @@ public class ProgrammingExerciseResultTestService {
         // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
+    }
+
+    private void activateFourTests() {
+        // Some test cases expect test1 to test4 to exist and be active.
+        var test4 = new ProgrammingExerciseTestCase().exercise(programmingExercise).active(true).testName("test4").weight(1.).bonusMultiplier(1.).bonusPoints(0.);
+        programmingExerciseTestCaseRepository.save(test4);
+        var test2 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "test2").orElseThrow().active(true);
+        programmingExerciseTestCaseRepository.saveAll(List.of(test2, test4));
     }
 
     // Test
@@ -398,6 +430,29 @@ public class ProgrammingExerciseResultTestService {
         }));
     }
 
+    // Test
+    public void shouldRemoveTestCaseNamesFromWebsocketNotification(AbstractBuildResultNotificationDTO resultNotification, WebsocketMessagingService websocketMessagingService)
+            throws Exception {
+        var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
+        programmingExerciseStudentParticipation.addSubmission(programmingSubmission);
+        programmingExerciseStudentParticipation = participationRepository.save(programmingExerciseStudentParticipation);
+
+        postResult(resultNotification);
+
+        // ensure that the test case is set but the name does not get send to the student
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC),
+                argThat(arg -> arg instanceof ResultDTO resultDTO && resultDTO.feedbacks().size() == 1 && resultDTO.feedbacks().get(0).testCase().testName() == null));
+    }
+
+    // Test
+    public void shouldUpdateParticipantScoresOnlyOnce(Object resultNotification, InstanceMessageSendService instanceMessageSendService) {
+        gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+
+        // check that exactly one update is scheduled
+        verify(instanceMessageSendService, times(1)).sendParticipantScoreSchedule(programmingExercise.getId(), programmingExerciseStudentParticipation.getParticipant().getId(),
+                null);
+    }
+
     private int getNumberOfBuildLogs(Object resultNotification) {
         if (resultNotification instanceof BambooBuildResultNotificationDTO) {
             return ((BambooBuildResultNotificationDTO) resultNotification).getBuild().jobs().iterator().next().logs().size();
@@ -415,5 +470,9 @@ public class ProgrammingExerciseResultTestService {
 
     public ProgrammingExerciseParticipation getSolutionParticipation() {
         return solutionParticipation;
+    }
+
+    public ProgrammingExerciseStudentParticipation getProgrammingExerciseStudentParticipation() {
+        return programmingExerciseStudentParticipation;
     }
 }

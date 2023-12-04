@@ -1,0 +1,57 @@
+<div class="container legend-wrapper">
+    <div
+        *ngIf="nodeTypes.has(NodeType.COMPETENCY_END)"
+        id="competency-end"
+        class="row"
+        ngbTooltip="{{ 'artemisApp.learningPath.graph.legend.competencyEnd.tooltip' | artemisTranslate }}"
+    >
+        <div class="col-auto"><fa-icon class="legend-icon" [icon]="getIcon(competencyEnd)"></fa-icon></div>
+        <div class="col-auto">
+            <span>
+                {{ 'artemisApp.learningPath.graph.legend.competencyEnd.title' | artemisTranslate }}
+            </span>
+        </div>
+    </div>
+    <div *ngIf="nodeTypes.has(NodeType.MATCH_START)" id="match-start" class="row" ngbTooltip="{{ 'artemisApp.learningPath.graph.legend.matchStart.tooltip' | artemisTranslate }}">
+        <div class="col-auto"><fa-icon class="legend-icon" [icon]="getIcon(matchStart)"></fa-icon></div>
+        <div class="col-auto">
+            <span>
+                {{ 'artemisApp.learningPath.graph.legend.matchStart.title' | artemisTranslate }}
+            </span>
+        </div>
+    </div>
+    <div *ngIf="nodeTypes.has(NodeType.MATCH_END)" id="match-end" class="row" ngbTooltip="{{ 'artemisApp.learningPath.graph.legend.matchEnd.tooltip' | artemisTranslate }}">
+        <div class="col-auto"><fa-icon class="legend-icon" [icon]="getIcon(matchEnd)"></fa-icon></div>
+        <div class="col-auto">
+            <span>
+                {{ 'artemisApp.learningPath.graph.legend.matchEnd.title' | artemisTranslate }}
+            </span>
+        </div>
+    </div>
+    <div
+        *ngIf="nodeTypes.has(NodeType.LECTURE_UNIT) || nodeTypes.has(NodeType.EXERCISE)"
+        id="learning-object"
+        class="row"
+        ngbTooltip="{{ 'artemisApp.learningPath.graph.legend.learningObject.tooltip' | artemisTranslate }}"
+    >
+        <div class="col-auto"><fa-icon class="legend-icon" [icon]="getIcon(learningObject)"></fa-icon></div>
+        <div class="col-auto">
+            <span>
+                {{ 'artemisApp.learningPath.graph.legend.learningObject.title' | artemisTranslate }}
+            </span>
+        </div>
+    </div>
+    <div
+        *ngIf="nodeTypes.has(NodeType.LECTURE_UNIT) || nodeTypes.has(NodeType.EXERCISE)"
+        id="completed-learning-object"
+        class="row"
+        ngbTooltip="{{ 'artemisApp.learningPath.graph.legend.completedLearningObject.tooltip' | artemisTranslate }}"
+    >
+        <div class="col-auto"><fa-icon class="legend-icon" [icon]="getIcon(completedLearningObject)"></fa-icon></div>
+        <div class="col-auto">
+            <span>
+                {{ 'artemisApp.learningPath.graph.legend.completedLearningObject.title' | artemisTranslate }}
+            </span>
+        </div>
+    </div>
+</div>

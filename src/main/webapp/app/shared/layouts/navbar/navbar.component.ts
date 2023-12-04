@@ -334,6 +334,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
         suspicious_behavior: 'artemisApp.examManagement.suspiciousBehavior.title',
         suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
+        exam_timeline: 'artemisApp.examTimeline.breadcrumb',
+        iris_settings: 'artemisApp.iris.settings.title.breadcrumb',
     };
 
     studentPathBreadcrumbTranslations = {
@@ -352,6 +354,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         participate: 'artemisApp.submission.detail.title',
         live: 'artemisApp.submission.detail.title',
         courses: 'artemisApp.course.home.title',
+        enroll: 'artemisApp.studentDashboard.enroll.title',
     };
 
     /**

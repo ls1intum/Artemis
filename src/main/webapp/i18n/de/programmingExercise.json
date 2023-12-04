@@ -102,6 +102,8 @@
             "buildPlanEditor": "Build-Plan-Editor",
             "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
             "publishBuildPlanUrl": "Build-Plan veröffentlichen",
+            "customizeBuildPlanWithAeolus": "Build-Plan mit Aeolus anpassen",
+            "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
                 "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
@@ -351,7 +353,8 @@
                     "tooltip": "Standardisiere Zeilenumbrüche und Kodierung für Konsistenz"
                 },
                 "successMessageRepos": "Die Repositories wurden erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
-                "successMessageExercise": "Die Programmierübung wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen."
+                "successMessageExercise": "Die Programmierübung wurde erfolgreich exportiert. Die generierte zip-Datei wird jetzt heruntergeladen.",
+                "notFoundMessageRepos": "Keine Repositories heruntergeladen für Aufgabe {{exerciseId}}: Es sind noch keine Abgaben der angegebenen Studenten vorhanden."
             },
             "resubmitOnFailedSubmission": "Die letzte Abgabe konnte nicht bewertet werden. Klicke den Button, um die Abgabe erneut bewerten zu lassen. Diese Aktion führt einen neuen Build aus, der die Abgabe testet.",
             "resubmit": "Die letzte Abgabe erneut bewerten. Diese Aktion führt einen Build auf dem Repository der Teilnahme aus ohne einen Commit zu machen.",
@@ -519,15 +522,26 @@
             "diffReport": {
                 "button": "Anzeigen",
                 "tooltip": "Zeigt den detaillierten Git-Diff zwischen den Template- und Lösungs-Repositories.",
+                "tooltipBetweenSubmissions": "Zeigt den detaillierten Git-Diff zwischen der aktuellen und der vorherigen Abgabe.",
                 "title": "Template-Lösungs-Diff",
-                "template": "Template",
+                "titleForSubmissions": "Abgaben-Diff",
+                "template": "Vorlage",
                 "solution": "Lösung",
+                "previousSubmission": "Vorherige Abgabe",
+                "currentSubmission": "Aktuelle Abgabe",
                 "errorWhileFetchingRepos": "Fehler beim Abrufen der Repositories. Bitte überprüfe deine Internetverbindung und öffne das Popup erneut.",
                 "404": "Template-Lösungs-Diff wurde noch nicht generiert. Bitte pusche etwas in die Template- oder Lösungs-Repositories, um ihn zu erstellen.",
                 "lineStatLabel": "Zeilen, die zwischen Vorlage und Lösung hinzugefügt/entfernt wurden",
+                "lineStatBetweenSubmissionsCurrentSubmissionLabel": "Zeilen, die zwischen der aktuellen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ currentCommitHash }} </span>",
+                "lineStatBetweenSubmissionsPreviousSubmissionLabel": "und der vorherigen Abgabe mit Commit-Hash <span class=\"font-italic text-info\"> {{ previousCommitHash }} </span> hinzugefügt/entfernt wurden",
+                "lineStatBetweenSubmissionsTemplateLabel": "und der Vorlage hinzugefügt/entfernt wurden",
+
                 "lineStatTooltipDetailPage": "Ungefilterte Zeilen, die beim Vergleich der Template- und Lösungs-Repositories hinzugefügt und entfernt wurden",
+                "lineStatTooltipExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden",
+                "lineStatTooltipFullReportExamTimeline": "Ungefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen.",
                 "lineStatTooltipFullReport": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungs-Repositories hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen.",
-                "lineStatTooltipFullEntry": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungsversionen dieser Datei hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen."
+                "lineStatTooltipFullEntry": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungsversionen dieser Datei hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen.",
+                "lineStatTooltipFullEntryExamTimeline": "Gefilterte Zeilen, die beim Vergleich der aktuellen und der vorherigen Abgabe dieser Datei hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen."
             },
             "projectTypes": {
                 "PLAIN_GRADLE": "Gradle",
@@ -542,6 +556,7 @@
             "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
             "recordTestwiseCoverage": "Testbasierte Code-Abdeckung aufzeichnen",
             "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testbasierte Code-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java/Kotlin-Aufgaben mit nicht-sequentiellen Testläufen verfügbar.",
+            "customizeBuildPlansWithAeolusTooltip": "Aktivieren Sie diese Option, um die Build-Pläne mit Aeolus anzupassen. Diese Option ist nur während der Übungserstellung verfügbar.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
             "testwiseCoverageReport": {
                 "button": "Testbasierte Code-Abdeckung anzeigen",
@@ -562,7 +577,17 @@
                 "dependenciesDownloadedCount": "Anzahl heruntergeladener Abhängigkeiten",
                 "tooltip": "The durchschnittlichen Statistiken werden von allen Builds (Template-, Lösung- und Studierendenabgaben) berechnet. Die Anzahl der heruntergeladenen Abhängigkeiten kann durch Caching im Docker-Image verringert werden."
             },
-            "studentDownloadTestsTooltip": "Hier kannst du die Tests runterladen. Die Beispiellösung wird automatisch an der Stelle eingefügt an der du deine Lösung platzieren musst, um diese zu testen."
+            "studentDownloadTestsTooltip": "Hier kannst du die Tests runterladen. Die Beispiellösung wird automatisch an der Stelle eingefügt an der du deine Lösung platzieren musst, um diese zu testen.",
+            "commitInfo": {
+                "title": "Commit-Informationen",
+                "commitHash": "Commit-Hash",
+                "author": "Autor",
+                "date": "Datum",
+                "message": "Nachricht",
+                "previousSubmission": "Vorherige Abgabe",
+                "currentSubmission": "Aktuelle Abgabe",
+                "template": "Vorlage"
+            }
         },
         "error": {
             "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben."

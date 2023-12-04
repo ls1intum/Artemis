@@ -86,6 +86,11 @@
                     "shortDescription": "Erstelle einen Notenschlüssel mit benutzerdefinierten oder vorgegebenen Notenstufen für einen Kurs oder eine Prüfung.",
                     "descriptionTextOne": "Punkte sind hilfreich, um einzelne Übungen zu bewerten, aber am Ende eines Semesters möchten du und die Studierenden eine Note erhalten. Auf der Notenschlüssel-Seite kannst du für jeden Kurs und jede Prüfung einen Notenschlüssel festlegen und die Notenstufen definieren, indem du die Intervalle, die Mindestnote und die untere/obere Grenze angibst. Der Standard-Notenschlüssel kann auch mit einem einzigen Klick erstellt werden. Artemis kümmert sich dann automatisch um die Zuordnung von Noten zu Notenstufen oder Bonuspunkten und um die Berechnung der Ergebnisstatistik auf der Grundlage der Notenstufen."
                 },
+                "submissionPolicy": {
+                    "title": "Abgaberichtlinie Definieren",
+                    "shortDescription": "Entmutige Versuch-und-Irrtum-Ansätze mit Einreichungsstrafen und Repository-Sperrmaßnahmen.",
+                    "descriptionTextOne": "Abhängig von den Aufgaben und deinem Unterrichtsstil kann es sinnvoll sein, eine Abgaberichtlinie zu definieren. Im Allgemeinen bekämpfen die Richtlinien zur Sperrung des Repositories und zur Bestrafung von Einsendungen Lösungsansätze, die auf Versuch und Irrtum beruhen. Wenn Studierende das Einsende-Limit erreichen, verhindert die erste Methode weitere Einsendungen, während die zweite Methode einen Punktabzug zur Folge hat. Die Abgaberichtlinien werden zunächst bei der Erstellung einer Programmierübung festgelegt und können später in der Benotungskonfiguration der jeweiligen Programmierübung angepasst werden."
+                },
                 "examExerciseUpdates": {
                     "title": "Aufgabenänderungen während einer Klausur",
                     "shortDescription": "Ändere die Aufgabenstellung während der Klausur und benachrichtige die Studierenden darüber.",

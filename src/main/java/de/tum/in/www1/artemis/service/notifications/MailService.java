@@ -316,10 +316,16 @@ public class MailService implements InstantNotificationService {
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
             return messageSource.getMessage("email.plagiarism.title", new Object[] { exercise.getTitle(), course.getTitle() }, context.getLocale());
         }
-        else {
-            context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
-            return notification.getTitle();
+        if (notificationType == NotificationType.NEW_CPC_PLAGIARISM_CASE_STUDENT) {
+            Exercise exercise = plagiarismCase.getExercise();
+            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            return messageSource.getMessage("email.plagiarism.cpc.title", new Object[] { exercise.getTitle(), course.getTitle() }, context.getLocale());
         }
+        if (notificationType == NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT) {
+            context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
+            return messageSource.getMessage("artemisApp.singleUserNotification.title.plagiarismCaseVerdictStudent", new Object[] {}, context.getLocale());
+        }
+        return notification.getTitle();
     }
 
     private void setContextForTutorialGroupNotifications(Context context, NotificationType notificationType,
@@ -369,10 +375,11 @@ public class MailService implements InstantNotificationService {
             case FILE_SUBMISSION_SUCCESSFUL -> templateEngine.process("mail/notification/fileSubmissionSuccessfulEmail", context);
             case EXERCISE_SUBMISSION_ASSESSED -> templateEngine.process("mail/notification/exerciseSubmissionAssessedEmail", context);
             case DUPLICATE_TEST_CASE -> templateEngine.process("mail/notification/duplicateTestCasesEmail", context);
-            case NEW_PLAGIARISM_CASE_STUDENT -> templateEngine.process("mail/notification/plagiarismCaseEmail", context);
+            case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT -> templateEngine.process("mail/notification/plagiarismCaseEmail", context);
             case PLAGIARISM_CASE_VERDICT_STUDENT -> templateEngine.process("mail/notification/plagiarismVerdictEmail", context);
-            case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED -> templateEngine
-                    .process("mail/notification/tutorialGroupBasicEmail", context);
+            case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR,
+                    TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED ->
+                templateEngine.process("mail/notification/tutorialGroupBasicEmail", context);
             case TUTORIAL_GROUP_DELETED -> templateEngine.process("mail/notification/tutorialGroupDeletedEmail", context);
             case TUTORIAL_GROUP_UPDATED -> templateEngine.process("mail/notification/tutorialGroupUpdatedEmail", context);
             case DATA_EXPORT_CREATED -> templateEngine.process("mail/notification/dataExportCreatedEmail", context);

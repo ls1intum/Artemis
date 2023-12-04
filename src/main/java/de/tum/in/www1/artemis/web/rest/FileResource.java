@@ -1,19 +1,16 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
-import java.net.FileNameMap;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLConnection;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.activation.MimetypesFileTypeMap;
+import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +20,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
@@ -37,13 +38,9 @@ import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.lecture.AttachmentUnitResource;
 
 /**
  * REST controller for managing Files.
@@ -57,8 +54,6 @@ public class FileResource {
     private static final int DAYS_TO_CACHE = 1;
 
     private final FileService fileService;
-
-    private final FilePathService filePathService;
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -88,12 +83,13 @@ public class FileResource {
 
     private final CourseRepository courseRepository;
 
-    public FileResource(FilePathService filePathService, SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService,
-            ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository,
-            FileUploadExerciseRepository fileUploadExerciseRepository, AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository,
-            DragItemRepository dragItemRepository, CourseRepository courseRepository) {
-        this.filePathService = filePathService;
+    private final FilePathService filePathService;
+
+    public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
+            LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
+            AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
+            FilePathService filePathService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -109,44 +105,7 @@ public class FileResource {
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
-    }
-
-    /**
-     * POST /fileUpload : Upload a new file.
-     *
-     * @param file         The file to save
-     * @param keepFileName specifies if original file name should be kept
-     * @return The path of the file
-     * @throws URISyntaxException if response path can't be converted into URI
-     * @deprecated Implement your own usage of {@link FileService#handleSaveFile(MultipartFile, boolean, boolean)} with a mixed multipart request instead. An example for this is
-     *             {@link AttachmentUnitResource#updateAttachmentUnit(Long, Long, AttachmentUnit, Attachment, MultipartFile, boolean, String)}
-     */
-    @Deprecated
-    @PostMapping("fileUpload")
-    @EnforceAtLeastTutor
-    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName) throws URISyntaxException {
-        log.debug("REST request to upload file : {}", file.getOriginalFilename());
-        String responsePath = fileService.handleSaveFile(file, keepFileName, false).toString();
-
-        // return path for getting the file
-        String responseBody = "{\"path\":\"" + responsePath + "\"}";
-
-        return ResponseEntity.created(new URI(responsePath)).body(responseBody);
-
-    }
-
-    /**
-     * GET /files/temp/:filename : Get the temporary file with the given filename
-     *
-     * @param filename The filename of the file to get
-     * @return The requested file, or 404 if the file doesn't exist
-     */
-    @GetMapping("files/temp/{filename:.+}")
-    @EnforceAtLeastTutor
-    public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
-        log.debug("REST request to get file : {}", filename);
-        sanitizeFilenameElseThrow(filename);
-        return responseEntityForFilePath(FilePathService.getTempFilePath().resolve(filename));
+        this.filePathService = filePathService;
     }
 
     /**
@@ -205,6 +164,109 @@ public class FileResource {
         return getTemplateFileContentWithResponse(languagePrefix, projectTypePrefix);
     }
 
+    /**
+     * GET /files/aeolus/templates/:language/:projectType : Get the aeolus template file with the given filename<br/>
+     * GET /files/aeolus/templates/:language : Get the aeolus template file with the given filename
+     * <p>
+     * The windfile contains the default build plan configuration for new programming exercises.
+     *
+     * @param language       The programming language for which the aeolus template file should be returned
+     * @param projectType    The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
+     * @param staticAnalysis Whether the static analysis template should be used
+     * @param sequentialRuns Whether the sequential runs template should be used
+     * @param testCoverage   Whether the test coverage template should be used
+     * @return The requested file, or 404 if the file doesn't exist
+     */
+    @GetMapping({ "files/aeolus/templates/{language}/{projectType}", "files/aeolus/templates/{language}" })
+    @EnforceAtLeastEditor
+    public ResponseEntity<String> getAeolusTemplate(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
+            @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
+            @RequestParam(value = "sequentialRuns", defaultValue = "false") boolean sequentialRuns,
+            @RequestParam(value = "testCoverage", defaultValue = "false") boolean testCoverage) {
+        log.debug("REST request to get aeolus template for programming language {} and project type {}, static Analysis: {}, sequential Runs {}, testCoverage: {}", language,
+                projectType, staticAnalysis, sequentialRuns, testCoverage);
+
+        String languagePrefix = language.name().toLowerCase();
+        String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
+
+        return getAeolusTemplateFileContentWithResponse(languagePrefix, projectTypePrefix, staticAnalysis, sequentialRuns, testCoverage);
+    }
+
+    /**
+     * Returns the file content of the template file for the given language and project type as JSON
+     *
+     * @param languagePrefix    The programming language for which the template file should be returned
+     * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
+     * @param staticAnalysis    Whether the static analysis template should be used
+     * @param sequentialRuns    Whether the sequential runs template should be used
+     * @param testCoverage      Whether the test coverage template should be used
+     * @return The requested file, or 404 if the file doesn't exist
+     */
+    private ResponseEntity<String> getAeolusTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix, boolean staticAnalysis, boolean sequentialRuns,
+            boolean testCoverage) {
+        try {
+            String fileName = buildAeolusTemplateName(projectTypePrefix, staticAnalysis, sequentialRuns, testCoverage);
+            Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", languagePrefix, fileName));
+            if (!fileResource.exists()) {
+                throw new IOException("File " + fileName + " not found");
+            }
+            byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
+            String yaml = new String(fileContent, StandardCharsets.UTF_8);
+            String json = convertYamlToJson(yaml);
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentType(MediaType.APPLICATION_JSON);
+            return new ResponseEntity<>(json, responseHeaders, HttpStatus.OK);
+        }
+        catch (IOException ex) {
+            log.warn("Error when retrieving aeolus template file", ex);
+            HttpHeaders responseHeaders = new HttpHeaders();
+            return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /**
+     * Returns the file content of the template file for the given language and project type with the different options
+     *
+     * @param projectTypePrefix The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
+     * @param staticAnalysis    whether the static analysis template should be used
+     * @param sequentialRuns    whether the sequential runs template should be used
+     * @param testCoverage      whether the test coverage template should be used
+     * @return The requested file, or 404 if the file doesn't exist
+     */
+    private String buildAeolusTemplateName(String projectTypePrefix, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage) {
+        List<String> fileNameComponents = new ArrayList<>();
+        if (!projectTypePrefix.isEmpty()) {
+            fileNameComponents.add(projectTypePrefix);
+        }
+        else {
+            fileNameComponents.add("default");
+        }
+        if (staticAnalysis) {
+            fileNameComponents.add("static");
+        }
+        if (sequentialRuns) {
+            fileNameComponents.add("sequential");
+        }
+        if (testCoverage) {
+            fileNameComponents.add("coverage");
+        }
+        return String.join("_", fileNameComponents) + ".yaml";
+    }
+
+    /**
+     * Converts a YAML string to a JSON string for easier communication with the client
+     *
+     * @param yaml YAML string
+     * @return JSON string
+     */
+    private String convertYamlToJson(String yaml) throws JsonProcessingException {
+        ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
+        Object obj = yamlReader.readValue(yaml, Object.class);
+
+        ObjectMapper jsonWriter = new ObjectMapper();
+        return jsonWriter.writeValueAsString(obj);
+    }
+
     private ResponseEntity<byte[]> getTemplateFileContentWithResponse(String languagePrefix, String projectTypePrefix) {
         try {
             Resource fileResource = resourceLoaderService.getResource(Path.of("templates", languagePrefix, projectTypePrefix, "readme"));
@@ -237,7 +299,7 @@ public class FileResource {
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
         Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        return responseEntityForFilePath(filePathService.actualPathForPublicPath(URI.create(question.getBackgroundFilePath())));
+        return responseEntityForFilePath(getActualPathFromPublicPathString(question.getBackgroundFilePath()));
     }
 
     /**
@@ -256,7 +318,7 @@ public class FileResource {
         if (dragItem.getPictureFilePath() == null) {
             throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");
         }
-        return responseEntityForFilePath(filePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath())));
+        return responseEntityForFilePath(getActualPathFromPublicPathString(dragItem.getPictureFilePath()));
     }
 
     /**
@@ -290,7 +352,7 @@ public class FileResource {
             throw new AccessForbiddenException();
         }
 
-        return buildFileResponse(filePathService.actualPathForPublicPath(URI.create(submission.getFilePath())), false);
+        return buildFileResponse(getActualPathFromPublicPathString(submission.getFilePath()), false);
     }
 
     /**
@@ -305,7 +367,7 @@ public class FileResource {
         log.debug("REST request to get icon for course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        return responseEntityForFilePath(filePathService.actualPathForPublicPath(URI.create(course.getCourseIcon())));
+        return responseEntityForFilePath(getActualPathFromPublicPathString(course.getCourseIcon()));
     }
 
     /**
@@ -314,7 +376,7 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/templates/code-of-conduct")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getCourseCodeOfConduct() throws IOException {
         var templatePath = Path.of("templates", "codeofconduct", "README.md");
         log.debug("REST request to get template : {}", templatePath);
@@ -335,7 +397,7 @@ public class FileResource {
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
-        return buildFileResponse(filePathService.actualPathForPublicPath(URI.create(examUser.getSigningImagePath())), false);
+        return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath()), false);
     }
 
     /**
@@ -351,7 +413,7 @@ public class FileResource {
         ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
-        return buildFileResponse(filePathService.actualPathForPublicPath(URI.create(examUser.getStudentImagePath())), true);
+        return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath()), true);
     }
 
     /**
@@ -378,7 +440,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildFileResponse(filePathService.actualPathForPublicPath(URI.create(attachment.getLink())), false);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
 
     /**
@@ -435,7 +497,7 @@ public class FileResource {
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        return buildFileResponse(filePathService.actualPathForPublicPath(URI.create(attachment.getLink())), false);
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
 
     /**
@@ -521,16 +583,7 @@ public class FileResource {
                     : "inline";
             headers.setContentDisposition(ContentDisposition.builder(contentType).filename(filename).build());
 
-            FileNameMap fileNameMap = URLConnection.getFileNameMap();
-            String mimeType = fileNameMap.getContentTypeFor(filename);
-
-            // If we were unable to find mimeType with previous method, try another one, which returns application/octet-stream mime type,
-            // if it also can't determine mime type
-            if (mimeType == null) {
-                MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
-                mimeType = fileTypeMap.getContentType(filename);
-            }
-            var response = ResponseEntity.ok().headers(headers).contentType(MediaType.parseMediaType(mimeType)).header("filename", filename);
+            var response = ResponseEntity.ok().headers(headers).contentType(getMediaTypeFromFilename(filename)).header("filename", filename);
             if (cache) {
                 var cacheControl = CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePublic();
                 response = response.cacheControl(cacheControl);
@@ -541,6 +594,24 @@ public class FileResource {
             log.error("Failed to download file: {} on path: {}", filename, path, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    private Path getActualPathFromPublicPathString(@Nullable String publicPath) {
+        if (publicPath == null) {
+            throw new EntityNotFoundException("No file linked");
+        }
+        return filePathService.actualPathForPublicPathOrThrow(URI.create(publicPath));
+    }
+
+    private MediaType getMediaTypeFromFilename(String filename) {
+        FileNameMap fileNameMap = URLConnection.getFileNameMap();
+        String mimeType = fileNameMap.getContentTypeFor(filename);
+        if (mimeType != null) {
+            return MediaType.parseMediaType(mimeType);
+        }
+        MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
+
+        return MediaType.parseMediaType(fileTypeMap.getContentType(filename));
     }
 
     /**
@@ -590,5 +661,4 @@ public class FileResource {
             throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
         }
     }
-
 }

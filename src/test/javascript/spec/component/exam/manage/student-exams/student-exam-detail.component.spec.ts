@@ -8,7 +8,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { ActivatedRoute, Params, convertToParamMap } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
@@ -34,6 +34,7 @@ import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-wo
 import { GradeType } from 'app/entities/grading-scale.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
+import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -50,7 +51,7 @@ describe('StudentExamDetailComponent', () => {
 
     let studentExamService: any;
 
-    beforeEach(() => {
+    beforeEach(async () => {
         course = { id: 1 };
 
         student = {
@@ -65,7 +66,16 @@ describe('StudentExamDetailComponent', () => {
         exam = {
             course,
             id: 1,
-            examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...student, user: student }],
+            examUsers: [
+                {
+                    didCheckImage: false,
+                    didCheckLogin: false,
+                    didCheckName: false,
+                    didCheckRegistrationNumber: false,
+                    ...student,
+                    user: student,
+                },
+            ],
             visibleDate: dayjs().add(120, 'seconds'),
             startDate: dayjs().add(200, 'seconds'),
             endDate: dayjs().add(7400, 'seconds'),
@@ -116,7 +126,7 @@ describe('StudentExamDetailComponent', () => {
             },
         } as StudentExamWithGradeDTO;
 
-        return TestBed.configureTestingModule({
+        await TestBed.configureTestingModule({
             imports: [
                 RouterTestingModule.withRoutes([]),
                 NgbModule,
@@ -130,6 +140,7 @@ describe('StudentExamDetailComponent', () => {
                 StudentExamDetailComponent,
                 MockComponent(DataTableComponent),
                 MockComponent(StudentExamWorkingTimeComponent),
+                MockComponent(WorkingTimeControlComponent),
                 MockDirective(NgForm),
                 MockDirective(NgModel),
                 MockPipe(ArtemisDatePipe),
@@ -161,52 +172,29 @@ describe('StudentExamDetailComponent', () => {
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        params: {
-                            subscribe: (fn: (value: Params) => void) =>
-                                fn({
-                                    courseId: 1,
-                                }),
-                        },
-                        data: {
-                            subscribe: (fn: (value: any) => void) => fn({ studentExam: studentExamWithGrade }),
-                        },
-                        snapshot: {
-                            paramMap: convertToParamMap({
-                                courseId: '1',
-                            }),
-                            url: [],
-                        },
+                        data: of({ studentExam: studentExamWithGrade }),
+                        params: of({ courseId: 1 }),
+                        url: of([]),
                     },
                 },
                 { provide: NgbModal, useClass: MockNgbModalService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                studentExamDetailComponentFixture = TestBed.createComponent(StudentExamDetailComponent);
-                studentExamDetailComponent = studentExamDetailComponentFixture.componentInstance;
-                studentExamService = TestBed.inject(StudentExamService);
-            });
+        }).compileComponents();
+
+        studentExamDetailComponentFixture = TestBed.createComponent(StudentExamDetailComponent);
+        studentExamDetailComponent = studentExamDetailComponentFixture.componentInstance;
+        studentExamService = TestBed.inject(StudentExamService);
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    const expectDuration = (hours: number, minutes: number, seconds: number) => {
-        expect(studentExamDetailComponent.workingTimeFormValues.hours).toBe(hours);
-        expect(studentExamDetailComponent.workingTimeFormValues.minutes).toBe(minutes);
-        expect(studentExamDetailComponent.workingTimeFormValues.seconds).toBe(seconds);
-    };
-
     it('initialize', () => {
         studentExamDetailComponentFixture.detectChanges();
 
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
-
-        expectDuration(2, 0, 0);
-        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(0);
     });
 
     it('should save working time', () => {
@@ -236,7 +224,7 @@ describe('StudentExamDetailComponent', () => {
 
     it('should disable the working time form while saving', () => {
         studentExamDetailComponent.isSavingWorkingTime = true;
-        expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
+        expect(studentExamDetailComponent.isWorkingTimeFormDisabled).toBeTrue();
     });
 
     it('should disable the working time form after a test run is submitted', () => {
@@ -244,10 +232,10 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.studentExam = studentExam;
 
         studentExamDetailComponent.studentExam.submitted = false;
-        expect(studentExamDetailComponent.isFormDisabled()).toBeFalse();
+        expect(studentExamDetailComponent.isWorkingTimeFormDisabled).toBeFalse();
 
         studentExamDetailComponent.studentExam.submitted = true;
-        expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
+        expect(studentExamDetailComponent.isWorkingTimeFormDisabled).toBeTrue();
     });
 
     it('should disable the working time form if there is no exam', () => {
@@ -255,19 +243,19 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.studentExam = studentExam;
 
         studentExamDetailComponent.studentExam.exam = undefined;
-        expect(studentExamDetailComponent.isFormDisabled()).toBeTrue();
+        expect(studentExamDetailComponent.isWorkingTimeFormDisabled).toBeTrue();
     });
 
-    it('should get examIsOver', () => {
+    it('should get isExamOver', () => {
         studentExamDetailComponent.studentExam = studentExam;
         studentExam.exam!.gracePeriod = 100;
-        expect(studentExamDetailComponent.isExamOver()).toBeFalse();
+        expect(studentExamDetailComponent.isExamOver).toBeFalse();
         studentExam.exam!.startDate = dayjs().add(-20, 'seconds');
-        expect(studentExamDetailComponent.isExamOver()).toBeFalse();
-        studentExam.exam!.startDate = dayjs().add(-200, 'seconds');
-        expect(studentExamDetailComponent.isExamOver()).toBeTrue();
+        expect(studentExamDetailComponent.isExamOver).toBeFalse();
+        studentExam.exam!.startDate = dayjs().add(-7400, 'seconds');
+        expect(studentExamDetailComponent.isExamOver).toBeTrue();
         studentExam.exam = undefined;
-        expect(studentExamDetailComponent.isExamOver()).toBeFalse();
+        expect(studentExamDetailComponent.isExamOver).toBeFalse();
     });
 
     it('should toggle to unsubmitted', () => {
@@ -303,40 +291,6 @@ describe('StudentExamDetailComponent', () => {
         expect(toggleSpy).toHaveBeenCalledOnce();
     }));
 
-    it('should update the percent difference when the absolute working time changes', () => {
-        studentExamDetailComponent.ngOnInit();
-
-        studentExamDetailComponent.workingTimeFormValues.hours = 4;
-        studentExamDetailComponent.updateWorkingTimePercent();
-        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(100);
-
-        studentExamDetailComponent.workingTimeFormValues.hours = 3;
-        studentExamDetailComponent.updateWorkingTimePercent();
-        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(50);
-
-        studentExamDetailComponent.workingTimeFormValues.hours = 0;
-        studentExamDetailComponent.updateWorkingTimePercent();
-        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(-100);
-
-        // small change, not a full percent
-        studentExamDetailComponent.workingTimeFormValues.hours = 2;
-        studentExamDetailComponent.workingTimeFormValues.seconds = 12;
-        studentExamDetailComponent.updateWorkingTimePercent();
-        expect(studentExamDetailComponent.workingTimeFormValues.percent).toBe(0.17);
-    });
-
-    it('should update the absolute working time when changing the percent difference', () => {
-        studentExamDetailComponent.ngOnInit();
-
-        studentExamDetailComponent.workingTimeFormValues.percent = 26;
-        studentExamDetailComponent.updateWorkingTimeDuration();
-        expectDuration(2, 31, 12);
-
-        studentExamDetailComponent.workingTimeFormValues.percent = -100;
-        studentExamDetailComponent.updateWorkingTimeDuration();
-        expectDuration(0, 0, 0);
-    });
-
     it.each([
         [true, undefined, 'artemisApp.studentExams.bonus'],
         [false, '2.0', 'artemisApp.studentExams.gradeBeforeBonus'],
@@ -344,7 +298,7 @@ describe('StudentExamDetailComponent', () => {
     ])('should get the correct grade explanation label', (isBonus: boolean, gradeAfterBonus: string | undefined, gradeExplanation: string) => {
         studentExamDetailComponent.isBonus = isBonus;
         studentExamDetailComponent.gradeAfterBonus = gradeAfterBonus;
-        expect(studentExamDetailComponent.getGradeExplanation()).toBe(gradeExplanation);
+        expect(studentExamDetailComponent.gradeExplanation).toBe(gradeExplanation);
     });
 
     it('should set exam grade', () => {
@@ -382,7 +336,7 @@ describe('StudentExamDetailComponent', () => {
         const ADJUST_SUBMITTED_STATE_BUTTON_ID = '#adjust-submitted-state-button';
 
         it('should NOT be disabled when individual working time is over', () => {
-            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver').mockReturnValue(true);
+            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver', 'get').mockReturnValue(true);
 
             studentExamDetailComponentFixture.detectChanges();
 
@@ -393,7 +347,7 @@ describe('StudentExamDetailComponent', () => {
         });
 
         it('should be disabled when individual working time is NOT over', () => {
-            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver').mockReturnValue(false);
+            const examIsOverSpy = jest.spyOn(studentExamDetailComponent, 'isExamOver', 'get').mockReturnValue(false);
 
             studentExamDetailComponentFixture.detectChanges();
 

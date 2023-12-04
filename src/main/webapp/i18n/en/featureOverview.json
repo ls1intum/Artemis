@@ -86,6 +86,11 @@
                     "shortDescription": "Create a grading key with custom or default grade steps for a course or an exam.",
                     "descriptionTextOne": "Scores are helpful to assess individual exercises but at the end of a semester you and your students would like to see a standard grade. On the grading key page, you can have a grading key for each course and exam, define the grade steps by specifying intervals, the minimum passing grade and the lower/upper bound inclusivity. The default grading key can also be generated with a single click. Artemis then automatically handles mapping scores to grade steps or bonus points, as well as calculating student result statistics based on grade steps."
                 },
+                "submissionPolicy": {
+                    "title": "Specify Submission Policies",
+                    "shortDescription": "Discourage trial-and-error approaches with submission penalty and lock repository policies.",
+                    "descriptionTextOne": "Depending on the exercises and your teaching style, it might be useful to specify a submission policy. In general, lock repository and submission penalty policies combat trial-and-error solving approaches. When the student reaches the submission limit, the former prevents further submissions, while the latter results in a point deduction. Submission policies are initially specified in the creation process of a programming exercise and can later be adjusted in the grading configuration of the particular programming exercise."
+                },
                 "examExerciseUpdates": {
                     "title": "Exercise Update during an Exam",
                     "shortDescription": "Update exercises during an exam and notify the students about the changes.",

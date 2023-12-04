@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.competency;
 
 import java.time.ZonedDateTime;
 
+import javax.validation.constraints.NotNull;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -34,11 +36,11 @@ public class CompetencyUtilService {
     private CompetencyRelationRepository competencyRelationRepository;
 
     /**
-     * Creates competency and links it to the course. The title of the competency will hold the specified suffix.
+     * Creates and saves a Competency for the given Course.
      *
-     * @param course course the competency will be linked to
-     * @param suffix the suffix that will be included in the title
-     * @return the persisted competency
+     * @param course The Course the Competency belongs to
+     * @param suffix The suffix that will be added to the title of the Competency
+     * @return The created Competency
      */
     private Competency createCompetency(Course course, String suffix) {
         Competency competency = new Competency();
@@ -49,11 +51,11 @@ public class CompetencyUtilService {
     }
 
     /**
-     * create and save competency with the passed arguments.
+     * Creates and saves a Competency for the given Course and Exercise.
      *
-     * @param course   the course we want to use the competency in
-     * @param exercise the exercise of the competency
-     * @return newly created competency
+     * @param course   The Course the Competency belongs to
+     * @param exercise The Exercise the Competency belongs to
+     * @return The created Competency
      */
     public Competency createCompetencyWithExercise(Course course, Exercise exercise) {
         Competency competency = new Competency();
@@ -64,21 +66,21 @@ public class CompetencyUtilService {
     }
 
     /**
-     * Creates competency and links it to the course.
+     * Creates and saves a Competency for the given Course.
      *
-     * @param course course the competency will be linked to
-     * @return the persisted competency
+     * @param course The Course the Competency belongs to
+     * @return The created Competency
      */
     public Competency createCompetency(Course course) {
         return createCompetency(course, "");
     }
 
     /**
-     * Creates competency and links it to the course.
+     * Creates and saves a Competency for the given Course.
      *
-     * @param course course the competency will be linked to
-     * @param time   the soft due date of the competency
-     * @return the persisted competency
+     * @param course The Course the Competency belongs to
+     * @param time   The soft due date of the competency
+     * @return The created Competency
      */
     public Competency createCompetencyWithSoftDueDate(Course course, ZonedDateTime time) {
         final var competency = createCompetency(course);
@@ -87,11 +89,11 @@ public class CompetencyUtilService {
     }
 
     /**
-     * Creates multiple competencies and links them to the course.
+     * Creates and saves a Competency for each given soft due date and links them to the Course.
      *
-     * @param course       course the competencies will be linked to
-     * @param softDueDates soft due dates of the competencies
-     * @return array of the persisted competencies
+     * @param course       The Course the Competencies belong to
+     * @param softDueDates The soft due dates of the Competencies
+     * @return An array of the created Competencies
      */
     public Competency[] createCompetencies(Course course, ZonedDateTime... softDueDates) {
         Competency[] competencies = new Competency[softDueDates.length];
@@ -102,11 +104,11 @@ public class CompetencyUtilService {
     }
 
     /**
-     * Creates multiple competencies and links them to the course.
+     * Creates and saves the given number of Competencies for the given Course.
      *
-     * @param course               course the competencies will be linked to
-     * @param numberOfCompetencies number of competencies to create
-     * @return array of the persisted competencies
+     * @param course               The Course the Competencies belong to
+     * @param numberOfCompetencies The number of Competencies to create
+     * @return An array of the created Competencies
      */
     public Competency[] createCompetencies(Course course, int numberOfCompetencies) {
         Competency[] competencies = new Competency[numberOfCompetencies];
@@ -117,10 +119,10 @@ public class CompetencyUtilService {
     }
 
     /**
-     * Link lecture unit to competency.
+     * Updates and saves the LectureUnit's Competencies by adding the given Competency.
      *
-     * @param competency  the competency to link the learning unit to
-     * @param lectureUnit the lecture unit that will be linked to the competency
+     * @param competency  The Competency to add to the LectureUnit
+     * @param lectureUnit The LectureUnit to update
      */
     public void linkLectureUnitToCompetency(Competency competency, LectureUnit lectureUnit) {
         lectureUnit.getCompetencies().add(competency);
@@ -128,11 +130,11 @@ public class CompetencyUtilService {
     }
 
     /**
-     * Link exercise to competency.
+     * Updates and saves the Exercise's Competencies by adding the given Competency.
      *
-     * @param competency the competency to link the learning unit to
-     * @param exercise   the exercise that will be linked to the competency
-     * @return the updated exercise
+     * @param competency The Competency to add to the Exercise
+     * @param exercise   The Exercise to update
+     * @return The updated Exercise
      */
     public Exercise linkExerciseToCompetency(Competency competency, Exercise exercise) {
         exercise.getCompetencies().add(competency);
@@ -140,11 +142,11 @@ public class CompetencyUtilService {
     }
 
     /**
-     * Adds a relation between competencies.
+     * Creates and saves a CompetencyRelation for the given Competencies.
      *
-     * @param tail the competency that relates to another competency
-     * @param type the type of the relation
-     * @param head the competency that the tail competency relates to
+     * @param tail The Competency that relates to the head Competency
+     * @param type The type of the relation
+     * @param head The Competency that the tail Competency relates to
      */
     public void addRelation(Competency tail, CompetencyRelation.RelationType type, Competency head) {
         CompetencyRelation relation = new CompetencyRelation();
@@ -152,5 +154,17 @@ public class CompetencyUtilService {
         relation.setHeadCompetency(head);
         relation.setType(type);
         competencyRelationRepository.save(relation);
+    }
+
+    /**
+     * Updates and saves the Competency's mastery threshold.
+     *
+     * @param competency       The Competency to update
+     * @param masteryThreshold The new mastery threshold
+     * @return The updated Competency
+     */
+    public Competency updateMasteryThreshold(@NotNull Competency competency, int masteryThreshold) {
+        competency.setMasteryThreshold(masteryThreshold);
+        return competencyRepo.save(competency);
     }
 }

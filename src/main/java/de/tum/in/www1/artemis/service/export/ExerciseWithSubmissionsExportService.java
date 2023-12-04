@@ -64,7 +64,6 @@ public abstract class ExerciseWithSubmissionsExportService {
     void exportProblemStatementAndEmbeddedFilesAndExerciseDetails(Exercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped) throws IOException {
         exportProblemStatementWithEmbeddedFiles(exercise, exportErrors, exportDir, pathsToBeZipped);
         exportExerciseDetails(exercise, exportDir, pathsToBeZipped);
-
     }
 
     private void exportProblemStatementWithEmbeddedFiles(Exercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped) throws IOException {
@@ -189,7 +188,7 @@ public abstract class ExerciseWithSubmissionsExportService {
                 }
                 catch (IOException e) {
                     exportErrors.add("Could not create directory for embedded files: " + e.getMessage());
-                    log.warn("Could not create directory for embedded files. Won't include embedded files: " + e.getMessage());
+                    log.warn("Could not create directory for embedded files. Won't include embedded files.", e);
                     return null;
                 }
             }
@@ -213,6 +212,8 @@ public abstract class ExerciseWithSubmissionsExportService {
         // do not include duplicate information
         exercise.getCourseViaExerciseGroupOrCourseMember().setExercises(null);
         exercise.getCourseViaExerciseGroupOrCourseMember().setExams(null);
+        // do not include related entities ids
+        Optional.ofNullable(exercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
         pathsToBeZipped.add(fileService.writeObjectToJsonFile(exercise, this.objectMapper, exerciseDetailsExportPath));
     }
 

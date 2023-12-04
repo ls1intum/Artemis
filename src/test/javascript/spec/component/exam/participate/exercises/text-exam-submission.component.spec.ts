@@ -15,6 +15,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTestModule } from '../../../../test.module';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import dayjs from 'dayjs/esm';
 
 describe('TextExamSubmissionComponent', () => {
     let fixture: ComponentFixture<TextExamSubmissionComponent>;
@@ -130,4 +131,11 @@ describe('TextExamSubmissionComponent', () => {
             expect(component.studentSubmission.isSynced).toBeFalse();
         });
     }));
+
+    it('should update the answer if the submission version changes', () => {
+        const submissionVersion = { id: 1, content: 'submission version', submission: textSubmission, createdDate: dayjs('2021-01-01') };
+        component.setSubmissionVersion(submissionVersion);
+        expect(component.answer).toBe('submission version');
+        expect(component.submissionVersion).toBe(submissionVersion);
+    });
 });

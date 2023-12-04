@@ -2,6 +2,7 @@ import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
+import { ServerDateService } from 'app/shared/server-date.service';
 
 /**
  * Calculates the individual end time based on the studentExam
@@ -83,3 +84,11 @@ export const isExamOverMultipleDays = (exam: Exam, studentExam: StudentExam): bo
 
     return !endDate.isSame(exam.startDate, 'day');
 };
+
+export function isExamResultPublished(isTestRun: boolean, exam: Exam | undefined, serverDateService: ServerDateService) {
+    if (isTestRun) {
+        return true;
+    }
+
+    return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(serverDateService.now());
+}

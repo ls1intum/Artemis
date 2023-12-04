@@ -46,7 +46,8 @@ import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismComparisonStatusDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 
 class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -138,7 +139,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textSubmission = textExerciseUtilService.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
         int submissionCount = 5;
         int submissionSize = 4;
-        var textBlocks = textExerciseUtilService.generateTextBlocks(submissionCount * submissionSize);
+        var textBlocks = TextExerciseFactory.generateTextBlocks(submissionCount * submissionSize);
         textExerciseUtilService.addAndSaveTextBlocksToTextSubmission(textBlocks, textSubmission);
 
         request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.OK);
@@ -1056,11 +1057,11 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"), longText);
 
         var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        var result = request.get(path, HttpStatus.OK, TextPlagiarismResult.class, plagiarismUtilService.getDefaultPlagiarismOptions());
-        assertThat(result.getComparisons()).hasSize(1);
-        assertThat(result.getExercise().getId()).isEqualTo(textExercise.getId());
+        var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
+        assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
+        assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(textExercise.getId());
 
-        PlagiarismComparison<TextSubmissionElement> comparison = result.getComparisons().iterator().next();
+        PlagiarismComparison<TextSubmissionElement> comparison = (PlagiarismComparison<TextSubmissionElement>) result.plagiarismResult().getComparisons().iterator().next();
         // Both submissions compared consist of 4 words (= 4 tokens). JPlag seems to be off by 1
         // when counting the length of a match. This is why it calculates a similarity of 3/4 = 75%
         // instead of 4/4 = 100% (5 words ==> 80%, 100 words ==> 99%, etc.). Therefore, we use a rather
@@ -1069,6 +1070,12 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(comparison.getSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
         assertThat(comparison.getMatches()).hasSize(1);
+
+        // verify plagiarism result stats
+        var stats = result.plagiarismResultStats();
+        assertThat(stats.numberOfDetectedSubmissions()).isEqualTo(2);
+        assertThat(stats.averageSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
+        assertThat(stats.maximalSimilarity()).isEqualTo(100.0, Offset.offset(1.0));
 
         var plagiarismStatusDto = new PlagiarismComparisonStatusDTO(CONFIRMED);
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
@@ -1094,7 +1101,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         textExerciseUtilService.createSubmissionForTextExercise(textExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student2"), shortText);
 
         var path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
-        request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, plagiarismUtilService.getPlagiarismOptions(50D, 0, 5));
+        request.get(path, HttpStatus.BAD_REQUEST, TextPlagiarismResult.class, plagiarismUtilService.getPlagiarismOptions(50, 0, 5));
     }
 
     @Test
@@ -1126,8 +1133,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         TextPlagiarismResult expectedResult = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise);
 
-        TextPlagiarismResult result = request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.OK, TextPlagiarismResult.class);
-        assertThat(result.getId()).isEqualTo(expectedResult.getId());
+        var result = request.get("/api/text-exercises/" + textExercise.getId() + "/plagiarism-result", HttpStatus.OK, PlagiarismResultDTO.class);
+        assertThat(result.plagiarismResult().getId()).isEqualTo(expectedResult.getId());
     }
 
     @Test

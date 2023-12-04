@@ -20,8 +20,8 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
-import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseInfoDTO;
-import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismCaseInfoDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismVerdictDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -189,7 +189,7 @@ public class PlagiarismCaseResource {
                 // Note: we only return the ID and verdict to tell the client there is a confirmed plagiarism case with student notification (post) and to support navigating to the
                 // detail page
                 // all other information might be irrelevant or sensitive and could lead to longer loading times
-                var plagiarismCaseInfoDTO = new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict());
+                var plagiarismCaseInfoDTO = new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict(), plagiarismCase.isCreatedByContinuousPlagiarismControl());
                 return ResponseEntity.ok(plagiarismCaseInfoDTO);
             }
         }
@@ -223,8 +223,10 @@ public class PlagiarismCaseResource {
         }
         Map<Long, PlagiarismCaseInfoDTO> plagiarismCaseInfoDTOs = plagiarismCasePerExerciseList.stream()
                 // the following line is already checked in the SQL statement, but we want to ensure it 100%
-                .filter(plagiarismCase -> plagiarismCase.getPost() != null).collect(Collectors.toMap(plagiarismCase -> plagiarismCase.getExercise().getId(),
-                        plagiarismCase -> new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict()), (case1, case2) -> case1));
+                .filter(plagiarismCase -> plagiarismCase.getPost() != null)
+                .collect(Collectors.toMap(plagiarismCase -> plagiarismCase.getExercise().getId(),
+                        plagiarismCase -> new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict(), plagiarismCase.isCreatedByContinuousPlagiarismControl()),
+                        (case1, case2) -> case1));
 
         return ResponseEntity.ok(plagiarismCaseInfoDTOs);
     }

@@ -22,7 +22,7 @@ export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> 
     resolve(route: ActivatedRouteSnapshot) {
         const exerciseId = route.params['exerciseId'] ? route.params['exerciseId'] : undefined;
         if (exerciseId) {
-            return this.service.find(exerciseId).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
+            return this.service.find(exerciseId, true).pipe(map((programmingExercise: HttpResponse<ProgrammingExercise>) => programmingExercise.body!));
         }
         return of(new ProgrammingExercise(undefined, undefined));
     }
@@ -137,6 +137,11 @@ export const routes: Routes = [
             pageTitle: 'artemisApp.codeHint.management.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/iris-settings',
+        loadChildren: () =>
+            import('app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update-routing.module').then((m) => m.IrisExerciseSettingsUpdateRoutingModule),
     },
     {
         path: ':courseId/programming-exercises/:exerciseId/edit-build-plan',

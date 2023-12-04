@@ -8,6 +8,7 @@ import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exerci
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { downloadStream } from 'app/shared/util/download.util';
+import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
@@ -43,9 +44,9 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
-    find(modelingExerciseId: number): Observable<EntityResponseType> {
+    find(modelingExerciseId: number, withPlagiarismDetectionConfig: boolean = false): Observable<EntityResponseType> {
         return this.http
-            .get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' })
+            .get<ModelingExercise>(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response', params: { withPlagiarismDetectionConfig: withPlagiarismDetectionConfig } })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
@@ -74,10 +75,10 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * @param exerciseId of the programming exercise
      * @param options
      */
-    checkPlagiarism(exerciseId: number, options?: PlagiarismOptions): Observable<ModelingPlagiarismResult> {
+    checkPlagiarism(exerciseId: number, options?: PlagiarismOptions): Observable<PlagiarismResultDTO<ModelingPlagiarismResult>> {
         return this.http
-            .get<ModelingPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response', params: { ...options?.toParams() } })
-            .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
+            .get<PlagiarismResultDTO<ModelingPlagiarismResult>>(`${this.resourceUrl}/${exerciseId}/check-plagiarism`, { observe: 'response', params: { ...options?.toParams() } })
+            .pipe(map((response: HttpResponse<PlagiarismResultDTO<ModelingPlagiarismResult>>) => response.body!));
     }
 
     convertToPdf(model: string, filename: string): Observable<HttpResponse<Blob>> {
@@ -91,12 +92,12 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      *
      * @param exerciseId
      */
-    getLatestPlagiarismResult(exerciseId: number): Observable<ModelingPlagiarismResult> {
+    getLatestPlagiarismResult(exerciseId: number): Observable<PlagiarismResultDTO<ModelingPlagiarismResult>> {
         return this.http
-            .get<ModelingPlagiarismResult>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
+            .get<PlagiarismResultDTO<ModelingPlagiarismResult>>(`${this.resourceUrl}/${exerciseId}/plagiarism-result`, {
                 observe: 'response',
             })
-            .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
+            .pipe(map((response: HttpResponse<PlagiarismResultDTO<ModelingPlagiarismResult>>) => response.body!));
     }
 
     /**

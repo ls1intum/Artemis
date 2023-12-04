@@ -7,17 +7,15 @@ import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming
     templateUrl: './git-diff-report.component.html',
 })
 export class GitDiffReportComponent implements OnInit {
-    @Input()
-    report: ProgrammingExerciseGitDiffReport;
+    @Input() report: ProgrammingExerciseGitDiffReport;
 
-    @Input()
-    templateFileContentByPath: Map<string, string>;
+    @Input() templateFileContentByPath: Map<string, string>;
 
-    @Input()
-    solutionFileContentByPath: Map<string, string>;
+    @Input() solutionFileContentByPath: Map<string, string>;
 
-    @Input()
-    filePaths: string[];
+    @Input() filePaths: string[];
+
+    @Input() diffForTemplateAndSolution = true;
 
     // TODO: Make this configurable by the user
     numberOfContextLines = 3;
@@ -30,17 +28,18 @@ export class GitDiffReportComponent implements OnInit {
 
     ngOnInit(): void {
         // Sort the diff entries by file path and start lines
-        this.entries = this.report.entries.sort((a, b) => {
-            const filePathA = a.filePath ?? a.previousFilePath ?? '';
-            const filePathB = b.filePath ?? b.previousFilePath ?? '';
-            if (filePathA < filePathB) {
-                return -1;
-            }
-            if (filePathA > filePathB) {
-                return 1;
-            }
-            return (a.startLine ?? a.previousStartLine ?? 0) - (b.startLine ?? b.previousStartLine ?? 0);
-        });
+        this.entries =
+            this.report.entries?.sort((a, b) => {
+                const filePathA = a.filePath ?? a.previousFilePath ?? '';
+                const filePathB = b.filePath ?? b.previousFilePath ?? '';
+                if (filePathA < filePathB) {
+                    return -1;
+                }
+                if (filePathA > filePathB) {
+                    return 1;
+                }
+                return (a.startLine ?? a.previousStartLine ?? 0) - (b.startLine ?? b.previousStartLine ?? 0);
+            }) ?? [];
 
         this.addedLineCount = this.entries
             .flatMap((entry) => {

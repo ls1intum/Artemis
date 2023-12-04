@@ -32,8 +32,15 @@ export async function generateDragAndDropQuizExercise(
     fileUploaderService: FileUploaderService,
     quizExerciseService: QuizExerciseService,
 ): Promise<QuizExercise> {
-    const interactiveElements = [...model.interactive.elements, ...model.interactive.relationships];
-    const elements = [...model.elements, ...model.relationships];
+    const interactiveElements = [
+        ...Object.entries(model.interactive.elements)
+            .filter(([, include]) => include)
+            .map(([id]) => id),
+        ...Object.entries(model.interactive.relationships)
+            .filter(([, include]) => include)
+            .map(([id]) => id),
+    ];
+    const elements = [...Object.values(model.elements), ...Object.values(model.relationships)];
 
     // Render the diagram's background image and store it
     const renderedDiagram = await ApollonEditor.exportModelAsSvg(model, {
@@ -41,9 +48,9 @@ export async function generateDragAndDropQuizExercise(
         exclude: interactiveElements,
     });
     const diagramBackground = await convertRenderedSVGToPNG(renderedDiagram);
-    const backgroundImageUploadResponse = await fileUploaderService.uploadFile(diagramBackground, 'diagram-background.png');
+    const files = new Map<string, Blob>();
+    files.set('diagram-background.png', diagramBackground);
 
-    const backgroundFilePath = backgroundImageUploadResponse.path;
     const dragItems = new Map<string, DragItem>();
     const dropLocations = new Map<string, DropLocation>();
 
@@ -53,7 +60,7 @@ export async function generateDragAndDropQuizExercise(
         if (!element) {
             continue;
         }
-        const { dragItem, dropLocation } = await generateDragAndDropItem(element, model, renderedDiagram.clip, fileUploaderService);
+        const { dragItem, dropLocation } = await generateDragAndDropItem(element, model, renderedDiagram.clip, files);
         dragItems.set(element.id, dragItem!);
         dropLocations.set(element.id, dropLocation!);
     }
@@ -62,13 +69,13 @@ export async function generateDragAndDropQuizExercise(
     const correctMappings = createCorrectMappings(dragItems, dropLocations, model);
 
     // Generate a drag-and-drop question object
-    const dragAndDropQuestion = createDragAndDropQuestion(title, backgroundFilePath, [...dragItems.values()], [...dropLocations.values()], correctMappings);
+    const dragAndDropQuestion = createDragAndDropQuestion(title, 'diagram-background.png', [...dragItems.values()], [...dropLocations.values()], correctMappings);
 
     // Generate a quiz exercise object
     const quizExercise = createDragAndDropQuizExercise(course, title, dragAndDropQuestion);
 
     // Save the quiz exercise
-    const creationResponse = await lastValueFrom(quizExerciseService.create(quizExercise));
+    const creationResponse = await lastValueFrom(quizExerciseService.create(quizExercise, files));
 
     return creationResponse.body ?? quizExercise;
 }
@@ -129,7 +136,7 @@ function createDragAndDropQuestion(
  * @param {UMLModelElement} element A particular element of the UML model.
  * @param {UMLModel} model The complete UML model.
  * @param svgSize actual size of the generated svg
- * @param {FileUploaderService} fileUploaderService To upload image base drag items.
+ * @param files a map of files that should be uploaded
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
@@ -137,15 +144,15 @@ async function generateDragAndDropItem(
     element: UMLModelElement,
     model: UMLModel,
     svgSize: { width: number; height: number },
-    fileUploaderService: FileUploaderService,
+    files: Map<string, Blob>,
 ): Promise<DragAndDropMapping> {
     const textualElementTypes: UMLElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute, UMLElementType.ObjectMethod];
     if (element.type in UMLRelationshipType) {
-        return generateDragAndDropItemForRelationship(element, model, svgSize, fileUploaderService);
+        return generateDragAndDropItemForRelationship(element, model, svgSize, files);
     } else if (textualElementTypes.includes(element.type as UMLElementType)) {
         return generateDragAndDropItemForText(element, model, svgSize);
     } else {
-        return generateDragAndDropItemForElement(element, model, svgSize, fileUploaderService);
+        return generateDragAndDropItemForElement(element, model, svgSize, files);
     }
 }
 
@@ -155,7 +162,7 @@ async function generateDragAndDropItem(
  * @param {UMLModelElement} element An element of the UML model.
  * @param {UMLModel} model The complete UML model.
  * @param svgSize actual size of the generated svg
- * @param {FileUploaderService} fileUploaderService To upload image base drag items.
+ * @param files a map of files that should be uploaded
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
@@ -163,14 +170,15 @@ async function generateDragAndDropItemForElement(
     element: UMLModelElement,
     model: UMLModel,
     svgSize: { width: number; height: number },
-    fileUploaderService: FileUploaderService,
+    files: Map<string, Blob>,
 ): Promise<DragAndDropMapping> {
     const renderedElement: SVG = await ApollonEditor.exportModelAsSvg(model, { include: [element.id] });
     const image = await convertRenderedSVGToPNG(renderedElement);
-    const imageUploadResponse = await fileUploaderService.uploadFile(image, `element-${element.id}.png`);
+    const imageName = `element-${element.id}.png`;
+    files.set(imageName, image);
 
     const dragItem = new DragItem();
-    dragItem.pictureFilePath = imageUploadResponse.path;
+    dragItem.pictureFilePath = imageName;
     const dropLocation = computeDropLocation(renderedElement.clip, svgSize);
 
     return new DragAndDropMapping(dragItem, dropLocation);
@@ -199,7 +207,7 @@ async function generateDragAndDropItemForText(element: UMLModelElement, model: U
  * @param {UMLModelElement} element A relationship of the UML model.
  * @param {UMLModel} model The complete UML model.
  * @param svgSize actual size of the generated svg
- * @param {FileUploaderService} fileUploaderService To upload image base drag items.
+ * @param files a map of files that should be uploaded
  *
  * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
  */
@@ -207,7 +215,7 @@ async function generateDragAndDropItemForRelationship(
     element: UMLModelElement,
     model: UMLModel,
     svgSize: { width: number; height: number },
-    fileUploaderService: FileUploaderService,
+    files: Map<string, Blob>,
 ): Promise<DragAndDropMapping> {
     const MIN_SIZE = 30;
 
@@ -223,10 +231,11 @@ async function generateDragAndDropItemForRelationship(
 
     const renderedElement: SVG = await ApollonEditor.exportModelAsSvg(model, { margin, include: [element.id] });
     const image = await convertRenderedSVGToPNG(renderedElement);
-    const imageUploadResponse = await fileUploaderService.uploadFile(image, `relationship-${element.id}.png`);
+    const imageName = `relationship-${element.id}.png`;
+    files.set(imageName, image);
 
     const dragItem = new DragItem();
-    dragItem.pictureFilePath = imageUploadResponse.path;
+    dragItem.pictureFilePath = imageName;
     const dropLocation = computeDropLocation(renderedElement.clip, svgSize);
 
     return new DragAndDropMapping(dragItem, dropLocation);
@@ -268,7 +277,7 @@ function computeDropLocation(elementLocation: { x: number; y: number; width: num
 function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: Map<string, DropLocation>, model: UMLModel): DragAndDropMapping[] {
     const textualElementTypes: UMLElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
     const mappings = new Map<string, DragAndDropMapping[]>();
-    const textualElements = model.elements.filter((element) => textualElementTypes.includes(element.type));
+    const textualElements = Object.values(model.elements).filter((element) => textualElementTypes.includes(element.type));
 
     // Create all one-on-one mappings
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {

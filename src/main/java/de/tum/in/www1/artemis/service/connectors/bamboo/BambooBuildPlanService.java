@@ -114,9 +114,9 @@ public class BambooBuildPlanService {
 
         Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryUrl, testRepositoryUrl, programmingExercise.getCheckoutSolutionRepository(),
                 solutionRepositoryUrl, auxiliaryRepositories)
-                        .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
-                                programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository(),
-                                recordTestwiseCoverage, programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
+                .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
+                        programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository(),
+                        recordTestwiseCoverage, programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
 
         bambooServer.publish(plan);
         setBuildPlanPermissionsForExercise(programmingExercise, plan.getKey().toString());
@@ -219,7 +219,8 @@ public class BambooBuildPlanService {
                     // Create artifacts and a final task for the execution of static code analysis
                     final List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.C);
                     final Artifact[] artifacts = staticCodeAnalysisTools.stream()
-                            .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
+                            .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPatterns(tool.getFilePattern()).shared(false))
+                            .toArray(Artifact[]::new);
                     defaultJob.artifacts(artifacts);
                     final var scaTasks = readScriptTasksFromTemplate(programmingLanguage, Optional.empty(), null, false, true);
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
@@ -257,7 +258,8 @@ public class BambooBuildPlanService {
                     // Create artifacts and a final task for the execution of static code analysis
                     final List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.SWIFT);
                     final Artifact[] artifacts = staticCodeAnalysisTools.stream()
-                            .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toArray(Artifact[]::new);
+                            .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPatterns(tool.getFilePattern()).shared(false))
+                            .toArray(Artifact[]::new);
                     defaultJob.artifacts(artifacts);
                     final var scaTasks = readScriptTasksFromTemplate(programmingLanguage, subDirectory, null, false, true);
                     defaultJob.finalTasks(scaTasks.toArray(new Task[0]));
@@ -292,7 +294,7 @@ public class BambooBuildPlanService {
         // Create artifacts and a final task for the execution of static code analysis
         List<StaticCodeAnalysisTool> staticCodeAnalysisTools = StaticCodeAnalysisTool.getToolsForProgrammingLanguage(ProgrammingLanguage.JAVA);
         var scaArtifacts = staticCodeAnalysisTools.stream()
-                .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPattern(tool.getFilePattern()).shared(false)).toList();
+                .map(tool -> new Artifact().name(tool.getArtifactLabel()).location("target").copyPatterns(tool.getFilePattern()).shared(false)).toList();
 
         if (isMavenProject) {
             String command = StaticCodeAnalysisTool.createBuildPlanCommandForProgrammingLanguage(ProgrammingLanguage.JAVA);
@@ -320,7 +322,7 @@ public class BambooBuildPlanService {
             if (recordTestwiseCoverage) {
                 // If a testwise coverage should be performed, a custom profile is used for the execution
                 goals += " -Pcoverage";
-                artifacts.add(new Artifact().name("testwiseCoverageReport").location("target/tia/reports").copyPattern("tiaTests.json"));
+                artifacts.add(new Artifact().name("testwiseCoverageReport").location("target/tia/reports").copyPatterns("tiaTests.json"));
             }
 
             defaultTasks.add(new MavenTask().goal(goals).jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true));
@@ -337,7 +339,7 @@ public class BambooBuildPlanService {
             String testCommand = "./gradlew clean test";
             if (recordTestwiseCoverage) {
                 testCommand += " tiaTests --run-all-tests";
-                artifacts.add(new Artifact().name("testwiseCoverageReport").location("build/reports/testwise-coverage/tiaTests").copyPattern("tiaTests.json"));
+                artifacts.add(new Artifact().name("testwiseCoverageReport").location("build/reports/testwise-coverage/tiaTests").copyPatterns("tiaTests.json"));
             }
             defaultTasks.add(new ScriptTask().inlineBody(testCommand).description("Tests"));
             finalTasks.add(new TestParserTask(TestParserTaskProperties.TestType.JUNIT).resultDirectories("**/test-results/test/*.xml").description("JUnit Parser"));

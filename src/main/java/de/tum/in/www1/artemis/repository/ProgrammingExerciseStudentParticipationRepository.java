@@ -32,7 +32,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             SELECT p
             FROM ProgrammingExerciseStudentParticipation p
                 LEFT JOIN FETCH p.results pr
-                LEFT JOIN FETCH pr.feedbacks
+                LEFT JOIN FETCH pr.feedbacks f
+                LEFT JOIN FETCH f.testCase
                 LEFT JOIN FETCH pr.submission
             WHERE p.id = :participationId
                 AND (pr.id = (
@@ -102,6 +103,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             @Param("teamShortName") String teamShortName);
 
     List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "submissions" })
+    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseId(Long exerciseId);

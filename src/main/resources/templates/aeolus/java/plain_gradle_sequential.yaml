@@ -1,0 +1,14 @@
+api: v0.0.1
+metadata:
+    name: java-gradle-sequential
+    id: java-windfile
+    description: Build Plan for a java Exercise
+actions:
+    - name: gradle
+      script: |
+          chmod +x gradlew
+          ./gradlew clean structuralTests
+          if [ $? -eq 0 ]; then
+              ./gradlew behaviorTests
+          fi
+      runAlways: false

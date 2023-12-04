@@ -35,9 +35,13 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringInte
 
     private static final String FILE_NAME = "test.java";
 
+    private static final String FILE_NAME2 = "test2.java";
+
     private final LocalRepository solutionRepo = new LocalRepository("main");
 
     private final LocalRepository templateRepo = new LocalRepository("main");
+
+    private final LocalRepository participationRepo = new LocalRepository("main");
 
     private ProgrammingExercise exercise;
 
@@ -94,5 +98,51 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringInte
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
         request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getGitDiffBetweenTemplateAndSubmission() throws Exception {
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "ABC", exercise, templateRepo);
+        participationRepo.configureRepos("participationLocalRepo", "participationOriginRepo");
+        var studentLogin = TEST_PREFIX + "student1";
+        var submission = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST", exercise, participationRepo, studentLogin);
+        request.get("/api/programming-exercises/" + exercise.getId() + "/submissions/" + submission.getId() + "/diff-report-with-template", HttpStatus.OK,
+                ProgrammingExerciseGitDiffReport.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void getGitDiffBetweenTemplateAndSubmissionEditorForbidden() throws Exception {
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "ABC", exercise, templateRepo);
+        participationRepo.configureRepos("participationLocalRepo", "participationOriginRepo");
+        var studentLogin = TEST_PREFIX + "student1";
+        var submission = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST", exercise, participationRepo, studentLogin);
+        request.get("/api/programming-exercises/" + exercise.getId() + "/submissions/" + submission.getId() + "/diff-report-with-template", HttpStatus.FORBIDDEN,
+                ProgrammingExerciseGitDiffReport.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getGitDiffBetweenTwoSubmissions() throws Exception {
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "ABC", exercise, templateRepo);
+        participationRepo.configureRepos("participationLocalRepo", "participationOriginRepo");
+        var studentLogin = TEST_PREFIX + "student1";
+        var submission = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST", exercise, participationRepo, studentLogin);
+        var submission2 = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST2", exercise, participationRepo, studentLogin);
+        request.get("/api/programming-exercises/" + exercise.getId() + "/submissions/" + submission.getId() + "/diff-report/" + submission2.getId(), HttpStatus.OK,
+                ProgrammingExerciseGitDiffReport.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void getGitDiffBetweenTwoSubmissionsEditorForbidden() throws Exception {
+        exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "ABC", exercise, templateRepo);
+        participationRepo.configureRepos("participationLocalRepo", "participationOriginRepo");
+        var studentLogin = TEST_PREFIX + "student1";
+        var submission = hestiaUtilTestService.setupSubmission(FILE_NAME, "TEST", exercise, participationRepo, studentLogin);
+        var submission2 = hestiaUtilTestService.setupSubmission(FILE_NAME2, "TEST2", exercise, participationRepo, studentLogin);
+        request.get("/api/programming-exercises/" + exercise.getId() + "/submissions/" + submission.getId() + "/diff-report/" + submission2.getId(), HttpStatus.FORBIDDEN,
+                ProgrammingExerciseGitDiffReport.class);
     }
 }

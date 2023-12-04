@@ -6,6 +6,7 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { Submission } from 'app/entities/submission.model';
 import { ArtemisTestModule } from '../test.module';
 import { Result } from 'app/entities/result.model';
+import dayjs from 'dayjs/esm';
 
 describe('ProgrammingExerciseParticipation Service', () => {
     let service: ProgrammingExerciseParticipationService;
@@ -93,4 +94,30 @@ describe('ProgrammingExerciseParticipation Service', () => {
             }),
         );
     });
+
+    it('should make GET request to retrieve commits infos for participation', fakeAsync(() => {
+        const participationId = 42;
+        const commitInfos = [{ hash: '123', author: 'author', timestamp: dayjs('2021-01-01'), message: 'commit message' }];
+        service.retrieveCommitsInfoForParticipation(participationId).subscribe((resp) => {
+            expect(resp).toEqual(commitInfos);
+        });
+
+        const expectedURL = `${resourceUrl}${participationId}/commits-info`;
+        const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
+        req.flush(commitInfos);
+        tick();
+    }));
+
+    it('should make GET request to retrieve files with content at commit', fakeAsync(() => {
+        const participationId = 42;
+        const commitId = 'commitId';
+        const files = new Map<string, string>();
+        files.set('file1', 'content1');
+        files.set('file2', 'content2');
+        service.getParticipationRepositoryFilesWithContentAtCommit(participationId, commitId).subscribe();
+        const expectedURL = `${resourceUrl}${participationId}/files-content/${commitId}`;
+        const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
+        req.flush(files);
+        tick();
+    }));
 });

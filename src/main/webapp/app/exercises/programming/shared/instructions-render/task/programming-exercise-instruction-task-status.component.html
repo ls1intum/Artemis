@@ -9,14 +9,14 @@
     ></fa-icon>
     <span *ngIf="taskName" class="task-name">{{ taskName }}</span>
     <span
-        *ngIf="latestResult && latestResult.feedbacks && latestResult.feedbacks.length && tests.length; else noResult"
+        *ngIf="latestResult && latestResult.feedbacks && latestResult.feedbacks.length && testIds.length; else noResult"
         class="guided-tour test-status--linked"
-        [class]="tests && tests.length === successfulTests.length ? 'text-success' : failedTests.length ? 'text-danger' : 'text-secondary'"
-        [innerHTML]="translationBasePath + 'totalTestsPassing' | artemisTranslate: { totalTests: tests.length, passedTests: successfulTests.length }"
+        [class]="testIds?.length === successfulTests.length ? 'text-success' : failedTests.length ? 'text-danger' : 'text-secondary'"
+        [innerHTML]="translationBasePath + 'totalTestsPassing' | artemisTranslate: { totalTests: testIds.length, passedTests: successfulTests.length }"
         (click)="showDetailsForTests()"
     ></span>
     <!-- There are no results at all, build error or never executed.-->
     <ng-template #noResult>
-        <span class="text-secondary" [innerHTML]="translationBasePath + (tests.length ? 'noResult' : 'noTests') | artemisTranslate"></span>
+        <span class="text-secondary" [innerHTML]="translationBasePath + (testIds.length ? 'noResult' : 'noTests') | artemisTranslate"></span>
     </ng-template>
 </div>

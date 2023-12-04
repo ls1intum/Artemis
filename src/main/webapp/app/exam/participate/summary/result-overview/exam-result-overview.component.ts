@@ -1,5 +1,4 @@
 import { ChangeDetectorRef, Component, Input, OnChanges, OnInit } from '@angular/core';
-import dayjs from 'dayjs/esm';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -11,6 +10,7 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular-ivy';
+import { isExamResultPublished } from 'app/exam/participate/exam.utils';
 
 type ExerciseInfo = {
     icon: IconProp;
@@ -31,6 +31,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     @Input() isGradingKeyCollapsed: boolean = true;
     @Input() isBonusGradingKeyCollapsed: boolean = true;
     @Input() exerciseInfos: Record<number, ExerciseInfo>;
+    @Input() isTestRun: boolean = false;
 
     gradingScaleExists = false;
     isBonus = false;
@@ -56,6 +57,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      * - exam.publishResultsDate is set
      * - we are after the exam.publishResultsDate
      * - at least one exercise has a result
+     * - it is a test run (results are published immediately)
      */
     showResultOverview = false;
 
@@ -66,7 +68,7 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
     ) {}
 
     ngOnInit() {
-        if (this.isExamResultPublished()) {
+        if (this.areResultsPublished()) {
             this.setExamGrade();
         }
 
@@ -77,8 +79,12 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         this.updateLocalVariables();
     }
 
+    private areResultsPublished() {
+        return isExamResultPublished(this.isTestRun, this.studentExamWithGrade?.studentExam?.exam, this.serverDateService);
+    }
+
     private updateLocalVariables() {
-        this.showResultOverview = !!(this.isExamResultPublished() && this.hasAtLeastOneResult());
+        this.showResultOverview = !!(this.areResultsPublished() && this.hasAtLeastOneResult());
         this.showIncludedInScoreColumn = this.containsExerciseThatIsNotIncludedCompletely();
         this.maxPoints = this.studentExamWithGrade?.maxPoints ?? 0;
         this.isBonusGradingKeyDisplayed = this.studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined;
@@ -102,11 +108,6 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         }
 
         return false;
-    }
-
-    private isExamResultPublished() {
-        const exam = this.studentExamWithGrade?.studentExam?.exam;
-        return exam && exam.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
 
     /**

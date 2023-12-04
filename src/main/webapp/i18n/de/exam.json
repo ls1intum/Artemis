@@ -171,7 +171,8 @@
                 "button": "Benachrichtigungen",
                 "type": {
                     "examWideAnnouncement": "Klausurweite Ankündigung",
-                    "workingTimeUpdate": "Bearbeitungszeit Aktualisiert"
+                    "workingTimeUpdate": "Bearbeitungszeit Aktualisiert",
+                    "examAttendanceCheck": "Anwesenheitskontrolle"
                 },
                 "from": "von",
                 "acknowledge": "Bestätigen",
@@ -182,6 +183,9 @@
                         "titlePersonal": "Deine persönliche Bearbeitungszeit dieser Klausur wurde geändert.",
                         "old": "Vorherige Bearbeitungszeit",
                         "new": "Neue Bearbeitungszeit"
+                    },
+                    "examAttendanceCheck": {
+                        "description": "Eine Klausur-Aufsicht hat die Anwesenheitskontrolle für dich ausgelöst. Bitte folge den Anweisungen der Aufsicht."
                     }
                 }
             }
@@ -248,7 +252,9 @@
             "totalColumn": "Total",
             "exerciseGroupTitle": "Durchschnittliche Ergebnisse der Aufgabengruppe \"{{ groupTitle }}\" im Vergleich",
             "gradesBeforeBonus": "Noten vor Bonus",
-            "gradesAfterBonus": "Noten nach Bonus"
+            "gradesAfterBonus": "Noten nach Bonus",
+            "noStudentResultAvailable": "Keine Studentenabgabe vorhanden",
+            "noExerciseGroupAvailable": "Keine Aufgabengruppen vorhanden"
         },
         "examParticipation": {
             "timer": "Restzeit: ",
@@ -341,6 +347,7 @@
             "submitted": "Abgegeben",
             "submissionDate": "Abgabedatum",
             "examSessions": "Sitzungen",
+            "examTimeline": "Klausurverlauf",
             "grade": "Note",
             "gradeBeforeBonus": "Note vor Bonus",
             "gradeAfterBonus": "Note nach Bonus",
@@ -619,7 +626,7 @@
                     "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",
                     "testRun": "Probiere verschiedene Kombinationen von Übungsvarianten aus Sicht der Studierenden aus.",
                     "exportResults": "Die Klausurergebnisse können in Form einer .csv Datei exportiert werden.",
-                    "editWorkingTime": "Bis 5 Minuten vor dem Ende der Prüfung können Sie deren Dauer verlängern.",
+                    "editWorkingTime": "Bis zu einer Minute vor dem Ende der Prüfung können Sie deren Dauer verlängern.",
                     "createAnnouncement": "Um wichtige Informationen an alle Studierenden, die gerade an der Klausur arbeiten, zu kommunizieren, kannst du eine Ankündigung machen. Sie wird sofort an alle Studierenden verteilt und angezeigt.",
                     "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können in diesem Dashboard eingesehen werden."
                 },
@@ -743,6 +750,11 @@
             "alreadySubmitted": "Du hast bereits abgegeben.",
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
             "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
+        },
+        "examTimeline": {
+            "title": "Klausurverlauf von {{ username }}",
+            "breadcrumb": "Klausurverlauf",
+            "disabledTooltip": "Der Klausurverlauf ist nur verfügbar, wenn die Klausur abgegeben wurde."
         },
         "examStatus": {
             "columnTitle": "Klausurstatus",

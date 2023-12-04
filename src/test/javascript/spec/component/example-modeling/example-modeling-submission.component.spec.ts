@@ -56,16 +56,16 @@ describe('Example Modeling Submission Component', () => {
         course: { id: 2 },
     } as ModelingExercise;
 
-    const mockFeedbackWithReference = {
+    const mockFeedbackWithReference: Feedback = {
         text: 'FeedbackWithReference',
         referenceId: 'relationshipId',
         reference: 'reference',
         credits: 30,
         correctionStatus: 'CORRECT',
-    } as Feedback;
-    const mockFeedbackWithoutReference = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED } as Feedback;
-    const mockFeedbackInvalid = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE };
-    const mockFeedbackCorrectionError = { reference: 'reference', type: FeedbackCorrectionErrorType.INCORRECT_SCORE } as FeedbackCorrectionError;
+    };
+    const mockFeedbackWithoutReference: Feedback = { text: 'FeedbackWithoutReference', credits: 30, type: FeedbackType.MANUAL_UNREFERENCED };
+    const mockFeedbackInvalid: Feedback = { text: 'FeedbackInvalid', referenceId: '4', reference: 'reference', correctionStatus: FeedbackCorrectionErrorType.INCORRECT_SCORE };
+    const mockFeedbackCorrectionError: FeedbackCorrectionError = { reference: 'reference', type: FeedbackCorrectionErrorType.INCORRECT_SCORE };
 
     const routeQueryParam = { readOnly: 0, toComplete: 0 };
 
@@ -431,8 +431,16 @@ describe('Example Modeling Submission Component', () => {
     it('should show assessment', () => {
         // GIVEN
         const model = {
-            version: '2.0.0',
+            version: '3.0.0',
             type: 'ClassDiagram',
+            elements: {},
+            relationships: {},
+            assessments: {},
+            interactive: {
+                elements: {},
+                relationships: {},
+            },
+            size: { width: 0, height: 0 },
         } as UMLModel;
 
         const result = { id: 1 } as Result;

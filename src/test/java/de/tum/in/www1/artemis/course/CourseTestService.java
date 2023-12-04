@@ -6,8 +6,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.argThat;
 import static org.mockito.Mockito.mockStatic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
@@ -85,7 +88,6 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.export.CourseExamExportService;
 import de.tum.in.www1.artemis.service.export.DataExportUtil;
-import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
@@ -227,9 +229,6 @@ public class CourseTestService {
 
     @Autowired
     private ParticipantScoreScheduleService participantScoreScheduleService;
-
-    @Autowired
-    private IrisSettingsService irisSettingsService;
 
     @Autowired
     private QuizExerciseUtilService quizExerciseUtilService;
@@ -622,23 +621,6 @@ public class CourseTestService {
         assertThat(updatedCourse.getOrganizations()).containsExactlyElementsOf(organizations);
         assertThat(updatedCourse.getCompetencies()).containsExactlyElementsOf(competencies);
         assertThat(updatedCourse.getPrerequisites()).containsExactlyElementsOf(prerequisites);
-    }
-
-    // Test
-    public void testEditCourseShouldPreserveIrisSettings() throws Exception {
-        Course course = courseUtilService.createCourseWithOrganizations();
-        course = courseRepo.save(course);
-
-        var courseWithSettings = courseRepo.findByIdElseThrow(course.getId());
-        courseWithSettings = irisSettingsService.addDefaultIrisSettingsTo(courseWithSettings);
-        courseWithSettings.getIrisSettings().getIrisChatSettings().setEnabled(true);
-        courseWithSettings.getIrisSettings().getIrisChatSettings().setPreferredModel(null);
-        courseRepo.save(courseWithSettings);
-
-        request.getMvc().perform(buildUpdateCourse(course.getId(), course)).andExpect(status().isOk());
-
-        Course updatedCourse = courseRepo.findByIdForUpdateElseThrow(course.getId());
-        assertThat(updatedCourse.getIrisSettings()).isEqualTo(courseWithSettings.getIrisSettings());
     }
 
     // Test
@@ -1941,7 +1923,7 @@ public class CourseTestService {
 
     // Test
     public Course testArchiveCourseWithTestModelingAndFileUploadExercises() throws Exception {
-        var course = courseUtilService.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
+        var course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         request.put("/api/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
         await().until(() -> courseRepo.findById(course.getId()).orElseThrow().getCourseArchivePath() != null);
         var updatedCourse = courseRepo.findById(course.getId()).orElseThrow();
@@ -2238,7 +2220,7 @@ public class CourseTestService {
 
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportModelingExercise() throws Exception {
-        Course course = courseUtilService.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
+        Course course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst();
         assertThat(modelingExercise).isPresent();
         archiveCourseAndAssertExerciseDoesntExist(course, modelingExercise.get());
@@ -2246,7 +2228,7 @@ public class CourseTestService {
 
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportTextExercise() throws Exception {
-        Course course = courseUtilService.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
+        Course course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         Optional<TextExercise> textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst();
         assertThat(textExercise).isPresent();
         archiveCourseAndAssertExerciseDoesntExist(course, textExercise.get());
@@ -2254,7 +2236,7 @@ public class CourseTestService {
 
     // Test
     public void testArchiveCourseWithTestModelingAndFileUploadExercisesFailToExportFileUploadExercise() throws Exception {
-        Course course = courseUtilService.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
+        Course course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst();
         assertThat(fileUploadExercise).isPresent();
         archiveCourseAndAssertExerciseDoesntExist(course, fileUploadExercise.get());
@@ -2288,7 +2270,7 @@ public class CourseTestService {
     }
 
     public void testExportCourse_cannotCreateTmpDir() throws Exception {
-        Course course = courseUtilService.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
+        Course course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
@@ -2300,7 +2282,7 @@ public class CourseTestService {
     }
 
     public void testExportCourse_cannotCreateCourseExercisesDir() throws Exception {
-        Course course = courseUtilService.createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(userPrefix);
+        Course course = courseUtilService.createCourseWithTextModelingAndFileUploadExercisesAndSubmissions(userPrefix);
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         MockedStatic<Files> mockedFiles = mockStatic(Files.class);
@@ -2312,7 +2294,7 @@ public class CourseTestService {
     }
 
     public void testExportCourseExam_cannotCreateTmpDir() throws Exception {
-        Course course = courseUtilService.createCourseWithExamAndExercises(userPrefix);
+        Course course = courseUtilService.createCourseWithExamExercisesAndSubmissions(userPrefix);
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         Optional<Exam> exam = examRepo.findByCourseId(course.getId()).stream().findFirst();
@@ -2327,7 +2309,7 @@ public class CourseTestService {
     }
 
     public void testExportCourseExam_cannotCreateExamsDir() throws Exception {
-        Course course = courseUtilService.createCourseWithExamAndExercises(userPrefix);
+        Course course = courseUtilService.createCourseWithExamExercisesAndSubmissions(userPrefix);
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
         course = courseRepo.findWithEagerExercisesById(course.getId());
@@ -3246,6 +3228,11 @@ public class CourseTestService {
 
         var result = request.getMvc().perform(buildCreateCourse(course, "testIcon")).andExpect(status().isCreated()).andReturn();
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+
+        assertThat(course.getCourseIcon()).as("Course icon got stored").isNotNull();
+        var imgResult = request.getMvc().perform(get(course.getCourseIcon())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM))
+                .andReturn();
+        assertThat(imgResult.getResponse().getContentAsByteArray()).isNotEmpty();
 
         var createdCourse = courseRepo.findByIdElseThrow(course.getId());
         assertThat(createdCourse.getCourseIcon()).as("Course icon got stored").isNotNull();

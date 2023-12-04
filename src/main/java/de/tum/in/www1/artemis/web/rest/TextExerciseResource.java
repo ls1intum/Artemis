@@ -1,9 +1,17 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.plagiarism.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
+import static java.util.Collections.emptySet;
+
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +24,6 @@ import de.jplag.exceptions.ExitException;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -30,11 +37,13 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionConfigHelper;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -245,19 +254,28 @@ public class TextExerciseResource {
         return ResponseEntity.ok().body(exercises);
     }
 
+    private Optional<TextExercise> findTextExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
+        if (includePlagiarismDetectionConfig) {
+            var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(exerciseId);
+            textExercise.ifPresent(it -> PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(it, textExerciseRepository));
+            return textExercise;
+        }
+        return textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId);
+    }
+
     /**
      * GET /text-exercises/:id : get the "id" textExercise.
      *
-     * @param exerciseId the id of the textExercise to retrieve
+     * @param exerciseId                    the id of the textExercise to retrieve
+     * @param withPlagiarismDetectionConfig boolean flag whether to include the plagiarism detection config of the exercise
      * @return the ResponseEntity with status 200 (OK) and with body the textExercise, or with
      *         status 404 (Not Found)
      */
     @GetMapping("text-exercises/{exerciseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         log.debug("REST request to get TextExercise : {}", exerciseId);
-        var textExercise = textExerciseRepository.findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
+        var textExercise = findTextExercise(exerciseId, withPlagiarismDetectionConfig).orElseThrow(() -> new EntityNotFoundException("TextExercise", exerciseId));
 
         // If the exercise belongs to an exam, only editors, instructors and admins are allowed to access it
         if (textExercise.isExamExercise()) {
@@ -346,7 +364,7 @@ public class TextExerciseResource {
 
             if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
                 textSubmission.setResults(Collections.emptyList());
-                participation.setResults(Collections.emptySet());
+                participation.setResults(emptySet());
             }
 
             Result result = textSubmission.getLatestResult();
@@ -469,13 +487,13 @@ public class TextExerciseResource {
      */
     @GetMapping("text-exercises/{exerciseId}/plagiarism-result")
     @EnforceAtLeastEditor
-    public ResponseEntity<TextPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
+    public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the text exercise with id: {}", exerciseId);
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
         var plagiarismResult = (TextPlagiarismResult) plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
         plagiarismResultRepository.prepareResultForClient(plagiarismResult);
-        return ResponseEntity.ok(plagiarismResult);
+        return buildPlagiarismResultResponse(plagiarismResult);
     }
 
     /**
@@ -492,17 +510,17 @@ public class TextExerciseResource {
     @GetMapping("text-exercises/{exerciseId}/check-plagiarism")
     @FeatureToggle(Feature.PlagiarismChecks)
     @EnforceAtLeastEditor
-    public ResponseEntity<TextPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
-            @RequestParam int minimumSize) throws ExitException {
+    public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold,
+            @RequestParam int minimumScore, @RequestParam int minimumSize) throws ExitException {
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
 
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks for text exercise: exerciseId={}.", exerciseId);
-        var config = new PlagiarismDetectionConfig(similarityThreshold, minimumScore, minimumSize);
-        var plagiarismResult = plagiarismDetectionService.checkTextExercise(textExercise, config);
+        PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(textExercise, similarityThreshold, minimumScore, minimumSize);
+        var plagiarismResult = plagiarismDetectionService.checkTextExercise(textExercise);
         log.info("Finished manual plagiarism checks for text exercise: exerciseId={}, elapsed={}.", exerciseId, TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.ok(plagiarismResult);
+        return buildPlagiarismResultResponse(plagiarismResult);
     }
 
     /**

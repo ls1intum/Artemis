@@ -3,15 +3,26 @@
     <div *ngIf="linkPreview && linkPreview.shouldPreviewBeShown" class="preview-container">
         <!-- Link preview template -->
         <div class="preview-card">
-            <div class="preview-content">
-                <a [href]="linkPreview.url" target="_blank" rel="noopener noreferrer">
+            <jhi-confirm-icon
+                class="close-button"
+                *ngIf="isAuthorOfOriginalPost"
+                iconSize="sm"
+                (confirmEvent)="removeLinkPreview(linkPreview)"
+                [ngClass]="'faTimes clickable icon'"
+                [initialIcon]="faTimes"
+                [initialTooltip]="'artemisApp.metis.removeLinkPreview' | artemisTranslate"
+                [confirmTooltip]="'artemisApp.metis.confirmRemoveLinkPreview' | artemisTranslate"
+            >
+            </jhi-confirm-icon>
+            <div class="left-border">
+                <div class="preview-content">
                     <h2 class="preview-title">{{ linkPreview.title }}</h2>
-                </a>
-                <p class="preview-description">{{ linkPreview.description }}</p>
-            </div>
+                    <p class="preview-description">{{ linkPreview.description }}</p>
+                </div>
 
-            <div class="preview-image" *ngIf="linkPreview.image && !multiple">
-                <img [src]="linkPreview.image" alt="Preview Image" />
+                <div class="preview-image" *ngIf="linkPreview.image && !multiple">
+                    <img [src]="linkPreview.image" alt="Preview Image" />
+                </div>
             </div>
         </div>
     </div>

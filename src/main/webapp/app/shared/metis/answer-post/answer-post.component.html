@@ -12,6 +12,9 @@
         *ngIf="!createAnswerPostModal.isInputOpen"
         [content]="posting.content"
         [isEdited]="!!posting.updatedDate"
+        [author]="posting.author"
+        [posting]="posting"
+        [isReply]="true"
         (userReferenceClicked)="userReferenceClicked.emit($event)"
     >
     </jhi-posting-content>

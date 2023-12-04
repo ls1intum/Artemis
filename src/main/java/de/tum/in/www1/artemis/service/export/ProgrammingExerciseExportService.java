@@ -62,6 +62,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.service.archival.ArchivalReportEntry;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
 
 /**
@@ -78,6 +79,8 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -92,12 +95,13 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     public static final String EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX = "Problem-Statement";
 
-    public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
-            FileService fileService, GitService gitService, ZipFileService zipFileService, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
+    public ProgrammingExerciseExportService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            StudentParticipationRepository studentParticipationRepository, FileService fileService, GitService gitService, ZipFileService zipFileService,
+            MappingJackson2HttpMessageConverter springMvcJacksonConverter, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         // Programming exercises do not have a submission export service
         super(fileService, springMvcJacksonConverter, null);
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -141,12 +145,21 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
         }
         catch (Exception e) {
             exportErrors.add("Failed to export programming exercise repositories: " + e.getMessage());
-
         }
+
         // Add problem statement as .md file
-        super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir.orElseThrow(), pathsToBeZipped);
+        exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir.orElseThrow(), pathsToBeZipped);
 
         return exportDir.orElseThrow();
+    }
+
+    @Override
+    void exportProblemStatementAndEmbeddedFilesAndExerciseDetails(Exercise exercise, List<String> exportErrors, Path exportDir, List<Path> pathsToBeZipped) throws IOException {
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
+            // Used for a save typecast, this should always be true since this class only works with programming exercises.
+            programmingExerciseTaskService.replaceTestIdsWithNames(programmingExercise);
+        }
+        super.exportProblemStatementAndEmbeddedFilesAndExerciseDetails(exercise, exportErrors, exportDir, pathsToBeZipped);
     }
 
     /**
@@ -628,7 +641,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
      * @return The checked out and zipped repository
      * @throws IOException if zip file creation failed
      */
-    private Path createZipForRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
+    public Path createZipForRepositoryWithParticipation(final ProgrammingExercise programmingExercise, final ProgrammingExerciseStudentParticipation participation,
             final RepositoryExportOptionsDTO repositoryExportOptions, Path workingDir, Path outputDir) throws IOException, UncheckedIOException {
         if (participation.getVcsRepositoryUrl() == null) {
             log.warn("Ignore participation {} for export, because its repository URL is null", participation.getId());

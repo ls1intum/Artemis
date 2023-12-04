@@ -61,6 +61,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "competencies", "auxiliaryRepositories",
+            "submissionPolicy", "plagiarismDetectionConfig" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(Long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(Long exerciseId);
 
@@ -119,11 +123,13 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             LEFT JOIN FETCH pe.solutionParticipation sp
             LEFT JOIN FETCH tp.results AS tpr
             LEFT JOIN FETCH sp.results AS spr
-            LEFT JOIN FETCH tpr.feedbacks
-            LEFT JOIN FETCH spr.feedbacks
+            LEFT JOIN FETCH tpr.feedbacks tf
+            LEFT JOIN FETCH spr.feedbacks sf
+            LEFT JOIN FETCH tf.testCase
+            LEFT JOIN FETCH sf.testCase
             LEFT JOIN FETCH tpr.submission
             LEFT JOIN FETCH spr.submission
-            WHERE pe.id = :#{#exerciseId}
+            WHERE pe.id = :exerciseId
                 AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
                 AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
             """)
@@ -227,6 +233,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 OR pe.solutionParticipation.id = :#{#participationId}
             """)
     Optional<ProgrammingExercise> findByParticipationId(@Param("participationId") Long participationId);
+
+    default ProgrammingExercise findByParticipationIdOrElseThrow(long participationId) throws EntityNotFoundException {
+        return findByParticipationId(participationId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming exercise for participation with id " + participationId + " does not exist"));
+    }
 
     @Query("""
             SELECT pe
@@ -416,6 +427,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
+    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig" })
+    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigById(Long exerciseId);
+
     long countByShortNameAndCourse(String shortName, Course course);
 
     long countByTitleAndCourse(String shortName, Course course);
@@ -433,6 +447,35 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @NotNull
     default ProgrammingExercise findByIdElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
         return findById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Find a programming exercise by its id, with grading criteria loaded, and throw an EntityNotFoundException if it cannot be found
+     *
+     * @param exerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    @Query("""
+            SELECT DISTINCT e FROM ProgrammingExercise e
+            LEFT JOIN FETCH e.gradingCriteria
+            WHERE e.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findByIdWithGradingCriteria(long exerciseId);
+
+    default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
+        return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+    }
+
+    /**
+     * Find a programming exercise by its id and fetch related plagiarism detection config.
+     * Throws an EntityNotFoundException if the exercise cannot be found.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
+        return findWithPlagiarismDetectionConfigById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
     /**
@@ -547,6 +590,14 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(long programmingExerciseId)
             throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesById(programmingExerciseId);
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigElseThrow(
+            long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(
+                programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 

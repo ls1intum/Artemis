@@ -15,9 +15,10 @@ import { FileUploadSubmission } from 'app/entities/file-upload-submission.model'
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-file-upload-submission-exam',
@@ -115,6 +116,9 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     getExerciseId(): number | undefined {
         return this.exercise.id;
     }
+    getExercise(): Exercise {
+        return this.exercise;
+    }
 
     public hasUnsavedChanges(): boolean {
         return !this.studentSubmission.isSynced!;
@@ -132,7 +136,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      *  Here the new filePath, which was received from the server, is used to display the name and type of the just uploaded file.
      */
     updateViewFromSubmission(): void {
-        if (this.studentSubmission.isSynced && this.studentSubmission.filePath) {
+        if ((this.studentSubmission.isSynced && this.studentSubmission.filePath) || (this.examTimeline && this.studentSubmission.filePath)) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
             const filePath = this.studentSubmission!.filePath!.split('/');
@@ -167,5 +171,12 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      */
     private onError() {
         this.alertService.error(this.translateService.instant('error.fileUploadSavingError'));
+    }
+
+    setSubmissionVersion(submissionVersion: SubmissionVersion): void {
+        // if we do not assign the parameter, eslint will complain because either the parameter is unused or if we suppress this with ts-ignore that ts-ignore shadows compilation errors.
+        this.submissionVersion = submissionVersion;
+        // submission versions are not supported for file upload exercises
+        throw new Error('Submission versions are not supported for file upload exercises.');
     }
 }

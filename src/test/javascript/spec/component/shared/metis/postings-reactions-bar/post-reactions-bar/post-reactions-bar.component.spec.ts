@@ -109,8 +109,8 @@ describe('PostReactionsBarComponent', () => {
         expect(component.currentUserIsAtLeastTutor).toBeTrue();
         fixture.detectChanges();
         const reactions = getElements(debugElement, 'jhi-emoji');
-        // emojis to be displayed it the user reaction, the pin, archive and the show answers toggle emoji
-        expect(reactions).toHaveLength(4);
+        // emojis to be displayed it the user reaction, the pin, and the show answers toggle emoji
+        expect(reactions).toHaveLength(3);
         expect(component.reactionMetaDataMap).toEqual({
             smile: {
                 count: 1,
@@ -170,21 +170,6 @@ describe('PostReactionsBarComponent', () => {
         expect(component.archiveTooltip).toBe('artemisApp.metis.archivePostTutorTooltip');
     });
 
-    it('should invoke metis service method when archive icon is toggled', () => {
-        metisCourse.isAtLeastTutor = true;
-        metisService.setCourse(metisCourse);
-        component.ngOnInit();
-        fixture.detectChanges();
-        const archiveEmoji = getElement(debugElement, '.archive');
-        archiveEmoji.click();
-        component.posting.displayPriority = DisplayPriority.ARCHIVED;
-        expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(component.posting.id!, DisplayPriority.ARCHIVED);
-        component.ngOnChanges();
-        // set correct tooltips for tutor and post that is archived and not pinned
-        expect(component.pinTooltip).toBe('artemisApp.metis.pinPostTutorTooltip');
-        expect(component.archiveTooltip).toBe('artemisApp.metis.removeArchivePostTutorTooltip');
-    });
-
     it('should show non-clickable pin emoji with correct tooltip for student when post is pinned', () => {
         metisCourse.isAtLeastTutor = false;
         metisService.setCourse(metisCourse);
@@ -197,20 +182,6 @@ describe('PostReactionsBarComponent', () => {
         expect(metisServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
         // set correct tooltips for student and post that is pinned
         expect(component.pinTooltip).toBe('artemisApp.metis.pinnedPostTooltip');
-    });
-
-    it('should show non-clickable archive emoji with correct tooltip for student when post is archived', () => {
-        metisCourse.isAtLeastTutor = false;
-        metisService.setCourse(metisCourse);
-        component.posting.displayPriority = DisplayPriority.ARCHIVED;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const archiveEmoji = getElement(debugElement, '.archive.reaction-button--not-hoverable');
-        expect(archiveEmoji).toBeDefined();
-        archiveEmoji.click();
-        expect(metisServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
-        // set correct tooltips for student and post that is archived
-        expect(component.archiveTooltip).toBe('artemisApp.metis.archivedPostTooltip');
     });
 
     it('start discussion button should be visible if post does not yet have any answers', () => {

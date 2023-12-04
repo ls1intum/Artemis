@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import {
+    faBan,
     faBell,
     faChartPie,
     faCheckSquare,
@@ -382,6 +383,17 @@ export class FeatureOverviewComponent implements OnInit {
             undefined,
             '/content/images/feature-overview/instructors/grade_key_editor.png',
         );
+
+        const featureSubmissionPolicy = new Feature(
+            'featureOverview.instructor.feature.submissionPolicy.title',
+            'featureOverview.instructor.feature.submissionPolicy.shortDescription',
+            'featureOverview.instructor.feature.submissionPolicy.descriptionTextOne',
+            faBan,
+            undefined,
+            undefined,
+            '/content/images/feature-overview/instructors/submission-policy-lock-configure-grading.png',
+        );
+
         const featureExamExerciseUpdates = new Feature(
             'featureOverview.instructor.feature.examExerciseUpdates.title',
             'featureOverview.instructor.feature.examExerciseUpdates.shortDescription',
@@ -408,6 +420,7 @@ export class FeatureOverviewComponent implements OnInit {
             featureStatistics,
             featureChecklist,
             featureGradeKey,
+            featureSubmissionPolicy,
         ];
     }
 

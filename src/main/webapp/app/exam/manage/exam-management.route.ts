@@ -57,7 +57,9 @@ import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } 
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 import { SuspiciousBehaviorComponent } from 'app/exam/manage/suspicious-behavior/suspicious-behavior.component';
 import { SuspiciousSessionsOverviewComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions-overview/suspicious-sessions-overview.component';
+import { StudentExamTimelineComponent } from 'app/exam/manage/student-exams/student-exam-timeline/student-exam-timeline.component';
 import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
+import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -287,6 +289,18 @@ export const examManagementRoute: Routes = [
     {
         path: ':examId/student-exams/:studentExamId/summary',
         component: StudentExamSummaryComponent,
+        resolve: {
+            studentExam: StudentExamResolve,
+        },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.examManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/student-exams/:studentExamId/exam-timeline',
+        component: StudentExamTimelineComponent,
         resolve: {
             studentExam: StudentExamResolve,
         },
@@ -637,6 +651,15 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/edit-build-plan',
+        component: BuildPlanEditorComponent,
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.programmingExercise.buildPlanEditor',
         },
         canActivate: [UserRouteAccessService],
     },

@@ -23,3 +23,17 @@
         min-width: 350px;
     }
 }
+.tooltip-wrapper {
+    display: inline-block; /* display: block works as well */
+    margin: 50px; /* make some space so the tooltip is visible */
+}
+
+.tooltip-wrapper .btn[disabled] {
+    /* don't let button block mouse events from reaching wrapper */
+    pointer-events: none;
+}
+
+.tooltip-wrapper.disabled {
+    /* OPTIONAL pointer-events setting above blocks cursor setting, so set it here */
+    cursor: not-allowed;
+}

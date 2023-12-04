@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-lti-exercise-launch',
@@ -12,6 +13,8 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private http: HttpClient,
+        private accountService: AccountService,
+        private router: Router,
     ) {
         this.isLaunching = true;
     }
@@ -20,6 +23,10 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
      * perform an LTI launch with state and id_token query parameters
      */
     ngOnInit(): void {
+        this.sendRequest();
+    }
+
+    sendRequest(): void {
         const state = this.route.snapshot.queryParamMap.get('state');
         const idToken = this.route.snapshot.queryParamMap.get('id_token');
 
@@ -47,20 +54,63 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             })
             .subscribe({
                 next: (data) => {
-                    const targetLinkUri = data['targetLinkUri'];
-                    window.sessionStorage.removeItem('state');
-
-                    if (targetLinkUri) {
-                        window.location.replace(targetLinkUri);
+                    this.handleLtiLaunchSuccess(data);
+                },
+                error: (error) => {
+                    if (error.status === 401) {
+                        this.authenticateUserThenRedirect(error);
                     } else {
-                        this.isLaunching = false;
-                        console.error('No LTI targetLinkUri received for a successful launch');
+                        this.handleLtiLaunchError();
                     }
                 },
-                error: () => {
-                    window.sessionStorage.removeItem('state');
-                    this.isLaunching = false;
-                },
             });
+    }
+
+    authenticateUserThenRedirect(error: any): void {
+        const loginName = error.headers.get('ltiSuccessLoginRequired');
+        this.accountService.identity().then((user) => {
+            if (user) {
+                this.redirectUserToTargetLink(error);
+            } else {
+                if (loginName) {
+                    this.accountService.setPrefilledUsername(loginName);
+                }
+                this.redirectUserToLoginThenTargetLink(error);
+            }
+        });
+    }
+
+    redirectUserToTargetLink(error: any): void {
+        // Redirect to target link since the user is already logged in
+        window.location.replace(error.headers.get('TargetLinkUri').toString());
+    }
+
+    redirectUserToLoginThenTargetLink(error: any): void {
+        // Redirect the user to the login page
+        this.router.navigate(['/']).then(() => {
+            // After navigating to the login page, set up a listener for when the user logs in
+            this.accountService.getAuthenticationState().subscribe((user) => {
+                if (user) {
+                    this.redirectUserToTargetLink(error);
+                }
+            });
+        });
+    }
+
+    handleLtiLaunchSuccess(data: NonNullable<unknown>): void {
+        const targetLinkUri = data['targetLinkUri'];
+        window.sessionStorage.removeItem('state');
+
+        if (targetLinkUri) {
+            window.location.replace(targetLinkUri);
+        } else {
+            this.isLaunching = false;
+            console.error('No LTI targetLinkUri received for a successful launch');
+        }
+    }
+
+    handleLtiLaunchError(): void {
+        window.sessionStorage.removeItem('state');
+        this.isLaunching = false;
     }
 }

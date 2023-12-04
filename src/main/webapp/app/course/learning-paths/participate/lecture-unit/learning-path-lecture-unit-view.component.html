@@ -1,5 +1,5 @@
 <div class="row">
-    <div class="col pe-0 flex-grow-1">
+    <div *ngIf="lectureUnit" class="col pe-0 flex-grow-1">
         <div [ngSwitch]="lectureUnit.type">
             <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-attachment-unit>
             <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-video-unit>

@@ -10,6 +10,9 @@
         [panningEnabled]="panningEnabled"
         [enableZoom]="zoomEnabled"
         [panOnZoom]="panOnZoom"
+        [showMiniMap]="showMiniMap"
+        [miniMapMaxWidth]="250"
+        [miniMapMaxHeight]="250"
         [update$]="update$"
         [center$]="center$"
         [zoomToFit$]="zoomToFit$"
@@ -20,9 +23,18 @@
             </svg:marker>
         </ng-template>
         <ng-template #nodeTemplate let-node>
-            <svg:g class="node" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
+            <svg:g [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
                 <svg:foreignObject [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
-                    <jhi-learning-path-graph-node class="node" [courseId]="courseId" [node]="node" (click)="nodeClicked.emit(node)"></jhi-learning-path-graph-node>
+                    <jhi-learning-path-graph-node
+                        id="{{ node.id }}"
+                        class="node"
+                        [courseId]="courseId"
+                        [node]="node"
+                        [competencyProgressDTO]="
+                            node.type === NodeType.COMPETENCY_START || node.type === NodeType.COMPETENCY_END ? competencyProgress.get(node.linkedResource) : undefined
+                        "
+                        (click)="nodeClicked.emit(node)"
+                    ></jhi-learning-path-graph-node>
                 </svg:foreignObject>
             </svg:g>
         </ng-template>
@@ -37,4 +49,5 @@
             </svg:g>
         </ng-template>
     </ngx-graph>
+    <jhi-learning-path-legend class="legend" [nodeTypes]="nodeTypes" />
 </div>

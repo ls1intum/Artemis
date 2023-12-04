@@ -230,7 +230,7 @@ jobs:
         - name: remove project-wide node options set in .npmrc just for this test
           run: rm .npmrc || true
         - name: Setup Node.js
-          uses: actions/setup-node@v3
+          uses: actions/setup-node@v4
           with:
               node-version: '${{ env.node }}'
               cache: 'npm'
@@ -249,7 +249,7 @@ jobs:
             with:
                 fetch-depth: 0
           - name: Setup Node.js
-            uses: actions/setup-node@v3
+            uses: actions/setup-node@v4
             with:
                 node-version: '${{ env.node }}'
                 cache: 'npm'
@@ -266,7 +266,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '${{ env.node }}'
         cache: 'npm'
@@ -284,7 +284,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '${{ env.node }}'
         cache: 'npm'

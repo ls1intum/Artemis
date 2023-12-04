@@ -57,7 +57,7 @@ The Artemis development team prioritizes the following issues in the future. We 
 * **Short term**: Add instructor assistance based on Generative AI
 * **Medium term**: Simplify the setup of Artemis
 * **Medium term**: Add feedback assistance based on Generative AI
-* **Medium term**: Add the possibility to use Iris for questions on all exercise types, lectures, and larning performance aspects
+* **Medium term**: Add the possibility to use Iris for questions on all exercise types, lectures, and learning performance aspects
 * **Long term**: Microservices, Kubernetes based deployment, and micro frontends
 * **Long term**: Allow students to take notes on lecture slides and support the automatic updates of lecture slides
 * **Long term**: Develop an exchange platform for exercises
@@ -94,30 +94,32 @@ Once the PR is ready to merge, notify the responsible feature maintainer:
 
 #### Maintainers
   
-| Feature / Aspect               | Maintainer                                                                                      |
-|--------------------------------| ----------------------------------------------------------------------------------------------- |
-| Programming exercises          | [@krusche](https://github.com/krusche)                                                          |
-| Quiz exercises                 | [@Santia-go](https://github.com/Santia-go)                                                      |
-| Modeling exercises (+ Apollon) | [@krusche](https://github.com/krusche)                                                          |
-| Text exercises                 | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
-| File upload exercises          | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
-| Exam mode                      | [@krusche](https://github.com/krusche)                                                          |
-| Grading                        | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
-| Assessment                     | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
-| Communication                  | [@krusche](https://github.com/krusche)                                                          |
-| Notifications                  | [@krusche](https://github.com/krusche)                                                          |
-| Team Exercises                 | [@krusche](https://github.com/krusche)                                                          |
-| Lectures                       | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
-| Integrated Markdown Editor     | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
-| Plagiarism checks              | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                              |
-| Learning analytics             | [@bassner](https://github.com/bassner)                                                          |
-| Adaptive learning              | [@bassner](https://github.com/bassner)                                                          |
-| Tutorial Groups                | [@Santia-go](https://github.com/Santia-go)                                                      |
-| Iris                           | [@bassner](https://github.com/bassner)                                                          |
-| Scalability                    | [@mtze](https://github.com/mtze)                                                                |
-| Usability + Performance        | [@bassner](https://github.com/bassner)                                                          |
-| Infrastructure                 | [@mtze](https://github.com/mtze)                                                                |
-| Mobile apps (iOS + Android)    | [@krusche](https://github.com/krusche) [@maximiliansoelch](https://github.com/maximiliansoelch) |
+| Feature / Aspect               | Maintainer                                                                                          |
+|--------------------------------|-----------------------------------------------------------------------------------------------------|
+| Programming exercises          | [@krusche](https://github.com/krusche)                                                              |
+| Quiz exercises                 | [@Santia-go](https://github.com/Santia-go)                                                          |
+| Modeling exercises (+ Apollon) | [@krusche](https://github.com/krusche)                                                              |
+| Text exercises                 | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
+| File upload exercises          | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
+| Exam mode                      | [@krusche](https://github.com/krusche)                                                              |
+| Grading                        | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
+| Assessment                     | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
+| Communication                  | [@rabeatwork](https://github.com/rabeatwork)                                                        |
+| Notifications                  | [@rabeatwork](https://github.com/rabeatwork)                                                        |
+| Team Exercises                 | [@krusche](https://github.com/krusche)                                                              |
+| Lectures                       | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner)     |
+| Integrated Markdown Editor     | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner)     |
+| Plagiarism checks              | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                                  |
+| Learning analytics             | [@bassner](https://github.com/bassner)                                                              |
+| Adaptive learning              | [@bassner](https://github.com/bassner) [@maximiliananzinger](https://github.com/maximiliananzinger) |
+| Learning paths                 | [@maximiliananzinger](https://github.com/maximiliananzinger)                                        |
+| Tutorial Groups                | [@Santia-go](https://github.com/Santia-go)                                                          |
+| Iris                           | [@bassner](https://github.com/bassner)                                                              |
+| Scalability                    | [@mtze](https://github.com/mtze)                                                                    |
+| Usability                      | [@rabeatwork](https://github.com/rabeatwork)                                                        |
+| Performance                    | [@rabeatwork](https://github.com/rabeatwork)                                                        |
+| Infrastructure                 | [@mtze](https://github.com/mtze)                                                                    |
+| Mobile apps (iOS + Android)    | [@krusche](https://github.com/krusche) [@maximiliansoelch](https://github.com/maximiliansoelch)     |
 
 
 ### Building for production
@@ -221,7 +223,7 @@ The following universities are actively using Artemis or are currently evaluatin
   Main contact person: [Michael Eggers](mailto:michael.eggers@hm.edu)  
   
 * **Technische Universität Dresden**  
-  Main contact person: [Martin Morgenstern](mailto:martin.morgenstern1@tu-dresden.de)  
+  Main contact person: [Andreas Domanowski](mailto:andreas.domanowski@tu-dresden.de)  
   
 * **Hochschule Heilbronn**  
   Main contact person: [Jörg Winckler](mailto:joerg.winckler@hs-heilbronn.de)  

@@ -46,7 +46,7 @@
                             <jhi-post #post [readOnlyMode]="false" [posting]="posts[0]" [showAnswers]="true" [isCourseMessagesPage]="false" [hasChannelModerationRights]="false">
                             </jhi-post>
                         </div>
-                        <div class="alert alert-warning my-2" *ngIf="(this.posts[0].answers?.length ?? 0) === 0">
+                        <div class="alert alert-warning my-2" *ngIf="!this.plagiarismCase.createdByContinuousPlagiarismControl && (this.posts[0].answers?.length ?? 0) === 0">
                             <h5
                                 *ngIf="posts[0].creationDate"
                                 [innerHTML]="

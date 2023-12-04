@@ -262,7 +262,7 @@ public class ProgrammingExerciseExportImportResource {
     @EnforceAtLeastInstructor
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
         long start = System.nanoTime();
@@ -271,7 +271,7 @@ public class ProgrammingExerciseExportImportResource {
             path = programmingExerciseExportService.exportProgrammingExerciseForDownload(programmingExercise, Collections.synchronizedList(new ArrayList<>()));
         }
         catch (Exception e) {
-            log.error("Error while exporting programming exercise with id " + exerciseId + " for instructor", e);
+            log.error("Error while exporting programming exercise with id {} for instructor", exerciseId, e);
             throw new InternalServerErrorException("Error while exporting programming exercise with id " + exerciseId + " for instructor");
         }
         var finalZipFile = path.toFile();

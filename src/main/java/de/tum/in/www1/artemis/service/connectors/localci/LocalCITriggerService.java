@@ -1,20 +1,16 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
-import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
-import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 /**
  * Service for triggering builds on the local CI system.
@@ -23,17 +19,14 @@ import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWe
 @Profile("localci")
 public class LocalCITriggerService implements ContinuousIntegrationTriggerService {
 
-    private final LocalCIBuildJobManagementService localCIBuildJobManagementService;
+    private final LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService;
 
-    private final ProgrammingExerciseGradingService programmingExerciseGradingService;
+    private final LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService;
 
-    private final ProgrammingMessagingService programmingMessagingService;
-
-    public LocalCITriggerService(LocalCIBuildJobManagementService localCIBuildJobManagementService, ProgrammingExerciseGradingService programmingExerciseGradingService,
-            ProgrammingMessagingService programmingMessagingService) {
-        this.localCIBuildJobManagementService = localCIBuildJobManagementService;
-        this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.programmingMessagingService = programmingMessagingService;
+    public LocalCITriggerService(LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService,
+            LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService) {
+        this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
+        this.localCIProgrammingLanguageFeatureService = localCIProgrammingLanguageFeatureService;
     }
 
     /**
@@ -55,19 +48,21 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) {
-        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash);
-        futureResult.thenAccept(buildResult -> {
-            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-            // Therefore, a mock auth object has to be created.
-            SecurityUtils.setAuthorizationObject();
-            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
-            if (result != null) {
-                programmingMessagingService.notifyUserAboutNewResult(result, participation);
-            }
-            else {
-                programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                        new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
-            }
-        });
+
+        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
+        ProjectType projectType = programmingExercise.getProjectType();
+        long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+
+        List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
+
+        if (projectType != null && !supportedProjectTypes.contains(programmingExercise.getProjectType())) {
+            throw new LocalCIException("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
+        }
+
+        // Exam exercises have a higher priority than normal exercises
+        int priority = programmingExercise.isExamExercise() ? 1 : 2;
+
+        localCISharedBuildJobQueueService.addBuildJobInformation(participation.getBuildPlanId(), participation.getId(), commitHash, System.currentTimeMillis(), priority, courseId);
     }
 }

@@ -1,6 +1,6 @@
 import { TranslateService } from '@ngx-translate/core';
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpClientTestingModule, HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'ngx-webstorage';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
@@ -29,9 +29,13 @@ const makeQuiz = () => {
 };
 
 describe('QuizExercise Service', () => {
+    const fileMap = new Map<string, Blob>();
+    fileMap.set('file.jpg', new Blob());
+
     let service: QuizExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: QuizExercise;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
@@ -44,6 +48,11 @@ describe('QuizExercise Service', () => {
         httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = makeQuiz();
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        jest.restoreAllMocks();
     });
 
     it('should find an element', async () => {
@@ -62,8 +71,34 @@ describe('QuizExercise Service', () => {
             elemDefault,
         );
         const expected = Object.assign({}, returnedFromService);
-        const result = firstValueFrom(service.create(new QuizExercise(undefined, undefined)));
-        const req = httpMock.expectOne({ method: 'POST' });
+        const result = firstValueFrom(service.create(new QuizExercise(undefined, undefined), fileMap));
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz-exercises' });
+        validateFormData(req);
+        req.flush(returnedFromService);
+        expect((await result)?.body).toEqual(expected);
+    });
+
+    it('should import a QuizExercise', async () => {
+        const returnedFromService = Object.assign(
+            {
+                description: 'BBBBBB',
+                explanation: 'BBBBBB',
+                randomizeQuestionOrder: true,
+                allowedNumberOfAttempts: 1,
+                isVisibleBeforeStart: true,
+                isOpenForPractice: true,
+                isPlannedToStart: true,
+                duration: 1,
+            },
+            elemDefault,
+        );
+        const quizExercise = new QuizExercise(undefined, undefined);
+        quizExercise.id = 42;
+
+        const expected = Object.assign({}, returnedFromService);
+        const result = firstValueFrom(service.import(quizExercise, fileMap));
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/quiz-exercises/import/42' });
+        validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
     });
@@ -83,8 +118,9 @@ describe('QuizExercise Service', () => {
             elemDefault,
         );
         const expected = Object.assign({}, returnedFromService);
-        const result = firstValueFrom(service.update(expected));
-        const req = httpMock.expectOne({ method: 'PUT' });
+        const result = firstValueFrom(service.update(1, expected, fileMap));
+        const req = httpMock.expectOne({ method: 'PUT', url: 'api/quiz-exercises/1' });
+        validateFormData(req);
         req.flush(returnedFromService);
         expect((await result)?.body).toEqual(expected);
     });
@@ -105,7 +141,7 @@ describe('QuizExercise Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         const result = firstValueFrom(service.query());
-        const req = httpMock.expectOne({ method: 'GET' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/quiz-exercises' });
         req.flush([returnedFromService]);
         expect((await result)?.body).toEqual([expected]);
     });
@@ -219,8 +255,11 @@ describe('QuizExercise Service', () => {
         }
     });
 
-    afterEach(() => {
-        httpMock.verify();
-        jest.restoreAllMocks();
-    });
+    function validateFormData(req: TestRequest) {
+        expect(req.request.body).toBeInstanceOf(FormData);
+        expect(req.request.body.get('exercise')).toBeInstanceOf(Blob);
+        const fileArray = req.request.body.getAll('files');
+        expect(fileArray).toBeArrayOfSize(1);
+        expect(fileArray[0]).toBeInstanceOf(Blob);
+    }
 });

@@ -12,7 +12,9 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -32,7 +34,6 @@ import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -63,6 +64,7 @@ import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.exam.ExamFactory;
@@ -302,7 +304,6 @@ public class ProgrammingExerciseTestService {
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
         solutionRepo.resetLocalRepo();
-        auxRepo.resetLocalRepo();
         sourceExerciseRepo.resetLocalRepo();
         sourceTestRepo.resetLocalRepo();
         sourceSolutionRepo.resetLocalRepo();
@@ -706,6 +707,8 @@ public class ProgrammingExerciseTestService {
         boolean staticCodeAnalysisEnabled = programmingLanguage == JAVA || programmingLanguage == SWIFT;
         // Setup exercises for import
         ProgrammingExercise sourceExercise = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
+        sourceExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
+        sourceExercise = programmingExerciseRepository.save(sourceExercise);
         sourceExercise.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(sourceExercise);
         programmingExerciseUtilService.addHintsToExercise(sourceExercise);
@@ -1344,7 +1347,7 @@ public class ProgrammingExerciseTestService {
 
     private void setupAuxRepoMock(AuxiliaryRepository auxiliaryRepository) throws GitAPIException {
         Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(auxRepo.localRepoFile.toPath(), null);
-        disableAutoGC(repository);
+
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUrl()), anyString(), anyBoolean());
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(auxiliaryRepository.getVcsRepositoryUrl()), (Path) any(), anyBoolean());
     }
@@ -1451,6 +1454,32 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
+    void exportProgrammingExerciseInstructorMaterial_problemStatementShouldContainTestNames() throws Exception {
+        programmingExerciseRepository.save(exercise);
+        var tests = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
+        var test = tests.get(0);
+        exercise.setProblemStatement("[task][name](<testid>%s</testid>)".formatted(test.getId()));
+        programmingExerciseRepository.save(exercise);
+
+        var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK, true);
+        // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
+        assertThat(zipFile).isNotNull();
+        await().until(zipFile::exists);
+        // Recursively unzip the exported file, to make sure there is no erroneous content
+        zipFileTestUtilService.extractZipFileRecursively(zipFile.getAbsolutePath());
+        String extractedZipDir = zipFile.getPath().substring(0, zipFile.getPath().length() - 4);
+
+        String problemStatement;
+        try (var files = Files.walk(Path.of(extractedZipDir))) {
+            var problemStatementFile = files.filter(Files::isRegularFile)
+                    .filter(file -> file.getFileName().toString().matches(EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX + ".*\\.md")).findFirst().orElseThrow();
+            problemStatement = Files.readString(problemStatementFile, StandardCharsets.UTF_8);
+        }
+
+        assertThat(problemStatement).isEqualTo("[task][name](%s)".formatted(test.getTestName()));
+    }
+
+    // Test
     void exportProgrammingExerciseInstructorMaterial_forbidden() throws Exception {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
         course.setInstructorGroupName("test");
@@ -1468,14 +1497,17 @@ public class ProgrammingExerciseTestService {
      * @return the zip file
      * @throws Exception if the export fails
      */
-    java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean problemStatementNull, boolean mockRepos, boolean saveEmbeddedFiles)
-            throws Exception {
+    File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean problemStatementNull, boolean mockRepos, boolean saveEmbeddedFiles) throws Exception {
         if (problemStatementNull) {
             generateProgrammingExerciseWithProblemStatementNullForExport();
         }
         else {
             generateProgrammingExerciseForExport(saveEmbeddedFiles);
         }
+        return exportProgrammingExerciseInstructorMaterial(expectedStatus, mockRepos);
+    }
+
+    private File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus, boolean mockRepos) throws Exception {
         if (mockRepos) {
             // Mock template repo
             Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
@@ -1529,7 +1561,7 @@ public class ProgrammingExerciseTestService {
     private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
         VcsRepositoryUrl vcsUrl = exercise.getRepositoryURL(repoType);
         Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null);
-        disableAutoGC(repository);
+
         createAndCommitDummyFileInLocalRepository(localRepo, fileName);
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
         doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), (Path) any(), anyBoolean());
@@ -1555,25 +1587,21 @@ public class ProgrammingExerciseTestService {
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
-        disableAutoGC(studentRepository);
         createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
 
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
-        disableAutoGC(templateRepository);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
 
         // Mock solution repo
         Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
-        disableAutoGC(solutionRepository);
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean());
 
         // Mock tests repo
         Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
-        disableAutoGC(testsRepository);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean());
 
@@ -1655,25 +1683,21 @@ public class ProgrammingExerciseTestService {
 
         // Mock student repo
         Repository studentRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null);
-        disableAutoGC(studentRepository);
         createAndCommitDummyFileInLocalRepository(studentRepo, "HelloWorld.java");
         doReturn(studentRepository).when(gitService).getOrCheckoutRepository(eq(participation.getVcsRepositoryUrl()), any(Path.class), anyBoolean());
 
         // Mock template repo
         Repository templateRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepo.localRepoFile.toPath(), null);
-        disableAutoGC(templateRepository);
         createAndCommitDummyFileInLocalRepository(exerciseRepo, "Template.java");
         doReturn(templateRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TEMPLATE)), any(Path.class), anyBoolean());
 
         // Mock solution repo
         Repository solutionRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(solutionRepo.localRepoFile.toPath(), null);
-        disableAutoGC(solutionRepository);
         createAndCommitDummyFileInLocalRepository(solutionRepo, "Solution.java");
         doReturn(solutionRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.SOLUTION)), any(Path.class), anyBoolean());
 
         // Mock tests repo
         Repository testsRepository = gitService.getExistingCheckedOutRepositoryByLocalPath(testRepo.localRepoFile.toPath(), null);
-        disableAutoGC(testsRepository);
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), any(Path.class), anyBoolean());
     }
@@ -1739,18 +1763,6 @@ public class ProgrammingExerciseTestService {
         mockDelegate.resetMockProvider();
 
         return studentExams;
-    }
-
-    /**
-     * Disables auto garbage collection for the given repository.
-     *
-     * @param repository the repository
-     */
-    private void disableAutoGC(org.eclipse.jgit.lib.Repository repository) {
-        // See https://www.eclipse.org/lists/jgit-dev/msg03734.html
-        repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
-        repository.getConfig().setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
-        repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOPACKLIMIT, 0);
     }
 
     /**

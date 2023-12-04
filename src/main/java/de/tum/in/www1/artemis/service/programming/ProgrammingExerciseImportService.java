@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
 @Service
 public class ProgrammingExerciseImportService {
@@ -41,6 +42,8 @@ public class ProgrammingExerciseImportService {
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
     private final ProgrammingExerciseService programmingExerciseService;
+
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     private final GitService gitService;
 
@@ -57,13 +60,15 @@ public class ProgrammingExerciseImportService {
     private final ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
     public ProgrammingExerciseImportService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseService programmingExerciseService, GitService gitService,
-            FileService fileService, UserRepository userRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService,
-            TemplateUpgradePolicy templateUpgradePolicy, ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, GitService gitService, FileService fileService, UserRepository userRepository,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, UrlService urlService, TemplateUpgradePolicy templateUpgradePolicy,
+            ProgrammingExerciseImportBasicService programmingExerciseImportBasicService) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseService = programmingExerciseService;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.gitService = gitService;
         this.fileService = fileService;
         this.userRepository = userRepository;
@@ -275,6 +280,11 @@ public class ProgrammingExerciseImportService {
         newExercise.generateAndSetProjectKey();
         programmingExerciseService.checkIfProjectExists(newExercise);
 
+        if (newExercise.isExamExercise()) {
+            // Disable feedback suggestions on exam exercises (currently not supported)
+            newExercise.setFeedbackSuggestionsEnabled(false);
+        }
+
         final var importedProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);
         importRepositories(originalProgrammingExercise, importedProgrammingExercise);
 
@@ -296,6 +306,8 @@ public class ProgrammingExerciseImportService {
         }
 
         programmingExerciseService.scheduleOperations(importedProgrammingExercise.getId());
+
+        programmingExerciseTaskService.replaceTestIdsWithNames(importedProgrammingExercise);
         return importedProgrammingExercise;
     }
 

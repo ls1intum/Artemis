@@ -115,7 +115,7 @@ public class PublicProgrammingSubmissionResource {
             throw ex;
         }
         catch (VersionControlException ex) {
-            log.warn("User committed to the wrong branch for participation + " + participationId);
+            log.warn("User committed to the wrong branch for participation {}", participationId);
             return ResponseEntity.status(HttpStatus.OK).build();
         }
 

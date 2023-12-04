@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.web.rest.plagiarism.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
+
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -14,13 +16,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
@@ -35,11 +33,13 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionConfigHelper;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -245,17 +245,27 @@ public class ModelingExerciseResource {
         return ResponseEntity.ok().body(exercises);
     }
 
+    private ModelingExercise findModelingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
+        if (includePlagiarismDetectionConfig) {
+            var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigByIdElseThrow(exerciseId);
+            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(modelingExercise, modelingExerciseRepository);
+            return modelingExercise;
+        }
+        return modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
+    }
+
     /**
      * GET modeling-exercises/:exerciseId : get the "id" modelingExercise.
      *
-     * @param exerciseId the id of the modelingExercise to retrieve
+     * @param exerciseId                    the id of the modelingExercise to retrieve
+     * @param withPlagiarismDetectionConfig boolean flag whether to include the plagiarism detection config of the exercise
      * @return the ResponseEntity with status 200 (OK) and with body the modelingExercise, or with status 404 (Not Found)
      */
     @GetMapping("modeling-exercises/{exerciseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
-        var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
+        var modelingExercise = findModelingExercise(exerciseId, withPlagiarismDetectionConfig);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.setGradingCriteria(gradingCriteria);
@@ -316,7 +326,7 @@ public class ModelingExerciseResource {
         }
         importedExercise.checkCourseAndExerciseGroupExclusivity("Modeling Exercise");
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        final var originalModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(sourceExerciseId);
+        final var originalModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(sourceExerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
         // validates general settings: points, dates
@@ -363,13 +373,13 @@ public class ModelingExerciseResource {
      */
     @GetMapping("modeling-exercises/{exerciseId}/plagiarism-result")
     @EnforceAtLeastEditor
-    public ResponseEntity<ModelingPlagiarismResult> getPlagiarismResult(@PathVariable long exerciseId) {
+    public ResponseEntity<PlagiarismResultDTO<ModelingPlagiarismResult>> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the modeling exercise with id: {}", exerciseId);
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExercise, null);
-        var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(modelingExercise.getId());
+        var plagiarismResult = (ModelingPlagiarismResult) plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(modelingExercise.getId());
         plagiarismResultRepository.prepareResultForClient(plagiarismResult);
-        return ResponseEntity.ok((ModelingPlagiarismResult) plagiarismResult);
+        return buildPlagiarismResultResponse(plagiarismResult);
     }
 
     /**
@@ -386,17 +396,17 @@ public class ModelingExerciseResource {
     @GetMapping("modeling-exercises/{exerciseId}/check-plagiarism")
     @FeatureToggle(Feature.PlagiarismChecks)
     @EnforceAtLeastInstructor
-    public ResponseEntity<ModelingPlagiarismResult> checkPlagiarism(@PathVariable long exerciseId, @RequestParam float similarityThreshold, @RequestParam int minimumScore,
-            @RequestParam int minimumSize) {
+    public ResponseEntity<PlagiarismResultDTO<ModelingPlagiarismResult>> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold,
+            @RequestParam int minimumScore, @RequestParam int minimumSize) {
         var modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks for modeling exercise: exerciseId={}.", exerciseId);
-        var config = new PlagiarismDetectionConfig(similarityThreshold, minimumScore, minimumSize);
-        var plagiarismResult = plagiarismDetectionService.checkModelingExercise(modelingExercise, config);
+        PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(modelingExercise, similarityThreshold, minimumScore, minimumSize);
+        var plagiarismResult = plagiarismDetectionService.checkModelingExercise(modelingExercise);
         log.info("Finished manual plagiarism checks for modeling exercise: exerciseId={}, elapsed={}.", exerciseId, TimeLogUtil.formatDurationFrom(start));
 
-        return ResponseEntity.ok(plagiarismResult);
+        return buildPlagiarismResultResponse(plagiarismResult);
     }
 
     /**
