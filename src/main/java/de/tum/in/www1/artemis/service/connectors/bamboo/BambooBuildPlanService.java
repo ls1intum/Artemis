@@ -143,113 +143,6 @@ public class BambooBuildPlanService {
     }
 
     /**
-     * Creates a custom Build Plan for a Programming Exercise using Aeolus. If the build plan could not be created, null is
-     * returned. Otherwise, the key of the created build plan is returned. Not the whole key is returned, only the build plan
-     * key, without the project key. Example: "PROJECT-BUILDPLANKEY" is created -> "BUILDPLANKEY" is returned, same as the
-     * default build plan creation.
-     *
-     * @param programmingExercise   the programming exercise for which to create the build plan
-     * @param buildPlanId           the id of the build plan
-     * @param planDescription       the description of the build plan
-     * @param repositoryUrl         the url of the assignment repository
-     * @param testRepositoryUrl     the url of the test repository
-     * @param solutionRepositoryUrl the url of the solution repository
-     * @param auxiliaryRepositories List of auxiliary repositories to be included in the build plan
-     * @return the key of the created build plan, or null if it could not be created
-     */
-    private String createCustomBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, String planDescription, VcsRepositoryUrl repositoryUrl,
-            VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl, List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories)
-            throws ContinuousIntegrationBuildPlanException {
-        if (aeolusBuildPlanService.isEmpty()) {
-            return null;
-        }
-        if (programmingExercise.getBuildPlanConfiguration() == null) {
-            // If no custom build plan configuration is present, we will use the default build plan creation
-            return null;
-        }
-        String assignedKey = null;
-        if (programmingExercise.getBuildPlanConfiguration() != null) {
-            try {
-                assignedKey = createCustomBuildPlanWithAeolus(buildPlanId, programmingExercise, planDescription, repositoryUrl, testRepositoryUrl, solutionRepositoryUrl,
-                        auxiliaryRepositories);
-            }
-            catch (ContinuousIntegrationBuildPlanException e) {
-                LOGGER.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
-                        + ", will create default build plan", e);
-            }
-        }
-        return assignedKey;
-    }
-
-    /**
-     * Tries to create a custom Build Plan for a Programming Exercise, if the build plan could not be created, null is returned.
-     *
-     * @param programmingExercise   the programming exercise for which to create the build plan
-     * @param buildPlanId           the id of the build plan
-     * @param planDescription       the description of the build plan
-     * @param repositoryUrl         the url of the assignment repository
-     * @param testRepositoryUrl     the url of the test repository
-     * @param solutionRepositoryUrl the url of the solution repository
-     * @param auxiliaryRepositories List of auxiliary repositories to be included in the build plan
-     * @return the key of the created build plan, or null if it could not be created
-     * @throws ContinuousIntegrationBuildPlanException if the build plan could not be created
-     */
-    private String createCustomBuildPlanWithAeolus(String buildPlanId, ProgrammingExercise programmingExercise, String planDescription, VcsRepositoryUrl repositoryUrl,
-            VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl, List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories)
-            throws ContinuousIntegrationBuildPlanException {
-        if (aeolusBuildPlanService.isEmpty()) {
-            return null;
-        }
-        Windfile windfile = programmingExercise.getWindfile();
-        Map<String, AeolusRepository> repositories = createRepositoryMapForAeolus(programmingExercise.getProgrammingLanguage(), programmingExercise.getBranch(),
-                programmingExercise.getCheckoutSolutionRepository(), repositoryUrl, testRepositoryUrl, solutionRepositoryUrl, auxiliaryRepositories);
-
-        String resultHookUrl = artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH;
-        windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.gitUser, resultHookUrl, planDescription, repositories);
-        String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(windfile, AeolusTarget.BAMBOO);
-        /*
-         * Aeolus returns the key of the build plan in the format "PROJECT-BUILDPLANKEY". To stay consistent with the
-         * default build plan creation, we return only the build plan key.
-         */
-        if (generatedKey != null && generatedKey.contains("-")) {
-            return generatedKey.split("-")[1];
-        }
-        else {
-            throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle());
-        }
-    }
-
-    /**
-     * Creates a map of repositories used in Aeolus to create the checkout task in the custom build plan
-     *
-     * @param programmingLanguage        the programming language of the exercise
-     * @param branch                     the branch of the exercise
-     * @param checkoutSolutionRepository whether the solution repository should be checked out (only used in OCAML and Haskell exercises)
-     * @param repositoryUrl              the url of the assignment repository
-     * @param testRepositoryUrl          the url of the test repository
-     * @param solutionRepositoryUrl      the url of the solution repository
-     * @param auxiliaryRepositories      List of auxiliary repositories to be included in the build plan
-     * @return a map of repositories used in Aeolus to create the checkout task in the custom build plan
-     */
-    private Map<String, AeolusRepository> createRepositoryMapForAeolus(ProgrammingLanguage programmingLanguage, String branch, boolean checkoutSolutionRepository,
-            VcsRepositoryUrl repositoryUrl, VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl,
-            List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories) {
-        Map<String, AeolusRepository> repositoryMap = new HashMap<>();
-        repositoryMap.put(ASSIGNMENT_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(repositoryUrl).toString(), branch,
-                RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage)));
-        if (checkoutSolutionRepository) {
-            repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(solutionRepositoryUrl).toString(), branch,
-                    RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage)));
-        }
-        repositoryMap.put(TEST_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(testRepositoryUrl).toString(), branch,
-                ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage)));
-        for (var auxRepo : auxiliaryRepositories) {
-            repositoryMap.put(auxRepo.name(), new AeolusRepository(auxRepo.repositoryUrl().toString(), branch, auxRepo.name()));
-        }
-        return repositoryMap;
-    }
-
-    /**
      * Set Build Plan Permissions for admins, instructors, editors and teaching assistants.
      *
      * @param programmingExercise a programming exercise with the required
@@ -672,5 +565,112 @@ public class BambooBuildPlanService {
      */
     private String[] getDefaultDockerRunArguments() {
         return programmingLanguageConfiguration.getDefaultDockerFlags().toArray(new String[0]);
+    }
+
+    /**
+     * Creates a custom Build Plan for a Programming Exercise using Aeolus. If the build plan could not be created, null is
+     * returned. Otherwise, the key of the created build plan is returned. Not the whole key is returned, only the build plan
+     * key, without the project key. Example: "PROJECT-BUILDPLANKEY" is created -> "BUILDPLANKEY" is returned, same as the
+     * default build plan creation.
+     *
+     * @param programmingExercise   the programming exercise for which to create the build plan
+     * @param buildPlanId           the id of the build plan
+     * @param planDescription       the description of the build plan
+     * @param repositoryUrl         the url of the assignment repository
+     * @param testRepositoryUrl     the url of the test repository
+     * @param solutionRepositoryUrl the url of the solution repository
+     * @param auxiliaryRepositories List of auxiliary repositories to be included in the build plan
+     * @return the key of the created build plan, or null if it could not be created
+     */
+    private String createCustomBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, String planDescription, VcsRepositoryUrl repositoryUrl,
+            VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl, List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories)
+            throws ContinuousIntegrationBuildPlanException {
+        if (aeolusBuildPlanService.isEmpty()) {
+            return null;
+        }
+        if (programmingExercise.getBuildPlanConfiguration() == null) {
+            // If no custom build plan configuration is present, we will use the default build plan creation
+            return null;
+        }
+        String assignedKey = null;
+        if (programmingExercise.getBuildPlanConfiguration() != null) {
+            try {
+                assignedKey = createCustomBuildPlanWithAeolus(buildPlanId, programmingExercise, planDescription, repositoryUrl, testRepositoryUrl, solutionRepositoryUrl,
+                        auxiliaryRepositories);
+            }
+            catch (ContinuousIntegrationBuildPlanException e) {
+                LOGGER.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
+                        + ", will create default build plan", e);
+            }
+        }
+        return assignedKey;
+    }
+
+    /**
+     * Tries to create a custom Build Plan for a Programming Exercise, if the build plan could not be created, null is returned.
+     *
+     * @param programmingExercise   the programming exercise for which to create the build plan
+     * @param buildPlanId           the id of the build plan
+     * @param planDescription       the description of the build plan
+     * @param repositoryUrl         the url of the assignment repository
+     * @param testRepositoryUrl     the url of the test repository
+     * @param solutionRepositoryUrl the url of the solution repository
+     * @param auxiliaryRepositories List of auxiliary repositories to be included in the build plan
+     * @return the key of the created build plan, or null if it could not be created
+     * @throws ContinuousIntegrationBuildPlanException if the build plan could not be created
+     */
+    private String createCustomBuildPlanWithAeolus(String buildPlanId, ProgrammingExercise programmingExercise, String planDescription, VcsRepositoryUrl repositoryUrl,
+            VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl, List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories)
+            throws ContinuousIntegrationBuildPlanException {
+        if (aeolusBuildPlanService.isEmpty()) {
+            return null;
+        }
+        Windfile windfile = programmingExercise.getWindfile();
+        Map<String, AeolusRepository> repositories = createRepositoryMapForAeolus(programmingExercise.getProgrammingLanguage(), programmingExercise.getBranch(),
+                programmingExercise.getCheckoutSolutionRepository(), repositoryUrl, testRepositoryUrl, solutionRepositoryUrl, auxiliaryRepositories);
+
+        String resultHookUrl = artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH;
+        windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.gitUser, resultHookUrl, planDescription, repositories);
+        String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(windfile, AeolusTarget.BAMBOO);
+        /*
+         * Aeolus returns the key of the build plan in the format "PROJECT-BUILDPLANKEY". To stay consistent with the
+         * default build plan creation, we return only the build plan key.
+         */
+        if (generatedKey != null && generatedKey.contains("-")) {
+            return generatedKey.split("-")[1];
+        }
+        else {
+            throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle());
+        }
+    }
+
+    /**
+     * Creates a map of repositories used in Aeolus to create the checkout task in the custom build plan
+     *
+     * @param programmingLanguage        the programming language of the exercise
+     * @param branch                     the branch of the exercise
+     * @param checkoutSolutionRepository whether the solution repository should be checked out (only used in OCAML and Haskell exercises)
+     * @param repositoryUrl              the url of the assignment repository
+     * @param testRepositoryUrl          the url of the test repository
+     * @param solutionRepositoryUrl      the url of the solution repository
+     * @param auxiliaryRepositories      List of auxiliary repositories to be included in the build plan
+     * @return a map of repositories used in Aeolus to create the checkout task in the custom build plan
+     */
+    private Map<String, AeolusRepository> createRepositoryMapForAeolus(ProgrammingLanguage programmingLanguage, String branch, boolean checkoutSolutionRepository,
+            VcsRepositoryUrl repositoryUrl, VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl,
+            List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories) {
+        Map<String, AeolusRepository> repositoryMap = new HashMap<>();
+        repositoryMap.put(ASSIGNMENT_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(repositoryUrl).toString(), branch,
+                RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage)));
+        if (checkoutSolutionRepository) {
+            repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(solutionRepositoryUrl).toString(), branch,
+                    RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage)));
+        }
+        repositoryMap.put(TEST_REPO_NAME, new AeolusRepository(bambooInternalUrlService.toInternalVcsUrl(testRepositoryUrl).toString(), branch,
+                ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage)));
+        for (var auxRepo : auxiliaryRepositories) {
+            repositoryMap.put(auxRepo.name(), new AeolusRepository(auxRepo.repositoryUrl().toString(), branch, auxRepo.name()));
+        }
+        return repositoryMap;
     }
 }
