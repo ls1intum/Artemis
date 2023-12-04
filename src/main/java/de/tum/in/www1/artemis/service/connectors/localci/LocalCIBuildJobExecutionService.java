@@ -321,8 +321,8 @@ public class LocalCIBuildJobExecutionService {
             case PYTHON -> {
                 return getPythonTestResultPaths();
             }
-            case C -> {
-                return getCTestResultPaths(programmingExercise);
+            case ASSEMBLER, C -> {
+                return getCustomTestResultPaths(programmingExercise);
             }
             default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
         }
@@ -357,7 +357,7 @@ public class LocalCIBuildJobExecutionService {
         return testResultPaths;
     }
 
-    private List<String> getCTestResultPaths(ProgrammingExercise programmingExercise) {
+    private List<String> getCustomTestResultPaths(ProgrammingExercise programmingExercise) {
         List<String> testResultPaths = new ArrayList<>();
         for (AeolusResult testResultPath : programmingExercise.getWindfile().getResults()) {
             testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/" + testResultPath.getPath());
