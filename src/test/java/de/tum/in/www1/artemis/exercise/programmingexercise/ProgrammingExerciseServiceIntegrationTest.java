@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -293,11 +294,13 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
 
     private ProgrammingExercise importExerciseBase() {
         final var toBeImported = createToBeImported();
+        programmingExercise.setGradingCriteria(new ArrayList<>());
         return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }
 
     private ProgrammingExercise importExerciseBaseWithSubmissionPolicy(SubmissionPolicy submissionPolicy) {
         final var toBeImported = createToBeImportedWithSubmissionPolicy(submissionPolicy);
+        programmingExercise.setGradingCriteria(new ArrayList<>());
         return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }
 
