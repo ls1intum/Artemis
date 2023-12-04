@@ -26,7 +26,7 @@ Follow these steps to create your local cypress instance:
 
 1. Install dependencies
 
-  First head into the cypress folder by using ``cd /src/test/cypress``. Now run ``npm install``.
+  First head into the cypress folder by using ``cd src/test/cypress``. Now run ``npm install``.
 
 2. Customize Cypress settings
 
@@ -52,28 +52,11 @@ Follow these steps to create your local cypress instance:
       "tutorGroupName": "tutors",
       "editorGroupName": "editors",
       "instructorGroupName": "instructors"
+      "createUsers": false
     }
 
   The ``USERID`` part will be automatically replaced by different user ids. These are set within the ``support/users.ts`` file.
-  For a typical local installation the IDs are:
-
-    - studentOne: 1
-    - studentTwo: 2
-    - studentThree: 3
-    - instructor: 16
-    - tutor: 6
-
-  For cypress to use the correct IDs, you have to adjust the code like this:
-
-  .. code-block:: ts
-
-    export const USER_ID = {
-      studentOne: 1,
-      studentTwo: 2,
-      studentThree: 3,
-      instructor: 16,
-      tutor: 6,
-    };
+  By default the users 100-106 will be used by Cypress, if these users do not exist on your instance yet set ``createUsers`` to ``true``.
 
 4. Open Cypress browser
 

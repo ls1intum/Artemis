@@ -23,10 +23,13 @@
                 </div>
             </div>
         </div>
-        <div class="form-group" *ngIf="deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)">
-            <label for="confirm-exercise-name" [ngClass]="warningTextColor" [jhiTranslate]="deleteConfirmationText">Please type in the name to confirm</label>
-            <input id="confirm-exercise-name" type="text" class="form-control" name="confirmExerciseName" [(ngModel)]="confirmEntityName" />
-        </div>
+        <jhi-confirm-entity-name
+            *ngIf="deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)"
+            [confirmationText]="deleteConfirmationText"
+            [entityName]="entityTitle"
+            [(ngModel)]="confirmEntityName"
+            name="confirmEntityName"
+        />
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="submitDisabled">
@@ -36,8 +39,8 @@
             id="delete"
             type="submit"
             [ngClass]="['btn', buttonType]"
-            [style.cursor]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled ? 'not-allowed' : 'pointer'"
-            [disabled]="deleteForm.form.invalid || !areSecurityChecksFulfilled || submitDisabled"
+            [style.cursor]="deleteForm.invalid || submitDisabled ? 'not-allowed' : 'pointer'"
+            [disabled]="deleteForm.invalid || submitDisabled"
             [ngSwitch]="actionType"
         >
             <span *ngIf="submitDisabled"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
