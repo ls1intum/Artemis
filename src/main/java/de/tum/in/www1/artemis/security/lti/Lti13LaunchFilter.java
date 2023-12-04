@@ -24,6 +24,7 @@ import com.google.gson.Gson;
 import de.tum.in.www1.artemis.domain.lti.Claims;
 import de.tum.in.www1.artemis.domain.lti.LtiAuthenticationResponseDTO;
 import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
@@ -110,7 +111,9 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         PrintWriter writer = response.getWriter();
 
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLinkUri);
-        lti13Service.buildLtiResponse(uriBuilder, response);
+        if (SecurityUtils.isAuthenticated()) {
+            lti13Service.buildLtiResponse(uriBuilder, response);
+        }
         LtiAuthenticationResponseDTO jsonResponse = new LtiAuthenticationResponseDTO(uriBuilder.build().toUriString(), ltiIdToken.getTokenValue(), clientRegistrationId);
 
         response.setContentType("application/json");
