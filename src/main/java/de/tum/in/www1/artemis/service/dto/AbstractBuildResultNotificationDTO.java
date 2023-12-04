@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 
@@ -52,7 +51,7 @@ public abstract class AbstractBuildResultNotificationDTO {
 
     public abstract boolean hasLogs();
 
-    public abstract List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage);
+    public abstract List<BuildLogEntry> extractBuildLogs();
 
     /**
      * Gets the build jobs that are part of the build result.
