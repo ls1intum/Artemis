@@ -13,6 +13,7 @@ const DocumentationLinks = {
     Model: 'exercises/modeling/',
     Programming: 'exercises/programming/',
     Text: 'exercises/textual/',
+    Math: 'exercises/math/',
     FileUpload: 'exercises/file-upload/',
     Notifications: 'notifications/',
     Competencies: 'learning-analytics/#id3',

@@ -14,6 +14,7 @@ import { convertDateFromServer } from 'app/utils/date.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MathExercise } from 'app/entities/math-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
@@ -57,6 +58,17 @@ export class CourseExerciseService {
         return this.http
             .get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises/`, { observe: 'response' })
             .pipe(map((res: HttpResponse<TextExercise[]>) => this.processExercisesHttpResponses(res)));
+    }
+
+    /**
+     * returns all math exercises for the course corresponding to courseId
+     * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
+     * @param courseId - the unique identifier of the course
+     */
+    findAllMathExercises(courseId: number): Observable<HttpResponse<MathExercise[]>> {
+        return this.http
+            .get<MathExercise[]>(`${this.resourceUrl}/${courseId}/math-exercises/`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<MathExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
     /**

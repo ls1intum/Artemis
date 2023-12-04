@@ -37,6 +37,7 @@ export enum ExerciseType {
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
+    MATH = 'math',
 }
 
 export type ScoresPerExerciseType = Map<ExerciseType, CourseScores>;

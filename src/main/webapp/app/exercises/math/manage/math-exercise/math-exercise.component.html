@@ -1,0 +1,70 @@
+<div class="table-responsive" *ngIf="mathExercises && filteredMathExercises.length > 0">
+    <table class="table table-striped">
+        <thead>
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                <th *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
+                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(mathExercises)" [ngModel]="allChecked" />
+                </th>
+                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release">Release</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due">Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                <th jhiSortBy="assessmentDueDate"><span jhiTranslate="artemisApp.exercise.assessmentDue">Assessment Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus">Bonus</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely">Included</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                <th jhiSortBy="presentationScoreEnabled" *ngIf="course.presentationScore !== 0">
+                    <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
+                </th>
+                <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories">Categories</span></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody class="markdown-preview">
+            <tr *ngFor="let mathExercise of filteredMathExercises; trackBy: trackId" id="exercise-card-{{ mathExercise.id }}">
+                <td *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
+                    <input class="form-check-input" type="checkbox" (change)="toggleExercise(mathExercise)" [ngModel]="isExerciseSelected(mathExercise)" />
+                </td>
+                <td>
+                    <a *ngIf="mathExercise.isAtLeastTutor; else showId" [routerLink]="['/course-management', course.id, 'math-exercises', mathExercise.id]">{{
+                        mathExercise.id
+                    }}</a>
+                    <ng-template #showId>{{ mathExercise.id }}</ng-template>
+                </td>
+                <td>
+                    <a *ngIf="mathExercise.isAtLeastTutor; else showTitle" [routerLink]="['/course-management', course.id, 'math-exercises', mathExercise.id]">{{
+                        mathExercise.title
+                    }}</a>
+                    <ng-template #showTitle>{{ mathExercise.title }}</ng-template>
+                </td>
+                <td>{{ mathExercise.releaseDate | artemisDate }}</td>
+                <td>{{ mathExercise.dueDate | artemisDate }}</td>
+                <td>{{ mathExercise.assessmentDueDate | artemisDate }}</td>
+                <td>{{ mathExercise.maxPoints }}</td>
+                <td>{{ mathExercise.bonusPoints }}</td>
+                <td>{{ exerciseService.isIncludedInScore(mathExercise) }}</td>
+                <td *ngIf="course.presentationScore !== 0">{{ mathExercise.presentationScoreEnabled }}</td>
+                <td class="d-md-table-cell">
+                    <jhi-exercise-categories [exercise]="mathExercise"></jhi-exercise-categories>
+                </td>
+                <td class="text-end">
+                    <jhi-math-exercise-row-buttons [courseId]="courseId" [exercise]="mathExercise" />
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div *ngIf="selectedExercises.length > 0">
+        <button
+            *ngIf="course.isAtLeastInstructor"
+            jhiDeleteButton
+            [entityTitle]="'Delete All Math Exercises'"
+            deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+            (delete)="deleteMultipleExercises(selectedExercises, mathExerciseService)"
+            [dialogError]="dialogError$"
+            id="delete-all-quiz"
+            class="mb-1"
+        >
+            <fa-icon [icon]="faTimes"></fa-icon>
+        </button>
+    </div>
+</div>

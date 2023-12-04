@@ -1,0 +1,220 @@
+<form name="editForm" role="form" novalidate #editForm="ngForm">
+    <div class="d-flex align-items-center">
+        <h4 *ngIf="!mathExercise.id" id="jhi-math-exercise-heading-create" jhiTranslate="artemisApp.mathExercise.home.createLabel">Create a new Math Exercise</h4>
+        <h4 *ngIf="!isImport && mathExercise.id" id="jhi-math-exercise-heading-edit" jhiTranslate="artemisApp.mathExercise.home.editLabel">Edit Math Exercise</h4>
+        <h4 *ngIf="isImport" id="jhi-math-exercise-heading-import" jhiTranslate="artemisApp.mathExercise.home.importLabel">Import Math Exercise</h4>
+        <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+    </div>
+    <div>
+        <div class="form-group" [hidden]="isImport || !mathExercise.id">
+            <label for="id" jhiTranslate="global.field.id">ID</label>
+            <input type="text" class="form-control" id="id" name="id" [(ngModel)]="mathExercise.id" readonly />
+        </div>
+        <jhi-exercise-title-channel-name
+            [exercise]="mathExercise"
+            [course]="mathExercise.course"
+            [minTitleLength]="3"
+            [isImport]="isImport"
+            [isExamMode]="isExamMode"
+        ></jhi-exercise-title-channel-name>
+        <div *ngIf="!isExamMode" class="form-group position-relative">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
+            <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
+            <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
+            <div>
+                <jhi-difficulty-picker [exercise]="mathExercise"></jhi-difficulty-picker>
+            </div>
+        </div>
+        <jhi-team-config-form-group class="form-element" [exercise]="mathExercise" [isImport]="isImport"></jhi-team-config-form-group>
+        <div class="d-flex" *ngIf="!isExamMode">
+            <div class="form-group flex-grow-1">
+                <jhi-date-time-picker
+                    class="form-element"
+                    id="pick-releaseDate"
+                    labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
+                    [(ngModel)]="mathExercise.releaseDate"
+                    (valueChange)="validateDate()"
+                    [error]="false"
+                    name="releaseDate"
+                ></jhi-date-time-picker>
+            </div>
+            <div class="form-group flex-grow-1 ms-3">
+                <jhi-date-time-picker
+                    class="form-element"
+                    id="pick-startDate"
+                    name="startDate"
+                    [error]="!!mathExercise.startDateError"
+                    labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
+                    (valueChange)="validateDate()"
+                    [(ngModel)]="mathExercise.startDate"
+                ></jhi-date-time-picker>
+                <span *ngIf="mathExercise.startDateError" class="invalid-feedback">{{ 'artemisApp.exercise.startDateError' | artemisTranslate }}</span>
+            </div>
+        </div>
+        <div class="d-flex" *ngIf="!isExamMode">
+            <div class="form-group flex-grow-1">
+                <jhi-date-time-picker
+                    class="form-element"
+                    id="pick-dueDate"
+                    name="dueDate"
+                    [error]="!!mathExercise.dueDateError"
+                    labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
+                    (valueChange)="validateDate()"
+                    [(ngModel)]="mathExercise.dueDate"
+                ></jhi-date-time-picker>
+                <span *ngIf="mathExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
+            </div>
+            <div class="form-group flex-grow-1 ms-3">
+                <jhi-date-time-picker
+                    class="form-element"
+                    id="pick-assessmentDueDate"
+                    name="assessmentDueDate"
+                    [error]="!!mathExercise.assessmentDueDateError"
+                    labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
+                    (valueChange)="validateDate()"
+                    [(ngModel)]="mathExercise.assessmentDueDate"
+                ></jhi-date-time-picker>
+                <span *ngIf="mathExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScore' + (mathExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate }}</label>
+            <div>
+                <jhi-included-in-overall-score-picker
+                    [(includedInOverallScore)]="mathExercise.includedInOverallScore"
+                    (includedInOverallScoreChange)="validateDate()"
+                    [allowNotIncluded]="!isExamMode"
+                ></jhi-included-in-overall-score-picker>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.points" for="field_points">Points</label>
+                    <input
+                        required
+                        type="number"
+                        class="form-control"
+                        [customMin]="1"
+                        [customMax]="9999"
+                        name="points"
+                        #points="ngModel"
+                        id="field_points"
+                        [(ngModel)]="mathExercise.maxPoints"
+                    />
+                    <div *ngIf="points?.invalid && (points?.dirty || points?.touched) && points?.errors" class="alert alert-danger">
+                        {{ 'artemisApp.exercise.pointsError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="form-group" [hidden]="mathExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints">Bonus Points</label>
+                    <input
+                        type="number"
+                        [required]="mathExercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY"
+                        class="form-control"
+                        [customMin]="0"
+                        [customMax]="9999"
+                        name="bonusPoints"
+                        id="field_bonusPoints"
+                        [(ngModel)]="mathExercise.bonusPoints"
+                        #bonusPoints="ngModel"
+                    />
+                    <div
+                        *ngIf="bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors"
+                        class="alert alert-danger"
+                        [hidden]="mathExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                    >
+                        {{ 'artemisApp.exercise.bonusPointsError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="form-group" *ngIf="(isAthenaEnabled$ | async) && !isExamMode">
+            <div class="form-check custom-control custom-checkbox">
+                <input
+                    type="checkbox"
+                    id="feedbackSuggestionsEnabled"
+                    [ngModel]="mathExercise.feedbackSuggestionsEnabled"
+                    (ngModelChange)="mathExercise.feedbackSuggestionsEnabled = !!$event"
+                    class="form-check-input custom-control-input"
+                    name="feedbackSuggestionsEnabled"
+                />
+                <label class="form-check-label custom-control-label" for="feedbackSuggestionsEnabled" jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"></label>
+                <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'"></jhi-help-icon>
+            </div>
+        </div>
+        <jhi-exercise-update-plagiarism *ngIf="!isExamMode" [exercise]="mathExercise"></jhi-exercise-update-plagiarism>
+        <jhi-presentation-score-checkbox [exercise]="mathExercise"></jhi-presentation-score-checkbox>
+        <div class="form-group">
+            <label jhiTranslate="artemisApp.exercise.problemStatement" for="problemStatement">Problem Statement</label>
+            <jhi-markdown-editor
+                id="problemStatement"
+                class="markdown-editor"
+                [domainCommands]="domainCommandsProblemStatement"
+                [(markdown)]="mathExercise.problemStatement"
+                [editorMode]="EditorMode.LATEX"
+            ></jhi-markdown-editor>
+        </div>
+        <!--        <div class='form-group'>-->
+        <!--            <label jhiTranslate='artemisApp.exercise.exampleSolution' for='exampleSolution'>Example Solution</label>-->
+        <!--            <jhi-markdown-editor-->
+        <!--                id='exampleSolution'-->
+        <!--                class='markdown-editor'-->
+        <!--                [domainCommands]='domainCommandsSampleSolution'-->
+        <!--                [(markdown)]='mathExercise.exampleSolution'-->
+        <!--                [editorMode]='EditorMode.LATEX'-->
+        <!--            ></jhi-markdown-editor>-->
+        <!--        </div>-->
+        <div class="form-group" *ngIf="!isExamMode">
+            <jhi-date-time-picker
+                class="form-element"
+                name="exampleSolutionPublicationDate"
+                labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
+                [(ngModel)]="mathExercise.exampleSolutionPublicationDate"
+                [error]="mathExercise.exampleSolutionPublicationDateError!"
+                (valueChange)="validateDate()"
+            ></jhi-date-time-picker>
+            <span *ngIf="mathExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
+                'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
+            }}</span>
+        </div>
+        <div class="form-group" *ngIf="!isExamMode">
+            <jhi-competency-selection
+                id="competencies"
+                [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
+                [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
+                [(ngModel)]="mathExercise.competencies"
+                name="competencies"
+            ></jhi-competency-selection>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="mathExercise"></jhi-grading-instructions-details>
+        </div>
+        <jhi-exercise-update-notification [exercise]="mathExercise" [isImport]="isImport" [(notificationText)]="notificationText"></jhi-exercise-update-notification>
+    </div>
+
+    <div>
+        <button type="button" class="btn btn-secondary" (click)="previousState()">
+            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+
+        <button
+            type="submit"
+            (click)="save()"
+            class="btn btn-primary"
+            id="submit-entity"
+            [disabled]="editForm.form.invalid || isSaving || mathExercise.dueDateError || mathExercise.assessmentDueDateError || mathExercise.exampleSolutionPublicationDateError"
+        >
+            <fa-icon [icon]="faSave"></fa-icon>
+            <span *ngIf="isImport" jhiTranslate="artemisApp.mathExercise.submitButton.import">Import</span>
+            <span *ngIf="!isImport && mathExercise.id" jhiTranslate="artemisApp.mathExercise.submitButton.save">Save</span>
+            <span *ngIf="!isImport && !mathExercise.id" jhiTranslate="artemisApp.mathExercise.submitButton.create">Create</span>
+        </button>
+    </div>
+</form>
