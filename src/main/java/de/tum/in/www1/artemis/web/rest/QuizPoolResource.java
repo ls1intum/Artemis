@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -83,6 +84,9 @@ public class QuizPoolResource {
 
         validateCourseRole(courseId);
         QuizPool quizPool = quizPoolService.findWithQuizQuestionsByExamId(examId);
+        if (quizPool == null) {
+            throw new EntityNotFoundException(ENTITY_NAME, "examId=" + examId);
+        }
 
         return ResponseEntity.ok().body(quizPool);
     }
