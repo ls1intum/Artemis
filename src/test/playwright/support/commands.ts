@@ -14,11 +14,21 @@ export class Commands {
             .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt'));
         if (!jwtCookie) {
             await new Promise((resolve, reject) => {
-                console.log('Login URL: ' + process.env.baseURL + '/' + BASE_API + 'public/authenticate');
+                const fullUrl = `${process.env.baseURL}/${BASE_API}public/authenticate`;
+                console.log('Login URL:', fullUrl);
+
+                const reqData = JSON.stringify({
+                    username,
+                    password,
+                    rememberMe: true,
+                });
+
+                console.log('Request Data:', reqData);
                 const req = https.request(
                     {
                         hostname: process.env.baseURL,
-                        path: BASE_API + 'public/authenticate',
+                        // port: new URL(process.env.baseURL).port || 8080,
+                        path: `/${BASE_API}public/authenticate`,
                         method: 'POST',
                         agent: new https.Agent({
                             ca: fs.readFileSync('./certs/rootCA.pem'),
@@ -27,46 +37,66 @@ export class Commands {
                         }),
                         headers: {
                             'Content-Type': 'application/json',
+                            'User-Agent': 'Playwright',
                         },
                     },
                     (res) => {
-                        let data = '';
+                        let data = '',
+                            jwtCookie = '';
                         res.on('data', (chunk) => (data += chunk));
-                        res.on('end', () => {
+                        res.on('end', async () => {
                             console.log('Response:', data);
-
                             expect(res.statusCode).toBe(200);
+                            console.log('Status code' + res.statusCode);
+                            const setCookieHeader = res.headers['set-cookie'];
+                            if (setCookieHeader) {
+                                setCookieHeader.forEach((cookie) => {
+                                    if (cookie.startsWith('jwt=')) {
+                                        jwtCookie = cookie.split(';')[0];
+                                    }
+                                });
+                            }
+
+                            if (jwtCookie) {
+                                console.log('Manually setting cookie: ' + jwtCookie);
+                                const [name, value] = jwtCookie.split('=');
+                                console.log('Manually setting cookie: ' + name + ' ' + value);
+                                await page.context().addCookies([
+                                    {
+                                        name,
+                                        value,
+                                        url: 'http://' + process.env.baseURL + '/',
+                                    },
+                                ]);
+                            }
+                            resolve(data);
                         });
                     },
                 );
 
-                console.log(
-                    'Request: ' +
-                        JSON.stringify({
-                            username,
-                            password,
-                            rememberMe: true,
-                        }),
-                );
-                req.on('error', reject);
-                req.write(
-                    JSON.stringify({
-                        username,
-                        password,
-                        rememberMe: true,
-                    }),
-                );
+                req.on('error', (e) => {
+                    console.error(`Request error: ${e.message}`);
+                    reject(e);
+                });
+                req.write(reqData);
                 req.end();
             });
+
+            console.log('Checking cookies...');
 
             const newJwtCookie = await page
                 .context()
                 .cookies()
                 .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt'));
+
+            console.log('Cookie: ' + newJwtCookie);
+            console.log('Token is defined');
             if (!newJwtCookie) {
                 throw new Error('Login failed: JWT cookie not found after login');
             }
         }
+
+        console.log('Navigating to page...');
 
         if (url) {
             await page.goto(url);

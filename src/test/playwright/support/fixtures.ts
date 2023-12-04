@@ -71,7 +71,7 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
                         firstTry = false;
                         return request(options, handler);
                     }
-                    console.error(`Unable to call ${options.uri}`, err.code, err);
+                    // console.error(`Unable to call ${options.uri}`, err.code, err);
                     return route.abort();
                 } else {
                     return route.fulfill({
