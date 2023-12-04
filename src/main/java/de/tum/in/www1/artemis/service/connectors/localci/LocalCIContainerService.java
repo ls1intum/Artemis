@@ -338,6 +338,7 @@ public class LocalCIContainerService {
     public Path createBuildScript(ProgrammingExerciseParticipation participation) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
+        boolean hasStaticCodeAnalysis = programmingExercise.isStaticCodeAnalysisEnabled();
 
         List<ScriptAction> actions;
 
@@ -372,7 +373,7 @@ public class LocalCIContainerService {
         else {
             // Windfile actions are not defined, use default build script
             switch (programmingExercise.getProgrammingLanguage()) {
-                case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
+                case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns, hasStaticCodeAnalysis);
                 case PYTHON -> scriptForPython(buildScript);
                 default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
             }
@@ -388,7 +389,7 @@ public class LocalCIContainerService {
         return buildScriptPath;
     }
 
-    private void scriptForJavaKotlin(ProgrammingExercise programmingExercise, StringBuilder buildScript, boolean hasSequentialTestRuns) {
+    private void scriptForJavaKotlin(ProgrammingExercise programmingExercise, StringBuilder buildScript, boolean hasSequentialTestRuns, boolean hasStaticCodeAnalysis) {
         boolean isMaven = ProjectType.isMavenProject(programmingExercise.getProjectType());
 
         if (hasSequentialTestRuns) {
@@ -412,6 +413,12 @@ public class LocalCIContainerService {
                             ./gradlew behaviorTests
                         fi
                         """);
+                if (hasStaticCodeAnalysis) {
+                    buildScript.append("""
+                            chmod +x gradlew
+                            ./gradlew check -x test
+                            """);
+                }
             }
         }
         else {
@@ -425,12 +432,14 @@ public class LocalCIContainerService {
                         chmod +x gradlew
                         ./gradlew clean test
                         """);
+                if (hasStaticCodeAnalysis) {
+                    buildScript.append("""
+                            chmod +x gradlew
+                            ./gradlew check -x test
+                             """);
+                }
             }
         }
-        buildScript.append("""
-                chmod +x gradlew
-                ./gradlew check -x test
-                """);
     }
 
     private void scriptForPython(StringBuilder buildScript) {
