@@ -6,4 +6,6 @@ export interface ExamExercise {
     type?: ExerciseType;
     studentParticipations?: StudentParticipation[];
     navigationTitle?: string;
+    overviewTitle?: string;
+    maxPoints?: number;
 }

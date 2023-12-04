@@ -88,6 +88,7 @@ describe('ExamUtils', () => {
                         },
                     ],
                     navigationTitle: 'Quiz',
+                    overviewTitle: 'Quiz Exam',
                     exerciseGroup: exerciseGroup,
                     title: 'Quiz Exam',
                     includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,

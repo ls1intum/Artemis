@@ -106,6 +106,7 @@ export abstract class Exercise implements BaseEntity, ExamExercise {
     public exerciseGroup?: ExerciseGroup;
     public competencies?: Competency[];
     public navigationTitle?: string;
+    public overviewTitle?: string;
     public plagiarismDetectionConfig?: PlagiarismDetectionConfig = defaultPlagiarismDetectionConfig;
 
     // transient objects which might not be set

@@ -27,7 +27,7 @@
             ></jhi-exam-navigation-bar>
             <!-- exercises -->
             <div [hidden]="activePageIndex !== -1">
-                <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)"></jhi-exam-exercise-overview-page>
+                <jhi-exam-exercise-overview-page [exercises]="examExercises" (onPageChanged)="onPageChange($event)"></jhi-exam-exercise-overview-page>
             </div>
             <ng-container *ngFor="let exercise of examExercises; let i = index">
                 <ng-container *ngIf="exercise && exercise.studentParticipations && exercise.studentParticipations[0]">

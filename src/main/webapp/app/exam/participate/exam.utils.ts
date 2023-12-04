@@ -101,6 +101,7 @@ export function getExamExercises(studentExam: StudentExam) {
     if (studentExam.exercises) {
         examExercises = studentExam.exercises.map((exercise: Exercise, index: number) => {
             exercise.navigationTitle = `${index + 1}`;
+            exercise.overviewTitle = exercise.exerciseGroup?.title;
             return exercise;
         });
     }

@@ -12,6 +12,7 @@ export class QuizExamExercise implements ExamExercise, QuizConfiguration {
     public type?: ExerciseType;
     public studentParticipations?: StudentParticipation[];
     public navigationTitle?: string;
+    public overviewTitle?: string;
     public exerciseGroup?: ExerciseGroup;
     public quizQuestions?: QuizQuestion[];
     public randomizeQuestionOrder?: boolean;
@@ -33,6 +34,7 @@ export class QuizExamExercise implements ExamExercise, QuizConfiguration {
         this.navigationTitle = 'Quiz';
         this.exerciseGroup = new ExerciseGroup();
         this.exerciseGroup.title = 'Quiz Exam';
+        this.overviewTitle = 'Quiz Exam';
         this.title = 'Quiz Exam';
         this.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
     }
