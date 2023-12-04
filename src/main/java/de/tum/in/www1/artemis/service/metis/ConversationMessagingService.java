@@ -154,13 +154,13 @@ public class ConversationMessagingService extends PostingService {
             log.debug("      broadcastForPost DONE");
 
             recipientSummaries = getNotificationRecipients(conversation).collect(Collectors.toSet());
-            log.debug("      getWebSocketRecipients DONE");
+            log.debug("      getNotificationRecipients DONE");
             recipientUsers = mapToUsers(recipientSummaries);
         }
         else {
             // In all other cases we need the list of participants to send the WS messages to the correct topics. Hence, the db query has to be made before sending WS messages
             recipientSummaries = getNotificationRecipients(conversation).collect(Collectors.toSet());
-            log.debug("      getWebSocketRecipients DONE");
+            log.debug("      getNotificationRecipients DONE");
             recipientUsers = mapToUsers(recipientSummaries);
 
             broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, recipientUsers);
@@ -185,9 +185,9 @@ public class ConversationMessagingService extends PostingService {
         Conversation conversation = createdConversationMessage.completeConversation();
         Course course = conversation.getCourse();
 
-        Set<User> mentionedUserLoginsAndIds = createdConversationMessage.mentionedUsers().stream()
+        Set<User> mentionedUsers = createdConversationMessage.mentionedUsers().stream()
                 .map(user -> new User(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getLangKey(), user.getEmail())).collect(Collectors.toSet());
-        recipientUsers.addAll(mentionedUserLoginsAndIds);
+        recipientUsers.addAll(mentionedUsers);
 
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
@@ -208,8 +208,8 @@ public class ConversationMessagingService extends PostingService {
 
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
-        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, recipientSummaries, mentionedUserLoginsAndIds);
-        conversationNotificationService.notifyAboutNewMessage(createdMessage, conversation, notificationRecipients, course, mentionedUserLoginsAndIds);
+        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, recipientSummaries, mentionedUsers);
+        conversationNotificationService.notifyAboutNewMessage(createdMessage, conversation, notificationRecipients, course, mentionedUsers);
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
 
         if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
