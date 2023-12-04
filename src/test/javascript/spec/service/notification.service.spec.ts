@@ -5,7 +5,14 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateTestingModule } from '../helpers/mocks/service/mock-translate.service';
-import { CONVERSATION_CREATE_GROUP_CHAT_TITLE, DATA_EXPORT_CREATED_TITLE, DATA_EXPORT_FAILED_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
+import {
+    CONVERSATION_CREATE_GROUP_CHAT_TITLE,
+    DATA_EXPORT_CREATED_TITLE,
+    DATA_EXPORT_FAILED_TITLE,
+    NEW_MESSAGE_TITLE,
+    NEW_REPLY_FOR_EXAM_POST_TITLE,
+    Notification,
+} from 'app/entities/notification.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -88,6 +95,14 @@ describe('Notification Service', () => {
         generatedNotification.notificationDate = dayjs();
         return generatedNotification;
     };
+
+    const generateConversationReplyNotification = () => {
+        const generatedNotification = { title: NEW_REPLY_FOR_EXAM_POST_TITLE, text: 'This is a simple new reply message notification' } as Notification;
+        generatedNotification.target = JSON.stringify({ message: 'new-message', entity: 'message', mainPage: 'courses', id: 10, course: course.id, conversation: conversation.id });
+        generatedNotification.notificationDate = dayjs();
+        return generatedNotification;
+    };
+
     const generateDataExportCreationSuccessNotification = () => {
         const generatedNotification = { title: DATA_EXPORT_CREATED_TITLE, text: 'Data export successfully created' } as Notification;
         generatedNotification.target = JSON.stringify({ entity: 'data-exports', mainPage: 'privacy', id: 1 });
@@ -197,6 +212,14 @@ describe('Notification Service', () => {
             const navigateToNotificationTarget = jest.spyOn(notificationService, 'navigateToNotificationTarget');
             jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
             notificationService.interpretNotification(conversationCreationNotification);
+            expect(router.navigate).toHaveBeenCalledOnce();
+            expect(navigateToNotificationTarget).toHaveBeenCalledOnce();
+        });
+
+        it('should navigate to new message reply notification target', () => {
+            const navigateToNotificationTarget = jest.spyOn(notificationService, 'navigateToNotificationTarget');
+            jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
+            notificationService.interpretNotification(generateConversationReplyNotification());
             expect(router.navigate).toHaveBeenCalledOnce();
             expect(navigateToNotificationTarget).toHaveBeenCalledOnce();
         });
