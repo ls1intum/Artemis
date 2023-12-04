@@ -58,10 +58,11 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
 
         // Initialize targetLink as an empty string here to ensure it has a value even if an exception is caught later.
         String targetLink = "";
+        OidcIdToken ltiIdToken = null;
         try {
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
 
-            OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
+            ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
 
             targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
 
@@ -76,7 +77,9 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         catch (LtiEmailAlreadyInUseException ex) {
             // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
             // We need targetLink to redirect user on the client-side after successful authentication
-            response.setHeader("TargetLinkUri", targetLink);
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLink);
+            lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken);
+            response.setHeader("TargetLinkUri", uriBuilder.build().toUriString());
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "LTI 1.3 user authentication failed");
         }
     }
