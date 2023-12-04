@@ -1,0 +1,25 @@
+name: Code Review GPT
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  pull_request_target:
+    types: [ready_for_review]
+
+jobs:
+  run_code_review:
+    if: >
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ready for review') && !github.event.pull_request.draft) ||
+      github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Code Review GPT
+        uses: mattzcarey/code-review-gpt@v0.1.5
+        with:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          MODEL: 'gpt-3.5-turbo'
+          GITHUB_TOKEN: ${{ github.token }}
