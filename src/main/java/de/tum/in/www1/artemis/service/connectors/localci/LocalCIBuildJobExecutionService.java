@@ -314,7 +314,9 @@ public class LocalCIBuildJobExecutionService {
             }
         }
         if (programmingExercise.isStaticCodeAnalysisEnabled()) {
-            testResultPaths.add("/testing-dir/target");
+            testResultPaths.add("/testing-dir/target/spotbugsXml.xml");
+            testResultPaths.add("/testing-dir/target/checkstyle-result.xml");
+            testResultPaths.add("/testing-dir/target/pmd.xml");
         }
         return testResultPaths;
     }

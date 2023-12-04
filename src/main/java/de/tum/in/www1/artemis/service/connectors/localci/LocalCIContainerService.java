@@ -392,8 +392,8 @@ public class LocalCIContainerService {
     private void scriptForJavaKotlin(ProgrammingExercise programmingExercise, StringBuilder buildScript, boolean hasSequentialTestRuns, boolean hasStaticCodeAnalysis) {
         boolean isMaven = ProjectType.isMavenProject(programmingExercise.getProjectType());
 
-        if (hasSequentialTestRuns) {
-            if (isMaven) {
+        if (isMaven) {
+            if (hasSequentialTestRuns) {
                 buildScript.append("""
                         cd structural
                         mvn clean test
@@ -407,24 +407,25 @@ public class LocalCIContainerService {
             }
             else {
                 buildScript.append("""
+                        mvn clean test
+                        """);
+            }
+            if (hasStaticCodeAnalysis) {
+                buildScript.append("""
+                        mvn checkstyle:checkstyle
+                        mvn pmd:pmd
+                        mvn spotbugs:spotbugs
+                        """);
+            }
+        }
+        else {
+            if (hasSequentialTestRuns) {
+                buildScript.append("""
                         chmod +x gradlew
                         ./gradlew clean structuralTests
                         if [ $? -eq 0 ]; then
                             ./gradlew behaviorTests
                         fi
-                        """);
-                if (hasStaticCodeAnalysis) {
-                    buildScript.append("""
-                            chmod +x gradlew
-                            ./gradlew check -x test
-                            """);
-                }
-            }
-        }
-        else {
-            if (isMaven) {
-                buildScript.append("""
-                        mvn clean test
                         """);
             }
             else {
@@ -432,12 +433,11 @@ public class LocalCIContainerService {
                         chmod +x gradlew
                         ./gradlew clean test
                         """);
-                if (hasStaticCodeAnalysis) {
-                    buildScript.append("""
-                            chmod +x gradlew
-                            ./gradlew check -x test
-                             """);
-                }
+            }
+            if (hasStaticCodeAnalysis) {
+                buildScript.append("""
+                        ./gradlew check -x test
+                        """);
             }
         }
     }
