@@ -125,7 +125,7 @@ public class BambooBuildPlanService {
         String assignedKey = null;
 
         if (aeolusBuildPlanService.isPresent()) {
-            assignedKey = createCustomBuildPlanForExercise(programmingExercise, projectKey + "-" + planKey, planDescription, repositoryUrl, testRepositoryUrl,
+            assignedKey = createCustomAeolusBuildPlanForExercise(programmingExercise, projectKey + "-" + planKey, planDescription, repositoryUrl, testRepositoryUrl,
                     solutionRepositoryUrl, auxiliaryRepositories);
         }
 
@@ -582,7 +582,7 @@ public class BambooBuildPlanService {
      * @param auxiliaryRepositories List of auxiliary repositories to be included in the build plan
      * @return the key of the created build plan, or null if it could not be created
      */
-    private String createCustomBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, String planDescription, VcsRepositoryUrl repositoryUrl,
+    private String createCustomAeolusBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, String planDescription, VcsRepositoryUrl repositoryUrl,
             VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl, List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories)
             throws ContinuousIntegrationBuildPlanException {
         if (aeolusBuildPlanService.isEmpty()) {
@@ -593,55 +593,30 @@ public class BambooBuildPlanService {
             return null;
         }
         String assignedKey = null;
-        if (programmingExercise.getBuildPlanConfiguration() != null) {
-            try {
-                assignedKey = createCustomBuildPlanWithAeolus(buildPlanId, programmingExercise, planDescription, repositoryUrl, testRepositoryUrl, solutionRepositoryUrl,
-                        auxiliaryRepositories);
+        try {
+            Windfile windfile = programmingExercise.getWindfile();
+            Map<String, AeolusRepository> repositories = createRepositoryMapForAeolus(programmingExercise.getProgrammingLanguage(), programmingExercise.getBranch(),
+                    programmingExercise.getCheckoutSolutionRepository(), repositoryUrl, testRepositoryUrl, solutionRepositoryUrl, auxiliaryRepositories);
+
+            String resultHookUrl = artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH;
+            windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.gitUser, resultHookUrl, planDescription, repositories);
+            String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(windfile, AeolusTarget.BAMBOO);
+            /*
+             * Aeolus returns the key of the build plan in the format "PROJECT-BUILDPLANKEY". To stay consistent with the
+             * default build plan creation, we return only the build plan key.
+             */
+            if (generatedKey != null && generatedKey.contains("-")) {
+                assignedKey = generatedKey.split("-")[1];
             }
-            catch (ContinuousIntegrationBuildPlanException e) {
-                LOGGER.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
-                        + ", will create default build plan", e);
+            else {
+                throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle());
             }
+        }
+        catch (ContinuousIntegrationBuildPlanException e) {
+            LOGGER.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
+                    + ", will create default build plan", e);
         }
         return assignedKey;
-    }
-
-    /**
-     * Tries to create a custom Build Plan for a Programming Exercise, if the build plan could not be created, null is returned.
-     *
-     * @param programmingExercise   the programming exercise for which to create the build plan
-     * @param buildPlanId           the id of the build plan
-     * @param planDescription       the description of the build plan
-     * @param repositoryUrl         the url of the assignment repository
-     * @param testRepositoryUrl     the url of the test repository
-     * @param solutionRepositoryUrl the url of the solution repository
-     * @param auxiliaryRepositories List of auxiliary repositories to be included in the build plan
-     * @return the key of the created build plan, or null if it could not be created
-     * @throws ContinuousIntegrationBuildPlanException if the build plan could not be created
-     */
-    private String createCustomBuildPlanWithAeolus(String buildPlanId, ProgrammingExercise programmingExercise, String planDescription, VcsRepositoryUrl repositoryUrl,
-            VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl, List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories)
-            throws ContinuousIntegrationBuildPlanException {
-        if (aeolusBuildPlanService.isEmpty()) {
-            return null;
-        }
-        Windfile windfile = programmingExercise.getWindfile();
-        Map<String, AeolusRepository> repositories = createRepositoryMapForAeolus(programmingExercise.getProgrammingLanguage(), programmingExercise.getBranch(),
-                programmingExercise.getCheckoutSolutionRepository(), repositoryUrl, testRepositoryUrl, solutionRepositoryUrl, auxiliaryRepositories);
-
-        String resultHookUrl = artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH;
-        windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.gitUser, resultHookUrl, planDescription, repositories);
-        String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(windfile, AeolusTarget.BAMBOO);
-        /*
-         * Aeolus returns the key of the build plan in the format "PROJECT-BUILDPLANKEY". To stay consistent with the
-         * default build plan creation, we return only the build plan key.
-         */
-        if (generatedKey != null && generatedKey.contains("-")) {
-            return generatedKey.split("-")[1];
-        }
-        else {
-            throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle());
-        }
     }
 
     /**
