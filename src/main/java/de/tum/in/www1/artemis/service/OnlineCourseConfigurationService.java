@@ -58,16 +58,14 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
      * Creates an initial configuration for online courses with default and random values
      *
      * @param course the online course we create a configuration for
-     * @return the created online course configuration
      */
-    public OnlineCourseConfiguration createOnlineCourseConfiguration(Course course) {
+    public void createOnlineCourseConfiguration(Course course) {
         OnlineCourseConfiguration ocConfiguration = new OnlineCourseConfiguration();
         ocConfiguration.setCourse(course);
         ocConfiguration.setLtiKey(RandomStringUtils.random(12, true, true));
         ocConfiguration.setLtiSecret(RandomStringUtils.random(12, true, true));
         ocConfiguration.setUserPrefix(course.getShortName());
         course.setOnlineCourseConfiguration(ocConfiguration);
-        return ocConfiguration;
     }
 
     /**
@@ -86,8 +84,8 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
         if (ocConfiguration.getLtiPlatformConfiguration() != null) {
             Optional<LtiPlatformConfiguration> existingLtiPlatformConfiguration = ltiPlatformConfigurationRepository
                     .findByRegistrationId(ocConfiguration.getLtiPlatformConfiguration().getRegistrationId());
-            if (!existingLtiPlatformConfiguration.isPresent()
-                    && !Objects.equals(existingLtiPlatformConfiguration.get().getId(), ocConfiguration.getLtiPlatformConfiguration().getId())) {
+            if (existingLtiPlatformConfiguration.isEmpty()
+                    || !Objects.equals(existingLtiPlatformConfiguration.get().getId(), ocConfiguration.getLtiPlatformConfiguration().getId())) {
                 throw new BadRequestAlertException("No platform registration found", ENTITY_NAME, "invalidRegistrationId");
             }
         }
@@ -123,7 +121,6 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
 
     /**
      * Associates an online course configuration with an LTI platform configuration.
-     *
      * If the provided online course configuration has a linked LTI platform configuration,
      * it is added to the platform's list of online course configurations.
      *

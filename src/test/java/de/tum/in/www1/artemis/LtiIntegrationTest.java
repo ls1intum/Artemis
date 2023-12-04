@@ -10,7 +10,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -311,7 +310,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
         requestBody = replaceEmail(requestBody, user.getEmail());
 
-        var nowIn20Minutes = ZonedDateTime.now().plus(20, ChronoUnit.MINUTES);
+        var nowIn20Minutes = ZonedDateTime.now().plusMinutes(20);
 
         // Mock that student1 already exists since 20 min
         doReturn(nowIn20Minutes).when(timeService).now();
@@ -420,8 +419,13 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @WithMockUser(username = TEST_PREFIX + "student3")
     void testRepositoryMethods() {
         assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> ltiPlatformConfigurationRepository.findByIdElseThrow(Long.MAX_VALUE));
-
         assertThat(ltiPlatformConfigurationRepository.findByRegistrationId("")).isEqualTo(Optional.empty());
+
+        LtiPlatformConfiguration platformConfiguration = new LtiPlatformConfiguration();
+        fillLtiPlatformConfig(platformConfiguration);
+        ltiPlatformConfigurationRepository.save(platformConfiguration);
+        assertThat(ltiPlatformConfigurationRepository.findByRegistrationId(platformConfiguration.getRegistrationId())).isEqualTo(Optional.of(platformConfiguration));
+
     }
 
     private void assertParametersExistingStudent(MultiValueMap<String, String> parameters) {
