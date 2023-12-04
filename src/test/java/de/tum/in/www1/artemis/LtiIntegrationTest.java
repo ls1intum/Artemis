@@ -354,4 +354,5 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         assertThat(parameters.getFirst("initialize")).isNotNull();
         assertThat(parameters.getFirst("ltiSuccessLoginRequired")).isNull();
     }
+
 }
