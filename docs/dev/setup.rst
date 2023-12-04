@@ -77,3 +77,4 @@ following dependencies/tools on your machine:
    setup/localci-localvc
    setup/common-problems
    setup/docker-compose
+   setup/local-database-tests

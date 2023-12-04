@@ -32,17 +32,17 @@ done
 jira_user_url="http://localhost:$jira_external_port/rest/api/latest/user"
 jira_group_add_url="http://localhost:$jira_external_port/rest/api/2/group/user?groupname="
 
-for i in {1..20}; do
+
+create_user_and_add_to_group() {
     # User 1-5 are students, 6-10 are tutors, 11-15 are editors and 16-20 are instructors
+    # For the cypress tests students: 100,102,104,(105),106; tutors: 101; instructors: 103
     group="students"
-    if ((i > 5)); then
-      group="tutors"
-    fi
-    if ((i > 10)); then
-      group="editors"
-    fi
-    if ((i > 15)); then
+    if ((i > 15)) && ((i < 100 || i == 103)); then
       group="instructors"
+    elif ((i > 10)) && ((i < 100)); then
+      group="editors"
+    elif ((i > 5)) && ((i < 100 || i == 101)); then
+      group="tutors"
     fi
 
     # Create user
@@ -72,4 +72,11 @@ for i in {1..20}; do
                 \"name\": \"artemis_test_user_$i\"
             }" \
     "$jira_group_add_url$group"
+}
+
+for i in {1..20}; do
+    create_user_and_add_to_group "$i"
+done
+for i in {100..106}; do
+    create_user_and_add_to_group "$i"
 done
