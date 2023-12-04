@@ -10,12 +10,12 @@ Orion
 Overview
 --------
 
-The `Orion plugin <https://github.com/ls1intum/Orion>`_ for `IntelliJ <https://www.jetbrains.com/idea/>`_ supports students, teaching assistants (tutors), and instructors with the conduction of programming exercises. It integrates Artemis in IntelliJ and automates the download (clone) and upload (push) of exercises.
+The `Orion plugin <https://github.com/ls1intum/Orion>`_ for `Jetbrains IDEs <https://www.jetbrains.com/>`_ supports students, teaching assistants (tutors), and instructors with the conduction of programming exercises. It integrates Artemis in a JetBrains IDE and automates the download (clone) and upload (push) of exercises.
 
 Installation
 ^^^^^^^^^^^^
 
-Orion is installed like every other plugin via IntelliJ's marketplace. Alternatively, although usually not needed, it is possible to install builds directly from `Orion's GitHub repository <https://github.com/ls1intum/Orion>`_. The installation process is described in the `readme <https://github.com/ls1intum/Orion#testing-of-pull-requests>`_.
+Orion is installed like every other plugin via Jetbrains's marketplace. Alternatively, although usually not needed, it is possible to install builds directly from `Orion's GitHub repository <https://github.com/ls1intum/Orion>`_. The installation process is described in the `readme <https://github.com/ls1intum/Orion#testing-of-pull-requests>`_. Orion works with all JetBrains IDEs but some features might not be available with certain IDEs and Programming languages.
 
 General Usage
 ^^^^^^^^^^^^^
@@ -91,7 +91,8 @@ Tutors can assess programming exercises via Orion by performing the following st
  5. Opening a file in either ``assignment`` or ``studentSubmission`` opens the editor with two available modes that can be switched using the tabs at the bottom of the editor.
 
    - In edit mode ("Text" tab), the files can be edited regularly, e.g. to try out fixes.
-   - In assessment mode ("Assessment" tab), the student's submission without the local changes is displayed in read-only mode. In this mode, assessment comments can be added, similar to the assessment in Artemis. Click the plus on the gutter on the left of the editor to add a new comment.
+   - In assessment mode ("Assessment" tab), the student's submission without the local changes is displayed in read-only mode. In this mode, assessment comments can be added, similar to the assessment in Artemis. Click the plus on the gutter on the left of the editor to add a new comment. Todos are highlighted for Java projects with seperate comments.
+   - In Diff mode ("Diff" tab), the students submission is displayed with a comparison to the template
 
  6. The integrated browser displays the problem statement, the assessment instructions, and the buttons to edit the general feedback.
 
@@ -103,3 +104,14 @@ Tutors can assess programming exercises via Orion by performing the following st
 .. |edit-in-intellij-button| image:: orion/edit-in-intellij-button.png
 .. |assess-in-orion-button| image:: orion/assess-in-orion-button.png
 .. |start-assessment-in-orion-button| image:: orion/start-assessment-in-orion-button.png
+
+Local Test Execution for students in Orion
+-------------------
+
+Students can execute tests locally if the corresponding exercise supports local test execution after the due date is over.
+
+1. Navigate to the exercise
+2. Verify that the assessment due date is over and there is a public solution
+3. Press the download-tests-button to download the tests.
+4. After downloading the Project contains a folder containing the tests and a copy of the submission.
+5. The Run Configuration can be used to execute Tests locally.
