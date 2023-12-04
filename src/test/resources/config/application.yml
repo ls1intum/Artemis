@@ -277,4 +277,4 @@ jhipster:
                 token-validity-in-seconds-for-remember-me: 2592000
 
 aeolus:
-    url: http://fake-aeolus-url:8090
+    url: http://mock-aeolus-url:8090

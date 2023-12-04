@@ -17,6 +17,11 @@ public class ActionDeserializer implements JsonDeserializer<Action> {
     public Action deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
         JsonObject jsonObject = json.getAsJsonObject();
         String className = "not-determined";
+        /*
+         * If we receive the serialized form of an action it could have a "class" field that helps in determining
+         * the actual type of the action. If it does not have this field we have to determine the type based on
+         * other fields that are present.
+         */
         if (jsonObject.has("class")) {
             className = jsonObject.get("class").getAsString();
         }
