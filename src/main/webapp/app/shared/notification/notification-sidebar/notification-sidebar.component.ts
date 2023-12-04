@@ -3,15 +3,7 @@ import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import dayjs from 'dayjs/esm';
 import { GroupNotification } from 'app/entities/group-notification.model';
-import {
-    LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE,
-    NEW_COURSE_POST_TITLE,
-    NEW_EXAM_POST_TITLE,
-    NEW_EXERCISE_POST_TITLE,
-    NEW_LECTURE_POST_TITLE,
-    NEW_MESSAGE_TITLE,
-    Notification,
-} from 'app/entities/notification.model';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { Subscription } from 'rxjs';
@@ -22,14 +14,7 @@ import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export const LAST_READ_STORAGE_KEY = 'lastNotificationRead';
-const IRRELEVANT_NOTIFICATION_TITLES = [
-    NEW_MESSAGE_TITLE,
-    LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE,
-    NEW_EXERCISE_POST_TITLE,
-    NEW_LECTURE_POST_TITLE,
-    NEW_EXAM_POST_TITLE,
-    NEW_COURSE_POST_TITLE,
-];
+const IRRELEVANT_NOTIFICATION_TITLES = [NEW_MESSAGE_TITLE, LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE];
 
 @Component({
     selector: 'jhi-notification-sidebar',

@@ -21,8 +21,10 @@ import {
     MENTIONED_IN_MESSAGE_TITLE,
     NEW_ANNOUNCEMENT_POST_TITLE,
     NEW_COURSE_POST_TITLE,
+    NEW_EXAM_POST_TITLE,
     NEW_EXERCISE_POST_TITLE,
     NEW_LECTURE_POST_TITLE,
+    NEW_MESSAGE_TITLE,
     NEW_REPLY_FOR_COURSE_POST_TITLE,
     NEW_REPLY_FOR_EXAM_POST_TITLE,
     NEW_REPLY_FOR_EXERCISE_POST_TITLE,
@@ -42,6 +44,8 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 
 const notificationsPerPage = 25;
+
+const NOTIFICATION_TITLES_TO_EXCLUDE_FROM_HISTORY = [NEW_MESSAGE_TITLE, NEW_EXERCISE_POST_TITLE, NEW_LECTURE_POST_TITLE, NEW_EXAM_POST_TITLE, NEW_COURSE_POST_TITLE];
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -156,7 +160,10 @@ export class NotificationService {
         if (!this.notificationSettingsService.isNotificationAllowedBySettings(notification)) {
             return;
         }
-        this.addNotifications([notification]);
+
+        if (!notification.title || !NOTIFICATION_TITLES_TO_EXCLUDE_FROM_HISTORY.includes(notification.title)) {
+            this.addNotifications([notification]);
+        }
 
         // Single notifications should also be sent through the single notification subject for the notifcation popup
         this.singleNotificationSubject.next(notification);
@@ -164,7 +171,6 @@ export class NotificationService {
 
     private addNotifications(notifications: Notification[], addToCount = true): void {
         if (notifications) {
-            let countPushed = 0;
             notifications.forEach((notification: Notification) => {
                 if (notification.notificationDate) {
                     notification.notificationDate = convertDateFromServer(notification.notificationDate);
@@ -176,13 +182,12 @@ export class NotificationService {
                     notification.notificationDate
                 ) {
                     this.notifications.push(notification);
-                    countPushed++;
                 }
             });
 
-            this.notificationSubject.next(notifications);
+            this.notificationSubject.next(this.notifications);
             if (addToCount) {
-                this.setTotalNotificationCount(this.totalNotifications + countPushed);
+                this.setTotalNotificationCount(this.notifications.length);
             }
         }
     }
