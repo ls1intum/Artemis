@@ -52,7 +52,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
         private activatedRoute: ActivatedRoute,
         private fileService: FileService,
         private router: Router,
-        protected scienceService: ScienceService,
+        scienceService: ScienceService,
     ) {
         super(scienceService, ScienceEventType.LECTURE__OPEN);
     }

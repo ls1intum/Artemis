@@ -8,7 +8,7 @@ import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({ template: '' })
 class ScienceComponent extends AbstractScienceComponent {
-    constructor(protected scienceService: ScienceService) {
+    constructor(scienceService: ScienceService) {
         super(scienceService, ScienceEventType.LECTURE__OPEN);
     }
 }
@@ -26,10 +26,10 @@ describe('AbstractScienceComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ScienceComponent);
-                comp = fixture.componentInstance;
                 scienceService = TestBed.inject(ScienceService);
                 logEventStub = jest.spyOn(scienceService, 'logEvent');
+                fixture = TestBed.createComponent(ScienceComponent);
+                comp = fixture.componentInstance;
                 fixture.detectChanges();
             });
     });
