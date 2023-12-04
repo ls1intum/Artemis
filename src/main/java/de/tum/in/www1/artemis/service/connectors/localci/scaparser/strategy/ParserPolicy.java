@@ -5,6 +5,9 @@ import org.w3c.dom.Document;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
 
+/**
+ * Policy class for the parser strategies.
+ */
 public class ParserPolicy {
 
     /**

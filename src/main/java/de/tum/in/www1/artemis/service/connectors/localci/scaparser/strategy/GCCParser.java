@@ -11,6 +11,9 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue;
 
+/**
+ * Parser for GCC static code analysis reports.
+ */
 public class GCCParser implements ParserStrategy {
 
     // General output is grouped into issues per function. At the beginning of these groups is a function part.

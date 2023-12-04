@@ -4,6 +4,9 @@ import org.w3c.dom.Document;
 
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
+/**
+ * Strategy interface for the parser strategies.
+ */
 public interface ParserStrategy {
 
     /**

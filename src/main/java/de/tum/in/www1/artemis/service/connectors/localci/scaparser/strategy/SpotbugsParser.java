@@ -14,6 +14,9 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue;
 
+/**
+ * Parser strategy for Spotbugs reports.
+ */
 class SpotbugsParser implements ParserStrategy {
 
     private static final String PROJECT_ELEMENT = "Project";

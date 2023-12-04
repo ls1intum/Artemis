@@ -12,6 +12,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+/**
+ * Utility class for XML parsing.
+ */
 public final class XmlUtils {
 
     private XmlUtils() {

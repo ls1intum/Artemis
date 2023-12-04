@@ -13,6 +13,9 @@ import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.Uns
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.utils.XmlUtils;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
+/**
+ * Context class for the parser strategies.
+ */
 public class ParserContext {
 
     /**

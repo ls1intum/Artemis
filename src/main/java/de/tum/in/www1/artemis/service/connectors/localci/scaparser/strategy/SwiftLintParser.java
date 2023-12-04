@@ -6,6 +6,9 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue;
 
+/**
+ * Parser strategy for SwiftLint reports.
+ */
 class SwiftLintParser extends CheckstyleFormatParser {
 
     @Override

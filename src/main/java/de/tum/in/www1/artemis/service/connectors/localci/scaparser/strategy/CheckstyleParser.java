@@ -6,6 +6,9 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue;
 
+/**
+ * Parser for the Checkstyle static code analysis tool.
+ */
 class CheckstyleParser extends CheckstyleFormatParser {
 
     // The packages rooted at checks denote the category and rule

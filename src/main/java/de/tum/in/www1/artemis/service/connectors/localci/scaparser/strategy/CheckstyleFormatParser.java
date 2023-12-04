@@ -11,6 +11,9 @@ import org.w3c.dom.Element;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue;
 
+/**
+ * Abstract class for parsing static code analysis reports in checkstyle format.
+ */
 public abstract class CheckstyleFormatParser implements ParserStrategy {
 
     protected static final String FILE_TAG = "file";

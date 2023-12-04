@@ -13,6 +13,9 @@ import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO.StaticCodeAnalysisIssue;
 
+/**
+ * Parser strategy for PMD CPD reports.
+ */
 class PMDCPDParser implements ParserStrategy {
 
     // Category/Rule which can be used by clients for further processing
