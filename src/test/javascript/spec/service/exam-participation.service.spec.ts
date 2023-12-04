@@ -19,6 +19,8 @@ import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { GradeType } from 'app/entities/grading-scale.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 
 describe('Exam Participation Service', () => {
     let service: ExamParticipationService;
@@ -264,5 +266,63 @@ describe('Exam Participation Service', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: [studentExam] }));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
+    });
+
+    describe('getExerciseButtonTooltip', () => {
+        const course = new Course();
+        it('should return synced if submission does not exist', () => {
+            const exercise = new TextExercise(course, undefined);
+            const toolTip = service.getExerciseButtonTooltip(exercise);
+            expect(toolTip).toBe('synced');
+        });
+        it('should return notSynced if exerciseType is not programming and submission.isSynced is false', () => {
+            const exercise = new TextExercise(course, undefined);
+            const submission = new TextSubmission();
+            submission.isSynced = false;
+            const studentParticipation = new StudentParticipation();
+            studentParticipation.submissions = [submission];
+            exercise.studentParticipations = [studentParticipation];
+            const toolTip = service.getExerciseButtonTooltip(exercise);
+            expect(toolTip).toBe('notSynced');
+        });
+        it('should return submitted if exerciseType is programming and submission.submitted and submission.isSynced is true', () => {
+            const exercise = new ProgrammingExercise(course, undefined);
+            const submission = new ProgrammingSubmission();
+            submission.submitted = true;
+            submission.isSynced = true;
+            const studentParticipation = new StudentParticipation();
+            studentParticipation.submissions = [submission];
+            exercise.studentParticipations = [studentParticipation];
+            const toolTip = service.getExerciseButtonTooltip(exercise);
+            expect(toolTip).toBe('submitted');
+        });
+        it('should return notSubmitted if exerciseType is programming and submission.submitted is true and submission.isSynced is false', () => {
+            const exercise = new ProgrammingExercise(course, undefined);
+            const submission = new ProgrammingSubmission();
+            submission.submitted = false;
+            submission.isSynced = true;
+            const studentParticipation = new StudentParticipation();
+            studentParticipation.submissions = [submission];
+            exercise.studentParticipations = [studentParticipation];
+            const toolTip = service.getExerciseButtonTooltip(exercise);
+            expect(toolTip).toBe('notSubmitted');
+        });
+        it('should return notSavedOrSubmitted if exerciseType is programming and submission.submitted is false and submission.isSynced is false', () => {
+            const exercise = new ProgrammingExercise(course, undefined);
+            const submission = new ProgrammingSubmission();
+            submission.submitted = false;
+            submission.isSynced = false;
+            const studentParticipation = new StudentParticipation();
+            studentParticipation.submissions = [submission];
+            exercise.studentParticipations = [studentParticipation];
+            const toolTip = service.getExerciseButtonTooltip(exercise);
+            expect(toolTip).toBe('notSavedOrSubmitted');
+        });
+    });
+
+    it('should return examExerciseIds', () => {
+        const exerciseIds = [1, 2, 3];
+        service.setExamExerciseIds(exerciseIds);
+        expect(service.getExamExerciseIds()).toEqual(exerciseIds);
     });
 });
