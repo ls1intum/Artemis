@@ -76,7 +76,6 @@ import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-edi
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CodeEditorContainerIntegration', () => {
     // needed to make sure ace is defined
@@ -104,7 +103,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule, MockDirective(NgbDropdown), MockModule(NgbTooltipModule), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, AceEditorModule, MockDirective(NgbDropdown), MockModule(NgbTooltipModule)],
             declarations: [
                 CodeEditorContainerComponent,
                 MockComponent(CodeEditorGridComponent),

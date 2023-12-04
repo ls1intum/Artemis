@@ -13,7 +13,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ConsistencyCheckComponent', () => {
     let component: ConsistencyCheckComponent;
@@ -37,7 +36,7 @@ describe('ConsistencyCheckComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockComponent(NgbHighlight), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, MockComponent(NgbHighlight)],
             declarations: [ConsistencyCheckComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
             providers: [MockProvider(TranslateService), MockProvider(AlertService), MockProvider(ConsistencyCheckService)],
         })

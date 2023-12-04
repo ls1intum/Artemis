@@ -13,7 +13,6 @@ import { of } from 'rxjs';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BarChartModule } from '@swimlane/ngx-charts';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('StatisticsGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsGraphComponent>;
@@ -23,7 +22,7 @@ describe('StatisticsGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(BarChartModule), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(BarChartModule)],
             declarations: [StatisticsGraphComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })

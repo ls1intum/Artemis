@@ -5,7 +5,6 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
 import { MetricsService } from 'app/admin/metrics/metrics.service';
 import { Metrics, ThreadDump } from 'app/admin/metrics/metrics.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('MetricsComponent', () => {
     let comp: MetricsComponent;
@@ -14,7 +13,7 @@ describe('MetricsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [MetricsComponent],
         })
             .compileComponents()

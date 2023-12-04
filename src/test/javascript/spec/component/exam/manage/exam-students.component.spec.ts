@@ -22,7 +22,6 @@ import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
 import { ExamUser } from 'app/entities/exam-user.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
@@ -62,7 +61,7 @@ describe('ExamStudentsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, RouterTestingModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, NgxDatatableModule, RouterTestingModule],
             declarations: [
                 ExamStudentsComponent,
                 MockComponent(UsersImportButtonComponent),

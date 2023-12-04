@@ -19,7 +19,6 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 
 describe('CodeEditorAceComponent', () => {
@@ -32,7 +31,7 @@ describe('CodeEditorAceComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, AceEditorModule],
             declarations: [
                 CodeEditorAceComponent,
                 TranslatePipeMock,

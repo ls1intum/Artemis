@@ -37,7 +37,6 @@ import { MockHasAnyAuthorityDirective } from '../helpers/mocks/directive/mock-ha
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 class MockRouterWithEvents {
     public url = 'courses';
@@ -104,7 +103,7 @@ describe('GuidedTourService', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, FontAwesomeTestingModule],
+                imports: [ArtemisTestModule],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -153,7 +152,7 @@ describe('GuidedTourService', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, FontAwesomeTestingModule],
+                imports: [ArtemisTestModule],
                 declarations: [
                     GuidedTourComponent,
                     MockDirective(TranslateDirective),

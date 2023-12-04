@@ -17,7 +17,6 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 class MockActivatedRoute {
     parent: any;
@@ -48,7 +47,7 @@ describe('CourseCompetencies', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, HttpClientTestingModule],
             declarations: [CourseCompetenciesComponent, CompetencyCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(AlertService),

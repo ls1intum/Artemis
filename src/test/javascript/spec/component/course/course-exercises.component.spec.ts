@@ -34,7 +34,6 @@ import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollme
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { CourseExercisesGroupedByWeekComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-week.component';
 import { CourseExercisesGroupedByTimeframeComponent } from 'app/overview/course-exercises/course-exercises-grouped-by-timeframe.component';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -54,7 +53,7 @@ describe('CourseExercisesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, RouterTestingModule.withRoutes([]), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, FormsModule, RouterTestingModule.withRoutes([])],
             declarations: [
                 CourseExercisesComponent,
                 MockDirective(OrionFilterDirective),

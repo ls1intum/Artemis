@@ -10,7 +10,6 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/e
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ExerciseHint Management Component', () => {
     let comp: ExerciseHintComponent;
@@ -23,7 +22,7 @@ describe('ExerciseHint Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [ExerciseHintComponent],
             providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute({ exerciseId: 15, exercise: programmingExercise }) }],
         })

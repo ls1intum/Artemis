@@ -14,7 +14,6 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('HealthComponent', () => {
     let comp: HealthComponent;
@@ -25,14 +24,7 @@ describe('HealthComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                HealthComponent,
-                MockComponent(HealthModalComponent),
-                TranslatePipeMock,
-                MockComponent(JhiConnectionStatusComponent),
-                MockDirective(TranslateDirective),
-                FontAwesomeTestingModule,
-            ],
+            declarations: [HealthComponent, MockComponent(HealthModalComponent), TranslatePipeMock, MockComponent(JhiConnectionStatusComponent), MockDirective(TranslateDirective)],
             providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
         })
             .compileComponents()

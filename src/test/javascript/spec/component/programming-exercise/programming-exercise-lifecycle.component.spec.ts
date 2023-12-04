@@ -13,7 +13,6 @@ import { SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
 import { Course } from 'app/entities/course.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
@@ -27,7 +26,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 ProgrammingExerciseLifecycleComponent,
                 MockComponent(ProgrammingExerciseTestScheduleDatePickerComponent),

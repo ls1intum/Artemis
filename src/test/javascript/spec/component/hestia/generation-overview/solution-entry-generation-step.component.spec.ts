@@ -14,7 +14,6 @@ import { EventEmitter } from '@angular/core';
 import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType } from 'app/entities/programming-exercise-test-case.model';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('SolutionEntryGenerationStep Component', () => {
     let comp: SolutionEntryGenerationStepComponent;
@@ -34,7 +33,7 @@ describe('SolutionEntryGenerationStep Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [SolutionEntryGenerationStepComponent, MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [MockProvider(NgbModal), MockProvider(AlertService), MockProvider(ArtemisTranslatePipe)],
         }).compileComponents();

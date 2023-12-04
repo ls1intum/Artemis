@@ -23,7 +23,6 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ComplaintsStudentViewComponent', () => {
     const complaintTimeLimitDays = 7;
@@ -65,7 +64,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 ComplaintsStudentViewComponent,
                 MockPipe(ArtemisTranslatePipe),

@@ -5,7 +5,6 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import dayjs from 'dayjs/esm';
 import { MockDirective, MockModule } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('FormDateTimePickerComponent', () => {
     let component: FormDateTimePickerComponent;
@@ -16,7 +15,7 @@ describe('FormDateTimePickerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(OwlDateTimeModule), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, MockModule(OwlDateTimeModule)],
             declarations: [FormDateTimePickerComponent, MockDirective(NgModel)],
         })
             .compileComponents()

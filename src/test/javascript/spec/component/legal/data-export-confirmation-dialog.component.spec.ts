@@ -14,7 +14,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { Observable, Subject } from 'rxjs';
 import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confirm-entity-name.component';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('DataExportConfirmationDialogComponent', () => {
     let comp: DataExportConfirmationDialogComponent;
@@ -24,7 +23,7 @@ describe('DataExportConfirmationDialogComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, ReactiveFormsModule, FormsModule, NgbModule, FontAwesomeTestingModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, ReactiveFormsModule, FormsModule, NgbModule],
             declarations: [
                 DataExportConfirmationDialogComponent,
                 AlertOverlayComponent,

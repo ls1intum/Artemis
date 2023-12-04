@@ -26,7 +26,6 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CloneRepoButtonComponent', () => {
     let component: CloneRepoButtonComponent;
@@ -82,7 +81,7 @@ describe('CloneRepoButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ClipboardModule, NgbPopoverModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, ClipboardModule, NgbPopoverModule],
             declarations: [
                 CloneRepoButtonComponent,
                 MockComponent(ExerciseActionButtonComponent),

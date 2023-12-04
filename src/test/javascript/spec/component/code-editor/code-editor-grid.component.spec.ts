@@ -5,7 +5,6 @@ import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-e
 import { Interactable } from '@interactjs/core/Interactable';
 import { InteractableEvent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { CollapsableCodeEditorElement } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 const fileBrowserWindowName = 'FileBrowser';
 const instructionsWindowName = 'Instructions';
@@ -17,7 +16,7 @@ describe('CodeEditorGridComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [CodeEditorGridComponent],
         })
             .compileComponents()

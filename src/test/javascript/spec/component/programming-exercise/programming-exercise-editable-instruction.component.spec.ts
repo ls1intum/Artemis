@@ -25,7 +25,6 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -52,7 +51,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [
                 ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionAnalysisComponent),

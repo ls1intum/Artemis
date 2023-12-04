@@ -23,7 +23,6 @@ import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
@@ -50,7 +49,7 @@ describe('ResultComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [ResultComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe), MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

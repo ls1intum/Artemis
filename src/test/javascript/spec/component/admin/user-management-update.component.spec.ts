@@ -26,7 +26,6 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
 import { LANGUAGES } from 'app/core/language/language.constants';
 import { AdminUserService } from 'app/core/user/admin-user.service';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 // Preliminary mock before import to prevent errors
 jest.mock('@sentry/angular-ivy', () => {
     const originalModule = jest.requireActual('@sentry/angular-ivy');
@@ -55,7 +54,7 @@ describe('UserManagementUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(MatFormFieldModule), MockModule(MatChipsModule), MockModule(MatAutocompleteModule), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, MockModule(MatFormFieldModule), MockModule(MatChipsModule), MockModule(MatAutocompleteModule)],
             declarations: [UserManagementUpdateComponent, TranslatePipeMock, MockDirective(NgForm), MockDirective(NgModel)],
             providers: [
                 FormBuilder,

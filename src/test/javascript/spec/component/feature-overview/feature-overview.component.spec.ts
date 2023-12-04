@@ -7,7 +7,6 @@ import { DebugElement } from '@angular/core';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Feature Overview Component', () => {
     let comp: FeatureOverviewComponent;
@@ -19,7 +18,7 @@ describe('Feature Overview Component', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, FontAwesomeTestingModule],
+                imports: [ArtemisTestModule],
                 declarations: [FeatureOverviewComponent, TranslatePipeMock],
                 providers: [
                     { provide: ActivatedRoute, useValue: route },

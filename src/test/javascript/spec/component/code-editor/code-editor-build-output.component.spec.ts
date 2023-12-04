@@ -23,7 +23,6 @@ import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exerc
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CodeEditorBuildOutputComponent', () => {
     let comp: CodeEditorBuildOutputComponent;
@@ -85,7 +84,7 @@ describe('CodeEditorBuildOutputComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, AceEditorModule],
             declarations: [CodeEditorBuildOutputComponent, MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: ResultService, useClass: MockResultService },

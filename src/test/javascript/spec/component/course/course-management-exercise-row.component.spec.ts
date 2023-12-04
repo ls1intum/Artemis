@@ -13,7 +13,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CourseManagementExerciseRowComponent', () => {
     let fixture: ComponentFixture<CourseManagementExerciseRowComponent>;
@@ -30,7 +29,7 @@ describe('CourseManagementExerciseRowComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 CourseManagementExerciseRowComponent,
                 MockPipe(ArtemisTranslatePipe),

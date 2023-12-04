@@ -78,7 +78,6 @@ import {
 } from '../../helpers/sample/iris-sample-data';
 import { ExerciseComponent } from 'app/entities/iris/iris-content-type.model';
 import { SessionReceivedAction } from 'app/iris/state-store.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CodeEditorInstructorIntegration', () => {
     // needed to make sure ace is defined
@@ -109,7 +108,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, MockModule(NgbTooltipModule), FontAwesomeTestingModule],
+            imports: [TranslateModule.forRoot(), ArtemisTestModule, MockModule(NgbTooltipModule)],
             declarations: [
                 CodeEditorInstructorAndEditorContainerComponent,
                 CodeEditorContainerComponent,

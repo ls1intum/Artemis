@@ -16,7 +16,6 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Exercise } from 'app/entities/exercise.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CourseManagementCardComponent', () => {
     let fixture: ComponentFixture<CourseManagementCardComponent>;
@@ -51,7 +50,7 @@ describe('CourseManagementCardComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 CourseManagementCardComponent,
                 MockPipe(ArtemisTranslatePipe),

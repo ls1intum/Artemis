@@ -11,7 +11,6 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { CourseExamAttemptReviewDetailComponent } from 'app/overview/course-exams/course-exam-attempt-review-detail/course-exam-attempt-review-detail.component';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CourseExamAttemptReviewDetailComponent', () => {
     let component: CourseExamAttemptReviewDetailComponent;
@@ -39,7 +38,7 @@ describe('CourseExamAttemptReviewDetailComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 CourseExamAttemptReviewDetailComponent,
                 MockPipe(ArtemisTranslatePipe),

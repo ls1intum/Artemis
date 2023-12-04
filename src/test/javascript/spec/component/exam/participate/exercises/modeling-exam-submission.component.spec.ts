@@ -18,7 +18,6 @@ import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exe
 import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ModelingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;
@@ -41,7 +40,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [
                 ModelingExamSubmissionComponent,
                 MockComponent(ModelingEditorComponent),

@@ -16,7 +16,6 @@ import { BarChartModule } from '@swimlane/ngx-charts';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('TutorEffortStatisticsComponent', () => {
     let fixture: ComponentFixture<TutorEffortStatisticsComponent>;
@@ -50,7 +49,7 @@ describe('TutorEffortStatisticsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule, MockModule(BarChartModule), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, HttpClientTestingModule, MockModule(BarChartModule)],
             declarations: [TutorEffortStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(MockHasAnyAuthorityDirective), MockComponent(HelpIconComponent)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

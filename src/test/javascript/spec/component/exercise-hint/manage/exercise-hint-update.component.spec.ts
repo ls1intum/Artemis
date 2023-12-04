@@ -23,7 +23,6 @@ import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.
 import { IrisSettingsService } from '../../../../../../main/webapp/app/iris/settings/shared/iris-settings.service';
 import { IrisSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-settings.model';
 import { ProfileInfo } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
@@ -50,7 +49,7 @@ describe('ExerciseHint Management Update Component', () => {
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, FormsModule],
             declarations: [ExerciseHintUpdateComponent, MockComponent(MarkdownEditorComponent), MockComponent(HelpIconComponent)],
             providers: [
                 FormBuilder,

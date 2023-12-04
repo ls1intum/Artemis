@@ -19,6 +19,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { MockThemeService } from './helpers/mocks/service/mock-theme.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from './helpers/mocks/service/mock-profile.service';
+import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 @NgModule({
     imports: [HttpClientTestingModule],
@@ -65,6 +66,7 @@ import { MockProfileService } from './helpers/mocks/service/mock-profile.service
             useClass: MockProfileService,
         },
     ],
+    exports: [FontAwesomeTestingModule],
 })
 export class ArtemisTestModule {
     constructor(dpConfig: NgbDatepickerConfig, translateService: TranslateService) {

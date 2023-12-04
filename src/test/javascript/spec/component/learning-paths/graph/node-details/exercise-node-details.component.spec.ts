@@ -9,7 +9,6 @@ import { ExerciseNodeDetailsComponent } from 'app/course/learning-paths/learning
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ExerciseNodeDetailsComponent', () => {
     let fixture: ComponentFixture<ExerciseNodeDetailsComponent>;
@@ -20,7 +19,7 @@ describe('ExerciseNodeDetailsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [ExerciseNodeDetailsComponent, MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()

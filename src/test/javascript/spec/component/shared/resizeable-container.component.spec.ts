@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { ArtemisTestModule } from '../../test.module';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ResizeableContainerComponent', () => {
     let component: ResizeableContainerComponent;
@@ -9,7 +8,7 @@ describe('ResizeableContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [ResizeableContainerComponent],
         }).compileComponents();
     });

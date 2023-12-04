@@ -48,7 +48,6 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ParticipationSubmissionComponent', () => {
     let comp: ParticipationSubmissionComponent;
@@ -86,7 +85,7 @@ describe('ParticipationSubmissionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, NgxDatatableModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, RouterTestingModule, NgxDatatableModule],
             declarations: [
                 ParticipationSubmissionComponent,
                 MockComponent(UpdatingResultComponent),

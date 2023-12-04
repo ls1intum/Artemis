@@ -41,7 +41,6 @@ import { FileService } from 'app/shared/http/file.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('FileUploadSubmissionComponent', () => {
     let comp: FileUploadSubmissionComponent;
@@ -55,7 +54,7 @@ describe('FileUploadSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot(), RouterTestingModule.withRoutes([routes[0]]), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot(), RouterTestingModule.withRoutes([routes[0]])],
             declarations: [
                 FileUploadSubmissionComponent,
                 MockComponent(ComplaintsForTutorComponent),

@@ -5,7 +5,6 @@ import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component'
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CloseCircleComponent } from 'app/shared/close-circle/close-circle.component';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Alert Overlay Component Tests', () => {
     let comp: AlertOverlayComponent;
@@ -14,7 +13,7 @@ describe('Alert Overlay Component Tests', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NoopAnimationsModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, NoopAnimationsModule],
             declarations: [AlertOverlayComponent, CloseCircleComponent],
             providers: [{ provide: AlertService, useClass: AlertService }],
         })

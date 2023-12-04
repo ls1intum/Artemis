@@ -11,7 +11,6 @@ import { NotificationSetting, notificationSettingsStructure } from 'app/shared/u
 import { AlertService } from 'app/core/util/alert.service';
 import { UrlSerializer } from '@angular/router';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('NotificationSettingsComponent', () => {
     let comp: NotificationSettingsComponent;
@@ -28,7 +27,7 @@ describe('NotificationSettingsComponent', () => {
         changed: false,
     };
 
-    const imports = [ArtemisTestModule, FontAwesomeTestingModule];
+    const imports = [ArtemisTestModule];
     const declarations = [NotificationSettingsComponent, MockHasAnyAuthorityDirective, MockPipe(ArtemisTranslatePipe)];
     const providers = [
         MockProvider(AlertService),

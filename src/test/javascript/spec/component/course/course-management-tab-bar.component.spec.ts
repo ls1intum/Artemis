@@ -17,7 +17,6 @@ import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.dire
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Course Management Tab Bar Component', () => {
     let component: CourseManagementTabBarComponent;
@@ -48,7 +47,6 @@ describe('Course Management Tab Bar Component', () => {
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(FeatureToggleLinkDirective),
                 MockDirective(FeatureToggleHideDirective),
-                FontAwesomeTestingModule,
             ],
             imports: [HttpClientTestingModule, RouterModule, ArtemisTestModule],
             providers: [

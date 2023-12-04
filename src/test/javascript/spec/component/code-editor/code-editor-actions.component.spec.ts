@@ -19,7 +19,6 @@ import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.se
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CodeEditorActionsComponent', () => {
     let comp: CodeEditorActionsComponent;
@@ -32,7 +31,7 @@ describe('CodeEditorActionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(AceEditorModule), MockModule(NgbTooltipModule), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, MockModule(AceEditorModule), MockModule(NgbTooltipModule)],
             declarations: [CodeEditorActionsComponent, TranslatePipeMock, FeatureToggleDirective],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },

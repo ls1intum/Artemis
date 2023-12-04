@@ -21,7 +21,6 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { MockRouterLinkDirective } from '../helpers/mocks/directive/mock-router-link.directive';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Exercise detail common actions Component', () => {
     let comp: NonProgrammingExerciseDetailCommonActionsComponent;
@@ -31,7 +30,7 @@ describe('Exercise detail common actions Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 NonProgrammingExerciseDetailCommonActionsComponent,
                 MockComponent(SubmissionExportButtonComponent),

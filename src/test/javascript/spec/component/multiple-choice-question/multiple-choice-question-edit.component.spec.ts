@@ -21,7 +21,6 @@ import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollaps
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('MultipleChoiceQuestionEditComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
@@ -43,7 +42,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, DragDropModule, NgbCollapseMocksModule, MockDirective(NgbTooltip), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, FormsModule, DragDropModule, NgbCollapseMocksModule, MockDirective(NgbTooltip)],
             declarations: [
                 MultipleChoiceQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),

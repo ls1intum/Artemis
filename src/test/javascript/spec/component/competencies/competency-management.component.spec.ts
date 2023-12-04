@@ -25,7 +25,6 @@ import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock
 import { By } from '@angular/platform-browser';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
 
 // eslint-disable-next-line @angular-eslint/component-selector
@@ -45,7 +44,7 @@ describe('CompetencyManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgbProgressbar, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgbProgressbar],
             declarations: [
                 CompetencyManagementComponent,
                 CompetencyCardStubComponent,

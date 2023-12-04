@@ -18,7 +18,6 @@ import { cloneDeep } from 'lodash-es';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 const question = new ShortAnswerQuestion();
 question.id = 1;
@@ -50,7 +49,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), AceEditorModule, MockModule(DragDropModule), MockDirective(NgbCollapse), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, MockModule(FormsModule), AceEditorModule, MockModule(DragDropModule), MockDirective(NgbCollapse)],
             declarations: [
                 ShortAnswerQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),

@@ -20,7 +20,6 @@ import { ExerciseEntry, LearningPathStorageService, LectureUnitEntry, StorageEnt
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { LearningPathComponent } from 'app/course/learning-paths/learning-path-graph/learning-path.component';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('LearningPathContainerComponent', () => {
     let fixture: ComponentFixture<LearningPathContainerComponent>;
@@ -46,7 +45,7 @@ describe('LearningPathContainerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(RouterModule), MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip), LearningPathComponent, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, MockModule(RouterModule), MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip), LearningPathComponent],
             declarations: [LearningPathContainerComponent],
             providers: [
                 {

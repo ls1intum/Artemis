@@ -17,7 +17,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import dayjs from 'dayjs/esm';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CompetencyFormComponent', () => {
     let competencyFormComponentFixture: ComponentFixture<CompetencyFormComponent>;
@@ -27,7 +26,7 @@ describe('CompetencyFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule, MockModule(NgbTooltipModule), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule, MockModule(NgbTooltipModule)],
             declarations: [CompetencyFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(KeysPipe), MockComponent(FormDateTimePickerComponent)],
             providers: [MockProvider(CompetencyService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })

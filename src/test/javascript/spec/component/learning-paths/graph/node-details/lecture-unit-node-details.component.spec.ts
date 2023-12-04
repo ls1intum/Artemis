@@ -8,7 +8,6 @@ import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTo
 import { LectureUnitNodeDetailsComponent } from 'app/course/learning-paths/learning-path-graph/node-details/lecture-unit-node-details.component';
 import { LectureUnitForLearningPathNodeDetailsDTO, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('LectureUnitNodeDetailsComponent', () => {
     let fixture: ComponentFixture<LectureUnitNodeDetailsComponent>;
@@ -19,7 +18,7 @@ describe('LectureUnitNodeDetailsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [LectureUnitNodeDetailsComponent, MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()

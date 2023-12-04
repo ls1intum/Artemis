@@ -38,7 +38,6 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { cloneDeep } from 'lodash-es';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -95,15 +94,7 @@ describe('Course Management Update Component', () => {
         } as any as ActivatedRoute;
         const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                MockModule(ReactiveFormsModule),
-                MockModule(FormsModule),
-                ImageCropperModule,
-                MockDirective(NgbTypeahead),
-                MockModule(NgbTooltipModule),
-                FontAwesomeTestingModule,
-            ],
+            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperModule, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -715,7 +706,6 @@ describe('Course Management Update Component Create', () => {
                 ImageCropperModule,
                 MockDirective(NgbTypeahead),
                 MockModule(NgbTooltipModule),
-                FontAwesomeTestingModule,
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

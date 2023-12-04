@@ -24,7 +24,6 @@ import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.
 import { MockExamExerciseUpdateService } from '../../../helpers/mocks/service/mock-exam-exercise-update.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Notification Popup Component', () => {
     let notificationPopupComponent: NotificationPopupComponent;
@@ -62,7 +61,7 @@ describe('Notification Popup Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [NotificationPopupComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

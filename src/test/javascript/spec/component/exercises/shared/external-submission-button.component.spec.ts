@@ -11,7 +11,6 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
 import { MockDirective } from 'ng-mocks';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('External Submission Dialog', () => {
     let fixture: ComponentFixture<ExternalSubmissionButtonComponent>;
@@ -21,7 +20,7 @@ describe('External Submission Dialog', () => {
     beforeEach(() => {
         modalService = { open: jest.fn() } as any as NgbModal;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [
                 ExternalSubmissionButtonComponent,
                 ButtonComponent,

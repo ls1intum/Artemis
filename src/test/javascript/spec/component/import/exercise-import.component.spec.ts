@@ -24,7 +24,6 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { FileUploadExercisePagingService } from 'app/exercises/file-upload/manage/file-upload-exercise-paging.service';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ExerciseImportComponent', () => {
     let fixture: ComponentFixture<ExerciseImportComponent>;
@@ -42,7 +41,7 @@ describe('ExerciseImportComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
             declarations: [
                 ExerciseImportComponent,
                 MockPipe(ExerciseCourseTitlePipe),

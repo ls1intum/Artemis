@@ -18,7 +18,6 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
 import { ApollonEditor } from '@ls1intum/apollon';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -38,7 +37,7 @@ describe('ModelingEditorComponent', () => {
         diagram.jsonRepresentation = JSON.stringify(classDiagram);
 
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [HttpClientTestingModule, ArtemisTestModule],
             declarations: [ModelingEditorComponent, MockComponent(ModelingExplanationEditorComponent)],
             providers: [MockProvider(GuidedTourService), { provide: ActivatedRoute, useValue: route }],
         })

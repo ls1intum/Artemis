@@ -20,7 +20,6 @@ import { ExamAssessmentButtonsComponent } from 'app/course/dashboards/assessment
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ExamAssessmentButtons', () => {
     let examAssessmentButtonsFixture: ComponentFixture<ExamAssessmentButtonsComponent>;
@@ -124,7 +123,7 @@ describe('ExamAssessmentButtons', () => {
         studentExams = [studentExamOne];
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [ExamAssessmentButtonsComponent, MockDirective(MockHasAnyAuthorityDirective), MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
             providers,
         })

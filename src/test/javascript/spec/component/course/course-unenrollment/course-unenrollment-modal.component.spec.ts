@@ -15,7 +15,6 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { Router } from '@angular/router';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CourseRegistrationButtonComponent', () => {
     let fixture: ComponentFixture<CourseUnenrollmentModalComponent>;
@@ -30,7 +29,7 @@ describe('CourseRegistrationButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ReactiveFormsModule, RouterTestingModule.withRoutes([]), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, ReactiveFormsModule, RouterTestingModule.withRoutes([])],
             declarations: [CourseUnenrollmentModalComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             providers: [MockProvider(CourseManagementService), MockProvider(AlertService), MockProvider(TranslateService)],
         })

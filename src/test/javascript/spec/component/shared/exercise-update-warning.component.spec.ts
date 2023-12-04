@@ -5,7 +5,6 @@ import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgModel } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('Exercise Update Warning Component Tests', () => {
     let fixture: ComponentFixture<ExerciseUpdateWarningComponent>;
@@ -13,7 +12,7 @@ describe('Exercise Update Warning Component Tests', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [ExerciseUpdateWarningComponent, MockDirective(NgModel), MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(TranslateService)],
         })

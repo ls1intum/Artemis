@@ -22,7 +22,6 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('FileUploadExamSubmissionComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSubmissionComponent>;
@@ -48,7 +47,7 @@ describe('FileUploadExamSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 FileUploadExamSubmissionComponent,
                 FullscreenComponent,

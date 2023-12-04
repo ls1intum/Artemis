@@ -21,7 +21,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { PresentationType } from 'app/grading-system/grading-system-presentations/grading-system-presentations.component';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 const generateCsv = jest.fn();
 jest.mock('export-to-csv', () => {
@@ -77,7 +76,7 @@ describe('Detailed Grading System Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 MockDirective(NgModel),
                 MockDirective(NgSelectOption),

@@ -8,7 +8,6 @@ import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
     let comp: ProgrammingExerciseTestScheduleDatePickerComponent;
@@ -24,7 +23,7 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(OwlDateTimeModule), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, MockModule(OwlDateTimeModule)],
             declarations: [
                 ProgrammingExerciseTestScheduleDatePickerComponent,
                 MockDirective(NgModel),

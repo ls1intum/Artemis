@@ -14,7 +14,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { ArtemisTestModule } from '../../../../test.module';
 
 describe('PostingContentPartComponent', () => {
     let component: PostingContentPartComponent;
@@ -31,7 +31,7 @@ describe('PostingContentPartComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MatDialogModule, MatMenuModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, MatDialogModule, MatMenuModule],
             declarations: [
                 PostingContentPartComponent,
                 HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe

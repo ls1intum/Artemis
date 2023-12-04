@@ -24,7 +24,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CourseManagementComponent', () => {
     let fixture: ComponentFixture<CourseManagementComponent>;
@@ -89,7 +88,7 @@ describe('CourseManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [
                 CourseManagementComponent,
                 MockDirective(OrionFilterDirective),

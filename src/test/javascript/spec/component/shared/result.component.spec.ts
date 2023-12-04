@@ -19,7 +19,6 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import * as utils from 'app/exercises/shared/feedback/feedback.utils';
 import { FeedbackComponentPreparedParams } from 'app/exercises/shared/feedback/feedback.utils';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 const mockExercise: Exercise = {
     id: 1,
@@ -67,7 +66,7 @@ describe('ResultComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbTooltipMocksModule, FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe)],
             providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
         })

@@ -11,7 +11,6 @@ import { Directive, Input } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: '[sortableData]' })
@@ -28,7 +27,7 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbModule), FontAwesomeTestingModule],
+            imports: [ArtemisTestModule, MockModule(NgbModule)],
             declarations: [
                 ReEvaluateMultipleChoiceQuestionComponent,
                 MockComponent(MultipleChoiceQuestionEditComponent),
