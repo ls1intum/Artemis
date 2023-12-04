@@ -216,3 +216,6 @@ extensibility and maintainability in places where it is uncertain what other tes
 
     @Isolated
     class QuizCacheTest extends AbstractSpringIntegrationIndependentTest { ... }
+
+.. note::
+    Avoid using ``@Isolated`` whenever possible, as it worsens the test runtime. Only use it when explicitly testing quiz cache, which only a few quiz-related tests do.
