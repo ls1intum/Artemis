@@ -110,14 +110,16 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
 
     private long getStartWorkingOnExamExpectedTotalQueryCount() {
         final int findUserWithGroupsAndAuthoritiesQueryCount = 1;
-        final int findStudentExamByIdWithExercisesQueryCount = 1;
+        final int findByIdWithExercisesAndQuizQuestionsQueryCount = 1;
         final int findExamByIdWithCourseQueryCount = 1;
         final int updateStudentExamQueryCount = 1;
         final int findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount = 1;
         final int createExamSessionQueryCount = 1;
         final int findExamSessionCountByStudentExamIdQueryCount = 1;
-        return findUserWithGroupsAndAuthoritiesQueryCount + findStudentExamByIdWithExercisesQueryCount + findExamByIdWithCourseQueryCount + updateStudentExamQueryCount
-                + findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount + createExamSessionQueryCount + findExamSessionCountByStudentExamIdQueryCount;
+        final int findQuizPoolByExamIdQueryCount = 1;
+        return findUserWithGroupsAndAuthoritiesQueryCount + findByIdWithExercisesAndQuizQuestionsQueryCount + findExamByIdWithCourseQueryCount + updateStudentExamQueryCount
+                + findStudentParticipationsByStudentExamWithSubmissionsResultQueryCount + createExamSessionQueryCount + findExamSessionCountByStudentExamIdQueryCount
+                + findQuizPoolByExamIdQueryCount;
     }
 
     private long getSubmitExamExpectedTotalQueryCount() {
