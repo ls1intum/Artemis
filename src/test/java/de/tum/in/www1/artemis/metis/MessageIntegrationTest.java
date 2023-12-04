@@ -217,6 +217,29 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateAnnouncementInPrivateChannel() throws Exception {
+        Channel channel = conversationUtilService.createAnnouncementChannel(course, "test");
+        ConversationParticipant otherParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+        ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
+
+        Post postToSave = new Post();
+        postToSave.setAuthor(author.getUser());
+        postToSave.setConversation(channel);
+        postToSave.setContent("message");
+
+        Post createdPost = createPostAndAwaitAsyncCode(postToSave);
+        checkCreatedMessagePost(postToSave, createdPost);
+
+        // conversation participants should be notified individually
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostDTO.class));
+
+        verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(otherParticipant.getUser()), any(Post.class));
+        verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(author.getUser()), any(Post.class));
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateConversationPostInCourseWideChannel_onlyFewDatabaseCalls() throws Exception {
         Course course = courseUtilService.createCourseWithMessagingEnabled();
