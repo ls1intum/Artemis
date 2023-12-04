@@ -325,14 +325,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
-        ConversationNotification notification = conversationNotificationRepository.findAll().stream().filter(not -> not.getMessage().getId().equals(createdPost.getId()))
+        ConversationNotification notificationForPost = conversationNotificationRepository.findAll().stream().filter(notification -> createdPost.equals(notification.getMessage()))
                 .findFirst().orElseThrow();
 
         // participants who hid the conversation should not be notified
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + recipientWithHiddenTrue.getUser().getId() + "/notifications/conversations"), eq(notification));
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + recipientWithHiddenTrue.getUser().getId() + "/notifications/conversations"),
+                eq(notificationForPost));
         // participants who have not hidden the conversation should be notified
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/user/" + recipientWithHiddenFalse.getUser().getId() + "/notifications/conversations"),
-                eq(notification));
+                eq(notificationForPost));
     }
 
     @ParameterizedTest
