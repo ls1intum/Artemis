@@ -411,7 +411,7 @@ public class SingleUserNotificationService {
     }
 
     /**
-     * Calculates the type of the notification based on the type of the conversation
+     * Determines the type of the notification based on the type of the conversation
      *
      * @param conversation the message the reply belongs to
      * @return notification type

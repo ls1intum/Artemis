@@ -76,8 +76,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             if (queryParams.conversationId) {
                 this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
             }
-            if (queryParams.postId) {
-                this.postInThread = { id: Number(queryParams.postId) } as Post;
+            if (queryParams.messageId) {
+                this.postInThread = { id: Number(queryParams.messageId) } as Post;
             } else {
                 this.postInThread = undefined;
             }

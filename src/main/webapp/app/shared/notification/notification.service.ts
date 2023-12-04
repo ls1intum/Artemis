@@ -92,7 +92,7 @@ export class NotificationService {
                     }
                 });
                 this.notificationSettingsService.refreshNotificationSettings();
-            }, 1 * 1000);
+            }, 15 * 1000);
 
             this.initialized = true;
         } else if (!user && this.initialized) {
@@ -259,7 +259,7 @@ export class NotificationService {
                 notification.title === NEW_REPLY_FOR_EXAM_POST_TITLE
             ) {
                 const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
-                queryParams.postId = target.id;
+                queryParams.messageId = target.id;
                 const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, queryParams);
             } else {

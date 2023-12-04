@@ -102,10 +102,7 @@ export class NotificationPopupComponent implements OnInit {
             this.examExerciseUpdateService.navigateToExamExercise(target.exercise);
         } else if (notification.title && conversationMessageNotificationTitles.includes(notification.title)) {
             const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
-
-            if (conversationMessageNotificationTitles.includes(notification.title)) {
-                queryParams.postId = target.id;
-            }
+            queryParams.messageId = target.id;
 
             const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
             // check if component reload is needed
