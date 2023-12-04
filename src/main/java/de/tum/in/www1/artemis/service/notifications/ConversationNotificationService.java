@@ -65,21 +65,7 @@ public class ConversationNotificationService {
             notificationText = NEW_MESSAGE_CHANNEL_TEXT;
             placeholders = new String[] { course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(), channel.getName(),
                     createdMessage.getAuthor().getName(), "channel" };
-            if (channel.getIsAnnouncementChannel()) {
-                notificationType = NotificationType.NEW_ANNOUNCEMENT_POST;
-            }
-            else if (channel.getLecture() != null) {
-                notificationType = NotificationType.NEW_LECTURE_POST;
-            }
-            else if (channel.getExercise() != null) {
-                notificationType = NotificationType.NEW_EXERCISE_POST;
-            }
-            else if (channel.getExam() != null) {
-                notificationType = NotificationType.NEW_EXAM_POST;
-            }
-            else if (channel.getIsCourseWide()) {
-                notificationType = NotificationType.NEW_COURSE_POST;
-            }
+            notificationType = getNotificationTypeForChannel(channel);
         }
         else if (conversation instanceof GroupChat) {
             notificationText = NEW_MESSAGE_GROUP_CHAT_TEXT;
@@ -119,5 +105,30 @@ public class ConversationNotificationService {
 
     private void sendNotificationViaWebSocket(ConversationNotification notification, Set<User> recipients) {
         recipients.forEach(user -> websocketMessagingService.sendMessage(notification.getTopic(user.getId()), notification));
+    }
+
+    /**
+     * Determines the notification type for the new message based on the channel properties
+     *
+     * @param channel the channel the message belongs to
+     * @return the notification type for the message
+     */
+    private static NotificationType getNotificationTypeForChannel(Channel channel) {
+        if (channel.getIsAnnouncementChannel()) {
+            return NotificationType.NEW_ANNOUNCEMENT_POST;
+        }
+        else if (channel.getLecture() != null) {
+            return NotificationType.NEW_LECTURE_POST;
+        }
+        else if (channel.getExercise() != null) {
+            return NotificationType.NEW_EXERCISE_POST;
+        }
+        else if (channel.getExam() != null) {
+            return NotificationType.NEW_EXAM_POST;
+        }
+        else if (channel.getIsCourseWide()) {
+            return NotificationType.NEW_COURSE_POST;
+        }
+        return NotificationType.CONVERSATION_NEW_MESSAGE;
     }
 }

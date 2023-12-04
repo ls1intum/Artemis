@@ -20,8 +20,6 @@ class NotificationTargetFactoryTest {
 
     private static final Long POST_ID = 101L;
 
-    private static Channel channel;
-
     private static final Long CHANNEL_ID = 123L;
 
     private static Course course;

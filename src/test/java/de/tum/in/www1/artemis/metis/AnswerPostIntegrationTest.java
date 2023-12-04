@@ -55,10 +55,6 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     private List<Post> existingPostsWithAnswers;
 
-    private List<Post> existingPostsWithAnswersInExercise;
-
-    private List<Post> existingPostsWithAnswersInLecture;
-
     private List<Post> existingPostsWithAnswersCourseWide;
 
     private List<AnswerPost> existingAnswerPosts;
@@ -86,10 +82,8 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
         existingAnswerPosts = existingPostsAndConversationPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
 
         // get all existing posts with answers in exercise context
-        existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getExercise() != null).toList();
-
-        // get all existing posts with answers in lecture context
-        existingPostsWithAnswersInLecture = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getLecture() != null).toList();
+        List<Post> existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getExercise() != null)
+                .toList();
 
         // get all existing posts with answers in lecture context
         existingPostsWithAnswersCourseWide = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getCourseWideContext() != null)

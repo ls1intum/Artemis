@@ -142,7 +142,6 @@ public class ConversationMessagingService extends PostingService {
     public void notifyAboutMessageCreation(CreatedConversationMessage createdConversationMessage) {
         SecurityUtils.setAuthorizationObject(); // required for async
         Post createdMessage = createdConversationMessage.messageWithHiddenDetails();
-        User author = createdMessage.getAuthor();
         Conversation conversation = createdConversationMessage.completeConversation();
         Course course = conversation.getCourse();
 
@@ -168,7 +167,24 @@ public class ConversationMessagingService extends PostingService {
             log.debug("      broadcastForPost DONE");
         }
 
+        sendAndSaveNotifications(createdConversationMessage, recipientUsers, recipientSummaries);
+    }
+
+    /**
+     * Sends and saves notifications for users that have not already been notified via broadcast notifications
+     *
+     * @param createdConversationMessage the new message and associated data
+     * @param recipientUsers             set of users that should receive notifications
+     * @param recipientSummaries         set of setting summaries for the recipients
+     */
+    private void sendAndSaveNotifications(CreatedConversationMessage createdConversationMessage, Set<User> recipientUsers,
+            Set<ConversationNotificationRecipientSummary> recipientSummaries) {
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
+        Post createdMessage = createdConversationMessage.messageWithHiddenDetails();
+        User author = createdMessage.getAuthor();
+        Conversation conversation = createdConversationMessage.completeConversation();
+        Course course = conversation.getCourse();
+
         Set<User> mentionedUserLoginsAndIds = createdConversationMessage.mentionedUsers().stream()
                 .map(user -> new User(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getLangKey(), user.getEmail())).collect(Collectors.toSet());
         recipientUsers.addAll(mentionedUserLoginsAndIds);
