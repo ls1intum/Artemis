@@ -38,14 +38,49 @@ class AeolusTest {
         scriptAction.setScript("script");
         scriptAction.setEnvironment(Map.of("key", "value"));
         scriptAction.setParameters(Map.of("key", "value"));
+        AeolusResult scriptResult = new AeolusResult("junit", "text.xml", "ignore", "junit", false);
+        scriptAction.setResults(List.of(scriptResult));
+        assertThat(scriptAction.getResults().get(0).getName()).isEqualTo("junit");
+        assertThat(scriptAction.getResults().get(0).getPath()).isEqualTo("text.xml");
+        assertThat(scriptAction.getResults().get(0).getIgnore()).isEqualTo("ignore");
+        assertThat(scriptAction.getResults().get(0).getType()).isEqualTo("junit");
+        assertThat(scriptAction.getResults().get(0).isBefore()).isEqualTo(false);
 
         PlatformAction platformAction = new PlatformAction();
         platformAction.setName("platformAction");
         platformAction.setWorkdir("workdir");
         platformAction.setRunAlways(true);
         platformAction.setPlatform("bamboo");
+        AeolusResult result = new AeolusResult();
+        result.setName("name");
+        result.setPath("path");
+        result.setIgnore("ignore");
+        result.setType("type");
+        result.setBefore(true);
+        platformAction.setResults(List.of(result));
+        assertThat(platformAction.getResults().get(0).getName()).isEqualTo("name");
+        assertThat(platformAction.getResults().get(0).getPath()).isEqualTo("path");
+        assertThat(platformAction.getResults().get(0).getIgnore()).isEqualTo("ignore");
+        assertThat(platformAction.getResults().get(0).getType()).isEqualTo("type");
+        assertThat(platformAction.getResults().get(0).isBefore()).isEqualTo(true);
 
         windfile.setActions(List.of(scriptAction, platformAction));
+    }
+
+    @Test
+    void testGetResults() {
+        var results = windfile.getResults();
+        assertThat(results.size()).isEqualTo(2);
+        assertThat(results.get(0).getName()).isEqualTo("junit");
+        assertThat(results.get(0).getPath()).isEqualTo("text.xml");
+        assertThat(results.get(0).getIgnore()).isEqualTo("ignore");
+        assertThat(results.get(0).getType()).isEqualTo("junit");
+        assertThat(results.get(0).isBefore()).isEqualTo(false);
+        assertThat(results.get(1).getName()).isEqualTo("name");
+        assertThat(results.get(1).getPath()).isEqualTo("path");
+        assertThat(results.get(1).getIgnore()).isEqualTo("ignore");
+        assertThat(results.get(1).getType()).isEqualTo("type");
+        assertThat(results.get(1).isBefore()).isEqualTo(true);
     }
 
     @Test

@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.aeolus;
 
+import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.SOLUTION_REPO_NAME;
+import static de.tum.in.www1.artemis.config.Constants.TEST_REPO_NAME;
+
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,8 +23,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.gson.Gson;
 
+import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
+import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooInternalUrlService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
 /**
  * Service for publishing custom build plans using Aeolus, currently supports Bamboo
@@ -103,5 +110,38 @@ public class AeolusBuildPlanService {
             LOGGER.error("Error while publishing build plan {} to Aeolus target {}", buildPlan, target, e);
         }
         return null;
+    }
+
+    /**
+     * Creates a map of repositories used in Aeolus to create the checkout task in the custom build plan
+     *
+     * @param programmingLanguage        the programming language of the exercise
+     * @param branch                     the branch of the exercise
+     * @param checkoutSolutionRepository whether the solution repository should be checked out (only used in OCAML and Haskell exercises)
+     * @param repositoryUrl              the url of the assignment repository
+     * @param testRepositoryUrl          the url of the test repository
+     * @param solutionRepositoryUrl      the url of the solution repository
+     * @param auxiliaryRepositories      List of auxiliary repositories to be included in the build plan
+     * @return a map of repositories used in Aeolus to create the checkout task in the custom build plan
+     */
+    public Map<String, AeolusRepository> createRepositoryMapForWindfile(ProgrammingLanguage programmingLanguage, String branch, boolean checkoutSolutionRepository,
+            VcsRepositoryUrl repositoryUrl, VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl,
+            List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories) {
+        if (bambooInternalUrlService.isEmpty()) {
+            throw new ContinuousIntegrationBuildPlanException("Internal URL service for Bamboo is not configured");
+        }
+        Map<String, AeolusRepository> repositoryMap = new HashMap<>();
+        repositoryMap.put(ASSIGNMENT_REPO_NAME, new AeolusRepository(bambooInternalUrlService.get().toInternalVcsUrl(repositoryUrl).toString(), branch,
+                ContinuousIntegrationService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage)));
+        if (checkoutSolutionRepository) {
+            repositoryMap.put(SOLUTION_REPO_NAME, new AeolusRepository(bambooInternalUrlService.get().toInternalVcsUrl(solutionRepositoryUrl).toString(), branch,
+                    ContinuousIntegrationService.RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage)));
+        }
+        repositoryMap.put(TEST_REPO_NAME, new AeolusRepository(bambooInternalUrlService.get().toInternalVcsUrl(testRepositoryUrl).toString(), branch,
+                ContinuousIntegrationService.RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage)));
+        for (var auxRepo : auxiliaryRepositories) {
+            repositoryMap.put(auxRepo.name(), new AeolusRepository(auxRepo.repositoryUrl().toString(), branch, auxRepo.name()));
+        }
+        return repositoryMap;
     }
 }

@@ -158,4 +158,17 @@ public class Windfile {
         Gson gson = builder.create();
         return gson.fromJson(json, Windfile.class);
     }
+
+    /**
+     * Collects the results of all actions of a windfile.
+     *
+     * @return the results of all actions of this windfile
+     */
+    public List<AeolusResult> getResults() {
+        List<AeolusResult> results = new ArrayList<>();
+        for (Action action : actions.stream().filter(action -> action.getResults() != null && !action.getResults().isEmpty()).toList()) {
+            results.addAll(action.getResults());
+        }
+        return results;
+    }
 }
