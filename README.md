@@ -94,31 +94,32 @@ Once the PR is ready to merge, notify the responsible feature maintainer:
 
 #### Maintainers
   
-| Feature / Aspect               | Maintainer                                                                                      |
-|--------------------------------|-------------------------------------------------------------------------------------------------|
-| Programming exercises          | [@krusche](https://github.com/krusche)                                                          |
-| Quiz exercises                 | [@Santia-go](https://github.com/Santia-go)                                                      |
-| Modeling exercises (+ Apollon) | [@krusche](https://github.com/krusche)                                                          |
-| Text exercises                 | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
-| File upload exercises          | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
-| Exam mode                      | [@krusche](https://github.com/krusche)                                                          |
-| Grading                        | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
-| Assessment                     | [@maximiliansoelch](https://github.com/maximiliansoelch)                                        |
-| Communication                  | [@rabeatwork](https://github.com/rabeatwork)                                                    |
-| Notifications                  | [@rabeatwork](https://github.com/rabeatwork)                                                    |
-| Team Exercises                 | [@krusche](https://github.com/krusche)                                                          |
-| Lectures                       | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
-| Integrated Markdown Editor     | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner) |
-| Plagiarism checks              | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                              |
-| Learning analytics             | [@bassner](https://github.com/bassner)                                                          |
-| Adaptive learning              | [@bassner](https://github.com/bassner)                                                          |
-| Tutorial Groups                | [@Santia-go](https://github.com/Santia-go)                                                      |
-| Iris                           | [@bassner](https://github.com/bassner)                                                          |
-| Scalability                    | [@mtze](https://github.com/mtze)                                                                |
-| Usability                      | [@rabeatwork](https://github.com/rabeatwork)                                                    |
-| Performance                    | [@rabeatwork](https://github.com/rabeatwork)                                                    |
-| Infrastructure                 | [@mtze](https://github.com/mtze)                                                                |
-| Mobile apps (iOS + Android)    | [@krusche](https://github.com/krusche) [@maximiliansoelch](https://github.com/maximiliansoelch) |
+| Feature / Aspect               | Maintainer                                                                                          |
+|--------------------------------|-----------------------------------------------------------------------------------------------------|
+| Programming exercises          | [@krusche](https://github.com/krusche)                                                              |
+| Quiz exercises                 | [@Santia-go](https://github.com/Santia-go)                                                          |
+| Modeling exercises (+ Apollon) | [@krusche](https://github.com/krusche)                                                              |
+| Text exercises                 | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
+| File upload exercises          | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
+| Exam mode                      | [@krusche](https://github.com/krusche)                                                              |
+| Grading                        | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
+| Assessment                     | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
+| Communication                  | [@rabeatwork](https://github.com/rabeatwork)                                                        |
+| Notifications                  | [@rabeatwork](https://github.com/rabeatwork)                                                        |
+| Team Exercises                 | [@krusche](https://github.com/krusche)                                                              |
+| Lectures                       | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner)     |
+| Integrated Markdown Editor     | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner)     |
+| Plagiarism checks              | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                                  |
+| Learning analytics             | [@bassner](https://github.com/bassner)                                                              |
+| Adaptive learning              | [@bassner](https://github.com/bassner) [@maximiliananzinger](https://github.com/maximiliananzinger) |
+| Learning paths                 | [@maximiliananzinger](https://github.com/maximiliananzinger)                                        |
+| Tutorial Groups                | [@Santia-go](https://github.com/Santia-go)                                                          |
+| Iris                           | [@bassner](https://github.com/bassner)                                                              |
+| Scalability                    | [@mtze](https://github.com/mtze)                                                                    |
+| Usability                      | [@rabeatwork](https://github.com/rabeatwork)                                                        |
+| Performance                    | [@rabeatwork](https://github.com/rabeatwork)                                                        |
+| Infrastructure                 | [@mtze](https://github.com/mtze)                                                                    |
+| Mobile apps (iOS + Android)    | [@krusche](https://github.com/krusche) [@maximiliansoelch](https://github.com/maximiliansoelch)     |
 
 
 ### Building for production

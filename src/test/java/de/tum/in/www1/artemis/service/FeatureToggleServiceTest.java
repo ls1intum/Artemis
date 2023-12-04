@@ -23,7 +23,7 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         // Verify that the test has reset the state
         // Must be extended if additional features are added
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
-        assertThat(featureToggleService.isFeatureEnabled(Feature.LearningPaths)).isFalse();
+        assertThat(featureToggleService.isFeatureEnabled(Feature.LearningPaths)).isTrue();
     }
 
     @Test
@@ -60,22 +60,22 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Test
     void testShouldNotEnableTwice() {
-        assertThat(featureToggleService.enabledFeatures().size()).isEqualTo(Feature.values().length - 1);
+        assertThat(featureToggleService.enabledFeatures()).hasSameSizeAs(Feature.values());
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
 
         // Feature should not be added multiple times
-        assertThat(featureToggleService.enabledFeatures().size()).isEqualTo(Feature.values().length - 1);
+        assertThat(featureToggleService.enabledFeatures()).hasSameSizeAs(Feature.values());
     }
 
     @Test
     void testShouldNotDisableTwice() {
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
 
-        assertThat(featureToggleService.disabledFeatures()).hasSize(2);
+        assertThat(featureToggleService.disabledFeatures()).hasSize(1);
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
 
         // Feature should not be added multiple times
-        assertThat(featureToggleService.disabledFeatures()).hasSize(2);
+        assertThat(featureToggleService.disabledFeatures()).hasSize(1);
 
         // Reset
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
