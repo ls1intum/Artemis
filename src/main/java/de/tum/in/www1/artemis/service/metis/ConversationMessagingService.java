@@ -153,13 +153,13 @@ public class ConversationMessagingService extends PostingService {
             broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, null);
             log.debug("      broadcastForPost DONE");
 
-            recipientSummaries = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+            recipientSummaries = getNotificationRecipients(conversation).collect(Collectors.toSet());
             log.debug("      getWebSocketRecipients DONE");
             recipientUsers = mapToUsers(recipientSummaries);
         }
         else {
             // In all other cases we need the list of participants to send the WS messages to the correct topics. Hence, the db query has to be made before sending WS messages
-            recipientSummaries = getWebSocketRecipients(conversation).collect(Collectors.toSet());
+            recipientSummaries = getNotificationRecipients(conversation).collect(Collectors.toSet());
             log.debug("      getWebSocketRecipients DONE");
             recipientUsers = mapToUsers(recipientSummaries);
 
