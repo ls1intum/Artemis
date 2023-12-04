@@ -450,8 +450,8 @@ public class SingleUserNotificationService {
                 || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_CHANNEL_TITLE)
                 || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE)
                 || Objects.equals(notification.getTitle(), MESSAGE_REPLY_IN_CONVERSATION_TITLE) || Objects.equals(notification.getTitle(), MENTIONED_IN_MESSAGE_TITLE)
-                || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_COURSE_POST) || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_EXAM_POST)
-                || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_LECTURE_POST) || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_EXERCISE_POST)) {
+                || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_COURSE_POST_TITLE) || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_EXAM_POST_TITLE)
+                || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_LECTURE_POST_TITLE) || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_EXERCISE_POST_TITLE)) {
             return (!Objects.equals(notification.getAuthor().getLogin(), notification.getRecipient().getLogin()));
         }
         return true;
