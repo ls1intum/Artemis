@@ -294,6 +294,21 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNoBuildPlanAccessSecretForImportedExercise() {
+        var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, createToBeImported());
+        assertThat(programmingExercise.getBuildPlanAccessSecret()).isEqualTo(importedExercise.getBuildPlanAccessSecret()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDifferentBuildPlanAccessSecretForImportedExercise() {
+        programmingExerciseUtilService.addBuildPlanAndSecretToProgrammingExercise(programmingExercise, "text");
+        var importedExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, createToBeImported());
+        assertThat(programmingExercise.getBuildPlanAccessSecret()).isNotNull().isNotEqualTo(importedExercise.getBuildPlanAccessSecret());
+    }
+
     private ProgrammingExercise importExerciseBase() {
         final var toBeImported = createToBeImported();
         return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
