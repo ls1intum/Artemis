@@ -48,7 +48,7 @@ public class GCCParser implements ParserStrategy {
     private static final int ERROR_POS = 6;
 
     // Map that contains the matching category for each error
-    private static final Map<String, String> categories = new HashMap<>();
+    private static final Map<String, String> CATEGORIES = new HashMap<>();
 
     private static final String ANALYZER_PREFIX = "[-Wanalyzer";
 
@@ -129,86 +129,91 @@ public class GCCParser implements ParserStrategy {
             String function = parts[FUNCTION_PART];
             String[] issueTextPerFunction = parts[ISSUE_PART].split("\n(?=" + HEADER_REGEX + ")");
 
-            for (String issueText : issueTextPerFunction) {
-                String[] segments = issueText.split("\n", SEGMENTS_COUNT);
-                String header = segments[HEADER_SEGMENT_POS];
-                String body = segments[BODY_SEGMENT_POS];
-
-                matcher.reset(header);
-
-                if (!matcher.find()) {
-                    continue;
-                }
-
-                // Construct issueText details based on regex groups
-                String filename = matcher.group(FILE_POS).trim();
-                Integer row = Integer.parseInt(matcher.group(ROW_POS));
-                Integer col = Integer.parseInt(matcher.group(COLUMN_POS));
-                String type = matcher.group(TYPE_POS);
-                String description = matcher.group(DESCRIPTION_POS);
-                String warningName = matcher.group(ERROR_POS);
-
-                // Only output warnings that have a name associated with it
-                if (warningName == null) {
-                    continue;
-                }
-
-                // warningName is included in the description, as it will not be shown be Artemis otherwise
-                String message = function + "\n" + warningName + description + "\nTrace:\n" + body;
-
-                StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue();
-
-                issue.setMessage(message);
-                issue.setFilePath(filename);
-                issue.setStartLine(row);
-                issue.setEndLine(row);
-                issue.setStartColumn(col);
-                issue.setEndColumn(col);
-                issue.setRule(warningName);
-                issue.setPriority(type); // Could potentially be used for sorting at some point, not displayed by Artemis
-
-                boolean isAnalyzerIssue = warningName.startsWith(ANALYZER_PREFIX);
-
-                // Set correct category, only real static analysis issues are categorized, see https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html
-                if (isAnalyzerIssue) {
-                    String category = categories.get(warningName);
-                    issue.setCategory(category);
-                }
-                else {
-                    issue.setCategory(MISC);
-                }
-                issues.add(issue);
-            }
+            extractIssueTextsFromFunction(matcher, issues, function, issueTextPerFunction);
         }
         report.setIssues(issues);
     }
 
+    /**
+     * Extracts the issue texts from the function part of the output.
+     */
+    private void extractIssueTextsFromFunction(Matcher matcher, List<StaticCodeAnalysisIssue> issues, String function, String[] issueTextPerFunction) {
+        for (String issueText : issueTextPerFunction) {
+            String[] segments = issueText.split("\n", SEGMENTS_COUNT);
+            String header = segments[HEADER_SEGMENT_POS];
+            String body = segments[BODY_SEGMENT_POS];
+
+            matcher.reset(header);
+            if (!matcher.find()) {
+                continue;
+            }
+
+            // Construct issueText details based on regex groups
+            String filename = matcher.group(FILE_POS).trim();
+            Integer row = Integer.parseInt(matcher.group(ROW_POS));
+            Integer col = Integer.parseInt(matcher.group(COLUMN_POS));
+            String type = matcher.group(TYPE_POS);
+            String description = matcher.group(DESCRIPTION_POS);
+            String warningName = matcher.group(ERROR_POS);
+
+            // Only output warnings that have a name associated with it
+            if (warningName == null) {
+                continue;
+            }
+            // warningName is included in the description, as it will not be shown be Artemis otherwise
+            String message = function + "\n" + warningName + description + "\nTrace:\n" + body;
+
+            StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue();
+
+            issue.setMessage(message);
+            issue.setFilePath(filename);
+            issue.setStartLine(row);
+            issue.setEndLine(row);
+            issue.setStartColumn(col);
+            issue.setEndColumn(col);
+            issue.setRule(warningName);
+            issue.setPriority(type); // Could potentially be used for sorting at some point, not displayed by Artemis
+
+            boolean isAnalyzerIssue = warningName.startsWith(ANALYZER_PREFIX);
+
+            // Set correct category, only real static analysis issues are categorized, see https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html
+            if (isAnalyzerIssue) {
+                String category = CATEGORIES.get(warningName);
+                issue.setCategory(category);
+            }
+            else {
+                issue.setCategory(MISC);
+            }
+            issues.add(issue);
+        }
+    }
+
     private void initCategoryMapping() {
         // Memory warnings
-        categories.put("[-Wanalyzer-free-of-non-heap]", MEMORY);
-        categories.put("[-Wanalyzer-malloc-leak]", MEMORY);
-        categories.put("[-Wanalyzer-file-leak]", MEMORY);
-        categories.put("[-Wanalyzer-mismatching-deallocation]", MEMORY);
+        CATEGORIES.put("[-Wanalyzer-free-of-non-heap]", MEMORY);
+        CATEGORIES.put("[-Wanalyzer-malloc-leak]", MEMORY);
+        CATEGORIES.put("[-Wanalyzer-file-leak]", MEMORY);
+        CATEGORIES.put("[-Wanalyzer-mismatching-deallocation]", MEMORY);
 
         // Undefined behavior
-        categories.put("[-Wanalyzer-double-free]", UNDEFINED_BEHAVIOR);
-        categories.put("[-Wanalyzer-null-argument]", UNDEFINED_BEHAVIOR);
-        categories.put("[-Wanalyzer-use-after-free]", UNDEFINED_BEHAVIOR);
-        categories.put("[-Wanalyzer-use-of-uninitialized-value]", UNDEFINED_BEHAVIOR);
-        categories.put("[-Wanalyzer-write-to-const]", UNDEFINED_BEHAVIOR);
-        categories.put("[-Wanalyzer-write-to-string-literal]", UNDEFINED_BEHAVIOR);
-        categories.put("[-Wanalyzer-possible-null-argument]", UNDEFINED_BEHAVIOR);
-        categories.put("[-Wanalyzer-possible-null-dereference]", UNDEFINED_BEHAVIOR);
+        CATEGORIES.put("[-Wanalyzer-double-free]", UNDEFINED_BEHAVIOR);
+        CATEGORIES.put("[-Wanalyzer-null-argument]", UNDEFINED_BEHAVIOR);
+        CATEGORIES.put("[-Wanalyzer-use-after-free]", UNDEFINED_BEHAVIOR);
+        CATEGORIES.put("[-Wanalyzer-use-of-uninitialized-value]", UNDEFINED_BEHAVIOR);
+        CATEGORIES.put("[-Wanalyzer-write-to-const]", UNDEFINED_BEHAVIOR);
+        CATEGORIES.put("[-Wanalyzer-write-to-string-literal]", UNDEFINED_BEHAVIOR);
+        CATEGORIES.put("[-Wanalyzer-possible-null-argument]", UNDEFINED_BEHAVIOR);
+        CATEGORIES.put("[-Wanalyzer-possible-null-dereference]", UNDEFINED_BEHAVIOR);
 
         // Bad Practice
-        categories.put("[-Wanalyzer-double-fclose]", BAD_PRACTICE);
-        categories.put("[-Wanalyzer-too-complex]", BAD_PRACTICE);
-        categories.put("[-Wanalyzer-stale-setjmp-buffer]", BAD_PRACTICE);
+        CATEGORIES.put("[-Wanalyzer-double-fclose]", BAD_PRACTICE);
+        CATEGORIES.put("[-Wanalyzer-too-complex]", BAD_PRACTICE);
+        CATEGORIES.put("[-Wanalyzer-stale-setjmp-buffer]", BAD_PRACTICE);
 
         // Security
-        categories.put("[-Wanalyzer-exposure-through-output-file]", SECURITY);
-        categories.put("[-Wanalyzer-unsafe-call-within-signal-handler]", SECURITY);
-        categories.put("[-Wanalyzer-use-of-pointer-in-stale-stack-frame]", SECURITY);
-        categories.put("[-Wanalyzer-tainted-array-index]", SECURITY);
+        CATEGORIES.put("[-Wanalyzer-exposure-through-output-file]", SECURITY);
+        CATEGORIES.put("[-Wanalyzer-unsafe-call-within-signal-handler]", SECURITY);
+        CATEGORIES.put("[-Wanalyzer-use-of-pointer-in-stale-stack-frame]", SECURITY);
+        CATEGORIES.put("[-Wanalyzer-tainted-array-index]", SECURITY);
     }
 }

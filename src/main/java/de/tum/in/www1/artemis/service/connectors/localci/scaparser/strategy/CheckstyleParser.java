@@ -17,6 +17,12 @@ class CheckstyleParser extends CheckstyleFormatParser {
     // Some rules don't belong to a category. We group them under this identifier.
     private static final String CATEGORY_MISCELLANEOUS = "miscellaneous";
 
+    /**
+     * Parses the given checkstyle report and returns a {@link StaticCodeAnalysisReportDTO} containing the issues.
+     *
+     * @param doc checkstyle report
+     * @return StaticCodeAnalysisReportDTO containing the issues
+     */
     public StaticCodeAnalysisReportDTO parse(Document doc) {
         StaticCodeAnalysisReportDTO report = new StaticCodeAnalysisReportDTO();
         report.setTool(StaticCodeAnalysisTool.CHECKSTYLE);

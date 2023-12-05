@@ -41,6 +41,7 @@ import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserPolicy;
 import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserStrategy;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
@@ -382,7 +383,12 @@ public class LocalCIBuildJobExecutionService {
         // Find the index of the last '/'
         int lastIndex = filePath.lastIndexOf('/');
         // If '/' is found, extract the substring after it; otherwise, keep the original string
-        return lastIndex != -1 ? filePath.substring(lastIndex + 1) : filePath;
+        if (lastIndex != -1) {
+            return filePath.substring(lastIndex + 1);
+        }
+        else {
+            return filePath;
+        }
     }
 
     /**
@@ -400,7 +406,7 @@ public class LocalCIBuildJobExecutionService {
             ParserStrategy parserStrategy = parserPolicy.configure(document);
             staticCodeAnalysisReports.add(parserStrategy.parse(document));
         }
-        catch (Exception e) {
+        catch (UnsupportedToolException e) {
             throw new IllegalStateException("Failed to parse static code analysis report for " + fileName, e);
         }
     }
@@ -496,13 +502,14 @@ public class LocalCIBuildJobExecutionService {
     /**
      * Constructs a {@link LocalCIBuildResult} from the given parameters.
      *
-     * @param failedTests              The list of failed tests.
-     * @param successfulTests          The list of successful tests.
-     * @param assignmentRepoBranchName The name of the branch of the assignment repository that was checked out for the build.
-     * @param assignmentRepoCommitHash The commit hash of the assignment repository that was checked out for the build.
-     * @param testsRepoCommitHash      The commit hash of the tests repository that was checked out for the build.
-     * @param isBuildSuccessful        Whether the build was successful or not.
-     * @param buildRunDate             The date when the build was completed.
+     * @param failedTests               The list of failed tests.
+     * @param successfulTests           The list of successful tests.
+     * @param assignmentRepoBranchName  The name of the branch of the assignment repository that was checked out for the build.
+     * @param assignmentRepoCommitHash  The commit hash of the assignment repository that was checked out for the build.
+     * @param testsRepoCommitHash       The commit hash of the tests repository that was checked out for the build.
+     * @param isBuildSuccessful         Whether the build was successful or not.
+     * @param buildRunDate              The date when the build was completed.
+     * @param staticCodeAnalysisReports The static code analysis reports
      * @return a {@link LocalCIBuildResult}
      */
     private LocalCIBuildResult constructBuildResult(List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests,
