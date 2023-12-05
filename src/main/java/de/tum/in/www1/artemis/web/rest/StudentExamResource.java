@@ -368,7 +368,7 @@ public class StudentExamResource {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the student exam of user {} for exam {}", currentUser.getLogin(), examId);
 
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndQuizQuestionsElseThrow(studentExamId);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
 
         if (!currentUser.equals(studentExam.getUser())) {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
@@ -812,6 +812,7 @@ public class StudentExamResource {
         Exam exam = studentExam.getExam();
         QuizPool quizPool = quizPoolService.findByExamId(exam.getId());
         if (quizPool != null) {
+            studentExamRepository.fetchAllQuizQuestions(studentExam);
             exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
             exam.setRandomizeQuizExamQuestionsOrder(quizPool.getRandomizeQuestionOrder());
         }

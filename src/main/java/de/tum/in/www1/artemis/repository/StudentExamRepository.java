@@ -34,15 +34,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<StudentExam> findWithExercisesById(Long studentExamId);
 
-    /**
-     * Get one student exam by id with exercises and quizQuestions.
-     *
-     * @param studentExamId the id of the student exam
-     * @return the student exam with exercises and quizQuestions
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "quizQuestions" })
-    Optional<StudentExam> findWithExercisesAndQuizQuestionsById(Long studentExamId);
-
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "examSessions" })
     Optional<StudentExam> findWithExercisesAndSessionsById(Long studentExamId);
 
@@ -362,17 +353,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     }
 
     /**
-     * Get one student exam by id with exercises and quizQuestions.
-     *
-     * @param studentExamId the id of the student exam
-     * @return the student exam with exercises and quizQuestions
-     */
-    @NotNull
-    default StudentExam findByIdWithExercisesAndQuizQuestionsElseThrow(Long studentExamId) {
-        return findWithExercisesAndQuizQuestionsById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student exam", studentExamId));
-    }
-
-    /**
      * Get one student exam by id with exercises and sessions
      *
      * @param studentExamId the id of the student exam
@@ -520,4 +500,17 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             WHERE se.id IN :ids
             """)
     List<StudentExam> findAllWithEagerExercisesById(List<Long> ids);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
+    Optional<StudentExam> findWithEagerQuizQuestionsById(Long studentExamId);
+
+    /**
+     * Fetch eagerly all quiz questions that belong to the individual student exam, then set the quiz exam related properties of the student exam
+     *
+     * @param studentExam the student exam of which the quiz questions to be fetched
+     */
+    default void fetchAllQuizQuestions(StudentExam studentExam) {
+        Optional<StudentExam> studentExamOptional = findWithEagerQuizQuestionsById(studentExam.getId());
+        studentExamOptional.ifPresent(exam -> studentExam.setQuizQuestions(exam.getQuizQuestions()));
+    }
 }
