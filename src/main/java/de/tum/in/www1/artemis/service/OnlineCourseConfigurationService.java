@@ -23,7 +23,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
-import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -35,16 +34,12 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
 
     private final Logger log = LoggerFactory.getLogger(OnlineCourseConfigurationService.class);
 
-    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
-
     private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
 
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    public OnlineCourseConfigurationService(OnlineCourseConfigurationRepository onlineCourseConfigurationRepository,
-            LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
-        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
+    public OnlineCourseConfigurationService(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
     }
 

@@ -112,15 +112,13 @@ public class CourseResource {
 
     private final LearningPathService learningPathService;
 
-    private final LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
-
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
             CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
-            ConductAgreementService conductAgreementService, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository) {
+            ConductAgreementService conductAgreementService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -140,7 +138,6 @@ public class CourseResource {
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathService = learningPathService;
         this.conductAgreementService = conductAgreementService;
-        this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
     }
 
     /**

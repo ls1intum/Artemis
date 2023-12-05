@@ -17,6 +17,10 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiDynamicRegistrationService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
+/**
+ * REST controller for managing LTI platform configurations.
+ * Handles administrative actions for LTI platforms, including configuration, deletion, and dynamic registration.
+ */
 @RestController
 @RequestMapping("api/admin/")
 @Profile("lti")
@@ -35,6 +39,13 @@ public class AdminLtiConfigurationResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    /**
+     * Constructor to initialize the controller with necessary services.
+     *
+     * @param ltiPlatformConfigurationRepository Repository for LTI platform configurations.
+     * @param ltiDynamicRegistrationService      Service for LTI dynamic registration.
+     * @param authCheckService                   Service for authorization checks.
+     */
     public AdminLtiConfigurationResource(LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository, LtiDynamicRegistrationService ltiDynamicRegistrationService,
             AuthorizationCheckService authCheckService) {
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;

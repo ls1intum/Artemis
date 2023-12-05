@@ -10,5 +10,4 @@ import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
  */
 @Repository
 public interface OnlineCourseConfigurationRepository extends JpaRepository<OnlineCourseConfiguration, Long> {
-
 }
