@@ -294,7 +294,7 @@ examples.forEach((activeConversation) => {
                 fixture.detectChanges();
                 tick(301);
                 const onConversationsUpdateSpy = jest.spyOn(component, 'onConversationsUpdate');
-                component.onConversationIsFavoriteDidChange();
+                component.updateConversations();
                 tick(301);
                 expect(onConversationsUpdateSpy).toHaveBeenCalledOnce();
                 expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);
@@ -304,7 +304,7 @@ examples.forEach((activeConversation) => {
                 fixture.detectChanges();
                 tick(301);
                 const onConversationsUpdateSpy = jest.spyOn(component, 'onConversationsUpdate');
-                component.onConversationIsHiddenDidChange();
+                component.updateConversations();
                 tick(301);
                 expect(onConversationsUpdateSpy).toHaveBeenCalledOnce();
                 expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);
@@ -314,7 +314,7 @@ examples.forEach((activeConversation) => {
                 fixture.detectChanges();
                 tick(301);
                 const onConversationsUpdateSpy = jest.spyOn(component, 'onConversationsUpdate');
-                component.onConversationIsMutedDidChange();
+                component.updateConversations();
                 tick(301);
                 expect(onConversationsUpdateSpy).toHaveBeenCalledOnce();
                 expect(onConversationsUpdateSpy).toHaveBeenCalledWith(component.allConversations);

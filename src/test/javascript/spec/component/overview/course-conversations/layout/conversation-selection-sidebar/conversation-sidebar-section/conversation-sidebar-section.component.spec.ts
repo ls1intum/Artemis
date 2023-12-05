@@ -28,7 +28,7 @@ class ConversationSidebarEntryStubComponent {
     activeConversation: ConversationDto | undefined;
 
     @Output()
-    settingsChanged = new EventEmitter<void>();
+    settingsDidChange = new EventEmitter<void>();
 
     @Output()
     conversationHiddenStatusChange = new EventEmitter<void>();
