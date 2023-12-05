@@ -62,10 +62,12 @@ public class ExamDeletionService {
 
     private final QuizPoolRepository quizPoolRepository;
 
+    private final QuizExamSubmissionRepository quizExamSubmissionRepository;
+
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationService participationService, CacheManager cacheManager, UserRepository userRepository,
             ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, GradingScaleRepository gradingScaleRepository,
             StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository, ChannelService channelService,
-            ExamLiveEventRepository examLiveEventRepository, QuizPoolRepository quizPoolRepository) {
+            ExamLiveEventRepository examLiveEventRepository, QuizPoolRepository quizPoolRepository, QuizExamSubmissionRepository quizExamSubmissionRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
         this.cacheManager = cacheManager;
@@ -79,6 +81,7 @@ public class ExamDeletionService {
         this.channelService = channelService;
         this.examLiveEventRepository = examLiveEventRepository;
         this.quizPoolRepository = quizPoolRepository;
+        this.quizExamSubmissionRepository = quizExamSubmissionRepository;
     }
 
     /**
@@ -108,6 +111,7 @@ public class ExamDeletionService {
 
         Optional<QuizPool> quizPoolOptional = quizPoolRepository.findByExamId(examId);
         quizPoolOptional.ifPresent(quizPool -> quizPoolRepository.deleteById(quizPool.getId()));
+        quizExamSubmissionRepository.deleteAll(quizExamSubmissionRepository.findAllByExamId(examId));
 
         // first delete test runs to avoid issues later
         List<StudentExam> testRuns = studentExamRepository.findAllTestRunsByExamId(examId);
@@ -161,6 +165,7 @@ public class ExamDeletionService {
                 }
             }
         }
+        quizExamSubmissionRepository.deleteAll(quizExamSubmissionRepository.findAllByExamId(examId));
         studentExamRepository.deleteAll(exam.getStudentExams());
         examLiveEventRepository.deleteAllByExamId(examId);
 

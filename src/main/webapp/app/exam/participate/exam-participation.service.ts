@@ -16,6 +16,7 @@ import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.mo
 import { captureException } from '@sentry/angular-ivy';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExamExercise } from 'app/entities/exam-exercise';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
@@ -251,6 +252,16 @@ export class ExamParticipationService {
     public updateQuizSubmission(exerciseId: number, quizSubmission: QuizSubmission): Observable<QuizSubmission> {
         const url = `api/exercises/${exerciseId}/submissions/exam`;
         return this.httpClient.put<QuizSubmission>(url, quizSubmission);
+    }
+
+    /**
+     * Update a quizSubmission
+     *
+     * @param quizExamSubmission the quiz exam submission to update
+     */
+    public updateQuizExamSubmission(quizExamSubmission: QuizExamSubmission): Observable<QuizExamSubmission> {
+        const url = `api/quiz-exams/submissions/exam`;
+        return this.httpClient.put<QuizExamSubmission>(url, quizExamSubmission);
     }
 
     public setLastSaveFailed(saveFailed: boolean, courseId: number, examId: number): void {

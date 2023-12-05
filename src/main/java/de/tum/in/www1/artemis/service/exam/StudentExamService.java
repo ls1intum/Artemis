@@ -92,13 +92,15 @@ public class StudentExamService {
 
     private final ExamQuizQuestionsGenerator examQuizQuestionsGenerator;
 
+    private final QuizExamSubmissionService quizExamSubmissionService;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, TextSubmissionRepository textSubmissionRepository,
             ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService) {
+            @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService, QuizExamSubmissionService quizExamSubmissionService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -118,6 +120,7 @@ public class StudentExamService {
         this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
         this.examQuizQuestionsGenerator = quizPoolService;
+        this.quizExamSubmissionService = quizExamSubmissionService;
     }
 
     /**
@@ -208,6 +211,29 @@ public class StudentExamService {
                 log.error("saveSubmission threw an exception", e);
             }
         }
+
+        if (studentExam.getQuizExamSubmission() != null) {
+            saveQuizExamSubmission(currentUser, studentExam, studentExam.getQuizExamSubmission());
+        }
+    }
+
+    private void saveQuizExamSubmission(User currentUser, StudentExam studentExam, QuizExamSubmission submissionFromClient) {
+        Optional<QuizExamSubmission> existingSubmissionInDatabaseOptional = quizExamSubmissionService.findWithEagerSubmittedAnswersByStudentExamId(studentExam.getId());
+        if (existingSubmissionInDatabaseOptional.isPresent()) {
+            QuizExamSubmission existingSubmissionInDatabase = existingSubmissionInDatabaseOptional.get();
+            if (!isContentEqualTo(existingSubmissionInDatabase, submissionFromClient)) {
+                saveSubmissionVersion(currentUser, submissionFromClient);
+            }
+        }
+        else {
+            QuizExamSubmission newQuizExamSubmission = quizExamSubmissionService.initializeNewSubmission();
+            submissionFromClient.setId(newQuizExamSubmission.getId());
+            saveSubmissionVersion(currentUser, submissionFromClient);
+        }
+        submissionFromClient.setStudentExam(studentExam);
+        submissionFromClient.submitted(true);
+        recreateSubmittedAnswerPointersToSubmission(submissionFromClient);
+        quizExamSubmissionService.save(submissionFromClient);
     }
 
     private void saveSubmission(User currentUser, List<StudentParticipation> existingRelevantParticipations, Exercise exercise) {
@@ -251,18 +277,7 @@ public class StudentExamService {
                 submissionFromClient.submissionDate(ZonedDateTime.now());
                 submissionFromClient.submitted(true);
                 if (exercise instanceof QuizExercise) {
-                    // recreate pointers back to submission in each submitted answer
-                    for (SubmittedAnswer submittedAnswer : ((QuizSubmission) submissionFromClient).getSubmittedAnswers()) {
-                        submittedAnswer.setSubmission(((QuizSubmission) submissionFromClient));
-                        if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                            ((DragAndDropSubmittedAnswer) submittedAnswer).getMappings()
-                                    .forEach(dragAndDropMapping -> dragAndDropMapping.setSubmittedAnswer(((DragAndDropSubmittedAnswer) submittedAnswer)));
-                        }
-                        else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
-                            ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts()
-                                    .forEach(submittedText -> submittedText.setSubmittedAnswer(((ShortAnswerSubmittedAnswer) submittedAnswer)));
-                        }
-                    }
+                    recreateSubmittedAnswerPointersToSubmission((AbstractQuizSubmission) submissionFromClient);
 
                     // load quiz submissions for existing participation to be able to compare them in saveSubmission
                     // 5. DB Call: read
@@ -292,6 +307,20 @@ public class StudentExamService {
                         saveSubmissionVersion(currentUser, submissionFromClient);
                     }
                 }
+            }
+        }
+    }
+
+    private void recreateSubmittedAnswerPointersToSubmission(AbstractQuizSubmission submissionFromClient) {
+        for (SubmittedAnswer submittedAnswer : submissionFromClient.getSubmittedAnswers()) {
+            submittedAnswer.setSubmission(submissionFromClient);
+            if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                ((DragAndDropSubmittedAnswer) submittedAnswer).getMappings()
+                        .forEach(dragAndDropMapping -> dragAndDropMapping.setSubmittedAnswer(((DragAndDropSubmittedAnswer) submittedAnswer)));
+            }
+            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
+                ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts()
+                        .forEach(submittedText -> submittedText.setSubmittedAnswer(((ShortAnswerSubmittedAnswer) submittedAnswer)));
             }
         }
     }
@@ -349,7 +378,7 @@ public class StudentExamService {
      * @param submission2 a quiz submission to be compared with {@code submission1} for equality
      * @return {@code true} if the quiz submissions are equal to each other and {@code false} otherwise
      */
-    public static boolean isContentEqualTo(@Nullable QuizSubmission submission1, @Nullable QuizSubmission submission2) {
+    public static boolean isContentEqualTo(@Nullable AbstractQuizSubmission submission1, @Nullable AbstractQuizSubmission submission2) {
         if (submission1 == null && submission2 == null) {
             return true;
         }

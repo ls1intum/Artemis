@@ -11,7 +11,7 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { Submission } from 'app/entities/submission.model';
+import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -37,7 +37,15 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamExercise } from 'app/entities/exam-exercise';
-import { asFileUploadExercise, asModelingExercise, asProgrammingExercise, asTextExercise, getExamExercises } from 'app/exam/participate/exam.utils';
+import {
+    asFileUploadExercise,
+    asModelingExercise,
+    asProgrammingExercise,
+    asTextExercise,
+    getExamExercises,
+    updateQuizExamExerciseSubmission,
+} from 'app/exam/participate/exam.utils';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -264,7 +272,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.studentExam = studentExam;
 
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
-            const exercises: Exercise[] = this.studentExam.exercises!;
+            const exercises: ExamExercise[] = this.examExercises!;
             const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
             this.examParticipationService.setExamExerciseIds(exerciseIds);
             // set endDate with workingTime
@@ -275,10 +283,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
             }
             // initializes array which manages submission component and exam overview initialization
-            this.pageComponentVisited = new Array(studentExam.exercises!.length).fill(false);
+            this.pageComponentVisited = new Array(this.examExercises!.length).fill(false);
             // TODO: move to exam-participation.service after studentExam was retrieved
             // initialize all submissions as synced
-            this.studentExam.exercises!.forEach((exercise: Exercise) => {
+            this.examExercises.forEach((exercise: Exercise) => {
                 if (exercise.studentParticipations) {
                     exercise.studentParticipations!.forEach((participation) => {
                         if (participation.submissions && participation.submissions.length > 0) {
@@ -732,8 +740,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
         // go through ALL student exam exercises and check if there are unsynced submissions
         // we do this, because due to connectivity problems, other submissions than the currently active one might have not been saved to the server yet
-        const submissionsToSync: { exercise: Exercise; submission: Submission }[] = [];
-        this.studentExam.exercises!.forEach((exercise: Exercise) => {
+        const submissionsToSync: { exercise: ExamExercise; submission: Submission }[] = [];
+        this.examExercises!.forEach((exercise: ExamExercise) => {
             if (exercise.studentParticipations) {
                 exercise.studentParticipations!.forEach((participation) => {
                     if (participation.submissions) {
@@ -753,7 +761,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // if no connection available -> don't try to sync, except it is forced
         // based on the submissions that need to be saved and the exercise, we perform different actions
         if (forceSave || this.connected) {
-            submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
+            submissionsToSync.forEach((submissionToSync: { exercise: ExamExercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
                         this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id!).subscribe({
@@ -771,10 +779,21 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // nothing to do here, because programming exercises are submitted differently
                         break;
                     case ExerciseType.QUIZ:
-                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission as QuizSubmission).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
-                        });
+                        if (submissionToSync.submission.submissionExerciseType === SubmissionExerciseType.QUIZ) {
+                            this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission as QuizSubmission).subscribe({
+                                next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
+                                error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                            });
+                        } else if (submissionToSync.submission.submissionExerciseType === SubmissionExerciseType.QUIZ_EXAM) {
+                            this.examParticipationService.updateQuizExamSubmission(submissionToSync.submission as QuizExamSubmission).subscribe({
+                                next: (updatedSubmission) => {
+                                    this.onSaveSubmissionSuccess(updatedSubmission);
+                                    this.studentExam.quizExamSubmission = updatedSubmission;
+                                    updateQuizExamExerciseSubmission(this.examExercises, updatedSubmission);
+                                },
+                                error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                            });
+                        }
                         break;
                     case ExerciseType.FILE_UPLOAD:
                         // nothing to do here, because file upload exercises are only submitted manually, not when you switch between exercises

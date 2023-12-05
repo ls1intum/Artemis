@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
@@ -36,6 +37,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
     @JsonSubTypes.Type(value = ProgrammingSubmission.class, name = "programming"),
     @JsonSubTypes.Type(value = ModelingSubmission.class, name = "modeling"),
     @JsonSubTypes.Type(value = QuizSubmission.class, name = "quiz"),
+    @JsonSubTypes.Type(value = QuizExamSubmission.class, name = "quiz-exam"),
     @JsonSubTypes.Type(value = TextSubmission.class, name = "text"),
     @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload")
 })

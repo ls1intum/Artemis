@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
@@ -29,6 +30,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.QuizExamSubmissionService;
 import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -64,9 +66,11 @@ public class QuizSubmissionResource {
 
     private final ExamSubmissionService examSubmissionService;
 
+    private final QuizExamSubmissionService quizExamSubmissionService;
+
     public QuizSubmissionResource(QuizExerciseRepository quizExerciseRepository, QuizSubmissionService quizSubmissionService, ParticipationService participationService,
             ResultWebsocketService resultWebsocketService, UserRepository userRepository, AuthorizationCheckService authCheckService, ExamSubmissionService examSubmissionService,
-            StudentParticipationRepository studentParticipationRepository) {
+            StudentParticipationRepository studentParticipationRepository, QuizExamSubmissionService quizExamSubmissionService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
@@ -75,6 +79,7 @@ public class QuizSubmissionResource {
         this.authCheckService = authCheckService;
         this.examSubmissionService = examSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.quizExamSubmissionService = quizExamSubmissionService;
     }
 
     /**
@@ -233,6 +238,25 @@ public class QuizSubmissionResource {
         QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user);
         long end = System.currentTimeMillis();
         log.info("submitQuizForExam took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
+        return ResponseEntity.ok(updatedQuizSubmission);
+    }
+
+    @PutMapping("quiz-exams/submissions/exam")
+    @EnforceAtLeastStudent
+    public ResponseEntity<QuizExamSubmission> submitQuizExam(@Valid @RequestBody QuizExamSubmission quizExamSubmission) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to submit QuizExamSubmission for exam : {}", quizExamSubmission);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        if (quizExamSubmission.getId() == null) {
+            QuizExamSubmission newQuizExamSubmission = quizExamSubmissionService.initializeNewSubmission();
+            quizExamSubmission.setId(newQuizExamSubmission.getId());
+        }
+        for (SubmittedAnswer submittedAnswer : quizExamSubmission.getSubmittedAnswers()) {
+            submittedAnswer.setSubmission(quizExamSubmission);
+        }
+        QuizExamSubmission updatedQuizSubmission = quizExamSubmissionService.saveSubmissionForExamMode(null, quizExamSubmission, user);
+        long end = System.currentTimeMillis();
+        log.info("submitQuizExam took {}ms for user {}", end - start, user.getLogin());
         return ResponseEntity.ok(updatedQuizSubmission);
     }
 }

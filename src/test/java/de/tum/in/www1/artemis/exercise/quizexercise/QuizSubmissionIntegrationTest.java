@@ -12,6 +12,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.parallel.Isolated;
@@ -35,7 +36,10 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
@@ -103,6 +107,15 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     @Autowired
     QuizSubmissionWebsocketService quizSubmissionWebsocketService;
+
+    @Autowired
+    private ExamRepository examRepository;
+
+    @Autowired
+    private QuizQuestionRepository quizQuestionRepository;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
 
     @BeforeEach
     void init() {
@@ -716,6 +729,65 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             case PROPORTIONAL_WITHOUT_PENALTY -> 41.7;
         };
         assertThat(result.getScore()).isEqualTo(expectedScore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testQuizExerciseSubmitExam() throws Exception {
+        Course course = courseUtilService.createCourse();
+        var exam = createExamForQuizExerciseTest(course);
+        QuizQuestion quizQuestion0 = QuizExerciseFactory.createMultipleChoiceQuestion();
+        QuizQuestion quizQuestion1 = QuizExerciseFactory.createMultipleChoiceQuestion();
+        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exam.getExerciseGroups().get(0));
+        quizExercise.setQuizQuestions(List.of(quizQuestion0));
+        exerciseRepository.save(quizExercise);
+
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var studentExam = examUtilService.addStudentExamWithUser(exam, user);
+        studentExam = examUtilService.addExercisesToStudentExam(studentExam, List.of(quizExercise));
+        quizQuestionRepository.save(quizQuestion1);
+        examUtilService.addQuizQuestionsToStudentExam(studentExam, List.of(quizQuestion1));
+
+        var studentParticipation = new StudentParticipation();
+        studentParticipation.setParticipant(user);
+        studentParticipation.exercise(quizExercise);
+        studentParticipationRepository.save(studentParticipation);
+
+        SubmittedAnswer submittedAnswer0 = new MultipleChoiceSubmittedAnswer();
+        submittedAnswer0.setQuizQuestion(quizQuestion0);
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.setSubmittedAnswers(Set.of(submittedAnswer0));
+        QuizSubmission updatedQuizSubmission = request.putWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class,
+                HttpStatus.OK);
+        assertThat(updatedQuizSubmission.isSubmitted()).isTrue();
+        assertThat(updatedQuizSubmission.getType()).isEqualTo(SubmissionType.MANUAL);
+        assertThat(updatedQuizSubmission.getParticipation()).isEqualTo(studentParticipation);
+        assertThat(updatedQuizSubmission.getResults()).isEmpty();
+        assertThat(updatedQuizSubmission.getSubmittedAnswers()).hasSize(1);
+    }
+
+    private Exam createExamForQuizExerciseTest(Course course) {
+        var exam = examUtilService.addExamWithExerciseGroup(course, true);
+        var startDate = ZonedDateTime.now().minusMinutes(5);
+        var endDate = ZonedDateTime.now().plusMinutes(5);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        exam = examRepository.save(exam);
+        return exam;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testQuizExamSubmitExam() throws Exception {
+        SubmittedAnswer submittedAnswer1 = new MultipleChoiceSubmittedAnswer();
+        QuizExamSubmission quizExamSubmission = new QuizExamSubmission();
+        quizExamSubmission.setSubmittedAnswers(Set.of(submittedAnswer1));
+        QuizExamSubmission updatedQuizExamSubmission = request.putWithResponseBody("/api/quiz-exams/submissions/exam", quizExamSubmission, QuizExamSubmission.class, HttpStatus.OK);
+        assertThat(updatedQuizExamSubmission.isSubmitted()).isTrue();
+        assertThat(updatedQuizExamSubmission.getType()).isEqualTo(SubmissionType.MANUAL);
+        assertThat(updatedQuizExamSubmission.getParticipation()).isNull();
+        assertThat(updatedQuizExamSubmission.getResults()).isEmpty();
+        assertThat(updatedQuizExamSubmission.getSubmittedAnswers()).hasSize(1);
     }
 
     private List<MultipartFile> generateMultipartFilesFromQuizExercise(QuizExercise quizExercise) {

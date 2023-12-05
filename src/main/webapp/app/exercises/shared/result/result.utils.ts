@@ -17,6 +17,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { TestCaseResult } from 'app/entities/test-case-result.model';
+import { ExamExercise } from 'app/entities/exam-exercise';
 
 /**
  * Enumeration object representing the possible options that
@@ -104,7 +105,7 @@ export const getUnreferencedFeedback = (feedbacks: Feedback[] | undefined): Feed
 };
 
 export const evaluateTemplateStatus = (
-    exercise: Exercise | undefined,
+    exercise: Exercise | ExamExercise | undefined,
     participation: Participation | undefined,
     result: Result | undefined,
     isBuilding: boolean,
@@ -128,9 +129,9 @@ export const evaluateTemplateStatus = (
     if (isModelingOrTextOrFileUpload(participation)) {
         // Based on its submission we test if the participation is in due time of the given exercise.
 
-        const inDueTime = isParticipationInDueTime(participation, exercise);
-        const dueDate = getExerciseDueDate(exercise, participation);
-        const assessmentDueDate = exercise.assessmentDueDate;
+        const inDueTime = isParticipationInDueTime(participation, exercise as Exercise);
+        const dueDate = getExerciseDueDate(exercise as Exercise, participation);
+        const assessmentDueDate = (exercise as Exercise).assessmentDueDate;
 
         if (inDueTime && initializedResultWithScore(result)) {
             // Submission is in due time of exercise and has a result with score

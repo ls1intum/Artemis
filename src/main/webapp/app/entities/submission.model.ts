@@ -19,6 +19,7 @@ export const enum SubmissionExerciseType {
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload',
+    QUIZ_EXAM = 'quiz-exam',
 }
 
 export abstract class Submission implements BaseEntity {

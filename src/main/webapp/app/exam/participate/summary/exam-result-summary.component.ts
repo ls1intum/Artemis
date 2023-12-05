@@ -23,7 +23,17 @@ import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular-ivy';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { isExamResultPublished } from 'app/exam/participate/exam.utils';
+import {
+    asExercise,
+    asFileUploadExercise,
+    asModelingExercise,
+    asProgrammingExercise,
+    asTextExercise,
+    getExamExercises,
+    isExamResultPublished,
+} from 'app/exam/participate/exam.utils';
+import { ExamExercise } from 'app/entities/exam-exercise';
+import { TranslateService } from '@ngx-translate/core';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -72,6 +82,7 @@ export class ExamResultSummaryComponent implements OnInit {
      * Current student's exam.
      */
     private _studentExam: StudentExam;
+    examExercises: ExamExercise[];
 
     plagiarismCaseInfos: { [exerciseId: number]: PlagiarismCaseInfo } = {};
     exampleSolutionPublished = false;
@@ -86,6 +97,10 @@ export class ExamResultSummaryComponent implements OnInit {
         if (this.studentExamGradeInfoDTO) {
             this.studentExamGradeInfoDTO.studentExam = studentExam;
         }
+        this.examExercises = getExamExercises(studentExam, {
+            title: this.translateService.instant('artemisApp.quizPool.title'),
+            navigationTitle: this.translateService.instant('artemisApp.quizPool.navigationTitle'),
+        });
         this.tryLoadPlagiarismCaseInfosForStudent();
     }
 
@@ -131,6 +146,12 @@ export class ExamResultSummaryComponent implements OnInit {
      */
     expandProblemStatement = false;
 
+    asExercise = asExercise;
+    asFileUploadExercise = asFileUploadExercise;
+    asModelingExercise = asModelingExercise;
+    asProgrammingExercise = asProgrammingExercise;
+    asTextExercise = asTextExercise;
+
     constructor(
         private route: ActivatedRoute,
         private serverDateService: ArtemisServerDateService,
@@ -138,6 +159,7 @@ export class ExamResultSummaryComponent implements OnInit {
         private examParticipationService: ExamParticipationService,
         private plagiarismCasesService: PlagiarismCasesService,
         private alertService: AlertService,
+        private translateService: TranslateService,
     ) {}
 
     /**
@@ -281,7 +303,7 @@ export class ExamResultSummaryComponent implements OnInit {
      * @param exercise
      * returns the students' submission for the exercise, undefined if no participation could be found
      */
-    getSubmissionForExercise(exercise: Exercise) {
+    getSubmissionForExercise(exercise: ExamExercise) {
         return exercise?.studentParticipations?.[0]?.submissions?.[0];
     }
 
@@ -289,7 +311,7 @@ export class ExamResultSummaryComponent implements OnInit {
      * @param exercise
      * returns the students' submission for the exercise, undefined if no participation could be found
      */
-    getParticipationForExercise(exercise: Exercise) {
+    getParticipationForExercise(exercise: ExamExercise) {
         return exercise.studentParticipations?.[0] || undefined;
     }
 
@@ -327,7 +349,7 @@ export class ExamResultSummaryComponent implements OnInit {
 
     private getExerciseInfos(studentExamWithGrade?: StudentExamWithGradeDTO): Record<number, ResultSummaryExerciseInfo> {
         const exerciseInfos: Record<number, ResultSummaryExerciseInfo> = {};
-        for (const exercise of this.studentExam?.exercises ?? []) {
+        for (const exercise of this.examExercises ?? []) {
             if (exercise.id === undefined) {
                 this.alertService.error('artemisApp.exam.error.cannotDisplayExerciseDetails', { exerciseGroupTitle: exercise.exerciseGroup?.title });
                 const errorMessage = 'Cannot getExerciseInfos as exerciseId is undefined';
@@ -341,10 +363,10 @@ export class ExamResultSummaryComponent implements OnInit {
 
             const { textColorClass, resultIconClass } = this.getTextColorAndIconClassByExercise(exercise);
 
-            exerciseInfos[exercise.id] = {
+            exerciseInfos[exercise.id!] = {
                 icon: getIcon(exercise.type),
                 isCollapsed: false,
-                achievedPoints: this.getPointsByExerciseIdFromExam(exercise.id, studentExamWithGrade),
+                achievedPoints: this.getPointsByExerciseIdFromExam(exercise.id!, studentExamWithGrade),
                 achievedPercentage: this.getAchievedPercentageByExerciseId(exercise.id),
                 colorClass: textColorClass,
                 resultIconClass: resultIconClass,
@@ -425,7 +447,7 @@ export class ExamResultSummaryComponent implements OnInit {
         return undefined;
     }
 
-    getTextColorAndIconClassByExercise(exercise: Exercise) {
+    getTextColorAndIconClassByExercise(exercise: ExamExercise) {
         const participation = exercise.studentParticipations![0];
         const showUngradedResults = false;
         const result = getLatestResultOfStudentParticipation(participation, showUngradedResults);

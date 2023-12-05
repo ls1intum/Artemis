@@ -506,6 +506,7 @@ public class StudentExamResource {
 
         // 4th: Reload the Quiz-Exercises
         examService.loadQuizExercisesForStudentExam(studentExam);
+        setQuizExamProperties(studentExam);
 
         // 5th fetch participations, submissions and results and connect them to the studentExam
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, user);

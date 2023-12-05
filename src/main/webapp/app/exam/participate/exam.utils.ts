@@ -10,6 +10,9 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
+import { cloneDeep } from 'lodash-es';
+import { InitializationState } from 'app/entities/participation/participation.model';
 
 /**
  * Calculates the individual end time based on the studentExam
@@ -116,6 +119,17 @@ export function getExamExercises(studentExam: StudentExam, quizExamTitles: { tit
     return examExercises;
 }
 
+/**
+ * Update quiz exam submission
+ *
+ * @param examExercises List of exam exercises which contains quiz exam exercise to be updated
+ * @param quizExamSubmission The new submission to be set
+ */
+export function updateQuizExamExerciseSubmission(examExercises: ExamExercise[], quizExamSubmission: QuizExamSubmission) {
+    const quizExamExercise = examExercises[0];
+    quizExamExercise.studentParticipations![0].submissions = [quizExamSubmission];
+}
+
 function createQuizExamExercise(studentExam: StudentExam, titles: { title: string; navigationTitle: string }): QuizExamExercise {
     const { title, navigationTitle } = titles;
     const quizExamExercise = new QuizExamExercise();
@@ -126,7 +140,23 @@ function createQuizExamExercise(studentExam: StudentExam, titles: { title: strin
     quizExamExercise.quizQuestions = studentExam.quizQuestions;
     quizExamExercise.randomizeQuestionOrder = studentExam.exam?.randomizeQuizExamQuestionsOrder;
     quizExamExercise.maxPoints = studentExam.exam?.quizExamMaxPoints;
+    let quizExamSubmission = studentExam.quizExamSubmission;
+    if (!quizExamSubmission) {
+        quizExamSubmission = new QuizExamSubmission();
+    }
+    quizExamSubmission.studentExam = cloneDeep(studentExam);
+    quizExamSubmission.isSynced = true;
+    quizExamExercise.studentParticipations = [
+        {
+            initializationState: InitializationState.INITIALIZED,
+            submissions: [quizExamSubmission],
+        },
+    ];
     return quizExamExercise;
+}
+
+export function asExercise(exercise: ExamExercise): Exercise {
+    return exercise as Exercise;
 }
 
 export function asFileUploadExercise(exercise: ExamExercise): FileUploadExercise {
