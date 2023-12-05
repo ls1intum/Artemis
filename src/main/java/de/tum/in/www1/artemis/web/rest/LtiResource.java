@@ -36,6 +36,13 @@ public class LtiResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    /**
+     * Constructor for LtiResource.
+     *
+     * @param courseRepository      Repository for course data access.
+     * @param authCheckService      Service for authorization checks.
+     * @param ltiDeepLinkingService Service for LTI deep linking.
+     */
     public LtiResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, LtiDeepLinkingService ltiDeepLinkingService) {
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;

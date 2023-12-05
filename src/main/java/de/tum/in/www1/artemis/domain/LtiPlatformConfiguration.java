@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LtiPlatformConfiguration extends DomainObject {
 
+    /** Entity name for LTI platform configuration. */
     public static final String ENTITY_NAME = "ltiPlatformConfiguration";
 
     @NotNull
