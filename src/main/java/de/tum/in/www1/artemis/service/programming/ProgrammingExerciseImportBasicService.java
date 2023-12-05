@@ -102,9 +102,7 @@ public class ProgrammingExerciseImportBasicService {
     @Transactional // TODO: apply the transaction on a smaller scope
     // IMPORTANT: the transactional context only works if you invoke this method from another class
     public ProgrammingExercise importProgrammingExerciseBasis(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
-        // Set values we don't want to copy to null
-        setupExerciseForImport(newExercise);
-        newExercise.setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
+        prepareBasicExerciseInformation(templateExercise, newExercise);
 
         // Note: same order as when creating an exercise
         programmingExerciseParticipationService.setupInitialTemplateParticipation(newExercise);
@@ -159,6 +157,25 @@ public class ProgrammingExerciseImportBasicService {
         channelService.createExerciseChannel(savedImportedExercise, Optional.ofNullable(newExercise.getChannelName()));
 
         return savedImportedExercise;
+    }
+
+    /**
+     * Prepares information directly stored in the exercise for the copy process.
+     * <p>
+     * Replaces attributes in the new exercise that should not be copied from the previous one.
+     *
+     * @param templateExercise Some exercise the information is copied from.
+     * @param newExercise      The exercise that is prepared.
+     */
+    private void prepareBasicExerciseInformation(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
+        // Set values we don't want to copy to null
+        setupExerciseForImport(newExercise);
+
+        if (templateExercise.hasBuildPlanAccessSecretSet()) {
+            newExercise.generateAndSetBuildPlanAccessSecret();
+        }
+
+        newExercise.setBranch(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
     }
 
     /**
