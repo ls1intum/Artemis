@@ -44,6 +44,8 @@ public class Lti13Service {
 
     private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";
 
+    private static final String COURSE_PATH_PATTERN = "/lti/deep-linking/{courseId}";
+
     private final Logger log = LoggerFactory.getLogger(Lti13Service.class);
 
     private final UserRepository userRepository;
@@ -284,6 +286,29 @@ public class Lti13Service {
         return exerciseOpt;
     }
 
+    private Course getCourseFromTargetLink(String targetLinkUrl) {
+        AntPathMatcher matcher = new AntPathMatcher();
+
+        String targetLinkPath;
+        try {
+            targetLinkPath = (new URL(targetLinkUrl)).getPath();
+        }
+        catch (MalformedURLException ex) {
+            log.info("Malformed target link url: {}", targetLinkUrl);
+            return null;
+        }
+
+        if (!matcher.match(COURSE_PATH_PATTERN, targetLinkPath)) {
+            log.info("Could not extract courseId from target link: {}", targetLinkUrl);
+            return null;
+        }
+        Map<String, String> pathVariables = matcher.extractUriTemplateVariables(COURSE_PATH_PATTERN, targetLinkPath);
+
+        String courseId = pathVariables.get("courseId");
+
+        return courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(Long.parseLong(courseId));
+    }
+
     private void createOrUpdateResourceLaunch(Lti13LaunchRequest launchRequest, User user, Exercise exercise) {
         Optional<LtiResourceLaunch> launchOpt = launchRepository.findByIssAndSubAndDeploymentIdAndResourceLinkId(launchRequest.getIss(), launchRequest.getSub(),
                 launchRequest.getDeploymentId(), launchRequest.getResourceLinkId());
@@ -309,5 +334,49 @@ public class Lti13Service {
      */
     public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         ltiService.buildLtiResponse(uriComponentsBuilder, response);
+    }
+
+    /**
+     * Builds a response indicating the need for successful login with the associated username.
+     *
+     * @param response   The HttpServletResponse object.
+     * @param ltiIdToken The OIDC ID token with the LTI email address.
+     */
+    public void buildLtiEmailInUseResponse(HttpServletResponse response, OidcIdToken ltiIdToken) {
+        Optional<String> optionalUsername = artemisAuthenticationProvider.getUsernameForEmail(ltiIdToken.getEmail());
+
+        if (optionalUsername.isPresent()) {
+            String sanitizedUsername = getSanitizedUsername(optionalUsername.get());
+            response.addHeader("ltiSuccessLoginRequired", sanitizedUsername);
+        }
+    }
+
+    private String getSanitizedUsername(String username) {
+        // Remove \r and LF \n characters to prevent HTTP response splitting
+        return username.replaceAll("[\r\n]", "");
+    }
+
+    /**
+     * Initiates the deep linking process for a course based on the provided LTI ID token and client registration ID.
+     *
+     * @param ltiIdToken The ID token containing the deep linking information.
+     * @throws BadRequestAlertException if the course is not found or LTI is not configured for the course.
+     */
+    public void startDeepLinking(OidcIdToken ltiIdToken) {
+
+        String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
+        Course targetCourse = getCourseFromTargetLink(targetLinkUrl);
+        if (targetCourse == null) {
+            log.error("No course to start deep-linking at {}", targetLinkUrl);
+            throw new BadRequestAlertException("Course not found", "LTI", "ltiCourseNotFound");
+        }
+
+        OnlineCourseConfiguration onlineCourseConfiguration = targetCourse.getOnlineCourseConfiguration();
+        if (onlineCourseConfiguration == null) {
+            throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
+        }
+
+        ltiService.authenticateLtiUser(ltiIdToken.getEmail(), createUsernameFromLaunchRequest(ltiIdToken, onlineCourseConfiguration), ltiIdToken.getGivenName(),
+                ltiIdToken.getFamilyName(), onlineCourseConfiguration.isRequireExistingUser());
     }
 }
