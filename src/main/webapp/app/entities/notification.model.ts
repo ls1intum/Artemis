@@ -27,7 +27,7 @@ export class Notification implements BaseEntity {
 }
 
 /**
- * Corresponds to the server-side NotificationTitleTypeConstants(.java) constant Strings
+ * Corresponds to the server-side NotificationConstants(.java) constant Strings
  */
 export const EXERCISE_SUBMISSION_ASSESSED_TITLE = 'artemisApp.singleUserNotification.title.exerciseSubmissionAssessed';
 
@@ -130,3 +130,11 @@ export const QUIZ_EXERCISE_STARTED_TEXT = 'artemisApp.groupNotification.text.qui
 
 export const DATA_EXPORT_CREATED_TITLE = 'artemisApp.singleUserNotification.title.dataExportCreated';
 export const DATA_EXPORT_FAILED_TITLE = 'artemisApp.singleUserNotification.title.dataExportFailed';
+
+export const NEW_MESSAGE_CHANNEL_TEXT = 'artemisApp.conversationNotification.text.newMessageChannel';
+
+export const NEW_MESSAGE_GROUP_CHAT_TEXT = 'artemisApp.conversationNotification.text.newMessageGroupChat';
+
+export const NEW_MESSAGE_DIRECT_TEXT = 'artemisApp.conversationNotification.text.newMessageDirect';
+
+export const MESSAGE_REPLY_IN_CONVERSATION_TEXT = 'artemisApp.singleUserNotification.text.messageReply';

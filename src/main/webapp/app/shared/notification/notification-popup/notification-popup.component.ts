@@ -57,6 +57,8 @@ export class NotificationPopupComponent implements OnInit {
 
     private studentExamExerciseIds: number[];
 
+    private readonly maxNotificationLength = 150;
+
     // Icons
     faTimes = faTimes;
     faMessage = faMessage;
@@ -137,15 +139,7 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     getNotificationTextTranslation(notification: Notification): string {
-        if (notification.textIsPlaceholder) {
-            const translation = this.artemisTranslatePipe.transform(notification.text, { placeholderValues: this.getParsedPlaceholderValues(notification) });
-            if (translation?.includes(translationNotFoundMessage)) {
-                return notification.text ?? 'No text found';
-            }
-            return translation;
-        } else {
-            return notification.text ?? 'No text found';
-        }
+        return this.notificationService.getNotificationTextTranslation(notification, this.maxNotificationLength);
     }
 
     private getParsedPlaceholderValues(notification: Notification): string[] {

@@ -173,18 +173,7 @@ export class NotificationSidebarComponent implements OnInit, OnDestroy {
      * @param notification {Notification}
      */
     getNotificationTextTranslation(notification: Notification): string {
-        if (notification.textIsPlaceholder) {
-            const translation = this.artemisTranslatePipe.transform(notification.text, { placeholderValues: this.getParsedPlaceholderValues(notification) });
-            if (translation?.includes(translationNotFoundMessage)) {
-                return notification.text ?? 'No text found';
-            }
-            if (translation?.length > this.maxNotificationLength) {
-                return translation.substring(0, this.maxNotificationLength - 1) + '...';
-            }
-            return translation;
-        } else {
-            return notification.text ?? 'No text found';
-        }
+        return this.notificationService.getNotificationTextTranslation(notification, this.maxNotificationLength);
     }
 
     private getParsedPlaceholderValues(notification: Notification): string[] {

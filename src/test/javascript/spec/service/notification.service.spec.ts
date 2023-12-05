@@ -9,6 +9,7 @@ import {
     CONVERSATION_CREATE_GROUP_CHAT_TITLE,
     DATA_EXPORT_CREATED_TITLE,
     DATA_EXPORT_FAILED_TITLE,
+    MESSAGE_REPLY_IN_CONVERSATION_TEXT,
     NEW_MESSAGE_TITLE,
     NEW_REPLY_FOR_EXAM_POST_TITLE,
     Notification,
@@ -29,7 +30,9 @@ import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.se
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { OneToOneChat } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
-import { MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ChangeDetectorRef } from '@angular/core';
 
 describe('Notification Service', () => {
     const resourceUrl = 'api/notifications';
@@ -37,6 +40,7 @@ describe('Notification Service', () => {
     let notificationService: NotificationService;
     let httpMock: HttpTestingController;
     let router: Router;
+    let artemisTranslatePipe: ArtemisTranslatePipe;
 
     let websocketService: JhiWebsocketService;
     let wsSubscribeStub: jest.SpyInstance;
@@ -141,6 +145,7 @@ describe('Notification Service', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, TranslateTestingModule, RouterTestingModule.withRoutes([])],
+            declarations: [MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -151,6 +156,8 @@ describe('Notification Service', () => {
                     },
                 }),
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
+                { provide: ChangeDetectorRef, useValue: {} },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: MetisService, useClass: MockMetisService },
                 {
@@ -172,6 +179,7 @@ describe('Notification Service', () => {
         router = TestBed.inject(Router);
 
         websocketService = TestBed.inject(JhiWebsocketService);
+        artemisTranslatePipe = TestBed.inject(ArtemisTranslatePipe);
         wsSubscribeStub = jest.spyOn(websocketService, 'subscribe');
         wsNotificationSubject = new Subject<Notification | undefined>();
         wsReceiveNotificationStub = jest.spyOn(websocketService, 'receive').mockReturnValue(wsNotificationSubject);
@@ -332,6 +340,57 @@ describe('Notification Service', () => {
             // pushes new quizExercise
             wsQuizExerciseSubject.next(quizExercise);
             // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
+        });
+
+        it('should handle textIsPlaceholder being true and return translated text', () => {
+            const notification: Notification = { textIsPlaceholder: true, text: 'someText' };
+            jest.spyOn(artemisTranslatePipe, 'transform').mockReturnValue('Translated Text');
+            const result = notificationService.getNotificationTextTranslation(notification, 50);
+            expect(result).toBe('Translated Text');
+        });
+
+        it('should truncate long translations', () => {
+            const notification: Notification = { textIsPlaceholder: true, text: 'longText' };
+            jest.spyOn(artemisTranslatePipe, 'transform').mockReturnValue('A very long translated text that exceeds the limit');
+            const result = notificationService.getNotificationTextTranslation(notification, 10);
+            expect(result).toBe('A very lo...');
+        });
+
+        it('should return original text if translation not found', () => {
+            const notification: Notification = { textIsPlaceholder: true, text: 'someKey' };
+            jest.spyOn(artemisTranslatePipe, 'transform').mockReturnValue('translation-not-found');
+            const result = notificationService.getNotificationTextTranslation(notification, 50);
+            expect(result).toBe(notification.text);
+        });
+
+        it('should return default message if translation not found and original text is undefined', () => {
+            const notification: Notification = { textIsPlaceholder: true, text: 'abcdef' };
+            jest.spyOn(artemisTranslatePipe, 'transform').mockReturnValue(undefined);
+            const result = notificationService.getNotificationTextTranslation(notification, 50);
+            expect(result).toBeUndefined();
+        });
+
+        it('should replace specific text patterns in the translation', () => {
+            const notification: Notification = { textIsPlaceholder: true, text: MESSAGE_REPLY_IN_CONVERSATION_TEXT };
+            jest.spyOn(artemisTranslatePipe, 'transform').mockReturnValue('Hello, [user]User Name(user123)[/user]');
+            const result = notificationService.getNotificationTextTranslation(notification, 50);
+            expect(result).toBe('Hello, User Name');
+        });
+
+        it('should replace multiple occurences of specific text patterns in the translation', () => {
+            const notification: Notification = { textIsPlaceholder: true, text: MESSAGE_REPLY_IN_CONVERSATION_TEXT };
+            jest.spyOn(artemisTranslatePipe, 'transform').mockReturnValue(
+                'Hello, [user]User Name(user123)[/user] [exercise]Modeling 1(exercises/123)[/exercise] [abc]Test(test)[/abc]',
+            );
+            const result = notificationService.getNotificationTextTranslation(notification, 50);
+            expect(result).toBe('Hello, User Name Modeling 1 Test');
+        });
+
+        it('should recognize wrong specific text patterns and not translate it', () => {
+            const notification: Notification = { textIsPlaceholder: true, text: MESSAGE_REPLY_IN_CONVERSATION_TEXT };
+            jest.spyOn(artemisTranslatePipe, 'transform').mockReturnValue('Hello, [abc]Test(user123)[/def] [abc]Test[/abc]');
+            const result = notificationService.getNotificationTextTranslation(notification, 50);
+            expect(result).toBe('Hello, [abc]Test(user123)[/def] [abc]Test[/abc]');
         });
     });
 });

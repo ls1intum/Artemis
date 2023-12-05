@@ -19,11 +19,15 @@ import {
     DATA_EXPORT_CREATED_TITLE,
     DATA_EXPORT_FAILED_TITLE,
     MENTIONED_IN_MESSAGE_TITLE,
+    MESSAGE_REPLY_IN_CONVERSATION_TEXT,
     NEW_ANNOUNCEMENT_POST_TITLE,
     NEW_COURSE_POST_TITLE,
     NEW_EXAM_POST_TITLE,
     NEW_EXERCISE_POST_TITLE,
     NEW_LECTURE_POST_TITLE,
+    NEW_MESSAGE_CHANNEL_TEXT,
+    NEW_MESSAGE_DIRECT_TEXT,
+    NEW_MESSAGE_GROUP_CHAT_TEXT,
     NEW_MESSAGE_TITLE,
     NEW_REPLY_FOR_COURSE_POST_TITLE,
     NEW_REPLY_FOR_EXAM_POST_TITLE,
@@ -42,10 +46,13 @@ import { RouteComponents } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
+import { translationNotFoundMessage } from 'app/core/config/translation.config';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 const notificationsPerPage = 25;
 
 const NOTIFICATION_TITLES_TO_EXCLUDE_FROM_HISTORY = [NEW_MESSAGE_TITLE, NEW_EXERCISE_POST_TITLE, NEW_LECTURE_POST_TITLE, NEW_EXAM_POST_TITLE, NEW_COURSE_POST_TITLE];
+const MESSAGING_NOTIFICATION_TEXTS = [NEW_MESSAGE_CHANNEL_TEXT, NEW_MESSAGE_GROUP_CHAT_TEXT, NEW_MESSAGE_DIRECT_TEXT, MESSAGE_REPLY_IN_CONVERSATION_TEXT];
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -71,6 +78,7 @@ export class NotificationService {
         private activatedRoute: ActivatedRoute,
         private courseManagementService: CourseManagementService,
         private notificationSettingsService: NotificationSettingsService,
+        private artemisTranslatePipe: ArtemisTranslatePipe,
     ) {
         this.initNotificationObserver();
 
@@ -272,6 +280,42 @@ export class NotificationService {
                 this.navigateToNotificationTarget(targetCourseId, routeComponents, {});
             }
         }
+    }
+
+    /**
+     * Returns the translated text for the placeholder of the notification text of the provided notification.
+     * If the notification is a legacy notification and therefor the text is not a placeholder
+     * it just returns the provided text for the notification text
+     * @param notification {Notification}
+     * @param maxNotificationLength {number}
+     */
+    getNotificationTextTranslation(notification: Notification, maxNotificationLength: number): string {
+        if (notification.textIsPlaceholder) {
+            let translation = this.artemisTranslatePipe.transform(notification.text, { placeholderValues: this.getParsedPlaceholderValues(notification) });
+            if (translation?.includes(translationNotFoundMessage)) {
+                return notification.text ?? 'No text found';
+            }
+
+            if (notification.text && MESSAGING_NOTIFICATION_TEXTS.includes(notification.text)) {
+                const pattern = /\[(?<tag>\w+)](.*?)\(.*?\)\[\/\k<tag>]/g;
+                translation = translation.replace(pattern, (match: string, tag: string, displayName: string) => displayName);
+            }
+
+            if (translation?.length > maxNotificationLength) {
+                return translation.substring(0, maxNotificationLength - 1) + '...';
+            }
+
+            return translation;
+        } else {
+            return notification.text ?? 'No text found';
+        }
+    }
+
+    private getParsedPlaceholderValues(notification: Notification): string[] {
+        if (notification.placeholderValues) {
+            return JSON.parse(notification.placeholderValues);
+        }
+        return [];
     }
 
     /**
