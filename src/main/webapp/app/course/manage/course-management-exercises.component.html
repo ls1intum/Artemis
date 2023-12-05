@@ -111,6 +111,24 @@
 
     <jhi-course-exercise-card
         *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
+        [headingJhiTranslate]="'artemisApp.course.mathExercise'"
+        [exerciseCount]="textExercisesCount"
+        [hidden]="shouldHideExerciseCard('math')"
+        [course]="course"
+    >
+        <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.MATH"></jhi-exercise-create-buttons>
+        <jhi-text-exercise
+            exercises
+            [embedded]="true"
+            [course]="course"
+            [exerciseFilter]="exerciseFilter"
+            (exerciseCount)="textExercisesCount = $event"
+            (filteredExerciseCount)="filteredTextExercisesCount = $event"
+        ></jhi-text-exercise>
+    </jhi-course-exercise-card>
+
+    <jhi-course-exercise-card
+        *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
         [headingJhiTranslate]="'artemisApp.course.fileUploadExercises'"
         [exerciseCount]="fileUploadExercisesCount"
         [hidden]="shouldHideExerciseCard('file-upload')"

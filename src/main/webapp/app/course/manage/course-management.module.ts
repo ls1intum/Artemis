@@ -65,6 +65,7 @@ import { CourseManagementTabBarComponent } from 'app/course/manage/course-manage
 import { ArtemisExerciseCreateButtonsModule } from 'app/exercises/shared/manage/exercise-create-buttons.module';
 import { ArtemisLearningPathManagementModule } from 'app/course/learning-paths/learning-path-management/learning-path-management.module';
 import { IrisModule } from 'app/iris/iris.module';
+import { ArtemisMathExerciseManagementModule } from 'app/exercises/math/manage/math-exercise-management.module';
 
 @NgModule({
     imports: [
@@ -85,6 +86,7 @@ import { IrisModule } from 'app/iris/iris.module';
         ArtemisFileUploadExerciseManagementModule,
         ArtemisQuizManagementModule,
         ArtemisTextExerciseManagementModule,
+        ArtemisMathExerciseManagementModule,
         ArtemisModelingExerciseManagementModule,
         ArtemisProgrammingExerciseModule,
         ArtemisTextExerciseModule,

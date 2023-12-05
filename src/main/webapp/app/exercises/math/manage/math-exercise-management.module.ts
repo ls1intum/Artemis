@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
-import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisMathExerciseModule } from 'app/exercises/math/manage/math-exercise/math-exercise.module';
 
 @NgModule({
-    imports: [ArtemisTextExerciseModule, ArtemisSharedLibsModule, ArtemisSharedComponentModule, ArtemisSharedModule],
+    imports: [ArtemisMathExerciseModule, ArtemisSharedLibsModule, ArtemisSharedComponentModule, ArtemisSharedModule],
 })
-export class ArtemisTextExerciseManagementModule {}
+export class ArtemisMathExerciseManagementModule {}

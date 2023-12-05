@@ -63,7 +63,7 @@ export class MathExerciseDetailComponent implements OnInit, OnDestroy {
 
         this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.mathExercise.gradingInstructions);
         this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.mathExercise.problemStatement);
-        this.formattedExampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.mathExercise.exampleSolution);
+        // this.formattedExampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.mathExercise.exampleSolution);
     }
 
     /**
@@ -89,6 +89,6 @@ export class MathExerciseDetailComponent implements OnInit, OnDestroy {
      * Subscribe to changes of the math exercise.
      */
     registerChangeInMathExercises() {
-        this.eventSubscription = this.eventManager.subscribe('mathExerciseListModification', () => this.load(this.textExercise.id!));
+        this.eventSubscription = this.eventManager.subscribe('mathExerciseListModification', () => this.load(this.mathExercise.id!));
     }
 }

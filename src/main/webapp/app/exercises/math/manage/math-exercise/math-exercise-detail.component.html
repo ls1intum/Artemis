@@ -37,13 +37,13 @@
                 <dd>
                     <span>{{ (mathExercise.feedbackSuggestionsEnabled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exercise.exampleSolution">Example Solution</span></dt>
-                <dd class="editor-outline-background" [innerHTML]="formattedExampleSolution"></dd>
-                <dt><span jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDate">Example Solution Publication Date</span></dt>
-                <dd>
-                    <span *ngIf="mathExercise.exampleSolutionPublicationDate">{{ mathExercise.exampleSolutionPublicationDate | artemisDate }}</span>
-                    <span *ngIf="!mathExercise.exampleSolutionPublicationDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
-                </dd>
+                <!--                <dt><span jhiTranslate="artemisApp.exercise.exampleSolution">Example Solution</span></dt>-->
+                <!--                <dd class="editor-outline-background" [innerHTML]="formattedExampleSolution"></dd>-->
+                <!--                <dt><span jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDate">Example Solution Publication Date</span></dt>-->
+                <!--                <dd>-->
+                <!--                    <span *ngIf="mathExercise.exampleSolutionPublicationDate">{{ mathExercise.exampleSolutionPublicationDate | artemisDate }}</span>-->
+                <!--                    <span *ngIf="!mathExercise.exampleSolutionPublicationDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>-->
+                <!--                </dd>-->
             </dl>
         </div>
     </div>

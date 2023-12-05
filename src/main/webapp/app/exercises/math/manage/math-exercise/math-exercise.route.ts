@@ -90,7 +90,7 @@ export const mathExerciseRoute: Routes = [
     },
     {
         path: ':courseId/math-exercises/:exerciseId/import',
-        component: MathExericseUpdateComponent,
+        component: MathExerciseUpdateComponent,
         resolve: {
             mathExercise: MathExerciseResolver,
         },

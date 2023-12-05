@@ -93,10 +93,6 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     loadChildren: () => import('./exercises/text/participate/text-participation.module').then((m) => m.ArtemisTextParticipationModule),
                 },
                 {
-                    path: 'courses/:courseId/math-exercises/:exerciseId',
-                    loadChildren: () => import('./exercises/math/participate/text-participation.module').then((m) => m.ArtemisTextParticipationModule),
-                },
-                {
                     path: 'courses/:courseId/file-upload-exercises/:exerciseId',
                     loadChildren: () => import('./exercises/file-upload/participate/file-upload-participation.module').then((m) => m.ArtemisFileUploadParticipationModule),
                 },

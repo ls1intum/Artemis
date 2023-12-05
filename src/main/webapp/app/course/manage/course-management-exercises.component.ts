@@ -1,6 +1,5 @@
 import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from './course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -19,11 +18,13 @@ export class CourseManagementExercisesComponent implements OnInit {
     showSearch = false;
     quizExercisesCount = 0;
     textExercisesCount = 0;
+    mathExercisesCount = 0;
     programmingExercisesCount = 0;
     modelingExercisesCount = 0;
     fileUploadExercisesCount = 0;
     filteredQuizExercisesCount = 0;
     filteredTextExercisesCount = 0;
+    filteredMathExercisesCount = 0;
     filteredProgrammingExercisesCount = 0;
     filteredModelingExercisesCount = 0;
     filteredFileUploadExercisesCount = 0;
@@ -40,7 +41,6 @@ export class CourseManagementExercisesComponent implements OnInit {
     @ContentChild('overrideNonProgrammingExerciseCard') overrideNonProgrammingExerciseCard: TemplateRef<any>;
 
     constructor(
-        private courseService: CourseManagementService,
         private router: Router,
         private route: ActivatedRoute,
     ) {}
@@ -72,6 +72,7 @@ export class CourseManagementExercisesComponent implements OnInit {
     setProgrammingExerciseCount(count: number) {
         this.programmingExercisesCount = count;
     }
+
     setFilteredProgrammingExerciseCount(count: number) {
         this.filteredProgrammingExercisesCount = count;
     }
@@ -88,7 +89,14 @@ export class CourseManagementExercisesComponent implements OnInit {
     }
 
     getExerciseCount(): number {
-        return this.quizExercisesCount + this.programmingExercisesCount + this.modelingExercisesCount + this.fileUploadExercisesCount + this.textExercisesCount;
+        return (
+            this.quizExercisesCount +
+            this.programmingExercisesCount +
+            this.modelingExercisesCount +
+            this.fileUploadExercisesCount +
+            this.textExercisesCount +
+            this.mathExercisesCount
+        );
     }
 
     getFilteredExerciseCount(): number {
@@ -97,7 +105,8 @@ export class CourseManagementExercisesComponent implements OnInit {
             this.filteredQuizExercisesCount +
             this.filteredModelingExercisesCount +
             this.filteredTextExercisesCount +
-            this.filteredFileUploadExercisesCount
+            this.filteredFileUploadExercisesCount +
+            this.filteredMathExercisesCount
         );
     }
 
@@ -107,7 +116,11 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     goBackToWizardMode() {
         this.router.navigate(['/course-management', this.course.id, 'lectures', this.lectureIdForGoingBack, 'edit'], {
-            queryParams: { shouldBeInWizardMode: 'true', shouldOpenCreateExercise: 'true', step: this.lectureWizardStepForGoingBack },
+            queryParams: {
+                shouldBeInWizardMode: 'true',
+                shouldOpenCreateExercise: 'true',
+                step: this.lectureWizardStepForGoingBack,
+            },
             queryParamsHandling: '',
         });
     }
