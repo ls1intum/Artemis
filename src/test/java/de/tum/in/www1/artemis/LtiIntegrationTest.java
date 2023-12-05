@@ -365,6 +365,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         List<LtiPlatformConfiguration> actualPlatforms = objectMapper.readValue(jsonContent, new TypeReference<>() {
+            // Empty block intended for type inference by Jackson's ObjectMapper
         });
 
         assertThat(actualPlatforms).hasSize(expectedPlatforms.size());

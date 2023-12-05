@@ -10,4 +10,5 @@ import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
  */
 @Repository
 public interface OnlineCourseConfigurationRepository extends JpaRepository<OnlineCourseConfiguration, Long> {
+    // This interface is intentionally left blank. Spring Data JPA generates the implementation at runtime.
 }
