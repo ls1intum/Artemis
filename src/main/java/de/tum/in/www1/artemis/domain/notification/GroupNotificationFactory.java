@@ -93,7 +93,7 @@ public class GroupNotificationFactory {
         String title;
         String text;
         boolean textIsPlaceholder;
-        String[] placeholderValues;
+        String[] placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
         NotificationPriority priority = MEDIUM;
 
         switch (notificationType) {
@@ -101,58 +101,58 @@ public class GroupNotificationFactory {
                 title = NotificationConstants.EXERCISE_RELEASED_TITLE;
                 text = NotificationConstants.EXERCISE_RELEASED_TEXT;
                 textIsPlaceholder = true;
-                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
             }
             case EXERCISE_PRACTICE -> {
                 title = NotificationConstants.EXERCISE_PRACTICE_TITLE;
                 text = NotificationConstants.EXERCISE_PRACTICE_TEXT;
                 textIsPlaceholder = true;
-                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
             }
             case QUIZ_EXERCISE_STARTED -> {
                 title = NotificationConstants.QUIZ_EXERCISE_STARTED_TITLE;
                 text = NotificationConstants.QUIZ_EXERCISE_STARTED_TEXT;
                 textIsPlaceholder = true;
-                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
             }
             case EXERCISE_UPDATED -> {
                 if (exercise.isExamExercise()) {
                     title = NotificationConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
                     text = NotificationConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TEXT;
-                    textIsPlaceholder = true;
-                    placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
                 }
                 else {
                     title = NotificationConstants.EXERCISE_UPDATED_TITLE;
                     text = NotificationConstants.EXERCISE_UPDATED_TEXT;
-                    textIsPlaceholder = true;
-                    placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
                 }
+                textIsPlaceholder = true;
             }
             case PROGRAMMING_TEST_CASES_CHANGED -> {
                 title = NotificationConstants.PROGRAMMING_TEST_CASES_CHANGED_TITLE;
                 text = NotificationConstants.PROGRAMMING_TEST_CASES_CHANGED_TEXT;
                 textIsPlaceholder = true;
-                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
             }
             case NEW_MANUAL_FEEDBACK_REQUEST -> {
                 title = NotificationConstants.NEW_MANUAL_FEEDBACK_REQUEST_TITLE;
                 text = NotificationConstants.NEW_MANUAL_FEEDBACK_REQUEST_TEXT;
                 textIsPlaceholder = true;
-                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
             }
             case DUPLICATE_TEST_CASE -> {
                 title = NotificationConstants.DUPLICATE_TEST_CASE_TITLE;
                 text = notificationText;
                 textIsPlaceholder = false;
-                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle() };
                 priority = HIGH;
+            }
+            case PROGRAMMING_REPOSITORY_LOCKS -> {
+                title = NotificationConstants.PROGRAMMING_REPOSITORY_LOCKS_TITLE;
+                text = notificationText;
+                textIsPlaceholder = false;
+            }
+            case PROGRAMMING_BUILD_RUN_UPDATE -> {
+                title = NotificationConstants.PROGRAMMING_BUILD_RUN_UPDATE_TITLE;
+                text = notificationText;
+                textIsPlaceholder = false;
             }
             case ILLEGAL_SUBMISSION -> {
                 title = NotificationConstants.ILLEGAL_SUBMISSION_TITLE;
                 text = NotificationConstants.ILLEGAL_SUBMISSION_TEXT;
                 textIsPlaceholder = true;
-                placeholderValues = new String[] { exercise.getCourseViaExerciseGroupOrCourseMember().getTitle(), exercise.getTitle() };
                 priority = HIGH;
             }
 

@@ -387,7 +387,7 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteCompetency_withRelatedCompetencies_shouldReturnBadRequest() throws Exception {
+    void deleteCompetency_withRelatedCompetencies_shouldDeleteCompetencyAndRelations() throws Exception {
         Competency competency1 = competencyUtilService.createCompetency(course);
 
         var relation = new CompetencyRelation();
@@ -396,8 +396,9 @@ class CompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCT
         relation.setType(CompetencyRelation.RelationType.EXTENDS);
         competencyRelationRepository.save(relation);
 
-        // Should return bad request, as the competency still has relations
-        request.delete("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.BAD_REQUEST);
+        request.delete("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.OK);
+        Set<CompetencyRelation> relations = competencyRelationRepository.findAllByCompetencyId(competency.getId());
+        assertThat(relations).isEmpty();
     }
 
     @Test
