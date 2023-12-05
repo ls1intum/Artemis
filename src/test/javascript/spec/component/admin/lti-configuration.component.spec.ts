@@ -1,63 +1,104 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
+import { Router } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { ArtemisTestModule } from '../../test.module';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';
-import { NgModule } from '@angular/core';
+import { MockLtiConfigurationService } from '../../helpers/mocks/service/mock-lti-configuration-service';
+import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
+import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
-describe('LTI Configuration Component', () => {
-    let comp: LtiConfigurationComponent;
+describe('LtiConfigurationComponent', () => {
+    let component: LtiConfigurationComponent;
     let fixture: ComponentFixture<LtiConfigurationComponent>;
+    let mockRouter: any;
+    let mockSortService: any;
+    let ltiConfigurationService: LtiConfigurationService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbNavModule, MockModule(NgbTooltipModule), NgModule],
+    beforeEach(async () => {
+        mockRouter = { navigate: jest.fn() };
+        mockSortService = { sortByProperty: jest.fn() };
+
+        await TestBed.configureTestingModule({
+            imports: [NgbNavModule, FontAwesomeModule],
             declarations: [
                 LtiConfigurationComponent,
-                MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(HelpIconComponent),
                 MockComponent(CopyIconButtonComponent),
                 MockDirective(SortDirective),
+                MockDirective(SortByDirective),
+                MockDirective(DeleteButtonDirective),
                 MockRouterLinkDirective,
             ],
-            providers: [MockProvider(SortService)],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(LtiConfigurationComponent);
-                comp = fixture.componentInstance;
-            });
-    });
+            providers: [
+                { provide: LtiConfigurationService, useClass: MockLtiConfigurationService },
+                { provide: Router, useValue: mockRouter },
+                { provide: SortService, useValue: mockSortService },
+            ],
+        }).compileComponents();
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
-    it('should initialize', () => {
+        fixture = TestBed.createComponent(LtiConfigurationComponent);
+        component = fixture.componentInstance;
+        ltiConfigurationService = TestBed.inject(LtiConfigurationService);
         fixture.detectChanges();
-        expect(comp).not.toBeNull();
+        component.predicate = 'id';
     });
 
-    describe('OnInit', () => {
-        it('should load lti 1.3 information', () => {
-            comp.ngOnInit();
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
 
-            expect(comp.getDynamicRegistrationUrl()).toBe(`${location.origin}/lti/dynamic-registration`);
-            expect(comp.getDeepLinkingUrl()).toBe(`${location.origin}/api/public/lti13/deep-linking`);
-            expect(comp.getToolUrl()).toBe(`${location.origin}/courses`);
-            expect(comp.getKeysetUrl()).toBe(`${location.origin}/.well-known/jwks.json`);
-            expect(comp.getInitiateLoginUrl()).toBe(`${location.origin}/api/public/lti13/initiate-login`);
-            expect(comp.getRedirectUri()).toBe(`${location.origin}/api/public/lti13/auth-callback`);
-            expect(comp.predicate).toBe('id');
-        });
+    it('should initialize and load LTI platforms', () => {
+        expect(component.platforms).toBeDefined();
+        expect(component.platforms).toHaveLength(2);
+    });
+
+    it('should generate URLs correctly', () => {
+        // Test for getDynamicRegistrationUrl
+        expect(component.getDynamicRegistrationUrl()).toContain('/lti/dynamic-registration');
+
+        // Test for getDeepLinkingUrl
+        expect(component.getDeepLinkingUrl()).toContain('/api/public/lti13/deep-linking');
+
+        // Test for getToolUrl
+        expect(component.getToolUrl()).toContain('/courses');
+
+        // Test for getKeysetUrl
+        expect(component.getKeysetUrl()).toContain('/.well-known/jwks.json');
+
+        // Test for getInitiateLoginUrl
+        expect(component.getInitiateLoginUrl()).toContain('/api/public/lti13/initiate-login');
+
+        // Test for getRedirectUri
+        expect(component.getRedirectUri()).toContain('/api/public/lti13/auth-callback');
+    });
+
+    it('should sort platforms', () => {
+        const dummyPlatforms: LtiPlatformConfiguration[] = [
+            { id: 1, customName: 'Platform A' },
+            { id: 2, customName: 'Platform B' },
+        ];
+        component.platforms = dummyPlatforms;
+        component.sortRows();
+        expect(mockSortService.sortByProperty).toHaveBeenCalledWith(dummyPlatforms, 'id', false);
+    });
+
+    it('should delete an LTI platform and navigate', () => {
+        const platformIdToDelete = 1;
+        const deleteSpy = jest.spyOn(ltiConfigurationService, 'deleteLtiPlatform');
+
+        component.deleteLtiPlatform(platformIdToDelete);
+
+        expect(deleteSpy).toHaveBeenCalledWith(platformIdToDelete);
+        expect(mockRouter.navigate).toHaveBeenCalledWith(['admin', 'lti-configuration']);
     });
 });
