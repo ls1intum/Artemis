@@ -297,6 +297,7 @@ export class NotificationService {
             }
 
             if (notification.text && MESSAGING_NOTIFICATION_TEXTS.includes(notification.text)) {
+                // Match all occurrences within the notification content of the form [tag]displayName(anything)[/tag] and replace it with only "displayName"
                 const pattern = /\[(?<tag>\w+)](.*?)\(.*?\)\[\/\k<tag>]/g;
                 translation = translation.replace(pattern, (match: string, tag: string, displayName: string) => displayName);
             }
