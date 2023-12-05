@@ -8,7 +8,7 @@ import { User } from 'app/core/user/user.model';
 import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
 import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/shared/metis/metis.util';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -108,7 +108,10 @@ export class MetisConversationService implements OnDestroy {
             );
         }
         if (!cachedConversation) {
-            throw new Error('The conversation is not part of the cache. Therefore, it cannot be set as active conversation.');
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.metis.channel.invalidReference',
+            });
         }
         this.activeConversation = cachedConversation;
         this._activeConversation$.next(this.activeConversation);
