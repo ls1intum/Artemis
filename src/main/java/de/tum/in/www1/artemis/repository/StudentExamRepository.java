@@ -501,6 +501,12 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             """)
     List<StudentExam> findAllWithEagerExercisesById(List<Long> ids);
 
+    /**
+     * Get all quiz questions for the given student exam id.
+     *
+     * @param studentExamId The id of the student exam
+     * @return StudentExam with quiz questions
+     */
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<StudentExam> findWithEagerQuizQuestionsById(Long studentExamId);
 
