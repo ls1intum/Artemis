@@ -325,4 +325,16 @@ describe('Exam Participation Service', () => {
         service.setExamExerciseIds(exerciseIds);
         expect(service.getExamExerciseIds()).toEqual(exerciseIds);
     });
+
+    it('should set last save failed', () => {
+        const storeSpy = jest.spyOn(localStorage, 'store');
+        service.setLastSaveFailed(true, 1, 1);
+        expect(storeSpy).toHaveBeenCalledWith('artemis_student_exam_1_1-save-failed', true);
+    });
+
+    it('should get last save failed', () => {
+        const storeSpy = jest.spyOn(localStorage, 'retrieve');
+        service.lastSaveFailed(1, 1);
+        expect(storeSpy).toHaveBeenCalledWith('artemis_student_exam_1_1-save-failed');
+    });
 });
