@@ -404,7 +404,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     if (this.isImportFromFile) {
                         this.createProgrammingExerciseForImportFromFile();
                     }
-                    console.log(this.selectedProgrammingLanguage);
                     if (this.isImportFromExistingExercise) {
                         this.createProgrammingExerciseForImport(params);
                     } else {

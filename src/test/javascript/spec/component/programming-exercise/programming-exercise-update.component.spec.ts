@@ -278,28 +278,40 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('default programming language', () => {
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ courseId });
-            route.url = of([{ path: 'new' } as UrlSegment]);
-            route.data = of({ programmingExercise: new ProgrammingExercise(course, undefined) });
-            jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
-        });
+        it.each([true, false])(
+            'should set default programming language',
+            fakeAsync((isExamExercise: boolean) => {
+                // SETUP
+                const route = TestBed.inject(ActivatedRoute);
+                route.url = of([{ path: 'new' } as UrlSegment]);
+                if (isExamExercise) {
+                    const examId = 1;
+                    const exerciseGroupId = 1;
+                    const exerciseGroup = new ExerciseGroup();
+                    exerciseGroup.id = exerciseGroupId;
+                    exerciseGroup.exam = { id: examId, course };
+                    route.params = of({ courseId, examId, exerciseGroupId });
+                    route.data = of({ programmingExercise: new ProgrammingExercise(undefined, exerciseGroup) });
+                    jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+                } else {
+                    route.params = of({ courseId });
+                    route.data = of({ programmingExercise: new ProgrammingExercise(course, undefined) });
+                }
+                jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+                // GIVEN
+                const testProgrammingLanguage = ProgrammingLanguage.SWIFT;
+                expect(new ProgrammingExercise(undefined, undefined).programmingLanguage).not.toBe(testProgrammingLanguage);
+                course.defaultProgrammingLanguage = testProgrammingLanguage;
+                jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(testProgrammingLanguage));
 
-        it('should set default programming language', fakeAsync(() => {
-            // GIVEN
-            const testProgrammingLanguage = ProgrammingLanguage.SWIFT;
-            expect(new ProgrammingExercise(undefined, undefined).programmingLanguage).not.toBe(testProgrammingLanguage);
-            course.defaultProgrammingLanguage = testProgrammingLanguage;
-            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(testProgrammingLanguage));
+                // WHEN
+                comp.ngOnInit();
+                tick();
 
-            // WHEN
-            comp.ngOnInit();
-            tick();
-
-            // THEN
-            expect(comp.programmingExercise.programmingLanguage).toBe(testProgrammingLanguage);
-        }));
+                // THEN
+                expect(comp.programmingExercise.programmingLanguage).toBe(testProgrammingLanguage);
+            }),
+        );
     });
 
     describe('programming language change and features', () => {
