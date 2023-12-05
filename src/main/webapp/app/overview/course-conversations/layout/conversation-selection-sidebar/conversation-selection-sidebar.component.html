@@ -40,9 +40,9 @@
                         [course]="course"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsDidChange)="onSettingsDidChange()"
-                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
-                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
-                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
+                        (conversationIsFavoriteDidChange)="updateConversations()"
+                        (conversationIsHiddenDidChange)="updateConversations()"
+                        (conversationIsMutedDidChange)="updateConversations()"
                     >
                     </jhi-conversation-sidebar-section>
                     <!-- Channels -->
@@ -56,9 +56,9 @@
                         [course]="course"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsDidChange)="onSettingsDidChange()"
-                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
-                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
-                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
+                        (conversationIsFavoriteDidChange)="updateConversations()"
+                        (conversationIsHiddenDidChange)="updateConversations()"
+                        (conversationIsMutedDidChange)="updateConversations()"
                     >
                         <ng-template>
                             <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
@@ -86,9 +86,9 @@
                         [course]="course"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsDidChange)="onSettingsDidChange()"
-                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
-                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
-                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
+                        (conversationIsFavoriteDidChange)="updateConversations()"
+                        (conversationIsHiddenDidChange)="updateConversations()"
+                        (conversationIsMutedDidChange)="updateConversations()"
                     >
                         <ng-template>
                             <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
@@ -113,9 +113,9 @@
                         [course]="course"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsDidChange)="onSettingsDidChange()"
-                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
-                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
-                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
+                        (conversationIsFavoriteDidChange)="updateConversations()"
+                        (conversationIsHiddenDidChange)="updateConversations()"
+                        (conversationIsMutedDidChange)="updateConversations()"
                     >
                         <ng-template>
                             <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
@@ -140,9 +140,9 @@
                         [course]="course"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsDidChange)="onSettingsDidChange()"
-                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
-                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
-                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
+                        (conversationIsFavoriteDidChange)="updateConversations()"
+                        (conversationIsHiddenDidChange)="updateConversations()"
+                        (conversationIsMutedDidChange)="updateConversations()"
                     >
                         <ng-template>
                             <div *ngIf="isMessagingEnabled" ngbDropdown container="body" class="d-inline-block">
@@ -169,9 +169,9 @@
                         [course]="course"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsDidChange)="onSettingsDidChange()"
-                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
-                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
-                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
+                        (conversationIsFavoriteDidChange)="updateConversations()"
+                        (conversationIsHiddenDidChange)="updateConversations()"
+                        (conversationIsMutedDidChange)="updateConversations()"
                     >
                         <ng-template>
                             <div class="d-inline-block">
@@ -193,9 +193,9 @@
                         [course]="course"
                         (conversationSelected)="onConversationSelected($event)"
                         (settingsDidChange)="onSettingsDidChange()"
-                        (conversationIsFavoriteDidChange)="onConversationIsFavoriteDidChange()"
-                        (conversationIsHiddenDidChange)="onConversationIsHiddenDidChange()"
-                        (conversationIsMutedDidChange)="onConversationIsMutedDidChange()"
+                        (conversationIsFavoriteDidChange)="updateConversations()"
+                        (conversationIsHiddenDidChange)="updateConversations()"
+                        (conversationIsMutedDidChange)="updateConversations()"
                     >
                         <ng-template>
                             <div class="d-inline-block">

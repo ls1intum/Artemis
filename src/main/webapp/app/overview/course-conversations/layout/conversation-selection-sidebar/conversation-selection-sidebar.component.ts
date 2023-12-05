@@ -344,15 +344,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         this.metisConversationService.setActiveConversation($event);
     }
 
-    onConversationIsFavoriteDidChange() {
-        this.onConversationsUpdate([...this.allConversations]);
-    }
-
-    onConversationIsHiddenDidChange() {
-        this.onConversationsUpdate([...this.allConversations]);
-    }
-
-    onConversationIsMutedDidChange() {
+    updateConversations() {
         this.onConversationsUpdate([...this.allConversations]);
     }
 

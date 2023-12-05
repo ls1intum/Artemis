@@ -43,7 +43,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     activeConversation: ConversationDto | undefined;
 
     @Output()
-    settingsChanged = new EventEmitter<void>();
+    settingsDidChange = new EventEmitter<void>();
 
     @Output()
     conversationIsFavoriteDidChange = new EventEmitter<void>();
@@ -112,7 +112,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {
-                this.settingsChanged.emit();
+                this.settingsDidChange.emit();
             });
     }
     ngOnInit(): void {
