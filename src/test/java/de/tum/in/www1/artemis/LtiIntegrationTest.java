@@ -39,10 +39,16 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
+import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -359,6 +365,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         List<LtiPlatformConfiguration> actualPlatforms = objectMapper.readValue(jsonContent, new TypeReference<>() {
+            // Empty block intended for type inference by Jackson's ObjectMapper
         });
 
         assertThat(actualPlatforms).hasSize(expectedPlatforms.size());

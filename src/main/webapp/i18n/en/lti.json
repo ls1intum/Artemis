@@ -85,7 +85,17 @@
                 "registeredSuccessfully": "Registered course successfully",
                 "registerFailed": "Error during dynamic registration"
             },
+            "deepLinking": {
+                "title": "Deep Linking",
+                "linking": "Linking",
+                "linkedSuccessfully": "Linked exercises successfully",
+                "linkedFailed": "Error during deep linking",
+                "link": "Link",
+                "unknownError": "Unsuccessful due to an unknown error. Please contact an admin!"
+            },
             "missingConfigurationWarning": "Missing values in the LTI1.3 configuration. Launches will not work.",
+            "selectContentFromCourse": "Select content from course {{ title }}",
+            "selectContentTooltip": "Simply select your preferred exercise and then click the Import button to integrate it into the platform.",
             "externalToolSettings": "External Tool Settings",
             "externalToolSettingsTooltip": "An External Tool is required for exercise linking and participation, allowing seamless integration with external resources and activities",
             "editExternalToolSettingsTooltip": "Please select an External Tool for this course to enable successful LTI communication. Once a pre-configured External Tool is chosen, this online course will become available for exercise linking and participation.",

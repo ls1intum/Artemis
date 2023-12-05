@@ -4,7 +4,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.Nullable;
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
@@ -13,12 +15,17 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+/**
+ * Represents the configuration for an LTI platform.
+ * Stores details such as registration ID, client ID, and various URIs needed for LTI communication.
+ */
 @Entity
 @Table(name = "lti_platform_configuration")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LtiPlatformConfiguration extends DomainObject {
 
+    /** Entity name for LTI platform configuration. */
     public static final String ENTITY_NAME = "ltiPlatformConfiguration";
 
     @NotNull
@@ -93,19 +100,21 @@ public class LtiPlatformConfiguration extends DomainObject {
         this.tokenUri = tokenUri;
     }
 
+    @Nullable
     public String getOriginalUrl() {
         return originalUrl;
     }
 
-    public void setOriginalUrl(String issuer) {
+    public void setOriginalUrl(@Nullable String issuer) {
         this.originalUrl = issuer;
     }
 
+    @Nullable
     public String getCustomName() {
         return customName;
     }
 
-    public void setCustomName(String customName) {
+    public void setCustomName(@Nullable String customName) {
         this.customName = customName;
     }
 

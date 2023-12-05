@@ -9,6 +9,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 
+/**
+ * Represents the client registration details for an LTI 1.3 integration.
+ * This class encapsulates information required for LTI 1.3 client registration,
+ * including response types, grant types, redirect URIs, and tool configuration.
+ */
 public class Lti13ClientRegistration {
 
     @JsonProperty("client_id")
@@ -40,9 +45,19 @@ public class Lti13ClientRegistration {
     @JsonProperty("https://purl.imsglobal.org/spec/lti-tool-configuration")
     private Lti13ToolConfiguration lti13ToolConfiguration;
 
+    /**
+     * Default constructor necessary for conversion.
+     */
     public Lti13ClientRegistration() { // Necessary for conversion
     }
 
+    /**
+     * Constructs a new Lti13ClientRegistration with specified server URL and client registration ID.
+     * Initializes various properties such as grant types, response types, and tool configurations.
+     *
+     * @param serverUrl            The server URL for LTI configuration.
+     * @param clientRegistrationId The client registration ID for LTI configuration.
+     */
     public Lti13ClientRegistration(String serverUrl, String clientRegistrationId) {
         this.setGrantTypes(Arrays.asList(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue(), AuthorizationGrantType.IMPLICIT.getValue()));
         this.setResponseTypes(List.of("id_token"));
@@ -53,14 +68,25 @@ public class Lti13ClientRegistration {
         this.setInitiateLoginUri(serverUrl + CustomLti13Configurer.LTI13_LOGIN_INITIATION_PATH + "/" + clientRegistrationId);
         this.setJwksUri(serverUrl + "/.well-known/jwks.json");
 
+        Lti13ToolConfiguration toolConfiguration = getLti13ToolConfiguration(serverUrl);
+        this.setLti13ToolConfiguration(toolConfiguration);
+    }
+
+    private static Lti13ToolConfiguration getLti13ToolConfiguration(String serverUrl) {
         Lti13ToolConfiguration toolConfiguration = new Lti13ToolConfiguration();
-        String domain = serverUrl.split("://").length >= 1 ? serverUrl.split("://")[1] : ""; // Domain cannot include protocol
+
+        // Extracting the domain from the server URL
+        String[] urlParts = serverUrl.split("://");
+        String domain = "";
+        if (urlParts.length >= 1) {
+            domain = urlParts[1]; // Domain cannot include protocol
+        }
         toolConfiguration.setDomain(domain);
         toolConfiguration.setTargetLinkUri(serverUrl + "/courses");
         toolConfiguration.setClaims(Arrays.asList("iss", "email", "sub", "name", "given_name", "family_name"));
         Message deepLinkingMessage = new Message("LtiDeepLinkingRequest", serverUrl + CustomLti13Configurer.LTI13_BASE_PATH + "/deep-linking");
         toolConfiguration.setMessages(List.of(deepLinkingMessage));
-        this.setLti13ToolConfiguration(toolConfiguration);
+        return toolConfiguration;
     }
 
     public String getClientId() {
@@ -143,6 +169,9 @@ public class Lti13ClientRegistration {
         this.lti13ToolConfiguration = lti13ToolConfiguration;
     }
 
+    /**
+     * Inner class representing the LTI 1.3 tool configuration.
+     */
     public static class Lti13ToolConfiguration {
 
         private String domain;
@@ -187,6 +216,9 @@ public class Lti13ClientRegistration {
         }
     }
 
+    /**
+     * Inner class representing a message in LTI 1.3 tool configuration.
+     */
     public static class Message {
 
         private String type;

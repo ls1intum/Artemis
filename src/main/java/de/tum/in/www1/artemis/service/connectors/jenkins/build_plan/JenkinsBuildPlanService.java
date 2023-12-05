@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
@@ -78,9 +79,12 @@ public class JenkinsBuildPlanService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final BuildPlanRepository buildPlanRepository;
+
     public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
             JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator) {
+            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator,
+            BuildPlanRepository buildPlanRepository) {
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
@@ -90,6 +94,7 @@ public class JenkinsBuildPlanService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
         this.jenkinsPipelineScriptCreator = jenkinsPipelineScriptCreator;
+        this.buildPlanRepository = buildPlanRepository;
     }
 
     /**
@@ -191,6 +196,34 @@ public class JenkinsBuildPlanService {
             log.error("Pipeline Script not found", e);
         }
 
+        postBuildPlanConfigChange(buildPlanKey, buildProjectKey, jobConfig);
+    }
+
+    /**
+     * Replaces the old build plan URL with a new one containing an updated exercise and access token.
+     *
+     * @param templateExercise The exercise containing the old build plan URL.
+     * @param newExercise      The exercise of which the build plan URL is updated.
+     * @param jobConfig        The job config in Jenkins for the new exercise.
+     */
+    private void updateBuildPlanURLs(ProgrammingExercise templateExercise, ProgrammingExercise newExercise, Document jobConfig) {
+        final Long previousExerciseId = templateExercise.getId();
+        final String previousBuildPlanAccessSecret = templateExercise.getBuildPlanAccessSecret();
+        final Long newExerciseId = newExercise.getId();
+        final String newBuildPlanAccessSecret = newExercise.getBuildPlanAccessSecret();
+
+        String toBeReplaced = String.format("/%d/build-plan?secret=%s", previousExerciseId, previousBuildPlanAccessSecret);
+        String replacement = String.format("/%d/build-plan?secret=%s", newExerciseId, newBuildPlanAccessSecret);
+
+        try {
+            JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, toBeReplaced, replacement);
+        }
+        catch (IllegalArgumentException e) {
+            log.error("Pipeline Script not found", e);
+        }
+    }
+
+    private void postBuildPlanConfigChange(String buildPlanKey, String buildProjectKey, Document jobConfig) {
         final var errorMessage = "Error trying to configure build plan in Jenkins " + buildPlanKey;
         try {
             URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(serverUrl.toString(), buildProjectKey, buildPlanKey).build(true).toUri();
@@ -233,17 +266,25 @@ public class JenkinsBuildPlanService {
     /**
      * Copies a build plan to another and replaces the old reference to the master and main branch with a reference to the default branch
      *
-     * @param sourceProjectKey the source project key
-     * @param sourcePlanName   the source plan name
-     * @param targetProjectKey the target project key
-     * @param targetPlanName   the target plan name
+     * @param sourceExercise the source exercise
+     * @param sourcePlanName the source plan name
+     * @param targetExercise the target exercise
+     * @param targetPlanName the target plan name
      * @return the key of the created build plan
      */
-    public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetPlanName) {
+    public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetPlanName) {
+        buildPlanRepository.copyBetweenExercises(sourceExercise, targetExercise);
+
+        String sourceProjectKey = sourceExercise.getProjectKey();
+        String targetProjectKey = targetExercise.getProjectKey();
+
         final var cleanTargetName = getCleanPlanName(targetPlanName);
         final var sourcePlanKey = sourceProjectKey + "-" + sourcePlanName;
         final var targetPlanKey = targetProjectKey + "-" + cleanTargetName;
         final var jobXml = jenkinsJobService.getJobConfigForJobInFolder(sourceProjectKey, sourcePlanKey);
+
+        updateBuildPlanURLs(sourceExercise, targetExercise, jobXml);
+
         jenkinsJobService.createJobInFolder(jobXml, targetProjectKey, targetPlanKey);
 
         return targetPlanKey;
@@ -362,7 +403,7 @@ public class JenkinsBuildPlanService {
     /**
      * Assigns access permissions to instructors and TAs for the specified build plan.
      * This is done by getting all users that belong to the instructor and TA groups of
-     * the exercise' course and adding permissions to the Jenkins job.
+     * the exercises' course and adding permissions to the Jenkins job.
      *
      * @param programmingExercise the programming exercise
      * @param planName            the name of the build plan
