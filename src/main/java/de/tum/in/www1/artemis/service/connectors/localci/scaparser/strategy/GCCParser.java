@@ -129,63 +129,62 @@ public class GCCParser implements ParserStrategy {
             String function = parts[FUNCTION_PART];
             String[] issueTextPerFunction = parts[ISSUE_PART].split("\n(?=" + HEADER_REGEX + ")");
 
-            extractIssueTextsFromFunction(matcher, issues, function, issueTextPerFunction);
+            for (String issueText : issueTextPerFunction) {
+                String[] segments = issueText.split("\n", SEGMENTS_COUNT);
+                String header = segments[HEADER_SEGMENT_POS];
+                String body = segments[BODY_SEGMENT_POS];
+
+                matcher.reset(header);
+
+                if (!matcher.find()) {
+                    continue;
+                }
+                constructIssueText(matcher, issues, function, body);
+            }
         }
         report.setIssues(issues);
     }
 
     /**
-     * Extracts the issue texts from the function part of the output.
+     * Constructs the issue text based on the regex groups.
+     *
+     * @param matcher  The matcher that contains the regex groups.
+     * @param issues   The list of issues the constructed issue will be added to.
+     * @param function The function the issue belongs to.
+     * @param body     The body of the issue.
      */
-    private void extractIssueTextsFromFunction(Matcher matcher, List<StaticCodeAnalysisIssue> issues, String function, String[] issueTextPerFunction) {
-        for (String issueText : issueTextPerFunction) {
-            String[] segments = issueText.split("\n", SEGMENTS_COUNT);
-            String header = segments[HEADER_SEGMENT_POS];
-            String body = segments[BODY_SEGMENT_POS];
-
-            matcher.reset(header);
-            if (!matcher.find()) {
-                continue;
-            }
-
-            // Construct issueText details based on regex groups
-            String filename = matcher.group(FILE_POS).trim();
-            Integer row = Integer.parseInt(matcher.group(ROW_POS));
-            Integer col = Integer.parseInt(matcher.group(COLUMN_POS));
-            String type = matcher.group(TYPE_POS);
-            String description = matcher.group(DESCRIPTION_POS);
-            String warningName = matcher.group(ERROR_POS);
-
-            // Only output warnings that have a name associated with it
-            if (warningName == null) {
-                continue;
-            }
-            // warningName is included in the description, as it will not be shown be Artemis otherwise
-            String message = function + "\n" + warningName + description + "\nTrace:\n" + body;
-
-            StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue();
-
-            issue.setMessage(message);
-            issue.setFilePath(filename);
-            issue.setStartLine(row);
-            issue.setEndLine(row);
-            issue.setStartColumn(col);
-            issue.setEndColumn(col);
-            issue.setRule(warningName);
-            issue.setPriority(type); // Could potentially be used for sorting at some point, not displayed by Artemis
-
-            boolean isAnalyzerIssue = warningName.startsWith(ANALYZER_PREFIX);
-
-            // Set correct category, only real static analysis issues are categorized, see https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html
-            if (isAnalyzerIssue) {
-                String category = CATEGORIES.get(warningName);
-                issue.setCategory(category);
-            }
-            else {
-                issue.setCategory(MISC);
-            }
-            issues.add(issue);
+    private void constructIssueText(Matcher matcher, List<StaticCodeAnalysisIssue> issues, String function, String body) {
+        String filename = matcher.group(FILE_POS).trim();
+        Integer row = Integer.parseInt(matcher.group(ROW_POS));
+        Integer col = Integer.parseInt(matcher.group(COLUMN_POS));
+        String type = matcher.group(TYPE_POS);
+        String description = matcher.group(DESCRIPTION_POS);
+        String warningName = matcher.group(ERROR_POS);
+        // Only output warnings that have a name associated with it
+        if (warningName == null) {
+            return;
         }
+        // warningName is included in the description, as it will not be shown be Artemis otherwise
+        String message = function + "\n" + warningName + description + "\nTrace:\n" + body;
+        StaticCodeAnalysisIssue issue = new StaticCodeAnalysisIssue();
+        issue.setMessage(message);
+        issue.setFilePath(filename);
+        issue.setStartLine(row);
+        issue.setEndLine(row);
+        issue.setStartColumn(col);
+        issue.setEndColumn(col);
+        issue.setRule(warningName);
+        issue.setPriority(type); // Could potentially be used for sorting at some point, not displayed by Artemis
+        boolean isAnalyzerIssue = warningName.startsWith(ANALYZER_PREFIX);
+        // Set correct category, only real static analysis issues are categorized, see https://gcc.gnu.org/onlinedocs/gcc-11.1.0/gcc/Static-Analyzer-Options.html
+        if (isAnalyzerIssue) {
+            String category = CATEGORIES.get(warningName);
+            issue.setCategory(category);
+        }
+        else {
+            issue.setCategory(MISC);
+        }
+        issues.add(issue);
     }
 
     private void initCategoryMapping() {
