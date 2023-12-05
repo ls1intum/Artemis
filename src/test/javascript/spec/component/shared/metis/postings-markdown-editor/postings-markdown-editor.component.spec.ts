@@ -21,6 +21,9 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { UserMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/userMentionCommand';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ChannelMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/channelMentionCommand';
+import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import * as CourseModel from 'app/entities/course.model';
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'jhi-markdown-editor' })
@@ -36,12 +39,13 @@ describe('PostingsMarkdownEditor', () => {
     let debugElement: DebugElement;
     let metisService: MetisService;
     let courseManagementService: CourseManagementService;
+    let channelService: ChannelService;
     let lectureService: LectureService;
     let findLectureWithDetailsSpy: jest.SpyInstance;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            providers: [{ provide: MetisService, useClass: MockMetisService }, MockProvider(LectureService), MockProvider(CourseManagementService)],
+            providers: [{ provide: MetisService, useClass: MockMetisService }, MockProvider(LectureService), MockProvider(CourseManagementService), MockProvider(ChannelService)],
             declarations: [PostingMarkdownEditorComponent, MockMarkdownEditorDirective],
             schemas: [CUSTOM_ELEMENTS_SCHEMA], // required because we mock the nested MarkdownEditorComponent
         })
@@ -53,6 +57,7 @@ describe('PostingsMarkdownEditor', () => {
                 metisService = TestBed.inject(MetisService);
                 courseManagementService = TestBed.inject(CourseManagementService);
                 lectureService = TestBed.inject(LectureService);
+                channelService = TestBed.inject(ChannelService);
                 findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
                 const returnValue = of(new HttpResponse({ body: [], status: 200 }));
                 findLectureWithDetailsSpy.mockReturnValue(returnValue);
@@ -64,7 +69,7 @@ describe('PostingsMarkdownEditor', () => {
             });
     });
 
-    it('should have set the correct default commands on init', () => {
+    it('should have set the correct default commands on init if messaging or communication is enabled', () => {
         component.ngOnInit();
 
         expect(component.defaultCommands).toEqual([
@@ -76,6 +81,24 @@ describe('PostingsMarkdownEditor', () => {
             new CodeBlockCommand(),
             new LinkCommand(),
             new UserMentionCommand(courseManagementService, metisService),
+            new ChannelMentionCommand(channelService, metisService),
+            new ExerciseReferenceCommand(metisService),
+            new LectureAttachmentReferenceCommand(metisService, lectureService),
+        ]);
+    });
+
+    it('should have set the correct default commands on init if communication and messaging and communication is disabled', () => {
+        jest.spyOn(CourseModel, 'isMessagingOrCommunicationEnabled').mockReturnValueOnce(false);
+        component.ngOnInit();
+
+        expect(component.defaultCommands).toEqual([
+            new BoldCommand(),
+            new ItalicCommand(),
+            new UnderlineCommand(),
+            new ReferenceCommand(),
+            new CodeCommand(),
+            new CodeBlockCommand(),
+            new LinkCommand(),
             new ExerciseReferenceCommand(metisService),
             new LectureAttachmentReferenceCommand(metisService, lectureService),
         ]);

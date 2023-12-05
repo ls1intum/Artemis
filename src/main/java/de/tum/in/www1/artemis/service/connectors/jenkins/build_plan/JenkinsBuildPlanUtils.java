@@ -8,14 +8,15 @@ public class JenkinsBuildPlanUtils {
     private static final String PIPELINE_SCRIPT_DETECTION_COMMENT = "// ARTEMIS: JenkinsPipeline";
 
     /**
-     * Replaces the base repository url written within the Jenkins pipeline script with the value specified by repoUrl
+     * Replaces either one of the previous repository urls or the build plan url written within the Jenkins pipeline
+     * script with the value specified by newUrl.
      *
      * @param jobXmlDocument the Jenkins pipeline
-     * @param repoUrl        the new repository url
-     * @param baseRepoUrl    the base repository url that will be replaced
+     * @param previousUrl    the previous url that will be replaced
+     * @param newUrl         the new repository or build plan url
      * @throws IllegalArgumentException if the xml document isn't a Jenkins pipeline script
      */
-    public static void replaceScriptParameters(Document jobXmlDocument, String repoUrl, String baseRepoUrl) throws IllegalArgumentException {
+    public static void replaceScriptParameters(Document jobXmlDocument, String previousUrl, String newUrl) throws IllegalArgumentException {
         final var scriptNode = findScriptNode(jobXmlDocument);
         if (scriptNode == null || scriptNode.getFirstChild() == null) {
             throw new IllegalArgumentException("Pipeline Script not found");
@@ -27,9 +28,9 @@ public class JenkinsBuildPlanUtils {
         if (!pipeLineScript.startsWith("pipeline") && !pipeLineScript.startsWith(PIPELINE_SCRIPT_DETECTION_COMMENT)) {
             throw new IllegalArgumentException("Pipeline Script not found");
         }
-        // Replace repo URL
-        // TODO: properly replace the baseRepoUrl with repoUrl by looking up the ciRepoName in the pipelineScript
-        pipeLineScript = pipeLineScript.replace(baseRepoUrl, repoUrl);
+        // Replace URL
+        // TODO: properly replace the previousUrl with newUrl by looking up the ciRepoName in the pipelineScript
+        pipeLineScript = pipeLineScript.replace(previousUrl, newUrl);
 
         scriptNode.getFirstChild().setTextContent(pipeLineScript);
     }
