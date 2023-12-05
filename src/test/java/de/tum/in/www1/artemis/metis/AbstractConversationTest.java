@@ -23,7 +23,10 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.*;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
@@ -175,6 +178,19 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
+
+        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
+        resetWebsocketMock();
+        return chat;
+    }
+
+    ChannelDTO createCourseWideChannel(String name) throws Exception {
+        var channelDTO = new ChannelDTO();
+        channelDTO.setName(name);
+        channelDTO.setIsPublic(true);
+        channelDTO.setIsCourseWide(true);
+        channelDTO.setIsAnnouncementChannel(false);
+        channelDTO.setDescription("course wide channel");
 
         var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         resetWebsocketMock();

@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelIdAndNameDTO;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -107,6 +108,31 @@ public class ChannelResource extends ConversationManagementResource {
         }
 
         return ResponseEntity.ok(channelDTOs.sorted(Comparator.comparing(ChannelDTO::getName)).toList());
+    }
+
+    /**
+     * GET /api/courses/:courseId/channels/public-overview: Returns a list of channels in a course that are visible to every course member
+     *
+     * @param courseId the id of the course
+     * @return ResponseEntity with status 200 (OK) and with body containing the list of channels visible to all course members
+     */
+    @GetMapping("/{courseId}/channels/public-overview")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<ChannelIdAndNameDTO>> getCoursePublicChannelsOverview(@PathVariable Long courseId) {
+        log.debug("REST request to get all public channels of course: {}", courseId);
+        checkMessagingOrCommunicationEnabledElseThrow(courseId);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
+        var channels = channelRepository.findChannelsByCourseId(courseId).stream();
+
+        // Filter channels that are either course-wide or public and, if associated with a lecture/exercise/exam,
+        // ensure it's visible to students
+        var filteredChannelSummaries = conversationService.filterVisibleChannelsForStudents(channels)
+                .filter(summary -> summary.getIsCourseWide() || Boolean.TRUE.equals(summary.getIsPublic()));
+        var channelDTOs = filteredChannelSummaries.map(summary -> new ChannelIdAndNameDTO(summary.getId(), summary.getName()));
+
+        return ResponseEntity.ok(channelDTOs.sorted(Comparator.comparing(ChannelIdAndNameDTO::name)).toList());
     }
 
     /**
