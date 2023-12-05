@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.component';
 import { Lti13DynamicRegistrationComponent } from 'app/lti/lti13-dynamic-registration.component';
+import { Lti13DeepLinkingComponent } from 'app/lti/lti13-deep-linking.component';
+import { Lti13SelectContentComponent } from 'app/lti/lti13-select-content.component';
 
 export const ltiLaunchRoutes: Routes = [
     {
@@ -15,6 +17,20 @@ export const ltiLaunchRoutes: Routes = [
         component: Lti13DynamicRegistrationComponent,
         data: {
             pageTitle: 'artemisApp.lti13.dynamicRegistration.title',
+        },
+    },
+    {
+        path: 'select-content',
+        component: Lti13SelectContentComponent,
+        data: {
+            pageTitle: 'artemisApp.lti13.deepLinking.title',
+        },
+    },
+    {
+        path: 'deep-linking/:courseId',
+        component: Lti13DeepLinkingComponent,
+        data: {
+            pageTitle: 'artemisApp.lti13.deepLinking.title',
         },
     },
 ];

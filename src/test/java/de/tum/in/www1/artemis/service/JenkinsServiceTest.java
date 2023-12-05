@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,11 +25,15 @@ import org.springframework.util.StreamUtils;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.in.www1.artemis.course.CourseUtilService;
+import de.tum.in.www1.artemis.domain.BuildPlan;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ContinuousIntegrationTestService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 
@@ -50,6 +55,12 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private BuildPlanRepository buildPlanRepository;
 
     /**
      * This method initializes the test case by setting up a local repo
@@ -253,5 +264,58 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
             String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
             continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUrl(), templateRepoUrl, "main");
         }).withMessageStartingWith("Error trying to configure build plan in Jenkins");
+    }
+
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    void testCopyBuildPlan() throws IOException {
+        var course = courseUtilService.addEmptyCourse();
+
+        ProgrammingExercise sourceExercise = new ProgrammingExercise();
+        course.addExercises(sourceExercise);
+        sourceExercise.generateAndSetProjectKey();
+        sourceExercise = programmingExerciseRepository.save(sourceExercise);
+        String buildPlanContent = "sample text";
+        buildPlanRepository.setBuildPlanForExercise(buildPlanContent, sourceExercise);
+
+        ProgrammingExercise targetExercise = new ProgrammingExercise();
+        course.addExercises(targetExercise);
+        targetExercise.generateAndSetProjectKey();
+        targetExercise = programmingExerciseRepository.save(targetExercise);
+
+        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetExercise.getProjectKey());
+
+        continuousIntegrationService.copyBuildPlan(sourceExercise, "", targetExercise, "", "", true);
+        BuildPlan sourceBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(sourceExercise.getId());
+        BuildPlan targetBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercisesElseThrow(targetExercise.getId());
+        assertThat(sourceBuildPlan).isEqualTo(targetBuildPlan);
+    }
+
+    /**
+     * The old exercise uses the old-style build plans that are stored in Jenkins directly rather than in Artemis.
+     */
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    void testCopyLegacyBuildPlan() throws IOException {
+        var course = courseUtilService.addEmptyCourse();
+
+        ProgrammingExercise sourceExercise = new ProgrammingExercise();
+        course.addExercises(sourceExercise);
+        sourceExercise = programmingExerciseRepository.save(sourceExercise);
+
+        Optional<BuildPlan> sourceBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(sourceExercise.getId());
+        assertThat(sourceBuildPlan).isEmpty();
+
+        ProgrammingExercise targetExercise = new ProgrammingExercise();
+        course.addExercises(targetExercise);
+        targetExercise.generateAndSetProjectKey();
+        targetExercise = programmingExerciseRepository.save(targetExercise);
+
+        jenkinsRequestMockProvider.mockCopyBuildPlan(sourceExercise.getProjectKey(), targetExercise.getProjectKey());
+
+        continuousIntegrationService.copyBuildPlan(sourceExercise, "", targetExercise, "", "", true);
+
+        Optional<BuildPlan> targetBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(targetExercise.getId());
+        assertThat(targetBuildPlan).isEmpty();
     }
 }

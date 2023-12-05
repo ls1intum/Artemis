@@ -118,6 +118,12 @@ describe('PostingContentComponent', () => {
         expect(component.getPatternMatches()).toEqual([firstMatch]);
     });
 
+    it('should calculate correct pattern matches for content with one channel reference', () => {
+        component.content = 'I do want to reference [channel]test(1)[/channel]!';
+        const firstMatch = { startIndex: 23, endIndex: 49, referenceType: ReferenceType.CHANNEL } as PatternMatch;
+        expect(component.getPatternMatches()).toEqual([firstMatch]);
+    });
+
     it('should calculate correct pattern matches for content with post, multiple exercise, lecture and attachment references', () => {
         component.content =
             'I do want to reference #4, #10, ' +
@@ -128,7 +134,8 @@ describe('PostingContentComponent', () => {
             '[text](courses/1/exercises/1)Text Exercise[/text], ' +
             '[lecture](courses/1/lectures/1)Lecture[/lecture], and ' +
             '[attachment](attachmentPath/attachment.pdf)PDF File[/attachment] in my posting content' +
-            '[user]name(login)[/user]!';
+            '[user]name(login)[/user]! ' +
+            'Check [channel]test(1)[/channel], as well!';
 
         const firstMatch = { startIndex: 23, endIndex: 25, referenceType: ReferenceType.POST } as PatternMatch;
         const secondMatch = { startIndex: 27, endIndex: 30, referenceType: ReferenceType.POST } as PatternMatch;
@@ -140,8 +147,21 @@ describe('PostingContentComponent', () => {
         const eightMatch = { startIndex: 341, endIndex: 389, referenceType: ReferenceType.LECTURE } as PatternMatch;
         const ninthMatch = { startIndex: 395, endIndex: 459, referenceType: ReferenceType.ATTACHMENT } as PatternMatch;
         const tenthMatch = { startIndex: 481, endIndex: 505, referenceType: ReferenceType.USER } as PatternMatch;
+        const eleventhMath = { startIndex: 513, endIndex: 539, referenceType: ReferenceType.CHANNEL } as PatternMatch;
 
-        expect(component.getPatternMatches()).toEqual([firstMatch, secondMatch, thirdMatch, fourthMatch, fifthMatch, sixthMatch, seventhMatch, eightMatch, ninthMatch, tenthMatch]);
+        expect(component.getPatternMatches()).toEqual([
+            firstMatch,
+            secondMatch,
+            thirdMatch,
+            fourthMatch,
+            fifthMatch,
+            sixthMatch,
+            seventhMatch,
+            eightMatch,
+            ninthMatch,
+            tenthMatch,
+            eleventhMath,
+        ]);
     });
 
     describe('Computing posting content parts', () => {
@@ -474,6 +494,36 @@ describe('PostingContentComponent', () => {
                     referenceStr: `Test`,
                     referenceType: ReferenceType.USER,
                     queryParams: { referenceUserLogin: 'test_login' } as Params,
+                    contentAfterReference: '.',
+                } as PostingContentPart,
+            ]);
+        }));
+
+        it('should compute parts when referencing a channel', fakeAsync(() => {
+            component.content = `This topic belongs to [channel]test(1)[/channel].`;
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts).toEqual([
+                {
+                    contentBeforeReference: 'This topic belongs to ',
+                    referenceStr: 'test',
+                    referenceType: ReferenceType.CHANNEL,
+                    queryParams: { channelId: 1 } as Params,
+                    contentAfterReference: '.',
+                } as PostingContentPart,
+            ]);
+        }));
+
+        it('should set channelID undefined if referenced a channel id is not a number', fakeAsync(() => {
+            component.content = `This topic belongs to [channel]test(abc)[/channel].`;
+            const matches = component.getPatternMatches();
+            component.computePostingContentParts(matches);
+            expect(component.postingContentParts).toEqual([
+                {
+                    contentBeforeReference: 'This topic belongs to ',
+                    referenceStr: 'test',
+                    referenceType: ReferenceType.CHANNEL,
+                    queryParams: { channelId: undefined } as Params,
                     contentAfterReference: '.',
                 } as PostingContentPart,
             ]);
