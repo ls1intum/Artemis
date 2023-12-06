@@ -166,6 +166,8 @@ public class LocalCIBuildJobManagementService {
             programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
         }
 
+        localCIContainerService.deleteScriptFile(participation.getId().toString());
+
         localCIContainerService.stopContainer(containerName);
     }
 

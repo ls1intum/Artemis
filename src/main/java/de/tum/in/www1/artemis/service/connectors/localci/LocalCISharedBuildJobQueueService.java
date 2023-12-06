@@ -148,7 +148,7 @@ public class LocalCISharedBuildJobQueueService {
                 }
             }
         }
-        throw new IllegalStateException("Could not retrieve participation with id " + participationId + " from database after " + maxRetries + " retries");
+        throw new IllegalStateException("Could not retrieve participation with id " + participationId + " from database after " + maxRetries + " retries.");
     }
 
     private void checkAvailabilityAndProcessNextBuild() {
@@ -219,8 +219,19 @@ public class LocalCISharedBuildJobQueueService {
         String commitHash = buildJob.getCommitHash();
         boolean isRetry = buildJob.getRetryCount() >= 1;
 
-        // participation might not be persisted in the database yet
-        ProgrammingExerciseParticipation participation = retrieveParticipationWithRetry(buildJob.getParticipationId());
+        ProgrammingExerciseParticipation participation;
+
+        // Participation might not be persisted in the database yet or it has been deleted in the meantime
+        try {
+            participation = retrieveParticipationWithRetry(buildJob.getParticipationId());
+        }
+        catch (IllegalStateException e) {
+            log.error("Cannot process build job for participation with id {} because it could not be retrieved from the database.", buildJob.getParticipationId());
+            processingJobs.remove(buildJob.getParticipationId());
+            localProcessingJobs.decrementAndGet();
+            checkAvailabilityAndProcessNextBuild();
+            return;
+        }
 
         // For some reason, it is possible that the participation object does not have the programming exercise
         if (participation.getProgrammingExercise() == null) {
@@ -229,16 +240,24 @@ public class LocalCISharedBuildJobQueueService {
 
         CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash, isRetry);
         futureResult.thenAccept(buildResult -> {
-            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-            // Therefore, a mock auth object has to be created.
-            SecurityUtils.setAuthorizationObject();
-            Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
-            if (result != null) {
-                programmingMessagingService.notifyUserAboutNewResult(result, participation);
+
+            // Do not process the result if the participation has been deleted in the meantime
+            Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
+            if (participationOptional.isPresent()) {
+                // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+                // Therefore, a mock auth object has to be created.
+                SecurityUtils.setAuthorizationObject();
+                Result result = programmingExerciseGradingService.processNewProgrammingExerciseResult(participation, buildResult);
+                if (result != null) {
+                    programmingMessagingService.notifyUserAboutNewResult(result, participation);
+                }
+                else {
+                    programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
+                            new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
+                }
             }
             else {
-                programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
-                        new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
+                log.warn("Participation with id {} has been deleted. Cancelling the processing of the build result.", participation.getId());
             }
 
             // after processing a build job, remove it from the processing jobs
@@ -257,10 +276,17 @@ public class LocalCISharedBuildJobQueueService {
                 log.error("Build job failed for the second time: {}", buildJob);
                 return null;
             }
-            log.warn("Requeueing failed build job: {}", buildJob);
-            buildJob.setRetryCount(buildJob.getRetryCount() + 1);
-            queue.add(buildJob);
 
+            // Do not requeue the build job if the participation has been deleted in the meantime
+            Optional<Participation> participationOptional = participationRepository.findById(participation.getId());
+            if (participationOptional.isPresent()) {
+                log.warn("Requeueing failed build job: {}", buildJob);
+                buildJob.setRetryCount(buildJob.getRetryCount() + 1);
+                queue.add(buildJob);
+            }
+            else {
+                log.warn("Participation with id {} has been deleted. Cancelling the requeueing of the build job.", participation.getId());
+            }
             return null;
         });
     }
