@@ -29,6 +29,7 @@ describe('MetisConversationService', () => {
     let channelService: ChannelService;
     let websocketService: JhiWebsocketService;
     let courseManagementService: CourseManagementService;
+    let alertService: AlertService;
 
     const course = { id: 1 } as Course;
     let groupChat: GroupChatDto;
@@ -61,6 +62,7 @@ describe('MetisConversationService', () => {
         websocketService = TestBed.inject(JhiWebsocketService);
         courseManagementService = TestBed.inject(CourseManagementService);
         conversationService = TestBed.inject(ConversationService);
+        alertService = TestBed.inject(AlertService);
 
         jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse<Course>({ body: course })));
         jest.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel] })));
@@ -139,6 +141,21 @@ describe('MetisConversationService', () => {
                         expect(hasUnreadMessages).toBeTrue();
                         done({});
                     });
+                },
+            });
+        });
+    });
+
+    it("should show alert if channel doesn't exist", () => {
+        groupChat.unreadMessagesCount = 1;
+        return new Promise((done) => {
+            metisConversationService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+
+                    metisConversationService.setActiveConversation(4);
+                    expect(addAlertSpy).toHaveBeenCalledOnce();
+                    done({});
                 },
             });
         });

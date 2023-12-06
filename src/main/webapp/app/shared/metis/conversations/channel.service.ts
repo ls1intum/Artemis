@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Channel, ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { Channel, ChannelDTO, ChannelIdAndNameDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,6 +18,12 @@ export class ChannelService {
 
     getChannelsOfCourse(courseId: number): Observable<HttpResponse<ChannelDTO[]>> {
         return this.http.get<ChannelDTO[]>(`${this.resourceUrl}${courseId}/channels/overview`, {
+            observe: 'response',
+        });
+    }
+
+    getPublicChannelsOfCourse(courseId: number): Observable<HttpResponse<ChannelIdAndNameDTO[]>> {
+        return this.http.get<ChannelIdAndNameDTO[]>(`${this.resourceUrl}${courseId}/channels/public-overview`, {
             observe: 'response',
         });
     }
