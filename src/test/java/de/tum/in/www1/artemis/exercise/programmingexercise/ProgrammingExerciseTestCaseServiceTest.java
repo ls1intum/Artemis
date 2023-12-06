@@ -83,7 +83,6 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
         when(gitService.getLastCommitHash(any())).thenReturn(ObjectId.fromString(dummyHash));
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
         new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).get(0).weight(50.0);
-        boolean isExamExercise = false;
 
         // After a test case reset, the solution and template repository should be built, so the ContinuousIntegrationService needs to be triggered
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
@@ -91,7 +90,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
 
         assertThat(programmingExercise.getTestCasesChanged()).isFalse();
 
-        testCaseService.reset(programmingExercise.getId(), isExamExercise);
+        testCaseService.reset(programmingExercise.getId(), programmingExercise.getDefaultTestCaseVisibility());
 
         Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
         ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository
