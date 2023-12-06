@@ -1,7 +1,13 @@
 package de.tum.in.www1.artemis.util;
 
+/**
+ * Holds static request body templates for LTI launch tests with different LMS platforms like EDX and Moodle.
+ */
 public class LtiRequestBodies {
 
+    /**
+     * LTI request body template for EDX platform. Used for simulating EDX LTI launch requests.
+     */
     public static final String EDX_REQUEST_BODY = """
             custom_component_display_name=Exercise\
             &lti_version=LTI-1p0\
@@ -26,6 +32,9 @@ public class LtiRequestBodies {
             &lis_person_sourcedid=lovaiible\
             &oauth_callback=about%3Ablank""";
 
+    /**
+     * LTI request body template for Moodle platform. Used for simulating Moodle LTI launch requests.
+     */
     public static final String MOODLE_REQUEST_BODY = """
             oauth_version=1.0\
             &oauth_timestamp=1659585343\
