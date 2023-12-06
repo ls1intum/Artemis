@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -39,6 +37,8 @@ public class AeolusTemplateService {
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private final ResourceLoaderService resourceLoaderService;
+
+    private final HashMap<String, Windfile> templateCache = new HashMap<>();
 
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -87,6 +87,9 @@ public class AeolusTemplateService {
     public Windfile getWindfileFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage)
             throws IOException {
         String templateFileName = buildAeolusTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage);
+        if (templateCache.containsKey(templateFileName)) {
+            return templateCache.get(templateFileName);
+        }
         Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", programmingLanguage.name().toLowerCase(), templateFileName));
         if (!fileResource.exists()) {
             throw new IOException("File " + templateFileName + " not found");
@@ -95,6 +98,7 @@ public class AeolusTemplateService {
         String yaml = new String(fileContent, StandardCharsets.UTF_8);
         Windfile windfile = readWindfile(yaml);
         this.addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);
+        templateCache.put(templateFileName, windfile);
         return windfile;
     }
 
