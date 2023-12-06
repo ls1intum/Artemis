@@ -47,6 +47,7 @@ describe('ColorSelectorComponent', () => {
         const target = document.createElement('div');
         const event = {
             target,
+            stopPropagation: jest.fn(),
         } as unknown as MouseEvent;
         component.ngOnInit();
 
