@@ -53,13 +53,13 @@
         </sql>
         <!-- Update the online_course_configuration with the foreign key reference -->
         <sql>
-            UPDATE online_course_configuration occ
-            SET occ.lti_platform_id = (
+            UPDATE online_course_configuration
+            SET lti_platform_id = (
                 SELECT lpc.id
                 FROM lti_platform_configuration lpc
-                WHERE lpc.registration_id = occ.registration_id
-                  AND lpc.client_id = occ.client_id
-            );
+                WHERE lpc.registration_id = online_course_configuration.registration_id
+                  AND lpc.client_id = online_course_configuration.client_id
+            )
         </sql>
         <!-- Remove the columns that are no longer present in the entity -->
         <dropColumn tableName="online_course_configuration" columnName="original_url"/>
