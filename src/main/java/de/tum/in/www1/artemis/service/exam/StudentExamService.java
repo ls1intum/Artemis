@@ -572,6 +572,8 @@ public class StudentExamService {
         testRun.setUser(userRepository.getUser());
         testRun.setTestRun(true);
         testRun.setSubmitted(false);
+        List<QuizQuestion> quizQuestions = examQuizQuestionsGenerator.generateQuizQuestionsForExam(testRunConfiguration.getExam().getId());
+        testRun.setQuizQuestions(quizQuestions);
         testRun = studentExamRepository.save(testRun);
         return testRun;
     }
