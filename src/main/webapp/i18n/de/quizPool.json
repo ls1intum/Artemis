@@ -5,6 +5,8 @@
             "group": "Gruppe",
             "groupName": "Gruppenname",
             "addGroup": "Gruppe hinzufügen",
+            "navigationTitle": "Quiz",
+            "title": "Quiz Exam",
             "delete": {
                 "question": "Möchten Sie die Quizgruppe <strong>{{ title }}</strong> wirklich löschen? Alle zugewiesenen Fragen werden nicht zugeordnet."
             },

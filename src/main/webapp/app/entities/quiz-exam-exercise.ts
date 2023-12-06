@@ -31,11 +31,7 @@ export class QuizExamExercise implements ExamExercise, QuizConfiguration {
                 submissions: [submission],
             },
         ];
-        this.navigationTitle = 'Quiz';
         this.exerciseGroup = new ExerciseGroup();
-        this.exerciseGroup.title = 'Quiz Exam';
-        this.overviewTitle = 'Quiz Exam';
-        this.title = 'Quiz Exam';
         this.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
     }
 }

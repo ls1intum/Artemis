@@ -102,7 +102,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     @Input()
     set studentExam(studentExam: StudentExam) {
         this._studentExam = studentExam;
-        this.examExercises = getExamExercises(studentExam);
+        this.examExercises = getExamExercises(studentExam, {
+            title: this.translateService.instant('artemisApp.quizPool.title'),
+            navigationTitle: this.translateService.instant('artemisApp.quizPool.navigationTitle'),
+        });
     }
 
     get studentExam(): StudentExam {

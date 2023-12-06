@@ -61,7 +61,7 @@ describe('ExamUtils', () => {
             const studentExam = new StudentExam();
             const course = new Course();
             studentExam.exercises = [new QuizExercise(course, undefined), new TextExercise(course, undefined)];
-            const examExercises = getExamExercises(studentExam);
+            const examExercises = getExamExercises(studentExam, { title: 'Quiz Exam', navigationTitle: 'Quiz' });
             expect(examExercises).toEqual(studentExam.exercises);
         });
 
@@ -72,7 +72,7 @@ describe('ExamUtils', () => {
             exam.randomizeQuizExamQuestionsOrder = true;
             studentExam.exam = exam;
             studentExam.quizQuestions = [new MultipleChoiceQuestion(), new DragAndDropQuestion()];
-            const examExercises = getExamExercises(studentExam);
+            const examExercises = getExamExercises(studentExam, { title: 'Quiz Exam', navigationTitle: 'Quiz' });
             const submission = new QuizSubmission();
             submission.isSynced = true;
             const exerciseGroup = new ExerciseGroup();
@@ -101,7 +101,7 @@ describe('ExamUtils', () => {
 
         it('should return empty exam exercises if studentExam has no exercises and no quiz exam', () => {
             const studentExam = new StudentExam();
-            const examExercises = getExamExercises(studentExam);
+            const examExercises = getExamExercises(studentExam, { title: 'Quiz Exam', navigationTitle: 'Quiz' });
             expect(examExercises).toEqual([]);
         });
     });

@@ -26,6 +26,7 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { getExamExercises } from 'app/exam/participate/exam.utils';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
@@ -54,7 +55,10 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     @Input()
     set studentExam(studentExam: StudentExam) {
         this._studentExam = studentExam;
-        this.examExercises = getExamExercises(studentExam);
+        this.examExercises = getExamExercises(studentExam, {
+            title: this.translateService.instant('artemisApp.quizPool.title'),
+            navigationTitle: this.translateService.instant('artemisApp.quizPool.navigationTitle'),
+        });
     }
 
     get studentExam(): StudentExam {
@@ -85,6 +89,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         private submissionVersionService: SubmissionVersionService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private datePipe: ArtemisDatePipe,
+        private translateService: TranslateService,
     ) {}
 
     ngOnInit(): void {

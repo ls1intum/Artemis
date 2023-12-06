@@ -96,7 +96,7 @@ export function isExamResultPublished(isTestRun: boolean, exam: Exam | undefined
     return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(serverDateService.now());
 }
 
-export function getExamExercises(studentExam: StudentExam) {
+export function getExamExercises(studentExam: StudentExam, titles: { title: string; navigationTitle: string }) {
     let examExercises: ExamExercise[] = [];
     if (studentExam.exercises) {
         examExercises = studentExam.exercises.map((exercise: Exercise, index: number) => {
@@ -107,13 +107,18 @@ export function getExamExercises(studentExam: StudentExam) {
     }
     const hasQuizExam = (studentExam.exam?.quizExamMaxPoints ?? 0) > 0;
     if (hasQuizExam) {
-        examExercises = [createQuizExamExercise(studentExam), ...examExercises];
+        examExercises = [createQuizExamExercise(studentExam, titles), ...examExercises];
     }
     return examExercises;
 }
 
-function createQuizExamExercise(studentExam: StudentExam): QuizExamExercise {
+function createQuizExamExercise(studentExam: StudentExam, titles: { title: string; navigationTitle: string }): QuizExamExercise {
+    const { title, navigationTitle } = titles;
     const quizExamExercise = new QuizExamExercise();
+    quizExamExercise.navigationTitle = navigationTitle;
+    quizExamExercise.exerciseGroup!.title = title;
+    quizExamExercise.overviewTitle = title;
+    quizExamExercise.title = title;
     quizExamExercise.quizQuestions = studentExam.quizQuestions;
     quizExamExercise.randomizeQuestionOrder = studentExam.exam?.randomizeQuizExamQuestionsOrder;
     quizExamExercise.maxPoints = studentExam.exam?.quizExamMaxPoints;

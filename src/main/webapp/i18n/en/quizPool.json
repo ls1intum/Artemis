@@ -5,6 +5,8 @@
             "group": "Group",
             "groupName": "Group Name",
             "addGroup": "Add Group",
+            "navigationTitle": "Quiz",
+            "title": "Quiz Exam",
             "delete": {
                 "question": "Are you sure you want to delete Quiz Group <strong>{{ title }}</strong>? All assigned Questions will be unmapped."
             },
