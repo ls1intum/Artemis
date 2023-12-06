@@ -161,7 +161,7 @@ public class ProgrammingExerciseFeedbackCreationService {
      * Transforms static code analysis reports to feedback objects.
      * As we reuse the Feedback entity to store static code analysis findings, a mapping to those attributes
      * has to be defined, violating the first normal form.
-     *
+     * <br>
      * Mapping:
      * - text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER
      * - reference: Tool
