@@ -99,9 +99,9 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
      * Find a quiz pool (if exists) that belongs to the given exam id
      *
      * @param examId the id of the exam to be searched
-     * @return quiz pool that belongs to the given exam id
+     * @return optional quiz pool that belongs to the given exam id
      */
-    public QuizPool findWithQuizQuestionsByExamId(Long examId) {
+    public Optional<QuizPool> findWithQuizQuestionsByExamId(Long examId) {
         Optional<QuizPool> quizPoolOptional = quizPoolRepository.findWithEagerQuizQuestionsByExamId(examId);
         if (quizPoolOptional.isPresent()) {
             QuizPool quizPool = quizPoolOptional.get();
@@ -109,9 +109,8 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
             List<QuizGroup> quizGroups = quizGroupRepository.findAllById(quizGroupIds);
             quizPool.setQuizGroups(quizGroups);
             reassignQuizQuestion(quizPool, quizGroups);
-            return quizPool;
         }
-        return null;
+        return quizPoolOptional;
     }
 
     /**
@@ -159,8 +158,9 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
 
     @Override
     public List<QuizQuestion> generateQuizQuestionsForExam(long examId) {
-        QuizPool quizPool = findWithQuizQuestionsByExamId(examId);
-        if (quizPool != null) {
+        Optional<QuizPool> quizPoolOptional = findWithQuizQuestionsByExamId(examId);
+        if (quizPoolOptional.isPresent()) {
+            QuizPool quizPool = quizPoolOptional.get();
             List<QuizGroup> quizGroups = quizPool.getQuizGroups();
             List<QuizQuestion> quizQuestions = quizPool.getQuizQuestions();
 
