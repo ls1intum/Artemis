@@ -91,11 +91,11 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
+    public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
         // No build plans exist for local CI. Only return a plan name.
         final String cleanPlanName = getCleanPlanName(targetPlanName);
-        return targetProjectKey + "-" + cleanPlanName;
+        return targetExercise.getProjectKey() + "-" + cleanPlanName;
     }
 
     @Override

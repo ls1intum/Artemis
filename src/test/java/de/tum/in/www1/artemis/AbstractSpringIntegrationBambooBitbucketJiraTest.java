@@ -44,6 +44,7 @@ import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerci
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooResultService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
@@ -97,6 +98,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     @SpyBean
     protected BambooServer bambooServer;
 
+    @SpyBean
+    protected OAuth2JWKSService oAuth2JWKSService;
+
     @Autowired
     protected BambooRequestMockProvider bambooRequestMockProvider;
 
@@ -111,7 +115,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @AfterEach
     protected void resetSpyBeans() {
-        Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer, textBlockService);
+        Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer, textBlockService, oAuth2JWKSService);
         super.resetSpyBeans();
     }
 
