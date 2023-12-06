@@ -41,6 +41,8 @@ import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
@@ -84,15 +86,18 @@ public class LocalCIBuildJobExecutionService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
+    private AeolusTemplateService aeolusTemplateService;
+
     public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService,
             LocalCIContainerService localCIContainerService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, XMLInputFactory localCIXMLInputFactory,
-            GitService gitService, ParticipationRepository participationRepository) {
+            GitService gitService, AeolusTemplateService aeolusTemplateService, ParticipationRepository participationRepository) {
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.versionControlService = versionControlService;
         this.localCIContainerService = localCIContainerService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.participationRepository = participationRepository;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
+        this.aeolusTemplateService = aeolusTemplateService;
         this.gitService = gitService;
     }
 
@@ -359,7 +364,14 @@ public class LocalCIBuildJobExecutionService {
 
     private List<String> getCustomTestResultPaths(ProgrammingExercise programmingExercise) {
         List<String> testResultPaths = new ArrayList<>();
-        for (AeolusResult testResultPath : programmingExercise.getWindfile().getResults()) {
+        Windfile windfile = programmingExercise.getWindfile();
+        if (windfile == null) {
+            windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
+        }
+        if (windfile == null) {
+            throw new IllegalArgumentException("No windfile found for programming exercise " + programmingExercise.getId());
+        }
+        for (AeolusResult testResultPath : windfile.getResults()) {
             testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/" + testResultPath.getPath());
         }
         return testResultPaths;

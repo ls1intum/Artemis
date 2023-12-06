@@ -40,7 +40,9 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 
 /**
@@ -65,9 +67,12 @@ public class LocalCIContainerService {
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
     String localCIBuildScriptBasePath;
 
-    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig) {
+    AeolusTemplateService aeolusTemplateService;
+
+    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService) {
         this.dockerClient = dockerClient;
         this.hostConfig = hostConfig;
+        this.aeolusTemplateService = aeolusTemplateService;
     }
 
     /**
@@ -348,7 +353,16 @@ public class LocalCIContainerService {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
 
-        List<ScriptAction> actions = programmingExercise.getWindfile() != null ? programmingExercise.getWindfile().getScriptActions() : List.of();
+        List<ScriptAction> actions = List.of();
+
+        Windfile windfile = programmingExercise.getWindfile();
+
+        if (windfile == null) {
+            windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
+        }
+        if (windfile != null) {
+            actions = windfile.getScriptActions();
+        }
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
