@@ -6,8 +6,6 @@ import { of } from 'rxjs';
 import { LectureDetailComponent } from 'app/lecture/lecture-detail.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { MockModule, MockPipe } from 'ng-mocks';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
-
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
@@ -22,7 +20,7 @@ describe('LectureDetailComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            declarations: [LectureDetailComponent, HtmlForMarkdownPipe, MockPipe(ArtemisDatePipe), FontAwesomeTestingModule, MockModule(RouterModule)],
+            declarations: [LectureDetailComponent, HtmlForMarkdownPipe, MockPipe(ArtemisDatePipe), MockModule(RouterModule)],
             providers: [{ provide: ActivatedRoute, useValue: mockActivatedRoute }],
         }).compileComponents();
     });
