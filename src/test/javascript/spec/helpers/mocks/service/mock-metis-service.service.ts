@@ -140,4 +140,6 @@ export class MockMetisService {
     getSimilarPosts(title: string): Observable<Post[]> {
         return of(metisCoursePosts.slice(0, 5));
     }
+
+    setCourse(course: Course | undefined): void {}
 }

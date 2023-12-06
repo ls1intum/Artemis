@@ -107,6 +107,8 @@ $pre-color: inherit;
 $table-bg-scale: 0;
 $table-border-color: $gray-700;
 $table-striped-bg: rgba($white, 0.02);
+$table-striped-color: $body-color;
+$table-color: $body-color;
 
 // Global colors
 $artemis-dark: #353d47; // (not bootstrap)
