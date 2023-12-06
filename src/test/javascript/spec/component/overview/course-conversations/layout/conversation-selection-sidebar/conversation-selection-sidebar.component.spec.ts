@@ -264,10 +264,9 @@ examples.forEach((activeConversation) => {
                 fixture.detectChanges();
                 tick(301);
 
-                const refreshSpy = jest.fn().mockReturnValue(EMPTY);
-                Object.defineProperty(metisConversationService, 'forceRefresh', { value: refreshSpy });
+                const forceRefreshMock = jest.spyOn(metisConversationService, 'forceRefresh').mockReturnValue(EMPTY);
                 component.onSettingsChanged();
-                expect(refreshSpy).toHaveBeenCalledOnce();
+                expect(forceRefreshMock).toHaveBeenCalledOnce();
             }));
 
             it('should run conversations update when hidden status is changed', fakeAsync(() => {
