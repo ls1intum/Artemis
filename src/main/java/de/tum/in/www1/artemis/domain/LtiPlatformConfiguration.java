@@ -1,14 +1,20 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.annotation.Nullable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -51,6 +57,10 @@ public class LtiPlatformConfiguration extends DomainObject {
     @NotNull
     @Column(name = "token_uri", nullable = false)
     private String tokenUri;
+
+    @OneToMany(mappedBy = "ltiPlatformConfiguration", fetch = FetchType.EAGER)
+    @JsonIgnoreProperties(value = "ltiPlatformConfiguration", allowSetters = true)
+    private Set<OnlineCourseConfiguration> onlineCourseConfigurations = new HashSet<>();
 
     public String getRegistrationId() {
         return registrationId;
@@ -108,6 +118,14 @@ public class LtiPlatformConfiguration extends DomainObject {
 
     public void setCustomName(@Nullable String customName) {
         this.customName = customName;
+    }
+
+    public Set<OnlineCourseConfiguration> getOnlineCourseConfigurations() {
+        return onlineCourseConfigurations;
+    }
+
+    public void setOnlineCourseConfigurations(Set<OnlineCourseConfiguration> onlineCourseConfigurations) {
+        this.onlineCourseConfigurations = onlineCourseConfigurations;
     }
 
 }
