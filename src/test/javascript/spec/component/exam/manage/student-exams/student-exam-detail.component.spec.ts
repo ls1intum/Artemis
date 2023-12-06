@@ -11,7 +11,6 @@ import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgForm, NgModel, ReactiveFormsModule } from '@angular/forms';
@@ -35,6 +34,7 @@ import { GradeType } from 'app/entities/grading-scale.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { MockNgbModalService } from '../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
+import { ArtemisTestModule } from '../../../../test.module';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -128,10 +128,10 @@ describe('StudentExamDetailComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [
+                ArtemisTestModule,
                 RouterTestingModule.withRoutes([]),
                 NgbModule,
                 NgxDatatableModule,
-                FontAwesomeTestingModule,
                 ReactiveFormsModule,
                 TranslateModule.forRoot(),
                 HttpClientTestingModule,
