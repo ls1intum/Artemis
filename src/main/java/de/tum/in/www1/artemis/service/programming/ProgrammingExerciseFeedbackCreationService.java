@@ -354,10 +354,12 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     private Set<ProgrammingExerciseTestCase> getTestCasesFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExercise exercise) {
+        Visibility visibility = exercise.isExamExercise() ? Visibility.AFTER_DUE_DATE : Visibility.ALWAYS;
+
         return buildResult.getBuildJobs().stream().flatMap(job -> Stream.concat(job.getFailedTests().stream(), job.getSuccessfulTests().stream()))
                 // we use default values for weight, bonus multiplier and bonus points
                 .map(testCase -> new ProgrammingExerciseTestCase().testName(testCase.getName()).weight(1.0).bonusMultiplier(1.0).bonusPoints(0.0).exercise(exercise).active(true)
-                        .visibility(Visibility.ALWAYS))
+                        .visibility(visibility))
                 .collect(Collectors.toSet());
     }
 
