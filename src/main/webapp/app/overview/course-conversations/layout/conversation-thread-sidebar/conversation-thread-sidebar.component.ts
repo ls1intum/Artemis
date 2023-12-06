@@ -14,7 +14,8 @@ import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 export class ConversationThreadSidebarComponent implements AfterViewInit {
     @Input()
     readOnlyMode = false;
-    @Input() set activeConversation(conversation: ConversationDto) {
+    @Input()
+    set activeConversation(conversation: ConversationDto) {
         this.conversation = conversation;
         this.hasChannelModerationRights = getAsChannelDto(this.conversation)?.hasChannelModerationRights ?? false;
     }
