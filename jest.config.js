@@ -55,7 +55,6 @@ const {
 } = require('./tsconfig.json');
 
 module.exports = {
-    globalSetup: 'jest-preset-angular/global-setup',
     testEnvironmentOptions: {
         url: 'https://artemis.fake/test',
     },
@@ -148,5 +147,6 @@ module.exports = {
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
+        "@sentry/angular-ivy": "<rootDir>/node_modules/@sentry/angular-ivy/bundles/sentry-angular-ivy.umd.js"
     },
 };
