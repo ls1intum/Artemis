@@ -16,7 +16,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
@@ -72,15 +71,7 @@ describe('ExamUpdateComponent', () => {
     describe('create and edit exams', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [
-                    RouterTestingModule.withRoutes(routes),
-                    MockModule(NgbModule),
-                    TranslateModule.forRoot(),
-                    FontAwesomeTestingModule,
-                    FormsModule,
-                    HttpClientModule,
-                    ArtemisExamModePickerModule,
-                ],
+                imports: [RouterTestingModule.withRoutes(routes), MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, HttpClientModule, ArtemisExamModePickerModule],
                 declarations: [
                     ExamUpdateComponent,
                     MockComponent(FormDateTimePickerComponent),
@@ -492,15 +483,7 @@ describe('ExamUpdateComponent', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [
-                    RouterTestingModule.withRoutes(routes),
-                    MockModule(NgbModule),
-                    TranslateModule.forRoot(),
-                    FontAwesomeTestingModule,
-                    FormsModule,
-                    HttpClientModule,
-                    ArtemisExamModePickerModule,
-                ],
+                imports: [RouterTestingModule.withRoutes(routes), MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, HttpClientModule, ArtemisExamModePickerModule],
                 declarations: [
                     ExamUpdateComponent,
                     ExamExerciseImportComponent,
