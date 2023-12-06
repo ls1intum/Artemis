@@ -117,8 +117,7 @@ public class ProgrammingExerciseTestCaseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         programmingExerciseTestCaseService.logTestCaseReset(user, programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember());
 
-        boolean isExamExercise = programmingExercise.isExamExercise();
-        List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(exerciseId, isExamExercise);
+        List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(exerciseId, programmingExercise.getDefaultTestCaseVisibility());
         return ResponseEntity.ok(testCases);
     }
 

@@ -904,4 +904,15 @@ public class ProgrammingExercise extends Exercise {
         }
         return null;
     }
+
+    /**
+     * In Exams misconfiguration and leaking test results to students during an exam shall be prevented by the default setting.
+     * In course exercises students shall receive immediate feedback. {@link Visibility.ALWAYS}
+     *
+     * @return default visibility {@link Visibility} set after the first execution of a test case
+     *         or when resetting the test case settings
+     */
+    public Visibility getDefaultTestCaseVisibility() {
+        return this.isExamExercise() ? Visibility.AFTER_DUE_DATE : Visibility.ALWAYS;
+    }
 }

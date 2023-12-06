@@ -113,19 +113,17 @@ public class ProgrammingExerciseTestCaseService {
     /**
      * Reset all tests to their initial configuration
      *
-     * @param exerciseId     to find exercise test cases
-     * @param isExamExercise to define the default visibility of test cases
+     * @param exerciseId        to find exercise test cases
+     * @param defaultVisibility of the test cases
      * @return test cases that have been reset
      */
-    public List<ProgrammingExerciseTestCase> reset(Long exerciseId, boolean isExamExercise) {
-        Visibility visibility = isExamExercise ? Visibility.AFTER_DUE_DATE : Visibility.ALWAYS;
-
+    public List<ProgrammingExerciseTestCase> reset(Long exerciseId, Visibility defaultVisibility) {
         Set<ProgrammingExerciseTestCase> testCases = this.testCaseRepository.findByExerciseId(exerciseId);
         for (ProgrammingExerciseTestCase testCase : testCases) {
             testCase.setWeight(1.0);
             testCase.setBonusMultiplier(1.0);
             testCase.setBonusPoints(0.0);
-            testCase.setVisibility(visibility);
+            testCase.setVisibility(defaultVisibility);
         }
         List<ProgrammingExerciseTestCase> updatedTestCases = testCaseRepository.saveAll(testCases);
 
