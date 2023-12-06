@@ -116,6 +116,7 @@ public class ProgrammingExerciseTestCaseService {
      * @param exerciseId to find exercise test cases
      * @return test cases that have been reset
      */
+    // TODO different initial configuration for exam exercises
     public List<ProgrammingExerciseTestCase> reset(Long exerciseId) {
         Set<ProgrammingExerciseTestCase> testCases = this.testCaseRepository.findByExerciseId(exerciseId);
         for (ProgrammingExerciseTestCase testCase : testCases) {
