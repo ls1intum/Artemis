@@ -964,6 +964,11 @@ Course Info Bar
     color: $mat-form-field-outline;
 }
 
+.mat-form-field-appearance-outline {
+    --mdc-outlined-text-field-outline-width: 1px;
+    --mdc-outlined-text-field-container-shape: 4px;
+}
+
 /* Connection Warning Tooltip */
 .connection-warning-popover {
     pointer-events: none;
