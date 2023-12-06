@@ -61,12 +61,5 @@
                   AND lpc.client_id = online_course_configuration.client_id
             )
         </sql>
-        <!-- Remove the columns that are no longer present in the entity -->
-        <dropColumn tableName="online_course_configuration" columnName="original_url"/>
-        <dropColumn tableName="online_course_configuration" columnName="registration_id"/>
-        <dropColumn tableName="online_course_configuration" columnName="client_id"/>
-        <dropColumn tableName="online_course_configuration" columnName="authorization_uri"/>
-        <dropColumn tableName="online_course_configuration" columnName="jkw_set_uri"/>
-        <dropColumn tableName="online_course_configuration" columnName="token_uri"/>
     </changeSet>
 </databaseChangeLog>
