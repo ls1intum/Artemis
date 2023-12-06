@@ -32,8 +32,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     constructor(
         private router: Router,
         private activatedRoute: ActivatedRoute,
-        public metisConversationService: MetisConversationService,
-        public metisService: MetisService,
+        private metisConversationService: MetisConversationService,
+        private metisService: MetisService,
     ) {}
 
     getAsChannel = getAsChannelDto;
