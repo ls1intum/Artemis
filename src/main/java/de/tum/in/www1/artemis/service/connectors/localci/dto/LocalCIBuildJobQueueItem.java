@@ -27,13 +27,16 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private long courseId;
 
-    public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId) {
+    private boolean isTestPush;
+
+    public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isTestPush) {
         this.name = name;
         this.participationId = participationId;
         this.commitHash = commitHash;
         this.submissionDate = submissionDate;
         this.priority = priority;
         this.courseId = courseId;
+        this.isTestPush = isTestPush;
     }
 
     public String getName() {
@@ -106,6 +109,14 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     public void setCourseId(long courseId) {
         this.courseId = courseId;
+    }
+
+    public boolean isTestPush() {
+        return isTestPush;
+    }
+
+    public void setTestPush(boolean testPush) {
+        isTestPush = testPush;
     }
 
     @Override

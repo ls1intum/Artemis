@@ -46,7 +46,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
  * This service contains the logic to execute a build job for a programming exercise participation in the local CI system.
- * The {@link #runBuildJob(ProgrammingExerciseParticipation, String, String, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService} and
+ * The {@link #runBuildJob(ProgrammingExerciseParticipation, String, boolean, String, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService} and
  * submitted to the executor service.
  */
 @Service
@@ -115,7 +115,7 @@ public class LocalCIBuildJobExecutionService {
      * @return The build result.
      * @throws LocalCIException If some error occurs while preparing or running the build job.
      */
-    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String commitHash, String containerName, String dockerImage) {
+    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isTestPush, String containerName, String dockerImage) {
         // Update the build plan status to "BUILDING".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
@@ -176,7 +176,7 @@ public class LocalCIBuildJobExecutionService {
             throw new LocalCIException("Error while getting branch of participation", e);
         }
 
-        if (commitHash != null) {
+        if (commitHash != null && !isTestPush) {
             // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
             assignmentRepositoryPath = cloneAndCheckoutRepository(participation, commitHash);
         }

@@ -83,8 +83,8 @@ public class LocalCISharedBuildJobQueueService {
      * @param priority        priority of the build job
      * @param courseId        course id of the build job
      */
-    public void addBuildJob(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, courseId);
+    public void addBuildJob(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isTestPush) {
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, courseId, isTestPush);
         queue.add(buildJobQueueItem);
     }
 
@@ -141,7 +141,7 @@ public class LocalCISharedBuildJobQueueService {
             participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
         }
 
-        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash);
+        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, buildJob.isTestPush());
         futureResult.thenAccept(buildResult -> {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore, a mock auth object has to be created.

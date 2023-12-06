@@ -197,10 +197,10 @@ public class LocalCIConnectorService {
             throw new LocalCIException("Could not set test cases changed flag", e);
         }
 
-        localCITriggerService.triggerBuild(solutionParticipation, commitHash);
+        localCITriggerService.triggerBuild(solutionParticipation, commitHash, true);
 
         try {
-            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
+            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), commitHash, SubmissionType.TEST);
         }
         catch (EntityNotFoundException e) {
             // Something went wrong while retrieving the template participation.
