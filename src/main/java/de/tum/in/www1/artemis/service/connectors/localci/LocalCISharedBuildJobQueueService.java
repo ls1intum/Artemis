@@ -82,6 +82,7 @@ public class LocalCISharedBuildJobQueueService {
      * @param submissionDate  submission date of the build job
      * @param priority        priority of the build job
      * @param courseId        course id of the build job
+     * @param isTestPush      defines if the build job is triggered by a push to a test repository
      */
     public void addBuildJob(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isTestPush) {
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, courseId, isTestPush);
