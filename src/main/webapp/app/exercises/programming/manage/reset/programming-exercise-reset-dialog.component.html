@@ -110,7 +110,7 @@
         </button>
         <div [style.cursor]="this.resetForm.form.invalid || !this.canSubmit ? 'not-allowed' : 'pointer'">
             <button type="submit" class="btn btn-danger" [disabled]="this.resetForm.form.invalid || !this.canSubmit">
-                <span *ngIf="resetInProgress"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span><fa-icon [icon]="faTimes"></fa-icon>&nbsp;
+                <span *ngIf="resetInProgress"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span><fa-icon [icon]="faUndo"></fa-icon>&nbsp;
                 <span jhiTranslate="entity.action.reset">Reset</span>
             </button>
         </div>
