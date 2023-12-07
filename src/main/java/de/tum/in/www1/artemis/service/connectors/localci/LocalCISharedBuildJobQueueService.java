@@ -121,6 +121,11 @@ public class LocalCISharedBuildJobQueueService {
         return processingJobs.values().stream().filter(job -> job.getCourseId() == courseId).toList();
     }
 
+    /**
+     * Remove all queued build jobs for a participation from the shared build job queue.
+     *
+     * @param participationId id of the participation
+     */
     public void removeQueuedJobsForParticipation(long participationId) {
         List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
         for (LocalCIBuildJobQueueItem job : queue) {

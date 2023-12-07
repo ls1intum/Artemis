@@ -114,6 +114,7 @@ public class LocalCIBuildJobExecutionService {
      *
      * @param participation The participation of the repository for which the build job should be executed.
      * @param commitHash    The commit hash of the commit that should be built. If it is null, the latest commit of the default branch will be built.
+     * @param isTestPush    Defines if the build job is triggered by a push to a test repository
      * @param containerName The name of the Docker container that will be used to run the build job.
      *                          It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
      * @param dockerImage   The Docker image that will be used to run the build job.
