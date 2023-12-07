@@ -101,7 +101,19 @@
         <button
             type="button"
             class="task__row__cell sort__button"
-            [ngbTooltip]="'artemisApp.programmingExercise.configureGrading.help.visibility' | artemisTranslate"
+            [ngbTooltip]="
+                this.isExamExercise
+                    ? ('artemisApp.programmingExercise.configureGrading.help.visibilityExam'
+                      | artemisTranslate
+                          : {
+                                afterReleaseDateOfResults: 'artemisApp.programmingExerciseTestCase.visibility.AfterReleaseDateOfResults' | artemisTranslate
+                            })
+                    : ('artemisApp.programmingExercise.configureGrading.help.visibility'
+                      | artemisTranslate
+                          : {
+                                afterDueDate: 'artemisApp.programmingExerciseTestCase.visibility.AfterDueDate' | artemisTranslate
+                            })
+            "
             placement="bottom auto"
             (click)="changeSort('visibility')"
         >

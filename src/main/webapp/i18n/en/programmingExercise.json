@@ -303,7 +303,8 @@
                     "weight": "Weight: The weighting of a test case determines the points a student receives for passing the test case. The number of points a test case awards is proportional to its weight and calculated as a fraction of the total exercise points.",
                     "bonusMultiplier": "Bonus multiplier: This multiplies the points given for passing a test case without affecting the fractions of other test cases. Multipliers greater than 1 can result in student scores greater than 100%.",
                     "bonusPoints": "Bonus points: Additional points added on top of the regular points for passing a test case. Setting bonus points can result in student scores greater than 100%.",
-                    "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after the due date has passed. Tests with visibility ‘Never’ do not influence the student score.",
+                    "visibility": "Feedback and points for test cases marked as ‘{{ afterDueDate }}’ only become visible to students after the due date has passed. Tests with visibility ‘Never’ do not influence the student score.",
+                    "visibilityExam": "Feedback and points for test cases marked as ‘{{ afterReleaseDateOfResults }}’ only become visible to students after the exam results release date has passed. Tests with visibility ‘Never’ do not influence the student score.",
                     "points": "The amount of points the student gets for passing this test. This value is rounded according to the course settings.",
                     "type": "The type of the test case determines if the test case has been generated from the test.json (STRUCTURAL), or has been written manually (BEHAVIORAL)."
                 },
