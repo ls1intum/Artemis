@@ -13,7 +13,7 @@ import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../test.module';
 import { CompetencyCardStubComponent } from './competency-card-stub.component';
-import { NgbAccordion, NgbModal, NgbModalRef, NgbPanel, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
@@ -25,6 +25,7 @@ import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock
 import { By } from '@angular/platform-browser';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { NgbAccordionBody, NgbAccordionButton, NgbAccordionCollapse, NgbAccordionDirective, NgbAccordionHeader, NgbAccordionItem } from '@ng-bootstrap/ng-bootstrap';
 
 // eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: 'ngx-graph', template: '' })
@@ -43,7 +44,7 @@ describe('CompetencyManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgbProgressbar, NgbAccordion],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgbProgressbar],
             declarations: [
                 CompetencyManagementComponent,
                 CompetencyCardStubComponent,
@@ -53,7 +54,12 @@ describe('CompetencyManagementComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(DeleteButtonDirective),
-                MockDirective(NgbPanel),
+                MockDirective(NgbAccordionDirective),
+                MockDirective(NgbAccordionItem),
+                MockDirective(NgbAccordionHeader),
+                MockDirective(NgbAccordionButton),
+                MockDirective(NgbAccordionCollapse),
+                MockDirective(NgbAccordionBody),
             ],
             providers: [
                 MockProvider(AccountService),
