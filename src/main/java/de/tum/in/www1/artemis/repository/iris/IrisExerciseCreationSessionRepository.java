@@ -20,16 +20,18 @@ public interface IrisExerciseCreationSessionRepository extends JpaRepository<Iri
     /**
      * Finds a list of {@link IrisExerciseCreationSession} based on the exercise and user IDs.
      *
-     * @param userId The ID of the user.
+     * @param userId   The ID of the user.
+     * @param courseId the ID of the course
      * @return A list of {@link IrisExerciseCreationSession} sessions sorted by creation date in descending order.
      */
     @Query("""
             SELECT s
-            FROM IrisCodeEditorSession s
+            FROM IrisExerciseCreationSession s
             WHERE s.user.id = :userId
+                AND s.course.id = :courseId
             ORDER BY s.creationDate DESC
             """)
-    List<IrisExerciseCreationSession> findByUserId(@Param("userId") Long userId);
+    List<IrisExerciseCreationSession> findByCourseIdAndUserId(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     /**
      * Finds a list of {@link IrisExerciseCreationSession} or throws an exception if none are found.
@@ -39,8 +41,8 @@ public interface IrisExerciseCreationSessionRepository extends JpaRepository<Iri
      * @throws EntityNotFoundException if no sessions are found.
      */
     @NotNull
-    default List<IrisExerciseCreationSession> findByUserIdElseThrow(long userId) throws EntityNotFoundException {
-        var result = findByUserId(userId);
+    default List<IrisExerciseCreationSession> findByCourseIdAndUserIdElseThrow(long courseId, long userId) throws EntityNotFoundException {
+        var result = findByCourseIdAndUserId(courseId, userId);
         if (result.isEmpty()) {
             throw new EntityNotFoundException("Iris Exercise Creation Session");
         }
@@ -60,16 +62,17 @@ public interface IrisExerciseCreationSessionRepository extends JpaRepository<Iri
     }
 
     /**
-     * Finds the newest exercise creation session for a given user ID or throws an exception if none is found.
+     * Finds the newest code editor session for a given exercise and user ID or throws an exception if none is found.
      *
-     * @param userId The ID of the user.
-     * @return The newest exercise creation session for the given user ID.
+     * @param courseId The ID of the exercise.
+     * @param userId   The ID of the user.
+     * @return The newest code editor session for the given exercise and user ID.
      * @throws EntityNotFoundException if no session is found.
      */
-    default IrisExerciseCreationSession findNewestByUserIdElseThrow(long userId) throws EntityNotFoundException {
-        var result = findByUserId(userId);
+    default IrisExerciseCreationSession findNewestByExerciseIdAndUserIdElseThrow(long courseId, long userId) throws EntityNotFoundException {
+        var result = findByCourseIdAndUserId(courseId, userId);
         if (result.isEmpty()) {
-            throw new EntityNotFoundException("Iris Exercise Creation Session");
+            throw new EntityNotFoundException("Iris Code Editor Session");
         }
         return result.get(0);
     }
