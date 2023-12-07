@@ -87,7 +87,9 @@
                                                 deleteQuestion="artemisApp.attachment.deleteQuestion"
                                                 (delete)="deleteAttachment(attachment)"
                                                 [dialogError]="dialogError$"
-                                            ></button>
+                                            >
+                                                <fa-icon [icon]="faTrash"></fa-icon>
+                                            </button>
                                         </div>
                                     </td>
                                     <div *ngIf="attachmentToBeCreated?.id === attachment?.id" class="edit-overlay">
