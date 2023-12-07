@@ -17,8 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -896,10 +894,9 @@ public class ProgrammingExercise extends Exercise {
             return null;
         }
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(buildPlanConfiguration, Windfile.class);
+            return Windfile.deserialize(buildPlanConfiguration);
         }
-        catch (JsonSyntaxException | JsonProcessingException e) {
+        catch (JsonSyntaxException e) {
             log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
         }
         return null;
