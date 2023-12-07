@@ -41,7 +41,7 @@ type ExerciseMetadata = {
  * If it is a message type, it contains an IrisMessage. It might also contain an exercise update.
  * If it is an error type, it contains an error message.
  */
-export class IrisCodeEditorWebsocketDTO {
+export class IrisExerciseCreationWebsocketDTO {
     type: IrisExerciseCreationWebsocketMessageType;
     message?: IrisMessage;
     exerciseUpdate?: ExerciseUpdate;
@@ -54,11 +54,11 @@ export class IrisCodeEditorWebsocketDTO {
  * The IrisCodeEditorWebsocketService handles the websocket communication for receiving messages in the code editor channels.
  */
 @Injectable()
-export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
+export class IrisExerciseCreationWebsocketService extends IrisWebsocketService {
     private exerciseUpdates: Subject<ExerciseUpdate> = new Subject<ExerciseUpdate>();
 
     /**
-     * Creates an instance of IrisCodeEditorWebsocketService.
+     * Creates an instance of IrisExerciseCreationWebsocketService.
      * @param jhiWebsocketService The JhiWebsocketService for websocket communication.
      * @param stateStore The IrisStateStore for managing the state of the application.
      */
@@ -66,7 +66,7 @@ export class IrisCodeEditorWebsocketService extends IrisWebsocketService {
         super(jhiWebsocketService, stateStore, 'exercise-creation');
     }
 
-    protected handleWebsocketResponse(response: IrisCodeEditorWebsocketDTO): void {
+    protected handleWebsocketResponse(response: IrisExerciseCreationWebsocketDTO): void {
         if (response.rateLimitInfo) {
             super.handleRateLimitInfo(response.rateLimitInfo);
         }

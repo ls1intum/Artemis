@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ConversationErrorOccurredAction, SessionReceivedAction } from 'app/iris/state-store.model';
-import { IrisHttpSessionService } from 'app/iris/http-session.service';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 import { IrisHttpMessageService } from 'app/iris/http-message.service';
 import { IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
 import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
 import { firstValueFrom } from 'rxjs';
+import { IrisHttpSessionService } from 'app/iris/http-session.service';
 
 /**
  * The IrisSessionService is responsible for managing Iris sessions and retrieving their associated messages.
@@ -28,19 +28,15 @@ export abstract class IrisSessionService {
 
     /**
      * Retrieves the current session or creates a new one if it doesn't exist.
-     * @param exerciseId The exercise ID to which the session will be attached.
+     * @param id The ID of the entity (course or exercise) in which the session will be attached.
      */
-    getCurrentSessionOrCreate(exerciseId: number): void {
+    getCurrentSessionOrCreate(id: number): void {
         let sessionId: number;
 
-        this.httpSessionService
-            .getCurrentSession(exerciseId)
-            .toPromise()
+        firstValueFrom(this.httpSessionService.getCurrentSession(id))
             .then((irisSessionResponse: HttpResponse<IrisSession>) => {
                 sessionId = irisSessionResponse.body!.id;
-                return this.httpMessageService
-                    .getMessages(sessionId)
-                    .toPromise()
+                return firstValueFrom(this.httpMessageService.getMessages(sessionId))
                     .then((messagesResponse: HttpResponse<IrisMessage[]>) => {
                         const messages = messagesResponse.body!;
                         messages.sort((a, b) => {
@@ -58,7 +54,7 @@ export abstract class IrisSessionService {
             })
             .catch((error: HttpErrorResponse) => {
                 if (error.status == 404) {
-                    return this.createNewSession(exerciseId);
+                    return this.createNewSession(id);
                 } else {
                     this.dispatchError(IrisErrorMessageKey.SESSION_LOAD_FAILED);
                 }

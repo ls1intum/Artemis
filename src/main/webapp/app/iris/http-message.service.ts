@@ -11,7 +11,7 @@ export type Response<T> = Observable<HttpResponse<T>>;
  * Provides a set of methods to perform CRUD operations on messages
  */
 @Injectable({ providedIn: 'root' })
-export abstract class IrisHttpMessageService {
+export class IrisHttpMessageService {
     protected apiPrefix: string = 'api/iris';
 
     protected constructor(protected httpClient: HttpClient) {}

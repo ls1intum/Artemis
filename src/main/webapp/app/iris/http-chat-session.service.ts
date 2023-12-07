@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { IrisHttpSessionService } from 'app/iris/http-session.service';
+import { IrisExerciseHttpSessionService } from 'app/iris/http-exercise-session.service';
 import { IrisRateLimitInformation } from 'app/iris/websocket.service';
 
 export class HeartbeatDTO {
@@ -13,7 +13,7 @@ export class HeartbeatDTO {
  * It interacts with the server-side API to perform session-related operations.
  */
 @Injectable({ providedIn: 'root' })
-export class IrisHttpChatSessionService extends IrisHttpSessionService {
+export class IrisHttpChatSessionService extends IrisExerciseHttpSessionService {
     protected constructor(http: HttpClient) {
         super(http, 'sessions');
     }

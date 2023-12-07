@@ -31,9 +31,9 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
 import { PROFILE_LOCALCI } from 'app/app.constants';
-import { IrisCodeEditorChatbotButtonComponent } from 'app/iris/exercise-chatbot/code-editor-chatbot-button.component';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-chatbot-button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -41,7 +41,7 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
     styleUrls: ['../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
-    @ViewChild(IrisCodeEditorChatbotButtonComponent, { static: false }) chatbotButton: IrisCodeEditorChatbotButtonComponent;
+    @ViewChild(IrisExerciseCreationChatbotButtonComponent, { static: false }) chatbotButton: IrisExerciseCreationChatbotButtonComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;

@@ -41,6 +41,8 @@ export abstract class IrisChatbotButtonComponent implements OnInit, OnDestroy {
             this.exerciseId = parseInt(params['exerciseId'], 10);
             if (this.exerciseId != null) {
                 this.sessionService.getCurrentSessionOrCreate(this.exerciseId);
+            } else if (this.courseId != null) {
+                this.sessionService.getCurrentSessionOrCreate(this.courseId);
             }
         });
 
