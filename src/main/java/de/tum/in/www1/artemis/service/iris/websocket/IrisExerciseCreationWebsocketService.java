@@ -38,7 +38,7 @@ public class IrisExerciseCreationWebsocketService extends IrisWebsocketService {
     public void sendMessage(IrisMessage message) {
         var session = message.getSession();
         var user = checkSessionTypeAndGetUser(session);
-        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.message(message));
+        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.message(message, null));
     }
 
     /**
@@ -51,18 +51,26 @@ public class IrisExerciseCreationWebsocketService extends IrisWebsocketService {
         super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.error(throwable));
     }
 
+    public record IrisExerciseMetadata(String title, String shortName, String[] categories, String difficulty, String participation, boolean allowOfflineIDE,
+            boolean allowOnlineEditor, boolean publishBuildPlan, String programmingLanguage, String includeInCourseScore, int points, int bonusPoints, String submissionPolicy) {
+    }
+
+    public record IrisExerciseUpdate(String problemStatement, IrisExerciseMetadata exerciseMetadata) {
+    }
+
     public enum IrisWebsocketMessageType {
         MESSAGE, ERROR
     }
 
-    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, String errorMessage, String errorTranslationKey, Map<String, Object> translationParams) {
+    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisExerciseUpdate exerciseUpdate, String errorMessage, String errorTranslationKey,
+            Map<String, Object> translationParams) {
 
-        private static IrisWebsocketDTO message(IrisMessage message) {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.MESSAGE, message, null, null, null);
+        private static IrisWebsocketDTO message(IrisMessage message, IrisExerciseUpdate exerciseUpdate) {
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.MESSAGE, message, exerciseUpdate, null, null, null);
         }
 
         private static IrisWebsocketDTO error(Throwable throwable) {
-            return new IrisWebsocketDTO(IrisWebsocketMessageType.ERROR, null, throwable.getMessage(), throwable instanceof IrisException i ? i.getTranslationKey() : null,
+            return new IrisWebsocketDTO(IrisWebsocketMessageType.ERROR, null, null, throwable.getMessage(), throwable instanceof IrisException i ? i.getTranslationKey() : null,
                     throwable instanceof IrisException i ? i.getTranslationParams() : null);
         }
 
