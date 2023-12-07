@@ -120,6 +120,10 @@ public class LocalCISharedBuildJobQueueService {
         return processingJobs.values().stream().filter(job -> job.getCourseId() == courseId).toList();
     }
 
+    public void removeQueuedJobsForParticipation(long participationId) {
+        queue.removeIf(job -> job.getParticipationId() == participationId);
+    }
+
     /**
      * Retrieve participation from database with retries.
      * This is necessary because the participation might not be persisted in the database yet.
