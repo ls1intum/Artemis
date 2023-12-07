@@ -166,7 +166,7 @@ public class RestTemplateConfiguration {
      * @return a RestTemplate with short timeouts
      */
     @Bean
-    @Profile("localci")
+    @Profile("aeolus | localci")
     public RestTemplate shortTimeoutAeolusRestTemplate() {
         return createShortTimeoutRestTemplate();
     }
