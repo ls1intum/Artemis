@@ -179,11 +179,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         });
     }
 
-    outputForm(id: any) {
-        const title = (<HTMLInputElement>document.getElementById(`${id}`)).value;
-        console.log(title);
-    }
-
     /**
      * Activate or deactivate the wizard mode for easier exercise creation.
      * This function is called by pressing "Switch to guided mode" when creating a new exercise
@@ -573,7 +568,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private getFormData(): Record<string, unknown> {
-        return {};
+        return {
+            title: (<HTMLInputElement>document.getElementById('field_title')).value,
+            short_name: (<HTMLInputElement>document.getElementById('field_shortName')).value,
+            package_name: (<HTMLInputElement>document.getElementById('field_packageName')).value,
+            points: (<HTMLInputElement>document.getElementById('field_points')).value,
+        };
     }
 
     /**

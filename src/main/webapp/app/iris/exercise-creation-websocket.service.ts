@@ -19,9 +19,9 @@ export type ExerciseUpdate = {
     exerciseUpdate: ExerciseMetadata;
 };
 
-type ExerciseMetadata = {
+export type ExerciseMetadata = {
     title: string;
-    shortName: string;
+    short_name: string;
     categories: string[];
     difficulty: 'no level' | 'easy' | 'medium' | 'hard';
     participation: 'individual' | 'team';
