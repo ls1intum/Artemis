@@ -55,6 +55,11 @@ public class NotificationSettingsService {
 
     public static final String NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST = "notification.lecture-notification.new-reply-for-lecture-post";
 
+    // exam notification setting group
+    public static final String NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST = "notification.exam-notification.new-exam-post";
+
+    public static final String NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST = "notification.exam-notification.new-reply-for-exam-post";
+
     // tutorial group notification settings group
     public static final String NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION = "notification.tutorial-group-notification.tutorial-group-registration";
 
@@ -75,6 +80,8 @@ public class NotificationSettingsService {
     public static final String NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE = "notification.user-notification.conversation-message";
 
     public static final String NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE = "notification.user-notification.new-reply-in-conversation";
+
+    public static final String NOTIFICATION__USER_NOTIFICATION__USER_MENTION = "notification.user-notification.user-mention";
 
     public static final String NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED = "notification.user-notification.data-export-created";
 
@@ -101,6 +108,9 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES),
             new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST),
             new NotificationSetting(true, false, true, NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST),
+            // exam notification setting group
+            new NotificationSetting(true, false, true, NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST),
+            new NotificationSetting(true, false, true, NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST),
             // tutorial group notification settings group
             new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION),
             new NotificationSetting(true, false, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE),
@@ -114,6 +124,8 @@ public class NotificationSettingsService {
             // user new message notification setting group
             new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE),
             new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE),
+            // user mention notification setting group
+            new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__USER_MENTION),
             // data export notification setting (cannot be overridden by user)
             new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED),
             new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED)));
@@ -133,6 +145,8 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES, new NotificationType[] { ATTACHMENT_CHANGE }),
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST, new NotificationType[] { NEW_LECTURE_POST }),
             Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST, new NotificationType[] { NEW_REPLY_FOR_LECTURE_POST }),
+            Map.entry(NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST, new NotificationType[] { NEW_EXAM_POST }),
+            Map.entry(NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST, new NotificationType[] { NEW_EXAM_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST, new NotificationType[] { NEW_COURSE_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, new NotificationType[] { NEW_REPLY_FOR_COURSE_POST }),
             Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST, new NotificationType[] { NEW_ANNOUNCEMENT_POST }),
@@ -147,7 +161,8 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE,
                     new NotificationType[] { CONVERSATION_NEW_MESSAGE, CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT,
                             CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_CHANNEL }),
-            Map.entry(NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE, new NotificationType[] { CONVERSATION_NEW_REPLY_MESSAGE }));
+            Map.entry(NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE, new NotificationType[] { CONVERSATION_NEW_REPLY_MESSAGE }),
+            Map.entry(NOTIFICATION__USER_NOTIFICATION__USER_MENTION, new NotificationType[] { CONVERSATION_USER_MENTIONED }));
 
     // This set has to equal the UI configuration in the client notification settings structure file!
     // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
@@ -200,7 +215,7 @@ public class NotificationSettingsService {
 
         return users.stream().filter(user -> {
             // for those notification types that are not explicitly set by the user, we use the default settings
-            Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().equals(user))
+            Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().getId().equals(user.getId()))
                     .map(NotificationSetting::getSettingId).collect(Collectors.toSet());
             for (NotificationSetting defaultSetting : DEFAULT_NOTIFICATION_SETTINGS) {
                 if (!decidedIds.contains(defaultSetting.getSettingId())) {
