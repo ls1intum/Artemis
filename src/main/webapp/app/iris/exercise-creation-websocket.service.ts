@@ -14,7 +14,7 @@ export enum IrisExerciseCreationWebsocketMessageType {
     ERROR = 'ERROR',
 }
 
-type ExerciseUpdate = {
+export type ExerciseUpdate = {
     problemStatement: string;
     exerciseUpdate: ExerciseMetadata;
 };

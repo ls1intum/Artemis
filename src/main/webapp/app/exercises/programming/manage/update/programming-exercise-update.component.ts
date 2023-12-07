@@ -34,6 +34,7 @@ import { PROFILE_LOCALCI } from 'app/app.constants';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-chatbot-button.component';
+import { ExerciseUpdate, IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -164,7 +165,24 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
         private irisSettingsService: IrisSettingsService,
-    ) {}
+        private irisExerciseCreationWebsocketService: IrisExerciseCreationWebsocketService,
+    ) {
+        irisExerciseCreationWebsocketService.onExerciseUpdate().subscribe((exerciseUpdate: ExerciseUpdate) => {
+            this.handleProblemStatementUpdate(exerciseUpdate);
+        });
+    }
+
+    private handleProblemStatementUpdate(exerciseUpdate: ExerciseUpdate) {
+        this.programmingExercise.problemStatement = exerciseUpdate.problemStatement;
+        Object.keys(exerciseUpdate).forEach((key) => {
+            console.log(key, exerciseUpdate[key]);
+        });
+    }
+
+    outputForm(id: any) {
+        const title = (<HTMLInputElement>document.getElementById(`${id}`)).value;
+        console.log(title);
+    }
 
     /**
      * Activate or deactivate the wizard mode for easier exercise creation.
