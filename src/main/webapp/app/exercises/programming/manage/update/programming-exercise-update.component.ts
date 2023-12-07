@@ -411,6 +411,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.isExamMode = true;
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                                 this.programmingExercise.exerciseGroup = res.body!;
+                                if (this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                    this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
+                                }
                             });
                             // we need the course id  to make the request to the server if it's an import from file
                             if (this.isImportFromFile) {
