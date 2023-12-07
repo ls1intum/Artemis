@@ -239,7 +239,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.save();
 
             // THEN
-            expect(comp.isSaving).toBeFalsy();
+            expect(comp.isSaving).toBeFalse();
             expect(alertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'error-message', disableTranslation: true });
         });
     });
@@ -474,8 +474,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             tick();
             expect(comp.programmingExercise.exerciseGroup).toBe(exerciseGroup);
             expect(comp.programmingExercise.course).toBeUndefined();
-            expect(comp.isImportFromExistingExercise).toBeTruthy();
-            expect(comp.isExamMode).toBeTruthy();
+            expect(comp.isImportFromExistingExercise).toBeTrue();
+            expect(comp.isExamMode).toBeTrue();
         }));
 
         it('should reset dates, id and project key', fakeAsync(() => {
