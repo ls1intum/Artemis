@@ -47,6 +47,6 @@ import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.comp
     ],
     imports: [CommonModule, MatDialogModule, FormsModule, FontAwesomeModule, ArtemisSharedModule, ArtemisMarkdownModule, ArtemisSharedComponentModule, RouterModule],
     providers: [IrisCodeEditorWebsocketService, IrisStateStore],
-    exports: [IrisCodeEditorChatbotButtonComponent, IrisTutorChatbotButtonComponent, IrisEnabledComponent],
+    exports: [IrisCodeEditorChatbotButtonComponent, IrisTutorChatbotButtonComponent, IrisExerciseCreationChatbotButtonComponent, IrisEnabledComponent],
 })
 export class IrisModule {}

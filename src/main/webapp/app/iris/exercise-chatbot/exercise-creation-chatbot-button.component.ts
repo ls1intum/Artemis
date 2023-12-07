@@ -11,7 +11,7 @@ import { IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation
 import { IrisExerciseCreationSessionService } from 'app/iris/exercise-creation-session.service';
 
 @Component({
-    selector: 'jhi-code-editor-chatbot-button',
+    selector: 'jhi-exercise-creation-chatbot-button',
     templateUrl: './code-editor-chatbot-button.component.html',
     providers: [IrisCodeEditorSessionService],
 })
