@@ -92,16 +92,16 @@ public class LocalCISharedBuildJobQueueService {
     /**
      * Create build job item object and add it to the queue.
      *
-     * @param name            name of the build job
-     * @param participationId participation id of the build job
-     * @param commitHash      commit hash of the build job
-     * @param submissionDate  submission date of the build job
-     * @param priority        priority of the build job
-     * @param courseId        course id of the build job
-     * @param isTestPush      defines if the build job is triggered by a push to a test repository
+     * @param name                   name of the build job
+     * @param participationId        participation id of the build job
+     * @param commitHash             commit hash of the build job
+     * @param submissionDate         submission date of the build job
+     * @param priority               priority of the build job
+     * @param courseId               course id of the build job
+     * @param isPushToTestRepository defines if the build job is triggered by a push to a test repository
      */
-    public void addBuildJob(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isTestPush) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, courseId, isTestPush);
+    public void addBuildJob(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isPushToTestRepository) {
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, courseId, isPushToTestRepository);
         queue.add(buildJobQueueItem);
     }
 
@@ -260,7 +260,8 @@ public class LocalCISharedBuildJobQueueService {
             participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
         }
 
-        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, isRetry, buildJob.isTestPush());
+        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, isRetry,
+                buildJob.isPushToTestRepository());
         futureResult.thenAccept(buildResult -> {
 
             // Do not process the result if the participation has been deleted in the meantime
