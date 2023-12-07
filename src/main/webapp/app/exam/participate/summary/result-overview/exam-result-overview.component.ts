@@ -97,13 +97,10 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      * used as fallback if not pre-calculated by the server
      */
     private sumExerciseScores() {
-        let exerciseScoreSum = 0;
-
-        this.studentExamWithGrade.studentExam?.exercises?.forEach((exercise) => {
-            exerciseScoreSum += this.studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
-        });
-
-        return exerciseScoreSum;
+        return (this.studentExamWithGrade.studentExam?.exercises ?? []).reduce((exerciseScoreSum, exercise) => {
+            const achievedPoints = this.studentExamWithGrade?.achievedPointsPerExercise?.[exercise.id!] ?? 0;
+            return exerciseScoreSum + achievedPoints;
+        }, 0);
     }
 
     private getOverallAchievedPoints() {
