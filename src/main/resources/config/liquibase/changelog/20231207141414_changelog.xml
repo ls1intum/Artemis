@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    This changeset modifies the iris_session table to add a course_id column.
+    This was done with the introduction of the IrisExerciseCreationSession type, which is used to create exercises
+    for a specific course.
+    -->
+    <changeSet id="20231207141414" author="michael_dyer">
+        <!-- Add a course_id column to the existing iris_session table -->
+        <addColumn tableName="iris_session">
+            <column name="course_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

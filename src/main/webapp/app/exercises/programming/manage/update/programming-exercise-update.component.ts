@@ -565,6 +565,17 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return this.irisSettings?.irisCodeEditorSettings?.enabled;
     }
 
+    getFormDataAndProblemStatement(): Record<string, unknown> {
+        return {
+            problemStatement: '',
+            metadata: this.getFormData(),
+        };
+    }
+
+    private getFormData(): Record<string, unknown> {
+        return {};
+    }
+
     /**
      * Return to the exercise overview page
      */

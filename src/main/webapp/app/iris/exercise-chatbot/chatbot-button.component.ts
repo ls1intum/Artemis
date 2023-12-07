@@ -1,5 +1,5 @@
 import { faChevronDown, faCircle, faCommentDots } from '@fortawesome/free-solid-svg-icons';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
@@ -20,6 +20,8 @@ export abstract class IrisChatbotButtonComponent implements OnInit, OnDestroy {
     private stateSubscription: Subscription;
     private chatOpenSubscription: Subscription;
 
+    @Input() paramsOnSend: () => Record<string, unknown> = () => ({});
+
     // Icons
     faCircle = faCircle;
     faCommentDots = faCommentDots;
@@ -39,9 +41,10 @@ export abstract class IrisChatbotButtonComponent implements OnInit, OnDestroy {
         this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.exerciseId = parseInt(params['exerciseId'], 10);
-            if (this.exerciseId != null) {
+            // TODO: This will need to be updated as soon as there exists a session type with both an exerciseId and a courseId
+            if (this.exerciseId) {
                 this.sessionService.getCurrentSessionOrCreate(this.exerciseId);
-            } else if (this.courseId != null) {
+            } else if (this.courseId) {
                 this.sessionService.getCurrentSessionOrCreate(this.courseId);
             }
         });
@@ -97,6 +100,7 @@ export abstract class IrisChatbotButtonComponent implements OnInit, OnDestroy {
                 courseId: this.courseId,
                 exerciseId: this.exerciseId,
                 sessionService: this.sessionService,
+                paramsOnSend: this.paramsOnSend,
             },
         });
     }
