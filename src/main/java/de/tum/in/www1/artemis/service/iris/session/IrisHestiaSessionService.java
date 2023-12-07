@@ -71,7 +71,7 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
     }
 
     @Override
-    public void requestAndHandleResponse(IrisSession irisSession) {
+    public void requestAndHandleResponse(IrisSession irisSession, Map<String, Object> clientParams) {
         throw new UnsupportedOperationException("Requesting and handling responses is not supported for Iris Hestia sessions");
     }
 

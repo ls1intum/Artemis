@@ -156,10 +156,12 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * Sends a request containing the current state of the exercise repositories in the code editor and the entire
      * conversation history to the LLM, and handles the response.
      *
-     * @param irisSession The code editor session to send the request for with all messages and message contents loaded
+     * @param irisSession  The code editor session to send the request for with all messages and message contents
+     *                         loaded
+     * @param clientParams Extra parameters from the client for the request (currently unused)
      */
     @Override
-    public void requestAndHandleResponse(IrisSession irisSession) {
+    public void requestAndHandleResponse(IrisSession irisSession, Map<String, Object> clientParams) {
         var sessionFromDB = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
         if (!(sessionFromDB instanceof IrisCodeEditorSession session)) {
             throw new BadRequestException("Iris session is not a code editor session");

@@ -129,13 +129,14 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
     }
 
     /**
-     * Sends all messages of the session to an LLM and handles the response by saving the message
-     * and sending it to the student via the Websocket.
+     * Sends all messages of the session to an LLM and handles the response by saving the message and sending it to the
+     * student via the Websocket.
      *
-     * @param session The chat session to send to the LLM
+     * @param session      The chat session to send to the LLM
+     * @param clientParams Extra parameters from the client for the request (currently unused)
      */
     @Override
-    public void requestAndHandleResponse(IrisSession session) {
+    public void requestAndHandleResponse(IrisSession session, Map<String, Object> clientParams) {
         var fullSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         Map<String, Object> parameters = new HashMap<>();
         if (!(fullSession instanceof IrisChatSession chatSession)) {

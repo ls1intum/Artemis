@@ -11,11 +11,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseCreationSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -30,6 +34,9 @@ import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.iris.IrisDefaultTemplateService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
+import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
+import de.tum.in.www1.artemis.service.iris.session.exercisecreation.IrisExerciseMetadataDTO;
+import de.tum.in.www1.artemis.service.iris.session.exercisecreation.IrisExerciseUpdateDTO;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisExerciseCreationWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -99,11 +106,17 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
 
     @Override
     public void sendOverWebsocket(IrisMessage message) {
-        irisExerciseCreationWebsocketService.sendMessage(message);
+        irisExerciseCreationWebsocketService.sendMessage(message, null);
     }
 
+    /**
+     * Sends a request to Iris to adapt the exercise metadata and the draft problem statement.
+     *
+     * @param irisSession  The session to get a message for
+     * @param clientParams The current exercise metadata and problem statement
+     */
     @Override
-    public void requestAndHandleResponse(IrisSession irisSession) {
+    public void requestAndHandleResponse(IrisSession irisSession, Map<String, Object> clientParams) {
         var fromDB = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         if (!(fromDB instanceof IrisExerciseCreationSession session)) {
             throw new BadRequestException("Iris session is not an exercise creation session");
@@ -111,15 +124,59 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
         var template = irisDefaultTemplateService.load("exercise-creation.hbs");
         var settings = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false).irisCodeEditorSettings();
         Map<String, Object> params = new HashMap<>();
+        params.put("metadata", clientParams.get("metadata"));
+        params.put("problemStatement", clientParams.get("problemStatement"));
         params.put("chatHistory", session.getMessages());
         irisConnectorService.sendRequestV2(template.getContent(), settings.getPreferredModel(), params).handleAsync((response, throwable) -> {
             if (throwable != null) {
                 log.error("Failed to get Iris response", throwable);
+                irisExerciseCreationWebsocketService.sendException(session, throwable);
                 return null;
             }
-
+            if (response == null || response.content() == null) {
+                log.error("Iris response is null");
+                irisExerciseCreationWebsocketService.sendException(session, new IrisParseResponseException("Iris did not respond"));
+                return null;
+            }
+            log.info("Received Iris response: {}", response);
+            if (!response.content().has("response")) {
+                log.error("Iris response did not have a response message for the user");
+                irisExerciseCreationWebsocketService.sendException(session, new IrisParseResponseException("Iris did not respond"));
+                return null;
+            }
+            var irisMessage = toIrisMessage(response.content());
+            var exerciseUpdate = toIrisExerciseUpdateDTO(response.content());
+            var saved = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);
+            irisExerciseCreationWebsocketService.sendMessage(saved, exerciseUpdate);
             return null;
         });
+    }
+
+    private IrisMessage toIrisMessage(JsonNode content) {
+        var message = new IrisMessage();
+        var chatWindowResponse = content.required("response").asText();
+        message.addContent(new IrisTextMessageContent(chatWindowResponse));
+        return message;
+    }
+
+    private IrisExerciseUpdateDTO toIrisExerciseUpdateDTO(JsonNode content) {
+        String problemStatement = null;
+        if (content.hasNonNull("finalProblemStatement")) {
+            problemStatement = content.get("finalProblemStatement").asText();
+        }
+        try {
+            String updatedMetadata = content.required("updatedMetadata").asText();
+            JsonNode metadataJson = objectMapper.readTree(updatedMetadata);
+            var metadata = IrisExerciseMetadataDTO.parse(metadataJson);
+            return new IrisExerciseUpdateDTO(problemStatement, metadata);
+        }
+        catch (JsonProcessingException e) {
+            log.warn("Failed to parse updatedMetadata, was not valid JSON", e);
+        }
+        catch (IllegalArgumentException e) {
+            log.warn("Failed to parse updatedMetadata, did not have all required fields", e);
+        }
+        return new IrisExerciseUpdateDTO(problemStatement, null);
     }
 
     @Override

@@ -86,7 +86,7 @@ public class IrisMessageResource {
         var savedMessage = irisMessageService.saveMessage(dto.message(), session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(dto.message().getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage);
-        irisSessionService.requestMessageFromIris(session);
+        irisSessionService.requestMessageFromIris(session, dto.extraParams());
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
@@ -102,7 +102,7 @@ public class IrisMessageResource {
      */
     @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody Map<String, Object> options) {
+    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody Map<String, Object> extraParams) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
@@ -116,7 +116,7 @@ public class IrisMessageResource {
         if (message.getSender() != IrisMessageSender.USER) {
             throw new BadRequestException("Only user messages can be resent");
         }
-        irisSessionService.requestMessageFromIris(session);
+        irisSessionService.requestMessageFromIris(session, extraParams);
 
         return ResponseEntity.ok(message);
     }

@@ -7,11 +7,11 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseCreationSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
+import de.tum.in.www1.artemis.service.iris.session.exercisecreation.IrisExerciseUpdateDTO;
 
 @Service
 @Profile("iris")
@@ -35,10 +35,10 @@ public class IrisExerciseCreationWebsocketService extends IrisWebsocketService {
      *
      * @param message that should be sent over the websocket
      */
-    public void sendMessage(IrisMessage message) {
+    public void sendMessage(IrisMessage message, IrisExerciseUpdateDTO exerciseUpdate) {
         var session = message.getSession();
         var user = checkSessionTypeAndGetUser(session);
-        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.message(message, null));
+        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.message(message, exerciseUpdate));
     }
 
     /**
@@ -47,25 +47,18 @@ public class IrisExerciseCreationWebsocketService extends IrisWebsocketService {
      * @param session   to which the exception belongs
      * @param throwable that should be sent over the websocket
      */
-    public void sendException(IrisCodeEditorSession session, Throwable throwable) {
+    public void sendException(IrisExerciseCreationSession session, Throwable throwable) {
         super.send(session.getUser(), WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.error(throwable));
-    }
-
-    public record IrisExerciseMetadata(String title, String shortName, String[] categories, String difficulty, String participation, boolean allowOfflineIDE,
-            boolean allowOnlineEditor, boolean publishBuildPlan, String programmingLanguage, String includeInCourseScore, int points, int bonusPoints, String submissionPolicy) {
-    }
-
-    public record IrisExerciseUpdate(String problemStatement, IrisExerciseMetadata exerciseMetadata) {
     }
 
     public enum IrisWebsocketMessageType {
         MESSAGE, ERROR
     }
 
-    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisExerciseUpdate exerciseUpdate, String errorMessage, String errorTranslationKey,
+    public record IrisWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisExerciseUpdateDTO exerciseUpdate, String errorMessage, String errorTranslationKey,
             Map<String, Object> translationParams) {
 
-        private static IrisWebsocketDTO message(IrisMessage message, IrisExerciseUpdate exerciseUpdate) {
+        private static IrisWebsocketDTO message(IrisMessage message, IrisExerciseUpdateDTO exerciseUpdate) {
             return new IrisWebsocketDTO(IrisWebsocketMessageType.MESSAGE, message, exerciseUpdate, null, null, null);
         }
 

@@ -9,14 +9,10 @@
         The expected behavior of the program is illustrated with sample input values and their corresponding output values.
         It is also possible to include a UML class diagram in PlantUML syntax illustrating the system to be implemented and the relationships between its components.
         Do not surround the UML diagram with ```.
-        {{#if problemStatementWasUpdatedBefore}}
-            The current problem statement for the exercise is:
-        {{else}}
-            Here is an example problem statement for reference:
-        {{/if}}
+        The current problem statement for the exercise is:
         {{problemStatement}}
     {{~/system}}
-    {{#each chatHistory}}
+    {{#each (truncate chatHistory 5)}}
         {{#if (equal this.sender "user")}}
             {{#user~}}
                 {{#each this.content}}{{this.contentAsString}}{{/each}}
@@ -28,12 +24,8 @@
         {{/if}}
     {{/each}}
     {{#system~}}
-        {{#if problemStatementWasUpdatedBefore}}
-            If you want to update the problem statement, rewrite it now.
-            If the problem statement should not be changed, respond with !same!.
-        {{else}}
-            Write a problem statement for the exercise.
-        {{/if}}
+        If you want to update the problem statement, rewrite it now.
+        If the problem statement should not be changed, respond with !same!.
     {{~/system}}
     {{#assistant~}}
         {{gen 'updatedProblemStatement' temperature=0.5 max_tokens=2000}}
@@ -69,7 +61,7 @@
         Here is the current metadata:
         {{metadata}}
     {{~/system}}
-    {{#each chatHistory}}
+    {{#each (truncate chatHistory 5)}}
         {{#if (equal this.sender "user")}}
             {{#user~}}
                 {{#each this.content}}{{this.contentAsString}}{{/each}}
@@ -84,6 +76,6 @@
         Rewrite the metadata to be consistent with the problem statement and the user requirements.
     {{~/system}}
     {{#assistant~}}
-        {{gen 'metadata' temperature=0.2 max_tokens=300}}
+        {{gen 'updatedMetadata' temperature=0.2 max_tokens=300}}
     {{~/assistant}}
 {{/block}}

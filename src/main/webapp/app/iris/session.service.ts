@@ -78,10 +78,10 @@ export abstract class IrisSessionService {
      * Sends a message to the server and returns the created message.
      * @param sessionId of the session in which the message should be created
      * @param message to be created
-     * @param options to be sent with the message
+     * @param extraParams to be sent with the message
      */
-    async sendMessage(sessionId: number, message: IrisUserMessage, options?: Record<string, unknown>): Promise<IrisMessage> {
-        const response = await firstValueFrom(this.httpMessageService.createMessage(sessionId, message, options));
+    async sendMessage(sessionId: number, message: IrisUserMessage, extraParams?: Record<string, unknown>): Promise<IrisMessage> {
+        const response = await firstValueFrom(this.httpMessageService.createMessage(sessionId, message, extraParams));
         return response.body!;
     }
 
@@ -89,10 +89,10 @@ export abstract class IrisSessionService {
      * Resends a message to the server and returns the created message.
      * @param sessionId of the session in which the message should be created
      * @param message to be created
-     * @param options to be sent with the message
+     * @param extraParams to be sent with the message
      */
-    async resendMessage(sessionId: number, message: IrisUserMessage, options?: Record<string, unknown>): Promise<IrisMessage> {
-        const response = await firstValueFrom(this.httpMessageService.resendMessage(sessionId, message, options));
+    async resendMessage(sessionId: number, message: IrisUserMessage, extraParams?: Record<string, unknown>): Promise<IrisMessage> {
+        const response = await firstValueFrom(this.httpMessageService.resendMessage(sessionId, message, extraParams));
         return response.body!;
     }
 

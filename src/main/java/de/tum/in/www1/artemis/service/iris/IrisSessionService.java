@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.iris;
 
+import java.util.Map;
+
 import javax.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
@@ -90,14 +92,14 @@ public class IrisSessionService {
     }
 
     /**
-     * Sends a request to Iris to get a message for the given session.
-     * It decides which Iris subsystem should handle it based on the session type.
-     * Currently, only the chat subsystem exists.
+     * Sends a request to Iris to get a message for the given session. It decides which Iris subsystem should handle it
+     * based on the session type. Currently, only the chat subsystem exists.
      *
-     * @param session The session to get a message for
+     * @param session      The session to get a message for
+     * @param clientParams Some extra parameters from the client to consider in the request to Iris
      */
-    public void requestMessageFromIris(IrisSession session) {
-        getIrisSessionSubService(session).requestAndHandleResponse(session);
+    public void requestMessageFromIris(IrisSession session, Map<String, Object> clientParams) {
+        getIrisSessionSubService(session).requestAndHandleResponse(session, clientParams);
     }
 
     public void checkRateLimit(IrisSession session, User user) {

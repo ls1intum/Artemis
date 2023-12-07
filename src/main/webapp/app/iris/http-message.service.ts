@@ -49,15 +49,15 @@ export class IrisHttpMessageService {
      * creates a new message in a session
      * @param sessionId of the session
      * @param message  to be created
-     * @param options  for the message
+     * @param extraParams  for the message
      */
-    createMessage(sessionId: number, message: IrisUserMessage, options?: Record<string, unknown>): Response<IrisMessage> {
+    createMessage(sessionId: number, message: IrisUserMessage, extraParams?: Record<string, unknown>): Response<IrisMessage> {
         message.messageDifferentiator = this.randomInt();
         const payload = {
             message: Object.assign({}, message, {
                 sentAt: convertDateFromClient(message.sentAt),
             }),
-            options: options ?? {},
+            extraParams: extraParams ?? {},
         };
         return this.httpClient.post<IrisServerMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages`, payload, { observe: 'response' }).pipe(
             tap((response) => {
@@ -72,12 +72,12 @@ export class IrisHttpMessageService {
      * resends a message in a session
      * @param {number} sessionId of the session
      * @param {IrisUserMessage} message to be resent
-     * @param {Record<string, unknown>} options for the message
+     * @param {Record<string, unknown>} extraParams for the message
      * @return {Response<IrisMessage>}
      */
-    resendMessage(sessionId: number, message: IrisUserMessage, options?: Record<string, unknown>): Response<IrisMessage> {
+    resendMessage(sessionId: number, message: IrisUserMessage, extraParams?: Record<string, unknown>): Response<IrisMessage> {
         message.messageDifferentiator = message.messageDifferentiator ?? this.randomInt();
-        return this.httpClient.post<IrisServerMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, options ?? {}, { observe: 'response' }).pipe(
+        return this.httpClient.post<IrisServerMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, extraParams ?? {}, { observe: 'response' }).pipe(
             tap((response) => {
                 if (response.body && response.body.id) {
                     message.id = response.body.id;
