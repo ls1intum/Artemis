@@ -97,9 +97,10 @@ public class LocalCISharedBuildJobQueueService {
      * @param submissionDate  submission date of the build job
      * @param priority        priority of the build job
      * @param courseId        course id of the build job
+     * @param isTestPush      defines if the build job is triggered by a push to a test repository
      */
-    public void addBuildJobInformation(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId) {
-        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, courseId);
+    public void addBuildJob(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isTestPush) {
+        LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, commitHash, submissionDate, priority, courseId, isTestPush);
         queue.add(buildJobQueueItem);
     }
 
@@ -238,7 +239,7 @@ public class LocalCISharedBuildJobQueueService {
             participation.setProgrammingExercise(programmingExerciseRepository.findByParticipationIdOrElseThrow(participation.getId()));
         }
 
-        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.addBuildJobToQueue(participation, commitHash, isRetry);
+        CompletableFuture<LocalCIBuildResult> futureResult = localCIBuildJobManagementService.executeBuildJob(participation, commitHash, isRetry, buildJob.isTestPush());
         futureResult.thenAccept(buildResult -> {
 
             // Do not process the result if the participation has been deleted in the meantime
@@ -295,13 +296,13 @@ public class LocalCISharedBuildJobQueueService {
 
         @Override
         public void itemAdded(ItemEvent<LocalCIBuildJobQueueItem> item) {
-            log.info("Item added to queue: {}", item.getItem());
+            log.info("CIBuildJobQueueItem added to queue: {}", item.getItem());
             checkAvailabilityAndProcessNextBuild();
         }
 
         @Override
         public void itemRemoved(ItemEvent<LocalCIBuildJobQueueItem> item) {
-            log.info("Item removed from queue: {}", item.getItem());
+            log.info("CIBuildJobQueueItem removed from queue: {}", item.getItem());
         }
     }
 }

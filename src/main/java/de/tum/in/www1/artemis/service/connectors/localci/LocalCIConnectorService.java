@@ -144,7 +144,7 @@ public class LocalCIConnectorService {
         }
         catch (GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
-            // For exceptions happening inside runBuildJob(), the user is notified. See the addBuildJobToQueue() method in the LocalCIBuildJobManagementService for that.
+            // For exceptions happening inside runBuildJob(), the user is notified. See the executeBuildJob() method in the LocalCIBuildJobManagementService for that.
             throw new LocalCIException("Could not process new push to repository " + localVCRepositoryUrl.getURI() + " and commit " + commitHash + ". No build job was queued.", e);
         }
 
@@ -197,10 +197,10 @@ public class LocalCIConnectorService {
             throw new LocalCIException("Could not set test cases changed flag", e);
         }
 
-        localCITriggerService.triggerBuild(solutionParticipation, commitHash);
+        localCITriggerService.triggerBuild(solutionParticipation, commitHash, true);
 
         try {
-            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
+            programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), commitHash, SubmissionType.TEST);
         }
         catch (EntityNotFoundException e) {
             // Something went wrong while retrieving the template participation.

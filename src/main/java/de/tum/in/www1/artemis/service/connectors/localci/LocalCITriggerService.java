@@ -36,8 +36,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) {
-        triggerBuild(participation, null);
+    public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
+        triggerBuild(participation, null, false);
     }
 
     /**
@@ -47,7 +47,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @param commitHash    the commit hash of the commit that triggers the build. If it is null, the latest commit of the default branch will be built.
      * @throws LocalCIException if the build job could not be added to the queue.
      */
-    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) {
+    @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, boolean isTestPush) throws LocalCIException {
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
@@ -63,6 +64,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // Exam exercises have a higher priority than normal exercises
         int priority = programmingExercise.isExamExercise() ? 1 : 2;
 
-        localCISharedBuildJobQueueService.addBuildJobInformation(participation.getBuildPlanId(), participation.getId(), commitHash, System.currentTimeMillis(), priority, courseId);
+        localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), commitHash, System.currentTimeMillis(), priority, courseId,
+                isTestPush);
     }
 }
