@@ -434,7 +434,7 @@ public class LocalCIContainerService {
                         ./gradlew clean test
                         """);
             }
-            if (hasStaticCodeAnalysis) {
+          else if (hasStaticCodeAnalysis) {
                 buildScript.append("""
                         ./gradlew check -x test
                         """);
