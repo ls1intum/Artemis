@@ -5,7 +5,6 @@ import { IrisStateStore } from 'app/iris/state-store.service';
 import { ActivatedRoute } from '@angular/router';
 import { SharedService } from 'app/iris/shared.service';
 import { IrisChatbotButtonComponent } from 'app/iris/exercise-chatbot/chatbot-button.component';
-import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
 import { IrisLogoSize } from '../iris-logo/iris-logo.component';
 import { IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
 import { IrisExerciseCreationSessionService } from 'app/iris/exercise-creation-session.service';
@@ -13,7 +12,7 @@ import { IrisExerciseCreationSessionService } from 'app/iris/exercise-creation-s
 @Component({
     selector: 'jhi-exercise-creation-chatbot-button',
     templateUrl: './code-editor-chatbot-button.component.html',
-    providers: [IrisCodeEditorSessionService],
+    providers: [IrisExerciseCreationSessionService],
 })
 export class IrisExerciseCreationChatbotButtonComponent extends IrisChatbotButtonComponent {
     protected readonly IrisLogoSize = IrisLogoSize;
