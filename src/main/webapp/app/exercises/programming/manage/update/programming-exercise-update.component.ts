@@ -561,10 +561,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     getFormDataAndProblemStatement(): Record<string, unknown> {
-        return {
-            problemStatement: '',
+        const o = {
+            problemStatement: document.getElementById('field_problemStatement')?.innerHTML,
             metadata: this.getFormData(),
         };
+        console.dir(o);
+        return o;
     }
 
     private getFormData(): Record<string, unknown> {

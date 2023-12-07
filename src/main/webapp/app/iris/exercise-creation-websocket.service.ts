@@ -63,13 +63,15 @@ export class IrisExerciseCreationWebsocketService extends IrisWebsocketService {
      * @param stateStore The IrisStateStore for managing the state of the application.
      */
     constructor(jhiWebsocketService: JhiWebsocketService, stateStore: IrisStateStore) {
-        super(jhiWebsocketService, stateStore, 'exercise-creation');
+        super(jhiWebsocketService, stateStore, 'exercise-creation-sessions');
     }
 
     protected handleWebsocketResponse(response: IrisExerciseCreationWebsocketDTO): void {
         if (response.rateLimitInfo) {
             super.handleRateLimitInfo(response.rateLimitInfo);
         }
+        console.log('Received websocket message:');
+        console.dir(response);
         switch (response.type) {
             case IrisExerciseCreationWebsocketMessageType.MESSAGE:
                 super.handleMessage(response.message);

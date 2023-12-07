@@ -9,11 +9,23 @@ public record IrisExerciseMetadataDTO(String title, String shortName, List<Strin
         boolean allowOnlineEditor, boolean publishBuildPlan, String programmingLanguage, String includeInCourseScore, int points, int bonusPoints, String submissionPolicy) {
 
     public static IrisExerciseMetadataDTO parse(JsonNode jsonNode) {
-        return new IrisExerciseMetadataDTO(jsonNode.required("title").asText(), jsonNode.required("short_name").asText(), toList(jsonNode.required("categories")),
-                jsonNode.required("difficulty").asText(), jsonNode.required("participation").asText(), jsonNode.required("allow_offline_IDE").asBoolean(),
-                jsonNode.required("allow_online_editor").asBoolean(), jsonNode.required("publish_build_plan").asBoolean(), jsonNode.required("programming_language").asText(),
-                jsonNode.required("include_in_course_score").asText(), jsonNode.required("points").asInt(), jsonNode.required("bonus_points").asInt(),
-                jsonNode.required("submission_policy").asText());
+        // @formatter:off
+        return new IrisExerciseMetadataDTO(
+                jsonNode.required("title").asText(),
+                jsonNode.required("short_name").asText(),
+                toList(jsonNode.required("categories")),
+                jsonNode.required("difficulty").asText(),
+                jsonNode.required("participation").asText(),
+                jsonNode.required("allow_offline_IDE").asBoolean(),
+                jsonNode.required("allow_online_editor").asBoolean(),
+                jsonNode.required("publish_build_plan").asBoolean(),
+                jsonNode.required("programming_language").asText(),
+                jsonNode.required("include_in_course_score").asText(),
+                jsonNode.required("points").asInt(),
+                jsonNode.required("bonus_points").asInt(),
+                jsonNode.required("submission_policy").asText()
+        );
+        // @formatter:on
     }
 
     private static List<String> toList(JsonNode jsonNode) {
