@@ -41,7 +41,7 @@
                         <div class="col-12">{{ 'artemisApp.metis.discussionSection.noMessages' | artemisTranslate }}</div>
                     </div>
                     <!-- new post button -->
-                    <div class="row mt-2" *ngIf="createdPost && !isLoading">
+                    <div class="row mt-2" *ngIf="createdPost && !isLoading && !channel.isArchived">
                         <div class="col-12">
                             <button id="new-post" class="btn btn-sm btn-primary" (click)="toggleSendMessage()">
                                 <fa-icon *ngIf="!shouldSendMessage" [icon]="faPlus"></fa-icon>
