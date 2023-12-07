@@ -35,6 +35,11 @@ import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checkli
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
 import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
 import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
+import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({
     template: '',
@@ -70,6 +75,7 @@ describe('ExamDetailComponent', () => {
                 HttpClientTestingModule,
             ],
             declarations: [
+                DetailOverviewListComponent,
                 ExamDetailComponent,
                 DummyComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -107,6 +113,9 @@ describe('ExamDetailComponent', () => {
                 }),
                 MockProvider(AlertService),
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                MockProvider(ArtemisDurationFromSecondsPipe),
             ],
             schemas: [],
         })
@@ -143,10 +152,8 @@ describe('ExamDetailComponent', () => {
     it('should load exam from route and display it to user', () => {
         examDetailComponentFixture.detectChanges();
         expect(examDetailComponent).not.toBeNull();
-        // stand in for other properties too who are simply loaded from the exam and displayed in spans
-        const titleSpan = examDetailComponentFixture.debugElement.query(By.css('#examTitle')).nativeElement;
-        expect(titleSpan).not.toBeNull();
-        expect(titleSpan.innerHTML).toEqual(exam.title);
+        expect(examDetailComponent.examDetailSections).toBeDefined();
+        expect(examDetailComponentFixture.debugElement.nativeElement.innerHTML).toInclude(exam.title!);
     });
 
     it('should correctly route to edit subpage', fakeAsync(() => {

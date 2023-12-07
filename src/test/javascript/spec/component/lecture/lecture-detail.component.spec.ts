@@ -5,9 +5,15 @@ import { faFile, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-
 import { of } from 'rxjs';
 import { LectureDetailComponent } from 'app/lecture/lecture-detail.component';
 import { Lecture } from 'app/entities/lecture.model';
-import { MockModule, MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { TranslateService } from '@ngx-translate/core';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 describe('LectureDetailComponent', () => {
     let component: LectureDetailComponent;
@@ -20,9 +26,16 @@ describe('LectureDetailComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            declarations: [LectureDetailComponent, HtmlForMarkdownPipe, MockPipe(ArtemisDatePipe), MockModule(RouterModule)],
-            providers: [{ provide: ActivatedRoute, useValue: mockActivatedRoute }],
-        }).compileComponents();
+            declarations: [LectureDetailComponent, HtmlForMarkdownPipe, MockPipe(ArtemisDatePipe), MockModule(RouterModule), DetailOverviewListComponent, HttpClientTestingModule],
+            providers: [
+                { provide: ActivatedRoute, useValue: mockActivatedRoute },
+                MockProvider(SessionStorageService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+            ],
+        })
+            .overrideTemplate(DetailOverviewListComponent, '')
+            .compileComponents();
     });
 
     beforeEach(() => {

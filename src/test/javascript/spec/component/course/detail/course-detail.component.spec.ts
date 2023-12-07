@@ -106,14 +106,14 @@ describe('Course Management Detail Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('should call registerChangeInCourses on init', () => {
+    it('should call registerChangeInCourses on init', async () => {
         const registerSpy = jest.spyOn(component, 'registerChangeInCourses');
-
-        fixture.detectChanges();
         component.ngOnInit();
+        await Promise.resolve();
+        await Promise.resolve();
         expect(component.courseDTO).toEqual(dtoMock);
         expect(component.course).toEqual(course);
-        expect(registerSpy).toHaveBeenCalledTimes(2);
+        expect(registerSpy).toHaveBeenCalledOnce();
     });
 
     it('should destroy event subscriber onDestroy', () => {

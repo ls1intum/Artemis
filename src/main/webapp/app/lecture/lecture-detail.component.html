@@ -3,7 +3,7 @@
         <div *ngIf="lecture">
             <h2><span jhiTranslate="artemisApp.lecture.detail.title">Lecture</span> {{ lecture.id }}</h2>
             <hr />
-            <jhi-detail-overview-list [sections]="detailSections"></jhi-detail-overview-list>
+            <jhi-detail-overview-list *ngIf="detailSections" [sections]="detailSections"></jhi-detail-overview-list>
 
             <ng-container *ngIf="lecture.course?.isAtLeastEditor">
                 <a [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'edit']" class="btn btn-primary">

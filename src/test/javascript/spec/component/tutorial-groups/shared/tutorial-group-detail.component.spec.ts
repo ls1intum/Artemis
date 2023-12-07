@@ -12,6 +12,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/course/tutorial-groups/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seconds.pipe';
+import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateService } from '@ngx-translate/core';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {
@@ -48,9 +54,10 @@ describe('TutorialGroupDetailWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipMocksModule, RouterTestingModule.withRoutes([])],
+            imports: [NgbTooltipMocksModule, RouterTestingModule.withRoutes([]), HttpClientTestingModule],
             declarations: [
                 TutorialGroupDetailComponent,
+                DetailOverviewListComponent,
                 MockWrapperComponent,
                 MockHeaderComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -58,8 +65,15 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 MockComponent(FaIconComponent),
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
             ],
-            providers: [MockProvider(ArtemisMarkdownService), MockProvider(SortService)],
+            providers: [
+                MockProvider(ArtemisMarkdownService),
+                MockProvider(SortService),
+                MockProvider(SessionStorageService),
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+            ],
         })
+            .overrideTemplate(DetailOverviewListComponent, '')
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(MockWrapperComponent);
