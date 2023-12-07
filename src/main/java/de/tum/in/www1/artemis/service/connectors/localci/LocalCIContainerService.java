@@ -410,7 +410,7 @@ public class LocalCIContainerService {
                         mvn clean test
                         """);
             }
-            if (hasStaticCodeAnalysis) {
+           else if (hasStaticCodeAnalysis) {
                 buildScript.append("""
                         mvn checkstyle:checkstyle
                         mvn pmd:pmd
