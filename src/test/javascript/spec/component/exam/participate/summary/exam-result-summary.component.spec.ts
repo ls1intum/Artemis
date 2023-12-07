@@ -56,7 +56,6 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import * as Utils from 'app/shared/util/utils';
 import * as ExamUtils from 'app/exam/participate/exam.utils';
-import { isExamExercise } from 'app/shared/util/utils';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
