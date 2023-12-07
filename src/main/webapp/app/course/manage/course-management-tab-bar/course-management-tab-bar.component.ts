@@ -19,6 +19,7 @@ import {
     faListAlt,
     faNetworkWired,
     faPersonChalkboard,
+    faPuzzlePiece,
     faRobot,
     faTable,
     faTimes,
@@ -29,6 +30,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_LTI } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
@@ -66,11 +68,13 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     faGraduationCap = faGraduationCap;
     faPersonChalkboard = faPersonChalkboard;
     faRobot = faRobot;
+    faPuzzlePiece = faPuzzlePiece;
 
     isCommunicationEnabled = false;
     isMessagingOrCommunicationEnabled = false;
 
     irisEnabled = false;
+    ltiEnabled = false;
 
     constructor(
         private eventManager: EventManager,
@@ -100,6 +104,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
             }
         });
     }

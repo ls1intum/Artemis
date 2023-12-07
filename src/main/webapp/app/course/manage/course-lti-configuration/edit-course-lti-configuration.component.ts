@@ -114,6 +114,9 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
     }
 
     getLtiPlatform(platform: LtiPlatformConfiguration) {
-        return platform.customName + ' ' + platform.originalUrl;
+        const customName = platform.customName ? platform.customName : '';
+        const originalUrl = platform.originalUrl ? platform.originalUrl : '';
+
+        return customName + ' ' + originalUrl;
     }
 }

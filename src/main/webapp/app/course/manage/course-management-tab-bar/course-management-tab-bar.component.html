@@ -70,6 +70,16 @@
             <fa-icon [icon]="faTable"></fa-icon>
             <span class="tab-link-text" jhiTranslate="entity.action.scores">Scores</span>
         </a>
+        <a
+            class="tab-link"
+            *ngIf="ltiEnabled && course.onlineCourse && course.isAtLeastInstructor"
+            [routerLink]="['/course-management', course.id, 'lti-configuration']"
+            id="lti-settings"
+            routerLinkActive="active"
+        >
+            <fa-icon [icon]="faPuzzlePiece"></fa-icon>
+            <span class="tab-link-text" jhiTranslate="global.menu.admin.lti">LTI Configuration</span>
+        </a>
         <div class="controls" *ngIf="shouldShowControlButtons()">
             <button
                 *ngIf="course.isAtLeastInstructor"

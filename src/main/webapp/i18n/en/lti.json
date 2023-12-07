@@ -71,7 +71,9 @@
                 "ltiPlatform": "Edit LTI Platform Configuration",
                 "customNameIdTooltip": "Enter a recognizable name for the platform to easily identify it in the list. This name is for administrative reference only and will not affect the platform's actual configuration or connectivity."
             },
-            "configuredPlatforms": "Configured Platforms"
+            "configuredPlatforms": "Configured Platforms",
+            "viewAdvancedSettings": "View Advanced Settings",
+            "closeAdvancedSettings": "Close Advanced Settings"
         },
         "lti13": {
             "launch": {

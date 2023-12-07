@@ -152,11 +152,6 @@
                     <span *ngIf="!course.onlineCourse">{{ 'global.generic.no' | artemisTranslate }}</span>
                 </dd>
             </ng-container>
-            <ng-container *ngIf="ltiEnabled && course.onlineCourse && course.isAtLeastInstructor">
-                <dd>
-                    <a [routerLink]="['/course-management', course?.id, 'lti-configuration']">LTI Configuration</a>
-                </dd>
-            </ng-container>
             <ng-container *ngIf="course.enrollmentEnabled">
                 <dt><span jhiTranslate="artemisApp.course.enrollmentStartDate">Enrollment Start</span></dt>
                 <dd id="course-enrollment-start-date">
