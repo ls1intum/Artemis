@@ -25,10 +25,10 @@ public class ParserPolicy {
         return switch (tool) {
             case SPOTBUGS -> new SpotbugsParser();
             case CHECKSTYLE -> new CheckstyleParser();
-            case SWIFTLINT -> new SwiftLintParser();
             case PMD -> new PMDParser();
             case PMD_CPD -> new PMDCPDParser();
-            case GCC -> new GCCParser();
+            // so far, we do not support swiftlint and gcc only SCA for Java
+            default -> throw new UnsupportedToolException("Tool " + tool + " is not supported");
         };
     }
 
