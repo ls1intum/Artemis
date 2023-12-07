@@ -335,7 +335,7 @@ public class LocalCIContainerService {
      * @param participation the participation for which to create the build script
      * @return the path to the build script file
      */
-    public Path createBuildScript(ProgrammingExerciseParticipation participation) {
+    public Path createBuildScript(ProgrammingExerciseParticipation participation, String containerName) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
 
@@ -352,7 +352,8 @@ public class LocalCIContainerService {
             }
         }
 
-        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(participation.getId().toString() + "-build.sh");
+        // We use the container name as part of the file name to avoid conflicts when multiple build jobs are running at the same time.
+        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(containerName + "-build.sh");
 
         StringBuilder buildScript = new StringBuilder("""
                 #!/bin/bash
@@ -441,11 +442,11 @@ public class LocalCIContainerService {
      * Deletes the build script for a given programming exercise.
      * The build script is stored in a file in the local-ci-scripts directory.
      *
-     * @param participationId the ID of the participation for which to delete the build script
+     * @param containerName the name of the container for which to delete the build script
      */
-    public void deleteScriptFile(String participationId) {
+    public void deleteScriptFile(String containerName) {
         Path scriptsPath = Path.of("local-ci-scripts");
-        Path buildScriptPath = scriptsPath.resolve(participationId + "-build.sh").toAbsolutePath();
+        Path buildScriptPath = scriptsPath.resolve(containerName + "-build.sh").toAbsolutePath();
         try {
             Files.deleteIfExists(buildScriptPath);
         }

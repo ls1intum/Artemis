@@ -56,7 +56,7 @@ public class LocalCISharedBuildJobQueueService {
     /**
      * Map of build jobs currently being processed across all nodes
      */
-    private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
+    private final IMap<String, LocalCIBuildJobQueueItem> processingJobs;
 
     private AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
@@ -191,10 +191,9 @@ public class LocalCISharedBuildJobQueueService {
     private LocalCIBuildJobQueueItem addToProcessingJobs() {
         LocalCIBuildJobQueueItem buildJob = queue.poll();
         if (buildJob != null) {
-            Long participationId = buildJob.getParticipationId();
             buildJob.setBuildStartDate(System.currentTimeMillis());
             buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(180));
-            processingJobs.put(participationId, buildJob);
+            processingJobs.put(buildJob.getId(), buildJob);
             localProcessingJobs.incrementAndGet();
         }
         return buildJob;
@@ -228,7 +227,7 @@ public class LocalCISharedBuildJobQueueService {
         }
         catch (IllegalStateException e) {
             log.error("Cannot process build job for participation with id {} because it could not be retrieved from the database.", buildJob.getParticipationId());
-            processingJobs.remove(buildJob.getParticipationId());
+            processingJobs.remove(buildJob.getId());
             localProcessingJobs.decrementAndGet();
             checkAvailabilityAndProcessNextBuild();
             return;
@@ -262,7 +261,7 @@ public class LocalCISharedBuildJobQueueService {
             }
 
             // after processing a build job, remove it from the processing jobs
-            processingJobs.remove(buildJob.getParticipationId());
+            processingJobs.remove(buildJob.getId());
             localProcessingJobs.decrementAndGet();
 
             // process next build job if node is available
@@ -270,7 +269,7 @@ public class LocalCISharedBuildJobQueueService {
         }).exceptionally(ex -> {
             log.error("Error while processing build job: {}", buildJob, ex);
 
-            processingJobs.remove(buildJob.getParticipationId());
+            processingJobs.remove(buildJob.getId());
             localProcessingJobs.decrementAndGet();
 
             if (buildJob.getRetryCount() > 0) {

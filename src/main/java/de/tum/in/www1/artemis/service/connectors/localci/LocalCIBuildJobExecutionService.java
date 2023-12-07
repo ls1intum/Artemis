@@ -143,7 +143,7 @@ public class LocalCIBuildJobExecutionService {
         }
 
         // Prepare script
-        Path buildScriptPath = localCIContainerService.createBuildScript(participation);
+        Path buildScriptPath = localCIContainerService.createBuildScript(participation, containerName);
 
         // Retrieve the paths to the repositories that the build job needs.
         // This includes the assignment repository (the one to be tested, e.g. the student's repository, or the template repository), and the tests repository which includes
@@ -251,7 +251,7 @@ public class LocalCIBuildJobExecutionService {
             // empty list for successful tests).
             localCIContainerService.stopContainer(containerName);
             // Delete script file from host system
-            localCIContainerService.deleteScriptFile(participation.getId().toString());
+            localCIContainerService.deleteScriptFile(containerName);
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
@@ -273,7 +273,7 @@ public class LocalCIBuildJobExecutionService {
             localCIContainerService.stopContainer(containerName);
 
             // Delete script file from host system
-            localCIContainerService.deleteScriptFile(participation.getId().toString());
+            localCIContainerService.deleteScriptFile(containerName);
 
             // Delete cloned repository
             if (commitHash != null) {
