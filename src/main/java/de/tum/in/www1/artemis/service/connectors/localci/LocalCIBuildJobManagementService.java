@@ -69,13 +69,14 @@ public class LocalCIBuildJobManagementService {
     /**
      * Submit a build job for a given participation to the executor service.
      *
-     * @param participation The participation of the repository for which the build job should be executed.
-     * @param commitHash    The commit hash of the submission that led to this build. If it is "null", the latest commit of the repository will be used.
-     * @param isTestPush    Defines if the build job is triggered by a push to a test repository.
+     * @param participation          The participation of the repository for which the build job should be executed.
+     * @param commitHash             The commit hash of the submission that led to this build. If it is "null", the latest commit of the repository will be used.
+     * @param isPushToTestRepository Defines if the build job is triggered by a push to a test repository.
      * @return A future that will be completed with the build result.
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
-    public CompletableFuture<LocalCIBuildResult> executeBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isTestPush) throws LocalCIException {
+    public CompletableFuture<LocalCIBuildResult> executeBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isPushToTestRepository)
+            throws LocalCIException {
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
@@ -89,7 +90,7 @@ public class LocalCIBuildJobManagementService {
         String containerName = "artemis-local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
-        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, isTestPush, containerName, dockerImage);
+        Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, isPushToTestRepository, containerName, dockerImage);
 
         // Wrap the buildJob Callable in a BuildJobTimeoutCallable, so that the build job is cancelled if it takes too long.
         BuildJobTimeoutCallable<LocalCIBuildResult> timedBuildJob = new BuildJobTimeoutCallable<>(buildJob, timeoutSeconds);

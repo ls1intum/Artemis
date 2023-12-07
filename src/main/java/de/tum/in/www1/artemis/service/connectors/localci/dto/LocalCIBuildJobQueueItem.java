@@ -27,16 +27,16 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private long courseId;
 
-    private boolean isTestPush;
+    private boolean isPushToTestRepository;
 
-    public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isTestPush) {
+    public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isPushToTestRepository) {
         this.name = name;
         this.participationId = participationId;
         this.commitHash = commitHash;
         this.submissionDate = submissionDate;
         this.priority = priority;
         this.courseId = courseId;
-        this.isTestPush = isTestPush;
+        this.isPushToTestRepository = isPushToTestRepository;
     }
 
     public String getName() {
@@ -111,12 +111,19 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         this.courseId = courseId;
     }
 
-    public boolean isTestPush() {
-        return isTestPush;
+    /**
+     * When pushing to the test repository, build jobs are triggered for the template and solution repository.
+     * However, getCommitHash() then returns the commit hash of the test repository.
+     * This flag is necessary so we do not try to checkout the commit hash of the test repository in the template/solution repository.
+     *
+     * @return true if the build job was triggered by a push to the test repository
+     */
+    public boolean isPushToTestRepository() {
+        return isPushToTestRepository;
     }
 
-    public void setTestPush(boolean testPush) {
-        isTestPush = testPush;
+    public void setPushToTestRepository(boolean isPushToTestRepository) {
+        this.isPushToTestRepository = isPushToTestRepository;
     }
 
     @Override
