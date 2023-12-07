@@ -7,9 +7,10 @@ import com.google.common.base.CaseFormat;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLContainerElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-public class BPMNPool extends UMLElement implements Serializable {
+public class BPMNPool extends UMLContainerElement implements Serializable {
 
     public static final String BPMN_POOL_TYPE = "BPMNPool";
 
@@ -23,7 +24,7 @@ public class BPMNPool extends UMLElement implements Serializable {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof BPMNTask referenceNode)) {
+        if (!(reference instanceof BPMNPool referenceNode)) {
             return 0;
         }
 

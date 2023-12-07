@@ -9,13 +9,13 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-public class BPMNSubprocess extends UMLElement implements Serializable {
+public class BPMNDataStore extends UMLElement implements Serializable {
 
-    public static final String BPMN_SUBPROCESS_TYPE = "BPMNSubprocess";
+    public static final String BPMN_DATA_STORE_TYPE = "BPMNDataStore";
 
     private final String name;
 
-    public BPMNSubprocess(String name, String jsonElementID) {
+    public BPMNDataStore(String name, String jsonElementID) {
         super(jsonElementID);
 
         this.name = name;
@@ -23,7 +23,7 @@ public class BPMNSubprocess extends UMLElement implements Serializable {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof BPMNSubprocess referenceNode)) {
+        if (!(reference instanceof BPMNDataStore referenceNode)) {
             return 0;
         }
 
@@ -41,7 +41,7 @@ public class BPMNSubprocess extends UMLElement implements Serializable {
 
     @Override
     public String getType() {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, BPMN_SUBPROCESS_TYPE);
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, BPMN_DATA_STORE_TYPE);
     }
 
     @Override

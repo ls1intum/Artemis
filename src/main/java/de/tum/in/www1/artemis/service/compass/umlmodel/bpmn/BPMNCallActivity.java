@@ -23,7 +23,7 @@ public class BPMNCallActivity extends UMLElement implements Serializable {
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof BPMNTask referenceNode)) {
+        if (!(reference instanceof BPMNCallActivity referenceNode)) {
             return 0;
         }
 
