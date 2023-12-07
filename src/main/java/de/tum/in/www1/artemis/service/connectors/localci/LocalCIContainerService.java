@@ -409,13 +409,13 @@ public class LocalCIContainerService {
                 buildScript.append("""
                         mvn clean test
                         """);
-            }
-           else if (hasStaticCodeAnalysis) {
-                buildScript.append("""
-                        mvn checkstyle:checkstyle
-                        mvn pmd:pmd
-                        mvn spotbugs:spotbugs
-                        """);
+                if (hasStaticCodeAnalysis) {
+                    buildScript.append("""
+                            mvn checkstyle:checkstyle
+                            mvn pmd:pmd
+                            mvn spotbugs:spotbugs
+                            """);
+                }
             }
         }
         else {
@@ -433,11 +433,11 @@ public class LocalCIContainerService {
                         chmod +x gradlew
                         ./gradlew clean test
                         """);
-            }
-          else if (hasStaticCodeAnalysis) {
-                buildScript.append("""
-                        ./gradlew check -x test
-                        """);
+                if (hasStaticCodeAnalysis) {
+                    buildScript.append("""
+                            ./gradlew check -x test
+                            """);
+                }
             }
         }
     }
