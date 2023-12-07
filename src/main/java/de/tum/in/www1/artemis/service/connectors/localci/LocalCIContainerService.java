@@ -333,6 +333,7 @@ public class LocalCIContainerService {
      * The build script is used to build the programming exercise in a Docker container.
      *
      * @param participation the participation for which to create the build script
+     * @param containerName the name of the container for which to create the build script
      * @return the path to the build script file
      */
     public Path createBuildScript(ProgrammingExerciseParticipation participation, String containerName) {

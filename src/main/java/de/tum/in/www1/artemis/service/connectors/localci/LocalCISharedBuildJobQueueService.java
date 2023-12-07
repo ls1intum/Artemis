@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.*;
@@ -121,7 +122,13 @@ public class LocalCISharedBuildJobQueueService {
     }
 
     public void removeQueuedJobsForParticipation(long participationId) {
-        queue.removeIf(job -> job.getParticipationId() == participationId);
+        List<LocalCIBuildJobQueueItem> toRemove = new ArrayList<>();
+        for (LocalCIBuildJobQueueItem job : queue) {
+            if (job.getParticipationId() == participationId) {
+                toRemove.add(job);
+            }
+        }
+        queue.removeAll(toRemove);
     }
 
     /**
@@ -156,6 +163,10 @@ public class LocalCISharedBuildJobQueueService {
         throw new IllegalStateException("Could not retrieve participation with id " + participationId + " from database after " + maxRetries + " retries.");
     }
 
+    /**
+     * Checks whether the node has at least one thread available for a new build job.
+     * If so, process the next build job.
+     */
     private void checkAvailabilityAndProcessNextBuild() {
         // Check conditions before acquiring the lock to avoid unnecessary locking
         if (!nodeIsAvailable()) {
@@ -203,14 +214,16 @@ public class LocalCISharedBuildJobQueueService {
         return buildJob;
     }
 
-    // Checks whether the node has at least one thread available for a new build job
+    /**
+     * Checks whether the node has at least one thread available for a new build job.
+     */
     private boolean nodeIsAvailable() {
         log.info("Current active threads: {}", localCIBuildExecutorService.getActiveCount());
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
     }
 
     /**
-     * Process a build job by adding it to the local CI executor service.
+     * Process a build job by submitting it to the local CI executor service.
      * On completion, check for next job.
      */
     private void processBuild(LocalCIBuildJobQueueItem buildJob) {
