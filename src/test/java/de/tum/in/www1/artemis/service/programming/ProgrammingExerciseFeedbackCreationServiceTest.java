@@ -276,18 +276,8 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     @Test
     void shouldGenerateNewTestCasesWithVisibilityAlways() {
         programmingExercise.setExerciseGroup(null);
-        // We do not want to use the test cases generated in the setup
-        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
-        var result = generateResult(List.of("test1", "test2"), Collections.emptyList());
-        feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
-
-        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).hasSize(2);
-
-        for (ProgrammingExerciseTestCase testCase : testCases) {
-            assertThat(testCase.getVisibility()).isEqualTo(Visibility.ALWAYS);
-        }
+        testGenerateNewTestCases(programmingExercise, Visibility.ALWAYS);
     }
 
     @Test
@@ -296,6 +286,10 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         programmingExercise.setExerciseGroup(exerciseGroup1);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
+        testGenerateNewTestCases(programmingExercise, Visibility.AFTER_DUE_DATE);
+    }
+
+    private void testGenerateNewTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) {
         // We do not want to use the test cases generated in the setup
         testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
@@ -306,7 +300,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         assertThat(testCases).hasSize(2);
 
         for (ProgrammingExerciseTestCase testCase : testCases) {
-            assertThat(testCase.getVisibility()).isEqualTo(Visibility.AFTER_DUE_DATE);
+            assertThat(testCase.getVisibility()).isEqualTo(expectedVisibility);
         }
     }
 
