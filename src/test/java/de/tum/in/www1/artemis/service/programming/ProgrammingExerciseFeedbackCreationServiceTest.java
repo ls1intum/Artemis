@@ -15,10 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseFactory;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -39,6 +39,9 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
 
     private ProgrammingExercise programmingExercise;
 
@@ -268,6 +271,43 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
         assertThat(testCases).hasSize(2);
 
         assertThat(testCases.stream().allMatch(ProgrammingExerciseTestCase::isActive)).isTrue();
+    }
+
+    @Test
+    void shouldGenerateNewTestCasesWithVisibilityAlways() {
+        programmingExercise.setExerciseGroup(null);
+        // We do not want to use the test cases generated in the setup
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+
+        var result = generateResult(List.of("test1", "test2"), Collections.emptyList());
+        feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
+
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).hasSize(2);
+
+        for (ProgrammingExerciseTestCase testCase : testCases) {
+            assertThat(testCase.getVisibility()).isEqualTo(Visibility.ALWAYS);
+        }
+    }
+
+    @Test
+    void shouldGenerateNewTestCasesWithVisibilityAfterDueDate() {
+        ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        programmingExercise.setExerciseGroup(exerciseGroup1);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        // We do not want to use the test cases generated in the setup
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+
+        var result = generateResult(List.of("test1", "test2"), Collections.emptyList());
+        feedbackCreationService.generateTestCasesFromBuildResult(result, programmingExercise);
+
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases).hasSize(2);
+
+        for (ProgrammingExerciseTestCase testCase : testCases) {
+            assertThat(testCase.getVisibility()).isEqualTo(Visibility.AFTER_DUE_DATE);
+        }
     }
 
     @Test
