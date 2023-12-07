@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
@@ -132,6 +133,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private QuizPoolRepository quizPoolRepository;
 
     private Course course1;
 
@@ -713,6 +717,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Optional<Channel> examChannelAfterDelete = channelRepository.findById(examChannel.getId());
         assertThat(examChannelAfterDelete).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteExamWithQuizPool() throws Exception {
+        Exam exam = examUtilService.addExamWithQuizPool(course1);
+
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        Optional<QuizPool> quizPool = quizPoolRepository.findByExamId(exam.getId());
+        assertThat(quizPool.isPresent()).isFalse();
     }
 
     @Test
