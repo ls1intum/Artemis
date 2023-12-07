@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+
+import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,9 +104,22 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
 
     @Override
     public void requestAndHandleResponse(IrisSession irisSession) {
-        var session = castToSessionType(irisSession, IrisExerciseCreationSession.class);
-        var template = irisDefaultTemplateService.load("exercise-creation");
+        var fromDB = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
+        if (!(fromDB instanceof IrisExerciseCreationSession session)) {
+            throw new BadRequestException("Iris session is not an exercise creation session");
+        }
+        var template = irisDefaultTemplateService.load("exercise-creation.hbs");
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false).irisCodeEditorSettings();
+        Map<String, Object> params = new HashMap<>();
+        params.put("chatHistory", session.getMessages());
+        irisConnectorService.sendRequestV2(template.getContent(), settings.getPreferredModel(), params).handleAsync((response, throwable) -> {
+            if (throwable != null) {
+                log.error("Failed to get Iris response", throwable);
+                return null;
+            }
 
+            return null;
+        });
     }
 
     @Override

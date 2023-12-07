@@ -11,7 +11,7 @@
                 </h2>
                 <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
             </div>
-            <jhi-exercise-creation-chatbot-button chatbot-button *ngIf="isIrisEnabled()"></jhi-exercise-creation-chatbot-button>
+            <jhi-exercise-creation-chatbot-button chatbot-button *ngIf="isIrisEnabled()" [paramsOnSend]="getFormDataAndProblemStatement"></jhi-exercise-creation-chatbot-button>
 
             <div class="flex-grow-1 ms-3" *ngIf="!isEdit && !isExamMode && !isImportFromExistingExercise">
                 <div class="guided-mode-button">

@@ -1,5 +1,5 @@
 import { faChevronDown, faCircle, faCommentDots } from '@fortawesome/free-solid-svg-icons';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { IrisChatbotWidgetComponent } from 'app/iris/exercise-chatbot/widget/chatbot-widget.component';
 import { Overlay } from '@angular/cdk/overlay';
@@ -19,6 +19,8 @@ export abstract class IrisChatbotButtonComponent implements OnInit, OnDestroy {
     protected exerciseId: number;
     private stateSubscription: Subscription;
     private chatOpenSubscription: Subscription;
+
+    @Input() paramsOnSend: () => Record<string, unknown> = () => ({});
 
     // Icons
     faCircle = faCircle;
@@ -98,6 +100,7 @@ export abstract class IrisChatbotButtonComponent implements OnInit, OnDestroy {
                 courseId: this.courseId,
                 exerciseId: this.exerciseId,
                 sessionService: this.sessionService,
+                paramsOnSend: this.paramsOnSend,
             },
         });
     }
