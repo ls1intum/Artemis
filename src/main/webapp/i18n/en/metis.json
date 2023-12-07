@@ -50,7 +50,7 @@
             "channel": {
                 "notAMember": "You are not a member of the channel.",
                 "noChannel": "There is no channel available.",
-                "invalidReference": "The referenced channel doesn't exist."
+                "invalidReference": "You are not a member of the referenced channel."
             },
             "communication": {
                 "label": "Communication",
