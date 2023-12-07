@@ -65,6 +65,7 @@
             "startDate": "Start",
             "endDate": "Ende",
             "semester": "Semester",
+            "ltiConfiguration": "LTI Konfiguration",
             "maxPoints": {
                 "title": "Maximale Punktzahl",
                 "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mit Hilfe der im Kurs erreichbaren Punkte berechnet."
@@ -206,6 +207,12 @@
             },
             "detail": {
                 "title": "Kurs Details:",
+                "sections": {
+                    "general": "Informationen",
+                    "mode": "Modus",
+                    "enrollment": "Einschreibung",
+                    "messaging": "Nachrichten & Kommunikation"
+                },
                 "assessmentsTitle": "Insgesamte Bewertungen",
                 "complaintsTitle": "Insgesamte Beschwerden",
                 "moreFeedbackTitle": "Insgesamte Feedbackanfragen",

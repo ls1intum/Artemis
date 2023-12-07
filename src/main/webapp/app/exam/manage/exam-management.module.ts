@@ -69,10 +69,13 @@ import { NgxSliderModule } from 'ngx-slider-v2';
 import { ProgrammingExerciseExamDiffComponent } from './student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
 import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
+import { DetailModule } from 'app/detail-overview-list/detail.module';
+import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 const ENTITY_STATES = [...examManagementState];
 
 @NgModule({
     // TODO: For better modularization we could define an exercise module with the corresponding exam routes
+    providers: [ArtemisDurationFromSecondsPipe],
     imports: [
         RouterModule.forChild(ENTITY_STATES),
         ArtemisTextExerciseModule,
@@ -107,6 +110,7 @@ const ENTITY_STATES = [...examManagementState];
         NgxSliderModule,
         GitDiffReportModule,
         ArtemisProgrammingExerciseModule,
+        DetailModule,
     ],
     declarations: [
         ExamManagementComponent,

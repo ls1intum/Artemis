@@ -6,7 +6,6 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
-import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 
@@ -51,7 +50,6 @@ export class DetailOverviewListComponent implements OnInit {
     protected readonly DetailType = DetailType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
-    readonly CHAT = IrisSubSettingsType.CHAT;
 
     @Input()
     sections: DetailOverviewSection[];
@@ -95,4 +93,6 @@ export class DetailOverviewListComponent implements OnInit {
             });
         }
     }
+
+    protected readonly undefined = undefined;
 }

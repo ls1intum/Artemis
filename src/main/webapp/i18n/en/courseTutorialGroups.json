@@ -11,7 +11,10 @@
                 "registeredFilter": "Show my Tutorial Groups"
             },
             "courseTutorialGroupDetail": {
-                "title": "Tutorial Group Details"
+                "title": "Tutorial Group Details",
+                "sections": {
+                    "general": "General Information"
+                }
             },
             "courseTutorialGroupOverview": {
                 "title": "Tutorial Groups Overview",

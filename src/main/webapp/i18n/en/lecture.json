@@ -32,7 +32,10 @@
             "visibleDate": "Visible from",
             "course": "Course",
             "detail": {
-                "title": "Lecture"
+                "title": "Lecture",
+                "sections": {
+                    "general": "General Information"
+                }
             },
             "attachments": {
                 "title": "Attachments of lecture",

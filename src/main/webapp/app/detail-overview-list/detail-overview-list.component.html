@@ -1,4 +1,4 @@
-<jhi-detail-overview-navigation-bar *ngIf="headlines" [sectionHeadlines]="headlines"></jhi-detail-overview-navigation-bar>
+<jhi-detail-overview-navigation-bar *ngIf="headlines?.length && headlines.length > 1" [sectionHeadlines]="headlines"></jhi-detail-overview-navigation-bar>
 <ng-container *ngFor="let section of sections">
     <h3 [id]="getHeadlineId(section.headline)">{{ section.headline | artemisTranslate }}</h3>
     <dl>
@@ -16,7 +16,12 @@
                 </dd>
                 <dd *ngSwitchCase="DetailType.Link">
                     <ng-container *ngIf="detail.data.text; else noText">
-                        <a *ngIf="!!detail.data.routerLink?.length || detail.data.href; else noLink" [routerLink]="detail.data.routerLink" href="{{ detail.data.href }}">
+                        <a
+                            *ngIf="!!detail.data.routerLink?.length || detail.data.href; else noLink"
+                            [routerLink]="detail.data.routerLink"
+                            [queryParams]="detail.data.queryParams"
+                            href="{{ detail.data.href }}"
+                        >
                             {{ detail.data.text }}
                         </a>
                         <ng-template #noLink>
@@ -178,7 +183,12 @@
                     </table>
                 </dd>
                 <dd *ngSwitchCase="DetailType.ProgrammingIrisEnabled">
-                    <jhi-iris-enabled [exercise]="detail.data.exercise" [irisSubSettingsType]="CHAT" [disabled]="!detail.data.isAtLeastInstructor"></jhi-iris-enabled>
+                    <jhi-iris-enabled
+                        [exercise]="detail.data.exercise"
+                        [course]="detail.data.course"
+                        [irisSubSettingsType]="detail.data.subSettingsType"
+                        [disabled]="detail.data.disabled"
+                    ></jhi-iris-enabled>
                 </dd>
                 <dd *ngSwitchCase="DetailType.ModelingEditor">
                     <button

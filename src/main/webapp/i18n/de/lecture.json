@@ -32,7 +32,10 @@
             "visibleDate": "Sichtbar ab",
             "course": "Kurs",
             "detail": {
-                "title": "Vorlesung"
+                "title": "Vorlesung",
+                "sections": {
+                    "general": "Informationen"
+                }
             },
             "attachments": {
                 "title": "Anhänge der Vorlesung",

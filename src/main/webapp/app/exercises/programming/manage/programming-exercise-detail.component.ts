@@ -57,6 +57,7 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -472,7 +473,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.irisEnabled &&
                         this.irisChatEnabled &&
                         exercise.course &&
-                        !this.isExamExercise && { type: DetailType.ProgrammingIrisEnabled, title: 'artemisApp.iris.settings.subSettings.enabled.chat', data: { exercise } },
+                        !this.isExamExercise && {
+                            type: DetailType.ProgrammingIrisEnabled,
+                            title: 'artemisApp.iris.settings.subSettings.enabled.chat',
+                            data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.CHAT },
+                        },
                     {
                         type: DetailType.ProgrammingBuildStatistics,
                         title: 'artemisApp.programmingExercise.buildLogStatistics.title',
