@@ -11,6 +11,8 @@
                 </h2>
                 <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
             </div>
+            <jhi-code-editor-chatbot-button chatbot-button *ngIf="isIrisEnabled()"></jhi-code-editor-chatbot-button>
+
             <div class="flex-grow-1 ms-3" *ngIf="!isEdit && !isExamMode && !isImportFromExistingExercise">
                 <div class="guided-mode-button">
                     <button type="button" id="guided.mode" class="btn btn-primary" (click)="toggleWizardMode()">

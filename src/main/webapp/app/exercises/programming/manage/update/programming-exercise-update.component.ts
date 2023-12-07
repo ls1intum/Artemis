@@ -1,5 +1,5 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, Subject } from 'rxjs';
@@ -31,6 +31,9 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
 import { PROFILE_LOCALCI } from 'app/app.constants';
+import { IrisCodeEditorChatbotButtonComponent } from 'app/iris/exercise-chatbot/code-editor-chatbot-button.component';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -38,6 +41,7 @@ import { PROFILE_LOCALCI } from 'app/app.constants';
     styleUrls: ['../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
+    @ViewChild(IrisCodeEditorChatbotButtonComponent, { static: false }) chatbotButton: IrisCodeEditorChatbotButtonComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
@@ -136,6 +140,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     public modePickerOptions: ModePickerOption<ProjectType>[] = [];
 
+    irisSettings?: IrisSettings;
+
     // Icons
     faSave = faSave;
     faBan = faBan;
@@ -157,6 +163,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     /**
@@ -464,6 +471,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             if (profileInfo) {
                 this.inProductionEnvironment = profileInfo.inProduction;
             }
+            if (profileInfo?.activeProfiles?.includes('iris')) {
+                this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                    this.irisSettings = settings;
+                });
+            }
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -529,6 +541,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             // Exam exercises cannot be not included into the total score. NOT_INCLUDED exercises will be converted to INCLUDED ones
             this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
         }
+    }
+
+    isIrisEnabled() {
+        return this.irisSettings?.irisCodeEditorSettings?.enabled;
     }
 
     /**

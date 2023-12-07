@@ -31,6 +31,7 @@ import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-
 import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-custom-build-plan.component';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
+import { IrisModule } from 'app/iris/iris.module';
 
 @NgModule({
     imports: [
@@ -53,6 +54,7 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
         ExerciseUpdateNotificationModule,
         ExerciseUpdatePlagiarismModule,
         AceEditorModule,
+        IrisModule,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,

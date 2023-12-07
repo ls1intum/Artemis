@@ -1,0 +1,89 @@
+{{#block hidden=True}}
+    {{#system~}}
+        You are drafting the problem statement of a programming exercise.
+        The exercise has the following information:
+        {{metadata}}
+        The problem statement of an exercise provides the students with an overview of the exercise.
+        It typically starts with an engaging thematic story hook to introduce the technical content of the exercise.
+        Then it gives a detailed description of the system to be implemented, which trains the students on a specific programming skill.
+        The expected behavior of the program is illustrated with sample input values and their corresponding output values.
+        It is also possible to include a UML class diagram in PlantUML syntax illustrating the system to be implemented and the relationships between its components.
+        Do not surround the UML diagram with ```.
+        {{#if problemStatementWasUpdatedBefore}}
+            The current problem statement for the exercise is:
+        {{else}}
+            Here is an example problem statement for reference:
+        {{/if}}
+        {{problemStatement}}
+    {{~/system}}
+    {{#each chatHistory}}
+        {{#if (equal this.sender "user")}}
+            {{#user~}}
+                {{#each this.content}}{{this.contentAsString}}{{/each}}
+            {{~/user}}
+        {{else}}
+            {{#assistant~}}
+                {{#each this.content}}{{this.contentAsString}}{{/each}}
+            {{~/assistant}}
+        {{/if}}
+    {{/each}}
+    {{#system~}}
+        {{#if problemStatementWasUpdatedBefore}}
+            If you want to update the problem statement, rewrite it now.
+            If the problem statement should not be changed, respond with !same!.
+        {{else}}
+            Write a problem statement for the exercise.
+        {{/if}}
+    {{~/system}}
+    {{#assistant~}}
+        {{gen 'updatedProblemStatement' temperature=0.5 max_tokens=2000}}
+    {{~/assistant}}
+    {{#if (equal updatedProblemStatement '!same!')}}
+        {{set 'finalProblemStatement' problemStatement}}
+    {{else}}
+        {{set 'finalProblemStatement' updatedProblemStatement}}
+    {{/if}}
+{{/block}}
+
+{{#block hidden=True}}
+    {{#system~}}
+        Here is the problem statement of a programming exercise.
+        {{finalProblemStatement}}
+        You are updating meta-information about this exercise.
+        The metadata must be a JSON object matching this Typescript type:
+        type Metadata = {
+            "title": string,
+            "shortname": string,
+            "categories": string[],
+            "difficulty": "no level" | "easy" | "medium" | "hard",
+            "participation": "individual" | "team",
+            "allow_offline_IDE": boolean,
+            "allow_online_editor": boolean,
+            "publish_build_plan": boolean,
+            "programming_language": "java" | "python" | "c" | "haskell" | "kotlin" | "vhdl" | "assembler" | "swift" | "ocaml" | "empty"
+            "include_in_course_score": "yes" | "bonus" | "no",
+            "points": number,
+            "bonus_points": number,
+            "submission_policy": "none" | "lock repository" | "submission penalty",
+        }
+        Here is the current metadata:
+        {{metadata}}
+    {{~/system}}
+    {{#each chatHistory}}
+        {{#if (equal this.sender "user")}}
+            {{#user~}}
+                {{#each this.content}}{{this.contentAsString}}{{/each}}
+            {{~/user}}
+        {{else}}
+            {{#assistant~}}
+                {{#each this.content}}{{this.contentAsString}}{{/each}}
+            {{~/assistant}}
+        {{/if}}
+    {{/each}}
+    {{#system~}}
+        Rewrite the metadata to be consistent with the problem statement and the user requirements.
+    {{~/system}}
+    {{#assistant~}}
+        {{gen 'metadata' temperature=0.2 max_tokens=300}}
+    {{~/assistant}}
+{{/block}}
