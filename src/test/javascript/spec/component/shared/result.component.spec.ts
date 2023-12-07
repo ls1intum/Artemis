@@ -26,6 +26,7 @@ const mockExercise: Exercise = {
     maxPoints: 100,
     dueDate: dayjs().subtract(3, 'hours'),
     assessmentType: AssessmentType.AUTOMATIC,
+    type: ExerciseType.PROGRAMMING,
 } as Exercise;
 
 const mockParticipation: Participation = {
@@ -74,8 +75,6 @@ describe('ResultComponent', () => {
                 fixture = TestBed.createComponent(ResultComponent);
                 comp = fixture.componentInstance;
                 modalService = TestBed.inject(NgbModal);
-
-                fixture.detectChanges();
             });
     });
 

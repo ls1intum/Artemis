@@ -546,4 +546,10 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     void testBuildLogStatistics() throws Exception {
         programmingExerciseTestService.buildLogStatistics();
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateBuildPlanURL() throws Exception {
+        programmingExerciseTestService.updateBuildPlanURL();
+    }
 }

@@ -10,7 +10,6 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CategorySelectorComponent', () => {
     let comp: CategorySelectorComponent;
@@ -53,7 +52,6 @@ describe('CategorySelectorComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                FontAwesomeTestingModule,
                 MockModule(MatAutocompleteModule),
                 MockModule(MatFormFieldModule),
                 MockModule(MatChipsModule),
