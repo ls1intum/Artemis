@@ -10,6 +10,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -81,16 +82,12 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     }
 
     public ProgrammingExerciseTestCase testName(String testName) {
-        this.testName = truncateTestName(testName);
+        this.testName = StringUtils.truncate(testName, MAX_TEST_CASE_LENGTH);
         return this;
     }
 
     public void setTestName(String testName) {
-        this.testName = truncateTestName(testName);
-    }
-
-    private String truncateTestName(String testName) {
-        return StringUtils.truncate(testName, MAX_TEST_CASE_LENGTH);
+        this.testName = StringUtils.truncate(testName, MAX_TEST_CASE_LENGTH);
     }
 
     public Double getWeight() {
