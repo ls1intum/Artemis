@@ -359,7 +359,7 @@ describe('CloneRepoButtonComponent', () => {
         accountServiceIdentityStub.mockReturnValue(Promise.resolve(undefined));
         component.onClick();
         tick();
-        expect(component.unableToLoadVCSAccessToken).toBeTrue();
+        expect(component.ableToLoadVCSAccessToken).toBeFalse();
         expect(alertServiceErrorStub).toHaveBeenCalledWith('artemisApp.exerciseActions.fetchVCSAccessTokenError');
     }));
 
@@ -371,7 +371,7 @@ describe('CloneRepoButtonComponent', () => {
         accountServiceIdentityStub.mockReturnValue(Promise.resolve(new User()));
         component.onClick();
         tick();
-        expect(component.unableToLoadVCSAccessToken).toBeTrue();
+        expect(component.ableToLoadVCSAccessToken).toBeFalse();
         expect(alertServiceErrorStub).toHaveBeenCalledWith('artemisApp.exerciseActions.fetchVCSAccessTokenError');
     }));
 

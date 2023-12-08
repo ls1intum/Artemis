@@ -47,7 +47,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     isTeamParticipation: boolean;
     activeParticipation?: ProgrammingExerciseStudentParticipation;
     isPracticeMode: boolean | undefined;
-    unableToLoadVCSAccessToken: boolean = false;
+    ableToLoadVCSAccessToken: boolean = true;
 
     // Icons
     faDownload = faDownload;
@@ -115,7 +115,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
      * including the clicks that make the popover go away (every second click).
      */
     onClick() {
-        if (this.versionControlAccessTokenRequired && !this.user.vcsAccessToken && !this.unableToLoadVCSAccessToken) {
+        if (this.versionControlAccessTokenRequired && !this.user.vcsAccessToken && this.ableToLoadVCSAccessToken) {
             this.accountService
                 .identity(true)
                 .then((user) => {
@@ -135,7 +135,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
      * that something is wrong and that they should try again after reloading the page.
      */
     onTokenRetrievalFail() {
-        this.unableToLoadVCSAccessToken = true;
+        this.ableToLoadVCSAccessToken = false;
         this.alertService.error('artemisApp.exerciseActions.fetchVCSAccessTokenError');
     }
 
