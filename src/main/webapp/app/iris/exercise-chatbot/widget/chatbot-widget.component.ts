@@ -66,6 +66,7 @@ import { DOCUMENT } from '@angular/common';
 import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
+import { IrisExerciseCreationSessionService } from 'app/iris/exercise-creation-session.service';
 
 @Component({
     selector: 'jhi-chatbot-widget',
@@ -355,6 +356,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
      * Handles the send button click event and sends the user's message.
      */
     onSend(): void {
+        console.log(this.paramsOnSend());
         if (this.error?.fatal) {
             return;
         }
@@ -501,7 +503,11 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
         this.modalService.open(content).result.then((result: string) => {
             if (result === 'confirm') {
                 this.isLoading = false;
-                this.createNewSession();
+                if (this.sessionService instanceof IrisExerciseCreationSessionService) {
+                    this.createNewCourseSession();
+                } else {
+                    this.createNewSession();
+                }
             }
         });
     }
@@ -900,6 +906,10 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     createNewSession() {
         this.sessionService.createNewSession(this.exerciseId);
+    }
+
+    createNewCourseSession() {
+        this.sessionService.createNewSession(this.courseId);
     }
 
     isChatSession() {
