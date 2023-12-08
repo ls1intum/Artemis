@@ -52,7 +52,7 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
 
     private static String loadTemplate() {
         try {
-            return Files.readString(Path.of("src", "main", "resources", "templates", "iris", "exercise-creation.hbs")).trim();
+            return Files.readString(Path.of("src", "main", "resources", "templates", "iris", "exercise-creation-test.hbs")).trim();
         }
         catch (IOException e) {
             throw new RuntimeException("Failed to load Iris template", e);
