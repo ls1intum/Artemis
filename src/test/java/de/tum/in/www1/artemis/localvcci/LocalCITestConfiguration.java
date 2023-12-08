@@ -91,6 +91,7 @@ public class LocalCITestConfiguration {
         // Mock dockerClient.execStartCmd(String execId).exec(T resultCallback)
         ExecStartCmd execStartCmd = mock(ExecStartCmd.class);
         doReturn(execStartCmd).when(dockerClient).execStartCmd(anyString());
+        doReturn(execStartCmd).when(execStartCmd).withDetach(anyBoolean());
         doAnswer(invocation -> {
             // Stub the 'exec' method of the 'ExecStartCmd' to call the 'onComplete' method of the provided 'ResultCallback.Adapter', which simulates the command completing
             // immediately.

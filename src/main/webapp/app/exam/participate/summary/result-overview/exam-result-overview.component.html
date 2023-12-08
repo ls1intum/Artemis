@@ -28,7 +28,7 @@
                     <th scope="row">{{ exerciseIndex + 1 }}</th>
                     <td>
                         &nbsp;
-                        <div *ngIf="exercise?.type" class="icon-container">
+                        <div *ngIf="exercise?.type && exerciseInfos[exercise.id!] !== undefined" class="icon-container">
                             <fa-icon [icon]="exerciseInfos[exercise.id!].icon" class="icon"></fa-icon>
                         </div>
                         &nbsp;
@@ -45,7 +45,7 @@
                     </td>
                     <td>
                         <span
-                            *ngIf="exerciseInfos[exercise.id!].achievedPercentage !== undefined; else noPercentageKnownPlaceholder"
+                            *ngIf="exerciseInfos[exercise.id!] !== undefined && exerciseInfos[exercise.id!].achievedPercentage !== undefined; else noPercentageKnownPlaceholder"
                             [class]="exerciseInfos[exercise.id!].colorClass"
                         >
                             {{ exerciseInfos[exercise.id!].achievedPercentage }}%

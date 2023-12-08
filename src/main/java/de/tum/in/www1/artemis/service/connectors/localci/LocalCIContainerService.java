@@ -194,8 +194,7 @@ public class LocalCIContainerService {
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
-        ExecCreateCmdResponse createStopContainerFileCmdResponse = dockerClient.execCreateCmd(containerId).withCmd("touch", "stop_container.txt").exec();
-        dockerClient.execStartCmd(createStopContainerFileCmdResponse.getId()).exec(new ResultCallback.Adapter<>());
+        executeDockerCommandWithoutAwaitingResponse(containerId, "touch", "stop_container.txt");
     }
 
     /**
@@ -211,7 +210,6 @@ public class LocalCIContainerService {
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths,
             String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath, ProgrammingLanguage programmingLanguage) {
-
         String testCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
@@ -244,7 +242,7 @@ public class LocalCIContainerService {
     }
 
     private void convertDosFilesToUnix(String path, String containerId) {
-        executeDockerCommand(containerId, false, false, "sh", "-c", "find " + path + " -type f -exec sed -i 's/\\r$//' {} \\;");
+        executeDockerCommand(containerId, false, false, "sh", "-c", "find " + path + " -type f ! -path '*/.git/*' -exec sed -i 's/\\r$//' {} \\;");
     }
 
     private void copyToContainer(String sourcePath, String containerId) {
@@ -300,11 +298,18 @@ public class LocalCIContainerService {
         }
     }
 
+    private void executeDockerCommandWithoutAwaitingResponse(String containerId, String... command) {
+        ExecCreateCmdResponse createCmdResponse = dockerClient.execCreateCmd(containerId).withCmd(command).exec();
+        dockerClient.execStartCmd(createCmdResponse.getId()).withDetach(true).exec(new ResultCallback.Adapter<>());
+    }
+
     private List<BuildLogEntry> executeDockerCommand(String containerId, boolean attachStdout, boolean attachStderr, String... command) {
+        boolean detach = !attachStdout && !attachStderr;
+
         ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(attachStdout).withAttachStderr(attachStderr).withCmd(command).exec();
         List<BuildLogEntry> buildLogEntries = new ArrayList<>();
         final CountDownLatch latch = new CountDownLatch(1);
-        dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(new ResultCallback.Adapter<>() {
+        dockerClient.execStartCmd(execCreateCmdResponse.getId()).withDetach(detach).exec(new ResultCallback.Adapter<>() {
 
             @Override
             public void onNext(Frame item) {
@@ -333,20 +338,14 @@ public class LocalCIContainerService {
      * The build script is used to build the programming exercise in a Docker container.
      *
      * @param participation the participation for which to create the build script
+     * @param containerName the name of the container for which to create the build script
      * @return the path to the build script file
      */
-    public Path createBuildScript(ProgrammingExerciseParticipation participation) {
+    public Path createBuildScript(ProgrammingExerciseParticipation participation, String containerName) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
 
-        List<ScriptAction> actions;
-
-        try {
-            actions = programmingExercise.getWindfile().getScriptActions();
-        }
-        catch (NullPointerException e) {
-            actions = null;
-        }
+        List<ScriptAction> actions = programmingExercise.getWindfile() != null ? programmingExercise.getWindfile().getScriptActions() : List.of();
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
@@ -359,17 +358,20 @@ public class LocalCIContainerService {
             }
         }
 
-        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(participation.getId().toString() + "-build.sh");
+        // We use the container name as part of the file name to avoid conflicts when multiple build jobs are running at the same time.
+        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(containerName + "-build.sh");
 
         StringBuilder buildScript = new StringBuilder("""
                 #!/bin/bash
                 cd /testing-dir
                 """);
 
-        if (actions != null) {
-            actions.forEach(action -> buildScript.append(action.getScript()).append("\n"));
-        }
-        else {
+        actions.forEach(action -> buildScript.append(action.getScript()).append("\n"));
+
+        // Fall back to hardcoded scripts for old exercises without windfile
+        // *****************
+        // TODO: Delete once windfile templates can be used as fallbacks
+        if (actions.isEmpty()) {
             // Windfile actions are not defined, use default build script
             switch (programmingExercise.getProgrammingLanguage()) {
                 case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
@@ -377,6 +379,7 @@ public class LocalCIContainerService {
                 default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
             }
         }
+        // *****************
 
         try {
             FileUtils.writeStringToFile(buildScriptPath.toFile(), buildScript.toString(), StandardCharsets.UTF_8);
@@ -445,11 +448,11 @@ public class LocalCIContainerService {
      * Deletes the build script for a given programming exercise.
      * The build script is stored in a file in the local-ci-scripts directory.
      *
-     * @param patricipationID the ID of the participation for which to delete the build script
+     * @param containerName the name of the container for which to delete the build script
      */
-    public void deleteScriptFile(String patricipationID) {
+    public void deleteScriptFile(String containerName) {
         Path scriptsPath = Path.of("local-ci-scripts");
-        Path buildScriptPath = scriptsPath.resolve(patricipationID + "-build.sh").toAbsolutePath();
+        Path buildScriptPath = scriptsPath.resolve(containerName + "-build.sh").toAbsolutePath();
         try {
             Files.deleteIfExists(buildScriptPath);
         }
