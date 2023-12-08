@@ -7,7 +7,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faEye, faFileExport, faListAlt, faSignal, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faFileExport, faListAlt, faSignal, faTable, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 
 @Component({
@@ -21,8 +21,9 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     readonly faTable = faTable;
     readonly faFileExport = faFileExport;
     readonly faWrench = faWrench;
-    readonly faTimes = faTimes;
+    readonly faTrash = faTrash;
     readonly faListAlt = faListAlt;
+    readonly faUndo = faUndo;
 
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
