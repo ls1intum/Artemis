@@ -5,6 +5,7 @@ import java.io.StringReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +18,7 @@ import javax.xml.stream.XMLStreamReader;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,15 +30,14 @@ import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
-import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
@@ -45,7 +46,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 
 /**
  * This service contains the logic to execute a build job for a programming exercise participation in the local CI system.
- * The {@link #runBuildJob(ProgrammingExerciseParticipation, String, String, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService} and
+ * The {@link #runBuildJob(ProgrammingExerciseParticipation, String, boolean, String, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService} and
  * submitted to the executor service.
  */
 @Service
@@ -67,6 +68,8 @@ public class LocalCIBuildJobExecutionService {
      */
     private final XMLInputFactory localCIXMLInputFactory;
 
+    private final GitService gitService;
+
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
@@ -74,12 +77,14 @@ public class LocalCIBuildJobExecutionService {
     private String repoClonePath;
 
     public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService,
-            LocalCIContainerService localCIContainerService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, XMLInputFactory localCIXMLInputFactory) {
+            LocalCIContainerService localCIContainerService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, XMLInputFactory localCIXMLInputFactory,
+            GitService gitService) {
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.versionControlService = versionControlService;
         this.localCIContainerService = localCIContainerService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
+        this.gitService = gitService;
     }
 
     public enum LocalCIBuildJobRepositoryType {
@@ -102,15 +107,17 @@ public class LocalCIBuildJobExecutionService {
      * Prepare the paths to the assignment and test repositories, the branch to checkout, the volume configuration for the Docker container, and the container configuration,
      * and then call {@link #runScriptAndParseResults(ProgrammingExerciseParticipation, String, String, String, String, Path, Path, Path[], String[], Path)} to execute the job.
      *
-     * @param participation The participation of the repository for which the build job should be executed.
-     * @param commitHash    The commit hash of the commit that should be built. If it is null, the latest commit of the default branch will be built.
-     * @param containerName The name of the Docker container that will be used to run the build job.
-     *                          It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
-     * @param dockerImage   The Docker image that will be used to run the build job.
+     * @param participation          The participation of the repository for which the build job should be executed.
+     * @param commitHash             The commit hash of the commit that should be built. If it is null, the latest commit of the default branch will be built.
+     * @param isPushToTestRepository Defines if the build job is triggered by a push to a test repository
+     * @param containerName          The name of the Docker container that will be used to run the build job.
+     *                                   It needs to be prepared beforehand to stop and remove the container if something goes wrong here.
+     * @param dockerImage            The Docker image that will be used to run the build job.
      * @return The build result.
      * @throws LocalCIException If some error occurs while preparing or running the build job.
      */
-    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String commitHash, String containerName, String dockerImage) {
+    public LocalCIBuildResult runBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isPushToTestRepository, String containerName,
+            String dockerImage) {
         // Update the build plan status to "BUILDING".
         localCIBuildPlanService.updateBuildPlanStatus(participation, ContinuousIntegrationService.BuildStatus.BUILDING);
 
@@ -169,6 +176,16 @@ public class LocalCIBuildJobExecutionService {
         }
         catch (LocalVCInternalException e) {
             throw new LocalCIException("Error while getting branch of participation", e);
+        }
+
+        /*
+         * If the commit hash is null, this means that the latest commit of the default branch should be built.
+         * If this build job is triggered by a push to the test repository, the commit hash reflects changes to the test repository.
+         * Thus, we do not checkout the commit hash of the test repository in the assignment repository.
+         */
+        if (commitHash != null && !isPushToTestRepository) {
+            // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
+            assignmentRepositoryPath = cloneAndCheckoutRepository(participation, commitHash);
         }
 
         // Create the container from the "ls1tum/artemis-maven-template" image with the local paths to the Git repositories and the shell script bound to it. Also give the
@@ -236,6 +253,7 @@ public class LocalCIBuildJobExecutionService {
 
         // Get an input stream of the test result files.
         List<TarArchiveInputStream> testResultsTarInputStreams = new ArrayList<>();
+        boolean errorOccurred = false;
         try {
             for (String testResultsPath : testResultsPaths) {
                 testResultsTarInputStreams.add(localCIContainerService.getArchiveFromContainer(containerId, testResultsPath));
@@ -243,17 +261,24 @@ public class LocalCIBuildJobExecutionService {
         }
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
-            // Stop the container and return a build results that indicates that the build failed.
+            errorOccurred = true;
+        }
+        finally {
             localCIContainerService.stopContainer(containerName);
+
             // Delete script file from host system
             localCIContainerService.deleteScriptFile(participation.getId().toString());
-            return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
+
+            // Delete cloned repository
+            if (commitHash != null) {
+                deleteCloneRepo(participation, commitHash);
+            }
         }
 
-        localCIContainerService.stopContainer(containerName);
-
-        // Delete script file from host system
-        localCIContainerService.deleteScriptFile(participation.getId().toString());
+        if (errorOccurred) {
+            // If the test results are not found, this means that something went wrong during the build and testing of the submission.
+            return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
+        }
 
         LocalCIBuildResult buildResult;
         try {
@@ -459,5 +484,30 @@ public class LocalCIBuildJobExecutionService {
         LocalCIBuildResult.LocalCIJobDTO job = new LocalCIBuildResult.LocalCIJobDTO(failedTests, successfulTests);
 
         return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job));
+    }
+
+    private Path cloneAndCheckoutRepository(ProgrammingExerciseParticipation participation, String commitHash) {
+        try {
+            // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
+            Repository repository = gitService.getOrCheckoutRepository(participation.getVcsRepositoryUrl(), Paths.get("checked-out-repos", commitHash), false);
+            gitService.checkoutRepositoryAtCommit(repository, commitHash);
+            return repository.getLocalPath();
+        }
+        catch (GitAPIException e) {
+            throw new LocalCIException("Error while cloning repository", e);
+        }
+    }
+
+    private void deleteCloneRepo(ProgrammingExerciseParticipation participation, String commitHash) {
+        try {
+            Repository repository = gitService.getOrCheckoutRepository(participation.getVcsRepositoryUrl(), Paths.get("checked-out-repos", commitHash), false);
+            gitService.deleteLocalRepository(repository);
+        }
+        catch (GitAPIException e) {
+            throw new LocalCIException("Error while checking out repository", e);
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Error while deleting repository", e);
+        }
     }
 }
