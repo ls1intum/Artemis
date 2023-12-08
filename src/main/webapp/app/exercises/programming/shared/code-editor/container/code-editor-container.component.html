@@ -8,19 +8,20 @@
         <div class="d-flex flex-wrap align-items-center ms-auto gap-2">
             <ng-content select="[editorToolbar]"></ng-content>
             <ng-content select="[chatbot-button]"></ng-content>
-            <jhi-code-editor-actions
-                *ngIf="!isTutorAssessment || commitState === CommitState.CONFLICT"
-                [buildable]="buildable"
-                [disableActions]="!editable && (!isTutorAssessment || commitState !== CommitState.CONFLICT)"
-                [unsavedFiles]="unsavedFiles"
-                [(editorState)]="editorState"
-                [(commitState)]="commitState"
-                [disableAutoSave]="disableAutoSave"
-                (onSavedFiles)="onSavedFiles($event)"
-                (onRefreshFiles)="onRefreshFiles()"
-                (commitStateChange)="onCommitStateChange.emit($event)"
-                (onError)="onError($event)"
-            ></jhi-code-editor-actions>
+            @if (!isTutorAssessment || commitState === CommitState.CONFLICT) {
+                <jhi-code-editor-actions
+                    [buildable]="buildable"
+                    [disableActions]="!editable && (!isTutorAssessment || commitState !== CommitState.CONFLICT)"
+                    [unsavedFiles]="unsavedFiles"
+                    [(editorState)]="editorState"
+                    [(commitState)]="commitState"
+                    [disableAutoSave]="disableAutoSave"
+                    (onSavedFiles)="onSavedFiles($event)"
+                    (onRefreshFiles)="onRefreshFiles()"
+                    (commitStateChange)="onCommitStateChange.emit($event)"
+                    (onError)="onError($event)"
+                ></jhi-code-editor-actions>
+            }
         </div>
     </div>
     <jhi-code-editor-file-browser
@@ -60,24 +61,28 @@
         (onFileLoad)="fileLoad($event)"
     >
     </jhi-code-editor-ace>
-    <jhi-code-editor-instructions
-        *ngIf="showEditorInstructions"
-        editorSidebarRight
-        (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
-        (onError)="onError($event)"
-        [isAssessmentMode]="isTutorAssessment"
-    >
-        <ng-content select="[editorSidebar]"></ng-content>
-    </jhi-code-editor-instructions>
-    <jhi-code-editor-build-output
-        editorBottomArea
-        *ngIf="buildable"
-        [participation]="participation"
-        (onAnnotations)="onAnnotations($event)"
-        (onError)="onError($event)"
-        (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"
-    ></jhi-code-editor-build-output>
-    <div *ngIf="isTutorAssessment" editorBottom>
-        <ng-content select="[editorBottom]"></ng-content>
-    </div>
+    @if (showEditorInstructions) {
+        <jhi-code-editor-instructions
+            editorSidebarRight
+            (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
+            (onError)="onError($event)"
+            [isAssessmentMode]="isTutorAssessment"
+        >
+            <ng-content select="[editorSidebar]"></ng-content>
+        </jhi-code-editor-instructions>
+    }
+    @if (buildable) {
+        <jhi-code-editor-build-output
+            editorBottomArea
+            [participation]="participation"
+            (onAnnotations)="onAnnotations($event)"
+            (onError)="onError($event)"
+            (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"
+        ></jhi-code-editor-build-output>
+    }
+    @if (isTutorAssessment) {
+        <div editorBottom>
+            <ng-content select="[editorBottom]"></ng-content>
+        </div>
+    }
 </jhi-code-editor-grid>

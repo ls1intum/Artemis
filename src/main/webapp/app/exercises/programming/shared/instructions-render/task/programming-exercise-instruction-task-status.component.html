@@ -1,22 +1,25 @@
 <div class="guided-tour" [class.success]="testCaseState === TestCaseState.SUCCESS" [class.failed]="testCaseState === TestCaseState.FAIL">
-    <fa-icon *ngIf="testCaseState === TestCaseState.SUCCESS" [icon]="farCheckCircle" size="lg" class="test-icon text-success"></fa-icon>
-    <fa-icon *ngIf="testCaseState === TestCaseState.FAIL" [icon]="farTimesCircle" size="lg" class="test-icon text-danger"></fa-icon>
-    <fa-icon
-        *ngIf="testCaseState === TestCaseState.NO_RESULT || testCaseState === TestCaseState.NOT_EXECUTED"
-        [icon]="faQuestionCircle"
-        size="lg"
-        class="test-icon text-secondary"
-    ></fa-icon>
-    <span *ngIf="taskName" class="task-name">{{ taskName }}</span>
-    <span
-        *ngIf="latestResult && latestResult.feedbacks && latestResult.feedbacks.length && testIds.length; else noResult"
-        class="guided-tour test-status--linked"
-        [class]="testIds?.length === successfulTests.length ? 'text-success' : failedTests.length ? 'text-danger' : 'text-secondary'"
-        [innerHTML]="translationBasePath + 'totalTestsPassing' | artemisTranslate: { totalTests: testIds.length, passedTests: successfulTests.length }"
-        (click)="showDetailsForTests()"
-    ></span>
-    <!-- There are no results at all, build error or never executed.-->
-    <ng-template #noResult>
+    @if (testCaseState === TestCaseState.SUCCESS) {
+        <fa-icon [icon]="farCheckCircle" size="lg" class="test-icon text-success"></fa-icon>
+    }
+    @if (testCaseState === TestCaseState.FAIL) {
+        <fa-icon [icon]="farTimesCircle" size="lg" class="test-icon text-danger"></fa-icon>
+    }
+    @if (testCaseState === TestCaseState.NO_RESULT || testCaseState === TestCaseState.NOT_EXECUTED) {
+        <fa-icon [icon]="faQuestionCircle" size="lg" class="test-icon text-secondary"></fa-icon>
+    }
+    @if (taskName) {
+        <span class="task-name">{{ taskName }}</span>
+    }
+    @if (latestResult && latestResult.feedbacks && latestResult.feedbacks.length && testIds.length) {
+        <span
+            class="guided-tour test-status--linked"
+            [class]="testIds?.length === successfulTests.length ? 'text-success' : failedTests.length ? 'text-danger' : 'text-secondary'"
+            [innerHTML]="translationBasePath + 'totalTestsPassing' | artemisTranslate: { totalTests: testIds.length, passedTests: successfulTests.length }"
+            (click)="showDetailsForTests()"
+        ></span>
+    } @else {
         <span class="text-secondary" [innerHTML]="translationBasePath + (testIds.length ? 'noResult' : 'noTests') | artemisTranslate"></span>
-    </ng-template>
+    }
+    <!-- There are no results at all, build error or never executed.-->
 </div>

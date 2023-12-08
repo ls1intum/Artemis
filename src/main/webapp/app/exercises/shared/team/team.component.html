@@ -1,51 +1,64 @@
 <div>
-    <div *ngIf="exercise && team" class="d-flex">
-        <div class="mb-2">
-            <h2 class="d-flex align-items-baseline mb-2">
-                <span>{{ exercise.title }} - {{ team.name }}</span
-                ><code class="ms-2 team-short-name">{{ team.shortName }}</code>
-            </h2>
-            <div>
-                <span class="d-inline-block">
-                    <span class="text-body-secondary font-weight-bolder">Tutor:</span>
-                    <a *ngIf="isAdmin && team.owner" [routerLink]="['/admin', 'user-management', team.owner?.login]">{{ team.owner?.name }}</a>
-                    <a *ngIf="!isAdmin && team.owner" [href]="'mailto:' + team.owner.email">{{ team.owner?.name }}</a>
-                    <span *ngIf="!team.owner" class="font-weight-bold" jhiTranslate="artemisApp.team.detail.noOwner">No tutor</span>
-                </span>
-                <span class="d-inline-block ms-2">
-                    <span class="text-body-secondary font-weight-bolder">Created:</span>
-                    <span ngbTooltip="{{ team.createdDate | artemisDate }}" tooltipClass="date-tooltip">
-                        {{ team.createdDate!.fromNow() }}
+    @if (exercise && team) {
+        <div class="d-flex">
+            <div class="mb-2">
+                <h2 class="d-flex align-items-baseline mb-2">
+                    <span>{{ exercise.title }} - {{ team.name }}</span
+                    ><code class="ms-2 team-short-name">{{ team.shortName }}</code>
+                </h2>
+                <div>
+                    <span class="d-inline-block">
+                        <span class="text-body-secondary font-weight-bolder">Tutor:</span>
+                        @if (isAdmin && team.owner) {
+                            <a [routerLink]="['/admin', 'user-management', team.owner?.login]">{{ team.owner?.name }}</a>
+                        }
+                        @if (!isAdmin && team.owner) {
+                            <a [href]="'mailto:' + team.owner.email">{{ team.owner?.name }}</a>
+                        }
+                        @if (!team.owner) {
+                            <span class="font-weight-bold" jhiTranslate="artemisApp.team.detail.noOwner">No tutor</span>
+                        }
                     </span>
-                    <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', team.createdBy]">({{ team.createdBy }})</a>
-                </span>
-                <span class="d-inline-block ms-2" *ngIf="team.lastModifiedDate && team.lastModifiedDate.isAfter(team.createdDate)">
-                    <span class="text-body-secondary font-weight-bolder">Last modified:</span>
-                    <span ngbTooltip="{{ team.lastModifiedDate | artemisDate }}" position="top" tooltipClass="date-tooltip">
-                        {{ team.lastModifiedDate!.fromNow() }}
+                    <span class="d-inline-block ms-2">
+                        <span class="text-body-secondary font-weight-bolder">Created:</span>
+                        <span ngbTooltip="{{ team.createdDate | artemisDate }}" tooltipClass="date-tooltip">
+                            {{ team.createdDate!.fromNow() }}
+                        </span>
+                        @if (isAdmin) {
+                            <a [routerLink]="['/admin', 'user-management', team.createdBy]">({{ team.createdBy }})</a>
+                        }
                     </span>
-                    <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', team.lastModifiedBy]">({{ team.lastModifiedBy }})</a>
-                </span>
+                    @if (team.lastModifiedDate && team.lastModifiedDate.isAfter(team.createdDate)) {
+                        <span class="d-inline-block ms-2">
+                            <span class="text-body-secondary font-weight-bolder">Last modified:</span>
+                            <span ngbTooltip="{{ team.lastModifiedDate | artemisDate }}" position="top" tooltipClass="date-tooltip">
+                                {{ team.lastModifiedDate!.fromNow() }}
+                            </span>
+                            @if (isAdmin) {
+                                <a [routerLink]="['/admin', 'user-management', team.lastModifiedBy]">({{ team.lastModifiedBy }})</a>
+                            }
+                        </span>
+                    }
+                </div>
             </div>
+            @if (exercise.isAtLeastTutor) {
+                <div class="d-flex ms-auto">
+                    @if (exercise.isAtLeastInstructor || team.owner?.id === currentUser.id) {
+                        <jhi-team-update-button [exercise]="exercise" [team]="team" [buttonSize]="ButtonSize.MEDIUM" (save)="onTeamUpdate($event)"></jhi-team-update-button>
+                    }
+                    @if (exercise.isAtLeastInstructor) {
+                        <jhi-team-delete-button
+                            class="ms-1"
+                            [exercise]="exercise"
+                            [team]="team"
+                            [buttonSize]="ButtonSize.MEDIUM"
+                            (delete)="onTeamDelete()"
+                        ></jhi-team-delete-button>
+                    }
+                </div>
+            }
         </div>
-        <div *ngIf="exercise.isAtLeastTutor" class="d-flex ms-auto">
-            <jhi-team-update-button
-                *ngIf="exercise.isAtLeastInstructor || team.owner?.id === currentUser.id"
-                [exercise]="exercise"
-                [team]="team"
-                [buttonSize]="ButtonSize.MEDIUM"
-                (save)="onTeamUpdate($event)"
-            ></jhi-team-update-button>
-            <jhi-team-delete-button
-                class="ms-1"
-                *ngIf="exercise.isAtLeastInstructor"
-                [exercise]="exercise"
-                [team]="team"
-                [buttonSize]="ButtonSize.MEDIUM"
-                (delete)="onTeamDelete()"
-            ></jhi-team-delete-button>
-        </div>
-    </div>
+    }
     <jhi-data-table [isLoading]="isLoading" [isTransitioning]="isTransitioning" [showPageSizeDropdown]="false" [showSearchField]="false" [allEntities]="team?.students || []">
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
@@ -71,7 +84,6 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-
                 <ngx-datatable-column prop="name" [minWidth]="150" [width]="250" [maxWidth]="250">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
@@ -83,7 +95,6 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-
                 <ngx-datatable-column prop="email" [minWidth]="150" [width]="250">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
@@ -98,8 +109,7 @@
             </ngx-datatable>
         </ng-template>
     </jhi-data-table>
-
-    <ng-container *ngIf="exercise && team">
+    @if (exercise && team) {
         <h4 class="mt-4 d-flex align-items-baseline">
             {{ 'artemisApp.team.detail.participationsTable.title' | artemisTranslate: { courseTitle: exercise.course!.title } }}
             <code class="ms-2 team-short-name">{{ team.shortName }}</code>
@@ -111,5 +121,5 @@
             [isAdmin]="isAdmin"
             [isTeamOwner]="isTeamOwner"
         ></jhi-team-participation-table>
-    </ng-container>
+    }
 </div>

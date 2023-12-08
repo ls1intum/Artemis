@@ -1,38 +1,73 @@
-<ng-container *ngIf="!this.linkPreview && !this.loaded && this.showLoadingsProgress; then fetch; else preview"> </ng-container>
-<ng-template #preview>
-    <div *ngIf="linkPreview && linkPreview.shouldPreviewBeShown" class="preview-container">
-        <!-- Link preview template -->
-        <div class="preview-card">
-            <jhi-confirm-icon
-                class="close-button"
-                *ngIf="isAuthorOfOriginalPost"
-                iconSize="sm"
-                (confirmEvent)="removeLinkPreview(linkPreview)"
-                [ngClass]="'faTimes clickable icon'"
-                [initialIcon]="faTimes"
-                [initialTooltip]="'artemisApp.metis.removeLinkPreview' | artemisTranslate"
-                [confirmTooltip]="'artemisApp.metis.confirmRemoveLinkPreview' | artemisTranslate"
-            >
-            </jhi-confirm-icon>
-            <div class="left-border">
-                <div class="preview-content">
-                    <h2 class="preview-title">{{ linkPreview.title }}</h2>
-                    <p class="preview-description">{{ linkPreview.description }}</p>
-                </div>
-
-                <div class="preview-image" *ngIf="linkPreview.image && !multiple">
-                    <img [src]="linkPreview.image" alt="Preview Image" />
+@if (!this.linkPreview && !this.loaded && this.showLoadingsProgress) {
+    @if (!hasError) {
+        <div class="loading-container">
+            <!-- Loading template -->
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    }
+} @else {
+    @if (linkPreview && linkPreview.shouldPreviewBeShown) {
+        <div class="preview-container">
+            <!-- Link preview template -->
+            <div class="preview-card">
+                @if (isAuthorOfOriginalPost) {
+                    <jhi-confirm-icon
+                        class="close-button"
+                        iconSize="sm"
+                        (confirmEvent)="removeLinkPreview(linkPreview)"
+                        [ngClass]="'faTimes clickable icon'"
+                        [initialIcon]="faTimes"
+                        [initialTooltip]="'artemisApp.metis.removeLinkPreview' | artemisTranslate"
+                        [confirmTooltip]="'artemisApp.metis.confirmRemoveLinkPreview' | artemisTranslate"
+                    >
+                    </jhi-confirm-icon>
+                }
+                <div class="left-border">
+                    <div class="preview-content">
+                        <h2 class="preview-title">{{ linkPreview.title }}</h2>
+                        <p class="preview-description">{{ linkPreview.description }}</p>
+                    </div>
+                    @if (linkPreview.image && !multiple) {
+                        <div class="preview-image">
+                            <img [src]="linkPreview.image" alt="Preview Image" />
+                        </div>
+                    }
                 </div>
             </div>
         </div>
-    </div>
-</ng-template>
-
-<ng-template #fetch>
-    <div *ngIf="!hasError" class="loading-container">
-        <!-- Loading template -->
-        <div class="loading-spinner">
-            <div class="spinner"></div>
+    }
+}
+<ng-template #preview>
+    @if (linkPreview && linkPreview.shouldPreviewBeShown) {
+        <div class="preview-container">
+            <!-- Link preview template -->
+            <div class="preview-card">
+                @if (isAuthorOfOriginalPost) {
+                    <jhi-confirm-icon
+                        class="close-button"
+                        iconSize="sm"
+                        (confirmEvent)="removeLinkPreview(linkPreview)"
+                        [ngClass]="'faTimes clickable icon'"
+                        [initialIcon]="faTimes"
+                        [initialTooltip]="'artemisApp.metis.removeLinkPreview' | artemisTranslate"
+                        [confirmTooltip]="'artemisApp.metis.confirmRemoveLinkPreview' | artemisTranslate"
+                    >
+                    </jhi-confirm-icon>
+                }
+                <div class="left-border">
+                    <div class="preview-content">
+                        <h2 class="preview-title">{{ linkPreview.title }}</h2>
+                        <p class="preview-description">{{ linkPreview.description }}</p>
+                    </div>
+                    @if (linkPreview.image && !multiple) {
+                        <div class="preview-image">
+                            <img [src]="linkPreview.image" alt="Preview Image" />
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
-    </div>
+    }
 </ng-template>
