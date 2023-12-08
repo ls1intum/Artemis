@@ -13,7 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faEye, faFileExport, faPlayCircle, faPlus, faSignal, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 
 @Component({
@@ -30,15 +30,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     // Icons
     faSort = faSort;
-    faPlus = faPlus;
-    faTimes = faTimes;
-    faEye = faEye;
-    faWrench = faWrench;
-    faTable = faTable;
-    faSignal = faSignal;
-    faFileExport = faFileExport;
-    faPlayCircle = faPlayCircle;
-    faStopCircle = faStopCircle;
+    faTrash = faTrash;
 
     protected get exercises() {
         return this.quizExercises;

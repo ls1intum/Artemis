@@ -7,7 +7,6 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.mail.internet.MimeMessage;
 import javax.validation.*;
 import javax.validation.constraints.NotNull;
 
@@ -305,29 +304,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         List<Post> updatedCourseWidePosts = postRepository.findPosts(postContextFilter, null, false, null).stream().filter(post -> post.getCourseWideContext() != null).toList();
         assertThat(existingCourseWidePosts).hasSize(updatedCourseWidePosts.size() - 1);
         verify(groupNotificationService).notifyAllGroupsAboutNewCoursePost(createdPost, course);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateAnnouncement() throws Exception {
-        Post postToSave = createPostWithoutContext();
-        postToSave.setCourse(course);
-        postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
-
-        PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        postContextFilter.setCourseId(course.getId());
-        postContextFilter.setCourseWideContexts(new CourseWideContext[] { CourseWideContext.ANNOUNCEMENT });
-        var numberOfPostsBefore = postRepository.findPosts(postContextFilter, null, false, null).getSize();
-
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
-        conversationUtilService.assertSensitiveInformationHidden(createdPost);
-        postToSave.setDisplayPriority(DisplayPriority.PINNED);
-        checkCreatedPost(postToSave, createdPost);
-
-        postRepository.findPosts(postContextFilter, null, false, null).stream().filter(post -> post.getCourseWideContext() != null).toList();
-        assertThat(postRepository.findPosts(postContextFilter, null, false, null)).hasSize(numberOfPostsBefore + 1);
-        verify(groupNotificationService).notifyAllGroupsAboutNewAnnouncement(createdPost, course);
-        verify(javaMailSender, timeout(4000).times(4)).send(any(MimeMessage.class));
     }
 
     @Test

@@ -40,7 +40,8 @@ import {
     faPencilAlt,
     faRobot,
     faTable,
-    faTimes,
+    faTrash,
+    faUndo,
     faUserCheck,
     faUsers,
     faWrench,
@@ -108,7 +109,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     exerciseDetailSections: DetailOverviewSection[];
 
     // Icons
-    faTimes = faTimes;
+    faUndo = faUndo;
+    faTrash = faTrash;
     faBook = faBook;
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.metis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,17 +17,23 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.post.ConversationUtilService;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -48,14 +55,23 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Autowired
     private ConversationUtilService conversationUtilService;
 
+    @Autowired
+    private ConversationMessageRepository conversationMessageRepository;
+
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private ExerciseUtilService exerciseUtilService;
+
+    @Autowired
+    private ExamUtilService examUtilService;
+
     private List<Post> existingConversationPostsWithAnswers;
 
     private List<Post> existingPostsWithAnswersCourseWide;
 
     private Long courseId;
-
-    @Autowired
-    private ConversationMessageRepository conversationMessageRepository;
 
     @BeforeEach
     void initTestCase() {
@@ -108,6 +124,75 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         // both conversation participants should be notified
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateAnswerInGeneralCourseWideChannel() throws Exception {
+        testCreateChannelAnswer((Channel) existingConversationPostsWithAnswers.get(3).getConversation(), NotificationType.NEW_REPLY_FOR_COURSE_POST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateAnswerInLectureChannel() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
+        Channel channel = lectureUtilService.addLectureChannel(lecture);
+        testCreateChannelAnswer(channel, NotificationType.NEW_REPLY_FOR_LECTURE_POST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateAnswerInExerciseChannel() throws Exception {
+        Course course = courseRepository.findWithEagerExercisesById(courseId);
+        Exercise exercise = course.getExercises().stream().findFirst().orElseThrow();
+        Channel channel = exerciseUtilService.addChannelToExercise(exercise);
+        testCreateChannelAnswer(channel, NotificationType.NEW_REPLY_FOR_EXERCISE_POST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateAnswerInExamChannel() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Exam exam = examUtilService.addExam(course);
+        Channel channel = examUtilService.addExamChannel(exam, "exam channel");
+        testCreateChannelAnswer(channel, NotificationType.NEW_REPLY_FOR_EXAM_POST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCreateAnswerInPublicChannel() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createPublicChannel(course, "test");
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
+        testCreateChannelAnswer(channel, NotificationType.CONVERSATION_NEW_REPLY_MESSAGE);
+    }
+
+    private void testCreateChannelAnswer(Channel channel, NotificationType notificationType) throws Exception {
+        Post message = existingConversationPostsWithAnswers.get(3);
+        message.setConversation(channel);
+        Post savedMessage = conversationMessageRepository.save(message);
+
+        AnswerPost answerPostToSave = createAnswerPost(savedMessage);
+
+        var countBefore = answerPostRepository.count();
+
+        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
+        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
+        // should not be automatically post resolving
+        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
+        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
+        assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
+
+        // conversation participants should be notified
+        if (channel.getIsCourseWide()) {
+            verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(anyString(), eq(new PostDTO(savedMessage, MetisCrudAction.UPDATE)));
+        }
+        else {
+            verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), eq(new PostDTO(savedMessage, MetisCrudAction.UPDATE)));
+        }
+        verify(singleUserNotificationService, timeout(2000).times(1)).notifyUserAboutNewMessageReply(eq(createdAnswerPost), any(), any(), eq(notificationType));
     }
 
     @ParameterizedTest

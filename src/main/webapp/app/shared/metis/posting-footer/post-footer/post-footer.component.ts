@@ -22,6 +22,8 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     @Input() modalRef?: NgbModalRef;
     tags: string[];
     courseId: number;
+    @Input()
+    hasChannelModerationRights = false;
 
     @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
     @Input() showAnswers: boolean;
