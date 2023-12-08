@@ -105,6 +105,7 @@ public class AnswerMessageService extends PostingService {
         answerMessage.setResolvesPost(false);
         AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
         savedAnswerMessage.getPost().setConversation(conversation);
+        setAuthorRoleForPosting(savedAnswerMessage, course);
         this.preparePostAndBroadcast(savedAnswerMessage, course);
         this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, mentionedUsers, savedAnswerMessage, author);
         return savedAnswerMessage;
@@ -161,13 +162,17 @@ public class AnswerMessageService extends PostingService {
     }
 
     private Conversation mayUpdateOrDeleteAnswerMessageElseThrow(AnswerPost existingAnswerPost, User user) {
-        // only the author of an answerMessage having postMessage with conversation context should edit or delete the entity
-        if (existingAnswerPost.getPost().getConversation() != null && !existingAnswerPost.getAuthor().getId().equals(user.getId())) {
+        boolean userIsAuthor = existingAnswerPost.getAuthor().getId().equals(user.getId());
+        Conversation conversation = existingAnswerPost.getPost().getConversation();
+        boolean isAllowedToEditOrDeleteOtherUsersMessage = conversation instanceof Channel channel
+                && this.channelAuthorizationService.isAllowedToEditOrDeleteMessagesOfOtherUsers(channel, user);
+        boolean isArchivedChannel = conversation instanceof Channel channel && channel.getIsArchived();
+
+        if ((!userIsAuthor && !isAllowedToEditOrDeleteOtherUsersMessage) || isArchivedChannel) {
             throw new AccessForbiddenException("Answer Post", existingAnswerPost.getId());
         }
-        else {
-            return conversationService.getConversationById(existingAnswerPost.getPost().getConversation().getId());
-        }
+
+        return conversationService.getConversationById(existingAnswerPost.getPost().getConversation().getId());
     }
 
     /**

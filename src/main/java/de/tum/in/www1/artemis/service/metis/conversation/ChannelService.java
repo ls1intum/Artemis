@@ -272,7 +272,6 @@ public class ChannelService {
      */
     public Channel createExamChannel(Exam exam, Optional<String> channelName) {
         Channel channelToCreate = createDefaultChannel(channelName, "exam-", exam.getTitle());
-        channelToCreate.setIsPublic(false);
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         exam.setChannelName(createdChannel.getName());
@@ -291,6 +290,9 @@ public class ChannelService {
             return null;
         }
         Channel channel = channelRepository.findChannelByLectureId(originalLecture.getId());
+        if (channel == null) {
+            return null;
+        }
         return updateChannelName(channel, channelName);
     }
 
@@ -324,14 +326,13 @@ public class ChannelService {
             return null;
         }
         Channel channel = channelRepository.findChannelByExamId(originalExam.getId());
+        if (channel == null) {
+            return null;
+        }
         return updateChannelName(channel, updatedExam.getChannelName());
     }
 
     private Channel updateChannelName(Channel channel, String newChannelName) {
-        if (channel == null) {
-            return null;
-        }
-
         // Update channel name if necessary
         if (!newChannelName.equals(channel.getName())) {
             channel.setName(newChannelName);

@@ -62,15 +62,28 @@
                     [navigateTo]="'competencyManagement'"
                 ></jhi-competencies-popover>
                 <div class="d-flex gap-1 w-100">
-                    <button
-                        type="button"
-                        *ngIf="editButtonAvailable(lectureUnit)"
-                        class="btn btn-primary btn-sm edit flex-grow-1"
-                        (click)="onEditButtonClicked(lectureUnit)"
-                        [ngbTooltip]="'entity.action.edit' | artemisTranslate"
-                    >
-                        <fa-icon [icon]="faPencilAlt"></fa-icon>
-                    </button>
+                    <ng-container *ngIf="this.emitEditEvents; else editLink">
+                        <button
+                            type="button"
+                            *ngIf="editButtonAvailable(lectureUnit)"
+                            class="btn btn-primary btn-sm edit flex-grow-1"
+                            (click)="onEditButtonClicked(lectureUnit)"
+                            [ngbTooltip]="'entity.action.edit' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faPencilAlt"></fa-icon>
+                        </button>
+                    </ng-container>
+                    <ng-template #editLink>
+                        <a
+                            type="button"
+                            *ngIf="editButtonAvailable(lectureUnit)"
+                            class="btn btn-primary btn-sm edit flex-grow-1"
+                            [routerLink]="['./', routerEditLinksBase[lectureUnit.type!], lectureUnit.id, 'edit']"
+                            [ngbTooltip]="'entity.action.edit' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faPencilAlt"></fa-icon>
+                        </a>
+                    </ng-template>
                     <button
                         type="button"
                         class="btn btn-danger btn-sm flex-grow-1"
@@ -86,7 +99,7 @@
                         (delete)="deleteLectureUnit(lectureUnit.id!)"
                         [dialogError]="dialogError$"
                     >
-                        <fa-icon [icon]="faTimes"></fa-icon>
+                        <fa-icon [icon]="faTrash"></fa-icon>
                     </button>
                 </div>
             </div>

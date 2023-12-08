@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType, WindFile } from 'app/entities/programming-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -64,6 +64,8 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
+import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -76,6 +78,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let courseService: CourseManagementService;
     let exerciseGroupService: ExerciseGroupService;
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
+    let alertService: AlertService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -128,6 +131,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: AlertService, useValue: { addAlert: () => {} } },
             ],
         })
             .compileComponents()
@@ -139,6 +143,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 courseService = debugElement.injector.get(CourseManagementService);
                 exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
                 programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
+                alertService = debugElement.injector.get(AlertService);
             });
     });
 
@@ -214,6 +219,29 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity);
             expect(entity.title).toBe('My Exercise');
         }));
+
+        it('should fail on error', async () => {
+            // GIVEN
+            const entity = new ProgrammingExercise(undefined, undefined);
+            entity.id = 1;
+            jest.spyOn(programmingExerciseService, 'update').mockReturnValue(
+                throwError(
+                    new HttpResponse({
+                        headers: new HttpHeaders({ 'X-artemisApp-alert': 'error-message' }),
+                    }),
+                ),
+            );
+            const alertSpy = jest.spyOn(alertService, 'addAlert');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            comp.programmingExercise.course = course;
+            // WHEN
+            comp.save();
+
+            // THEN
+            expect(comp.isSaving).toBeFalse();
+            expect(alertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'error-message', disableTranslation: true });
+        });
     });
 
     describe('exam mode', () => {
@@ -277,28 +305,40 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     });
 
     describe('default programming language', () => {
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            route.params = of({ courseId });
-            route.url = of([{ path: 'new' } as UrlSegment]);
-            route.data = of({ programmingExercise: new ProgrammingExercise(course, undefined) });
-            jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
-        });
+        it.each([true, false])(
+            'should set default programming language',
+            fakeAsync((isExamExercise: boolean) => {
+                // SETUP
+                const route = TestBed.inject(ActivatedRoute);
+                route.url = of([{ path: 'new' } as UrlSegment]);
+                if (isExamExercise) {
+                    const examId = 1;
+                    const exerciseGroupId = 1;
+                    const exerciseGroup = new ExerciseGroup();
+                    exerciseGroup.id = exerciseGroupId;
+                    exerciseGroup.exam = { id: examId, course };
+                    route.params = of({ courseId, examId, exerciseGroupId });
+                    route.data = of({ programmingExercise: new ProgrammingExercise(undefined, exerciseGroup) });
+                    jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+                } else {
+                    route.params = of({ courseId });
+                    route.data = of({ programmingExercise: new ProgrammingExercise(course, undefined) });
+                }
+                jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+                // GIVEN
+                const testProgrammingLanguage = ProgrammingLanguage.SWIFT;
+                expect(new ProgrammingExercise(undefined, undefined).programmingLanguage).not.toBe(testProgrammingLanguage);
+                course.defaultProgrammingLanguage = testProgrammingLanguage;
+                jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(testProgrammingLanguage));
 
-        it('should set default programming language', fakeAsync(() => {
-            // GIVEN
-            const testProgrammingLanguage = ProgrammingLanguage.SWIFT;
-            expect(new ProgrammingExercise(undefined, undefined).programmingLanguage).not.toBe(testProgrammingLanguage);
-            course.defaultProgrammingLanguage = testProgrammingLanguage;
-            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(testProgrammingLanguage));
+                // WHEN
+                comp.ngOnInit();
+                tick();
 
-            // WHEN
-            comp.ngOnInit();
-            tick();
-
-            // THEN
-            expect(comp.programmingExercise.programmingLanguage).toBe(testProgrammingLanguage);
-        }));
+                // THEN
+                expect(comp.programmingExercise.programmingLanguage).toBe(testProgrammingLanguage);
+            }),
+        );
     });
 
     describe('programming language change and features', () => {
@@ -390,6 +430,20 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
             expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
         }));
+
+        it('should clear custom build definition on programming language change', fakeAsync(() => {
+            // WHEN
+            fixture.detectChanges();
+            comp.programmingExercise.buildPlanConfiguration = 'some custom build definition';
+            comp.programmingExercise.windFile = new WindFile();
+            tick();
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
+            comp.onProjectTypeChange(ProjectType.FACT);
+
+            // THEN
+            expect(comp.programmingExercise.buildPlanConfiguration).toBeUndefined();
+            expect(comp.programmingExercise.windFile).toBeUndefined();
+        }));
     });
 
     describe('import with static code analysis', () => {
@@ -403,6 +457,26 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             route.params = of({ courseId });
             route.url = of([{ path: 'import' } as UrlSegment]);
         });
+
+        it('should correctly import into an exam exercise', fakeAsync(() => {
+            const examId = 1;
+            const exerciseGroupId = 1;
+            const exerciseGroup = new ExerciseGroup();
+            exerciseGroup.id = exerciseGroupId;
+            exerciseGroup.exam = { id: examId, course };
+            const programmingExercise = new ProgrammingExercise(undefined, exerciseGroup);
+            jest.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId, examId, exerciseGroupId });
+            route.data = of({ programmingExercise });
+
+            comp.ngOnInit();
+            tick();
+            expect(comp.programmingExercise.exerciseGroup).toBe(exerciseGroup);
+            expect(comp.programmingExercise.course).toBeUndefined();
+            expect(comp.isImportFromExistingExercise).toBeTrue();
+            expect(comp.isExamMode).toBeTrue();
+        }));
 
         it('should reset dates, id and project key', fakeAsync(() => {
             const programmingExercise = getProgrammingExerciseForImport();
@@ -722,6 +796,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
                 translateValues: {},
             });
+        });
+
+        it('should update AuxiliaryRepository checkout directory', () => {
+            const auxiliaryRepository = new AuxiliaryRepository();
+            auxiliaryRepository.checkoutDirectory = 'aux';
+            auxiliaryRepository.name = 'aux';
+            auxiliaryRepository.repositoryUrl = 'auxurl';
+            comp.programmingExercise.auxiliaryRepositories = [auxiliaryRepository];
+            const returned = comp.updateCheckoutDirectory(auxiliaryRepository)('new-value');
+            expect(auxiliaryRepository.checkoutDirectory).toBe('new-value');
+            expect(returned).toBe('new-value');
+        });
+
+        it('should update AuxiliaryRepository name', () => {
+            const auxiliaryRepository = new AuxiliaryRepository();
+            auxiliaryRepository.checkoutDirectory = 'aux';
+            auxiliaryRepository.name = 'aux';
+            auxiliaryRepository.repositoryUrl = 'auxurl';
+            comp.programmingExercise.auxiliaryRepositories = [auxiliaryRepository];
+            const returned = comp.updateRepositoryName(auxiliaryRepository)('new-value');
+            expect(auxiliaryRepository.name).toBe('new-value');
+            expect(returned).toBe('new-value');
         });
 
         it('should find no validation errors for valid input', () => {

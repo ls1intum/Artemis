@@ -81,6 +81,8 @@ public class NotificationSettingsService {
 
     public static final String NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE = "notification.user-notification.new-reply-in-conversation";
 
+    public static final String NOTIFICATION__USER_NOTIFICATION__USER_MENTION = "notification.user-notification.user-mention";
+
     public static final String NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED = "notification.user-notification.data-export-created";
 
     public static final String NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED = "notification.user-notification.data-export-failed";
@@ -122,6 +124,8 @@ public class NotificationSettingsService {
             // user new message notification setting group
             new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE),
             new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE),
+            // user mention notification setting group
+            new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__USER_MENTION),
             // data export notification setting (cannot be overridden by user)
             new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED),
             new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED)));
@@ -157,7 +161,8 @@ public class NotificationSettingsService {
             Map.entry(NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE,
                     new NotificationType[] { CONVERSATION_NEW_MESSAGE, CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT,
                             CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_CHANNEL }),
-            Map.entry(NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE, new NotificationType[] { CONVERSATION_NEW_REPLY_MESSAGE }));
+            Map.entry(NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE, new NotificationType[] { CONVERSATION_NEW_REPLY_MESSAGE }),
+            Map.entry(NOTIFICATION__USER_NOTIFICATION__USER_MENTION, new NotificationType[] { CONVERSATION_USER_MENTIONED }));
 
     // This set has to equal the UI configuration in the client notification settings structure file!
     // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
@@ -210,7 +215,7 @@ public class NotificationSettingsService {
 
         return users.stream().filter(user -> {
             // for those notification types that are not explicitly set by the user, we use the default settings
-            Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().equals(user))
+            Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().getId().equals(user.getId()))
                     .map(NotificationSetting::getSettingId).collect(Collectors.toSet());
             for (NotificationSetting defaultSetting : DEFAULT_NOTIFICATION_SETTINGS) {
                 if (!decidedIds.contains(defaultSetting.getSettingId())) {

@@ -5,12 +5,10 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*
 import static de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel.WEBAPP;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -80,25 +78,26 @@ public class SingleUserNotificationService {
      */
     private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation, User author) {
         var singleUserNotification = switch (notificationType) {
-            // Post Types
-            // case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) ((List<Posting>) notificationSubject).get(0),
-            // (AnswerPost) ((List<Posting>) notificationSubject).get(1), notificationType, (Course) typeSpecificInformation);
             // Exercise related
             case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
             // Plagiarism related
-            case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT -> createNotification((PlagiarismCase) notificationSubject,
-                    notificationType, (User) typeSpecificInformation, author);
+            case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT ->
+                createNotification((PlagiarismCase) notificationSubject, notificationType, (User) typeSpecificInformation, author);
             // Tutorial Group related
-            case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED -> createNotification(
-                    ((TutorialGroupNotificationSubject) notificationSubject).tutorialGroup, notificationType, ((TutorialGroupNotificationSubject) notificationSubject).users,
-                    ((TutorialGroupNotificationSubject) notificationSubject).responsibleUser);
+            case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR,
+                    TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED ->
+                createNotification(((TutorialGroupNotificationSubject) notificationSubject).tutorialGroup, notificationType,
+                        ((TutorialGroupNotificationSubject) notificationSubject).users, ((TutorialGroupNotificationSubject) notificationSubject).responsibleUser);
             // Conversation creation related
-            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_DELETE_CHANNEL -> createNotification(
-                    ((ConversationNotificationSubject) notificationSubject).conversation, notificationType, ((ConversationNotificationSubject) notificationSubject).user,
-                    ((ConversationNotificationSubject) notificationSubject).responsibleUser);
-            case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST, CONVERSATION_NEW_REPLY_MESSAGE, CONVERSATION_USER_MENTIONED -> createNotification(
-                    ((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType, ((NewReplyNotificationSubject) notificationSubject).user,
-                    ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
+            case CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_CHANNEL,
+                    CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_DELETE_CHANNEL ->
+                createNotification(((ConversationNotificationSubject) notificationSubject).conversation, notificationType,
+                        ((ConversationNotificationSubject) notificationSubject).user, ((ConversationNotificationSubject) notificationSubject).responsibleUser);
+            // Message reply related
+            case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXAM_POST, CONVERSATION_NEW_REPLY_MESSAGE,
+                    CONVERSATION_USER_MENTIONED ->
+                createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType, ((NewReplyNotificationSubject) notificationSubject).user,
+                        ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, (User) typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
@@ -127,40 +126,6 @@ public class SingleUserNotificationService {
 
         // notify all relevant users
         relevantStudents.forEach(student -> notifyUserAboutAssessedExerciseSubmission(exercise, student));
-    }
-
-    /**
-     * Notify author of a post for an exercise that there is a new reply.
-     *
-     * @param post       that is replied
-     * @param answerPost that is replied with
-     * @param course     that the post belongs to
-     */
-    public void notifyUserAboutNewReplyForExercise(Post post, AnswerPost answerPost, Course course) {
-        notifyRecipientWithNotificationType(Arrays.asList(post, answerPost), NEW_REPLY_FOR_EXERCISE_POST, course, post.getAuthor());
-    }
-
-    /**
-     * Notify author of a post for a lecture that there is a new reply.
-     *
-     * @param post       that is replied
-     * @param answerPost that is replied with
-     * @param course     that the post belongs to
-     */
-    public void notifyUserAboutNewReplyForLecture(Post post, AnswerPost answerPost, Course course) {
-        notifyRecipientWithNotificationType(Arrays.asList(post, answerPost), NEW_REPLY_FOR_LECTURE_POST, course, post.getAuthor());
-    }
-
-    /**
-     * Notify author of a course-wide that there is a new reply.
-     * Also creates and sends an email.
-     *
-     * @param post       that is replied
-     * @param answerPost that is replied with
-     * @param course     that the post belongs to
-     */
-    public void notifyUserAboutNewReplyForCoursePost(Post post, AnswerPost answerPost, Course course) {
-        notifyRecipientWithNotificationType(Arrays.asList(post, answerPost), NEW_REPLY_FOR_COURSE_POST, course, post.getAuthor());
     }
 
     /**
@@ -418,8 +383,9 @@ public class SingleUserNotificationService {
             return (isChannelAndCourseWide && isChannelVisibleToMentionedUser) || conversationService.isMember(post.getConversation().getId(), user.getId());
         }).forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, mentionedUser, author, CONVERSATION_USER_MENTIONED));
 
+        Conversation conv = conversationService.getConversationById(post.getConversation().getId());
         usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved))
-                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author, getAnswerMessageNotificationType(post)));
+                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author, getAnswerMessageNotificationType(conv)));
     }
 
     /**
@@ -445,15 +411,14 @@ public class SingleUserNotificationService {
     }
 
     /**
-     * Calculates the type of the notification based on the type of the conversation
+     * Determines the type of the notification based on the type of the conversation
      *
-     * @param message the message the reply belongs to
+     * @param conversation the message the reply belongs to
      * @return notification type
      */
-    @NotNull
-    private NotificationType getAnswerMessageNotificationType(Post message) {
+    private NotificationType getAnswerMessageNotificationType(Conversation conversation) {
         NotificationType answerMessageNotificationType;
-        if (message.getConversation() instanceof Channel channel) {
+        if (conversation instanceof Channel channel) {
             if (channel.getExercise() != null) {
                 answerMessageNotificationType = NEW_REPLY_FOR_EXERCISE_POST;
             }
@@ -462,6 +427,9 @@ public class SingleUserNotificationService {
             }
             else if (channel.getExam() != null) {
                 answerMessageNotificationType = NEW_REPLY_FOR_EXAM_POST;
+            }
+            else if (channel.getIsCourseWide()) {
+                answerMessageNotificationType = NEW_REPLY_FOR_COURSE_POST;
             }
             else {
                 answerMessageNotificationType = CONVERSATION_NEW_REPLY_MESSAGE;
@@ -481,7 +449,9 @@ public class SingleUserNotificationService {
                 || Objects.equals(notification.getTitle(), CONVERSATION_ADD_USER_CHANNEL_TITLE) || Objects.equals(notification.getTitle(), CONVERSATION_ADD_USER_GROUP_CHAT_TITLE)
                 || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_CHANNEL_TITLE)
                 || Objects.equals(notification.getTitle(), CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE)
-                || Objects.equals(notification.getTitle(), MESSAGE_REPLY_IN_CONVERSATION_TITLE) || Objects.equals(notification.getTitle(), MENTIONED_IN_MESSAGE_TITLE)) {
+                || Objects.equals(notification.getTitle(), MESSAGE_REPLY_IN_CONVERSATION_TITLE) || Objects.equals(notification.getTitle(), MENTIONED_IN_MESSAGE_TITLE)
+                || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_COURSE_POST_TITLE) || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_EXAM_POST_TITLE)
+                || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_LECTURE_POST_TITLE) || Objects.equals(notification.getTitle(), NEW_REPLY_FOR_EXERCISE_POST_TITLE)) {
             return (!Objects.equals(notification.getAuthor().getLogin(), notification.getRecipient().getLogin()));
         }
         return true;

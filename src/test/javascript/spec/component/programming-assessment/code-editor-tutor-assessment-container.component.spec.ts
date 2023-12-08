@@ -1,6 +1,6 @@
 import * as ace from 'brace';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -252,17 +252,17 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     it('should not show feedback suggestions where there are already existing manual feedbacks', async () => {
         comp.unreferencedFeedback = [{ text: 'unreferenced test', detailText: 'some detail', reference: undefined }];
         comp.referencedFeedback = [{ text: 'referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' }];
-        const feedbackSuggestionsStub = jest.spyOn(comp['athenaService'], 'getFeedbackSuggestionsForProgramming');
+        const feedbackSuggestionsStub = jest.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions');
         feedbackSuggestionsStub.mockReturnValue(
             of([
-                { text: 'unreferenced test', detailText: 'some detail', reference: undefined },
-                { text: 'referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' },
-                { text: 'suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' },
-            ]),
+                { text: 'FeedbackSuggestion:unreferenced test', detailText: 'some detail' },
+                { text: 'FeedbackSuggestion:referenced test', detailText: 'some detail', reference: 'file:src/Test.java_line:1' },
+                { text: 'FeedbackSuggestion:suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' },
+            ] as Feedback[]),
         );
         comp['submission'] = { id: undefined }; // Needed for loadFeedbackSuggestions
         await comp['loadFeedbackSuggestions']();
-        expect(comp.feedbackSuggestions).toStrictEqual([{ text: 'suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' }]);
+        expect(comp.feedbackSuggestions).toStrictEqual([{ text: 'FeedbackSuggestion:suggestion to pass', detailText: 'some detail', reference: 'file:src/Test.java_line:2' }]);
     });
 
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
@@ -528,9 +528,10 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         const codeEditorAceComp = fixture.debugElement.query(By.directive(CodeEditorAceComponent)).componentInstance;
         codeEditorAceComp.isLoading = false;
-        fixture.detectChanges();
-
-        expect(codeEditorAceComp.markerIds).toHaveLength(1);
+        fixture.whenStable().then(() => {
+            fixture.detectChanges();
+            expect(codeEditorAceComp.markerIds).toHaveLength(1);
+        });
 
         getFilesWithContentStub.mockRestore();
         getFileStub.mockRestore();
@@ -664,5 +665,30 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.feedbackSuggestions = [feedbackSuggestion1, feedbackSuggestion2, feedbackSuggestion3];
         comp.removeSuggestion(feedbackSuggestion2);
         expect(comp.feedbackSuggestions).toEqual([feedbackSuggestion1, feedbackSuggestion3]);
+    });
+
+    it('should show a confirmation dialog if there are pending feedback suggestions', async () => {
+        const modalOpenStub = jest.spyOn(comp['modalService'], 'open').mockReturnValue({ closed: of(true) } as NgbModalRef); // Confirm dismissal
+        comp.feedbackSuggestions = [{ id: 1, credits: 1 }];
+        await comp.discardPendingSubmissionsWithConfirmation();
+        expect(modalOpenStub).toHaveBeenCalled();
+        // Dismissal should clear all feedback suggestions
+        expect(comp.feedbackSuggestions).toBeEmpty();
+    });
+
+    it('should keep feedback suggestions if the confirmation dialog is cancelled', async () => {
+        const modalOpenStub = jest.spyOn(comp['modalService'], 'open').mockReturnValue({ closed: of(false) } as NgbModalRef); // Cancel suggestion dismissal
+        comp.feedbackSuggestions = [{ id: 1, credits: 1 }];
+        await comp.discardPendingSubmissionsWithConfirmation();
+        expect(modalOpenStub).toHaveBeenCalled();
+        // Cancelling should keep everything intact
+        expect(comp.feedbackSuggestions).not.toBeEmpty();
+    });
+
+    it('should not show a confirmation dialog if there are no feedback suggestions left', async () => {
+        const modalOpenStub = jest.spyOn(comp['modalService'], 'open');
+        comp.feedbackSuggestions = [];
+        await comp.discardPendingSubmissionsWithConfirmation();
+        expect(modalOpenStub).not.toHaveBeenCalled();
     });
 });

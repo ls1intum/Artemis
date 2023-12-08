@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
@@ -132,6 +133,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private ExamUserRepository examUserRepository;
+
+    @Autowired
+    private QuizPoolRepository quizPoolRepository;
 
     private Course course1;
 
@@ -717,6 +721,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteExamWithQuizPool() throws Exception {
+        Exam exam = examUtilService.addExamWithQuizPool(course1);
+
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+        Optional<QuizPool> quizPool = quizPoolRepository.findByExamId(exam.getId());
+        assertThat(quizPool.isPresent()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().get(0));
         exerciseRepository.save(textExercise);
@@ -1093,7 +1107,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testArchiveCourseWithExam() throws Exception {
-        Course course = courseUtilService.createCourseWithExamAndExercises(TEST_PREFIX);
+        Course course = courseUtilService.createCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
         course.setEndDate(now().minusMinutes(5));
         course = courseRepository.save(course);
 
@@ -1113,7 +1127,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private Course archiveExamAsInstructor() throws Exception {
-        var course = courseUtilService.createCourseWithExamAndExercises(TEST_PREFIX);
+        var course = courseUtilService.createCourseWithExamExercisesAndSubmissions(TEST_PREFIX);
         var exam = examRepository.findByCourseId(course.getId()).stream().findFirst().orElseThrow();
 
         request.put("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.OK);

@@ -30,6 +30,7 @@ import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.c
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
+import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -69,6 +70,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     isSaving: boolean;
     goBackAfterSaving = false;
     problemStatementLoaded = false;
+    buildPlanLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText?: string;
     courseId: number;
@@ -115,11 +117,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public packageNameRequired = true;
     public staticCodeAnalysisAllowed = false;
     public checkoutSolutionRepositoryAllowed = false;
+    public customizeBuildPlanWithAeolus = false;
     public sequentialTestRunsAllowed = false;
     public publishBuildPlanUrlAllowed = false;
     public testwiseCoverageAnalysisSupported = false;
     public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
+    public customBuildPlansSupported = false;
 
     // Additional options for import
     public recreateBuildPlans = false;
@@ -261,6 +265,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             this.programmingExercise.projectType = this.projectTypes[0];
             this.selectedProjectTypeValue = this.projectTypes[0]!;
             this.withDependenciesValue = false;
+            this.buildPlanLoaded = false;
+            this.programmingExercise.windFile = undefined;
+            this.programmingExercise.buildPlanConfiguration = undefined;
         }
 
         // If we switch to another language which does not support static code analysis we need to reset options related to static code analysis
@@ -404,6 +411,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             this.isExamMode = true;
                             this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
                                 this.programmingExercise.exerciseGroup = res.body!;
+                                if (this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                    this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
+                                }
                             });
                             // we need the course id  to make the request to the server if it's an import from file
                             if (this.isImportFromFile) {
@@ -459,6 +469,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         });
 
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.customBuildPlansSupported = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI) || profileInfo?.activeProfiles.includes(PROFILE_AEOLUS);
+        });
         this.defineSupportedProgrammingLanguages();
     }
 
@@ -559,6 +572,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * Saves the programming exercise with the provided input
      */
     saveExercise() {
+        if (this.programmingExercise.customizeBuildPlanWithAeolus) {
+            this.programmingExercise.buildPlanConfiguration = JSON.stringify(this.programmingExercise.windFile);
+        } else {
+            this.programmingExercise.buildPlanConfiguration = undefined;
+            this.programmingExercise.windFile = undefined;
+        }
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
         if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {
             this.programmingExercise.submissionPolicy = undefined;
@@ -1019,6 +1038,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             auxiliaryRepositoryDuplicateDirectories: this.auxiliaryRepositoryDuplicateDirectories,
             auxiliaryRepositoryDuplicateNames: this.auxiliaryRepositoryDuplicateNames,
             checkoutSolutionRepositoryAllowed: this.checkoutSolutionRepositoryAllowed,
+            customBuildPlansSupported: this.customBuildPlansSupported,
             invalidDirectoryNamePattern: this.invalidDirectoryNamePattern,
             invalidRepositoryNamePattern: this.invalidRepositoryNamePattern,
             titleNamePattern: this.titleNamePattern,
@@ -1057,6 +1077,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             updateTemplate: this.updateTemplate,
             publishBuildPlanUrlAllowed: this.publishBuildPlanUrlAllowed,
             recreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,
+            buildPlanLoaded: this.buildPlanLoaded,
         };
     }
 }

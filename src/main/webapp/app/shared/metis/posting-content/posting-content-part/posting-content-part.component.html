@@ -12,11 +12,14 @@
 <a class="reference" *ngIf="postingContentPart.referenceType === ReferenceType.USER" (click)="onClickUserReference(postingContentPart.queryParams?.referenceUserLogin)">
     <fa-icon class="px-1" [icon]="faAt"></fa-icon>{{ postingContentPart.referenceStr }}
 </a>
+<a class="reference" *ngIf="postingContentPart.referenceType === ReferenceType.CHANNEL" (click)="onClickChannelReference(postingContentPart.queryParams?.channelId)">
+    <fa-icon class="px-1" [icon]="faHashtag"></fa-icon>{{ postingContentPart.referenceStr }}
+</a>
 <a class="reference" *ngIf="postingContentPart.attachmentToReference" (click)="openAttachment(postingContentPart.attachmentToReference)">
     <fa-icon class="px-1" [icon]="faFile"></fa-icon>{{ postingContentPart.referenceStr }}
 </a>
-<div style="max-width: 400px">
-    <a class="reference" *ngIf="postingContentPart.slideToReference" (click)="enlargeImage(postingContentPart.slideToReference)">
+<div *ngIf="postingContentPart.slideToReference" style="max-width: 400px">
+    <a class="reference" (click)="enlargeImage(postingContentPart.slideToReference)">
         <img
             class="img-fluid rounded-sm border mt-1 mb-1"
             *ngIf="postingContentPart.slideToReference && !imageNotFound"

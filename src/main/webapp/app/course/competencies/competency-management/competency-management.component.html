@@ -24,125 +24,131 @@
     </div>
 
     <div class="container mx-0 mt-3 mb-3 mw-100">
-        <ngb-accordion [closeOthers]="true">
-            <ngb-panel id="panel-1">
-                <ng-template ngbPanelTitle
-                    >{{ 'artemisApp.competency.relation.competencyRelations' | artemisTranslate }}<span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
-                </ng-template>
-                <ng-template ngbPanelContent>
-                    <form class="row p-3 g-3 align-items-center">
-                        <div class="col">
-                            <div class="form-group">
-                                <label for="tail">{{ 'artemisApp.competency.relation.tailCompetency' | artemisTranslate }}</label>
-                                <select
-                                    [ngClass]="{ 'border-danger': relationError !== competencyRelationError.NONE }"
-                                    class="form-select"
-                                    id="tail"
-                                    name="tail"
-                                    [(ngModel)]="tailCompetency"
-                                    (change)="validate()"
-                                >
-                                    <option *ngFor="let competency of competencies" [value]="competency.id">{{ competency.title }}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="form-group">
-                                <label for="type">{{ 'artemisApp.competency.relation.relationType' | artemisTranslate }}</label>
-                                <select
-                                    [ngClass]="{ 'border-danger': relationError !== competencyRelationError.NONE }"
-                                    class="form-select"
-                                    id="type"
-                                    name="type"
-                                    [(ngModel)]="relationType"
-                                    (change)="validate()"
-                                >
+        <div ngbAccordion [closeOthers]="true">
+            <div ngbAccordionItem>
+                <div ngbAccordionHeader>
+                    <button ngbAccordionButton>
+                        {{ 'artemisApp.competency.relation.competencyRelations' | artemisTranslate }}<span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
+                    </button>
+                </div>
+                <div ngbAccordionCollapse>
+                    <div ngbAccordionBody>
+                        <ng-template>
+                            <form class="row p-3 g-3 align-items-center">
+                                <div class="col">
+                                    <div class="form-group">
+                                        <label for="tail">{{ 'artemisApp.competency.relation.tailCompetency' | artemisTranslate }}</label>
+                                        <select
+                                            [ngClass]="{ 'border-danger': relationError !== competencyRelationError.NONE }"
+                                            class="form-select"
+                                            id="tail"
+                                            name="tail"
+                                            [(ngModel)]="tailCompetency"
+                                            (change)="validate()"
+                                        >
+                                            <option *ngFor="let competency of competencies" [value]="competency.id">{{ competency.title }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="form-group">
+                                        <label for="type">{{ 'artemisApp.competency.relation.relationType' | artemisTranslate }}</label>
+                                        <select
+                                            [ngClass]="{ 'border-danger': relationError !== competencyRelationError.NONE }"
+                                            class="form-select"
+                                            id="type"
+                                            name="type"
+                                            [(ngModel)]="relationType"
+                                            (change)="validate()"
+                                        >
+                                            >
+                                            <option value="RELATES" selected>{{ 'artemisApp.competency.relation.relates' | artemisTranslate }}</option>
+                                            <option value="ASSUMES">{{ 'artemisApp.competency.relation.assumes' | artemisTranslate }}</option>
+                                            <option value="EXTENDS">{{ 'artemisApp.competency.relation.extends' | artemisTranslate }}</option>
+                                            <option value="MATCHES">{{ 'artemisApp.competency.relation.matches' | artemisTranslate }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="form-group">
+                                        <label for="head">{{ 'artemisApp.competency.relation.headCompetency' | artemisTranslate }}</label>
+                                        <select
+                                            [ngClass]="{ 'border-danger': relationError !== competencyRelationError.NONE }"
+                                            class="form-select"
+                                            id="head"
+                                            name="head"
+                                            [(ngModel)]="headCompetency"
+                                            (ngModelChange)="validate()"
+                                        >
+                                            <option *ngFor="let competency of competencies" [value]="competency.id">{{ competency.title }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <input
+                                        type="button"
+                                        class="btn btn-primary"
+                                        value="{{ 'artemisApp.competency.relation.createRelation' | artemisTranslate }}"
+                                        (click)="createRelation()"
+                                        [disabled]="!headCompetency || !tailCompetency || !relationType || relationError !== competencyRelationError.NONE"
+                                    />
+                                    <span
+                                        *ngIf="relationError !== competencyRelationError.NONE"
+                                        jhiTranslate="{{ getErrorMessage(relationError) }}"
+                                        id="relation-not-valid-text"
+                                        class="invalid-feedback"
                                     >
-                                    <option value="RELATES" selected>{{ 'artemisApp.competency.relation.relates' | artemisTranslate }}</option>
-                                    <option value="ASSUMES">{{ 'artemisApp.competency.relation.assumes' | artemisTranslate }}</option>
-                                    <option value="EXTENDS">{{ 'artemisApp.competency.relation.extends' | artemisTranslate }}</option>
-                                    <option value="MATCHES">{{ 'artemisApp.competency.relation.matches' | artemisTranslate }}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="form-group">
-                                <label for="head">{{ 'artemisApp.competency.relation.headCompetency' | artemisTranslate }}</label>
-                                <select
-                                    [ngClass]="{ 'border-danger': relationError !== competencyRelationError.NONE }"
-                                    class="form-select"
-                                    id="head"
-                                    name="head"
-                                    [(ngModel)]="headCompetency"
-                                    (ngModelChange)="validate()"
-                                >
-                                    <option *ngFor="let competency of competencies" [value]="competency.id">{{ competency.title }}</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <input
-                                type="button"
-                                class="btn btn-primary"
-                                value="{{ 'artemisApp.competency.relation.createRelation' | artemisTranslate }}"
-                                (click)="createRelation()"
-                                [disabled]="!headCompetency || !tailCompetency || !relationType || relationError !== competencyRelationError.NONE"
-                            />
-                            <span
-                                *ngIf="relationError !== competencyRelationError.NONE"
-                                jhiTranslate="{{ getErrorMessage(relationError) }}"
-                                id="relation-not-valid-text"
-                                class="invalid-feedback"
+                                        You can not create this relation.
+                                    </span>
+                                </div>
+                            </form>
+                            <ngx-graph
+                                class="m-1 chart-container"
+                                layout="dagreCluster"
+                                [enableZoom]="false"
+                                [draggingEnabled]="false"
+                                [nodes]="nodes"
+                                [links]="edges"
+                                [clusters]="clusters"
+                                [update$]="update$"
                             >
-                                You can not create this relation.
-                            </span>
-                        </div>
-                    </form>
-                    <ngx-graph
-                        class="m-1 chart-container"
-                        layout="dagreCluster"
-                        [enableZoom]="false"
-                        [draggingEnabled]="false"
-                        [nodes]="nodes"
-                        [links]="edges"
-                        [clusters]="clusters"
-                        [update$]="update$"
-                    >
-                        <ng-template #defsTemplate>
-                            <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
-                                <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
-                            </svg:marker>
-                        </ng-template>
+                                <ng-template #defsTemplate>
+                                    <svg:marker id="arrow" viewBox="0 -5 10 10" refX="8" refY="0" markerWidth="4" markerHeight="4" orient="auto">
+                                        <svg:path d="M0,-5L10,0L0,5" class="arrow-head" />
+                                    </svg:marker>
+                                </ng-template>
 
-                        <ng-template #clusterTemplate let-cluster>
-                            <svg:g class="node cluster">
-                                <svg:rect rx="5" ry="5" [attr.width]="cluster.dimension.width" [attr.height]="cluster.dimension.height" [attr.fill]="cluster.data.color" />
-                            </svg:g>
-                        </ng-template>
+                                <ng-template #clusterTemplate let-cluster>
+                                    <svg:g class="node cluster">
+                                        <svg:rect rx="5" ry="5" [attr.width]="cluster.dimension.width" [attr.height]="cluster.dimension.height" [attr.fill]="cluster.data.color" />
+                                    </svg:g>
+                                </ng-template>
 
-                        <ng-template #nodeTemplate let-node>
-                            <svg:g class="node">
-                                <svg:rect [attr.width]="node.dimension.width" [attr.height]="node.dimension.height" />
-                                <svg:text alignment-baseline="central" [attr.x]="10" [attr.y]="node.dimension.height / 2">
-                                    {{ node.label }}
-                                </svg:text>
-                            </svg:g>
-                        </ng-template>
+                                <ng-template #nodeTemplate let-node>
+                                    <svg:g class="node">
+                                        <svg:rect [attr.width]="node.dimension.width" [attr.height]="node.dimension.height" />
+                                        <svg:text alignment-baseline="central" [attr.x]="10" [attr.y]="node.dimension.height / 2">
+                                            {{ node.label }}
+                                        </svg:text>
+                                    </svg:g>
+                                </ng-template>
 
-                        <ng-template #linkTemplate let-link>
-                            <svg:g class="edge" (click)="removeRelation(link)">
-                                <svg:path class="line" stroke-width="2" marker-end="url(#arrow)"></svg:path>
-                                <svg:text class="edge-label" text-anchor="middle">
-                                    <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
-                                        {{ ('artemisApp.competency.relation.' + link.label.toLowerCase() | artemisTranslate).toUpperCase() }}
-                                    </textPath>
-                                </svg:text>
-                            </svg:g>
+                                <ng-template #linkTemplate let-link>
+                                    <svg:g class="edge" (click)="removeRelation(link)">
+                                        <svg:path class="line" stroke-width="2" marker-end="url(#arrow)"></svg:path>
+                                        <svg:text class="edge-label" text-anchor="middle">
+                                            <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
+                                                {{ ('artemisApp.competency.relation.' + link.label.toLowerCase() | artemisTranslate).toUpperCase() }}
+                                            </textPath>
+                                        </svg:text>
+                                    </svg:g>
+                                </ng-template>
+                            </ngx-graph>
                         </ng-template>
-                    </ngx-graph>
-                </ng-template>
-            </ngb-panel>
-        </ngb-accordion>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="container-fluid" style="min-height: 100px">
@@ -201,7 +207,7 @@
                             (delete)="deleteCompetency(competency.id!)"
                             [dialogError]="dialogError$"
                         >
-                            <fa-icon [icon]="faTimes"></fa-icon>
+                            <fa-icon [icon]="faTrash"></fa-icon>
                         </button>
                     </td>
                 </tr>
@@ -253,7 +259,7 @@
                     </td>
                     <td class="text-end">
                         <button id="removeButton" class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
-                            <fa-icon [icon]="faTimes"></fa-icon> {{ 'artemisApp.competency.competencyCard.remove' | artemisTranslate }}
+                            <fa-icon [icon]="faTrash"></fa-icon> {{ 'artemisApp.competency.competencyCard.remove' | artemisTranslate }}
                         </button>
                     </td>
                 </tr>

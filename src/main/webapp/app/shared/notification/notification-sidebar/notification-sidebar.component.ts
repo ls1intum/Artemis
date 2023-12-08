@@ -3,20 +3,7 @@ import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import dayjs from 'dayjs/esm';
 import { GroupNotification } from 'app/entities/group-notification.model';
-import {
-    LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE,
-    NEW_COURSE_POST_TITLE,
-    NEW_EXAM_POST_TITLE,
-    NEW_EXERCISE_POST_TITLE,
-    NEW_LECTURE_POST_TITLE,
-    NEW_MESSAGE_TITLE,
-    NEW_REPLY_FOR_COURSE_POST_TITLE,
-    NEW_REPLY_FOR_EXAM_POST_TITLE,
-    NEW_REPLY_FOR_EXERCISE_POST_TITLE,
-    NEW_REPLY_FOR_LECTURE_POST_TITLE,
-    NEW_REPLY_MESSAGE_TITLE,
-    Notification,
-} from 'app/entities/notification.model';
+import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { Subscription } from 'rxjs';
@@ -27,19 +14,7 @@ import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 export const LAST_READ_STORAGE_KEY = 'lastNotificationRead';
-const IRRELEVANT_NOTIFICATION_TITLES = [
-    NEW_MESSAGE_TITLE,
-    NEW_REPLY_MESSAGE_TITLE,
-    LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE,
-    NEW_EXERCISE_POST_TITLE,
-    NEW_LECTURE_POST_TITLE,
-    NEW_EXAM_POST_TITLE,
-    NEW_COURSE_POST_TITLE,
-    NEW_REPLY_FOR_EXERCISE_POST_TITLE,
-    NEW_REPLY_FOR_LECTURE_POST_TITLE,
-    NEW_REPLY_FOR_EXAM_POST_TITLE,
-    NEW_REPLY_FOR_COURSE_POST_TITLE,
-];
+const IRRELEVANT_NOTIFICATION_TITLES = [NEW_MESSAGE_TITLE, LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE];
 
 @Component({
     selector: 'jhi-notification-sidebar',
@@ -198,18 +173,7 @@ export class NotificationSidebarComponent implements OnInit, OnDestroy {
      * @param notification {Notification}
      */
     getNotificationTextTranslation(notification: Notification): string {
-        if (notification.textIsPlaceholder) {
-            const translation = this.artemisTranslatePipe.transform(notification.text, { placeholderValues: this.getParsedPlaceholderValues(notification) });
-            if (translation?.includes(translationNotFoundMessage)) {
-                return notification.text ?? 'No text found';
-            }
-            if (translation?.length > this.maxNotificationLength) {
-                return translation.substring(0, this.maxNotificationLength - 1) + '...';
-            }
-            return translation;
-        } else {
-            return notification.text ?? 'No text found';
-        }
+        return this.notificationService.getNotificationTextTranslation(notification, this.maxNotificationLength);
     }
 
     private getParsedPlaceholderValues(notification: Notification): string[] {

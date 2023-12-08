@@ -10,6 +10,7 @@ import {
     faFile,
     faFileUpload,
     faFont,
+    faHashtag,
     faKeyboard,
     faMessage,
     faPaperclip,
@@ -28,8 +29,10 @@ import { AccountService } from 'app/core/auth/account.service';
 export class PostingContentPartComponent {
     @Input() postingContentPart: PostingContentPart;
     @Output() userReferenceClicked = new EventEmitter<string>();
+    @Output() channelReferenceClicked = new EventEmitter<number>();
 
     imageNotFound = false;
+    hasClickedUserReference = false;
 
     // Only allow certain html tags and attributes
     allowedHtmlTags: string[] = ['a', 'b', 'br', 'blockquote', 'code', 'del', 'em', 'i', 'ins', 'li', 'mark', 'ol', 'p', 'pre', 'small', 'span', 'strong', 'sub', 'sup', 'ul'];
@@ -39,6 +42,7 @@ export class PostingContentPartComponent {
     protected readonly faFile = faFile;
     protected readonly faBan = faBan;
     protected readonly faAt = faAt;
+    protected readonly faHashtag = faHashtag;
 
     protected readonly ReferenceType = ReferenceType;
 
@@ -105,8 +109,20 @@ export class PostingContentPartComponent {
      * @param referenceUserLogin login of the referenced user
      */
     onClickUserReference(referenceUserLogin: string | undefined) {
-        if (referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity?.login) {
+        if (!this.hasClickedUserReference && referenceUserLogin && referenceUserLogin !== this.accountService.userIdentity?.login) {
+            this.hasClickedUserReference = true;
             this.userReferenceClicked.emit(referenceUserLogin);
+        }
+    }
+
+    /**
+     * Emit an event if the clicked channel reference is clicked
+     *
+     * @param channelId login of the referenced user
+     */
+    onClickChannelReference(channelId: number | undefined) {
+        if (channelId) {
+            this.channelReferenceClicked.emit(channelId);
         }
     }
 }

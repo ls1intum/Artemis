@@ -57,6 +57,8 @@ export class NotificationPopupComponent implements OnInit {
 
     private studentExamExerciseIds: number[];
 
+    private readonly maxNotificationLength = 150;
+
     // Icons
     faTimes = faTimes;
     faMessage = faMessage;
@@ -102,6 +104,8 @@ export class NotificationPopupComponent implements OnInit {
             this.examExerciseUpdateService.navigateToExamExercise(target.exercise);
         } else if (notification.title && conversationMessageNotificationTitles.includes(notification.title)) {
             const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
+            queryParams.messageId = target.id;
+
             const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
             // check if component reload is needed
             if (currentCourseId === undefined || currentCourseId !== targetCourseId || this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
@@ -135,15 +139,7 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     getNotificationTextTranslation(notification: Notification): string {
-        if (notification.textIsPlaceholder) {
-            const translation = this.artemisTranslatePipe.transform(notification.text, { placeholderValues: this.getParsedPlaceholderValues(notification) });
-            if (translation?.includes(translationNotFoundMessage)) {
-                return notification.text ?? 'No text found';
-            }
-            return translation;
-        } else {
-            return notification.text ?? 'No text found';
-        }
+        return this.notificationService.getNotificationTextTranslation(notification, this.maxNotificationLength);
     }
 
     private getParsedPlaceholderValues(notification: Notification): string[] {

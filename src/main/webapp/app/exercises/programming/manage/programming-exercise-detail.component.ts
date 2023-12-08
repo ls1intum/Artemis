@@ -39,7 +39,8 @@ import {
     faPencilAlt,
     faRobot,
     faTable,
-    faTimes,
+    faTrash,
+    faUndo,
     faUserCheck,
     faUsers,
     faWrench,
@@ -54,7 +55,8 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { IrisProgrammingExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-programming-exercise-settings-update/iris-programming-exercise-settings-update.component';
+import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -72,6 +74,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly ButtonSize = ButtonSize;
     readonly AssessmentType = AssessmentType;
     readonly documentationType: DocumentationType = 'Programming';
+    readonly CHAT = IrisSubSettingsType.CHAT;
 
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
@@ -88,6 +91,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     // Also used to hide the buttons to lock and unlock all repositories as that does not do anything in the local VCS.
     localVCEnabled = false;
     irisEnabled = false;
+    irisChatEnabled = false;
 
     isAdmin = false;
     addedLineCount: number;
@@ -101,7 +105,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
-    faTimes = faTimes;
+    faUndo = faUndo;
+    faTrash = faTrash;
     faBook = faBook;
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
@@ -138,6 +143,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private router: Router,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private consistencyCheckService: ConsistencyCheckService,
+        private irisSettingsService: IrisSettingsService,
     ) {}
 
     ngOnInit() {
@@ -190,7 +196,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.supportsAuxiliaryRepositories =
                             this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
                         this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                        this.irisEnabled = profileInfo.activeProfiles.includes('iris') && !this.programmingExercise.exerciseGroup;
+                        this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                        if (this.irisEnabled) {
+                            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                                this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
+                            });
+                        }
                     }
                 });
 
@@ -396,16 +407,18 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             if (gitDiffReport) {
                 this.programmingExercise.gitDiffReport = gitDiffReport;
                 gitDiffReport.programmingExercise = this.programmingExercise;
-                this.addedLineCount = gitDiffReport.entries
-                    .map((entry) => entry.lineCount)
-                    .filter((lineCount) => lineCount)
-                    .map((lineCount) => lineCount!)
-                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
-                this.removedLineCount = gitDiffReport.entries
-                    .map((entry) => entry.previousLineCount)
-                    .filter((lineCount) => lineCount)
-                    .map((lineCount) => lineCount!)
-                    .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0);
+                this.addedLineCount =
+                    gitDiffReport.entries
+                        ?.map((entry) => entry.lineCount)
+                        .filter((lineCount) => lineCount)
+                        .map((lineCount) => lineCount!)
+                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
+                this.removedLineCount =
+                    gitDiffReport.entries
+                        ?.map((entry) => entry.previousLineCount)
+                        .filter((lineCount) => lineCount)
+                        .map((lineCount) => lineCount!)
+                        .reduce((lineCount1, lineCount2) => lineCount1 + lineCount2, 0) ?? 0;
             }
         });
     }
@@ -416,14 +429,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     showGitDiff(): void {
         const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
         modalRef.componentInstance.report = this.programmingExercise.gitDiffReport;
-    }
-
-    /**
-     * Shows the iris settings in a modal.
-     */
-    showIrisSettings(): void {
-        const modalRef = this.modalService.open(IrisProgrammingExerciseSettingsUpdateComponent, { size: 'xl' });
-        modalRef.componentInstance.programmingExerciseId = this.programmingExercise.id;
     }
 
     createStructuralSolutionEntries() {

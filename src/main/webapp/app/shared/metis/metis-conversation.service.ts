@@ -8,7 +8,7 @@ import { User } from 'app/core/user/user.model';
 import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
 import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/shared/metis/metis.util';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -38,7 +38,7 @@ export class MetisConversationService implements OnDestroy {
     _isCodeOfConductPresented$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
     private hasUnreadMessages = false;
     _hasUnreadMessages$: Subject<boolean> = new ReplaySubject<boolean>(1);
-    // Stores the course for which the service is setup -> should not change during the lifetime of the service
+    // Stores the course for which the service is set up -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
     private isLoading = false;
@@ -140,7 +140,10 @@ export class MetisConversationService implements OnDestroy {
             );
         }
         if (!cachedConversation) {
-            throw new Error('The conversation is not part of the cache. Therefore, it cannot be set as active conversation.');
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.metis.channel.invalidReference',
+            });
         }
         this.activeConversation = cachedConversation;
         this._activeConversation$.next(this.activeConversation);
@@ -175,7 +178,7 @@ export class MetisConversationService implements OnDestroy {
         }
     }
 
-    public forceRefresh = (notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> => {
+    public forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
         if (!this._course) {
             throw new Error('Course is not set. The service does not seem to be initialized.');
         }
@@ -218,7 +221,7 @@ export class MetisConversationService implements OnDestroy {
             // refresh complete
             switchMap(() => EMPTY),
         );
-    };
+    }
 
     public createOneToOneChat = (loginOfChatPartner: string): Observable<HttpResponse<OneToOneChatDTO>> =>
         this.onConversationCreation(this.oneToOneChatService.create(this._courseId, loginOfChatPartner));

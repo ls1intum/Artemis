@@ -21,6 +21,7 @@
         [isGradingKeyCollapsed]="isGradingKeyCollapsed"
         [isBonusGradingKeyCollapsed]="isBonusGradingKeyCollapsed"
         [exerciseInfos]="exerciseInfos"
+        [isTestRun]="isTestRun"
     />
 </div>
 <div *ngIf="!resultsArePublished" class="mb-0">
@@ -75,13 +76,23 @@
                             <ng-template #hideExampleSolution> {{ 'artemisApp.exam.examSummary.hideExampleSolution' | artemisTranslate }} </ng-template>
                         </button>
 
-                        <jhi-programming-exercise-example-solution-repo-download
-                            *ngIf="exercise.type === PROGRAMMING"
-                            class="ms-2 float-end"
-                            [exerciseId]="exercise.id!"
-                            [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
-                            [displayedOnExamSummary]="true"
-                        />
+                        <ng-container *ngIf="exercise.type === PROGRAMMING">
+                            <jhi-programming-exercise-example-solution-repo-download
+                                class="ms-2 float-end"
+                                [exerciseId]="exercise.id!"
+                                [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
+                                [displayedOnExamSummary]="true"
+                            />
+                            <jhi-programming-exercise-example-solution-repo-download
+                                *ngIf="exerciseInfos[exercise.id!].releaseTestsWithExampleSolution"
+                                class="ms-2 float-end"
+                                [exerciseId]="exercise.id!"
+                                [includeTests]="true"
+                                [title]="'artemisApp.programmingExercise.export.downloadTestsWithExampleSolution'"
+                                [displayedOnExamSummary]="true"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.studentDownloadTestsTooltip' | artemisTranslate }}"
+                            />
+                        </ng-container>
                     </ng-container>
                 </span>
             </div>
