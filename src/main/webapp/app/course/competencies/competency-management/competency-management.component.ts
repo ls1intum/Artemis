@@ -7,7 +7,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, forkJoin } from 'rxjs';
-import { faPencilAlt, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteImportComponent } from 'app/course/competencies/competency-management/prerequisite-import.component';
 import { ClusterNode, Edge, Node } from '@swimlane/ngx-graph';
@@ -45,7 +45,7 @@ export class CompetencyManagementComponent implements OnInit, OnDestroy {
 
     // Icons
     faPlus = faPlus;
-    faTimes = faTimes;
+    faTrash = faTrash;
     faPencilAlt = faPencilAlt;
 
     constructor(

@@ -3,7 +3,7 @@ import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-gr
 import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { EMPTY, Subject, from } from 'rxjs';
-import { faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -29,7 +29,7 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
 
     faWrench = faWrench;
     faUsers = faUsers;
-    faTimes = faTimes;
+    faTrash = faTrash;
 
     constructor(
         private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
