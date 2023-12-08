@@ -205,7 +205,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(Object resultNotification, boolean withFailedTest) {
+    public void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(AbstractBuildResultNotificationDTO resultNotification, boolean withFailedTest) {
         // reset saved test weights to be all 1
         var test2 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "test2").orElseThrow();
         var test3 = programmingExerciseTestCaseRepository.findByExerciseIdAndTestName(programmingExercise.getId(), "test3").orElseThrow();
@@ -255,14 +255,17 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldHandleTestCasesWithLongNames(Object resultNotification) {
-        gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+    public void shouldHandleTestCasesWithLongNames(AbstractBuildResultNotificationDTO resultNotification) {
+        final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+        // gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         assertThat(testCases.stream().map(ProgrammingExerciseTestCase::getTestName).toArray()).contains("a".repeat(254), "b".repeat(255), "c".repeat(255));
+        assertThat(result.getFeedbacks().stream().map(Feedback::getTestCase).filter(Objects::nonNull).map(ProgrammingExerciseTestCase::getTestName)).contains("a".repeat(254),
+                "b".repeat(255), "c".repeat(255));
     }
 
     // Test
-    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification, ProgrammingLanguage programmingLanguage) {
+    public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(AbstractBuildResultNotificationDTO resultNotification, ProgrammingLanguage programmingLanguage) {
         final long participationId = programmingExerciseStudentParticipationStaticCodeAnalysis.getId();
         final var result = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         assertThat(result).isNotNull();
@@ -285,7 +288,7 @@ public class ProgrammingExerciseResultTestService {
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId)).hasSameSizeAs(submissions);
     }
 
-    public void shouldSaveBuildLogsInBuildLogRepository(Object resultNotification) {
+    public void shouldSaveBuildLogsInBuildLogRepository(AbstractBuildResultNotificationDTO resultNotification) {
         buildLogEntryRepository.deleteAll();
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
@@ -299,7 +302,7 @@ public class ProgrammingExerciseResultTestService {
         assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
-    public void shouldNotSaveBuildLogsInBuildLogRepository(Object resultNotification) {
+    public void shouldNotSaveBuildLogsInBuildLogRepository(AbstractBuildResultNotificationDTO resultNotification) {
         buildLogEntryRepository.deleteAll();
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
@@ -314,7 +317,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldGenerateNewManualResultIfManualAssessmentExists(Object resultNotification) {
+    public void shouldGenerateNewManualResultIfManualAssessmentExists(AbstractBuildResultNotificationDTO resultNotification) {
         activateFourTests();
 
         var programmingSubmission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
@@ -350,7 +353,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldGenerateTestwiseCoverageFileReports(Object resultNotification) throws GitAPIException {
+    public void shouldGenerateTestwiseCoverageFileReports(AbstractBuildResultNotificationDTO resultNotification) throws GitAPIException {
         // set testwise coverage analysis for programming exercise
         programmingExercise.setTestwiseCoverageEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
@@ -377,7 +380,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldIgnoreResultIfNotOnDefaultBranch(Object resultNotification) {
+    public void shouldIgnoreResultIfNotOnDefaultBranch(AbstractBuildResultNotificationDTO resultNotification) {
         solutionParticipation.setProgrammingExercise(programmingExercise);
 
         assertThatIllegalArgumentException().isThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification))
@@ -385,7 +388,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldCreateResultOnParticipationDefaultBranch(Object resultNotification) {
+    public void shouldCreateResultOnParticipationDefaultBranch(AbstractBuildResultNotificationDTO resultNotification) {
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
         programmingExerciseStudentParticipation.setBranch("branch");
 
@@ -395,7 +398,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldIgnoreResultIfNotOnParticipationBranch(Object resultNotification) {
+    public void shouldIgnoreResultIfNotOnParticipationBranch(AbstractBuildResultNotificationDTO resultNotification) {
         programmingExerciseStudentParticipation.setBranch("default");
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
 
@@ -404,7 +407,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, Object resultNotification) {
+    public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, AbstractBuildResultNotificationDTO resultNotification) {
         programmingExercise.setBranch(defaultBranch);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
@@ -453,7 +456,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldUpdateParticipantScoresOnlyOnce(Object resultNotification, InstanceMessageSendService instanceMessageSendService) {
+    public void shouldUpdateParticipantScoresOnlyOnce(AbstractBuildResultNotificationDTO resultNotification, InstanceMessageSendService instanceMessageSendService) {
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
 
         // check that exactly one update is scheduled
@@ -461,7 +464,7 @@ public class ProgrammingExerciseResultTestService {
                 null);
     }
 
-    private int getNumberOfBuildLogs(Object resultNotification) {
+    private int getNumberOfBuildLogs(AbstractBuildResultNotificationDTO resultNotification) {
         if (resultNotification instanceof BambooBuildResultNotificationDTO) {
             return ((BambooBuildResultNotificationDTO) resultNotification).getBuild().jobs().iterator().next().logs().size();
         }

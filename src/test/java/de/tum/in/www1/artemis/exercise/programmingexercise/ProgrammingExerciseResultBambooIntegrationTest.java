@@ -83,8 +83,8 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
         String name1 = "a".repeat(254);
         String name2 = "b".repeat(255);
         String name3 = "c".repeat(256);
-        var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of(name1, name2), List.of(name3),
-                new ArrayList<>());
+        var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.SOLUTION_REPO_NAME.toUpperCase(), null, null, null, List.of(name1, name2), List.of(name3),
+                null);
 
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());

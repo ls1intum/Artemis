@@ -92,7 +92,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         String name1 = "a".repeat(254);
         String name2 = "b".repeat(255);
         String name3 = "c".repeat(256);
-        var notification = ProgrammingExerciseFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, null, ProgrammingLanguage.JAVA, true, List.of(name1, name2),
+        var notification = ProgrammingExerciseFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, true, List.of(name1, name2),
                 List.of(name3), new ArrayList<>(), new ArrayList<>(), null);
 
         gitlabRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getSolutionParticipation(), Map.of(TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now()));
