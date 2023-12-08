@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseCreationSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisException;
+import de.tum.in.www1.artemis.service.iris.session.exercisecreation.IrisExerciseMetadataDTO;
 import de.tum.in.www1.artemis.service.iris.session.exercisecreation.IrisExerciseUpdateDTO;
 
 @Service
@@ -35,10 +36,11 @@ public class IrisExerciseCreationWebsocketService extends IrisWebsocketService {
      *
      * @param message that should be sent over the websocket
      */
-    public void sendMessage(IrisMessage message, IrisExerciseUpdateDTO exerciseUpdate) {
+    public void sendMessage(IrisMessage message, String problemStatement, IrisExerciseMetadataDTO metadata) {
         var session = message.getSession();
         var user = checkSessionTypeAndGetUser(session);
-        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.message(message, exerciseUpdate));
+        var update = new IrisExerciseUpdateDTO(problemStatement, metadata);
+        super.send(user, WEBSOCKET_TOPIC_SESSION_TYPE, session.getId(), IrisWebsocketDTO.message(message, update));
     }
 
     /**

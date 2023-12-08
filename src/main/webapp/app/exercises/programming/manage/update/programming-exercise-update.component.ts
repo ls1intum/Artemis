@@ -165,7 +165,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
         private irisSettingsService: IrisSettingsService,
-        private irisExerciseCreationWebsocketService: IrisExerciseCreationWebsocketService,
+        irisExerciseCreationWebsocketService: IrisExerciseCreationWebsocketService,
     ) {
         irisExerciseCreationWebsocketService.onExerciseUpdate().subscribe((exerciseUpdate: ExerciseUpdate) => {
             this.handleProblemStatementUpdate(exerciseUpdate);
@@ -173,10 +173,32 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private handleProblemStatementUpdate(exerciseUpdate: ExerciseUpdate) {
-        this.programmingExercise.problemStatement = exerciseUpdate.problemStatement;
-        Object.keys(exerciseUpdate).forEach((key) => {
-            console.log(key, exerciseUpdate[key]);
-        });
+        if (exerciseUpdate.problemStatement) {
+            this.programmingExercise.problemStatement = exerciseUpdate.problemStatement;
+        }
+        if (exerciseUpdate.metadata) {
+            this.programmingExercise.title = exerciseUpdate.metadata.title;
+            this.programmingExercise.shortName = exerciseUpdate.metadata.shortName;
+        }
+    }
+
+    isIrisEnabled() {
+        return this.irisSettings?.irisCodeEditorSettings?.enabled;
+    }
+
+    getFormDataAndProblemStatement(): Record<string, unknown> {
+        const getValue = function (fieldName: string) {
+            const value = (<HTMLInputElement>document.getElementById(fieldName))?.value || null;
+            console.log('Value of ' + fieldName + ': ' + value);
+            return value;
+        };
+        return {
+            problemStatement: getValue('field_problemStatement'),
+            metadata: {
+                title: getValue('field_title'),
+                short_name: getValue('field_shortName'),
+            },
+        };
     }
 
     /**
@@ -554,28 +576,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             // Exam exercises cannot be not included into the total score. NOT_INCLUDED exercises will be converted to INCLUDED ones
             this.programmingExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
         }
-    }
-
-    isIrisEnabled() {
-        return this.irisSettings?.irisCodeEditorSettings?.enabled;
-    }
-
-    getFormDataAndProblemStatement(): Record<string, unknown> {
-        const o = {
-            problemStatement: document.getElementById('field_problemStatement')?.innerHTML,
-            metadata: this.getFormData(),
-        };
-        console.dir(o);
-        return o;
-    }
-
-    private getFormData(): Record<string, unknown> {
-        return {
-            title: (<HTMLInputElement>document.getElementById('field_title')).value,
-            short_name: (<HTMLInputElement>document.getElementById('field_shortName')).value,
-            package_name: (<HTMLInputElement>document.getElementById('field_packageName')).value,
-            points: (<HTMLInputElement>document.getElementById('field_points')).value,
-        };
     }
 
     /**

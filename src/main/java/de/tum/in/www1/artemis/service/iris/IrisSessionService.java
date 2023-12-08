@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.service.iris;
 
-import java.util.Map;
-
 import javax.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -98,7 +98,7 @@ public class IrisSessionService {
      * @param session      The session to get a message for
      * @param clientParams Some extra parameters from the client to consider in the request to Iris
      */
-    public void requestMessageFromIris(IrisSession session, Map<String, Object> clientParams) {
+    public void requestMessageFromIris(IrisSession session, JsonNode clientParams) {
         getIrisSessionSubService(session).requestAndHandleResponse(session, clientParams);
     }
 

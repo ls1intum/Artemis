@@ -15,24 +15,13 @@ export enum IrisExerciseCreationWebsocketMessageType {
 }
 
 export type ExerciseUpdate = {
-    problemStatement: string;
-    exerciseUpdate: ExerciseMetadata;
+    problemStatement?: string;
+    metadata?: ExerciseMetadata;
 };
 
 export type ExerciseMetadata = {
     title: string;
-    short_name: string;
-    categories: string[];
-    difficulty: 'no level' | 'easy' | 'medium' | 'hard';
-    participation: 'individual' | 'team';
-    allow_offline_IDE: boolean;
-    allow_online_editor: boolean;
-    publish_build_plan: boolean;
-    programming_language: 'java' | 'python' | 'c' | 'haskell' | 'kotlin' | 'vhdl' | 'assembler' | 'swift' | 'ocaml' | 'empty';
-    include_in_course_score: 'yes' | 'bonus' | 'no';
-    points: number;
-    bonus_points: number;
-    submission_policy: 'none' | 'lock repository' | 'submission penalty';
+    shortName: string;
 };
 
 /**

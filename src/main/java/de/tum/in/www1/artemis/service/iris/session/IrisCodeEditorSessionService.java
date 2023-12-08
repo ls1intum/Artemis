@@ -161,7 +161,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @param clientParams Extra parameters from the client for the request (currently unused)
      */
     @Override
-    public void requestAndHandleResponse(IrisSession irisSession, Map<String, Object> clientParams) {
+    public void requestAndHandleResponse(IrisSession irisSession, JsonNode clientParams) {
         var sessionFromDB = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
         if (!(sessionFromDB instanceof IrisCodeEditorSession session)) {
             throw new BadRequestException("Iris session is not a code editor session");

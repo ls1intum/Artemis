@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 
 import javax.ws.rs.BadRequestException;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -36,7 +39,6 @@ import de.tum.in.www1.artemis.service.iris.IrisDefaultTemplateService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
 import de.tum.in.www1.artemis.service.iris.session.exercisecreation.IrisExerciseMetadataDTO;
-import de.tum.in.www1.artemis.service.iris.session.exercisecreation.IrisExerciseUpdateDTO;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisExerciseCreationWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -48,7 +50,16 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Profile("iris")
 public class IrisExerciseCreationSessionService implements IrisSessionSubServiceInterface {
 
-    private final Logger log = LoggerFactory.getLogger(IrisCodeEditorSessionService.class);
+    private static String loadTemplate() {
+        try {
+            return Files.readString(Path.of("src", "main", "resources", "templates", "iris", "exercise-creation.hbs")).trim();
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Failed to load Iris template", e);
+        }
+    }
+
+    private final Logger log = LoggerFactory.getLogger(IrisExerciseCreationSessionService.class);
 
     private final IrisConnectorService irisConnectorService;
 
@@ -106,7 +117,10 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
 
     @Override
     public void sendOverWebsocket(IrisMessage message) {
-        irisExerciseCreationWebsocketService.sendMessage(message, null);
+        irisExerciseCreationWebsocketService.sendMessage(message, null, null);
+    }
+
+    private record IrisExerciseCreationRequestDTO(String problemStatement, ObjectNode metadata, List<IrisMessage> chatHistory) {
     }
 
     /**
@@ -116,18 +130,20 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
      * @param clientParams The current exercise metadata and problem statement
      */
     @Override
-    public void requestAndHandleResponse(IrisSession irisSession, Map<String, Object> clientParams) {
+    public void requestAndHandleResponse(IrisSession irisSession, JsonNode clientParams) {
         var fromDB = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         if (!(fromDB instanceof IrisExerciseCreationSession session)) {
             throw new BadRequestException("Iris session is not an exercise creation session");
         }
+        if (!clientParams.path("metadata").isObject()) {
+            throw new BadRequestException("Exercise metadata is not an object: " + clientParams.path("metadata"));
+        }
         var template = irisDefaultTemplateService.load("exercise-creation.hbs");
         var settings = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false).irisCodeEditorSettings();
-        Map<String, Object> params = new HashMap<>();
-        params.put("metadata", clientParams.get("metadata"));
-        params.put("problemStatement", clientParams.get("problemStatement"));
-        params.put("chatHistory", session.getMessages());
-        irisConnectorService.sendRequestV2(template.getContent(), settings.getPreferredModel(), params).handleAsync((response, throwable) -> {
+        String problemStatement = clientParams.path("problemStatement").asText();
+        ObjectNode metadata = (ObjectNode) clientParams.path("metadata");
+        var params = new IrisExerciseCreationRequestDTO(problemStatement, metadata, session.getMessages());
+        irisConnectorService.sendRequestV2(loadTemplate(), settings.getPreferredModel(), params).handleAsync((response, throwable) -> {
             if (throwable != null) {
                 log.error("Failed to get Iris response", throwable);
                 irisExerciseCreationWebsocketService.sendException(session, throwable);
@@ -144,39 +160,48 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
                 irisExerciseCreationWebsocketService.sendException(session, new IrisParseResponseException("Iris did not respond"));
                 return null;
             }
-            var irisMessage = toIrisMessage(response.content());
-            var exerciseUpdate = toIrisExerciseUpdateDTO(response.content());
-            var saved = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);
-            irisExerciseCreationWebsocketService.sendMessage(saved, exerciseUpdate);
+            var irisMessage = getResponse(response.content());
+            var updatedProblemStatement = getProblemStatement(response.content());
+            var updatedMetadata = getUpdatedMetadata(response.content(), metadata);
+            var savedMessage = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);
+            irisExerciseCreationWebsocketService.sendMessage(savedMessage, updatedProblemStatement, updatedMetadata);
             return null;
         });
     }
 
-    private IrisMessage toIrisMessage(JsonNode content) {
+    private IrisMessage getResponse(JsonNode content) {
         var message = new IrisMessage();
         var chatWindowResponse = content.required("response").asText();
         message.addContent(new IrisTextMessageContent(chatWindowResponse));
         return message;
     }
 
-    private IrisExerciseUpdateDTO toIrisExerciseUpdateDTO(JsonNode content) {
-        String problemStatement = null;
-        if (content.hasNonNull("finalProblemStatement")) {
-            problemStatement = content.get("finalProblemStatement").asText();
+    private String getProblemStatement(JsonNode content) {
+        if (content.hasNonNull("updatedProblemStatement")) {
+            return content.get("updatedProblemStatement").asText();
         }
+        return null;
+    }
+
+    private IrisExerciseMetadataDTO getUpdatedMetadata(JsonNode content, ObjectNode currentMetadata) {
         try {
-            String updatedMetadata = content.required("updatedMetadata").asText();
-            JsonNode metadataJson = objectMapper.readTree(updatedMetadata);
-            var metadata = IrisExerciseMetadataDTO.parse(metadataJson);
-            return new IrisExerciseUpdateDTO(problemStatement, metadata);
+            JsonNode updatedMetadata = objectMapper.readTree(content.required("updatedMetadata").asText());
+            if (!updatedMetadata.isObject()) {
+                throw new IllegalArgumentException("Updated metadata is not an object: " + updatedMetadata.getNodeType());
+            }
+            // Merge the updated metadata with the current metadata
+            ObjectNode mergedMetadata = objectMapper.createObjectNode();
+            mergedMetadata.setAll(currentMetadata);
+            mergedMetadata.setAll((ObjectNode) updatedMetadata);
+            return objectMapper.treeToValue(mergedMetadata, IrisExerciseMetadataDTO.class);
         }
         catch (JsonProcessingException e) {
-            log.warn("Failed to parse updatedMetadata, was not valid JSON", e);
+            log.warn("Failed to parse updatedMetadata, did not match Metadata type", e);
         }
         catch (IllegalArgumentException e) {
             log.warn("Failed to parse updatedMetadata, did not have all required fields", e);
         }
-        return new IrisExerciseUpdateDTO(problemStatement, null);
+        return null;
     }
 
     @Override

@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
@@ -136,7 +138,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
      * @param clientParams Extra parameters from the client for the request (currently unused)
      */
     @Override
-    public void requestAndHandleResponse(IrisSession session, Map<String, Object> clientParams) {
+    public void requestAndHandleResponse(IrisSession session, JsonNode clientParams) {
         var fullSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
         Map<String, Object> parameters = new HashMap<>();
         if (!(fullSession instanceof IrisChatSession chatSession)) {
