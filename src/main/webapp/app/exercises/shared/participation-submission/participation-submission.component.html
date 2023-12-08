@@ -83,7 +83,7 @@
                             (delete)="deleteResult(result.submission, result)"
                             [dialogError]="dialogError$"
                         >
-                            <fa-icon [icon]="faTimes"></fa-icon>
+                            <fa-icon [icon]="faTrash"></fa-icon>
                             {{ 'artemisApp.result.delete.buttonText' | artemisTranslate }}
                         </span>
                     </div>
@@ -147,7 +147,7 @@
                     (delete)="deleteSubmission(value)"
                     [dialogError]="dialogError$"
                 >
-                    <fa-icon [icon]="faTimes"></fa-icon>
+                    <fa-icon [icon]="faTrash"></fa-icon>
                 </button>
             </ng-template>
         </ngx-datatable-column>
