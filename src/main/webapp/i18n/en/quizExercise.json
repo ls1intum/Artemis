@@ -81,6 +81,7 @@
             "addMultipleChoiceQuestion": "Add Multiple-Choice Question",
             "addDragAndDropQuestion": "Add Drag-And-Drop Question",
             "addShortAnswerQuestion": "Add Short-Answer Question",
+            "addApollonDragAndDropQuestion": "Create Apollon Drag-And-Drop Question",
             "addExistingQuestions": "Add Existing Questions",
             "fromAFile": "From a file",
             "fromACourse": "From a course",
