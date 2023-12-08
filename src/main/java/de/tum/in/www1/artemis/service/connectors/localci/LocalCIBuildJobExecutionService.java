@@ -80,6 +80,9 @@ public class LocalCIBuildJobExecutionService {
     @Value("${artemis.repo-clone-path}")
     private String repoClonePath;
 
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
+
     public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService,
             LocalCIContainerService localCIContainerService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, XMLInputFactory localCIXMLInputFactory,
             GitService gitService, ParticipationRepository participationRepository) {
@@ -509,7 +512,8 @@ public class LocalCIBuildJobExecutionService {
 
     private void deleteCloneRepo(ProgrammingExerciseParticipation participation, String commitHash) {
         try {
-            Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(Paths.get("checked-out-repos", commitHash), participation.getVcsRepositoryUrl(), "main");
+            Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(Paths.get("checked-out-repos", commitHash), participation.getVcsRepositoryUrl(),
+                    defaultBranch);
             if (repository == null) {
                 throw new EntityNotFoundException("Repository with commit hash " + commitHash + " not found");
             }
