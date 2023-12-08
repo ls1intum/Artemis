@@ -217,9 +217,11 @@
                             }
                             @if (mode === 'live') {
                                 <jhi-connection-status class="connection-status-quiz">
-                                    @if (unsavedChanges) {
-                                        <span innerContent jhiTranslate="artemisApp.quizExercise.unsavedChanges" class="in-parentheses"></span>
-                                    }
+                                    <ng-container innerContent>
+                                        @if (unsavedChanges) {
+                                            <span jhiTranslate="artemisApp.quizExercise.unsavedChanges" class="in-parentheses"></span>
+                                        }
+                                    </ng-container>
                                 </jhi-connection-status>
                             }
                             @if (mode === 'practice') {

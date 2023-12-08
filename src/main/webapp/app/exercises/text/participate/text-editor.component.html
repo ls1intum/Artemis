@@ -5,19 +5,20 @@
                 {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}:
                 <span class="font-weight-normal">{{ examMode ? textExercise.exerciseGroup?.title : textExercise?.title }}</span>
             </span>
-            @if (isOwnerOfParticipation) {
-                <jhi-button
-                    id="submit"
-                    submitbutton
-                    [title]="!isAllowedToSubmitAfterDueDate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
-                    (onClick)="submit()"
-                    [disabled]="!isActive || !submission"
-                    [isLoading]="isSaving"
-                    [btnType]="isAllowedToSubmitAfterDueDate ? ButtonType.WARNING : ButtonType.PRIMARY"
-                    [tooltip]="submitButtonTooltip"
-                >
-                </jhi-button>
-            }
+            <ng-container submitbutton>
+                @if (isOwnerOfParticipation) {
+                    <jhi-button
+                        id="submit"
+                        [title]="!isAllowedToSubmitAfterDueDate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
+                        (onClick)="submit()"
+                        [disabled]="!isActive || !submission"
+                        [isLoading]="isSaving"
+                        [btnType]="isAllowedToSubmitAfterDueDate ? ButtonType.WARNING : ButtonType.PRIMARY"
+                        [tooltip]="submitButtonTooltip"
+                    >
+                    </jhi-button>
+                }
+            </ng-container>
         </jhi-header-participation-page>
     }
     <!--resizable container-->
@@ -117,11 +118,13 @@
             <!--region Right Panel-->
             <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
             <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
-            @if (textExercise!.problemStatement) {
-                <p right-body class="markdown-preview mb-3">
-                    <span [innerHTML]="textExercise!.problemStatement! | htmlForMarkdown"></span>
-                </p>
-            }
+            <ng-container right-body>
+                @if (textExercise!.problemStatement) {
+                    <p class="markdown-preview mb-3">
+                        <span [innerHTML]="textExercise!.problemStatement! | htmlForMarkdown"></span>
+                    </p>
+                }
+            </ng-container>
             <!--endregion-->
         </jhi-resizeable-container>
     }
