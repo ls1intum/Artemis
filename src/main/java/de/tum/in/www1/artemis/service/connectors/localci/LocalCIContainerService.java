@@ -370,7 +370,7 @@ public class LocalCIContainerService {
 
         // Fall back to hardcoded scripts for old exercises without windfile
         // *****************
-        // TODO: delete
+        // TODO: Delete once windfile templates can be used as fallbacks
         if (actions.isEmpty()) {
             // Windfile actions are not defined, use default build script
             switch (programmingExercise.getProgrammingLanguage()) {

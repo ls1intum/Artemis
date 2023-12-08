@@ -266,7 +266,6 @@ public class LocalCIBuildJobExecutionService {
 
         // Get an input stream of the test result files.
         List<TarArchiveInputStream> testResultsTarInputStreams = new ArrayList<>();
-        boolean errorOccurred = false;
         try {
             for (String testResultsPath : testResultsPaths) {
                 testResultsTarInputStreams.add(localCIContainerService.getArchiveFromContainer(containerId, testResultsPath));
@@ -274,7 +273,7 @@ public class LocalCIBuildJobExecutionService {
         }
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
-            errorOccurred = true;
+            return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
         finally {
             localCIContainerService.stopContainer(containerName);
@@ -286,11 +285,6 @@ public class LocalCIBuildJobExecutionService {
             if (commitHash != null) {
                 deleteCloneRepo(participation, commitHash);
             }
-        }
-
-        if (errorOccurred) {
-            // If the test results are not found, this means that something went wrong during the build and testing of the submission.
-            return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
 
         LocalCIBuildResult buildResult;
@@ -513,10 +507,13 @@ public class LocalCIBuildJobExecutionService {
 
     private void deleteCloneRepo(ProgrammingExerciseParticipation participation, String commitHash) {
         try {
-            Repository repository = gitService.getOrCheckoutRepository(participation.getVcsRepositoryUrl(), Paths.get("checked-out-repos", commitHash), false);
+            Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(Paths.get("checked-out-repos", commitHash), participation.getVcsRepositoryUrl(), "main");
+            if (repository == null) {
+                throw new EntityNotFoundException("Repository with commit hash " + commitHash + " not found");
+            }
             gitService.deleteLocalRepository(repository);
         }
-        catch (GitAPIException e) {
+        catch (EntityNotFoundException e) {
             throw new LocalCIException("Error while checking out repository", e);
         }
         catch (IOException e) {
