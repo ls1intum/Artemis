@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -38,7 +39,7 @@ public class AeolusTemplateService {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    private final HashMap<String, Windfile> templateCache = new HashMap<>();
+    private final ConcurrentHashMap<String, Windfile> templateCache = new ConcurrentHashMap<>();
 
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;

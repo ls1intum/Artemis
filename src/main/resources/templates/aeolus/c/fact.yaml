@@ -32,7 +32,8 @@ actions:
       runAlways: false
     - name: cleanup
       script: |-
-          sudo rm -rf tests assignment test-reports || true
+          sudo rm -rf tests/ assignment/ test-reports/ || true
+          chmod -R 777 .
       runAlways: true
       results:
           - name: junit_test-reports/tests-results.xml

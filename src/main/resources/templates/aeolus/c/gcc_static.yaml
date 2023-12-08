@@ -67,10 +67,8 @@ actions:
       runAlways: false
     - name: cleanup
       script: |-
-          sudo rm -rf *.o
-          sudo rm -rf tests/
-          sudo rm -rf assignment/
-          sudo rm -rf test-reports/
+          sudo rm -rf tests/ assignment/ test-reports/ || true
+          chmod -R 777 .
       runAlways: true
       results:
           - name: gcc

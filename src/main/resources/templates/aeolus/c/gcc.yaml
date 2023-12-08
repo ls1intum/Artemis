@@ -12,8 +12,8 @@ actions:
           # Updating assignment and test-reports ownership...
           sudo chown artemis_user:artemis_user assignment/ -R
           sudo rm -rf test-reports
-          sudo mkdir test-reports
-          sudo chown artemis_user:artemis_user test-reports/ -R
+          mkdir test-reports
+          chown artemis_user:artemis_user test-reports/ -R
 
           # assignment
           cd tests
@@ -65,14 +65,11 @@ actions:
       runAlways: false
     - name: cleanup
       script: |-
-          sudo rm -rf *.o
-          rm -rf tests/
-          rm -rf assignment/
-          rm -rf test-reports/
+        sudo rm -rf tests/ assignment/ test-reports/ || true
+        chmod -R 777 .
       runAlways: true
       results:
           - name: junit_test-reports/tests-results.xml
             path: test-reports/tests-results.xml
             type: junit
             before: true
-
