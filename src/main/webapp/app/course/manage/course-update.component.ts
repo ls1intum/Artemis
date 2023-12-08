@@ -18,7 +18,7 @@ import { Organization } from 'app/entities/organization.model';
 import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
-import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
@@ -61,6 +61,7 @@ export class CourseUpdateComponent implements OnInit {
     faSave = faSave;
     faBan = faBan;
     faTimes = faTimes;
+    faTrash = faTrash;
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
 

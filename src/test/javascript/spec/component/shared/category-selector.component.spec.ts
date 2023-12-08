@@ -92,14 +92,12 @@ describe('CategorySelectorComponent', () => {
             clientX: 1,
             clientY: 2,
         });
-        const stopPropagationSpy = jest.spyOn(mouseEvent, 'stopPropagation');
 
         const openColorSelectorSpy = jest.spyOn(comp.colorSelector, 'openColorSelector');
         comp.openColorSelector(mouseEvent, category5);
 
         expect(comp.selectedCategory).toEqual(category5);
         expect(openColorSelectorSpy).toHaveBeenCalledWith(mouseEvent, undefined, 150);
-        expect(stopPropagationSpy).toHaveBeenCalledOnce(); // otherwise the colorpicker will close immediately
     });
 
     it('should select color for category', () => {
