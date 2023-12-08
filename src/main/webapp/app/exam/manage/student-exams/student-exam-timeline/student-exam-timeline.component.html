@@ -15,8 +15,8 @@
         @for (exercise of studentExam.exercises; track exercise; let i = $index) {
             @if (exercise && exercise.studentParticipations && exercise.studentParticipations[0]) {
                 @if (pageComponentVisited[i]) {
-                    @switch (exercise.type) {
-                        <div [hidden]="i !== activePageIndex">
+                    <div [hidden]="i !== activePageIndex">
+                        @switch (exercise.type) {
                             @case (ExerciseType.QUIZ) {
                                 <jhi-quiz-submission-exam
                                     [exercise]="exercise"
@@ -57,8 +57,8 @@
                                     [(cachedDiffReports)]="cachedDiffReports"
                                 ></jhi-programming-exam-diff>
                             }
-                        </div>
-                    }
+                        }
+                    </div>
                 }
             }
         }

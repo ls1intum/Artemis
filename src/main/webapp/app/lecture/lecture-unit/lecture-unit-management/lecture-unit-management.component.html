@@ -33,28 +33,26 @@
                         </svg>
                     </div>
                     <div class="lecture-unit-type-container">
-                        @switch (lectureUnit.type) {
-                            <div class="unit-badges d-flex flex-column gap-1">
-                                <div class="badge bg-info">
-                                    {{
-                                        getLectureUnitReleaseDate(lectureUnit)
-                                            ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (getLectureUnitReleaseDate(lectureUnit) | artemisDate)
-                                            : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
-                                    }}
-                                </div>
-                                @case (LectureUnitType.ATTACHMENT) {
-                                    <div class="badge bg-info attachment-badge">
-                                        {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
-                                    </div>
-                                }
+                        <div class="unit-badges d-flex flex-column gap-1">
+                            <div class="badge bg-info">
+                                {{
+                                    getLectureUnitReleaseDate(lectureUnit)
+                                        ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (getLectureUnitReleaseDate(lectureUnit) | artemisDate)
+                                        : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
+                                }}
                             </div>
+                            @if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+                                <div class="badge bg-info attachment-badge">
+                                    {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
+                                </div>
+                            }
+                        </div>
+                        @switch (lectureUnit.type) {
+                            @case (LectureUnitType.ATTACHMENT) {
+                                <jhi-attachment-unit [attachmentUnit]="lectureUnit" [isPresentationMode]="true"></jhi-attachment-unit>
+                            }
                             @case (LectureUnitType.EXERCISE) {
                                 <jhi-exercise-unit [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!"></jhi-exercise-unit>
-                            }
-                            @case (LectureUnitType.ATTACHMENT) {
-                                <div>
-                                    <jhi-attachment-unit [attachmentUnit]="lectureUnit" [isPresentationMode]="true"></jhi-attachment-unit>
-                                </div>
                             }
                             @case (LectureUnitType.VIDEO) {
                                 <jhi-video-unit [videoUnit]="lectureUnit" [isPresentationMode]="true"></jhi-video-unit>

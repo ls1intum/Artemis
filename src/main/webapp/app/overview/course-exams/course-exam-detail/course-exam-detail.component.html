@@ -18,8 +18,8 @@
                     <fa-icon [icon]="faPenAlt" size="3x"></fa-icon>
                 </h4>
             } @else {
-                @switch (examState) {
-                    <h4 class="col-3 icon-settings">
+                <h4 class="col-3 icon-settings">
+                    @switch (examState) {
                         <!-- Calender to indicate an upcoming exam -->
                         @case ('UPCOMING') {
                             <fa-icon [icon]="faCalendarDay" size="2x"></fa-icon>
@@ -48,8 +48,10 @@
                         @case ('NO_MORE_ATTEMPTS') {
                             <fa-icon [icon]="faCircleStop" size="2x"></fa-icon>
                         }
-                    </h4>
-                    <div class="col-9 row card-body justify-content-center">
+                    }
+                </h4>
+                <div class="col-9 row card-body justify-content-center">
+                    @switch (examState) {
                         @case ('UPCOMING') {
                             <div>
                                 <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'upcoming' | artemisTranslate }}</h5>
@@ -96,8 +98,8 @@
                                 <div class="text-center">{{ 'artemisApp.exam.overview.testExam.noMoreAttemptsExplanation' | artemisTranslate }}</div>
                             </div>
                         }
-                    </div>
-                }
+                    }
+                </div>
             }
         </div>
         <!-- Footer -->
