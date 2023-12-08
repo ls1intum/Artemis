@@ -36,7 +36,7 @@ Configure Artemis
 
 Create a file ``src/main/resources/config/application-local.yml`` with the following content:
 
-.. code:: yaml
+.. code-block:: yaml
 
        artemis:
            user-management:
@@ -69,7 +69,7 @@ You can stop and remove the Bamboo and Bitbucket containers or just stop them in
 
 You also need to configure further settings in the ``src/main/resources/config/application-local.yml`` properties:
 
-.. code:: yaml
+.. code-block:: yaml
 
        artemis:
            user-management:
@@ -143,7 +143,7 @@ Setup with Docker Compose
 
 You can also use Docker Compose to set up the local CI and local VC systems. Using the following command, you can start the Artemis and MySQL containers:
 
-::
+.. code-block:: bash
 
     docker compose -f docker/artemis-dev-local-vc-local-ci-mysql.yml up
 
@@ -151,3 +151,70 @@ You can also use Docker Compose to set up the local CI and local VC systems. Usi
     Unix systems: When running the Artemis container on a Unix system, you will have to give the user running the container permission to access the Docker socket by adding them to the ``docker`` group. You can do this by changing the value of ``services.artemis-app.group_add`` in the ``docker/artemis-dev-local-vc-local-ci-mysql.yml`` file to the group ID of the ``docker`` group on your system. You can find the group ID by running ``getent group docker | cut -d: -f3``. The default value is ``999``.
 
     Windows: If you want to run the Docker containers locally on Windows, you will have to change the value for the Docker connection URI. You can add ``ARTEMIS_CONTINUOUSINTEGRATION_DOCKERCONNECTIONURI="tcp://host.docker.internal:2375"`` to the environment file, found in ``docker/artemis/config/dev-local-vc-local-ci.env``. This overwrites the default value ``unix:///var/run/docker.sock`` for this property defined in ``src/main/resources/config/application-docker.yml``.
+
+
+Podman as Docker alternative
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`Podman <https://podman.io/>`_ offers a container runtime that is API-compatible with Docker.
+Rather than having a system-wide socket that runs with administrative permissions, though, Podman allows to create containers with only user permissions.
+In single-user setups this might not be as relevant, but offers additional security in a production environment where the Artemis CI has to execute untrusted student code.
+
+.. admonition:: Podman is supported on a best effort basis.
+
+    We are relying on the API compatibility to provide support but are not actively testing against Podman on a test system or in the continuous integration.
+    If you notice any issues, feel free to open an issue or pull request so that we can try to fix them.
+
+.. note::
+
+    These setup steps are mostly focused on Linux systems.
+    On mac and Windows, both Docker and Podman run the containers in a small virtual machine anyway.
+    Therefore, there is little technical benefit relevant to Artemis for choosing one over the other in local development setups.
+    If in doubt, we recommend to use Docker, since that solution is most likely to be tested by other Artemis developers.
+
+
+Linux setup
+"""""""""""
+
+Podman itself should be available via your regular package manager.
+
+After installation, you have to ensure that your user is allowed to create containers.
+This is managed by the files ``/etc/subuid`` and ``/etc/subgid``.
+Ensure both files contain a line starting with your username.
+If not, you can generate the relevant lines using
+
+.. code-block:: bash
+
+    #! /usr/bin/env sh
+
+    printf "%s:%d:65536\n" "$USER" "$(( $(id -u) * 65536 ))" | tee -a /etc/subuid /etc/subgid
+
+After that, enable the Podman user socket that provides the API for the container management:
+
+.. code-block:: bash
+
+    systemctl --user enable --now podman.socket
+
+Configure the connection to this socket in Artemis by replacing ``${UID}`` with your actual user id (``id -u``):
+
+.. code-block:: yaml
+
+    artemis:
+        continuous-integration:
+            docker-connection-uri: "unix:///run/user/${UID}/podman/podman.sock"
+            # alternatively, if you use the `DOCKER_HOST` environment variable already
+            # to tell other tools to use the Podman socket instead of the Docker one:
+            # docker-connection-uri: "${DOCKER_HOST}"
+
+
+Windows or mac setup
+""""""""""""""""""""
+
+Podman offers a `desktop application <https://podman-desktop.io/>`_ application similar to Docker desktop and `CLI tools <https://podman.io>`_ for Windows, macOS, and Linux.
+As with Docker, to run containers on Windows or macOS the runtime has to start a small virtual Linux machine that then actually runs the containers.
+You can probably connect to this VM similarly as described in the regular setup steps above
+(`additional Podman documentation <https://podman-desktop.io/docs/migrating-from-docker/using-the-docker_host-environment-variable>`_).
+
+.. note::
+
+    If you try out Podman on a Windows or mac system and have additional setup tips, feel free to submit a pull request to extend this documentation section.
