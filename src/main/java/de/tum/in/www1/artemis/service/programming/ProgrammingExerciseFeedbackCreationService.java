@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.programming;
 
 import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.MAX_TEST_CASE_LENGTH;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -221,7 +223,7 @@ public class ProgrammingExerciseFeedbackCreationService {
     public Feedback createFeedbackFromTestCase(String testName, List<String> testMessages, boolean successful, final ProgrammingExercise exercise,
             Set<ProgrammingExerciseTestCase> activeTestCases) {
         Feedback feedback = new Feedback();
-        var testCase = activeTestCases.stream().filter(test -> testName.equals(test.getTestName())).findAny();
+        var testCase = activeTestCases.stream().filter(test -> StringUtils.truncate(testName, MAX_TEST_CASE_LENGTH).equals(test.getTestName())).findAny();
         if (testCase.isPresent()) {
             feedback.setTestCase(testCase.get());
         }
