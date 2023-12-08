@@ -55,9 +55,9 @@ export interface PlagiarismDetectionConfig {
     minimumSize?: number;
 }
 
-export const defaultPlagiarismDetectionConfig: PlagiarismDetectionConfig = {
+export const DEFAULT_PLAGIARISM_DETECTION_CONFIG: PlagiarismDetectionConfig = {
     continuousPlagiarismControlEnabled: false,
-    continuousPlagiarismControlPostDueDateChecksEnabled: true,
+    continuousPlagiarismControlPostDueDateChecksEnabled: false,
     similarityThreshold: 90,
     minimumSize: 50,
     minimumScore: 0,
@@ -107,7 +107,7 @@ export abstract class Exercise implements BaseEntity, ExamExercise {
     public competencies?: Competency[];
     public navigationTitle?: string;
     public overviewTitle?: string;
-    public plagiarismDetectionConfig?: PlagiarismDetectionConfig = defaultPlagiarismDetectionConfig;
+    public plagiarismDetectionConfig?: PlagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG; // default value
 
     // transient objects which might not be set
     public numberOfSubmissions?: DueDateStat;
