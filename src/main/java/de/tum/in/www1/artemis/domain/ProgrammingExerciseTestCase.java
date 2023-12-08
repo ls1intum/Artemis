@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.config.Constants.MAX_TEST_CASE_LENGTH;
 import static de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType.DEFAULT;
 
 import java.util.HashSet;
@@ -7,6 +8,7 @@ import java.util.Set;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -29,6 +31,7 @@ import de.tum.in.www1.artemis.domain.hestia.*;
 public class ProgrammingExerciseTestCase extends DomainObject {
 
     @Column(name = "test_name")
+    @Size(max = MAX_TEST_CASE_LENGTH, message = "The test case name is too long.")
     private String testName;
 
     @Column(name = "weight")
@@ -78,12 +81,19 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     }
 
     public ProgrammingExerciseTestCase testName(String testName) {
-        this.testName = testName;
+        this.testName = truncateTestName(testName);
         return this;
     }
 
     public void setTestName(String testName) {
-        this.testName = testName;
+        this.testName = truncateTestName(testName);
+    }
+
+    private String truncateTestName(String testName) {
+        if (testName != null && testName.length() > MAX_TEST_CASE_LENGTH) {
+            return testName.substring(0, MAX_TEST_CASE_LENGTH);
+        }
+        return testName;
     }
 
     public Double getWeight() {

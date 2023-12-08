@@ -77,6 +77,20 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, true);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldHandleTestCasesWithLongNames() throws JsonProcessingException {
+        String name1 = "a".repeat(254);
+        String name2 = "b".repeat(255);
+        String name3 = "c".repeat(256);
+        var notification = ProgrammingExerciseFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of(name1, name2), List.of(name3),
+                new ArrayList<>());
+
+        bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
+                ZonedDateTime.now());
+        programmingExerciseResultTestService.shouldHandleTestCasesWithLongNames(notification);
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

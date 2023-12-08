@@ -123,6 +123,7 @@ public class ProgrammingExerciseResultTestService {
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
+
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
         programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
@@ -251,6 +252,13 @@ public class ProgrammingExerciseResultTestService {
         assertThat(latestSubmissions).hasSize(1);
         var latestSolutionSubmissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(solutionParticipation.getId());
         assertThat(latestSolutionSubmissions).hasSize(1);
+    }
+
+    // Test
+    public void shouldHandleTestCasesWithLongNames(Object resultNotification) {
+        gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+        Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
+        assertThat(testCases.stream().map(ProgrammingExerciseTestCase::getTestName).toArray()).contains("a".repeat(254), "b".repeat(255), "c".repeat(255));
     }
 
     // Test
