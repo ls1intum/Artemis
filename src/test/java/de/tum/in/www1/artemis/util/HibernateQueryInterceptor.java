@@ -1,10 +1,16 @@
 package de.tum.in.www1.artemis.util;
 
 import org.hibernate.EmptyInterceptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import de.tum.in.www1.artemis.service.exam.ExamDeletionService;
 
 @Component
 public class HibernateQueryInterceptor extends EmptyInterceptor {
+
+    private final Logger log = LoggerFactory.getLogger(ExamDeletionService.class);
 
     private final transient ThreadLocal<Long> threadQueryCount = new ThreadLocal<>();
 
@@ -34,6 +40,7 @@ public class HibernateQueryInterceptor extends EmptyInterceptor {
     public String onPrepareStatement(String sql) {
         Long count = threadQueryCount.get();
         if (count != null) {
+            log.info("DEBUG QUERY: " + sql);
             threadQueryCount.set(count + 1);
         }
         return super.onPrepareStatement(sql);
