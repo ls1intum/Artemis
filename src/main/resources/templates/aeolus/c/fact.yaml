@@ -8,10 +8,10 @@ actions:
           # Build and run all tests
           # ------------------------------
           # Updating assignment and test-reports ownership...
-          chown artemis_user:artemis_user assignment/ -R
-          rm -rf test-reports
-          mkdir test-reports
-          chown artemis_user:artemis_user test-reports/ -R
+          sudo chown artemis_user:artemis_user assignment/ -R || true
+          sudo rm -rf test-reports
+          sudo mkdir test-reports
+          sudo chown artemis_user:artemis_user test-reports/ -R || true
       runAlways: false
     - name: build_and_run_all_tests
       script: |
@@ -28,13 +28,11 @@ actions:
           cd tests
           python3 Tests.py
           rm Tests.py
-          rm -rf ./tests
+          rm -rf ./tests || true
       runAlways: false
     - name: cleanup
       script: |-
-          sudo rm -rf tests/
-          sudo rm -rf assignment/
-          rm -rf test-reports/
+          sudo rm -rf tests assignment test-reports || true
       runAlways: true
       results:
           - name: junit_test-reports/tests-results.xml
