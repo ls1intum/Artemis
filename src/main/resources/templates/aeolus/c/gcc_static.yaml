@@ -12,8 +12,8 @@ actions:
           # Updating assignment and test-reports ownership...
           sudo chown artemis_user:artemis_user assignment/ -R
           sudo rm -rf test-reports
-          sudo mkdir test-reports
-          sudo chown artemis_user:artemis_user test-reports/ -R
+          mkdir test-reports
+          chown artemis_user:artemis_user test-reports/ -R
 
           # assignment
           cd tests
@@ -55,8 +55,8 @@ actions:
           # Task Description:
           # Build and run all tests if the compilation succeeds
           # ------------------------------
-
-          sudo gcc -c -Wall assignment/*.c || error=true
+          sudo chown artemis_user:artemis_user .
+          gcc -c -Wall assignment/*.c || error=true
           if [ ! $error ]
           then
               cd tests || exit 0
@@ -67,6 +67,7 @@ actions:
       runAlways: false
     - name: cleanup
       script: |-
+          sudo rm -rf *.o
           sudo rm -rf tests/
           sudo rm -rf assignment/
           sudo rm -rf test-reports/

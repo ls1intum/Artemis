@@ -55,8 +55,8 @@ actions:
           # Task Description:
           # Build and run all tests if the compilation succeeds
           # ------------------------------
-
-          sudo gcc -c -Wall assignment/*.c || error=true
+          sudo chown artemis_user:artemis_user .
+          gcc -c -Wall assignment/*.c || error=true
           if [ ! $error ]
           then
               cd tests || exit 0
@@ -65,9 +65,10 @@ actions:
       runAlways: false
     - name: cleanup
       script: |-
-          sudo rm -rf tests/
-          sudo rm -rf assignment/
-          sudo rm -rf test-reports/
+          sudo rm -rf *.o
+          rm -rf tests/
+          rm -rf assignment/
+          rm -rf test-reports/
       runAlways: true
       results:
           - name: junit_test-reports/tests-results.xml
