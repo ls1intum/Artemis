@@ -3,7 +3,7 @@ import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/shared/course
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
+import { CommonModule } from '@angular/common';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { CourseManagementService } from 'app/course/manage/course-management.service';

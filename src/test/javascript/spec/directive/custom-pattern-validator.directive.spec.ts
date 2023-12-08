@@ -1,7 +1,7 @@
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { ArtemisTestModule } from '../test.module';
 import { By } from '@angular/platform-browser';
