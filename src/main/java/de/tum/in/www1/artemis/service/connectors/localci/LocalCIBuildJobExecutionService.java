@@ -110,7 +110,8 @@ public class LocalCIBuildJobExecutionService {
 
     /**
      * Prepare the paths to the assignment and test repositories, the branch to checkout, the volume configuration for the Docker container, and the container configuration,
-     * and then call {@link #runScriptAndParseResults(ProgrammingExerciseParticipation, String, String, String, String, Path, Path, Path[], String[], Path)} to execute the job.
+     * and then call {@link #runScriptAndParseResults(ProgrammingExerciseParticipation, String, String, String, String, Path, Path, Path[], String[], Path, boolean)} to execute the
+     * job.
      *
      * @param participation          The participation of the repository for which the build job should be executed.
      * @param commitHash             The commit hash of the commit that should be built. If it is null, the latest commit of the default branch will be built.
@@ -207,7 +208,7 @@ public class LocalCIBuildJobExecutionService {
         CreateContainerResponse container = localCIContainerService.configureContainer(containerName, branch, commitHash, dockerImage);
 
         return runScriptAndParseResults(participation, containerName, container.getId(), branch, commitHash, assignmentRepositoryPath, testsRepositoryPath,
-                auxiliaryRepositoriesPaths, auxiliaryRepositoryCheckoutDirectories, buildScriptPath);
+                auxiliaryRepositoriesPaths, auxiliaryRepositoryCheckoutDirectories, buildScriptPath, isPushToTestRepository);
     }
 
     /**
@@ -223,7 +224,8 @@ public class LocalCIBuildJobExecutionService {
      * @throws LocalCIException if something went wrong while running the build job.
      */
     private LocalCIBuildResult runScriptAndParseResults(ProgrammingExerciseParticipation participation, String containerName, String containerId, String branch, String commitHash,
-            Path assignmentRepositoryPath, Path testsRepositoryPath, Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath) {
+            Path assignmentRepositoryPath, Path testsRepositoryPath, Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath,
+            boolean isPushToTestRepository) {
 
         ProgrammingLanguage programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
 
@@ -282,7 +284,7 @@ public class LocalCIBuildJobExecutionService {
             localCIContainerService.deleteScriptFile(containerName);
 
             // Delete cloned repository
-            if (commitHash != null) {
+            if (commitHash != null && !isPushToTestRepository) {
                 deleteCloneRepo(participation, commitHash);
             }
         }
