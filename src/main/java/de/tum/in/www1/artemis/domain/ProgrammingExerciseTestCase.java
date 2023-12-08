@@ -90,10 +90,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     }
 
     private String truncateTestName(String testName) {
-        if (testName != null && testName.length() > MAX_TEST_CASE_LENGTH) {
-            return testName.substring(0, MAX_TEST_CASE_LENGTH);
-        }
-        return testName;
+        return StringUtils.truncate(testName, MAX_TEST_CASE_LENGTH);
     }
 
     public Double getWeight() {
