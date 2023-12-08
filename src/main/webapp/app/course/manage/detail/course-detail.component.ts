@@ -172,7 +172,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 details: [
                     { type: DetailType.Text, title: 'artemisApp.course.maxPoints.title', data: { text: course.maxPoints } },
                     { type: DetailType.Text, title: 'artemisApp.course.accuracyOfScores', data: { text: course.accuracyOfScores } },
-                    { type: DetailType.Text, title: 'artemisApp.course.defaultProgrammingLanguage', data: { text: course.defaultProgrammingLanguage?.toLowerCase() } },
+                    { type: DetailType.Text, title: 'artemisApp.course.defaultProgrammingLanguage', data: { text: course.defaultProgrammingLanguage } },
                     { type: DetailType.Boolean, title: 'artemisApp.course.testCourse.title', data: { boolean: course.testCourse } },
                     this.ltiEnabled &&
                         !course.onlineCourse &&

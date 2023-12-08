@@ -62,7 +62,7 @@ export class CourseManagementPage {
      * */
     addStudentToCourse(credentials: CypressCredentials) {
         cy.intercept(POST, COURSE_BASE + '*/students/' + credentials.username).as('addStudentQuery');
-        cy.get('#add-students').click();
+        cy.get('#detail-value-artemisApp\\.course\\.studentGroupName').children().first().click({ force: true });
         this.confirmUserIntoGroup(credentials);
         cy.wait('@addStudentQuery');
     }
@@ -167,66 +167,66 @@ export class CourseManagementPage {
     }
 
     getCourseTitle() {
-        return cy.get('#course-title');
+        return cy.get('#detail-value-artemisApp\\.course\\.title');
     }
 
     getCourseShortName() {
-        return cy.get('#course-short-name');
+        return cy.get('#detail-value-artemisApp\\.course\\.shortName');
     }
 
     getCourseStudentGroupName() {
-        return cy.get('#course-student-group-name');
+        return cy.get('#detail-value-artemisApp\\.course\\.studentGroupName');
     }
 
     getCourseTutorGroupName() {
-        return cy.get('#course-tutor-group-name');
+        return cy.get('#detail-value-artemisApp\\.course\\.teachingAssistantGroupName');
     }
 
     getCourseEditorGroupName() {
-        return cy.get('#course-editor-group-name');
+        return cy.get('#detail-value-artemisApp\\.course\\.editorGroupName');
     }
 
     getCourseInstructorGroupName() {
-        return cy.get('#course-instructor-group-name');
+        return cy.get('#detail-value-artemisApp\\.course\\.instructorGroupName');
     }
 
     getCourseStartDate() {
-        return cy.get('#course-start-date');
+        return cy.get('#detail-value-artemisApp\\.course\\.startDate');
     }
 
     getCourseEndDate() {
-        return cy.get('#course-end-date');
+        return cy.get('#detail-value-artemisApp\\.course\\.endDate');
     }
 
     getCourseSemester() {
-        return cy.get('#course-semester');
+        return cy.get('#detail-value-artemisApp\\.course\\.semester');
     }
 
     getCourseProgrammingLanguage() {
-        return cy.get('#course-programming-language');
+        return cy.get('#detail-value-artemisApp\\.course\\.defaultProgrammingLanguage');
     }
 
     getCourseTestCourse() {
-        return cy.get('#course-test-course');
+        return cy.get('#detail-value-artemisApp\\.course\\.testCourse\\.title');
     }
 
     getCourseOnlineCourse() {
-        return cy.get('#course-online-course');
+        return cy.get('#detail-value-artemisApp\\.course\\.onlineCourse\\.title');
     }
 
     getCourseMaxComplaints() {
-        return cy.get('#course-max-complaints');
+        return cy.get('#detail-value-artemisApp\\.course\\.maxComplaints\\.title');
     }
 
     getCourseMaxTeamComplaints() {
-        return cy.get('#course-max-team-complaints');
+        return cy.get('#detail-value-artemisApp\\.course\\.maxTeamComplaints\\.title');
     }
 
     getMaxComplaintTimeDays() {
-        return cy.get('#course-max-time-days');
+        return cy.get('#detail-value-artemisApp\\.course\\.maxComplaintTimeDays\\.title');
     }
 
     getMaxRequestMoreFeedbackTimeDays() {
-        return cy.get('#course-max-request-more-feedback-days');
+        return cy.get('#detail-value-artemisApp\\.course\\.maxRequestMoreFeedbackTimeDays\\.title');
     }
 }

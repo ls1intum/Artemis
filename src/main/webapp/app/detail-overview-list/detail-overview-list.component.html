@@ -3,18 +3,18 @@
     <h3 [id]="getHeadlineId(section.headline)">{{ section.headline | artemisTranslate }}</h3>
     <dl>
         <ng-container *ngFor="let detail of section.details">
-            <dt *ngIf="detail.title">
+            <dt *ngIf="detail.title" id="detail-title-{{ detail.title }}">
                 <span>{{ detail.title | artemisTranslate: detail.titleTranslationProps }}</span>
                 <jhi-help-icon *ngIf="detail.titleHelpText" text="{{ detail.titleHelpText }}"></jhi-help-icon>
             </dt>
             <ng-container [ngSwitch]="detail.type">
-                <dd *ngSwitchCase="DetailType.Text">
+                <dd *ngSwitchCase="DetailType.Text" id="detail-value-{{ detail.title }}">
                     {{ detail.data.text || '-' }}
                 </dd>
-                <dd *ngSwitchCase="DetailType.Date">
+                <dd *ngSwitchCase="DetailType.Date" id="detail-value-{{ detail.title }}">
                     {{ detail.data.date ? (detail.data.date | artemisDate) : '-' }}
                 </dd>
-                <dd *ngSwitchCase="DetailType.Link">
+                <dd *ngSwitchCase="DetailType.Link" id="detail-value-{{ detail.title }}">
                     <ng-container *ngIf="detail.data.text; else noText">
                         <a
                             *ngIf="!!detail.data.routerLink?.length || detail.data.href; else noLink"
@@ -30,10 +30,10 @@
                     </ng-container>
                     <ng-template #noText><span #noText>-</span></ng-template>
                 </dd>
-                <dd *ngSwitchCase="DetailType.Boolean">
+                <dd *ngSwitchCase="DetailType.Boolean" id="detail-value-{{ detail.title }}">
                     <jhi-checklist-check [checkAttribute]="detail.data.boolean"></jhi-checklist-check>
                 </dd>
-                <dd *ngSwitchCase="DetailType.ProgrammingRepositoryButtons">
+                <dd *ngSwitchCase="DetailType.ProgrammingRepositoryButtons" id="detail-value-{{ detail.title }}">
                     <div class="clone-buttons" *ngIf="detail.data.participation?.repositoryUrl">
                         <jhi-clone-repo-button [smallButtons]="true" [repositoryUrl]="detail.data.participation.repositoryUrl"></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
@@ -45,7 +45,7 @@
                     </div>
                     <span *ngIf="!detail.data.participation?.repositoryUrl">-</span>
                 </dd>
-                <dd *ngSwitchCase="DetailType.ProgrammingAuxiliaryRepositoryButtons">
+                <dd *ngSwitchCase="DetailType.ProgrammingAuxiliaryRepositoryButtons" id="detail-value-{{ detail.title }}">
                     <ul>
                         <li *ngFor="let auxiliaryRepository of detail.data.auxiliaryRepositories">
                             <span>Repository: {{ auxiliaryRepository.name }}</span>
@@ -72,7 +72,7 @@
                     </ul>
                 </dd>
 
-                <dd *ngSwitchCase="DetailType.ProgrammingTestStatus">
+                <dd *ngSwitchCase="DetailType.ProgrammingTestStatus" id="detail-value-{{ detail.title }}">
                     <div *ngIf="detail.data.participation" class="d-flex align-items-center">
                         <jhi-updating-result
                             *ngIf="!detail.data.loading"
@@ -106,7 +106,7 @@
                         </a>
                     </div>
                 </dd>
-                <dd *ngSwitchCase="DetailType.ProgrammingDiffReport">
+                <dd *ngSwitchCase="DetailType.ProgrammingDiffReport" id="detail-value-{{ detail.title }}">
                     <div class="fw-bold">
                         <jhi-git-diff-line-stat
                             [addedLineCount]="detail.data.addedLineCount"
@@ -126,31 +126,31 @@
                         ></jhi-button>
                     </div>
                 </dd>
-                <dd class="p-3 border" *ngSwitchCase="DetailType.ProgrammingProblemStatement">
+                <dd class="p-3 border" *ngSwitchCase="DetailType.ProgrammingProblemStatement" id="detail-value-{{ detail.title }}">
                     <jhi-programming-exercise-instructions
                         [exercise]="detail.data.exercise"
                         [participation]="detail.data.exercise?.templateParticipation!"
                         [personalParticipation]="true"
                     ></jhi-programming-exercise-instructions>
                 </dd>
-                <dd *ngSwitchCase="DetailType.ProgrammingTimeline">
+                <dd *ngSwitchCase="DetailType.ProgrammingTimeline" id="detail-value-{{ detail.title }}">
                     <jhi-programming-exercise-lifecycle
                         [isExamMode]="detail.data.isExamMode"
                         [exercise]="detail.data.exercise"
                         [readOnly]="true"
                     ></jhi-programming-exercise-lifecycle>
                 </dd>
-                <dd *ngSwitchCase="DetailType.Markdown">
+                <dd *ngSwitchCase="DetailType.Markdown" id="detail-value-{{ detail.title }}">
                     <div *ngIf="detail.data.innerHtml" class="p-3 border" [innerHTML]="detail.data.innerHtml"></div>
                     <span *ngIf="!detail.data.innerHtml">-</span>
                 </dd>
-                <dd *ngSwitchCase="DetailType.GradingCriteria" class="col-md-6 mt-4">
+                <dd *ngSwitchCase="DetailType.GradingCriteria" class="col-md-6 mt-4" id="detail-value-{{ detail.title }}">
                     <jhi-structured-grading-instructions-assessment-layout
                         [readonly]="true"
                         [criteria]="detail.data.gradingCriteria || []"
                     ></jhi-structured-grading-instructions-assessment-layout>
                 </dd>
-                <dd *ngSwitchCase="DetailType.ProgrammingBuildStatistics">
+                <dd *ngSwitchCase="DetailType.ProgrammingBuildStatistics" id="detail-value-{{ detail.title }}">
                     <table class="table table-striped">
                         <thead>
                             <tr>
@@ -182,7 +182,7 @@
                         </tbody>
                     </table>
                 </dd>
-                <dd *ngSwitchCase="DetailType.ProgrammingIrisEnabled">
+                <dd *ngSwitchCase="DetailType.ProgrammingIrisEnabled" id="detail-value-{{ detail.title }}">
                     <jhi-iris-enabled
                         [exercise]="detail.data.exercise"
                         [course]="detail.data.course"
@@ -190,7 +190,7 @@
                         [disabled]="detail.data.disabled"
                     ></jhi-iris-enabled>
                 </dd>
-                <dd *ngSwitchCase="DetailType.ModelingEditor">
+                <dd *ngSwitchCase="DetailType.ModelingEditor" id="detail-value-{{ detail.title }}">
                     <button
                         *ngIf="!!detail.data.umlModel?.elements?.length && detail.data.isApollonProfileActive"
                         (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"
