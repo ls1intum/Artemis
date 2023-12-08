@@ -16,7 +16,7 @@ import { Competency } from 'app/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion, faSquareRootVariable } from '@fortawesome/free-solid-svg-icons';
 import { CourseScores } from 'app/course/course-scores/course-scores';
 
 export enum DifficultyLevel {
@@ -187,6 +187,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         [ExerciseType.QUIZ]: faCheckDouble,
         [ExerciseType.TEXT]: faFont,
         [ExerciseType.FILE_UPLOAD]: faFileUpload,
+        [ExerciseType.MATH]: faSquareRootVariable,
     };
 
     return icons[exerciseType] as IconProp;
@@ -202,6 +203,7 @@ export function getIconTooltip(exerciseType?: ExerciseType): string {
         [ExerciseType.QUIZ]: 'artemisApp.exercise.isQuiz',
         [ExerciseType.TEXT]: 'artemisApp.exercise.isText',
         [ExerciseType.FILE_UPLOAD]: 'artemisApp.exercise.isFileUpload',
+        [ExerciseType.MATH]: 'artemisApp.exercise.isMath',
     };
 
     return tooltips[exerciseType];
@@ -242,6 +244,8 @@ export function declareExerciseType(exerciseInfo: ExerciseInfo): ExerciseType | 
             return ExerciseType.FILE_UPLOAD;
         case 'QuizExercise':
             return ExerciseType.QUIZ;
+        case 'MathExercise':
+            return ExerciseType.MATH;
     }
     return undefined;
 }
@@ -263,6 +267,8 @@ export function getExerciseUrlSegment(exerciseType?: ExerciseType): string {
             return 'file-upload-exercises';
         case ExerciseType.QUIZ:
             return 'quiz-exercises';
+        case ExerciseType.MATH:
+            return 'math-exercises';
         default:
             throw Error('Unexpected exercise type: ' + exerciseType);
     }

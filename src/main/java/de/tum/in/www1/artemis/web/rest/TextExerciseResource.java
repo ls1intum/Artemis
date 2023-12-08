@@ -232,7 +232,7 @@ public class TextExerciseResource {
     @GetMapping("courses/{courseId}/text-exercises")
     @EnforceAtLeastTutor
     public ResponseEntity<List<TextExercise>> getTextExercisesForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
+        log.debug("REST request to get all Textexercises for the course with id : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         List<TextExercise> exercises = textExerciseRepository.findByCourseIdWithCategories(courseId);

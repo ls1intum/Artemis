@@ -7,8 +7,6 @@ import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.enumeration.Language;
-
 /**
  * A MathSubmission.
  */
@@ -27,23 +25,11 @@ public class MathSubmission extends Submission {
     @Size(max = MAX_SUBMISSION_TEXT_LENGTH, message = "The text submission is too large.")
     private String text;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "language", table = "math_submission_details")
-    private Language language;
-
     public MathSubmission() {
     }
 
     public String getText() {
         return text;
-    }
-
-    public Language getLanguage() {
-        return language;
-    }
-
-    public void setLanguage(Language language) {
-        this.language = language;
     }
 
     public MathSubmission text(String text) {
@@ -62,7 +48,7 @@ public class MathSubmission extends Submission {
 
     @Override
     public String toString() {
-        return "MathSubmission{" + "id=" + getId() + ", language='" + getLanguage() + "'" + "}";
+        return "MathSubmission{" + "id=" + getId() + "}";
     }
 
 }

@@ -1,5 +1,5 @@
 <div class="table-responsive" *ngIf="mathExercises && filteredMathExercises.length > 0">
-    <table class="table table-striped">
+    <table class="table table-striped mb-0">
         <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                 <th *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
@@ -22,38 +22,38 @@
         </thead>
         <tbody class="markdown-preview">
             <tr *ngFor="let mathExercise of filteredMathExercises; trackBy: trackId" id="exercise-card-{{ mathExercise.id }}">
-                <td *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
+                <td *ngIf="course.isAtLeastInstructor" class="d-md-table-cell align-middle">
                     <input class="form-check-input" type="checkbox" (change)="toggleExercise(mathExercise)" [ngModel]="isExerciseSelected(mathExercise)" />
                 </td>
-                <td>
+                <td class="align-middle">
                     <a *ngIf="mathExercise.isAtLeastTutor; else showId" [routerLink]="['/course-management', course.id, 'math-exercises', mathExercise.id]">{{
                         mathExercise.id
                     }}</a>
                     <ng-template #showId>{{ mathExercise.id }}</ng-template>
                 </td>
-                <td>
+                <td class="align-middle">
                     <a *ngIf="mathExercise.isAtLeastTutor; else showTitle" [routerLink]="['/course-management', course.id, 'math-exercises', mathExercise.id]">{{
                         mathExercise.title
                     }}</a>
                     <ng-template #showTitle>{{ mathExercise.title }}</ng-template>
                 </td>
-                <td>{{ mathExercise.releaseDate | artemisDate }}</td>
-                <td>{{ mathExercise.dueDate | artemisDate }}</td>
-                <td>{{ mathExercise.assessmentDueDate | artemisDate }}</td>
-                <td>{{ mathExercise.maxPoints }}</td>
-                <td>{{ mathExercise.bonusPoints }}</td>
-                <td>{{ exerciseService.isIncludedInScore(mathExercise) }}</td>
-                <td *ngIf="course.presentationScore !== 0">{{ mathExercise.presentationScoreEnabled }}</td>
-                <td class="d-md-table-cell">
+                <td class="align-middle">{{ mathExercise.releaseDate | artemisDate }}</td>
+                <td class="align-middle">{{ mathExercise.dueDate | artemisDate }}</td>
+                <td class="align-middle">{{ mathExercise.assessmentDueDate | artemisDate }}</td>
+                <td class="align-middle">{{ mathExercise.maxPoints }}</td>
+                <td class="align-middle">{{ mathExercise.bonusPoints }}</td>
+                <td class="align-middle">{{ exerciseService.isIncludedInScore(mathExercise) }}</td>
+                <td class="align-middle" *ngIf="course.presentationScore !== 0">{{ mathExercise.presentationScoreEnabled }}</td>
+                <td class="d-md-table-cell align-middle">
                     <jhi-exercise-categories [exercise]="mathExercise"></jhi-exercise-categories>
                 </td>
-                <td class="text-end">
+                <td class="text-end align-middle">
                     <jhi-math-exercise-row-buttons [courseId]="courseId" [exercise]="mathExercise" />
                 </td>
             </tr>
         </tbody>
     </table>
-    <div *ngIf="selectedExercises.length > 0">
+    <div class="p-2" *ngIf="selectedExercises.length > 0">
         <button
             *ngIf="course.isAtLeastInstructor"
             jhiDeleteButton
@@ -62,7 +62,6 @@
             (delete)="deleteMultipleExercises(selectedExercises, mathExerciseService)"
             [dialogError]="dialogError$"
             id="delete-all-quiz"
-            class="mb-1"
         >
             <fa-icon [icon]="faTimes"></fa-icon>
         </button>

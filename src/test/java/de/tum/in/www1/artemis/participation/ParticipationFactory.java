@@ -63,7 +63,6 @@ public class ParticipationFactory {
     public static MathSubmission generateMathSubmission(String text, Language language, boolean submitted) {
         MathSubmission textSubmission = new MathSubmission();
         textSubmission.text(text);
-        textSubmission.setLanguage(language);
         textSubmission.setSubmitted(submitted);
         if (submitted) {
             textSubmission.setSubmissionDate(now().minusDays(1));

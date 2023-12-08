@@ -88,7 +88,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         }
     }
 
-    getExerciseCount(): number {
+    get exerciseCount(): number {
         return (
             this.quizExercisesCount +
             this.programmingExercisesCount +
@@ -99,7 +99,7 @@ export class CourseManagementExercisesComponent implements OnInit {
         );
     }
 
-    getFilteredExerciseCount(): number {
+    get filteredExerciseCount(): number {
         return (
             this.filteredProgrammingExercisesCount +
             this.filteredQuizExercisesCount +

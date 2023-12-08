@@ -15,17 +15,12 @@ import { ActivatedRoute, Event, NavigationEnd, Router } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { LectureService } from 'app/lecture/lecture.service';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { LANGUAGES } from 'app/core/language/language.constants';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import {
     faBars,
     faBell,
@@ -50,7 +45,6 @@ import {
     faUserPlus,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
@@ -133,13 +127,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private examParticipationService: ExamParticipationService,
         private serverDateService: ArtemisServerDateService,
         private alertService: AlertService,
-        private courseManagementService: CourseManagementService,
         private exerciseService: ExerciseService,
-        private exerciseHintService: ExerciseHintService,
-        private apollonDiagramService: ApollonDiagramService,
-        private lectureService: LectureService,
-        private examService: ExamManagementService,
-        private organisationService: OrganizationManagementService,
         public themeService: ThemeService,
         private entityTitleService: EntityTitleService,
     ) {

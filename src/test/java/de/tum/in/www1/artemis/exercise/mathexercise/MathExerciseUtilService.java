@@ -111,7 +111,6 @@ public class MathExerciseUtilService {
             studentParticipation = participationRepository.save(studentParticipation);
 
             submission.setParticipation(studentParticipation);
-            submission.setLanguage(Language.ENGLISH);
             submission.setText(text);
             submission.setSubmitted(true);
             submission.setSubmissionDate(ZonedDateTime.now());

@@ -1,5 +1,5 @@
-<div class="question card">
-    <div class="question-options card-header">
+<div class="exercise-card card">
+    <div class="question-options card-header exercise-card-header">
         <h5 class="mb-0">
             <span> {{ exerciseCount }} </span>
             <span [jhiTranslate]="headingJhiTranslate"></span>
@@ -8,10 +8,12 @@
             <ng-content select="[exerciseCreateButtons]"></ng-content>
         </div>
         <button class="btn question-collapse" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">
-            <fa-icon size="2x" [icon]="isCollapsed ? faAngleRight : faAngleDown"></fa-icon>
+            <fa-icon size="2x" [icon]="isCollapsed ? faAngleRight : faAngleDown" class="collapse-icon"></fa-icon>
         </button>
     </div>
-    <div class="card-body question-card-body" [ngbCollapse]="isCollapsed">
-        <ng-content select="[exercises]"></ng-content>
+    <div [ngbCollapse]="isCollapsed || exerciseCount === 0">
+        <div class="exercise-card-body">
+            <ng-content select="[exercises]"></ng-content>
+        </div>
     </div>
 </div>

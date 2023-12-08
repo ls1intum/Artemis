@@ -66,6 +66,7 @@ import { ArtemisExerciseCreateButtonsModule } from 'app/exercises/shared/manage/
 import { ArtemisLearningPathManagementModule } from 'app/course/learning-paths/learning-path-management/learning-path-management.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { ArtemisMathExerciseManagementModule } from 'app/exercises/math/manage/math-exercise-management.module';
+import { ArtemisMathExerciseModule } from 'app/exercises/math/manage/math-exercise/math-exercise.module';
 
 @NgModule({
     imports: [
@@ -90,6 +91,7 @@ import { ArtemisMathExerciseManagementModule } from 'app/exercises/math/manage/m
         ArtemisModelingExerciseManagementModule,
         ArtemisProgrammingExerciseModule,
         ArtemisTextExerciseModule,
+        ArtemisMathExerciseModule,
         ArtemisModelingExerciseModule,
         ArtemisColorSelectorModule,
         ArtemisDashboardsModule,

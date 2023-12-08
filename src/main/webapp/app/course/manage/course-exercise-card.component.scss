@@ -1,4 +1,4 @@
-.question {
+.exercise-card {
     width: 100%;
     box-sizing: border-box;
     border: 1px solid var(--course-exercise-card-border-color);
@@ -8,12 +8,14 @@
     &:first-of-type {
         margin-top: 1rem;
     }
+}
 
-    .question-title {
-        flex: 1;
+.exercise-card-body {
+    border-top: 1px solid var(--course-exercise-card-border-color);
+}
 
-        input.form-control {
-            width: 100%;
-        }
-    }
+.collapse-icon {
+    display: inline-block;
+    width: 2em;
+    height: 2em;
 }
