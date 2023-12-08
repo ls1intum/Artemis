@@ -37,10 +37,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
 import { ExamExercise } from 'app/entities/exam-exercise';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { getExamExercises } from 'app/exam/participate/exam.utils';
+import { asFileUploadExercise, asModelingExercise, asProgrammingExercise, asTextExercise, getExamExercises } from 'app/exam/participate/exam.utils';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -141,6 +138,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     // Icons
     faGraduationCap = faGraduationCap;
+
+    asFileUploadExercise = asFileUploadExercise;
+    asModelingExercise = asModelingExercise;
+    asProgrammingExercise = asProgrammingExercise;
+    asTextExercise = asTextExercise;
 
     constructor(
         private websocketService: JhiWebsocketService,
@@ -859,21 +861,5 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     }
                 }
             });
-    }
-
-    asFileUploadExercise(exercise: ExamExercise): FileUploadExercise {
-        return exercise as FileUploadExercise;
-    }
-
-    asTextExercise(exercise: ExamExercise): TextExercise {
-        return exercise as TextExercise;
-    }
-
-    asProgrammingExercise(exercise: ExamExercise): ProgrammingExercise {
-        return exercise as ProgrammingExercise;
-    }
-
-    asModelingExercise(exercise: ExamExercise): ModelingExercise {
-        return exercise as ModelingExercise;
     }
 }

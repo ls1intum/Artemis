@@ -6,6 +6,10 @@ import { ServerDateService } from 'app/shared/server-date.service';
 import { ExamExercise } from 'app/entities/exam-exercise';
 import { Exercise } from 'app/entities/exercise.model';
 import { QuizExamExercise } from 'app/entities/quiz-exam-exercise';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 /**
  * Calculates the individual end time based on the studentExam
@@ -123,4 +127,20 @@ function createQuizExamExercise(studentExam: StudentExam, titles: { title: strin
     quizExamExercise.randomizeQuestionOrder = studentExam.exam?.randomizeQuizExamQuestionsOrder;
     quizExamExercise.maxPoints = studentExam.exam?.quizExamMaxPoints;
     return quizExamExercise;
+}
+
+export function asFileUploadExercise(exercise: ExamExercise): FileUploadExercise {
+    return exercise as FileUploadExercise;
+}
+
+export function asTextExercise(exercise: ExamExercise): TextExercise {
+    return exercise as TextExercise;
+}
+
+export function asProgrammingExercise(exercise: ExamExercise): ProgrammingExercise {
+    return exercise as ProgrammingExercise;
+}
+
+export function asModelingExercise(exercise: ExamExercise): ModelingExercise {
+    return exercise as ModelingExercise;
 }

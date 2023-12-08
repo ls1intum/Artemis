@@ -22,10 +22,7 @@ import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.comp
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExamExercise } from 'app/entities/exam-exercise';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { getExamExercises } from 'app/exam/participate/exam.utils';
+import { asFileUploadExercise, asModelingExercise, asProgrammingExercise, asTextExercise, getExamExercises } from 'app/exam/participate/exam.utils';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
@@ -82,6 +79,11 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     @ViewChild('slider') slider: SliderComponent;
 
     private activatedRouteSubscription: Subscription;
+
+    asFileUploadExercise = asFileUploadExercise;
+    asModelingExercise = asModelingExercise;
+    asProgrammingExercise = asProgrammingExercise;
+    asTextExercise = asTextExercise;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -452,21 +454,5 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             const submission = firstSubmission as FileUploadSubmission | ProgrammingSubmission;
             return this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === submission.participation?.exercise?.id);
         }
-    }
-
-    asFileUploadExercise(exercise: ExamExercise): FileUploadExercise {
-        return exercise as FileUploadExercise;
-    }
-
-    asTextExercise(exercise: ExamExercise): TextExercise {
-        return exercise as TextExercise;
-    }
-
-    asProgrammingExercise(exercise: ExamExercise): ProgrammingExercise {
-        return exercise as ProgrammingExercise;
-    }
-
-    asModelingExercise(exercise: ExamExercise): ModelingExercise {
-        return exercise as ModelingExercise;
     }
 }
