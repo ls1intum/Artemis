@@ -38,8 +38,18 @@ import {
     QUIZ_EXERCISE_BASE,
     TEXT_EXERCISE_BASE,
     UPLOAD_EXERCISE_BASE,
+    PATCH,
 } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
+
+type PatchProgrammingExerciseTestVisibilityDto = {
+    id: number;
+    weight: number;
+    bonusPoints: number;
+    bonusMultiplier: number;
+    visibility: Visibility;
+}[];
 
 /**
  * A class which encapsulates all API requests related to exercises.
@@ -131,6 +141,55 @@ export class ExerciseAPIRequests {
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
             method: POST,
             body: exercise,
+        });
+    }
+
+    private updateProgrammingExerciseTestCaseVisibility(programmingExerciseId: number, programmingExerciseTestCases: ProgrammingExerciseTestCase[], newVisibility: Visibility) {
+        const updatedTestCaseSettings: PatchProgrammingExerciseTestVisibilityDto = [];
+
+        cy.log('programming Exercise tasks' + JSON.stringify(programmingExerciseTestCases, null, 2));
+
+        for (let testCase of programmingExerciseTestCases) {
+            updatedTestCaseSettings.push({
+                id: testCase.id!,
+                weight: testCase.weight!,
+                bonusPoints: testCase.bonusPoints!,
+                bonusMultiplier: testCase.bonusMultiplier!,
+                visibility: newVisibility,
+            });
+        }
+
+        return cy.request({
+            url: `${BASE_API}programming-exercises/${programmingExerciseId}/update-test-cases`,
+            method: PATCH,
+            body: updatedTestCaseSettings,
+        });
+    }
+
+    changeProgrammingExerciseTestVisibility(programmingExercise: ProgrammingExercise, newVisibility: Visibility, retryNumber: number) {
+        const maxRetries: number = 20;
+        const retryDelay: number = 5000;
+
+        if (retryNumber >= maxRetries) {
+            return;
+        }
+
+        cy.request({
+            url: `${BASE_API}programming-exercises/${programmingExercise.id}/test-cases`,
+            method: GET,
+        }).then((response) => {
+            const testCases = response.body as ProgrammingExerciseTestCase[];
+
+            if (retryNumber > 0) {
+                cy.log(`Could not find test cases yet, retrying... (${retryNumber} / ${maxRetries})`);
+            }
+
+            cy.wait(retryDelay);
+            if (testCases.length > 0) {
+                this.updateProgrammingExerciseTestCaseVisibility(programmingExercise.id!, testCases, newVisibility);
+            } else {
+                this.changeProgrammingExerciseTestVisibility(programmingExercise, newVisibility, retryNumber + 1);
+            }
         });
     }
 

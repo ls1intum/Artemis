@@ -6,6 +6,7 @@ import { AdditionalData, BASE_API, Exercise, ExerciseType, PUT } from '../../con
 import { POST } from '../../constants';
 import { convertModelAfterMultiPart, generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Visibility } from 'app/entities/programming-exercise-test-case.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam exercise group creation page.
@@ -68,7 +69,12 @@ export class ExamExerciseGroupCreationPage {
                         .createProgrammingExercise({ exerciseGroup: groupResponse.body, title, assessmentType: additionalData.progExerciseAssessmentType })
                         .then((response) => {
                             processResponse(response);
+
+                            const exercise = { ...response.body, additionalData };
+                            const retryNumber = 0;
+                            exerciseAPIRequest.changeProgrammingExerciseTestVisibility(exercise, Visibility.Always, retryNumber);
                         });
+
                     break;
             }
         });
