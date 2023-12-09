@@ -15,13 +15,7 @@
             </span>
         </span>
         <fa-icon
-            *ngIf="
-                !previewMode &&
-                !readOnlyMode &&
-                ((!isCourseMessagesPage && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT))) ||
-                    (isCourseMessagesPage && hasChannelModerationRights) ||
-                    isAuthorOfPosting)
-            "
+            *ngIf="mayEditOrDelete"
             size="xs"
             class="ms-1 editIcon clickable icon"
             [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
@@ -35,13 +29,7 @@
             (isModalOpen)="isModalOpen.emit()"
         ></jhi-post-create-edit-modal>
         <jhi-confirm-icon
-            *ngIf="
-                !previewMode &&
-                !readOnlyMode &&
-                ((!isCourseMessagesPage && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT))) ||
-                    (isCourseMessagesPage && hasChannelModerationRights) ||
-                    isAuthorOfPosting)
-            "
+            *ngIf="mayEditOrDelete"
             iconSize="xs"
             (confirmEvent)="deletePosting()"
             [ngClass]="'deleteIcon clickable icon'"

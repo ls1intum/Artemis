@@ -129,7 +129,6 @@ examples.forEach((activeConversation) => {
             expect(navigateSpy).toHaveBeenCalledWith([], {
                 relativeTo: activatedRoute,
                 queryParams: { conversationId: activeConversation?.id },
-                queryParamsHandling: 'merge',
                 replaceUrl: true,
             });
         });
