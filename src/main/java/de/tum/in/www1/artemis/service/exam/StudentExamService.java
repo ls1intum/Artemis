@@ -92,13 +92,15 @@ public class StudentExamService {
 
     private final ExamQuizQuestionsGenerator examQuizQuestionsGenerator;
 
+    private final QuizExamSubmissionRepository quizExamSubmissionRepository;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, TextSubmissionRepository textSubmissionRepository,
             ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService) {
+            @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService, QuizExamSubmissionRepository quizExamSubmissionRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -118,6 +120,7 @@ public class StudentExamService {
         this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
         this.examQuizQuestionsGenerator = quizPoolService;
+        this.quizExamSubmissionRepository = quizExamSubmissionRepository;
     }
 
     /**
@@ -206,6 +209,26 @@ public class StudentExamService {
             }
             catch (Exception e) {
                 log.error("saveSubmission threw an exception", e);
+            }
+        }
+
+        saveQuizExamSubmission(currentUser, studentExam.getId(), studentExam.getQuizExamSubmission());
+    }
+
+    private void saveQuizExamSubmission(User currentUser, Long studentExamId, QuizExamSubmission submissionFromClient) {
+        if (submissionFromClient != null) {
+            Optional<QuizExamSubmission> existingSubmissionInDatabaseOptional = Optional.empty();
+            boolean isQuizExamSubmissionContentEqual = true;
+            if (submissionFromClient.getId() != null) {
+                existingSubmissionInDatabaseOptional = quizExamSubmissionRepository.findWithEagerSubmittedAnswersByStudentExamId(studentExamId);
+                if (existingSubmissionInDatabaseOptional.isPresent()) {
+                    QuizExamSubmission existingSubmissionInDatabase = existingSubmissionInDatabaseOptional.get();
+                    isQuizExamSubmissionContentEqual = isContentEqualTo(existingSubmissionInDatabase, submissionFromClient);
+                }
+            }
+            if (existingSubmissionInDatabaseOptional.isEmpty() || !isQuizExamSubmissionContentEqual) {
+                quizExamSubmissionRepository.save(submissionFromClient);
+                saveSubmissionVersion(currentUser, submissionFromClient);
             }
         }
     }
