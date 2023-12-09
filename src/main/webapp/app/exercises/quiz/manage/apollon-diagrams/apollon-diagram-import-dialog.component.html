@@ -1,0 +1,11 @@
+<div>
+    <jhi-apollon-diagram-list
+        *ngIf="!this.isInEditView; else editView"
+        [courseId]="this.courseId"
+        (openDiagram)="handleDetailOpen($event)"
+        (closeDialog)="closeModal()"
+    ></jhi-apollon-diagram-list>
+</div>
+<ng-template #editView>
+    <jhi-apollon-diagram-detail [courseId]="this.courseId" [apollonDiagramId]="this.apollonDiagramDetailId" (closeEdit)="handleDetailClose($event)" (closeModal)="closeModal()" />
+</ng-template>
