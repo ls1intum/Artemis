@@ -462,11 +462,19 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     Optional<ProgrammingExercise> findByIdWithGradingCriteria(long exerciseId);
 
+    /**
+     * Finds all programming exercises with eager template participation and the given programming language.
+     *
+     * @param programmingLanguage the programming language of the exercises to find.
+     * @return a list of programming exercises with eager template participation.
+     */
     @Query("""
-            SELECT DISTINCT pe FROM ProgrammingExercise pe
-            WHERE pe.programmingLanguage = :#{#programmingLanguage}
+            SELECT DISTINCT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.templateParticipation tp
+            WHERE pe.programmingLanguage = :programmingLanguage
             """)
-    List<ProgrammingExercise> findAllByProgrammingLanguage(@Param("programmingLanguage") ProgrammingLanguage programmingLanguage);
+    List<ProgrammingExercise> findAllByProgrammingLanguageWithTemplateParticipation(@Param("programmingLanguage") ProgrammingLanguage programmingLanguage);
 
     default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
         return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
