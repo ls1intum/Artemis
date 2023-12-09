@@ -22,6 +22,7 @@ import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } fro
 import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular-ivy';
 import { AlertService } from 'app/core/util/alert.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { isExamResultPublished } from 'app/exam/participate/exam.utils';
 
 export type ResultSummaryExerciseInfo = {
@@ -35,6 +36,7 @@ export type ResultSummaryExerciseInfo = {
     submission?: Submission;
     participation?: Participation;
     displayExampleSolution: boolean;
+    releaseTestsWithExampleSolution: boolean;
 };
 
 type StateBeforeResetting = {
@@ -350,6 +352,7 @@ export class ExamResultSummaryComponent implements OnInit {
                 submission: this.getSubmissionForExercise(exercise),
                 participation: this.getParticipationForExercise(exercise),
                 displayExampleSolution: false,
+                releaseTestsWithExampleSolution: exercise.type === ExerciseType.PROGRAMMING && !!(exercise as ProgrammingExercise).releaseTestsWithExampleSolution,
             };
         }
         return exerciseInfos;

@@ -36,7 +36,8 @@ actions:
       cp result.xml ../assignment/result.xml
     runAlways: false
   - name: junit
-    script: '#empty script action, just for the results'
+    script: |
+        chmod -R 777 .
     runAlways: true
     results:
       - name: junit_result.xml
