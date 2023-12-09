@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
@@ -47,26 +48,26 @@ public class ConversationNotificationService {
      * Notify registered students about new message
      *
      * @param createdMessage the new message
+     * @param conversation   the conversation the message belongs to
      * @param recipients     the users which should be notified about the new message
      * @param mentionedUsers users mentioned in the message
      * @param course         the course in which the message was posted
+     * @return the created notification
      */
-    public void notifyAboutNewMessage(Post createdMessage, Set<User> recipients, Course course, Set<User> mentionedUsers) {
+    public ConversationNotification notifyAboutNewMessage(Post createdMessage, Conversation conversation, Set<User> recipients, Course course, Set<User> mentionedUsers) {
         String notificationText;
         String[] placeholders;
         NotificationType notificationType = NotificationType.CONVERSATION_NEW_MESSAGE;
         String conversationName = createdMessage.getConversation().getHumanReadableNameForReceiver(createdMessage.getAuthor());
 
         // add channel/groupChat/oneToOneChat string to placeholders for notification to distinguish in mobile client
-        if (createdMessage.getConversation() instanceof Channel channel) {
+        if (conversation instanceof Channel channel) {
             notificationText = NEW_MESSAGE_CHANNEL_TEXT;
             placeholders = new String[] { course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(), channel.getName(),
                     createdMessage.getAuthor().getName(), "channel" };
-            if (channel.getIsAnnouncementChannel()) {
-                notificationType = NotificationType.NEW_ANNOUNCEMENT_POST;
-            }
+            notificationType = getNotificationTypeForChannel(channel);
         }
-        else if (createdMessage.getConversation() instanceof GroupChat groupChat) {
+        else if (conversation instanceof GroupChat) {
             notificationText = NEW_MESSAGE_GROUP_CHAT_TEXT;
             placeholders = new String[] { course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(), createdMessage.getAuthor().getName(),
                     conversationName, "groupChat" };
@@ -78,6 +79,7 @@ public class ConversationNotificationService {
         }
         var notification = createConversationMessageNotification(course.getId(), createdMessage, notificationType, notificationText, true, placeholders);
         saveAndSend(notification, createdMessage, course, recipients, mentionedUsers, placeholders);
+        return notification;
     }
 
     private void saveAndSend(ConversationNotification notification, Post createdMessage, Course course, Set<User> recipients, Set<User> mentionedUsers, String[] placeHolders) {
@@ -103,5 +105,30 @@ public class ConversationNotificationService {
 
     private void sendNotificationViaWebSocket(ConversationNotification notification, Set<User> recipients) {
         recipients.forEach(user -> websocketMessagingService.sendMessage(notification.getTopic(user.getId()), notification));
+    }
+
+    /**
+     * Determines the notification type for the new message based on the channel properties
+     *
+     * @param channel the channel the message belongs to
+     * @return the notification type for the message
+     */
+    private static NotificationType getNotificationTypeForChannel(Channel channel) {
+        if (channel.getIsAnnouncementChannel()) {
+            return NotificationType.NEW_ANNOUNCEMENT_POST;
+        }
+        else if (channel.getLecture() != null) {
+            return NotificationType.NEW_LECTURE_POST;
+        }
+        else if (channel.getExercise() != null) {
+            return NotificationType.NEW_EXERCISE_POST;
+        }
+        else if (channel.getExam() != null) {
+            return NotificationType.NEW_EXAM_POST;
+        }
+        else if (channel.getIsCourseWide()) {
+            return NotificationType.NEW_COURSE_POST;
+        }
+        return NotificationType.CONVERSATION_NEW_MESSAGE;
     }
 }

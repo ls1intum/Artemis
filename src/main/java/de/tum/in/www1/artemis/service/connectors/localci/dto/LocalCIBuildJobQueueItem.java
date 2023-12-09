@@ -8,6 +8,8 @@ public class LocalCIBuildJobQueueItem implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private String id;
+
     private String name;
 
     private long participationId;
@@ -27,13 +29,25 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private long courseId;
 
-    public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId) {
+    private boolean isPushToTestRepository;
+
+    public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isPushToTestRepository) {
+        this.id = String.valueOf(participationId) + submissionDate;
         this.name = name;
         this.participationId = participationId;
         this.commitHash = commitHash;
         this.submissionDate = submissionDate;
         this.priority = priority;
         this.courseId = courseId;
+        this.isPushToTestRepository = isPushToTestRepository;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -106,6 +120,21 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     public void setCourseId(long courseId) {
         this.courseId = courseId;
+    }
+
+    /**
+     * When pushing to the test repository, build jobs are triggered for the template and solution repository.
+     * However, getCommitHash() then returns the commit hash of the test repository.
+     * This flag is necessary so we do not try to checkout the commit hash of the test repository in the template/solution repository.
+     *
+     * @return true if the build job was triggered by a push to the test repository
+     */
+    public boolean isPushToTestRepository() {
+        return isPushToTestRepository;
+    }
+
+    public void setPushToTestRepository(boolean isPushToTestRepository) {
+        this.isPushToTestRepository = isPushToTestRepository;
     }
 
     @Override

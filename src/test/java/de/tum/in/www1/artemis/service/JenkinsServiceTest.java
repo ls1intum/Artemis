@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,6 +36,7 @@ import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUt
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanUtils;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
 
 class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
@@ -264,6 +266,32 @@ class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
             String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
             continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUrl(), templateRepoUrl, "main");
         }).withMessageStartingWith("Error trying to configure build plan in Jenkins");
+    }
+
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
+    void testUpdateBuildPlanRepoUrlsForStudent() throws Exception {
+        MockedStatic<JenkinsBuildPlanUtils> mockedUtils = mockStatic(JenkinsBuildPlanUtils.class);
+        ArgumentCaptor<String> toBeReplacedCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> replacementCaptor = ArgumentCaptor.forClass(String.class);
+        mockedUtils.when(() -> JenkinsBuildPlanUtils.replaceScriptParameters(any(), toBeReplacedCaptor.capture(), replacementCaptor.capture())).thenCallRealMethod();
+
+        var programmingExercise = continuousIntegrationTestService.programmingExercise;
+        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+
+        String projectKey = programmingExercise.getProjectKey();
+        String planName = programmingExercise.getProjectKey();
+
+        String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
+        jenkinsRequestMockProvider.mockUpdatePlanRepository(projectKey, planName, HttpStatus.OK);
+
+        continuousIntegrationService.updatePlanRepository(projectKey, planName, ASSIGNMENT_REPO_NAME, null, participation.getRepositoryUrl(), templateRepoUrl, "main");
+
+        assertThat(toBeReplacedCaptor.getValue()).contains("-exercise.git");
+        assertThat(replacementCaptor.getValue()).contains(TEST_PREFIX + "student1.git");
     }
 
     @Test
