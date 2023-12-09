@@ -1,0 +1,44 @@
+api: v0.0.1
+actions:
+    - name: provide_environment_information
+      script: |
+          #!/bin/bash
+          echo "--------------------Python versions--------------------"
+          python3 --version
+          pip3 --version
+
+          echo "--------------------Contents of tests repository--------------------"
+          ls -la tests
+          echo "---------------------------------------------"
+          echo "--------------------Contents of assignment repository--------------------"
+          ls -la assignment
+          echo "---------------------------------------------"
+
+          #Fallback in case Docker does not work as intended
+          REQ_FILE=tests/requirements.txt
+          if [ -f "$REQ_FILE" ]; then
+              pip3 install --user -r tests/requirements.txt || true
+          else
+              echo "$REQ_FILE does not exist"
+          fi
+      runAlways: false
+    - name: prepare_makefile
+      script: |
+          rm -f assignment/{GNUmakefile, Makefile, makefile}
+          cp -f tests/Makefile assignment/Makefile || exit 2
+      runAlways: false
+    - name: run_and_compile
+      script: |
+          python3 compileTest.py ../assignment/
+          rm compileTest.py
+          cp result.xml ../assignment/result.xml
+      workdir: tests
+      runAlways: false
+    - name: junit
+      script: '#empty script action, just for the results'
+      runAlways: true
+      results:
+          - name: assignment_junit_results
+            path: assignment/result.xml
+            type: junit
+            before: true
