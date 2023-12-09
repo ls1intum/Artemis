@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.LtiPlatformConfiguration;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class OnlineCourseConfigurationServiceTest {
 
@@ -83,6 +84,17 @@ class OnlineCourseConfigurationServiceTest {
         verify(ltiPlatformConfigurationRepository).findByIdElseThrow(ltiPlatformConfiguration.getId());
         assertThat(ltiPlatformConfiguration.getOnlineCourseConfigurations()).contains(onlineCourseConfiguration);
         assertThat(onlineCourseConfiguration.getLtiPlatformConfiguration()).isEqualTo(ltiPlatformConfiguration);
+    }
+
+    @Test
+    void addOnlineCourseConfigurationToLtiConfigurationsThrowsEntityNotFound() {
+        LtiPlatformConfiguration ltiPlatformConfiguration = getMockLtiPlatformConfiguration();
+        when(ltiPlatformConfigurationRepository.findByIdElseThrow(ltiPlatformConfiguration.getId()))
+                .thenThrow(new EntityNotFoundException("LtiPlatformConfiguration", ltiPlatformConfiguration.getId()));
+        OnlineCourseConfiguration onlineCourseConfiguration = getMockOnlineCourseConfiguration(ltiPlatformConfiguration);
+
+        assertThatThrownBy(() -> onlineCourseConfigurationService.addOnlineCourseConfigurationToLtiConfigurations(onlineCourseConfiguration))
+                .isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
