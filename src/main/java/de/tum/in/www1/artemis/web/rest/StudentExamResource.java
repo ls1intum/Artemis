@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -374,14 +373,14 @@ public class StudentExamResource {
             throw new AccessForbiddenException("Current user is not the user of the requested student exam");
         }
 
-        if (studentExam.isTestRun()) {
-            // this check is quite expensive, so we only so it for test runs
-            studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
-        }
-        else {
-            // those checks are good enough and less expensive, because they do not involve additional database queries
-            validateExamRequestParametersElseThrow(studentExam, examId, courseId);
-        }
+        // if (studentExam.isTestRun()) {
+        // // this check is quite expensive, so we only so it for test runs
+        // studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
+        // }
+        // else {
+        // // those checks are good enough and less expensive, because they do not involve additional database queries
+        // validateExamRequestParametersElseThrow(studentExam, examId, courseId);
+        // }
 
         // students can not fetch the exam until EXAM_START_WAIT_TIME_MINUTES minutes before the exam start, we use the same constant in the client
         if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
@@ -752,17 +751,17 @@ public class StudentExamResource {
     private void prepareStudentExamForConduction(HttpServletRequest request, User currentUser, StudentExam studentExam) {
 
         // In case the studentExam is not yet started, a new participation with a specific initialization date should be created - isStarted uses Boolean
-        if (studentExam.isTestExam()) {
-            boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
-            if (setupTestExamNeeded) {
-                // Fix startedDate. As the studentExam.startedDate is used to link the participation.initializationDate, we need to drop the ms
-                // (initializationDate is stored with ms)
-                ZonedDateTime startedDate = now().truncatedTo(ChronoUnit.SECONDS);
-
-                // Set up new participations for the Exercises and set initialisationDate to the startedDate
-                studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
-            }
-        }
+        // if (studentExam.isTestExam()) {
+        // boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
+        // if (setupTestExamNeeded) {
+        // // Fix startedDate. As the studentExam.startedDate is used to link the participation.initializationDate, we need to drop the ms
+        // // (initializationDate is stored with ms)
+        // ZonedDateTime startedDate = now().truncatedTo(ChronoUnit.SECONDS);
+        //
+        // // Set up new participations for the Exercises and set initialisationDate to the startedDate
+        // studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
+        // }
+        // }
 
         if (!Boolean.TRUE.equals(studentExam.isStarted()) || studentExam.getStartedDate() == null) {
             // Mark the student exam as started with now as the start date if it was not started before
