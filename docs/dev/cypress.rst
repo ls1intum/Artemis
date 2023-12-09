@@ -51,7 +51,7 @@ Follow these steps to create your local cypress instance:
       "studentGroupName": "students",
       "tutorGroupName": "tutors",
       "editorGroupName": "editors",
-      "instructorGroupName": "instructors"
+      "instructorGroupName": "instructors",
       "createUsers": false
     }
 
