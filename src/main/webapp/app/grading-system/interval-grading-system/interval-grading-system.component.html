@@ -80,7 +80,7 @@
                     </td>
                     <ng-template #intervalInputs>
                         <td *ngIf="gradeEditMode === GradeEditMode.PERCENTAGE">
-                            <input [ngModel]="getPercentageInterval(gradeStep)" type="number" step="0.5" min="0" (ngModelChange)="setPercentageInterval(i, $event)" required />
+                            <input [ngModel]="getPercentageInterval(gradeStep)" type="number" step="0.5" min="0.5" (ngModelChange)="setPercentageInterval(i, $event)" required />
                         </td>
                         <td *ngIf="gradeEditMode === GradeEditMode.POINTS">
                             <input
