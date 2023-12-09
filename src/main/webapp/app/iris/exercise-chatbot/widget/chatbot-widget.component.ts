@@ -854,9 +854,9 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     toggleScrollLock(lockParent: boolean): void {
         if (lockParent) {
-            document.body.classList.add('cdk-global-scrollblock');
+            document.body.classList.add('cdk-global-scroll');
         } else {
-            document.body.classList.remove('cdk-global-scrollblock');
+            document.body.classList.remove('cdk-global-scroll');
         }
     }
 
