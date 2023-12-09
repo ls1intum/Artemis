@@ -157,7 +157,7 @@ Podman as Docker alternative
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 `Podman <https://podman.io/>`_ offers a container runtime that is API-compatible with Docker.
-Rather than having a system-wide socket that runs with administrative permissions, though, Podman allows to create containers with only user permissions.
+Rather than having a system-wide socket that runs with administrative permissions, Podman allows to create containers with only user permissions.
 In single-user setups this might not be as relevant, but offers additional security in a production environment where the Artemis CI has to execute untrusted student code.
 
 .. admonition:: Podman is supported on a best effort basis.
@@ -178,10 +178,10 @@ Linux setup
 
 Podman itself should be available via your regular package manager.
 
-After installation, you have to ensure that your user is allowed to create containers.
+After the installation, you have to ensure that your user is allowed to create containers.
 This is managed by the files ``/etc/subuid`` and ``/etc/subgid``.
 Ensure both files contain a line starting with your username.
-If not, you can generate the relevant lines using
+If not, you can generate the relevant lines by executing the following command:
 
 .. code-block:: bash
 
