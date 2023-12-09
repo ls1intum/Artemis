@@ -40,7 +40,9 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 
 /**
@@ -57,15 +59,20 @@ public class LocalCIContainerService {
 
     private final HostConfig hostConfig;
 
+    public static final String WORKING_DIRECTORY = "/var/tmp";
+
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
     @Value("${artemis.continuous-integration.local-cis-build-scripts-path}")
     String localCIBuildScriptBasePath;
 
-    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig) {
+    AeolusTemplateService aeolusTemplateService;
+
+    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService) {
         this.dockerClient = dockerClient;
         this.hostConfig = hostConfig;
+        this.aeolusTemplateService = aeolusTemplateService;
     }
 
     /**
@@ -84,7 +91,7 @@ public class LocalCIContainerService {
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
                 // by the creation of a file "stop_container.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f /stop_container.txt ]; do sleep 0.5; done")
+                .withCmd("sh", "-c", "while [ ! -f " + WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
                 // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
@@ -112,7 +119,7 @@ public class LocalCIContainerService {
         // container's
         // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
         // command has finished before trying to extract the results.
-        return executeDockerCommand(containerId, true, true, "sh", "script.sh");
+        return executeDockerCommand(containerId, true, true, "sh", WORKING_DIRECTORY + "/script.sh");
     }
 
     /**
@@ -151,10 +158,10 @@ public class LocalCIContainerService {
         TarArchiveInputStream repositoryTarInputStream;
 
         if (Objects.equals(repositoryCheckoutPath, "")) {
-            repositoryTarInputStream = getArchiveFromContainer(containerId, "/testing-dir/.git/refs/heads/" + branchName);
+            repositoryTarInputStream = getArchiveFromContainer(containerId, WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/" + branchName);
         }
         else {
-            repositoryTarInputStream = getArchiveFromContainer(containerId, "/testing-dir/" + repositoryCheckoutPath + "/.git/refs/heads/" + branchName);
+            repositoryTarInputStream = getArchiveFromContainer(containerId, WORKING_DIRECTORY + "/testing-dir/" + repositoryCheckoutPath + "/.git/refs/heads/" + branchName);
         }
 
         repositoryTarInputStream.getNextTarEntry();
@@ -194,7 +201,7 @@ public class LocalCIContainerService {
         // Create a file "stop_container.txt" in the root directory of the container to indicate that the test results have been extracted or that the container should be stopped
         // for some other reason.
         // The container's main process is waiting for this file to appear and then stops the main process, thus stopping and removing the container.
-        executeDockerCommandWithoutAwaitingResponse(containerId, "touch", "stop_container.txt");
+        executeDockerCommandWithoutAwaitingResponse(containerId, "touch", WORKING_DIRECTORY + "/stop_container.txt");
     }
 
     /**
@@ -214,22 +221,23 @@ public class LocalCIContainerService {
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
         if (!Objects.equals(testCheckoutPath, "")) {
-            addDirectory(buildJobContainerId, "/testing-dir", true);
+            addDirectory(buildJobContainerId, WORKING_DIRECTORY + "/testing-dir", true);
+            executeDockerCommand(buildJobContainerId, false, false, "chmod", "-R", "777", WORKING_DIRECTORY + "/testing-dir");
         }
-        addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, "testing-dir/" + testCheckoutPath);
-        addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, "testing-dir/" + assignmentCheckoutPath);
+        addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
+        addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
-            addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], "testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
+            addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
         }
-        convertDosFilesToUnix("testing-dir/", buildJobContainerId);
+        convertDosFilesToUnix(WORKING_DIRECTORY + "/testing-dir/", buildJobContainerId);
 
-        addAndPrepareDirectory(buildJobContainerId, buildScriptPath, "script.sh");
-        convertDosFilesToUnix("script.sh", buildJobContainerId);
+        addAndPrepareDirectory(buildJobContainerId, buildScriptPath, WORKING_DIRECTORY + "/script.sh");
+        convertDosFilesToUnix(WORKING_DIRECTORY + "/script.sh", buildJobContainerId);
     }
 
     private void addAndPrepareDirectory(String containerId, Path repositoryPath, String newDirectoryName) {
         copyToContainer(repositoryPath.toString(), containerId);
-        renameDirectoryOrFile(containerId, repositoryPath.getFileName().toString(), newDirectoryName);
+        renameDirectoryOrFile(containerId, WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
 
     private void renameDirectoryOrFile(String containerId, String oldName, String newName) {
@@ -247,7 +255,7 @@ public class LocalCIContainerService {
 
     private void copyToContainer(String sourcePath, String containerId) {
         try (InputStream uploadStream = new ByteArrayInputStream(createTarArchive(sourcePath).toByteArray())) {
-            dockerClient.copyArchiveToContainerCmd(containerId).withRemotePath("/").withTarInputStream(uploadStream).exec();
+            dockerClient.copyArchiveToContainerCmd(containerId).withRemotePath(WORKING_DIRECTORY).withTarInputStream(uploadStream).exec();
         }
         catch (IOException e) {
             throw new LocalCIException("Could not copy to container " + containerId, e);
@@ -306,7 +314,8 @@ public class LocalCIContainerService {
     private List<BuildLogEntry> executeDockerCommand(String containerId, boolean attachStdout, boolean attachStderr, String... command) {
         boolean detach = !attachStdout && !attachStderr;
 
-        ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(attachStdout).withAttachStderr(attachStderr).withCmd(command).exec();
+        ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(containerId).withAttachStdout(attachStdout).withAttachStderr(attachStderr).withUser("root")
+                .withCmd(command).exec();
         List<BuildLogEntry> buildLogEntries = new ArrayList<>();
         final CountDownLatch latch = new CountDownLatch(1);
         dockerClient.execStartCmd(execCreateCmdResponse.getId()).withDetach(detach).exec(new ResultCallback.Adapter<>() {
@@ -338,13 +347,23 @@ public class LocalCIContainerService {
      * The build script is used to build the programming exercise in a Docker container.
      *
      * @param participation the participation for which to create the build script
+     * @param containerName the name of the container for which to create the build script
      * @return the path to the build script file
      */
-    public Path createBuildScript(ProgrammingExerciseParticipation participation) {
+    public Path createBuildScript(ProgrammingExerciseParticipation participation, String containerName) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
 
-        List<ScriptAction> actions = programmingExercise.getWindfile() != null ? programmingExercise.getWindfile().getScriptActions() : List.of();
+        List<ScriptAction> actions = List.of();
+
+        Windfile windfile = programmingExercise.getWindfile();
+
+        if (windfile == null) {
+            windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
+        }
+        if (windfile != null) {
+            actions = windfile.getScriptActions();
+        }
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
@@ -357,18 +376,18 @@ public class LocalCIContainerService {
             }
         }
 
-        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(participation.getId().toString() + "-build.sh");
+        // We use the container name as part of the file name to avoid conflicts when multiple build jobs are running at the same time.
+        Path buildScriptPath = scriptsPath.toAbsolutePath().resolve(containerName + "-build.sh");
 
-        StringBuilder buildScript = new StringBuilder("""
-                #!/bin/bash
-                cd /testing-dir
-                """);
+        StringBuilder buildScript = new StringBuilder();
+        buildScript.append("#!/bin/bash\n");
+        buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
 
         actions.forEach(action -> buildScript.append(action.getScript()).append("\n"));
 
         // Fall back to hardcoded scripts for old exercises without windfile
         // *****************
-        // TODO: delete
+        // TODO: Delete once windfile templates can be used as fallbacks
         if (actions.isEmpty()) {
             // Windfile actions are not defined, use default build script
             switch (programmingExercise.getProgrammingLanguage()) {
@@ -446,11 +465,11 @@ public class LocalCIContainerService {
      * Deletes the build script for a given programming exercise.
      * The build script is stored in a file in the local-ci-scripts directory.
      *
-     * @param participationId the ID of the participation for which to delete the build script
+     * @param containerName the name of the container for which to delete the build script
      */
-    public void deleteScriptFile(String participationId) {
+    public void deleteScriptFile(String containerName) {
         Path scriptsPath = Path.of("local-ci-scripts");
-        Path buildScriptPath = scriptsPath.resolve(participationId + "-build.sh").toAbsolutePath();
+        Path buildScriptPath = scriptsPath.resolve(containerName + "-build.sh").toAbsolutePath();
         try {
             Files.deleteIfExists(buildScriptPath);
         }

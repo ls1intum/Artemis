@@ -44,6 +44,9 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN", 1);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?sequentialRuns=true", 1);
         templatesWithExpectedScriptActions.put("ASSEMBLER", 4);
+        templatesWithExpectedScriptActions.put("C/FACT", 3);
+        templatesWithExpectedScriptActions.put("C/GCC", 4);
+        templatesWithExpectedScriptActions.put("C/GCC?staticAnalysis=true", 4);
         for (Map.Entry<String, Integer> entry : templatesWithExpectedScriptActions.entrySet()) {
             String template = request.get("/api/aeolus/templates/" + entry.getKey(), HttpStatus.OK, String.class);
             assertThat(template).isNotEmpty();

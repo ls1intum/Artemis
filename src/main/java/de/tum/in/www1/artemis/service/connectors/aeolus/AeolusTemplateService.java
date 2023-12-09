@@ -3,9 +3,8 @@ package de.tum.in.www1.artemis.service.connectors.aeolus;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -21,6 +20,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -38,6 +38,8 @@ public class AeolusTemplateService {
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private final ResourceLoaderService resourceLoaderService;
+
+    private final ConcurrentHashMap<String, Windfile> templateCache = new ConcurrentHashMap<>();
 
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -86,6 +88,9 @@ public class AeolusTemplateService {
     public Windfile getWindfileFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage)
             throws IOException {
         String templateFileName = buildAeolusTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage);
+        if (templateCache.containsKey(templateFileName)) {
+            return templateCache.get(templateFileName);
+        }
         Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", programmingLanguage.name().toLowerCase(), templateFileName));
         if (!fileResource.exists()) {
             throw new IOException("File " + templateFileName + " not found");
@@ -94,7 +99,25 @@ public class AeolusTemplateService {
         String yaml = new String(fileContent, StandardCharsets.UTF_8);
         Windfile windfile = readWindfile(yaml);
         this.addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);
+        templateCache.put(templateFileName, windfile);
         return windfile;
+    }
+
+    /**
+     * Returns the file content of the template file for the given exercise
+     *
+     * @param exercise the exercise for which the template file should be returned
+     * @return the requested template as a {@link Windfile} object
+     */
+    public Windfile getDefaultWindfileFor(ProgrammingExercise exercise) {
+        try {
+            return getWindfileFor(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType()), exercise.isStaticCodeAnalysisEnabled(),
+                    exercise.hasSequentialTestRuns(), exercise.isTestwiseCoverageEnabled());
+        }
+        catch (IOException e) {
+            LOGGER.info("No windfile for the settings of exercise {}", exercise.getId(), e);
+        }
+        return null;
     }
 
     /**
