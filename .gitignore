@@ -211,6 +211,7 @@ data-exports/
 /src/main/resources/known_hosts
 /.nx
 /local-ci-scripts
+/checked-out-repos
 
 ##############################
 # Supporting scripts config

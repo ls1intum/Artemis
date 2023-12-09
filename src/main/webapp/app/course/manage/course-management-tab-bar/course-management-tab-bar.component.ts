@@ -22,7 +22,7 @@ import {
     faPuzzlePiece,
     faRobot,
     faTable,
-    faTimes,
+    faTrash,
     faUserCheck,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
@@ -52,7 +52,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
 
     // Icons
     faArrowUpRightFromSquare = faArrowUpRightFromSquare;
-    faTimes = faTimes;
+    faTrash = faTrash;
     faEye = faEye;
     faWrench = faWrench;
     faTable = faTable;

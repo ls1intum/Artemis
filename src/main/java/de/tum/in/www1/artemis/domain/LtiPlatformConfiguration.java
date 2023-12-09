@@ -107,8 +107,8 @@ public class LtiPlatformConfiguration extends DomainObject {
         return originalUrl;
     }
 
-    public void setOriginalUrl(@Nullable String issuer) {
-        this.originalUrl = issuer;
+    public void setOriginalUrl(@Nullable String originalUrl) {
+        this.originalUrl = originalUrl;
     }
 
     @Nullable

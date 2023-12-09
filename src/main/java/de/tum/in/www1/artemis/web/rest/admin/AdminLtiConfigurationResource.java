@@ -104,7 +104,7 @@ public class AdminLtiConfigurationResource {
     @PutMapping("lti-platform")
     @EnforceAdmin
     public void updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
-        log.debug("REST request to update  configured lti platform");
+        log.debug("REST request to update configured lti platform");
         ltiPlatformConfigurationRepository.save(platform);
     }
 
