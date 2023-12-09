@@ -53,7 +53,7 @@ describe('ApollonDiagramCreateForm Component', () => {
     it('save', fakeAsync(() => {
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         jest.spyOn(apollonDiagramService, 'create').mockReturnValue(of(response));
-        const ngbModalSpy = jest.spyOn(ngbModal, 'dismiss');
+        const ngbModalSpy = jest.spyOn(ngbModal, 'close');
         fixture.componentInstance.apollonDiagram = new ApollonDiagram(UMLDiagramType.ClassDiagram, 999);
 
         // test

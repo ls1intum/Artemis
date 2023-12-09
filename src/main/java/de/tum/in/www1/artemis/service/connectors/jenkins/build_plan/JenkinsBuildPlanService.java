@@ -190,7 +190,7 @@ public class JenkinsBuildPlanService {
         final Document jobConfig = jenkinsJobService.getJobConfigForJobInFolder(buildProjectKey, buildPlanKey);
 
         try {
-            JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, repoUrl, existingRepoUrl);
+            JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, existingRepoUrl, repoUrl);
         }
         catch (IllegalArgumentException e) {
             log.error("Pipeline Script not found", e);
