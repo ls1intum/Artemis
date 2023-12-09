@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.connectors.lti;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -172,37 +171,34 @@ public class Lti13Service {
      */
     public void onNewResult(StudentParticipation participation) {
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
-        // send new results to all platforms configured via lti 1.3
-        List<LtiPlatformConfiguration> ltiPlatformConfigurations = ltiPlatformConfigurationRepository.findAll();
-        for (LtiPlatformConfiguration ltiPlatformConfiguration : ltiPlatformConfigurations) {
 
-            ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(ltiPlatformConfiguration);
-            if (clientRegistration == null) {
-                log.error("Could not transmit score to external LMS for course {}: client registration not found", course.getTitle());
+        LtiPlatformConfiguration ltiPlatformConfiguration = course.getOnlineCourseConfiguration().getLtiPlatformConfiguration();
+        ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(ltiPlatformConfiguration);
+        if (clientRegistration == null) {
+            log.error("Could not transmit score to external LMS for course {}: client registration not found", course.getTitle());
+            return;
+        }
+
+        participation.getStudents().forEach(student -> {
+            // there can be multiple launches for one exercise and student if the student has used more than one LTI 1.3 platform
+            // to launch the exercise (for example multiple lms)
+            Collection<LtiResourceLaunch> launches = launchRepository.findByUserAndExercise(student, participation.getExercise());
+
+            if (launches.isEmpty()) {
                 return;
             }
 
-            participation.getStudents().forEach(student -> {
-                // there can be multiple launches for one exercise and student if the student has used more than one LTI 1.3 platform
-                // to launch the exercise (for example multiple lms)
-                Collection<LtiResourceLaunch> launches = launchRepository.findByUserAndExercise(student, participation.getExercise());
+            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
-                if (launches.isEmpty()) {
-                    return;
-                }
+            if (result.isEmpty()) {
+                log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
+                return;
+            }
 
-                Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
 
-                if (result.isEmpty()) {
-                    log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
-                    return;
-                }
-
-                String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
-
-                launches.forEach(launch -> submitScore(launch, clientRegistration, concatenatedFeedbacks, result.get().getScore()));
-            });
-        }
+            launches.forEach(launch -> submitScore(launch, clientRegistration, concatenatedFeedbacks, result.get().getScore()));
+        });
     }
 
     protected void submitScore(LtiResourceLaunch launch, ClientRegistration clientRegistration, String comment, Double score) {
@@ -347,7 +343,12 @@ public class Lti13Service {
      * @param ltiIdToken The ID token containing the deep linking information.
      * @throws BadRequestAlertException if the course is not found or LTI is not configured for the course.
      */
-    public void startDeepLinking(OidcIdToken ltiIdToken) {
+    public void startDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId) {
+
+        Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(clientRegistrationId);
+        if (!ltiPlatformConfiguration.isPresent()) {
+            throw new BadRequestAlertException("Configuration not found for this client registration ID:" + clientRegistrationId, "LTI", "ltiNotConfigured");
+        }
 
         ltiService.authenticateLtiUser(ltiIdToken.getEmail(), ltiIdToken.getPreferredUsername(), ltiIdToken.getGivenName(), ltiIdToken.getFamilyName(), true);
     }
