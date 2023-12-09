@@ -19,6 +19,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
+import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 
 describe('Edit Course LTI Configuration Component', () => {
     let comp: EditCourseLtiConfigurationComponent;
@@ -51,6 +52,7 @@ describe('Edit Course LTI Configuration Component', () => {
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
                 MockComponent(HelpIconComponent),
+                MockDirective(MockHasAnyAuthorityDirective),
             ],
             providers: [
                 MockProvider(CourseManagementService),
