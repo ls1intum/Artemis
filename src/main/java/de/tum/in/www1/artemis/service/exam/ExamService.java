@@ -532,7 +532,7 @@ public class ExamService {
         // 2nd: fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
         Optional<QuizExamSubmission> quizExamSubmissionOptional = quizExamSubmissionRepository.findWithEagerSubmittedAnswersByStudentExamId(studentExam.getId());
-        quizExamSubmissionOptional.ifPresent(studentExam::setQuizExamSubmission);
+        // quizExamSubmissionOptional.ifPresent(studentExam::setQuizExamSubmission);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
 
