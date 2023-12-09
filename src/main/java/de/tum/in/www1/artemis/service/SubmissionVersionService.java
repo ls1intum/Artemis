@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.SubmissionVersionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -86,6 +87,15 @@ public class SubmissionVersionService {
             }
             catch (JsonProcessingException e) {
                 log.error("Error when writing quiz submission {} to json value. Will fall back to string representation", submission, e);
+                return submission.toString();
+            }
+        }
+        else if (submission instanceof QuizExamSubmission quizExamSubmission) {
+            try {
+                return objectMapper.writeValueAsString(quizExamSubmission.getSubmittedAnswers());
+            }
+            catch (JsonProcessingException e) {
+                log.error("Error when writing quiz exam submission {} to json value. Will fall back to string representation", submission, e);
                 return submission.toString();
             }
         }

@@ -12,8 +12,8 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
 
 let artemisServerDateService: ArtemisServerDateService;
 
@@ -73,30 +73,30 @@ describe('ExamUtils', () => {
             studentExam.exam = exam;
             studentExam.quizQuestions = [new MultipleChoiceQuestion(), new DragAndDropQuestion()];
             const examExercises = getExamExercises(studentExam, { title: 'Quiz Exam', navigationTitle: 'Quiz' });
-            const submission = new QuizSubmission();
+            const submission = new QuizExamSubmission();
             submission.isSynced = true;
+            submission.studentExam = studentExam;
             const exerciseGroup = new ExerciseGroup();
             exerciseGroup.title = 'Quiz Exam';
-            expect(examExercises).toEqual([
-                {
-                    id: 0,
-                    type: ExerciseType.QUIZ,
-                    studentParticipations: [
-                        {
-                            initializationState: InitializationState.INITIALIZED,
-                            submissions: [submission],
-                        },
-                    ],
-                    navigationTitle: 'Quiz',
-                    overviewTitle: 'Quiz Exam',
-                    exerciseGroup: exerciseGroup,
-                    title: 'Quiz Exam',
-                    includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-                    quizQuestions: studentExam.quizQuestions,
-                    maxPoints: exam.quizExamMaxPoints,
-                    randomizeQuestionOrder: exam.randomizeQuizExamQuestionsOrder,
-                },
-            ]);
+            expect(examExercises).toHaveLength(1);
+            expect(examExercises[0]).toEqual({
+                id: 0,
+                type: ExerciseType.QUIZ,
+                studentParticipations: [
+                    {
+                        initializationState: InitializationState.INITIALIZED,
+                        submissions: [submission],
+                    },
+                ],
+                navigationTitle: 'Quiz',
+                overviewTitle: 'Quiz Exam',
+                exerciseGroup: exerciseGroup,
+                title: 'Quiz Exam',
+                includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+                quizQuestions: studentExam.quizQuestions,
+                maxPoints: exam.quizExamMaxPoints,
+                randomizeQuestionOrder: exam.randomizeQuizExamQuestionsOrder,
+            });
         });
 
         it('should return empty exam exercises if studentExam has no exercises and no quiz exam', () => {
