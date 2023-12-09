@@ -21,6 +21,7 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
 
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
+    mayEditOrDelete = false;
     readonly CourseWideContext = CourseWideContext;
 
     // Icons
@@ -36,6 +37,10 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
         // determines if the current user is the author of the original post, that the answer belongs to
         this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting.post!);
         this.isAnswerOfAnnouncement = getAsChannelDto(this.posting.post?.conversation)?.isAnnouncementChannel ?? false;
+        const isCourseWideChannel = getAsChannelDto(this.posting.post?.conversation)?.isCourseWide ?? false;
+        const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
+        const mayEditOrDeleteOtherUsersAnswer = (isCourseWideChannel && isAtLeastInstructorInCourse) || this.hasChannelModerationRights;
+        this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
     }
 
     /**

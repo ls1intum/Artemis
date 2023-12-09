@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
@@ -18,6 +19,8 @@ class NotificationTargetFactoryTest {
     private static Post post;
 
     private static final Long POST_ID = 101L;
+
+    private static final Long CHANNEL_ID = 123L;
 
     private static Course course;
 
@@ -39,7 +42,7 @@ class NotificationTargetFactoryTest {
 
     private static final String BASE_URL = "https://artemistest.ase.in.tum.de";
 
-    private static final String DISCUSSION_SEARCH_TEXT = "discussion?searchText=%23";
+    private static final String MESSAGES_CONVERSATION = "messages?conversationId=";
 
     private String resultingURL;
 
@@ -56,7 +59,7 @@ class NotificationTargetFactoryTest {
     // expected/correct URLs
 
     // e.g. https://artemistest.ase.in.tum.de/courses/477/discussion?searchText=%232000
-    private static final String EXPECTED_POST_URL = BASE_URL_COURSES_COURSE_ID + "/" + DISCUSSION_SEARCH_TEXT + POST_ID;
+    private static final String EXPECTED_POST_URL = BASE_URL_COURSES_COURSE_ID + "/" + MESSAGES_CONVERSATION + CHANNEL_ID;
 
     // e.g. https://artemistest.ase.in.tum.de/courses/477/lectures/199
     private static final String EXPECTED_ATTACHMENT_CHANGED_URL = BASE_URL_COURSES_COURSE_ID + "/" + LECTURES_TEXT + "/" + LECTURE_ID;
@@ -87,9 +90,13 @@ class NotificationTargetFactoryTest {
         course = new Course();
         course.setId(COURSE_ID);
 
+        Channel channel = new Channel();
+        channel.setId(CHANNEL_ID);
+
         post = new Post();
         post.setId(POST_ID);
         post.setCourse(course);
+        post.setConversation(channel);
 
         lecture = new Lecture();
         lecture.setId(LECTURE_ID);
