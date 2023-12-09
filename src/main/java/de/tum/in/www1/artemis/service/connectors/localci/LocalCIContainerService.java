@@ -383,7 +383,16 @@ public class LocalCIContainerService {
         buildScript.append("#!/bin/bash\n");
         buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
 
-        actions.forEach(action -> buildScript.append(action.getScript()).append("\n"));
+        actions.forEach(action -> {
+            String workdir = action.getWorkdir();
+            if (workdir != null) {
+                buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
+            }
+            buildScript.append(action.getScript()).append("\n");
+            if (workdir != null) {
+                buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
+            }
+        });
 
         // Fall back to hardcoded scripts for old exercises without windfile
         // *****************
