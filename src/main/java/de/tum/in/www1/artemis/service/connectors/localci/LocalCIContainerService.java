@@ -210,19 +210,24 @@ public class LocalCIContainerService {
      * @param buildJobContainerId                    the id of the build job container
      * @param assignmentRepositoryPath               the path to the assignment repository
      * @param testRepositoryPath                     the path to the test repository
+     * @param solutionRepositoryPath                 the path to the solution repository
      * @param auxiliaryRepositoriesPaths             the paths to the auxiliary repositories
      * @param auxiliaryRepositoryCheckoutDirectories the names of the auxiliary repositories
      * @param buildScriptPath                        the path to the build script
      * @param programmingLanguage                    the programming language of the exercise
      */
-    public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths,
-            String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath, ProgrammingLanguage programmingLanguage) {
+    public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
+            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath, ProgrammingLanguage programmingLanguage) {
         String testCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
         if (!Objects.equals(testCheckoutPath, "")) {
             addDirectory(buildJobContainerId, WORKING_DIRECTORY + "/testing-dir", true);
             executeDockerCommand(buildJobContainerId, false, false, "chmod", "-R", "777", WORKING_DIRECTORY + "/testing-dir");
+        }
+        if (solutionRepositoryPath != null) {
+            String solutionCheckoutPath = RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
+            addAndPrepareDirectory(buildJobContainerId, solutionRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
         }
         addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
         addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
