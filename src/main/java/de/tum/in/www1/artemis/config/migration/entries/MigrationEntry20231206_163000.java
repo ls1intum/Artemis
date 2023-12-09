@@ -76,18 +76,25 @@ public class MigrationEntry20231206_163000 extends MigrationEntry {
             for (int i = 0; i < chunk.size(); i++) {
                 var exercise = chunk.get(i);
                 allFutures[i] = CompletableFuture.runAsync(() -> {
-                    var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId());
-                    if (templateParticipation.isEmpty()) {
-                        /*
-                         * If the template participation is missing, we cannot migrate the exercise, so we skip it.
-                         * as there is no way to migrate the exercise, we also log an error but ultimately continue with the migration.
-                         * This is to avoid the migration to fail completely if one exercise is missing the template participation.
-                         */
-                        log.error("Exercise {} has no template participation, will default to not checking out solution repository in build plan", exercise.getId());
-                        return;
+                    boolean checkoutSolutionRepository = false;
+                    try {
+                        var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId());
+                        if (templateParticipation.isEmpty()) {
+                            /*
+                             * If the template participation is missing, we cannot migrate the exercise, so we skip it.
+                             * as there is no way to migrate the exercise, we also log an error but ultimately continue with the migration.
+                             * This is to avoid the migration to fail completely if one exercise is missing the template participation.
+                             */
+                            log.error("Exercise {} has no template participation, will default to not checking out solution repository in build plan", exercise.getId());
+                            return;
+                        }
+                        checkoutSolutionRepository = ciMigrationService.get().hasSolutionRepository(templateParticipation.get().getBuildPlanId());
                     }
-                    var checksOutSolutionRepository = ciMigrationService.get().hasSolutionRepository(templateParticipation.get().getBuildPlanId());
-                    exercise.setCheckoutSolutionRepository(checksOutSolutionRepository);
+                    catch (Exception e) {
+                        log.error("Error while checking if exercise {} needs to check out solution repository in build plan, setting checkoutSolutionRepository to false",
+                                exercise.getId(), e);
+                    }
+                    exercise.setCheckoutSolutionRepository(checkoutSolutionRepository);
                     log.debug("Migrating exercise {}", exercise.getId());
                     programmingExerciseRepository.save(exercise);
                 }, executorService);
