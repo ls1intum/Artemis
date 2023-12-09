@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -383,13 +382,13 @@ public class StudentExamResource {
         // }
 
         // students can not fetch the exam until EXAM_START_WAIT_TIME_MINUTES minutes before the exam start, we use the same constant in the client
-        if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
-            throw new AccessForbiddenException("Students cannot download the student exams until " + EXAM_START_WAIT_TIME_MINUTES + " minutes before the exam start");
-        }
-
-        if (!Boolean.TRUE.equals(studentExam.isStarted())) {
-            websocketMessagingService.sendMessage("/topic/exam/" + examId + "/started", "");
-        }
+        // if (now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
+        // throw new AccessForbiddenException("Students cannot download the student exams until " + EXAM_START_WAIT_TIME_MINUTES + " minutes before the exam start");
+        // }
+        //
+        // if (!Boolean.TRUE.equals(studentExam.isStarted())) {
+        // websocketMessagingService.sendMessage("/topic/exam/" + examId + "/started", "");
+        // }
 
         prepareStudentExamForConduction(request, currentUser, studentExam);
 
