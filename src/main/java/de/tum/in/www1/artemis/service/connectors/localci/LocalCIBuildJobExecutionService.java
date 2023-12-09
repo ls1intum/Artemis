@@ -361,9 +361,9 @@ public class LocalCIBuildJobExecutionService {
             }
         }
         if (programmingExercise.isStaticCodeAnalysisEnabled()) {
-            testResultPaths.add("/testing-dir/target/spotbugsXml.xml");
-            testResultPaths.add("/testing-dir/target/checkstyle-result.xml");
-            testResultPaths.add("/testing-dir/target/pmd.xml");
+            testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/target/spotbugsXml.xml");
+            testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/target/checkstyle-result.xml");
+            testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/target/pmd.xml");
         }
         return testResultPaths;
     }
