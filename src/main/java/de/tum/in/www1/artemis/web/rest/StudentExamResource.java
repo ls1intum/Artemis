@@ -788,7 +788,7 @@ public class StudentExamResource {
 
         // Load quizzes from database, because they include lazy relationships
         examService.loadQuizExercisesForStudentExam(studentExam);
-        // setQuizExamProperties(studentExam);
+        setQuizExamProperties(studentExam);
 
         // Fetch participations, submissions and results and connect them to the studentExam
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, currentUser);
@@ -811,11 +811,11 @@ public class StudentExamResource {
     private void setQuizExamProperties(StudentExam studentExam) {
         Exam exam = studentExam.getExam();
         QuizPool quizPool = quizPoolService.findByExamId(exam.getId());
-        if (quizPool != null) {
-            studentExamRepository.fetchAllQuizQuestions(studentExam);
-            exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
-            exam.setRandomizeQuizExamQuestionsOrder(quizPool.getRandomizeQuestionOrder());
-        }
+        // if (quizPool != null) {
+        // studentExamRepository.fetchAllQuizQuestions(studentExam);
+        // exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
+        // exam.setRandomizeQuizExamQuestionsOrder(quizPool.getRandomizeQuestionOrder());
+        // }
     }
 
     /**
