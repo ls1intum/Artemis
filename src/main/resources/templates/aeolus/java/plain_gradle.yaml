@@ -6,6 +6,6 @@ metadata:
 actions:
     - name: gradle
       script: |
-        chmod +x gradlew
-        ./gradlew clean test
+         chmod +x gradlew
+         ./gradlew clean test
       runAlways: false

@@ -5,8 +5,6 @@ actions:
       # the build process is specified in `run.sh` in the test repository
       # -s enables the safe testing mode
       chmod +x run.sh
-      ls -lah
-      set -x
       ./run.sh -s
     runAlways: false
   - name: junit

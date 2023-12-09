@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
@@ -53,7 +54,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * This service contains the logic to execute a build job for a programming exercise participation in the local CI system.
- * The {@link #runBuildJob(ProgrammingExerciseParticipation, String, String, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService} and
+ * The {@link #runBuildJob(ProgrammingExerciseParticipation, String, boolean, String, String)} method is wrapped into a Callable by the {@link LocalCIBuildJobManagementService} and
  * submitted to the executor service.
  */
 @Service
@@ -129,7 +130,8 @@ public class LocalCIBuildJobExecutionService {
 
     /**
      * Prepare the paths to the assignment and test repositories, the branch to check out, the volume configuration for the Docker container, and the container configuration,
-     * and then call {@link #runScriptAndParseResults(ProgrammingExerciseParticipation, String, String, String, String, Path, Path, Path, Path[], String[], Path)} to execute the
+     * and then call {@link #runScriptAndParseResults(ProgrammingExerciseParticipation, String, String, String, String, Path, Path, Path, Path[], String[], Path, boolean)} to
+     * execute the
      * job.
      *
      * @param participation          The participation of the repository for which the build job should be executed.
@@ -199,7 +201,6 @@ public class LocalCIBuildJobExecutionService {
         catch (LocalVCInternalException e) {
             throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
         }
-
         Path assignmentRepositoryPath = assignmentRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
         Path testsRepositoryPath = testsRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
         Path solutionRepositoryPath = null;
@@ -245,7 +246,7 @@ public class LocalCIBuildJobExecutionService {
         CreateContainerResponse container = localCIContainerService.configureContainer(containerName, branch, commitHash, dockerImage);
 
         return runScriptAndParseResults(participation, containerName, container.getId(), branch, commitHash, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath,
-                auxiliaryRepositoriesPaths, auxiliaryRepositoryCheckoutDirectories, buildScriptPath);
+                auxiliaryRepositoriesPaths, auxiliaryRepositoryCheckoutDirectories, buildScriptPath, isPushToTestRepository);
     }
 
     /**
@@ -262,7 +263,7 @@ public class LocalCIBuildJobExecutionService {
      */
     private LocalCIBuildResult runScriptAndParseResults(ProgrammingExerciseParticipation participation, String containerName, String containerId, String branch, String commitHash,
             Path assignmentRepositoryPath, Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths,
-            String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath) {
+            String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath, boolean isPushToTestRepository) {
 
         ProgrammingLanguage programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
 
@@ -312,17 +313,19 @@ public class LocalCIBuildJobExecutionService {
         }
         catch (NotFoundException e) {
             // If the test results are not found, this means that something went wrong during the build and testing of the submission.
-            // Stop the container and return a build results that indicates that the build failed.
-            localCIContainerService.stopContainer(containerName);
-            // Delete script file from host system
-            localCIContainerService.deleteScriptFile(participation.getId().toString());
             return constructFailedBuildResult(branch, assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate);
         }
+        finally {
+            localCIContainerService.stopContainer(containerName);
 
-        localCIContainerService.stopContainer(containerName);
+            // Delete script file from host system
+            localCIContainerService.deleteScriptFile(containerName);
 
-        // Delete script file from host system
-        localCIContainerService.deleteScriptFile(participation.getId().toString());
+            // Delete cloned repository
+            if (commitHash != null && !isPushToTestRepository) {
+                deleteCloneRepo(participation, commitHash);
+            }
+        }
 
         LocalCIBuildResult buildResult;
         try {
@@ -352,7 +355,7 @@ public class LocalCIBuildJobExecutionService {
             case PYTHON -> {
                 return getPythonTestResultPaths();
             }
-            case ASSEMBLER, C, HASKELL -> {
+            case ASSEMBLER, C, VHDL, HASKELL -> {
                 return getCustomTestResultPaths(programmingExercise);
             }
             default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
@@ -390,7 +393,14 @@ public class LocalCIBuildJobExecutionService {
 
     private List<String> getCustomTestResultPaths(ProgrammingExercise programmingExercise) {
         List<String> testResultPaths = new ArrayList<>();
-        for (AeolusResult testResultPath : programmingExercise.getWindfile().getResults()) {
+        Windfile windfile = programmingExercise.getWindfile();
+        if (windfile == null) {
+            windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
+        }
+        if (windfile == null) {
+            throw new IllegalArgumentException("No windfile found for programming exercise " + programmingExercise.getId());
+        }
+        for (AeolusResult testResultPath : windfile.getResults()) {
             testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/" + testResultPath.getPath());
         }
         return testResultPaths;
@@ -522,6 +532,25 @@ public class LocalCIBuildJobExecutionService {
         return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate);
     }
 
+    /**
+     * Constructs a {@link LocalCIBuildResult} from the given parameters.
+     *
+     * @param failedTests              The list of failed tests.
+     * @param successfulTests          The list of successful tests.
+     * @param assignmentRepoBranchName The name of the branch of the assignment repository that was checked out for the build.
+     * @param assignmentRepoCommitHash The commit hash of the assignment repository that was checked out for the build.
+     * @param testsRepoCommitHash      The commit hash of the tests repository that was checked out for the build.
+     * @param isBuildSuccessful        Whether the build was successful or not.
+     * @param buildRunDate             The date when the build was completed.
+     * @return a {@link LocalCIBuildResult}
+     */
+    private LocalCIBuildResult constructBuildResult(List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests,
+            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate) {
+        LocalCIBuildResult.LocalCIJobDTO job = new LocalCIBuildResult.LocalCIJobDTO(failedTests, successfulTests);
+
+        return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job));
+    }
+
     private Path cloneAndCheckoutRepository(ProgrammingExerciseParticipation participation, String commitHash) {
         try {
             // Clone the assignment repository into a temporary directory with the name of the commit hash and then checkout the commit hash.
@@ -549,24 +578,5 @@ public class LocalCIBuildJobExecutionService {
         catch (IOException e) {
             throw new RuntimeException("Error while deleting repository", e);
         }
-    }
-
-    /**
-     * Constructs a {@link LocalCIBuildResult} from the given parameters.
-     *
-     * @param failedTests              The list of failed tests.
-     * @param successfulTests          The list of successful tests.
-     * @param assignmentRepoBranchName The name of the branch of the assignment repository that was checked out for the build.
-     * @param assignmentRepoCommitHash The commit hash of the assignment repository that was checked out for the build.
-     * @param testsRepoCommitHash      The commit hash of the tests repository that was checked out for the build.
-     * @param isBuildSuccessful        Whether the build was successful or not.
-     * @param buildRunDate             The date when the build was completed.
-     * @return a {@link LocalCIBuildResult}
-     */
-    private LocalCIBuildResult constructBuildResult(List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests,
-            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate) {
-        LocalCIBuildResult.LocalCIJobDTO job = new LocalCIBuildResult.LocalCIJobDTO(failedTests, successfulTests);
-
-        return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job));
     }
 }
