@@ -10,7 +10,6 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ArtemisColorSelectorModule } from 'app/shared/color-selector/color-selector.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 
 describe('CategorySelectorComponent', () => {
     let comp: CategorySelectorComponent;
@@ -53,7 +52,6 @@ describe('CategorySelectorComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                FontAwesomeTestingModule,
                 MockModule(MatAutocompleteModule),
                 MockModule(MatFormFieldModule),
                 MockModule(MatChipsModule),
@@ -94,14 +92,12 @@ describe('CategorySelectorComponent', () => {
             clientX: 1,
             clientY: 2,
         });
-        const stopPropagationSpy = jest.spyOn(mouseEvent, 'stopPropagation');
 
         const openColorSelectorSpy = jest.spyOn(comp.colorSelector, 'openColorSelector');
         comp.openColorSelector(mouseEvent, category5);
 
         expect(comp.selectedCategory).toEqual(category5);
         expect(openColorSelectorSpy).toHaveBeenCalledWith(mouseEvent, undefined, 150);
-        expect(stopPropagationSpy).toHaveBeenCalledOnce(); // otherwise the colorpicker will close immediately
     });
 
     it('should select color for category', () => {

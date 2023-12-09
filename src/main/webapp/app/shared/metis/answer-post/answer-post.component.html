@@ -6,6 +6,7 @@
         [isCourseMessagesPage]="isCourseMessagesPage"
         [isCommunicationPage]="isCommunicationPage"
         [lastReadDate]="lastReadDate"
+        [hasChannelModerationRights]="hasChannelModerationRights"
     >
     </jhi-answer-post-header>
     <jhi-posting-content
@@ -16,6 +17,7 @@
         [posting]="posting"
         [isReply]="true"
         (userReferenceClicked)="userReferenceClicked.emit($event)"
+        (channelReferenceClicked)="channelReferenceClicked.emit($event)"
     >
     </jhi-posting-content>
     <ng-container #createEditAnswerPostContainer></ng-container>

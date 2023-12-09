@@ -1,20 +1,22 @@
-<div class="p-4">
+<div class="modal-header">
+    <h4 class="modal-title">{{ 'artemisApp.apollonDiagram.detail.title' | artemisTranslate: { title: this.apollonDiagram?.title } }}</h4>
+    <button type="button ms-auto" class="btn" (click)="confirmExitDetailView(true)"><fa-icon [icon]="faX" size="lg" /></button>
+</div>
+<div class="modal-body">
     <div class="row">
-        <div class="col text-end">
+        <div class="d-flex align-items-center text-end mb-1">
+            <button class="btn me-auto" (click)="confirmExitDetailView(false)">
+                <fa-icon [icon]="faArrow" size="lg" />
+                <span class="ms-1" jhiTranslate="artemisApp.apollonDiagram.back">Back to Overview</span>
+            </button>
             <label class="me-1">
-                <input class="form-check-input" type="checkbox" name="keepOriginalSize" [(ngModel)]="crop" />&nbsp;<span jhiTranslate="artemisApp.apollonDiagram.detail.crop"
-                    >Crop</span
-                >
+                <input class="form-check-input" type="checkbox" name="keepOriginalSize" [(ngModel)]="crop" />&nbsp;
+                <span jhiTranslate="artemisApp.apollonDiagram.detail.crop">Crop</span>
             </label>
             <fa-icon class="me-1" [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.apollonDiagram.detail.help' | artemisTranslate }}"></fa-icon>
             <button class="btn btn-info me-1" (click)="downloadSelection()" [hidden]="!apollonDiagram">
                 <fa-icon [icon]="faDownload"></fa-icon>&nbsp;<span jhiTranslate="entity.action.download">Download</span>
             </button>
-            <span class="border-right border-secondary me-2"></span>
-            <button id="generate-quiz-exercise" class="btn btn-info me-1" (click)="generateExercise()" [hidden]="!apollonDiagram">
-                {{ 'artemisApp.apollonDiagram.detail.createLabel' | artemisTranslate }} &hellip;
-            </button>
-            <button class="btn btn-success" (click)="saveDiagram()" [hidden]="!apollonDiagram" jhiTranslate="entity.action.save">Save</button>
         </div>
     </div>
 
@@ -23,5 +25,14 @@
         <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram.title" />
     </div>
 
-    <div #editorContainer style="width: 100%; height: calc(100vh - 300px)"></div>
+    <div #editorContainer style="width: 100%; height: calc(100vh - 400px)"></div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-outline-primary me-auto" (click)="confirmExitDetailView(true)">Close</button>
+    <button class="btn btn-outline-primary" (click)="saveDiagram()" [hidden]="!apollonDiagram" [disabled]="isSaved" jhiTranslate="artemisApp.apollonDiagram.detail.save">
+        Save Diagram
+    </button>
+    <button id="generate-quiz-exercise" class="btn btn-primary" (click)="generateExercise()" [hidden]="!apollonDiagram">
+        {{ 'artemisApp.apollonDiagram.detail.createLabel' | artemisTranslate }}
+    </button>
 </div>
