@@ -397,11 +397,13 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         if (!forceCacheOverride && subject) {
             return subject.asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
         }
+        // If all submission states for the exercise are currently loaded, don't send a new rest request.
+        // Instead, wait for the exercise request to finish and return this result
         const exercisePreloadingSubject = this.exerciseBuildStateSubjects.get(exerciseId);
         if (exercisePreloadingSubject) {
             return exercisePreloadingSubject.asObservable().pipe(
-                filter((val: ExerciseSubmissionState | undefined) => val !== undefined),
-                map((val: ExerciseSubmissionState) => val[participationId]),
+                map((val) => val && val[participationId]),
+                filter((val) => val !== undefined),
             ) as Observable<ProgrammingSubmissionStateObj>;
         }
         // The setup process is difficult, because it should not happen that multiple subscribers trigger the setup process at the same time.
