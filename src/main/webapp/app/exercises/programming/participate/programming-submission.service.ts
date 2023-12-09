@@ -402,10 +402,22 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         const exercisePreloadingSubject = this.exerciseBuildStateSubjects.get(exerciseId);
         if (exercisePreloadingSubject) {
             return exercisePreloadingSubject.asObservable().pipe(
-                map((val) => val && val[participationId]),
-                filter((val) => val !== undefined),
-            ) as Observable<ProgrammingSubmissionStateObj>;
+                // remove initial undefined state
+                filter((states) => !!states),
+                switchMap((exerciseStates) => {
+                    const participationState = exerciseStates?.[participationId];
+                    if (participationState) {
+                        return of(participationState);
+                    }
+                    // Load the submission manually if it was not part of the exercise state
+                    return this.loadLatestPendingSubmissionByParticipationId(participationId, exerciseId, personal, fetchPending);
+                }),
+            );
         }
+        return this.loadLatestPendingSubmissionByParticipationId(participationId, exerciseId, personal, fetchPending);
+    };
+
+    private loadLatestPendingSubmissionByParticipationId(participationId: number, exerciseId: number, personal: boolean, fetchPending: boolean) {
         // The setup process is difficult, because it should not happen that multiple subscribers trigger the setup process at the same time.
         // There the subject is returned before the REST call is made, but will emit its result as soon as it returns.
         this.submissionSubjects[participationId] = new BehaviorSubject<ProgrammingSubmissionStateObj | undefined>(undefined);
@@ -419,7 +431,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         }
         // We just remove the initial undefined from the pipe as it is only used to make the setup process easier.
         return this.submissionSubjects[participationId].asObservable().pipe(filter((stateObj) => stateObj !== undefined)) as Observable<ProgrammingSubmissionStateObj>;
-    };
+    }
 
     /**
      * Will retrieve and cache all pending submissions for all student participations of given exercise.
