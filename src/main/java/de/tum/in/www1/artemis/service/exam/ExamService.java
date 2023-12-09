@@ -64,7 +64,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
-import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
@@ -75,7 +74,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.QuizExamSubmissionRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -175,8 +173,6 @@ public class ExamService {
 
     private final CourseRepository courseRepository;
 
-    private final QuizExamSubmissionRepository quizExamSubmissionRepository;
-
     private final ObjectMapper defaultObjectMapper;
 
     private static final boolean IS_TEST_RUN = false;
@@ -190,8 +186,7 @@ public class ExamService {
             SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService,
             GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService,
             BonusService bonusService, ExerciseDeletionService exerciseDeletionService, SubmittedAnswerRepository submittedAnswerRepository,
-            AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository,
-            QuizExamSubmissionRepository quizExamSubmissionRepository) {
+            AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -217,7 +212,6 @@ public class ExamService {
         this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.courseRepository = courseRepository;
-        this.quizExamSubmissionRepository = quizExamSubmissionRepository;
         this.defaultObjectMapper = new ObjectMapper();
     }
 
@@ -531,8 +525,6 @@ public class ExamService {
 
         // 2nd: fetch all submitted answers for quizzes
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
-        Optional<QuizExamSubmission> quizExamSubmissionOptional = quizExamSubmissionRepository.findWithEagerSubmittedAnswersByStudentExamId(studentExam.getId());
-        quizExamSubmissionOptional.ifPresent(studentExam::setQuizExamSubmission);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
 

@@ -505,7 +505,6 @@ public class StudentExamResource {
 
         // 4th: Reload the Quiz-Exercises
         examService.loadQuizExercisesForStudentExam(studentExam);
-        setQuizExamProperties(studentExam);
 
         // 5th fetch participations, submissions and results and connect them to the studentExam
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, user);
@@ -788,7 +787,6 @@ public class StudentExamResource {
 
         // Load quizzes from database, because they include lazy relationships
         examService.loadQuizExercisesForStudentExam(studentExam);
-        setQuizExamProperties(studentExam);
 
         // Fetch participations, submissions and results and connect them to the studentExam
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, currentUser);
@@ -798,6 +796,8 @@ public class StudentExamResource {
                 participation.setExercise(null);
             }
         }
+
+        setQuizExamProperties(studentExam);
 
         // Create new exam session
         createNewExamSession(request, studentExam);

@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
-import de.tum.in.www1.artemis.domain.quiz.QuizConfiguration;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
@@ -228,14 +227,13 @@ public class QuizSubmissionService extends AbstractQuizSubmissionService<QuizSub
     /**
      * Set the participation of the quiz submission and then save the quiz submission to the database
      *
-     * @param quizConfiguration the QuizConfiguration of the participation of which the given quizSubmission belongs to
-     * @param quizSubmission    the QuizSubmission to be saved
-     * @param user              the User of the participation of which the given quizSubmission belongs to
+     * @param quizExercise   the QuizExercise of the participation of which the given quizSubmission belongs to
+     * @param quizSubmission the QuizSubmission to be saved
+     * @param user           the User of the participation of which the given quizSubmission belongs to
      * @return saved QuizSubmission
      */
     @Override
-    protected QuizSubmission save(QuizConfiguration quizConfiguration, QuizSubmission quizSubmission, User user) {
-        QuizExercise quizExercise = (QuizExercise) quizConfiguration;
+    protected QuizSubmission save(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
         quizSubmission.setParticipation(this.getParticipation(quizExercise, quizSubmission, user));
         return quizSubmissionRepository.save(quizSubmission);
     }

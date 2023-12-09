@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.exercise.quizexercise;
 
-import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
@@ -8,11 +7,11 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.security.Principal;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.parallel.Isolated;
@@ -36,10 +35,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
@@ -108,15 +104,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Autowired
     QuizSubmissionWebsocketService quizSubmissionWebsocketService;
 
-    @Autowired
-    private ExamRepository examRepository;
-
-    @Autowired
-    private QuizQuestionRepository quizQuestionRepository;
-
-    @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
-
     @BeforeEach
     void init() {
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
@@ -147,7 +134,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testQuizSubmitUnactiveQuizWebsocket() {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(now().plusDays(1), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusDays(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(240);
         quizExerciseRepository.save(quizExercise);
 
@@ -329,12 +316,12 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitLiveMode_badRequest_notActive(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(now().plusSeconds(20), now().plusSeconds(30), quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusSeconds(20), ZonedDateTime.now().plusSeconds(30), quizMode);
         quizExercise.setDuration(10);
         quizExercise = quizExerciseService.save(quizExercise);
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
-            var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, now().plusSeconds(10)));
+            var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().plusSeconds(10)));
             quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student4");
         }
 
@@ -353,15 +340,15 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         int invalidExerciseId = -1;
 
         Course course = courseUtilService.createCourse();
-        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, now().minusHours(5), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setDuration(350);
-        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(now().minusMinutes(5)));
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
         quizExerciseService.save(quizExercise);
 
         quizScheduleService.clearAllQuizData();
         quizScheduleService.clearQuizData(quizExercise.getId());
 
-        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, now());
+        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, ZonedDateTime.now());
 
         // submit quiz more times than the allowed number of attempts, expected status = BAD_REQUEST
         request.postWithResponseBody("/api/exercises/" + invalidExerciseId + "/submissions/live", quizSubmission, Result.class, HttpStatus.NOT_FOUND);
@@ -371,7 +358,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPractice(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(now().minusSeconds(10), now().minusSeconds(8), quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(10), ZonedDateTime.now().minusSeconds(8), quizMode);
         quizExercise.setDuration(2);
         quizExercise.setIsOpenForPractice(true);
         quizExerciseService.save(quizExercise);
@@ -442,7 +429,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testQuizSubmitPractice_badRequest() throws Exception {
-        QuizExercise quizExerciseServer = quizExerciseUtilService.createQuiz(now().minusSeconds(4), now().minusSeconds(2), QuizMode.SYNCHRONIZED);
+        QuizExercise quizExerciseServer = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), ZonedDateTime.now().minusSeconds(2), QuizMode.SYNCHRONIZED);
         quizExerciseServer.setDuration(2);
         quizExerciseServer.setIsOpenForPractice(false);
         quizExerciseService.save(quizExerciseServer);
@@ -487,7 +474,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testQuizSubmitPreview_forbidden() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
     }
@@ -498,7 +485,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         Course course = courseUtilService.createCourse();
         course.setStudentGroupName("abc");
         courseRepository.save(course);
-        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
         verifyNoInteractions(websocketMessagingService);
@@ -510,7 +497,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         Course course = courseUtilService.createCourse();
         course.setTeachingAssistantGroupName("tutor2");
         courseRepository.save(course);
-        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
     }
@@ -530,7 +517,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPreview_badRequest_submissionId() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         var quizSubmission = new QuizSubmission();
         quizSubmission.setId(1L);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
@@ -539,7 +526,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPractice_badRequest_submissionId() throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         var quizSubmission = new QuizSubmission();
         quizSubmission.setId(1L);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
@@ -549,7 +536,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPreview(QuizMode quizMode) throws Exception {
-        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(now().minusSeconds(4), null, quizMode);
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(4), null, quizMode);
         quizExerciseService.save(quizExercise);
 
         int numberOfParticipants = 10;
@@ -599,8 +586,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         Course course = courseUtilService.createCourse();
         String publishQuizPath = "/topic/courses/" + course.getId() + "/quizExercises";
         log.debug("// Creating the quiz exercise 2s in the future");
-        var initialReleaseDate = now().plus(2, ChronoUnit.SECONDS);
-        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, now(), null, QuizMode.SYNCHRONIZED);
+        var initialReleaseDate = ZonedDateTime.now().plus(2, ChronoUnit.SECONDS);
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(initialReleaseDate));
         quizExercise.duration(60);
 
@@ -616,7 +603,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         // reschedule
         log.debug("// Rescheduling the quiz to now");
-        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(now()));
+        quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now()));
         quizExercise = quizExerciseService.save(quizExercise);
 
         // check that quiz and quiz batches have started
@@ -635,7 +622,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         log.debug("// End the quiz and delete it");
         quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExercise).isNotNull();
-        quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
+        quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
         quizExercise = exerciseRepository.saveAndFlush(quizExercise);
 
         // ...delete the quiz
@@ -652,7 +639,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     void testQuizScoringTypes() throws IOException {
         Course course = courseUtilService.createCourse();
-        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
         quizExercise = quizExerciseService.save(quizExercise);
 
@@ -693,7 +680,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     void testQuizScoringType(ScoringType scoringType) throws IOException {
         Course course = courseUtilService.createCourse();
-        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
         quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().peek(quizQuestion -> quizQuestion.setScoringType(scoringType)).toList());
         quizExercise = quizExerciseService.save(quizExercise);
@@ -731,66 +718,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(result.getScore()).isEqualTo(expectedScore);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testQuizExerciseSubmitExam() throws Exception {
-        Course course = courseUtilService.createCourse();
-        var exam = createExamForQuizExerciseTest(course);
-        QuizQuestion quizQuestion0 = QuizExerciseFactory.createMultipleChoiceQuestion();
-        QuizQuestion quizQuestion1 = QuizExerciseFactory.createMultipleChoiceQuestion();
-        QuizExercise quizExercise = QuizExerciseFactory.createQuizForExam(exam.getExerciseGroups().get(0));
-        quizExercise.setQuizQuestions(List.of(quizQuestion0));
-        exerciseRepository.save(quizExercise);
-
-        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        var studentExam = examUtilService.addStudentExamWithUser(exam, user);
-        studentExam = examUtilService.addExercisesToStudentExam(studentExam, List.of(quizExercise));
-        quizQuestionRepository.save(quizQuestion1);
-        examUtilService.addQuizQuestionsToStudentExam(studentExam, List.of(quizQuestion1));
-
-        var studentParticipation = new StudentParticipation();
-        studentParticipation.setParticipant(user);
-        studentParticipation.exercise(quizExercise);
-        studentParticipationRepository.save(studentParticipation);
-
-        SubmittedAnswer submittedAnswer0 = new MultipleChoiceSubmittedAnswer();
-        submittedAnswer0.setQuizQuestion(quizQuestion0);
-        QuizSubmission quizSubmission = new QuizSubmission();
-        quizSubmission.setSubmittedAnswers(Set.of(submittedAnswer0));
-        QuizSubmission updatedQuizSubmission = request.putWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class,
-                HttpStatus.OK);
-        assertThat(updatedQuizSubmission.isSubmitted()).isTrue();
-        assertThat(updatedQuizSubmission.getType()).isEqualTo(SubmissionType.MANUAL);
-        assertThat(updatedQuizSubmission.getParticipation()).isEqualTo(studentParticipation);
-        assertThat(updatedQuizSubmission.getResults()).isEmpty();
-        assertThat(updatedQuizSubmission.getSubmittedAnswers()).hasSize(1);
-    }
-
-    private Exam createExamForQuizExerciseTest(Course course) {
-        var exam = examUtilService.addExamWithExerciseGroup(course, true);
-        var startDate = now().minusMinutes(5);
-        var endDate = now().plusMinutes(5);
-        exam.setStartDate(startDate);
-        exam.setEndDate(endDate);
-        exam = examRepository.save(exam);
-        return exam;
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testQuizExamSubmitExam() throws Exception {
-        SubmittedAnswer submittedAnswer1 = new MultipleChoiceSubmittedAnswer();
-        QuizExamSubmission quizExamSubmission = new QuizExamSubmission();
-        quizExamSubmission.setSubmittedAnswers(Set.of(submittedAnswer1));
-        QuizExamSubmission updatedQuizExamSubmission = request.putWithResponseBody("/api/exercises/0/submissions/exam", quizExamSubmission, QuizExamSubmission.class,
-                HttpStatus.OK);
-        assertThat(updatedQuizExamSubmission.isSubmitted()).isTrue();
-        assertThat(updatedQuizExamSubmission.getType()).isEqualTo(SubmissionType.MANUAL);
-        assertThat(updatedQuizExamSubmission.getParticipation()).isNull();
-        assertThat(updatedQuizExamSubmission.getResults()).isEmpty();
-        assertThat(updatedQuizExamSubmission.getSubmittedAnswers()).hasSize(1);
-    }
-
     private List<MultipartFile> generateMultipartFilesFromQuizExercise(QuizExercise quizExercise) {
         return quizExercise.getQuizQuestions().stream().filter(quizQuestion -> quizQuestion instanceof DragAndDropQuestion).map(quizQuestion -> (DragAndDropQuestion) quizQuestion)
                 .flatMap(quizQuestion -> {
@@ -809,7 +736,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     @ValueSource(booleans = { true, false })
     void submitExercise_shortAnswer_tooLarge(boolean tooLarge) throws Exception {
         Course course = courseUtilService.createCourse();
-        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(now().minusSeconds(5), now().plusSeconds(10), QuizMode.SYNCHRONIZED, course);
+        QuizExercise quizExercise = QuizExerciseFactory.generateQuizExercise(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), QuizMode.SYNCHRONIZED,
+                course);
         quizExercise.addQuestions(QuizExerciseFactory.createShortAnswerQuestion());
         quizExercise.setDuration(10);
         quizExercise = quizExerciseService.save(quizExercise);
@@ -870,7 +798,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
     private QuizExercise setupQuizExerciseParameters() {
         Course course = quizExerciseUtilService.addCourseWithOneQuizExercise();
-        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, now(), null, QuizMode.SYNCHRONIZED);
+        QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(240);
         return quizExercise;
     }
@@ -883,7 +811,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         @EnumSource(QuizMode.class)
         void testQuizSubmitLiveMode(QuizMode quizMode) throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(now().minusMinutes(2), null, quizMode);
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusMinutes(2), null, quizMode);
             quizExercise.setDuration(600);
             quizExercise = quizExerciseService.save(quizExercise);
 
@@ -892,7 +820,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             assertThat(participationRepository.findByExerciseId(quizExercise.getId())).isEmpty();
 
             if (quizMode != QuizMode.SYNCHRONIZED) {
-                var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, now().minusSeconds(10)));
+                var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(10)));
                 quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student1");
             }
 
@@ -911,17 +839,17 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
         @EnumSource(QuizMode.class)
         void testQuizSubmitLiveMode_badRequest_alreadySubmitted(QuizMode quizMode) throws Exception {
-            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(now().minusSeconds(5), now().plusSeconds(10), quizMode);
+            QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), quizMode);
             quizExercise.setDuration(10);
             quizExercise = quizExerciseService.save(quizExercise);
 
             if (quizMode != QuizMode.SYNCHRONIZED) {
-                var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, now().minusSeconds(5)));
+                var batch = quizBatchService.save(QuizExerciseFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
                 quizExerciseUtilService.joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student3");
             }
 
             // create a submission for the first time
-            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, now());
+            QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
             quizScheduleService.updateSubmission(quizExercise.getId(), TEST_PREFIX + "student3", quizSubmission);
             // submit quiz for the second time, expected status = BAD_REQUEST
             request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
