@@ -127,7 +127,7 @@ public class LtiDeepLinkingService {
         }
     }
 
-    boolean isEmptyString(String string) {
+    private boolean isEmptyString(String string) {
         return string == null || string.isEmpty();
     }
 }
