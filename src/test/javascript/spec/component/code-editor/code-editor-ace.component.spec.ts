@@ -129,7 +129,13 @@ describe('CodeEditorAceComponent', () => {
         await fixture.whenStable();
 
         expect(comp.isLoading).toBeFalse();
-        expect(comp.fileSession).toEqual({ dummy: { code: 'lorem ipsum', cursor: { column: 0, row: 0 }, loadingError: false } });
+        expect(comp.fileSession).toEqual({
+            dummy: {
+                code: 'lorem ipsum',
+                cursor: { column: 0, row: 0 },
+                loadingError: false,
+            },
+        });
         expect(initEditorSpy).toHaveBeenCalledWith();
     }));
 
@@ -218,7 +224,10 @@ describe('CodeEditorAceComponent', () => {
 
         await comp.onFileChange(fileChange);
 
-        expect(comp.fileSession).toEqual({ anotherFile: fileSession.anotherFile, [fileChange.newFileName]: fileSession[selectedFile] });
+        expect(comp.fileSession).toEqual({
+            anotherFile: fileSession.anotherFile,
+            [fileChange.newFileName]: fileSession[selectedFile],
+        });
     });
 
     it('should init editor on newly created file if selected', async () => {
@@ -232,7 +241,10 @@ describe('CodeEditorAceComponent', () => {
         await comp.onFileChange(fileChange);
 
         expect(initEditorSpy).toHaveBeenCalledWith();
-        expect(comp.fileSession).toEqual({ anotherFile: fileSession.anotherFile, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 }, loadingError: false } });
+        expect(comp.fileSession).toEqual({
+            anotherFile: fileSession.anotherFile,
+            [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 }, loadingError: false },
+        });
     });
 
     it('should not do anything on file content change if the code has not changed', () => {
@@ -267,7 +279,16 @@ describe('CodeEditorAceComponent', () => {
         await comp.onFileTextChanged(newFileContent);
 
         expect(onFileContentChangeSpy).toHaveBeenCalledWith({ file: selectedFile, fileContent: newFileContent });
-        const newAnnotations = [{ fileName: selectedFile, text: 'error', type: 'error', timestamp: 0, row: 4, column: 4 }];
+        const newAnnotations = [
+            {
+                fileName: selectedFile,
+                text: 'error',
+                type: 'error',
+                timestamp: 0,
+                row: 4,
+                column: 4,
+            },
+        ];
         expect(comp.annotationsArray).toEqual(newAnnotations);
     });
 
@@ -359,16 +380,33 @@ describe('CodeEditorAceComponent', () => {
 
     it('should convert an accepted feedback suggestion to a marked manual feedback', async () => {
         await comp.initEditor();
-        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.MANUAL };
+        const suggestion = {
+            text: 'FeedbackSuggestion:',
+            detailText: 'test',
+            reference: 'file:src/Test.java_line:16',
+            type: FeedbackType.MANUAL,
+        };
         comp.feedbackSuggestions = [suggestion];
         await comp.acceptSuggestion(suggestion);
         expect(comp.feedbackSuggestions).toBeEmpty();
-        expect(comp.feedbacks).toEqual([{ text: 'FeedbackSuggestion:accepted:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.MANUAL }]);
+        expect(comp.feedbacks).toEqual([
+            {
+                text: 'FeedbackSuggestion:accepted:',
+                detailText: 'test',
+                reference: 'file:src/Test.java_line:16',
+                type: FeedbackType.MANUAL,
+            },
+        ]);
     });
 
     it('should remove discarded suggestions', async () => {
         await comp.initEditor();
-        const suggestion = { text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.MANUAL };
+        const suggestion = {
+            text: 'FeedbackSuggestion:',
+            detailText: 'test',
+            reference: 'file:src/Test.java_line:16',
+            type: FeedbackType.MANUAL,
+        };
         comp.feedbackSuggestions = [suggestion];
         comp.discardSuggestion(suggestion);
         expect(comp.feedbackSuggestions).toBeEmpty();
@@ -380,11 +418,25 @@ describe('CodeEditorAceComponent', () => {
         await comp.initEditor();
 
         // Change of feedbacks from the outside
-        await comp.ngOnChanges({ feedbacks: { previousValue: [], currentValue: [new Feedback()], firstChange: true, isFirstChange: () => true } });
+        await comp.ngOnChanges({
+            feedbacks: {
+                previousValue: [],
+                currentValue: [new Feedback()],
+                firstChange: true,
+                isFirstChange: () => true,
+            },
+        });
         expect(updateLineWidgetHeightSpy).toHaveBeenCalled();
 
         // Change of feedback suggestions from the outside
-        await comp.ngOnChanges({ feedbackSuggestions: { previousValue: [], currentValue: [new Feedback()], firstChange: true, isFirstChange: () => true } });
+        await comp.ngOnChanges({
+            feedbackSuggestions: {
+                previousValue: [],
+                currentValue: [new Feedback()],
+                firstChange: true,
+                isFirstChange: () => true,
+            },
+        });
         expect(updateLineWidgetHeightSpy).toHaveBeenCalled();
     });
 
@@ -392,10 +444,60 @@ describe('CodeEditorAceComponent', () => {
         await comp.initEditor();
         const addLineWidgetWithFeedbackSpy = jest.spyOn(comp, 'addLineWidgetWithFeedback');
 
-        comp.feedbackSuggestions = [{ text: 'FeedbackSuggestion:', detailText: 'test', reference: 'file:src/Test.java_line:16', type: FeedbackType.MANUAL }];
+        comp.feedbackSuggestions = [
+            {
+                text: 'FeedbackSuggestion:',
+                detailText: 'test',
+                reference: 'file:src/Test.java_line:16',
+                type: FeedbackType.MANUAL,
+            },
+        ];
         comp.selectedFile = 'src/Test.java';
         await comp.updateLineWidgets();
 
         expect(addLineWidgetWithFeedbackSpy).toHaveBeenCalled();
+    });
+
+    describe('feedback deletion', () => {
+        let f1: Feedback;
+        let f2: Feedback;
+        beforeEach(() => {
+            f1 = new Feedback();
+            f1.text = 'File src/abc/BubbleSort.java at line 6';
+            f1.detailText = 'a';
+            f1.reference = 'file:src/abc/BubbleSort.java_line:5';
+
+            f2 = new Feedback();
+            f2.text = 'File src/abc/BubbleSort.java at line 7';
+            f2.detailText = 'b';
+            f2.reference = 'file:src/abc/BubbleSort.java_line:6';
+        });
+
+        it('should delete correct inline feedback before saving for the first time', async () => {
+            await comp.initEditor();
+            await comp.updateFeedback(f1);
+            await comp.updateFeedback(f2);
+
+            comp.deleteFeedback(f1);
+
+            expect(comp.feedbacks).not.toContain(f1);
+            expect(comp.feedbacks).toContain(f2);
+        });
+
+        it('should delete correct inline feedback after saving', async () => {
+            await comp.initEditor();
+            await comp.updateFeedback(f1);
+            await comp.updateFeedback(f2);
+
+            // saving is simulated here by giving the feedbacks an id, which is the only remaining untested factor for
+            // feedback deletion
+            f1.id = 1;
+            f2.id = 2;
+
+            comp.deleteFeedback(f1);
+
+            expect(comp.feedbacks).not.toContain(f1);
+            expect(comp.feedbacks).toContain(f2);
+        });
     });
 });

@@ -130,7 +130,7 @@
             </ng-template>
             <ng-template ngx-datatable-cell-template let-value="value">
                 <div class="d-flex flex-column">
-                    <div *ngFor="let result of value">{{ result.completionDate | artemisDate }}</div>
+                    <div *ngFor="let result of value">{{ result.completionDate | artemisDate: 'long' : true }}</div>
                 </div>
             </ng-template>
         </ngx-datatable-column>
