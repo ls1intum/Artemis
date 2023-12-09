@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.staticcodeanalysis;
 
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 import java.io.BufferedReader;
 import java.io.File;
