@@ -346,7 +346,7 @@ public class Lti13Service {
     public void startDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId) {
 
         Optional<LtiPlatformConfiguration> ltiPlatformConfiguration = ltiPlatformConfigurationRepository.findByRegistrationId(clientRegistrationId);
-        if (!ltiPlatformConfiguration.isPresent()) {
+        if (ltiPlatformConfiguration.isEmpty()) {
             throw new BadRequestAlertException("Configuration not found for this client registration ID:" + clientRegistrationId, "LTI", "ltiNotConfigured");
         }
 
