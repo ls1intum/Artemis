@@ -6,7 +6,7 @@
 
         <a
             *ngIf="course.isAtLeastInstructor"
-            id="edit-course"
+            id="lti-config"
             [routerLink]="['/course-management', course.id!, 'lti-configuration', 'edit']"
             class="tab-item btn btn-warning btn-md"
         >

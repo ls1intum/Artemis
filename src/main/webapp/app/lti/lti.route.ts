@@ -3,6 +3,7 @@ import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.comp
 import { Lti13DynamicRegistrationComponent } from 'app/lti/lti13-dynamic-registration.component';
 import { Lti13DeepLinkingComponent } from 'app/lti/lti13-deep-linking.component';
 import { Lti13SelectContentComponent } from 'app/lti/lti13-select-content.component';
+import { LtiCoursesComponent } from 'app/lti/lti13-select-course.component';
 
 export const ltiLaunchRoutes: Routes = [
     {
@@ -27,7 +28,14 @@ export const ltiLaunchRoutes: Routes = [
         },
     },
     {
-        path: 'deep-linking/:courseId',
+        path: 'deep-linking',
+        component: LtiCoursesComponent,
+        data: {
+            pageTitle: 'artemisApp.lti13.selectCourse',
+        },
+    },
+    {
+        path: 'exercises/:courseId',
         component: Lti13DeepLinkingComponent,
         data: {
             pageTitle: 'artemisApp.lti13.deepLinking.title',
