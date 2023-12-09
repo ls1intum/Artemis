@@ -355,7 +355,7 @@ public class LocalCIBuildJobExecutionService {
             case PYTHON -> {
                 return getPythonTestResultPaths();
             }
-            case ASSEMBLER, C, VHDL, HASKELL -> {
+            case ASSEMBLER, C, VHDL, HASKELL, OCAML -> {
                 return getCustomTestResultPaths(programmingExercise);
             }
             default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
