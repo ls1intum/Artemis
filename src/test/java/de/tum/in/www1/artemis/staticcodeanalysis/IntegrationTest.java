@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.staticcodeanalysis;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -42,7 +42,7 @@ class IntegrationTest {
 
         try (BufferedReader reader = Files.newBufferedReader(EXPECTED_FOLDER_PATH.resolve(expectedJSONReportFileName))) {
             String expected = reader.lines().collect(Collectors.joining(System.lineSeparator()));
-            assertEquals(expected, actual);
+            assertThat(actual).isEqualTo(expected);
         }
     }
 
@@ -59,7 +59,7 @@ class IntegrationTest {
         ReportParser parser = new ReportParser();
         String actual = parser.transformToJSONReport(toolReport);
 
-        assertEquals(expected, actual);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test
@@ -89,13 +89,15 @@ class IntegrationTest {
 
     @Test
     void testParseInvalidXML() throws ParserException, IOException {
-        Exception exception = assertThrows(SAXParseException.class,
-                () -> XmlUtils.createDocumentBuilder().parse(new File(REPORTS_FOLDER_PATH.resolve("invalid_xml.xml").toString())));
+        SAXParseException saxParseException = catchThrowableOfType(
+                () -> XmlUtils.createDocumentBuilder().parse(new File(REPORTS_FOLDER_PATH.resolve("invalid_xml.xml").toString())), SAXParseException.class);
+
+        assertThat(saxParseException).isNotNull();
 
         try (BufferedReader reader = Files.newBufferedReader(EXPECTED_FOLDER_PATH.resolve("invalid_xml.txt"))) {
             String expectedInvalidXML = reader.readLine();
             // JSON transform escapes quotes, so we need to escape them too
-            testParserWithString("invalid_xml.xml", String.format(expectedInvalidXML, exception.toString().replaceAll("\"", "\\\\\"")));
+            testParserWithString("invalid_xml.xml", String.format(expectedInvalidXML, saxParseException.toString().replaceAll("\"", "\\\\\"")));
         }
     }
 
