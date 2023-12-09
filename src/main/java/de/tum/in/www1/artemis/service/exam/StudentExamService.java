@@ -211,26 +211,6 @@ public class StudentExamService {
                 log.error("saveSubmission threw an exception", e);
             }
         }
-
-        saveQuizExamSubmission(currentUser, studentExam.getId(), studentExam.getQuizExamSubmission());
-    }
-
-    private void saveQuizExamSubmission(User currentUser, Long studentExamId, QuizExamSubmission submissionFromClient) {
-        if (submissionFromClient != null) {
-            Optional<QuizExamSubmission> existingSubmissionInDatabaseOptional = Optional.empty();
-            boolean isQuizExamSubmissionContentEqual = true;
-            if (submissionFromClient.getId() != null) {
-                existingSubmissionInDatabaseOptional = quizExamSubmissionRepository.findWithEagerSubmittedAnswersByStudentExamId(studentExamId);
-                if (existingSubmissionInDatabaseOptional.isPresent()) {
-                    QuizExamSubmission existingSubmissionInDatabase = existingSubmissionInDatabaseOptional.get();
-                    isQuizExamSubmissionContentEqual = isContentEqualTo(existingSubmissionInDatabase, submissionFromClient);
-                }
-            }
-            if (existingSubmissionInDatabaseOptional.isEmpty() || !isQuizExamSubmissionContentEqual) {
-                quizExamSubmissionRepository.save(submissionFromClient);
-                saveSubmissionVersion(currentUser, submissionFromClient);
-            }
-        }
     }
 
     private void saveSubmission(User currentUser, List<StudentParticipation> existingRelevantParticipations, Exercise exercise) {
