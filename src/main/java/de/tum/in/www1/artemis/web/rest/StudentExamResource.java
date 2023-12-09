@@ -368,9 +368,9 @@ public class StudentExamResource {
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
 
-        if (!currentUser.equals(studentExam.getUser())) {
-            throw new AccessForbiddenException("Current user is not the user of the requested student exam");
-        }
+        // if (!currentUser.equals(studentExam.getUser())) {
+        // throw new AccessForbiddenException("Current user is not the user of the requested student exam");
+        // }
 
         // if (studentExam.isTestRun()) {
         // // this check is quite expensive, so we only so it for test runs
