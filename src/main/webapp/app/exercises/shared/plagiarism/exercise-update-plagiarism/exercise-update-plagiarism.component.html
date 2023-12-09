@@ -12,8 +12,8 @@
                     id="continuous_plagiarism_control_enabled"
                     class="plagiarism-option-checkbox form-check-input"
                     name="exercise.plagiarismDetectionConfig.continuousPlagiarismControlEnabled"
-                    #exercise.plagiarismDetectionConfig.continuousPlagiarismControlEnabled="ngModel"
-                    [(ngModel)]="exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
+                    [checked]="exercise.plagiarismDetectionConfig!.continuousPlagiarismControlEnabled"
+                    (click)="toggleCPCEnabled()"
                 />
                 <div class="plagiarism-option-label" jhiTranslate="artemisApp.plagiarism.continuousPlagiarismControlEnabled">Enable Continuous Plagiarism Control</div>
             </div>
@@ -78,7 +78,7 @@
                 <div class="form-group">
                     <div>
                         <label class="form-control-label" jhiTranslate="artemisApp.plagiarism.minimumSize">Minimum Size</label>
-                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="getMinimumSizeTooltip() | artemisTranslate"></fa-icon>
+                        <fa-icon [icon]="faQuestionCircle" placement="bottom auto" [ngbTooltip]="minimumSizeTooltip | artemisTranslate"></fa-icon>
                     </div>
                     <input
                         type="number"

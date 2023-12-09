@@ -36,7 +36,7 @@ export class MetisConversationService implements OnDestroy {
     _isCodeOfConductPresented$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
     private hasUnreadMessages = false;
     _hasUnreadMessages$: Subject<boolean> = new ReplaySubject<boolean>(1);
-    // Stores the course for which the service is setup -> should not change during the lifetime of the service
+    // Stores the course for which the service is set up -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
     private isLoading = false;
@@ -137,7 +137,7 @@ export class MetisConversationService implements OnDestroy {
         }
     }
 
-    public forceRefresh = (notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> => {
+    public forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
         if (!this._course) {
             throw new Error('Course is not set. The service does not seem to be initialized.');
         }
@@ -180,7 +180,7 @@ export class MetisConversationService implements OnDestroy {
             // refresh complete
             switchMap(() => EMPTY),
         );
-    };
+    }
 
     public createOneToOneChat = (loginOfChatPartner: string): Observable<HttpResponse<OneToOneChatDTO>> =>
         this.onConversationCreation(this.oneToOneChatService.create(this._courseId, loginOfChatPartner));
