@@ -92,15 +92,13 @@ public class StudentExamService {
 
     private final ExamQuizQuestionsGenerator examQuizQuestionsGenerator;
 
-    private final QuizExamSubmissionRepository quizExamSubmissionRepository;
-
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, TextSubmissionRepository textSubmissionRepository,
             ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService, QuizExamSubmissionRepository quizExamSubmissionRepository) {
+            @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -120,7 +118,6 @@ public class StudentExamService {
         this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
         this.examQuizQuestionsGenerator = quizPoolService;
-        this.quizExamSubmissionRepository = quizExamSubmissionRepository;
     }
 
     /**
