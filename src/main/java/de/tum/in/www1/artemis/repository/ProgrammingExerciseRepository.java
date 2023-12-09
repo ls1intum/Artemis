@@ -23,6 +23,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -460,6 +461,12 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             WHERE e.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findByIdWithGradingCriteria(long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT pe FROM ProgrammingExercise pe
+            WHERE pe.programmingLanguage = :#{#programmingLanguage}
+            """)
+    List<ProgrammingExercise> findAllByProgrammingLanguage(@Param("programmingLanguage") ProgrammingLanguage programmingLanguage);
 
     default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
         return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));

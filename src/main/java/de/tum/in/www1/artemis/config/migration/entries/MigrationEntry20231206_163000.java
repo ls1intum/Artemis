@@ -56,25 +56,19 @@ public class MigrationEntry20231206_163000 extends MigrationEntry {
             return;
         }
 
-        long size = programmingExerciseRepository.count();
-        if (size == 0) {
+        var exercisesToMigrate = programmingExerciseRepository.findAllByProgrammingLanguage(ProgrammingLanguage.HASKELL);
+        exercisesToMigrate.addAll(programmingExerciseRepository.findAllByProgrammingLanguage(ProgrammingLanguage.OCAML));
+
+        if (exercisesToMigrate.isEmpty()) {
             // no exercises to change, migration complete
             return;
         }
 
-        var haskellOrOcamlExercises = programmingExerciseRepository.findAll().stream()
-                .filter(exercise -> exercise.getProgrammingLanguage() == ProgrammingLanguage.HASKELL || exercise.getProgrammingLanguage() == ProgrammingLanguage.OCAML).toList();
-
-        if (haskellOrOcamlExercises.isEmpty()) {
-            // no exercises to change, migration complete
-            return;
-        }
-
-        log.info("Migrating {} programming exercises. This might take a while.", haskellOrOcamlExercises.size());
+        log.info("Migrating {} programming exercises. This might take a while.", exercisesToMigrate.size());
 
         ExecutorService executorService = Executors.newFixedThreadPool(THREADS);
 
-        var chunks = Lists.partition(haskellOrOcamlExercises, BATCH_SIZE);
+        var chunks = Lists.partition(exercisesToMigrate, BATCH_SIZE);
 
         for (var chunk : chunks) {
             CompletableFuture<?>[] allFutures = new CompletableFuture[Math.min(THREADS, chunk.size())];
