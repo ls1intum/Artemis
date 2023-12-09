@@ -19,8 +19,15 @@ public class ParserPolicy {
      */
     public ParserStrategy configure(Document document) {
         String filePattern = document.getDocumentURI();
+        // Find the index of the last '/'
+        int lastIndex = filePattern.lastIndexOf('/');
+        // If '/' is found, extract the substring after it; otherwise, keep the original string
+        if (lastIndex != -1) {
+            filePattern = filePattern.substring(lastIndex + 1);
+        }
+        String finalFilePattern = filePattern;
         StaticCodeAnalysisTool tool = StaticCodeAnalysisTool.getToolByFilePattern(filePattern)
-                .orElseThrow(() -> new UnsupportedToolException("Tool for identifying filePattern " + filePattern + " not found"));
+                .orElseThrow(() -> new UnsupportedToolException("Tool for identifying filePattern " + finalFilePattern + " not found"));
 
         return switch (tool) {
             case SPOTBUGS -> new SpotbugsParser();
