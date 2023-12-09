@@ -190,9 +190,7 @@ public class LtiService {
             uriComponentsBuilder.queryParam("initialize", "");
         }
         else {
-            ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
-            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-
+            prepareLogoutCookie(response);
             uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
         }
     }
@@ -205,5 +203,15 @@ public class LtiService {
      */
     public boolean isLtiCreatedUser(User user) {
         return user.getGroups().contains(LTI_GROUP_NAME);
+    }
+
+    /**
+     * Include logout JWT cookie to response.
+     *
+     * @param response the response to add the JWT cookie to
+     */
+    protected void prepareLogoutCookie(HttpServletResponse response) {
+        ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
     }
 }

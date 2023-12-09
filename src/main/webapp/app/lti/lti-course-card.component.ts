@@ -6,7 +6,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 @Component({
     selector: 'jhi-overview-lti-course-card',
     templateUrl: './lti-course-card.component.html',
-    styleUrls: ['./lti-course-card.component.scss'],
+    styleUrls: ['../overview/course-card.scss'],
 })
 export class LtiCourseCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;

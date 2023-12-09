@@ -333,6 +333,7 @@ public class Lti13Service {
             String sanitizedUsername = getSanitizedUsername(optionalUsername.get());
             response.addHeader("ltiSuccessLoginRequired", sanitizedUsername);
         }
+        ltiService.prepareLogoutCookie(response);
     }
 
     private String getSanitizedUsername(String username) {
