@@ -119,9 +119,8 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
      * @param examId the id of the exam to be searched
      * @return quiz pool that belongs to the given exam id
      */
-    public QuizPool findByExamId(Long examId) {
-        Optional<QuizPool> quizPoolOptional = quizPoolRepository.findByExamId(examId);
-        return quizPoolOptional.orElse(null);
+    public Optional<QuizPool> findByExamId(Long examId) {
+        return quizPoolRepository.findByExamId(examId);
     }
 
     /**

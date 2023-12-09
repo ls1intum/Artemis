@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -787,6 +788,7 @@ public class StudentExamResource {
 
         // Load quizzes from database, because they include lazy relationships
         examService.loadQuizExercisesForStudentExam(studentExam);
+        setQuizExamProperties(studentExam);
 
         // Fetch participations, submissions and results and connect them to the studentExam
         examService.fetchParticipationsSubmissionsAndResultsForExam(studentExam, currentUser);
@@ -796,8 +798,6 @@ public class StudentExamResource {
                 participation.setExercise(null);
             }
         }
-
-        setQuizExamProperties(studentExam);
 
         // Create new exam session
         createNewExamSession(request, studentExam);
@@ -810,8 +810,9 @@ public class StudentExamResource {
      */
     private void setQuizExamProperties(StudentExam studentExam) {
         Exam exam = studentExam.getExam();
-        QuizPool quizPool = quizPoolService.findByExamId(exam.getId());
-        if (quizPool != null) {
+        Optional<QuizPool> quizPoolOptional = quizPoolService.findByExamId(exam.getId());
+        if (quizPoolOptional.isPresent()) {
+            QuizPool quizPool = quizPoolOptional.get();
             studentExamRepository.fetchAllQuizQuestions(studentExam);
             exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
             exam.setRandomizeQuizExamQuestionsOrder(quizPool.getRandomizeQuestionOrder());
