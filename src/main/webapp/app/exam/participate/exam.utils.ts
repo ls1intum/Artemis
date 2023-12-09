@@ -100,7 +100,7 @@ export function isExamResultPublished(isTestRun: boolean, exam: Exam | undefined
     return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(serverDateService.now());
 }
 
-export function getExamExercises(studentExam: StudentExam, titles: { title: string; navigationTitle: string }) {
+export function getExamExercises(studentExam: StudentExam, quizExamTitles: { title: string; navigationTitle: string }) {
     let examExercises: ExamExercise[] = [];
     if (studentExam.exercises) {
         examExercises = studentExam.exercises.map((exercise: Exercise, index: number) => {
@@ -111,7 +111,7 @@ export function getExamExercises(studentExam: StudentExam, titles: { title: stri
     }
     const hasQuizExam = (studentExam.exam?.quizExamMaxPoints ?? 0) > 0;
     if (hasQuizExam) {
-        examExercises = [createQuizExamExercise(studentExam, titles), ...examExercises];
+        examExercises = [createQuizExamExercise(studentExam, quizExamTitles), ...examExercises];
     }
     return examExercises;
 }
