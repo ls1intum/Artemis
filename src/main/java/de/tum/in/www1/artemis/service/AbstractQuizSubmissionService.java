@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.quiz.AbstractQuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.QuizConfiguration;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 
 @Service
@@ -26,12 +27,12 @@ public abstract class AbstractQuizSubmissionService<T extends AbstractQuizSubmis
     /**
      * Save the given submission to the database.
      *
-     * @param quizExercise the QuizExercise of which the given submission belongs to
-     * @param submission   the AbstractQuizSubmission to be saved
-     * @param user         the User that made the given submission
+     * @param quizConfiguration the QuizConfiguration of which the given submission belongs to
+     * @param submission        the AbstractQuizSubmission to be saved
+     * @param user              the User that made the given submission
      * @return saved AbstractQuizSubmission
      */
-    protected abstract T save(QuizExercise quizExercise, T submission, User user);
+    protected abstract T save(QuizConfiguration quizConfiguration, T submission, User user);
 
     /**
      * Updates a submission for the exam mode

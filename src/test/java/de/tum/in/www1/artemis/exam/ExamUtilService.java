@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseFactory;
 import de.tum.in.www1.artemis.exercise.fileuploadexercise.FileUploadExerciseUtilService;
 import de.tum.in.www1.artemis.exercise.modelingexercise.ModelingExerciseFactory;
@@ -611,6 +612,32 @@ public class ExamUtilService {
         StudentExam studentExam = ExamFactory.generateStudentExam(exam);
         studentExam.setUser(user);
         studentExam.setWorkingTime(exam.getDuration());
+        studentExam = studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
+    /**
+     * Add exercises to the given StudentExam.
+     *
+     * @param studentExam The StudentExam for which the exercises should be added to
+     * @param exercises   The exercises should be added to
+     * @return the StudentExam
+     */
+    public StudentExam addExercisesToStudentExam(StudentExam studentExam, List<Exercise> exercises) {
+        studentExam.setExercises(exercises);
+        studentExam = studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
+    /**
+     * Add quiz questions to the given StudentExam.
+     *
+     * @param studentExam   The StudentExam for which the quiz questions should be added to
+     * @param quizQuestions The quiz questions should be added to
+     * @return the StudentExam
+     */
+    public StudentExam addQuizQuestionsToStudentExam(StudentExam studentExam, List<QuizQuestion> quizQuestions) {
+        studentExam.setQuizQuestions(quizQuestions);
         studentExam = studentExamRepository.save(studentExam);
         return studentExam;
     }
