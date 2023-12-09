@@ -40,6 +40,9 @@ import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
@@ -83,15 +86,18 @@ public class LocalCIBuildJobExecutionService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
+    private final AeolusTemplateService aeolusTemplateService;
+
     public LocalCIBuildJobExecutionService(LocalCIBuildPlanService localCIBuildPlanService, Optional<VersionControlService> versionControlService,
             LocalCIContainerService localCIContainerService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, XMLInputFactory localCIXMLInputFactory,
-            GitService gitService, ParticipationRepository participationRepository) {
+            GitService gitService, AeolusTemplateService aeolusTemplateService, ParticipationRepository participationRepository) {
         this.localCIBuildPlanService = localCIBuildPlanService;
         this.versionControlService = versionControlService;
         this.localCIContainerService = localCIContainerService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.participationRepository = participationRepository;
         this.localCIXMLInputFactory = localCIXMLInputFactory;
+        this.aeolusTemplateService = aeolusTemplateService;
         this.gitService = gitService;
     }
 
@@ -320,6 +326,9 @@ public class LocalCIBuildJobExecutionService {
             case PYTHON -> {
                 return getPythonTestResultPaths();
             }
+            case ASSEMBLER, C -> {
+                return getCustomTestResultPaths(programmingExercise);
+            }
             default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
         }
     }
@@ -328,20 +337,20 @@ public class LocalCIBuildJobExecutionService {
         List<String> testResultPaths = new ArrayList<>();
         if (ProjectType.isMavenProject(programmingExercise.getProjectType())) {
             if (programmingExercise.hasSequentialTestRuns()) {
-                testResultPaths.add("/testing-dir/structural/target/surefire-reports");
-                testResultPaths.add("/testing-dir/behavior/target/surefire-reports");
+                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/structural/target/surefire-reports");
+                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/behavior/target/surefire-reports");
             }
             else {
-                testResultPaths.add("/testing-dir/target/surefire-reports");
+                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/target/surefire-reports");
             }
         }
         else {
             if (programmingExercise.hasSequentialTestRuns()) {
-                testResultPaths.add("/testing-dir/build/test-results/behaviorTests");
-                testResultPaths.add("/testing-dir/build/test-results/structuralTests");
+                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/build/test-results/behaviorTests");
+                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/build/test-results/structuralTests");
             }
             else {
-                testResultPaths.add("/testing-dir/build/test-results/test");
+                testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/build/test-results/test");
             }
         }
         return testResultPaths;
@@ -349,7 +358,22 @@ public class LocalCIBuildJobExecutionService {
 
     private List<String> getPythonTestResultPaths() {
         List<String> testResultPaths = new ArrayList<>();
-        testResultPaths.add("/testing-dir/test-reports");
+        testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/test-reports");
+        return testResultPaths;
+    }
+
+    private List<String> getCustomTestResultPaths(ProgrammingExercise programmingExercise) {
+        List<String> testResultPaths = new ArrayList<>();
+        Windfile windfile = programmingExercise.getWindfile();
+        if (windfile == null) {
+            windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
+        }
+        if (windfile == null) {
+            throw new IllegalArgumentException("No windfile found for programming exercise " + programmingExercise.getId());
+        }
+        for (AeolusResult testResultPath : windfile.getResults()) {
+            testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/" + testResultPath.getPath());
+        }
         return testResultPaths;
     }
 
