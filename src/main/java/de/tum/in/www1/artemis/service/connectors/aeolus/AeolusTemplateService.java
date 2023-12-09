@@ -39,7 +39,7 @@ public class AeolusTemplateService {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    private final ConcurrentHashMap<String, Windfile> templateCache = new ConcurrentHashMap<>();
+    private final Map<String, Windfile> templateCache = new ConcurrentHashMap<>();
 
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -88,8 +88,9 @@ public class AeolusTemplateService {
     public Windfile getWindfileFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage)
             throws IOException {
         String templateFileName = buildAeolusTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage);
-        if (templateCache.containsKey(templateFileName)) {
-            return templateCache.get(templateFileName);
+        String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
+        if (templateCache.containsKey(uniqueKey)) {
+            return templateCache.get(uniqueKey);
         }
         Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", programmingLanguage.name().toLowerCase(), templateFileName));
         if (!fileResource.exists()) {
@@ -99,7 +100,7 @@ public class AeolusTemplateService {
         String yaml = new String(fileContent, StandardCharsets.UTF_8);
         Windfile windfile = readWindfile(yaml);
         this.addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);
-        templateCache.put(templateFileName, windfile);
+        templateCache.put(uniqueKey, windfile);
         return windfile;
     }
 
