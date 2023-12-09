@@ -1,0 +1,1 @@
+{"tool":null,"issues":[{"filePath":"invalid_name.xml","startLine":1,"rule":"ExceptionDuringParsing","category":"miscellaneous","message":"An exception occurred during parsing the report for file invalid_name.xml. Exception: de.tum.in.ase.parser.exception.UnsupportedToolException: Tool for identifying tag data not found"}]}
