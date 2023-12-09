@@ -426,7 +426,7 @@ public class LocalCIBuildJobExecutionService {
                 // Read the contents of the tar entry as a string.
                 String xmlString = readTarEntryContent(testResultsTarInputStream);
 
-                processTestResultFile(xmlString, failedTests, successfulTests);
+                processTestResultFile(xmlString.replace("\n\t", ""), failedTests, successfulTests);
             }
         }
 
