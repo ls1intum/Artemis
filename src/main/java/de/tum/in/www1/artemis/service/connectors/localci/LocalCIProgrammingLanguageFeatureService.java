@@ -26,8 +26,8 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, false, false, true, false, false, List.of(), false, false, true));
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, true, true, false, false, List.of(FACT, GCC), false, true, true));
         programmingLanguageFeatures.put(ASSEMBLER, new ProgrammingLanguageFeature(ASSEMBLER, false, false, false, false, false, List.of(), false, true, true));
+        programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, true, false, true, true, false, List.of(), true, true, true));
         // TODO LOCALVC_CI: Local CI is not supporting Haskell at the moment.
-        // TODO LOCALVC_CI: Local CI is not supporting Kotlin at the moment.
         // TODO LOCALVC_CI: Local CI is not supporting VHDL at the moment.
         // TODO LOCALVC_CI: Local CI is not supporting Swift at the moment.
         // TODO LOCALVC_CI: Local CI is not supporting OCAML at the moment.
