@@ -1218,6 +1218,11 @@ public class ExamService {
         examRepository.setNumberOfExamUsersForExams(Collections.singletonList(exam));
     }
 
+    /**
+     * Set properties for quiz exercises in exam
+     *
+     * @param exam The exam for which to set the properties
+     */
     public void setQuizExamProperties(Exam exam) {
         Optional<QuizPool> optionalQuizPool = quizPoolService.findByExamId(exam.getId());
         if (optionalQuizPool.isPresent()) {
