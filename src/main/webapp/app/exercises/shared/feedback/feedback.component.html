@@ -1,113 +1,198 @@
-<div *ngIf="!isExamReviewPage" class="modal-header feedback-header">
-    <h3 class="modal-title">
-        <ng-container *ngIf="taskName; else noTaskDescription">{{ 'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName } }}</ng-container>
-        <ng-template #noTaskDescription>{{ 'artemisApp.result.detail.feedback' | artemisTranslate }}</ng-template>
-    </h3>
+@if (!isExamReviewPage) {
+    <div class="modal-header feedback-header">
+        <h3 class="modal-title">
+            @if (taskName) {
+                {{ 'artemisApp.result.detail.feedbackForTask' | artemisTranslate: { taskName } }}
+            } @else {
+                {{ 'artemisApp.result.detail.feedback' | artemisTranslate }}
+            }
+        </h3>
 
-    <button *ngIf="activeModal" type="button" class="feedback-header__close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
-        <fa-icon [icon]="faXmark" size="xl"></fa-icon>
-    </button>
-</div>
+        @if (activeModal) {
+            <button type="button" class="feedback-header__close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
+                <fa-icon [icon]="faXmark" size="xl"></fa-icon>
+            </button>
+        }
+    </div>
+}
 
 <div class="modal-body position-relative">
     <!-- Message, if defined -->
-    <div *ngIf="messageKey" class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
-    <div *ngIf="showMissingAutomaticFeedbackInformation" class="mb-3">
-        <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: latestDueDate }"></h6>
-    </div>
+    @if (messageKey) {
+        <div class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
+    }
+    @if (showMissingAutomaticFeedbackInformation) {
+        <div class="mb-3">
+            <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: latestDueDate }"></h6>
+        </div>
+    }
 
     <!-- Loading state -->
-    <div *ngIf="isLoading; else feedbackContainer" class="text-body-secondary d-flex justify-content-center" id="result-detail-spinner">
-        <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch"></fa-icon>
-    </div>
+    @if (isLoading) {
+        <div class="text-body-secondary d-flex justify-content-center" id="result-detail-spinner">
+            <fa-icon [spin]="true" size="lg" [icon]="faCircleNotch"></fa-icon>
+        </div>
+    } @else {
+        @if (!loadingFailed && feedbackItemNodes?.length) {
+            <div class="result-detail-container">
+                @if (!isExamReviewPage) {
+                    <div>
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h4>
+                                @if (!exercise?.maxPoints) {
+                                    <span>
+                                        {{ 'artemisApp.result.score' | artemisTranslate: { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
+                                    </span>
+                                } @else {
+                                    @if (exercise && exercise.maxPoints) {
+                                        <span>
+                                            {{
+                                                'artemisApp.result.scoreWithPoints'
+                                                    | artemisTranslate
+                                                        : {
+                                                              score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
+                                                              points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course)
+                                                          }
+                                            }}
+                                        </span>
+                                    }
+                                }
+                                <ng-template #scoreWithPoints>
+                                    @if (exercise && exercise.maxPoints) {
+                                        <span>
+                                            {{
+                                                'artemisApp.result.scoreWithPoints'
+                                                    | artemisTranslate
+                                                        : {
+                                                              score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
+                                                              points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course)
+                                                          }
+                                            }}
+                                        </span>
+                                    }
+                                </ng-template>
+                            </h4>
+
+                            @if (badge) {
+                                <span class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
+                                    {{ badge.text | artemisTranslate | uppercase }}
+                                </span>
+                            }
+                        </div>
+
+                        <!-- Show and link to the commit hash in case of programming exercise results -->
+                        @if (exerciseType === ExerciseType.PROGRAMMING && result.submission) {
+                            <p>
+                                {{ 'artemisApp.feedback.modal.submitted' | artemisTranslate }}
+                                <span [ngbTooltip]="result.submission.submissionDate | artemisDate">
+                                    {{ result.submission.submissionDate | artemisTimeAgo }}
+                                </span>
+                                - {{ 'artemisApp.feedback.modal.linkedToCommit' | artemisTranslate }}:
+                                @if (commitUrl) {
+                                    <a href="{{ commitUrl }}" target="_blank" rel="noopener noreferrer">{{ commitHash }}</a>
+                                } @else {
+                                    {{ commitHash }}
+                                }
+                            </p>
+                        }
+                    </div>
+                }
+
+                @if (showScoreChart && result.participation?.exercise) {
+                    <div class="result-score-chart">
+                        <div id="feedback-chart" #containerRef class="chart-space">
+                            <ngx-charts-bar-horizontal-stacked
+                                [view]="[containerRef.offsetWidth, 80]"
+                                [results]="chartData.results"
+                                [scheme]="chartData.scheme"
+                                [xScaleMax]="chartData.xScaleMax"
+                                [xAxis]="true"
+                                [xAxisTickFormatting]="xAxisFormatting"
+                                [legend]="true"
+                                [legendTitle]="''"
+                                [legendPosition]="legendPosition"
+                                [tooltipDisabled]="true"
+                            >
+                            </ngx-charts-bar-horizontal-stacked>
+                        </div>
+                    </div>
+                }
+
+                @if (!isExamReviewPage) {
+                    <hr />
+                }
+
+                <!-- Always show failed build logs first -->
+                <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null"></ng-container>
+
+                @if (buildLogs?.length) {
+                    <hr />
+                }
+
+                @if (!loadingFailed && resultIsPreliminary(result)) {
+                    <div>
+                        <div class="d-flex justify-content-end m-1">
+                            <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
+                        </div>
+                        @if (exercise?.assessmentType !== AssessmentType.AUTOMATIC) {
+                            <p jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
+                        }
+                        @if (exercise?.assessmentType === AssessmentType.AUTOMATIC) {
+                            <p jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
+                        }
+                    </div>
+                }
+
+                <div class="feedback-list">
+                    @for (feedbackItemNode of feedbackItemNodes; track feedbackItemNode) {
+                        <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course"></jhi-feedback-node>
+                    }
+                </div>
+            </div>
+        } @else {
+            @if (buildLogs?.length) {
+                <h4 jhiTranslate="artemisApp.result.buildError">Build Error:</h4>
+                <dl class="buildoutput dl-horizontal">
+                    @for (logEntry of buildLogs; track logEntry; let i = $index) {
+                        <!--Don't show the timestamp again if it is the same as the last entry's.-->
+                        @if (i === 0 || logEntry.time !== buildLogs[i - 1].time) {
+                            <dt class="mb-1">{{ logEntry.time | artemisDate: 'short' : true }}</dt>
+                        }
+                        <dd
+                            [class.text-danger]="logEntry.type === BuildLogType.ERROR"
+                            [class.font-weight-bold]="logEntry.type === BuildLogType.ERROR"
+                            [class.text-warning]="logEntry.type === BuildLogType.WARNING"
+                            [class.mb-3]="i + 1 < buildLogs.length && logEntry.time !== buildLogs[i + 1].time"
+                        >
+                            {{ logEntry.log }}
+                        </dd>
+                    }
+                </dl>
+            } @else {
+                @if (!isExamReviewPage) {
+                    <h4 jhiTranslate="artemisApp.result.noResultDetails">No result details available</h4>
+                } @else {
+                    <span jhiTranslate="artemisApp.result.noResultDetails">No result details available</span>
+                }
+                @if (isOnlyCompilationTested) {
+                    <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested">Your code compiled successfully. There are currently no tests visible.</p>
+                }
+            }
+        }
+    }
 
     <!-- Feedbacks container -->
-    <ng-template #feedbackContainer>
-        <div *ngIf="!loadingFailed && feedbackItemNodes?.length; else buildLogsContainer" class="result-detail-container">
-            <div *ngIf="!isExamReviewPage">
-                <div class="d-flex justify-content-between align-items-start">
-                    <h4>
-                        <span *ngIf="!exercise?.maxPoints; else scoreWithPoints">
-                            {{ 'artemisApp.result.score' | artemisTranslate: { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
-                        </span>
-                        <ng-template #scoreWithPoints>
-                            <span *ngIf="exercise && exercise.maxPoints">
-                                {{
-                                    'artemisApp.result.scoreWithPoints'
-                                        | artemisTranslate
-                                            : {
-                                                  score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
-                                                  points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course)
-                                              }
-                                }}
-                            </span>
-                        </ng-template>
-                    </h4>
-
-                    <span *ngIf="badge" class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
-                        {{ badge.text | artemisTranslate | uppercase }}
-                    </span>
-                </div>
-
-                <!-- Show and link to the commit hash in case of programming exercise results -->
-                <p *ngIf="exerciseType === ExerciseType.PROGRAMMING && result.submission">
-                    {{ 'artemisApp.feedback.modal.submitted' | artemisTranslate }}
-                    <span [ngbTooltip]="result.submission.submissionDate | artemisDate">
-                        {{ result.submission.submissionDate | artemisTimeAgo }}
-                    </span>
-                    - {{ 'artemisApp.feedback.modal.linkedToCommit' | artemisTranslate }}:
-                    <a *ngIf="commitUrl; else commitWithoutLink" href="{{ commitUrl }}" target="_blank" rel="noopener noreferrer">{{ commitHash }}</a>
-                    <ng-template #commitWithoutLink>{{ commitHash }}</ng-template>
-                </p>
-            </div>
-
-            <div *ngIf="showScoreChart && result.participation?.exercise" class="result-score-chart">
-                <div id="feedback-chart" #containerRef class="chart-space">
-                    <ngx-charts-bar-horizontal-stacked
-                        [view]="[containerRef.offsetWidth, 80]"
-                        [results]="chartData.results"
-                        [scheme]="chartData.scheme"
-                        [xScaleMax]="chartData.xScaleMax"
-                        [xAxis]="true"
-                        [xAxisTickFormatting]="xAxisFormatting"
-                        [legend]="true"
-                        [legendTitle]="''"
-                        [legendPosition]="legendPosition"
-                        [tooltipDisabled]="true"
-                    >
-                    </ngx-charts-bar-horizontal-stacked>
-                </div>
-            </div>
-
-            <hr *ngIf="!isExamReviewPage" />
-
-            <!-- Always show failed build logs first -->
-            <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null"></ng-container>
-
-            <hr *ngIf="buildLogs?.length" />
-
-            <div *ngIf="!loadingFailed && resultIsPreliminary(result)">
-                <div class="d-flex justify-content-end m-1">
-                    <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
-                </div>
-                <p *ngIf="exercise?.assessmentType !== AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
-                <p *ngIf="exercise?.assessmentType === AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
-            </div>
-
-            <div class="feedback-list">
-                <jhi-feedback-node *ngFor="let feedbackItemNode of feedbackItemNodes" [feedbackItemNode]="feedbackItemNode" [course]="course"></jhi-feedback-node>
-            </div>
-        </div>
-    </ng-template>
 
     <!-- Build logs container -->
     <ng-template #buildLogsContainer>
-        <ng-container *ngIf="buildLogs?.length; else noFeedbacksContainer">
+        @if (buildLogs?.length) {
             <h4 jhiTranslate="artemisApp.result.buildError">Build Error:</h4>
             <dl class="buildoutput dl-horizontal">
-                <ng-container *ngFor="let logEntry of buildLogs; let i = index">
+                @for (logEntry of buildLogs; track logEntry; let i = $index) {
                     <!--Don't show the timestamp again if it is the same as the last entry's.-->
-                    <dt class="mb-1" *ngIf="i === 0 || logEntry.time !== buildLogs[i - 1].time">{{ logEntry.time | artemisDate: 'short' : true }}</dt>
+                    @if (i === 0 || logEntry.time !== buildLogs[i - 1].time) {
+                        <dt class="mb-1">{{ logEntry.time | artemisDate: 'short' : true }}</dt>
+                    }
                     <dd
                         [class.text-danger]="logEntry.type === BuildLogType.ERROR"
                         [class.font-weight-bold]="logEntry.type === BuildLogType.ERROR"
@@ -116,22 +201,23 @@
                     >
                         {{ logEntry.log }}
                     </dd>
-                </ng-container>
+                }
             </dl>
-        </ng-container>
-    </ng-template>
-
-    <!-- No content fallback -->
-    <ng-template #noFeedbacksContainer>
-        <h4 *ngIf="!isExamReviewPage; else noResultsAvailableWithSmallerFont" jhiTranslate="artemisApp.result.noResultDetails">No result details available</h4>
-        <ng-template #noResultsAvailableWithSmallerFont>
-            <span jhiTranslate="artemisApp.result.noResultDetails">No result details available</span>
-        </ng-template>
-        <p *ngIf="isOnlyCompilationTested" class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested">
-            Your code compiled successfully. There are currently no tests visible.
-        </p>
+        } @else {
+            <!-- No content fallback -->
+            @if (!isExamReviewPage) {
+                <h4 jhiTranslate="artemisApp.result.noResultDetails">No result details available</h4>
+            } @else {
+                <span jhiTranslate="artemisApp.result.noResultDetails">No result details available</span>
+            }
+            @if (isOnlyCompilationTested) {
+                <p class="mb-0" jhiTranslate="artemisApp.result.onlyCompilationTested">Your code compiled successfully. There are currently no tests visible.</p>
+            }
+        }
     </ng-template>
 </div>
 <div class="modal-footer">
-    <button *ngIf="activeModal" id="feedback-close" type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
+    @if (activeModal) {
+        <button id="feedback-close" type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
+    }
 </div>
