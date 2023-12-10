@@ -280,4 +280,17 @@ export class OrionConnectorService {
     initializeAssessment(submissionId: number, feedback: Array<Feedback>) {
         theWindow().orionExerciseConnector.initializeAssessment(String(submissionId), stringifyCircular(feedback));
     }
+
+    /**
+     * Initializes the test repository
+     *
+     * @param exercise the current programming exercise
+     */
+    initializeTestRepository(exercise: ProgrammingExercise) {
+        if (exercise.testRepositoryUrl !== undefined) {
+            theWindow().orionExerciseConnector.initializeTestRepository(exercise.testRepositoryUrl);
+        } else {
+            theWindow().orionExerciseConnector.initializeTestRepository('null');
+        }
+    }
 }

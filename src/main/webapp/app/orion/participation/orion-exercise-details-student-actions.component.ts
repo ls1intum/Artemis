@@ -7,6 +7,7 @@ import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.component';
 
 @Component({
     selector: 'jhi-orion-exercise-details-student-actions',
@@ -22,6 +23,7 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     @Input() courseId: number;
     @Input() smallButtons: boolean;
     @Input() examMode: boolean;
+    protected readonly OrionButtonType = OrionButtonType;
 
     constructor(
         private orionConnectorService: OrionConnectorService,
@@ -34,7 +36,6 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
      */
     ngOnInit(): void {
         this.orionConnectorService.state().subscribe((orionState: OrionState) => (this.orionState = orionState));
-
         this.route.queryParams.subscribe((params) => {
             if (params['withIdeSubmit']) {
                 this.submitChanges();
@@ -60,5 +61,22 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     submitChanges() {
         this.orionConnectorService.submit();
         this.ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise as ProgrammingExercise);
+    }
+
+    /**
+     * Initializes a test repository
+     */
+    initializeTestRepository() {
+        this.orionConnectorService.initializeTestRepository(this.exercise as ProgrammingExercise);
+    }
+
+    /**
+     * Returns if the dude date has passed
+     */
+    isDueDatePassed() {
+        if (this.exercise.dueDate === undefined) {
+            return false;
+        }
+        return this.exercise.dueDate.date() < Date.now();
     }
 }

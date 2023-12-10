@@ -8,6 +8,8 @@
     (click)="handleClick()"
 >
     <fa-icon [hidden]="!buttonLoading" [spin]="true" [icon]="faCircleNotch"></fa-icon>
-    <span *ngIf="!buttonLoading" class="intellij-logo"></span>
+    <fa-icon [hidden]="buttonType !== OrionButtonType.Reload" [icon]="faRotateRight"></fa-icon>
+    <fa-icon [hidden]="buttonType !== OrionButtonType.Submit" [icon]="faUpload"></fa-icon>
+    <fa-icon [hidden]="buttonType !== OrionButtonType.Download" [icon]="faDownload"></fa-icon>
     <span>{{ buttonLabel }}</span>
 </button>
