@@ -57,20 +57,6 @@
                                         </span>
                                     }
                                 }
-                                <ng-template #scoreWithPoints>
-                                    @if (exercise && exercise.maxPoints) {
-                                        <span>
-                                            {{
-                                                'artemisApp.result.scoreWithPoints'
-                                                    | artemisTranslate
-                                                        : {
-                                                              score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
-                                                              points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course)
-                                                          }
-                                            }}
-                                        </span>
-                                    }
-                                </ng-template>
                             </h4>
 
                             @if (badge) {

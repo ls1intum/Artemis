@@ -36,13 +36,6 @@
             <span class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
         }
     </div>
-    <ng-template #notResolved>
-        @if (isAtLeastTutorInCourse || isAuthorOfOriginalPost) {
-            <div>
-                <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
-            </div>
-        }
-    </ng-template>
     @if (!isAnswerOfAnnouncement) {
         <div class="col-auto ps-0">
             <div id="toggleElement" class="resolve" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">

@@ -87,26 +87,6 @@
                     </div>
                 </div>
             }
-            <ng-template #intro>
-                <div>
-                    <div class="alert alert-success" role="alert">
-                        <div>
-                            <span class="badge rounded-pill text-bg-warning ms-1" ngbTooltip="{{ 'artemisApp.generic.betaWarning' | artemisTranslate }}">BETA</span>
-                            {{ 'artemisApp.pages.tutorialGroupsManagement.intro' | artemisTranslate }}
-                        </div>
-                        <div class="text-center">
-                            @if (isAtLeastInstructor) {
-                                <jhi-tutorial-groups-import-button
-                                    class="btn btn-outline-secondary"
-                                    ngbTooltip="{{ 'artemisApp.tutorialGroupImportDialog.explanations.description' | artemisTranslate }}"
-                                    [courseId]="courseId"
-                                    (importFinished)="loadTutorialGroups()"
-                                ></jhi-tutorial-groups-import-button>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </ng-template>
         </div>
         <div class="col-12 col-xl-2">
             <jhi-tutorial-groups-course-information [tutorialGroups]="tutorialGroups"></jhi-tutorial-groups-course-information>
