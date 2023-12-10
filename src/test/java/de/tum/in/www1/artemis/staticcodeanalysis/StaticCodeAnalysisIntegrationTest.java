@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.staticcodeanalysis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.assertj.core.api.Assertions.fail;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -63,32 +64,57 @@ class StaticCodeAnalysisIntegrationTest {
     }
 
     @Test
-    void testCheckstyleParser() throws ParserException, IOException {
-        testParserWithFile("checkstyle-result.xml", "checkstyle.txt");
+    void testCheckstyleParser() throws IOException {
+        try {
+            testParserWithFile("checkstyle-result.xml", "checkstyle.txt");
+        }
+        catch (ParserException e) {
+            fail("Checkstyle parser failed with exception: " + e.getMessage());
+        }
     }
 
     @Test
-    void testPMDCPDParser() throws ParserException, IOException {
-        testParserWithFile("cpd.xml", "pmd_cpd.txt");
+    void testPMDCPDParser() throws IOException {
+        try {
+            testParserWithFile("cpd.xml", "pmd_cpd.txt");
+        }
+        catch (ParserException e) {
+            fail("PMD-CPD parser failed with exception: " + e.getMessage());
+        }
     }
 
     @Test
-    void testPMDParser() throws ParserException, IOException {
-        testParserWithFile("pmd.xml", "pmd.txt");
+    void testPMDParser() throws IOException {
+        try {
+            testParserWithFile("pmd.xml", "pmd.txt");
+        }
+        catch (ParserException e) {
+            fail("PMD parser failed with exception: " + e.getMessage());
+        }
     }
 
     @Test
-    void testSpotbugsParser() throws ParserException, IOException {
-        testParserWithFile("spotbugsXml.xml", "spotbugs.txt");
+    void testSpotbugsParser() throws IOException {
+        try {
+            testParserWithFile("spotbugsXml.xml", "spotbugs.txt");
+        }
+        catch (ParserException e) {
+            fail("Spotbugs parser failed with exception: " + e.getMessage());
+        }
     }
 
     @Test
-    void testParseInvalidFilename() throws ParserException, IOException {
-        testParserWithFile("cpd_invalid.txt", "invalid_filename.txt");
+    void testParseInvalidFilename() throws IOException {
+        try {
+            testParserWithFile("cpd_invalid.txt", "invalid_filename.txt");
+            fail("Expected ParserException");
+        }
+        catch (ParserException ignored) {
+        }
     }
 
     @Test
-    void testParseInvalidXML() throws ParserException, IOException {
+    void testParseInvalidXML() throws IOException {
         SAXParseException saxParseException = catchThrowableOfType(
                 () -> XmlUtils.createDocumentBuilder().parse(new File(REPORTS_FOLDER_PATH.resolve("invalid_xml.xml").toString())), SAXParseException.class);
 
@@ -97,12 +123,22 @@ class StaticCodeAnalysisIntegrationTest {
         try (BufferedReader reader = Files.newBufferedReader(EXPECTED_FOLDER_PATH.resolve("invalid_xml.txt"))) {
             String expectedInvalidXML = reader.readLine();
             // JSON transform escapes quotes, so we need to escape them too
-            testParserWithString("invalid_xml.xml", String.format(expectedInvalidXML, saxParseException.toString().replaceAll("\"", "\\\\\"")));
+            try {
+                testParserWithString("invalid_xml.xml", String.format(expectedInvalidXML, saxParseException.toString().replaceAll("\"", "\\\\\"")));
+            }
+            catch (ParserException e) {
+                fail("Parser failed with exception: " + e.getMessage());
+            }
         }
     }
 
     @Test
-    void testInvalidName() throws ParserException, IOException {
-        testParserWithFile("invalid_name.xml", "invalid_name.txt");
+    void testInvalidName() throws IOException {
+        try {
+            testParserWithFile("invalid_name.xml", "invalid_name.txt");
+        }
+        catch (ParserException e) {
+            fail("Parser failed with exception: " + e.getMessage());
+        }
     }
 }
