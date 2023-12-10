@@ -30,7 +30,7 @@
         </tr>
     </thead>
     <tbody>
-        <tr *ngIf="quizPoolMaxPoints > 0">
+        <tr *ngIf="quizExamMaxPoints > 0">
             <td></td>
             <td></td>
             <td></td>
@@ -42,7 +42,7 @@
                     <span>Quiz Exam</span>
                 </div>
             </td>
-            <td>{{ quizPoolMaxPoints }}</td>
+            <td>{{ quizExamMaxPoints }}</td>
             <td>{{ totalParticipants }}</td>
         </tr>
         <tr *ngFor="let column of exerciseGroupVariantColumns; let i = index">
