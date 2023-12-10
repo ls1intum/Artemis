@@ -364,7 +364,7 @@ public class LocalCIBuildJobExecutionService {
             case PYTHON -> {
                 return getPythonTestResultPaths();
             }
-            case ASSEMBLER, C, VHDL, HASKELL -> {
+            case ASSEMBLER, C, VHDL, HASKELL, OCAML, SWIFT -> {
                 return getCustomTestResultPaths(programmingExercise);
             }
             default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
@@ -448,7 +448,8 @@ public class LocalCIBuildJobExecutionService {
                     processStaticCodeAnalysisReportFile(fileName, xmlString, staticCodeAnalysisReports);
                 }
                 else {
-                    processTestResultFile(xmlString, failedTests, successfulTests);
+                    // ugly workaround because in swift result files \n\t breaks the parsing
+                    processTestResultFile(xmlString.replace("\n\t", ""), failedTests, successfulTests);
                 }
             }
         }
