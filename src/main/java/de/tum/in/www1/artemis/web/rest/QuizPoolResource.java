@@ -63,6 +63,7 @@ public class QuizPoolResource {
      * @param courseId the id of the Course of which the QuizPool belongs to
      * @param examId   the id of the Exam of which the QuizPool belongs to
      * @param quizPool the QuizPool to update
+     * @param files    the files to upload
      * @return the ResponseEntity with status 200 (OK) and with the body of the QuizPool, or with status 400 (Bad Request) if the QuizPool is invalid
      */
     @PutMapping(value = "courses/{courseId}/exams/{examId}/quiz-pools", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
