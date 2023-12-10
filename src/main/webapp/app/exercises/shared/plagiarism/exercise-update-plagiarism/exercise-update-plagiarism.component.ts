@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Exercise, ExerciseType, defaultPlagiarismDetectionConfig } from 'app/entities/exercise.model';
+import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -8,19 +8,29 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 })
 export class ExerciseUpdatePlagiarismComponent implements OnInit {
     @Input() exercise: Exercise;
+    minimumSizeTooltip?: string;
 
-    faQuestionCircle = faQuestionCircle;
+    readonly faQuestionCircle = faQuestionCircle;
 
     ngOnInit(): void {
+        this.minimumSizeTooltip = this.getMinimumSizeTooltip();
         if (!this.exercise.plagiarismDetectionConfig) {
-            this.exercise.plagiarismDetectionConfig = defaultPlagiarismDetectionConfig;
+            // Create the default plagiarism configuration if there is none (e.g. importing an old exercise from a file)
+            this.exercise.plagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG;
         }
+    }
+
+    toggleCPCEnabled() {
+        const config = this.exercise.plagiarismDetectionConfig!;
+        const newValue = !config.continuousPlagiarismControlEnabled;
+        config.continuousPlagiarismControlEnabled = newValue;
+        config.continuousPlagiarismControlPostDueDateChecksEnabled = newValue;
     }
 
     /**
      * Return the translation identifier of the minimum size tooltip for the current exercise type.
      */
-    getMinimumSizeTooltip() {
+    getMinimumSizeTooltip(): string | undefined {
         switch (this.exercise.type) {
             case ExerciseType.PROGRAMMING: {
                 return 'artemisApp.plagiarism.minimumSizeTooltipProgrammingExercise';
