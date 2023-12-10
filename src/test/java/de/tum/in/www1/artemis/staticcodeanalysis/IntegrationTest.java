@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.staticcodeanalysis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -60,6 +61,12 @@ class IntegrationTest {
         String actual = parser.transformToJSONReport(toolReport);
 
         assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test
+    void testParserExceptionThrown() {
+        ReportParser parser = new ReportParser();
+        assertThatThrownBy(() -> parser.transformToJSONReport(null)).isInstanceOf(ParserException.class);
     }
 
     @Test

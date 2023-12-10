@@ -36,6 +36,7 @@ public class ReportParser {
             return mapper.writeValueAsString(report);
         }
         catch (Exception e) {
+            System.err.println("Error while parsing static code analysis report: " + e.getMessage());
             throw new ParserException(e.getMessage(), e);
         }
     }
@@ -47,16 +48,15 @@ public class ReportParser {
      * @return Static code analysis report represented as a plain Java object
      */
     public StaticCodeAnalysisReportDTO transformToReport(File file) {
+        if (file == null) {
+            throw new IllegalArgumentException("File must not be null");
+        }
+
+        // The static code analysis parser only supports xml files.
+        if (!FileUtils.getExtension(file).equals("xml")) {
+            throw new IllegalArgumentException("File must be xml format");
+        }
         try {
-            if (file == null) {
-                throw new IllegalArgumentException("File must not be null");
-            }
-
-            // The static code analysis parser only supports xml files.
-            if (!FileUtils.getExtension(file).equals("xml")) {
-                throw new IllegalArgumentException("File must be xml format");
-            }
-
             // Reject any file larger than the given threshold
             if (FileUtils.isFilesizeGreaterThan(file, STATIC_CODE_ANALYSIS_REPORT_FILESIZE_LIMIT_IN_MB)) {
                 return createFileTooLargeReport(file.getName());
@@ -66,7 +66,7 @@ public class ReportParser {
             return context.getReport(file);
         }
         catch (Exception e) {
-            return createErrorReport(file != null ? file.getName() : "", e);
+            return createErrorReport(file.getName(), e);
         }
     }
 }
