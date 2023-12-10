@@ -107,7 +107,6 @@ public class MathSubmissionService extends SubmissionService {
         }
         catch (Exception ex) {
             log.error("Math submission version could not be saved", ex);
-            // TODO: throw exception?
         }
 
         return mathSubmission;

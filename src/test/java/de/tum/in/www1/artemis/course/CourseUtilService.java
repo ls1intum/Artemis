@@ -232,7 +232,7 @@ public class CourseUtilService {
      * @throws IOException If a file cannot be loaded from resources.
      */
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
-            int numberOfTutorParticipations) throws IOException, Exception {
+            int numberOfTutorParticipations) throws Exception {
         List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
@@ -250,7 +250,7 @@ public class CourseUtilService {
      * @return The list of created and saved courses.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, int numberOfTutorParticipations) throws IOException, Exception {
+    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, int numberOfTutorParticipations) throws Exception {
         return createCoursesWithExercisesAndLectures(userPrefix, withParticipations, false, numberOfTutorParticipations);
     }
 
@@ -264,8 +264,7 @@ public class CourseUtilService {
      * @return The list of created and saved courses.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
-            throws IOException, Exception {
+    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);

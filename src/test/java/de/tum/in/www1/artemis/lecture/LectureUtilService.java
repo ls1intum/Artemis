@@ -120,7 +120,7 @@ public class LectureUtilService {
      * @throws IOException If a file cannot be loaded from resources
      */
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
-            throws IOException, Exception {
+            throws Exception {
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
