@@ -1,12 +1,12 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ResultService } from 'app/exercises/shared/result/result.service';
+import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -151,6 +151,23 @@ describe('ResultService', () => {
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith(`api/exercises/${programmingExercise.id}/results-with-points-per-criterion`, expect.anything());
     }));
+
+    it('should convert Result Response from Server', () => {
+        const emptyResponse: EntityResponseType = new HttpResponse<Result>({ body: undefined });
+        const response: EntityResponseType = new HttpResponse<Result>({ body: result1 });
+        const converResultsSpy = jest.spyOn(resultService as any, 'convertResultDatesFromServer');
+        const result = resultService.convertResultResponseDatesFromServer(emptyResponse);
+        expect(result).toBe(emptyResponse);
+        expect(converResultsSpy).toHaveBeenCalledTimes(0);
+        resultService.convertResultResponseDatesFromServer(response);
+        expect(converResultsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should trigger csv download', () => {
+        const createASpy = jest.spyOn(document, 'createElement');
+        resultService.triggerDownloadCSV(['row1', 'row2'], 'filename');
+        expect(createASpy).toHaveBeenCalledOnce();
+    });
 
     describe('getResultString', () => {
         let translateServiceSpy: jest.SpyInstance;

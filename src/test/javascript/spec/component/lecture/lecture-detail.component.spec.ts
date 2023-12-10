@@ -57,6 +57,10 @@ describe('LectureDetailComponent', () => {
         component.ngOnInit();
 
         expect(component.lecture).toEqual(mockLecture);
+        expect(component.detailSections).toBeDefined();
+        for (const detail of component.detailSections[0].details) {
+            expect(detail).toBeDefined();
+        }
     });
 
     it('should have the correct icons initialized', () => {
