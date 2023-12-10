@@ -1125,7 +1125,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         return Set.of(submittedAnswer);
     }
 
-    private void prepareQuizPoolForSubmitQuizExamTest(Long examId, QuizGroup quizGroup, MultipleChoiceQuestion quizQuestion) {
+    private void prepareQuizPoolForSubmitQuizExamTest(Long examId, QuizGroup quizGroup, MultipleChoiceQuestion quizQuestion) throws IOException {
         QuizPool quizPool = new QuizPool();
         List<QuizGroup> quizGroups = new ArrayList<>();
         List<QuizQuestion> quizQuestions = new ArrayList<>();
@@ -1135,7 +1135,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         quizPool.setQuizQuestions(quizQuestions);
         quizPool.setMaxPoints(1);
         quizPool.setRandomizeQuestionOrder(true);
-        quizPoolService.update(examId, quizPool);
+        quizPoolService.update(examId, quizPool, null);
     }
 
     @Test
