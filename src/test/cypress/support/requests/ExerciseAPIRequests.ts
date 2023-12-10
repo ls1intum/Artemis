@@ -51,6 +51,9 @@ type PatchProgrammingExerciseTestVisibilityDto = {
     visibility: Visibility;
 }[];
 
+const MAX_RETRIES: number = 15;
+const RETRY_DELAY: number = 5000;
+
 /**
  * A class which encapsulates all API requests related to exercises.
  */
@@ -147,8 +150,6 @@ export class ExerciseAPIRequests {
     private updateProgrammingExerciseTestCaseVisibility(programmingExerciseId: number, programmingExerciseTestCases: ProgrammingExerciseTestCase[], newVisibility: Visibility) {
         const updatedTestCaseSettings: PatchProgrammingExerciseTestVisibilityDto = [];
 
-        cy.log('programming Exercise tasks' + JSON.stringify(programmingExerciseTestCases, null, 2));
-
         for (let testCase of programmingExerciseTestCases) {
             updatedTestCaseSettings.push({
                 id: testCase.id!,
@@ -166,12 +167,19 @@ export class ExerciseAPIRequests {
         });
     }
 
+    /**
+     * Retrieves the test cases for passed exercise and adjusts their visibility according.
+     * <br>
+     * Note: test cases are not available before the tests of the solution have completely run through
+     *       -> we need to do retries until the tests have been executed
+     *
+     * @param programmingExercise for which the test cases shall be set to {@link newVisibility}
+     * @param newVisibility that is applied for all found test cases
+     * @param retryNumber
+     */
     changeProgrammingExerciseTestVisibility(programmingExercise: ProgrammingExercise, newVisibility: Visibility, retryNumber: number) {
-        const maxRetries: number = 20;
-        const retryDelay: number = 5000;
-
-        if (retryNumber >= maxRetries) {
-            return;
+        if (retryNumber >= MAX_RETRIES) {
+            throw new Error('Could not find test cases (tests for solution might be finished yet)');
         }
 
         cy.request({
@@ -181,10 +189,10 @@ export class ExerciseAPIRequests {
             const testCases = response.body as ProgrammingExerciseTestCase[];
 
             if (retryNumber > 0) {
-                cy.log(`Could not find test cases yet, retrying... (${retryNumber} / ${maxRetries})`);
+                cy.log(`Could not find test cases yet, retrying... (${retryNumber} / ${MAX_RETRIES})`);
             }
 
-            cy.wait(retryDelay);
+            cy.wait(RETRY_DELAY);
             if (testCases.length > 0) {
                 this.updateProgrammingExerciseTestCaseVisibility(programmingExercise.id!, testCases, newVisibility);
             } else {
