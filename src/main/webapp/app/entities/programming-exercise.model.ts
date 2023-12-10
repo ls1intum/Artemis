@@ -13,19 +13,25 @@ import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-lo
 export class BuildAction {
     name: string;
     runAlways: boolean;
-    class: string;
     workdir: string;
+    results?: AeolusResult[];
+    parameters: Map<string, string | boolean | number>;
+}
+
+export class AeolusResult {
+    name: string;
+    path: string;
+    ignore: string;
+    type?: string;
+    before?: boolean;
 }
 
 export class ScriptAction extends BuildAction {
     script: string;
-    class: string = 'script-action';
 }
 
 export class PlatformAction extends BuildAction {
     type: string;
-    class: string = 'platform-action';
-    parameters: Map<string, string | boolean | number>;
     kind: string;
 }
 
