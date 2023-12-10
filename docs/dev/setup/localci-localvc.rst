@@ -170,7 +170,7 @@ In single-user setups this might not be as relevant, but offers additional secur
     These setup steps are mostly focused on Linux systems.
     On Mac and Windows, both Docker and Podman run the containers in a small virtual machine anyway.
     Therefore, there is little technical benefit relevant to Artemis for choosing one over the other in local development setups.
-    If in doubt, we recommend to use Docker, since that solution is most likely to be tested by other Artemis developers.
+    If in doubt, we recommend using Docker, since that solution is most likely to be tested by Artemis developers.
 
 
 Linux setup
