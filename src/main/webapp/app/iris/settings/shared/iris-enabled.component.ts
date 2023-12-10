@@ -21,7 +21,6 @@ export class IrisEnabledComponent implements OnInit {
     constructor(private irisSettingsService: IrisSettingsService) {}
 
     ngOnInit(): void {
-        console.log(this.exercise, this.course, this.irisSubSettingsType);
         if (this.exercise) {
             this.irisSettingsService.getUncombinedProgrammingExerciseSettings(this.exercise.id!).subscribe((settings) => {
                 this.irisSettings = settings;

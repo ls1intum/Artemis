@@ -129,13 +129,7 @@ export class GradingSystemService {
         } else {
             gradeStepsObservable = this.findGradeStepsForCourse(courseId);
         }
-        return gradeStepsObservable.pipe(
-            map((gradeStepsDTO) => {
-                if (gradeStepsDTO && gradeStepsDTO.body) {
-                    return gradeStepsDTO.body;
-                }
-            }),
-        );
+        return gradeStepsObservable.pipe(map((gradeStepsDTO) => gradeStepsDTO?.body ?? undefined));
     }
 
     /**

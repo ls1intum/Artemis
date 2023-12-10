@@ -210,13 +210,14 @@ public class LocalCIContainerService {
      * @param buildJobContainerId                    the id of the build job container
      * @param assignmentRepositoryPath               the path to the assignment repository
      * @param testRepositoryPath                     the path to the test repository
+     * @param solutionRepositoryPath                 the path to the solution repository
      * @param auxiliaryRepositoriesPaths             the paths to the auxiliary repositories
      * @param auxiliaryRepositoryCheckoutDirectories the names of the auxiliary repositories
      * @param buildScriptPath                        the path to the build script
      * @param programmingLanguage                    the programming language of the exercise
      */
-    public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path[] auxiliaryRepositoriesPaths,
-            String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath, ProgrammingLanguage programmingLanguage) {
+    public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
+            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, Path buildScriptPath, ProgrammingLanguage programmingLanguage) {
         String testCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
@@ -226,6 +227,10 @@ public class LocalCIContainerService {
         }
         addAndPrepareDirectory(buildJobContainerId, testRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + testCheckoutPath);
         addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
+        if (solutionRepositoryPath != null) {
+            String solutionCheckoutPath = RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
+            addAndPrepareDirectory(buildJobContainerId, solutionRepositoryPath, WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
+        }
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
             addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
         }
@@ -383,7 +388,16 @@ public class LocalCIContainerService {
         buildScript.append("#!/bin/bash\n");
         buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
 
-        actions.forEach(action -> buildScript.append(action.getScript()).append("\n"));
+        actions.forEach(action -> {
+            String workdir = action.getWorkdir();
+            if (workdir != null) {
+                buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
+            }
+            buildScript.append(action.getScript()).append("\n");
+            if (workdir != null) {
+                buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
+            }
+        });
 
         // Fall back to hardcoded scripts for old exercises without windfile
         // *****************
