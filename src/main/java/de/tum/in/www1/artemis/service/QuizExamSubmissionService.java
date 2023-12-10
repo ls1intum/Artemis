@@ -41,14 +41,31 @@ public class QuizExamSubmissionService extends AbstractQuizSubmissionService<Qui
         return quizExamSubmissionRepository.save(quizExamSubmission);
     }
 
+    /**
+     * Saves the given QuizExamSubmission
+     *
+     * @param quizExamSubmission the QuizExamSubmission to be saved
+     * @return the saved QuizExamSubmission
+     */
     public QuizExamSubmission save(QuizExamSubmission quizExamSubmission) {
         return this.save(null, quizExamSubmission, null);
     }
 
+    /**
+     * Finds a QuizExamSubmission with SubmittedAnswers by the given studentExamId
+     *
+     * @param studentExamId the id of the StudentExam
+     * @return the QuizExamSubmission with SubmittedAnswers
+     */
     public Optional<QuizExamSubmission> findWithEagerSubmittedAnswersByStudentExamId(Long studentExamId) {
         return quizExamSubmissionRepository.findWithEagerSubmittedAnswersByStudentExamId(studentExamId);
     }
 
+    /**
+     * Initializes a new QuizExamSubmission
+     *
+     * @return the newly initialized QuizExamSubmission
+     */
     public QuizExamSubmission initializeNewSubmission() {
         return quizExamSubmissionRepository.save(new QuizExamSubmission());
     }

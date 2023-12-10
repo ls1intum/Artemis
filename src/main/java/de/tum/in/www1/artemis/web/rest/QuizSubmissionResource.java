@@ -241,6 +241,12 @@ public class QuizSubmissionResource {
         return ResponseEntity.ok(updatedQuizSubmission);
     }
 
+    /**
+     * Submit a new submission for quiz exam.
+     *
+     * @param quizExamSubmission the quiz exam submission to submit
+     * @return the ResponseEntity with the submission as the body
+     */
     @PutMapping("quiz-exams/submissions/exam")
     @EnforceAtLeastStudent
     public ResponseEntity<QuizExamSubmission> submitQuizExam(@Valid @RequestBody QuizExamSubmission quizExamSubmission) {
