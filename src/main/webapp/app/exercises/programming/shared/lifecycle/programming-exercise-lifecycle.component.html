@@ -155,30 +155,33 @@
                 type="checkbox"
                 name="showTestNamesToStudents"
                 id="field_showTestNamesToStudents"
+                [disabled]="readOnly"
                 [(ngModel)]="exercise.showTestNamesToStudents"
                 checked
             />
             <label class="form-control-label" for="field_showTestNamesToStudents" jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents"></label>
             <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'"></jhi-help-icon>
         </div>
+
         <div class="form-check">
             <input
                 type="checkbox"
                 class="form-check-input"
                 name="releaseTestsWithExampleSolution"
                 [checked]="exercise.releaseTestsWithExampleSolution"
-                [disabled]="!exercise.exampleSolutionPublicationDate"
+                [disabled]="!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate"
                 id="releaseTestsWithExampleSolution"
                 (change)="toggleReleaseTests()"
             />
             <label
-                [ngStyle]="!exercise.exampleSolutionPublicationDate ? { color: 'grey' } : {}"
+                [ngStyle]="!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate ? { color: 'grey' } : {}"
                 class="form-control-label"
                 for="releaseTestsWithExampleSolution"
                 jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"
             ></label>
             <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'"></jhi-help-icon>
         </div>
+
         <div class="form-check" *ngIf="(isAthenaEnabled$ | async) && !isExamMode">
             <input
                 type="checkbox"

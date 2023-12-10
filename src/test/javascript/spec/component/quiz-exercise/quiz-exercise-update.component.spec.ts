@@ -39,6 +39,7 @@ import { Exam } from 'app/entities/exam.model';
 import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('QuizExercise Update Detail Component', () => {
     let comp: QuizExerciseUpdateComponent;
@@ -1013,7 +1014,7 @@ describe('QuizExercise Update Detail Component', () => {
                 comp.cacheValidation();
                 comp.pendingChangesCache = true;
                 if (comp.courseId) {
-                    comp.quizQuestionListEditComponent = new QuizQuestionListEditComponent();
+                    comp.quizQuestionListEditComponent = new QuizQuestionListEditComponent(new MockNgbModalService() as any as NgbModal);
                     jest.spyOn(comp.quizQuestionListEditComponent, 'parseAllQuestions').mockImplementation();
                 }
                 comp.save();
