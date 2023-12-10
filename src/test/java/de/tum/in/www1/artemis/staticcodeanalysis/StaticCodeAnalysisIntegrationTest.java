@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.staticcodeanalysis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatExceptionOfType;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -45,6 +46,11 @@ class StaticCodeAnalysisIntegrationTest {
             String expected = reader.lines().collect(Collectors.joining(System.lineSeparator()));
             assertThat(actual).isEqualTo(expected);
         }
+    }
+
+    private void testParserWithNullValue() throws ParserException {
+        ReportParser parser = new ReportParser();
+        String actual = parser.transformToJSONReport(null);
     }
 
     /**
@@ -140,5 +146,11 @@ class StaticCodeAnalysisIntegrationTest {
         catch (ParserException e) {
             fail("Parser failed with exception: " + e.getMessage());
         }
+    }
+
+    @Test
+    void testThrowsParserException() throws ParserException {
+        assertThatExceptionOfType(ParserException.class).isThrownBy(() -> testParserWithNullValue());
+
     }
 }

@@ -36,7 +36,6 @@ public class ReportParser {
             return mapper.writeValueAsString(report);
         }
         catch (Exception e) {
-            System.err.println("Error while parsing static code analysis report: " + e.getMessage());
             throw new ParserException(e.getMessage(), e);
         }
     }
