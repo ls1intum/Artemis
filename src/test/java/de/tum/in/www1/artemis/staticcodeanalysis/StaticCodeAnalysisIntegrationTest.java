@@ -149,8 +149,7 @@ class StaticCodeAnalysisIntegrationTest {
     }
 
     @Test
-    void testThrowsParserException() throws ParserException {
-        assertThatExceptionOfType(ParserException.class).isThrownBy(() -> testParserWithNullValue());
-
+    void testThrowsParserException() {
+        assertThatExceptionOfType(ParserException.class).isThrownBy(this::testParserWithNullValue);
     }
 }
