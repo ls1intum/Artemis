@@ -22,7 +22,11 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.quiz.QuizGroup;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.DragAndDropMappingRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.QuizGroupRepository;
+import de.tum.in.www1.artemis.repository.QuizPoolRepository;
+import de.tum.in.www1.artemis.repository.ShortAnswerMappingRepository;
 import de.tum.in.www1.artemis.service.exam.ExamQuizQuestionsGenerator;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -43,16 +47,13 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
 
     private final ExamRepository examRepository;
 
-    private final QuizQuestionRepository quizQuestionRepository;
-
     public QuizPoolService(DragAndDropMappingRepository dragAndDropMappingRepository, ShortAnswerMappingRepository shortAnswerMappingRepository,
-            QuizPoolRepository quizPoolRepository, QuizGroupRepository quizGroupRepository, ExamRepository examRepository, FileService fileService, FilePathService filePathService,
-            QuizQuestionRepository quizQuestionRepository) {
+            QuizPoolRepository quizPoolRepository, QuizGroupRepository quizGroupRepository, ExamRepository examRepository, FileService fileService,
+            FilePathService filePathService) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository, fileService, filePathService);
         this.quizPoolRepository = quizPoolRepository;
         this.quizGroupRepository = quizGroupRepository;
         this.examRepository = examRepository;
-        this.quizQuestionRepository = quizQuestionRepository;
     }
 
     /**
@@ -60,6 +61,7 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
      *
      * @param examId   the id of the exam to be checked
      * @param quizPool the quiz pool to be updated
+     * @param files    the list of files to be uploaded
      * @return updated quiz pool
      */
     public QuizPool update(Long examId, QuizPool quizPool, List<MultipartFile> files) throws IOException {
@@ -87,15 +89,7 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
             }
         }
         quizPool.reconnectJSONIgnoreAttributes();
-
-        Optional<QuizPool> quizPoolOptional = findWithQuizQuestionsByExamId(examId);
-        if (quizPoolOptional.isPresent()) {
-            QuizPool existingQuizPool = quizPoolOptional.get();
-            handleDndQuizFileUpdates(quizPool, existingQuizPool, files);
-        }
-        else {
-            handleDndQuizFileCreation(quizPool, files);
-        }
+        handleDndQuizFile(quizPool, examId, files);
 
         log.debug("Save quiz pool to database: {}", quizPool);
         super.save(quizPool);
@@ -105,6 +99,17 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
         reassignQuizQuestion(savedQuizPool, savedQuizGroups);
 
         return savedQuizPool;
+    }
+
+    private void handleDndQuizFile(QuizPool quizPool, Long examId, List<MultipartFile> files) throws IOException {
+        Optional<QuizPool> quizPoolOptional = findWithQuizQuestionsByExamId(examId);
+        if (quizPoolOptional.isPresent()) {
+            QuizPool existingQuizPool = quizPoolOptional.get();
+            handleDndQuizFileUpdates(quizPool, existingQuizPool, files);
+        }
+        else {
+            handleDndQuizFileCreation(quizPool, files);
+        }
     }
 
     /**
