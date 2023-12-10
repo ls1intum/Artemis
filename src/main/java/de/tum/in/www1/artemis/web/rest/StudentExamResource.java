@@ -45,6 +45,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.event.ExamLiveEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
+import de.tum.in.www1.artemis.domain.quiz.QuizQuestion;
 import de.tum.in.www1.artemis.repository.ExamLiveEventRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -814,6 +815,11 @@ public class StudentExamResource {
         if (quizPoolOptional.isPresent()) {
             QuizPool quizPool = quizPoolOptional.get();
             studentExamRepository.fetchAllQuizQuestions(studentExam);
+            if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
+                for (QuizQuestion quizQuestion : studentExam.getQuizQuestions()) {
+                    quizQuestion.filterForStudentsDuringQuiz();
+                }
+            }
             exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
             exam.setRandomizeQuizExamQuestionsOrder(quizPool.getRandomizeQuestionOrder());
         }
