@@ -216,6 +216,12 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
         return results;
     }
 
+    /**
+     * Get the course that belongs to the given quiz question
+     *
+     * @param quizQuestion the quiz question to be checked
+     * @return the course that belongs to the given quiz question
+     */
     public Course getCourseByQuizQuestion(QuizQuestion quizQuestion) {
         Long quizPoolId = quizQuestion.getQuizPoolId();
         QuizPool quizPool = quizPoolRepository.findById(quizPoolId).orElseThrow(() -> new EntityNotFoundException("QuizPool", quizPoolId));
