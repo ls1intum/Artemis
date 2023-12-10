@@ -21,6 +21,7 @@
             [matChipInputFor]="chipList"
             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
             (matChipInputTokenEnd)="onItemAdd($event)"
+            maxlength="25"
         />
     </mat-chip-grid>
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onItemSelect($event)">
