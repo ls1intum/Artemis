@@ -18,6 +18,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.Instant;
@@ -521,7 +522,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         return studentExamRepository.save(studentExam);
     }
 
-    private int prepareQuizPoolForExam(Exam exam, int numberOfGroup, int numberOfQuestionPerGroup) {
+    private int prepareQuizPoolForExam(Exam exam, int numberOfGroup, int numberOfQuestionPerGroup) throws IOException {
         QuizPool quizPool = new QuizPool();
         List<QuizGroup> quizGroups = new ArrayList<>();
         List<QuizQuestion> quizQuestions = new ArrayList<>();
@@ -541,7 +542,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         quizPool.setQuizQuestions(quizQuestions);
         quizPool.setMaxPoints(maxPoints);
         quizPool.setRandomizeQuestionOrder(true);
-        quizPoolService.update(exam.getId(), quizPool);
+        quizPoolService.update(exam.getId(), quizPool, null);
         return quizQuestions.stream().reduce(0, (sum, question) -> sum + question.getPoints(), Integer::sum);
     }
 

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpStatus.CREATED;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,9 +27,12 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -295,18 +299,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         verifyStudentsExamAndExercisesAndQuizQuestions(exam, 0);
     }
 
-    private void setupEmptyQuizPoolForExam(Exam exam) {
+    private void setupEmptyQuizPoolForExam(Exam exam) throws IOException {
         QuizPool quizPool = new QuizPool();
-        quizPoolService.update(exam.getId(), quizPool);
+        quizPoolService.update(exam.getId(), quizPool, null);
     }
 
-    private void setupQuizPoolWithQuestionsForExam(Exam exam) {
+    private void setupQuizPoolWithQuestionsForExam(Exam exam) throws IOException {
         QuizPool quizPool = new QuizPool();
-        setupGroupsAndQuestionsForQuizPool(quizPool);
-        quizPoolService.update(exam.getId(), quizPool);
+        List<MultipartFile> files = setupGroupsAndQuestionsForQuizPool(quizPool);
+        quizPoolService.update(exam.getId(), quizPool, files);
     }
 
-    private void setupGroupsAndQuestionsForQuizPool(QuizPool quizPool) {
+    private List<MultipartFile> setupGroupsAndQuestionsForQuizPool(QuizPool quizPool) {
         QuizGroup quizGroup0 = QuizExerciseFactory.createQuizGroup("Encapsulation");
         QuizGroup quizGroup1 = QuizExerciseFactory.createQuizGroup("Inheritance");
         QuizGroup quizGroup2 = QuizExerciseFactory.createQuizGroup("Polymorphism");
@@ -317,6 +321,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         QuizQuestion saQuizQuestion0 = QuizExerciseFactory.createShortAnswerQuestionWithTitleAndGroup("SA 0", null);
         quizPool.setQuizGroups(List.of(quizGroup0, quizGroup1, quizGroup2));
         quizPool.setQuizQuestions(List.of(mcQuizQuestion0, mcQuizQuestion1, dndQuizQuestion0, dndQuizQuestion1, saQuizQuestion0));
+        return getFilesForQuizPoolUpdate();
+    }
+
+    private List<MultipartFile> getFilesForQuizPoolUpdate() {
+        List<String> fileNames = List.of("dragItemImage2.png", "dragItemImage4.png");
+        List<MultipartFile> files = new ArrayList<>();
+        for (String fileName : fileNames) {
+            files.add(new MockMultipartFile("files", fileName, MediaType.IMAGE_PNG_VALUE, "test".getBytes()));
+        }
+        return files;
     }
 
     private void registerNewStudentsToExam(Exam exam, int numberOfStudents) {
