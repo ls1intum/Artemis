@@ -73,9 +73,12 @@ public class GradeStepResource {
     public ResponseEntity<GradeStepsDTO> getAllGradeStepsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all grade steps for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        GradingScale gradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, course.getMaxPoints(), course.getTitle());
+        Optional<GradingScale> gradingScale = gradingScaleRepository.findByCourseId(courseId);
+        if (gradingScale.isEmpty()) {
+            return ResponseEntity.ok(null);
+        }
+        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale.get(), course.getMaxPoints(), course.getTitle());
         return ResponseEntity.ok(gradeStepsDTO);
     }
 
@@ -161,9 +164,9 @@ public class GradeStepResource {
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForCourse(@PathVariable Long courseId, @RequestParam Double gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for course: {}", gradePercentage, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        Optional<GradingScale> optionalGradingScale = gradingScaleRepository.findByCourseId(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        Optional<GradingScale> optionalGradingScale = gradingScaleRepository.findByCourseId(courseId);
         if (optionalGradingScale.isEmpty()) {
             return ResponseEntity.ok(null);
         }
@@ -199,9 +202,9 @@ public class GradeStepResource {
         log.debug("REST request to get grade step for grade percentage {} for exam: {}", gradePercentage, examId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         Exam exam = examRepository.findByIdElseThrow(examId);
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
         if (gradingScale.isEmpty()) {
             return ResponseEntity.ok(null);

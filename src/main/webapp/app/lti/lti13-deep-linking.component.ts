@@ -1,0 +1,149 @@
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Exercise } from 'app/entities/exercise.model';
+import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { SortService } from 'app/shared/service/sort.service';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { AccountService } from 'app/core/auth/account.service';
+import { Course } from 'app/entities/course.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { onError } from 'app/shared/util/global.utils';
+import { SessionStorageService } from 'ngx-webstorage';
+
+@Component({
+    selector: 'jhi-deep-linking',
+    templateUrl: './lti13-deep-linking.component.html',
+})
+export class Lti13DeepLinkingComponent implements OnInit {
+    courseId: number;
+    exercises: Exercise[];
+    selectedExercise?: Exercise;
+    course: Course;
+
+    predicate = 'type';
+    reverse = false;
+    isLinking = true;
+
+    // Icons
+    faSort = faSort;
+    faExclamationTriangle = faExclamationTriangle;
+    faWrench = faWrench;
+    constructor(
+        public route: ActivatedRoute,
+        private sortService: SortService,
+        private courseManagementService: CourseManagementService,
+        private http: HttpClient,
+        private accountService: AccountService,
+        private router: Router,
+        private alertService: AlertService,
+        private sessionStorageService: SessionStorageService,
+    ) {}
+
+    /**
+     * Initializes the component.
+     * - Retrieves the course ID from the route parameters.
+     * - Fetches the user's identity.
+     * - Retrieves the course details and exercises.
+     * - Redirects unauthenticated users to the login page.
+     */
+    ngOnInit() {
+        this.route.params.subscribe((params) => {
+            this.courseId = Number(params['courseId']);
+
+            if (!this.courseId) {
+                this.isLinking = false;
+                return;
+            }
+            if (!this.isLinking) {
+                return;
+            }
+
+            this.accountService.identity().then((user) => {
+                if (user) {
+                    this.courseManagementService.findWithExercises(this.courseId).subscribe((findWithExercisesResult) => {
+                        if (findWithExercisesResult?.body?.exercises) {
+                            this.course = findWithExercisesResult.body;
+                            this.exercises = findWithExercisesResult.body.exercises;
+                        }
+                    });
+                } else {
+                    this.redirectUserToLoginThenTargetLink(window.location.href);
+                }
+            });
+        });
+    }
+
+    /**
+     * Redirects the user to the login page and sets up a listener for user login.
+     * After login, redirects the user back to the original link.
+     *
+     * @param currentLink The current URL to return to after login.
+     */
+    redirectUserToLoginThenTargetLink(currentLink: string): void {
+        this.router.navigate(['/']).then(() => {
+            this.accountService.getAuthenticationState().subscribe((user) => {
+                if (user) {
+                    window.location.replace(currentLink);
+                }
+            });
+        });
+    }
+
+    /**
+     * Sorts the list of exercises based on the selected predicate and order.
+     */
+    sortRows() {
+        this.sortService.sortByProperty(this.exercises, this.predicate, this.reverse);
+    }
+
+    /**
+     * Toggles the selected exercise.
+     *
+     * @param exercise The exercise to toggle.
+     */
+    toggleExercise(exercise: Exercise) {
+        this.selectedExercise = exercise;
+    }
+
+    /**
+     * Checks if the given exercise is currently selected.
+     *
+     * @param exercise The exercise to check.
+     * @returns True if the exercise is selected, false otherwise.
+     */
+    isExerciseSelected(exercise: Exercise) {
+        return this.selectedExercise === exercise;
+    }
+
+    /**
+     * Sends a deep link request for the selected exercise.
+     * If an exercise is selected, it sends a POST request to initiate deep linking.
+     */
+    sendDeepLinkRequest() {
+        if (this.selectedExercise) {
+            const ltiIdToken = this.sessionStorageService.retrieve('ltiIdToken') ?? '';
+            const clientRegistrationId = this.sessionStorageService.retrieve('clientRegistrationId') ?? '';
+
+            const httpParams = new HttpParams().set('exerciseId', this.selectedExercise.id!).set('ltiIdToken', ltiIdToken!).set('clientRegistrationId', clientRegistrationId!);
+
+            this.http.post(`api/lti13/deep-linking/${this.courseId}`, null, { observe: 'response', params: httpParams }).subscribe({
+                next: (response) => {
+                    if (response.status === 200) {
+                        if (response.body) {
+                            const targetLink = response.body['targetLinkUri'];
+                            window.location.replace(targetLink);
+                        }
+                    } else {
+                        this.isLinking = false;
+                        this.alertService.error('artemisApp.lti13.deepLinking.unknownError');
+                    }
+                },
+                error: (error) => {
+                    this.isLinking = false;
+                    onError(this.alertService, error);
+                },
+            });
+        }
+    }
+}
