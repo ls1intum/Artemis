@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -7,6 +8,7 @@ import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { Feedback } from 'app/entities/feedback.model';
 
 @Component({
     selector: 'jhi-orion-exercise-details-student-actions',
@@ -22,6 +24,8 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     @Input() courseId: number;
     @Input() smallButtons: boolean;
     @Input() examMode: boolean;
+
+    private feedbackRequestSubscription: Subscription;
 
     constructor(
         private orionConnectorService: OrionConnectorService,
@@ -39,6 +43,9 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
             if (params['withIdeSubmit']) {
                 this.submitChanges();
             }
+        });
+        this.feedbackRequestSubscription = this.orionConnectorService.getObservableForFeedback().subscribe(() => {
+            this.initializeFeedback();
         });
     }
 
@@ -60,5 +67,26 @@ export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     submitChanges() {
         this.orionConnectorService.submit();
         this.ideBuildAndTestService.listenOnBuildOutputAndForwardChanges(this.exercise as ProgrammingExercise);
+    }
+
+    /**
+     * returns feedback for an exercise.
+     * Orion will handle the feedback and processes the last graded result
+     * this ensures feedback changes won't break the plugin and the endpoint stays extensible
+     */
+    initializeFeedback() {
+        const participations = this.exercise.studentParticipations as ProgrammingExerciseStudentParticipation[];
+        const connectorService = this.orionConnectorService;
+        participations?.forEach(function (participation) {
+            participation.results?.forEach(function (result) {
+                if (result.rated !== undefined && result.rated) {
+                    if (result.feedbacks !== undefined) {
+                        connectorService.initializeFeedbackArray(result.feedbacks);
+                        return;
+                    }
+                }
+            });
+            connectorService.initializeFeedbackArray([] as Array<Feedback>);
+        });
     }
 }

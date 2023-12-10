@@ -1,5 +1,5 @@
 import { Injectable, Injector } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
 import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
@@ -36,7 +36,7 @@ function theWindow(): any {
 export class OrionConnectorService {
     private orionState: OrionState;
     private orionStateSubject: BehaviorSubject<OrionState>;
-
+    private orionFeedbackSubject = new Subject<any>();
     // When loaded, the AssessmentComponent registers here to receive updates from the plugin
     activeAssessmentComponent: OrionTutorAssessmentComponent | undefined = undefined;
 
@@ -49,6 +49,13 @@ export class OrionConnectorService {
         theWindow().artemisClientConnector = connector;
         connector.orionState = { opened: -1, view: ExerciseView.STUDENT, cloning: false, building: false };
         connector.orionStateSubject = new BehaviorSubject<OrionState>(connector.orionState);
+    }
+
+    /**
+     * Gets the observable of the feedback subject
+     */
+    getObservableForFeedback() {
+        return this.orionFeedbackSubject.asObservable();
     }
 
     /**
@@ -118,6 +125,7 @@ export class OrionConnectorService {
         const view = ExerciseView[viewString];
         this.setIDEStateParameter({ view });
         this.setIDEStateParameter({ opened });
+        this.orionFeedbackSubject.next(viewString);
     }
 
     /**
@@ -279,5 +287,14 @@ export class OrionConnectorService {
      */
     initializeAssessment(submissionId: number, feedback: Array<Feedback>) {
         theWindow().orionExerciseConnector.initializeAssessment(String(submissionId), stringifyCircular(feedback));
+    }
+
+    /**
+     * Initializes a existing feedback array in orion
+     *
+     * @param feedbacks
+     */
+    initializeFeedbackArray(feedbacks: Array<Feedback>): void {
+        theWindow().orionExerciseConnector.initializeFeedback(stringifyCircular(feedbacks));
     }
 }

@@ -70,6 +70,12 @@ export interface OrionExerciseConnector {
      * @param exerciseJson Exercise in a Json string.
      */
     importParticipation(repository: string, exerciseJson: string): void;
+
+    /**
+     * Initializes the feedback comments for a student. See {@link OrionConnectorService} for details
+     * @param feedbacks a string containing an array of {@link Feedback}
+     */
+    initializeFeedback(feedbacks: string): void;
 }
 
 export interface OrionVCSConnector {

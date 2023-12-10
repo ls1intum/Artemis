@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { OrionExerciseDetailsStudentActionsComponent } from 'app/orion/participation/orion-exercise-details-student-actions.component';
 import { Exercise } from 'app/entities/exercise.model';
@@ -19,6 +19,7 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
     let orionConnectorService: OrionConnectorService;
 
     let orionStateStub: jest.SpyInstance;
+    let orionFeedbackStub: jest.SpyInstance;
     let cloneSpy: jest.SpyInstance;
     let submitSpy: jest.SpyInstance;
     let forwardBuildSpy: jest.SpyInstance;
@@ -48,7 +49,8 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
                 comp = fixture.componentInstance;
                 orionConnectorService = TestBed.inject(OrionConnectorService);
                 orionStateStub = jest.spyOn(orionConnectorService, 'state').mockReturnValue(new BehaviorSubject(orionState));
-                forwardBuildSpy = jest.spyOn(TestBed.inject(OrionBuildAndTestService), 'listenOnBuildOutputAndForwardChanges');
+                (orionFeedbackStub = jest.spyOn(orionConnectorService, 'getObservableForFeedback').mockReturnValue(new Subject<any>())),
+                    (forwardBuildSpy = jest.spyOn(TestBed.inject(OrionBuildAndTestService), 'listenOnBuildOutputAndForwardChanges'));
                 cloneSpy = jest.spyOn(orionConnectorService, 'importParticipation');
                 submitSpy = jest.spyOn(orionConnectorService, 'submit');
             });
@@ -63,6 +65,8 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
 
         expect(orionStateStub).toHaveBeenCalledOnce();
         expect(orionStateStub).toHaveBeenCalledWith();
+        expect(orionFeedbackStub).toHaveBeenCalledOnce();
+        expect(orionFeedbackStub).toHaveBeenCalledWith();
         expect(comp.orionState).toEqual(orionState);
     });
 
@@ -99,6 +103,8 @@ describe('OrionExerciseDetailsStudentActionsComponent', () => {
 
         comp.ngOnInit();
 
+        expect(orionFeedbackStub).toHaveBeenCalledOnce();
+        expect(orionFeedbackStub).toHaveBeenCalledWith();
         expect(submitChangesSpy).toHaveBeenCalledOnce();
         expect(submitChangesSpy).toHaveBeenCalledWith();
     });
