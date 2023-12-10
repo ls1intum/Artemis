@@ -4,19 +4,19 @@
             {{ 'artemisApp.fileUploadSubmission.fileUpload' | artemisTranslate }}:
             <span class="font-weight-normal">{{ examMode ? fileUploadExercise?.exerciseGroup?.title : fileUploadExercise?.title }}</span>
         </span>
-        @if (isOwnerOfParticipation) {
-            <jhi-button
-                submitbutton
-                id="submit"
-                [disabled]="(!isActive && !isLate) || !submission || !submissionFile || !!result"
-                [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
-                (onClick)="submitExercise()"
-                [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
-                [tooltip]="submitButtonTooltip"
-                [isLoading]="isSaving"
-            >
-            </jhi-button>
-        }
+        <ng-container submitbutton>
+            @if (isOwnerOfParticipation) {
+                <jhi-button
+                    id="submit"
+                    [disabled]="(!isActive && !isLate) || !submission || !submissionFile || !!result"
+                    [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
+                    (onClick)="submitExercise()"
+                    [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
+                    [tooltip]="submitButtonTooltip"
+                    [isLoading]="isSaving"
+                ></jhi-button>
+            }
+        </ng-container>
     </jhi-header-participation-page>
 }
 @if (fileUploadExercise) {
@@ -99,11 +99,11 @@
         <!--region Right Panel-->
         <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
         <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
-        @if (fileUploadExercise!.problemStatement) {
-            <p right-body class="mb-3 markdown-preview">
+        <p right-body class="mb-3 markdown-preview">
+            @if (fileUploadExercise!.problemStatement) {
                 <span [innerHTML]="fileUploadExercise!.problemStatement! | htmlForMarkdown"></span>
-            </p>
-        }
+            }
+        </p>
         <!--endregion-->
     </jhi-resizeable-container>
 }

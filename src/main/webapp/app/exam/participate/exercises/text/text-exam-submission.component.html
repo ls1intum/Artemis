@@ -41,14 +41,16 @@
         <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
         <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
         <!-- problem statement update & difference highlighter -->
-        @if (exercise) {
-            <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)"> </jhi-exam-exercise-update-highlighter>
-        }
-        @if (exercise.problemStatement) {
-            <p right-body class="markdown-preview mb-3">
-                <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
-            </p>
-        }
+        <ng-container right-body>
+            @if (exercise) {
+                <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)"> </jhi-exam-exercise-update-highlighter>
+            }
+            @if (exercise.problemStatement) {
+                <p class="markdown-preview mb-3">
+                    <span [innerHTML]="exercise.problemStatement! | htmlForMarkdown"></span>
+                </p>
+            }
+        </ng-container>
         <!--endregion-->
     </jhi-resizeable-container>
 }

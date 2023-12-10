@@ -24,9 +24,7 @@
         @if (!busy && exercise) {
             <jhi-resizeable-container class="col-12">
                 <!--region Left Panel-->
-                @if (exercise!.title) {
-                    <span left-header>{{ exercise!.title }}</span>
-                }
+                <span left-header>{{ exercise?.title ?? '' }}</span>
                 <jhi-score-display
                     left-header
                     [score]="totalScore"
@@ -79,9 +77,7 @@
     @if (!busy && exercise) {
         <jhi-resizeable-container class="col-12">
             <!--region Left Panel-->
-            @if (exercise!.title) {
-                <span left-header>{{ exercise!.title }}</span>
-            }
+            <span left-header>{{ exercise?.title ?? '' }}</span>
             <jhi-score-display left-header [score]="totalScore" [maxPoints]="exercise!.maxPoints!" [maxBonusPoints]="exercise!.bonusPoints!" [course]="course"></jhi-score-display>
             <div left-body>
                 <div class="row">
