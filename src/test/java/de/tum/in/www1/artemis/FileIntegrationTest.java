@@ -17,8 +17,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,13 +28,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropQuestion;
+import de.tum.in.www1.artemis.domain.quiz.DragItem;
+import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.quizexercise.QuizExerciseFactory;
 import de.tum.in.www1.artemis.lecture.LectureFactory;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.ExamUserDTO;
 
@@ -63,6 +71,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private QuizPoolService quizPoolService;
 
     @BeforeEach
     void initTestCase() {
@@ -220,6 +231,36 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             // and is now the first page of the merged pdf
             assertThat(firstPage.getCropBox().getHeight()).isEqualTo(4);
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetDragAndDropFileQuizPool() throws Exception {
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExamWithQuizPool(course);
+        QuizPool quizPool = quizPoolService.findByExamId(exam.getId()).orElseThrow();
+        DragAndDropQuestion question = QuizExerciseFactory.createDragAndDropQuestion();
+        question.setBackgroundFilePath("background.png");
+        quizPool.setQuizQuestions(List.of(question));
+        List<MultipartFile> files = List.of(new MockMultipartFile("files", "dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "test1".getBytes()),
+                new MockMultipartFile("files", "dragItemImage4.png", MediaType.IMAGE_PNG_VALUE, "test2".getBytes()),
+                new MockMultipartFile("files", "background.png", MediaType.IMAGE_PNG_VALUE, "test3".getBytes()));
+        quizPool = quizPoolService.update(exam.getId(), quizPool, files);
+        question = (DragAndDropQuestion) quizPool.getQuizQuestions().get(0);
+        DragItem dragItem0 = question.getDragItems().get(1);
+        DragItem dragItem1 = question.getDragItems().get(3);
+
+        var result1 = request.get("/api/files/drag-and-drop/drag-items/" + dragItem0.getId() + "/" + getFileName(dragItem0.getPictureFilePath()), HttpStatus.OK, String.class);
+        var result2 = request.get("/api/files/drag-and-drop/drag-items/" + dragItem1.getId() + "/" + getFileName(dragItem1.getPictureFilePath()), HttpStatus.OK, String.class);
+        var result3 = request.get("/api/files/drag-and-drop/backgrounds/" + question.getId() + "/" + getFileName(question.getBackgroundFilePath()), HttpStatus.OK, String.class);
+        assertThat(result1).isEqualTo("test1");
+        assertThat(result2).isEqualTo("test2");
+        assertThat(result3).isEqualTo("test3");
+    }
+
+    private String getFileName(String path) {
+        String[] parts = path.split("/");
+        return parts[parts.length - 1];
     }
 
     private void callAndCheckMergeResult(Lecture lecture, int expectedPages) throws Exception {
