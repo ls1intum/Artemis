@@ -10,6 +10,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { User } from 'app/core/user/user.model';
+import { FormsModule } from '@angular/forms';
 
 describe('ExamTerminationConfirmationComponent', () => {
     let component: ExamTerminationConfirmationComponent;
@@ -28,6 +29,7 @@ describe('ExamTerminationConfirmationComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [FormsModule],
             declarations: [ExamTerminationConfirmationComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ExamLiveEventsButtonComponent), MockComponent(FaIconComponent)],
             providers: [{ provide: AccountService, useClass: MockAccountService }],
         })
@@ -64,18 +66,5 @@ describe('ExamTerminationConfirmationComponent', () => {
         const continueExamSpy = jest.spyOn(component.onExamContinue, 'emit');
         component.continue();
         expect(continueExamSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should check name input', () => {
-        component.accountName = 'user';
-        component.enteredName = 'admin';
-        expect(component.nameIsCorrect).toBeFalse();
-        expect(component.inserted).toBeTrue();
-
-        component.enteredName = 'user';
-        expect(component.nameIsCorrect).toBeTrue();
-
-        component.enteredName = '    ';
-        expect(component.inserted).toBeFalse();
     });
 });

@@ -46,12 +46,4 @@ export class ExamTerminationConfirmationComponent implements OnChanges {
     continue() {
         this.onExamContinue.emit();
     }
-
-    get nameIsCorrect(): boolean {
-        return this.enteredName.trim() === this.accountName.trim();
-    }
-
-    get inserted(): boolean {
-        return this.enteredName.trim() !== '';
-    }
 }
