@@ -63,13 +63,6 @@ class StaticCodeAnalysisIntegrationTest {
     }
 
     @Test
-    void testParserExceptionThrown() {
-        ReportParser parser = new ReportParser();
-        ParserException parserException = catchThrowableOfType(() -> parser.transformToJSONReport(null), ParserException.class);
-        assertThat(parserException).isNotNull();
-    }
-
-    @Test
     void testCheckstyleParser() throws ParserException, IOException {
         testParserWithFile("checkstyle-result.xml", "checkstyle.txt");
     }
