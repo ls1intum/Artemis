@@ -1,10 +1,12 @@
 @if (exercise) {
     <jhi-header-exercise-page-with-details [exercise]="exercise" [exam]="exam" [isTestRun]="isTestRun">
-        @if (!isTestRun) {
-            <span pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.pageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
-        } @else {
-            <span pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
-        }
+        <ng-template pagetitle>
+            @if (!isTestRun) {
+                <span>{{ 'artemisApp.exerciseAssessmentDashboard.pageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
+            } @else {
+                <span>{{ 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
+            }
+        </ng-template>
     </jhi-header-exercise-page-with-details>
 }
 
