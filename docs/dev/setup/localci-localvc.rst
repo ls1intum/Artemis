@@ -168,7 +168,7 @@ In single-user setups this might not be as relevant, but offers additional secur
 .. note::
 
     These setup steps are mostly focused on Linux systems.
-    On mac and Windows, both Docker and Podman run the containers in a small virtual machine anyway.
+    On Mac and Windows, both Docker and Podman run the containers in a small virtual machine anyway.
     Therefore, there is little technical benefit relevant to Artemis for choosing one over the other in local development setups.
     If in doubt, we recommend to use Docker, since that solution is most likely to be tested by other Artemis developers.
 
@@ -207,7 +207,7 @@ Configure the connection to this socket in Artemis by replacing ``${UID}`` with 
             # docker-connection-uri: "${DOCKER_HOST}"
 
 
-Windows or mac setup
+Windows or Mac setup
 """"""""""""""""""""
 
 Podman offers a `desktop application <https://podman-desktop.io/>`_ application similar to Docker desktop and `CLI tools <https://podman.io>`_ for Windows, macOS, and Linux.
@@ -217,4 +217,4 @@ You can probably connect to this VM similarly as described in the regular setup 
 
 .. note::
 
-    If you try out Podman on a Windows or mac system and have additional setup tips, feel free to submit a pull request to extend this documentation section.
+    If you try out Podman on a Windows or Mac system and have additional setup tips, feel free to submit a pull request to extend this documentation section.
