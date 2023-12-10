@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.service.connectors.localci.scaparser.utils.XmlUtil
 /**
  * Tests each parser with an example file
  */
-class IntegrationTest {
+class StaticCodeAnalysisIntegrationTest {
 
     private final static Path EXPECTED_FOLDER_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "expected");
 
