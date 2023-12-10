@@ -91,11 +91,17 @@ export class QuizPoolComponent implements OnInit {
             return;
         }
 
+        const filesMap = this.quizQuestionsEditComponent.fileMap;
+        const files = new Map<string, Blob>();
+        filesMap.forEach((value, key) => {
+            files.set(key, value.file);
+        });
+
         this.isSaving = true;
         this.quizQuestionsEditComponent.parseAllQuestions();
         const requestOptions = {} as any;
         this.quizPool.maxPoints = this.quizPoolMappingComponent.getMaxPoints();
-        this.quizPoolService.update(this.courseId, this.examId, this.quizPool, requestOptions).subscribe({
+        this.quizPoolService.update(this.courseId, this.examId, this.quizPool, files, requestOptions).subscribe({
             next: (quizPoolResponse: HttpResponse<QuizPool>) => {
                 if (quizPoolResponse.body) {
                     this.onSaveSuccess(quizPoolResponse.body);

@@ -699,7 +699,7 @@ public class QuizExerciseResource {
 
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
-        quizExerciseService.validateQuizExerciseFiles(importedExercise, nullsafeFiles, false);
+        quizExerciseService.validateQuizConfigurationFiles(importedExercise, nullsafeFiles, false);
 
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
         final var newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, nullsafeFiles);

@@ -24,7 +24,7 @@ describe('QuizPoolService', () => {
         const courseId = 2;
         const examId = 3;
         const quizPool = new QuizPool();
-        const response = firstValueFrom(quizPoolService.update(courseId, examId, quizPool));
+        const response = firstValueFrom(quizPoolService.update(courseId, examId, quizPool, new Map()));
         const req = httpMock.expectOne({
             method: 'PUT',
             url: `api/courses/${courseId}/exams/${examId}/quiz-pools`,

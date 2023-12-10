@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,7 +15,9 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.quiz.QuizGroup;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
@@ -45,8 +48,9 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
     private final ExamRepository examRepository;
 
     public QuizPoolService(DragAndDropMappingRepository dragAndDropMappingRepository, ShortAnswerMappingRepository shortAnswerMappingRepository,
-            QuizPoolRepository quizPoolRepository, QuizGroupRepository quizGroupRepository, ExamRepository examRepository) {
-        super(dragAndDropMappingRepository, shortAnswerMappingRepository);
+            QuizPoolRepository quizPoolRepository, QuizGroupRepository quizGroupRepository, ExamRepository examRepository, FileService fileService,
+            FilePathService filePathService) {
+        super(dragAndDropMappingRepository, shortAnswerMappingRepository, fileService, filePathService);
         this.quizPoolRepository = quizPoolRepository;
         this.quizGroupRepository = quizGroupRepository;
         this.examRepository = examRepository;
@@ -57,9 +61,10 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
      *
      * @param examId   the id of the exam to be checked
      * @param quizPool the quiz pool to be updated
+     * @param files    the list of files to be uploaded
      * @return updated quiz pool
      */
-    public QuizPool update(Long examId, QuizPool quizPool) {
+    public QuizPool update(Long examId, QuizPool quizPool, List<MultipartFile> files) throws IOException {
         Exam exam = examRepository.findByIdElseThrow(examId);
 
         quizPool.setExam(exam);
@@ -84,6 +89,7 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
             }
         }
         quizPool.reconnectJSONIgnoreAttributes();
+        handleDndQuizFile(quizPool, examId, files);
 
         log.debug("Save quiz pool to database: {}", quizPool);
         super.save(quizPool);
@@ -93,6 +99,17 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
         reassignQuizQuestion(savedQuizPool, savedQuizGroups);
 
         return savedQuizPool;
+    }
+
+    private void handleDndQuizFile(QuizPool quizPool, Long examId, List<MultipartFile> files) throws IOException {
+        Optional<QuizPool> quizPoolOptional = findWithQuizQuestionsByExamId(examId);
+        if (quizPoolOptional.isPresent()) {
+            QuizPool existingQuizPool = quizPoolOptional.get();
+            handleDndQuizFileUpdates(quizPool, existingQuizPool, files);
+        }
+        else {
+            handleDndQuizFileCreation(quizPool, files);
+        }
     }
 
     /**
@@ -197,5 +214,17 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
             }
         }
         return results;
+    }
+
+    /**
+     * Get the course that belongs to the given quiz question
+     *
+     * @param quizQuestion the quiz question to be checked
+     * @return the course that belongs to the given quiz question
+     */
+    public Course getCourseByQuizQuestion(QuizQuestion quizQuestion) {
+        Long quizPoolId = quizQuestion.getQuizPoolId();
+        QuizPool quizPool = quizPoolRepository.findById(quizPoolId).orElseThrow(() -> new EntityNotFoundException("QuizPool", quizPoolId));
+        return quizPool.getExam().getCourse();
     }
 }

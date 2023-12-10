@@ -80,11 +80,13 @@ public class FileResource {
 
     private final FilePathService filePathService;
 
+    private final QuizPoolService quizPoolService;
+
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
             AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
             ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
-            FilePathService filePathService) {
+            FilePathService filePathService, QuizPoolService quizPoolService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -101,6 +103,7 @@ public class FileResource {
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
         this.filePathService = filePathService;
+        this.quizPoolService = quizPoolService;
     }
 
     /**
@@ -189,7 +192,13 @@ public class FileResource {
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId) {
         log.debug("REST request to get background for drag and drop question : {}", questionId);
         DragAndDropQuestion question = quizQuestionRepository.findDnDQuestionByIdOrElseThrow(questionId);
-        Course course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Course course;
+        if (question.getExercise() != null) {
+            course = question.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        }
+        else {
+            course = quizPoolService.getCourseByQuizQuestion(question);
+        }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         return responseEntityForFilePath(getActualPathFromPublicPathString(question.getBackgroundFilePath()));
     }
@@ -205,7 +214,13 @@ public class FileResource {
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId) {
         log.debug("REST request to get file for drag item : {}", dragItemId);
         DragItem dragItem = dragItemRepository.findByIdElseThrow(dragItemId);
-        Course course = dragItem.getQuestion().getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Course course;
+        if (dragItem.getQuestion().getExercise() != null) {
+            course = dragItem.getQuestion().getExercise().getCourseViaExerciseGroupOrCourseMember();
+        }
+        else {
+            course = quizPoolService.getCourseByQuizQuestion(dragItem.getQuestion());
+        }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         if (dragItem.getPictureFilePath() == null) {
             throw new EntityNotFoundException("Drag item " + dragItemId + " has no picture file");

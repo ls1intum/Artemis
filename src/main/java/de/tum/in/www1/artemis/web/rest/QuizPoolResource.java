@@ -1,17 +1,21 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.quiz.QuizPool;
@@ -59,15 +63,17 @@ public class QuizPoolResource {
      * @param courseId the id of the Course of which the QuizPool belongs to
      * @param examId   the id of the Exam of which the QuizPool belongs to
      * @param quizPool the QuizPool to update
+     * @param files    the files to upload
      * @return the ResponseEntity with status 200 (OK) and with the body of the QuizPool, or with status 400 (Bad Request) if the QuizPool is invalid
      */
-    @PutMapping("courses/{courseId}/exams/{examId}/quiz-pools")
+    @PutMapping(value = "courses/{courseId}/exams/{examId}/quiz-pools", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructor
-    public ResponseEntity<QuizPool> updateQuizPool(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody QuizPool quizPool) {
+    public ResponseEntity<QuizPool> updateQuizPool(@PathVariable Long courseId, @PathVariable Long examId, @RequestPart("quizPool") QuizPool quizPool,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException {
         log.info("REST request to update QuizPool : {}", quizPool);
 
         validateCourseRole(courseId);
-        QuizPool updatedQuizPool = quizPoolService.update(examId, quizPool);
+        QuizPool updatedQuizPool = quizPoolService.update(examId, quizPool, files);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedQuizPool.getId().toString())).body(updatedQuizPool);
     }
