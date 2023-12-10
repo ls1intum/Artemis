@@ -15,9 +15,7 @@
                 </jhi-ide-button>
             </ng-template>
         </jhi-exercise-assessment-dashboard>
-    }
-    <!-- If the exercise is opened, show download submission buttons -->
-    @else {
+    } @else {
         <jhi-exercise-assessment-dashboard>
             <ng-template #overrideOpenAssessmentButton let-submission="submission" let-queryParams="queryParams" let-buttonLabel="buttonLabel" let-disabled="disabled">
                 <jhi-ide-button
