@@ -89,6 +89,9 @@ public class SubmissionVersionService {
                 return submission.toString();
             }
         }
+        else if (submission instanceof MathSubmission mathSubmission) {
+            return mathSubmission.getText();
+        }
         else {
             throw new IllegalArgumentException("Versioning for this submission type not supported: " + submission.getType());
         }

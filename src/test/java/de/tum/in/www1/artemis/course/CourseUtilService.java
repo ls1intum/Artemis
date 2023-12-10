@@ -232,7 +232,7 @@ public class CourseUtilService {
      * @throws IOException If a file cannot be loaded from resources.
      */
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(String userPrefix, boolean withParticipations, boolean withFiles,
-            int numberOfTutorParticipations) throws IOException {
+            int numberOfTutorParticipations) throws IOException, Exception {
         List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
@@ -250,7 +250,7 @@ public class CourseUtilService {
      * @return The list of created and saved courses.
      * @throws IOException If a file cannot be loaded from resources.
      */
-    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, int numberOfTutorParticipations) throws IOException {
+    public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, int numberOfTutorParticipations) throws IOException, Exception {
         return createCoursesWithExercisesAndLectures(userPrefix, withParticipations, false, numberOfTutorParticipations);
     }
 
@@ -265,7 +265,7 @@ public class CourseUtilService {
      * @throws IOException If a file cannot be loaded from resources.
      */
     public List<Course> createCoursesWithExercisesAndLectures(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
-            throws IOException {
+            throws IOException, Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -376,7 +376,7 @@ public class CourseUtilService {
             Submission textSubmission = ParticipationFactory.generateTextSubmission("text", Language.ENGLISH, true);
             Submission programmingSubmission1 = ParticipationFactory.generateProgrammingSubmission(true, "1234", SubmissionType.MANUAL);
             Submission programmingSubmission2 = ParticipationFactory.generateProgrammingSubmission(true, "5678", SubmissionType.MANUAL);
-            Submission mathSubmission = ParticipationFactory.generateMathSubmission("math", Language.ENGLISH, true);
+            Submission mathSubmission = ParticipationFactory.generateMathSubmission("math", true);
 
             Result result1 = generateResult(true, 10D);
             Result result2 = generateResult(true, 12D);
@@ -574,7 +574,7 @@ public class CourseUtilService {
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
         QuizSubmission quizSubmission = ParticipationFactory.generateQuizSubmission(true);
         ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
-        MathSubmission mathSubmission = ParticipationFactory.generateMathSubmission("text of math submission", Language.ENGLISH, true);
+        MathSubmission mathSubmission = ParticipationFactory.generateMathSubmission("text of math submission", true);
 
         // Save submissions
         modelingSubmission = submissionRepository.save(modelingSubmission);
@@ -1001,7 +1001,7 @@ public class CourseUtilService {
         var exerciseGroup4 = exerciseGroupRepository.save(new ExerciseGroup());
         var mathExercise = MathExerciseFactory.generateMathExerciseForExam(exerciseGroup4);
         mathExercise = exerciseRepo.save(mathExercise);
-        var mathSubmission = ParticipationFactory.generateMathSubmission("example math text", Language.ENGLISH, true);
+        var mathSubmission = ParticipationFactory.generateMathSubmission("example math text", true);
         mathExerciseUtilService.saveMathSubmission(mathExercise, mathSubmission, userPrefix + "student1");
         exerciseGroup4.addExercise(mathExercise);
         exerciseGroup4 = exerciseGroupRepository.save(exerciseGroup4);

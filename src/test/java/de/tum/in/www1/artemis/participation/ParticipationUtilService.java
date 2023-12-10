@@ -89,6 +89,9 @@ public class ParticipationUtilService {
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;
 
+    @Autowired
+    private MathSubmissionRepository mathSubmissionRepository;
+
     /**
      * Creates and saves a Result for a ProgrammingExerciseStudentParticipation associated with the given ProgrammingExercise and login. If no corresponding
      * ProgrammingExerciseStudentParticipation exists, it will be created and saved as well.
@@ -165,6 +168,9 @@ public class ParticipationUtilService {
         }
         else if (exercise instanceof TextExercise) {
             submission = new TextSubmission();
+        }
+        else if (exercise instanceof MathExercise) {
+            submission = new MathSubmission();
         }
         else if (exercise instanceof FileUploadExercise) {
             submission = new FileUploadSubmission();
@@ -668,14 +674,17 @@ public class ParticipationUtilService {
      * @return The saved Submission
      */
     private Submission saveSubmissionToRepo(Submission submission) {
-        if (submission instanceof ModelingSubmission) {
-            return modelingSubmissionRepo.save((ModelingSubmission) submission);
+        if (submission instanceof ModelingSubmission modelingSubmission) {
+            return modelingSubmissionRepo.save(modelingSubmission);
         }
-        else if (submission instanceof TextSubmission) {
-            return textSubmissionRepo.save((TextSubmission) submission);
+        else if (submission instanceof TextSubmission textSubmission) {
+            return textSubmissionRepo.save(textSubmission);
         }
-        else if (submission instanceof ProgrammingSubmission) {
-            return programmingSubmissionRepo.save((ProgrammingSubmission) submission);
+        else if (submission instanceof MathSubmission mathSubmission) {
+            return mathSubmissionRepository.save(mathSubmission);
+        }
+        else if (submission instanceof ProgrammingSubmission programmingSubmission) {
+            return programmingSubmissionRepo.save(programmingSubmission);
         }
         return null;
     }
@@ -691,9 +700,16 @@ public class ParticipationUtilService {
         if (exampleSubmission.getSubmission() instanceof ModelingSubmission) {
             submission = modelingSubmissionRepo.save((ModelingSubmission) exampleSubmission.getSubmission());
         }
-        else {
+        else if (exampleSubmission.getSubmission() instanceof TextSubmission) {
             submission = textSubmissionRepo.save((TextSubmission) exampleSubmission.getSubmission());
         }
+        else if (exampleSubmission.getSubmission() instanceof MathSubmission) {
+            submission = mathSubmissionRepository.save((MathSubmission) exampleSubmission.getSubmission());
+        }
+        else {
+            throw new RuntimeException("Unsupported submission type");
+        }
+
         exampleSubmission.setSubmission(submission);
         return exampleSubmissionRepo.save(exampleSubmission);
     }
@@ -719,7 +735,7 @@ public class ParticipationUtilService {
      * @param flagAsExampleSubmission True, if the submission is an ExampleSubmission
      * @return The generated ExampleSubmission
      */
-    public ExampleSubmission generateExampleSubmission(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission) {
+    public ExampleSubmission generateExampleSubmission(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission) throws Exception {
         return generateExampleSubmission(modelOrText, exercise, flagAsExampleSubmission, false);
     }
 
@@ -733,15 +749,22 @@ public class ParticipationUtilService {
      * @param usedForTutorial         True, if the ExampleSubmission is used for a tutorial
      * @return The generated ExampleSubmission
      */
-    public ExampleSubmission generateExampleSubmission(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission, boolean usedForTutorial) {
+    public ExampleSubmission generateExampleSubmission(String modelOrText, Exercise exercise, boolean flagAsExampleSubmission, boolean usedForTutorial) throws Exception {
         Submission submission;
         if (exercise instanceof ModelingExercise) {
             submission = ParticipationFactory.generateModelingSubmission(modelOrText, false);
         }
-        else {
+        else if (exercise instanceof MathExercise) {
+            submission = ParticipationFactory.generateMathSubmission(modelOrText, false);
+        }
+        else if (exercise instanceof TextExercise) {
             submission = ParticipationFactory.generateTextSubmission(modelOrText, Language.ENGLISH, false);
             saveSubmissionToRepo(submission);
         }
+        else {
+            throw new Exception("unsupported exercise type");
+        }
+
         submission.setExampleSubmission(flagAsExampleSubmission);
         return ParticipationFactory.generateExampleSubmission(submission, exercise, usedForTutorial);
     }
@@ -792,13 +815,16 @@ public class ParticipationUtilService {
         if (exercise instanceof TextExercise) {
             submission = ParticipationFactory.generateTextSubmission("test", Language.ENGLISH, true);
         }
-        if (exercise instanceof FileUploadExercise) {
+        else if (exercise instanceof MathExercise) {
+            submission = ParticipationFactory.generateMathSubmission("test", true);
+        }
+        else if (exercise instanceof FileUploadExercise) {
             submission = ParticipationFactory.generateFileUploadSubmission(true);
         }
-        if (exercise instanceof ModelingExercise) {
+        else if (exercise instanceof ModelingExercise) {
             submission = ParticipationFactory.generateModelingSubmission(null, true);
         }
-        if (exercise instanceof ProgrammingExercise) {
+        else if (exercise instanceof ProgrammingExercise) {
             submission = ParticipationFactory.generateProgrammingSubmission(true);
         }
         Submission submissionWithParticipation = addSubmission(studentParticipation, submission);

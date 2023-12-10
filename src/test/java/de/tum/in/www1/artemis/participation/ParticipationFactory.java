@@ -56,14 +56,12 @@ public class ParticipationFactory {
      * Generates a MathSubmission with the given arguments.
      *
      * @param text      The text of the Submission
-     * @param language  The Language of the Submission
      * @param submitted True, if the Submission was submitted one day ago; False, if the Submission was not submitted
      * @return The generated MathSubmission
      */
-    public static MathSubmission generateMathSubmission(String text, Language language, boolean submitted) {
+    public static MathSubmission generateMathSubmission(String text, boolean submitted) {
         MathSubmission textSubmission = new MathSubmission();
         textSubmission.text(text);
-        textSubmission.setLanguage(language);
         textSubmission.setSubmitted(submitted);
         if (submitted) {
             textSubmission.setSubmissionDate(now().minusDays(1));
@@ -79,9 +77,23 @@ public class ParticipationFactory {
      * @return The generated TextSubmission
      */
     public static TextSubmission generateLateTextSubmission(String text, Language language) {
-        TextSubmission mathSubmission = new TextSubmission();
+        TextSubmission textSubmission = new TextSubmission();
+        textSubmission.text(text);
+        textSubmission.setLanguage(language);
+        textSubmission.setSubmitted(true);
+        textSubmission.setSubmissionDate(now().plusDays(1));
+        return textSubmission;
+    }
+
+    /**
+     * Generates a TextSubmission with SubmissionDate in the future (now + 1 day).
+     *
+     * @param text The text of the Submission
+     * @return The generated TextSubmission
+     */
+    public static MathSubmission generateLateMathSubmission(String text) {
+        MathSubmission mathSubmission = new MathSubmission();
         mathSubmission.text(text);
-        mathSubmission.setLanguage(language);
         mathSubmission.setSubmitted(true);
         mathSubmission.setSubmissionDate(now().plusDays(1));
         return mathSubmission;

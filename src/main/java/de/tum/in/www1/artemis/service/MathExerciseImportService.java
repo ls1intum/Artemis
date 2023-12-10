@@ -118,7 +118,6 @@ public class MathExerciseImportService extends ExerciseImportService {
             log.debug("Copying the Submission to new ExampleSubmission: {}", newSubmission);
             newSubmission.setExampleSubmission(true);
             newSubmission.setSubmissionDate(originalSubmission.getSubmissionDate());
-            newSubmission.setLanguage(((MathSubmission) originalSubmission).getLanguage());
             newSubmission.setType(originalSubmission.getType());
             newSubmission.setParticipation(originalSubmission.getParticipation());
             newSubmission.setText(((MathSubmission) originalSubmission).getText());
