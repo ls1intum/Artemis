@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.bpmn;
 import java.io.Serializable;
 import java.util.Objects;
 
-import com.google.common.base.CaseFormat;
-
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLContainerElement;
@@ -42,7 +40,7 @@ public class BPMNSwimlane extends UMLContainerElement implements Serializable {
 
     @Override
     public String getType() {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, BPMN_SWIMLANE_TYPE);
+        return BPMN_SWIMLANE_TYPE;
     }
 
     @Override

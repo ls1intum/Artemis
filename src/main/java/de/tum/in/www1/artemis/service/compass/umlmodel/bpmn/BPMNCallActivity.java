@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service.compass.umlmodel.bpmn;
 import java.io.Serializable;
 import java.util.Objects;
 
-import com.google.common.base.CaseFormat;
-
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
@@ -41,7 +39,7 @@ public class BPMNCallActivity extends UMLElement implements Serializable {
 
     @Override
     public String getType() {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, BPMN_CALL_ACTIVITY_TYPE);
+        return BPMN_CALL_ACTIVITY_TYPE;
     }
 
     @Override

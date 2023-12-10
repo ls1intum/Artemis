@@ -93,67 +93,137 @@ public class BPMNDiagram extends UMLDiagram {
         return modelElements;
     }
 
-    @Override
-    public List<UMLElement> getAllModelElements() {
-        return super.getAllModelElements();
-    }
-
+    /**
+     * Retrieve annotations from the diagram
+     *
+     * @return All BPMNAnnotation elements in the diagrams
+     */
     public List<BPMNAnnotation> getAnnotations() {
         return annotations;
     }
 
+    /**
+     * Retrieve call activities from the diagram
+     *
+     * @return All BPMNCallActivity elements in the diagrams
+     */
     public List<BPMNCallActivity> getCallActivities() {
         return callActivities;
     }
 
+    /**
+     * Retrieve data objects from the diagram
+     *
+     * @return All BPMNDataObject elements in the diagrams
+     */
     public List<BPMNDataObject> getDataObjects() {
         return dataObjects;
     }
 
+    /**
+     * Retrieve data stores from the diagram
+     *
+     * @return All BPMNDataStore elements in the diagrams
+     */
     public List<BPMNDataStore> getDataStores() {
         return dataStores;
     }
 
+    /**
+     * Retrieve end events from the diagram
+     *
+     * @return All BPMNEndEvent elements in the diagrams
+     */
     public List<BPMNEndEvent> getEndEvents() {
         return endEvents;
     }
 
+    /**
+     * Retrieve gateways from the diagram
+     *
+     * @return All BPMNGateway elements in the diagrams
+     */
     public List<BPMNGateway> getGateways() {
         return gateways;
     }
 
+    /**
+     * Retrieve groups from the diagram
+     *
+     * @return All BPMNGroup elements in the diagrams
+     */
     public List<BPMNGroup> getGroups() {
         return groups;
     }
 
+    /**
+     * Retrieve intermediate events from the diagram
+     *
+     * @return All BPMNIntermediateEvent elements in the diagrams
+     */
     public List<BPMNIntermediateEvent> getIntermediateEvents() {
         return intermediateEvents;
     }
 
+    /**
+     * Retrieve pools from the diagram
+     *
+     * @return All BPMNPool elements in the diagrams
+     */
     public List<BPMNPool> getPools() {
         return pools;
     }
 
+    /**
+     * Retrieve start events from the diagram
+     *
+     * @return All BPMNStartEvent elements in the diagrams
+     */
     public List<BPMNStartEvent> getStartEvents() {
         return startEvents;
     }
 
+    /**
+     * Retrieve subprocesses from the diagram
+     *
+     * @return All BPMNSubprocess elements in the diagrams
+     */
     public List<BPMNSubprocess> getSubprocesses() {
         return subprocesses;
     }
 
+    /**
+     * Retrieve swimlanes from the diagram
+     *
+     * @return All BPMNSwimlane elements in the diagrams
+     */
     public List<BPMNSwimlane> getSwimlanes() {
         return swimlanes;
     }
 
+    /**
+     * Retrieve tasks from the diagram
+     *
+     * @return All BPMNTask elements in the diagrams
+     */
     public List<BPMNTask> getTasks() {
         return tasks;
     }
 
+    /**
+     * Retrieve transactions from the diagram
+     *
+     * @return All BPMNTransaction elements in the diagrams
+     */
     public List<BPMNTransaction> getTransactions() {
         return transactions;
     }
 
+    /**
+     * Retrieve flows from the diagram
+     *
+     * @return All BPMNFlow elements in the diagrams
+     */
     public List<BPMNFlow> getFlows() {
         return flows;
     }

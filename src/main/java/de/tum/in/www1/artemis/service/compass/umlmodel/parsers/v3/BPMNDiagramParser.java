@@ -18,14 +18,13 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 public class BPMNDiagramParser {
 
     /**
-     * Create a BPMN diagram from the model and control flow elements given as JSON arrays. It parses the JSON objects to corresponding Java objects and creates an activity
-     * diagram containing these UML model elements.
+     * Build a BPMN diagram object from a BPMN diagram JSON
      *
      * @param modelElements     the model elements as JSON array
-     * @param relationships     the control flow elements as JSON array
+     * @param relationships     the flow elements as JSON array
      * @param modelSubmissionId the ID of the corresponding modeling submission
-     * @return a UML activity diagram containing the parsed model elements and control flows
-     * @throws IOException when no corresponding model elements could be found for the source and target IDs in the control flow JSON objects
+     * @return a BPMN diagram containing the parsed model elements and flows
+     * @throws IOException when no corresponding model elements could be found for the source and target IDs in the flow JSON objects
      */
     protected static BPMNDiagram buildBPMNDiagramFromJSON(JsonObject modelElements, JsonObject relationships, long modelSubmissionId) throws IOException {
         Map<String, UMLElement> elementMap = new HashMap<>();
@@ -46,7 +45,7 @@ public class BPMNDiagramParser {
         List<BPMNTransaction> transactions = new ArrayList<>();
         List<BPMNFlow> flows = new ArrayList<>();
 
-        // loop over all JSON elements and create activity and activity node objects
+        // Parse object representations for all JSON model elements
         for (var entry : modelElements.entrySet()) {
             JsonObject jsonObject = entry.getValue().getAsJsonObject();
 
@@ -126,10 +125,9 @@ public class BPMNDiagramParser {
                 default:
                     break;
             }
-            ;
         }
 
-        // loop over all JSON elements again to connect parent activity elements with their child elements
+        // Loop over the model elements again to assign their respective parent elements
         for (var entry : modelElements.entrySet()) {
             JsonObject jsonObject = entry.getValue().getAsJsonObject();
 
@@ -138,14 +136,14 @@ public class BPMNDiagramParser {
                 UMLElement parentElement = elementMap.get(parentId);
                 UMLElement childElement = elementMap.get(jsonObject.get(ELEMENT_ID).getAsString());
 
-                if (parentElement instanceof UMLContainerElement) {
-                    UMLContainerElement parentContainer = (UMLContainerElement) parentElement;
+                if (parentElement instanceof UMLContainerElement parentContainer) {
                     parentContainer.addSubElement(childElement);
+                    childElement.setParentElement(parentContainer);
                 }
             }
         }
 
-        // loop over all JSON control flow elements and create control flow objects
+        // Parse flows between model elements and assign source and target respectively
         for (var entry : relationships.entrySet()) {
             JsonObject jsonObject = entry.getValue().getAsJsonObject();
             BPMNFlow flow = parseFlow(jsonObject, elementMap);
@@ -157,9 +155,10 @@ public class BPMNDiagramParser {
     }
 
     /**
+     * Parse a BPMNAnnotation from a JsonObject
      *
-     * @param annotationJson
-     * @return
+     * @param annotationJson The JsonObject to parse
+     * @return The parsed BPMNAnnotation
      */
     private static BPMNAnnotation parseAnnotation(JsonObject annotationJson) {
         String jsonElementId = annotationJson.get(ELEMENT_ID).getAsString();
@@ -168,9 +167,10 @@ public class BPMNDiagramParser {
     }
 
     /**
+     * Parse a BPMNCallActivity from a JsonObject
      *
-     * @param callActivityJson
-     * @return
+     * @param callActivityJson The JsonObject to parse
+     * @return The parsed BPMNCallActivity
      */
     private static BPMNCallActivity parseCallActivity(JsonObject callActivityJson) {
         String jsonElementId = callActivityJson.get(ELEMENT_ID).getAsString();
@@ -179,9 +179,10 @@ public class BPMNDiagramParser {
     }
 
     /**
+     * Parse a BPMNDataObject from a JsonObject
      *
-     * @param dataObjectJson
-     * @return
+     * @param dataObjectJson The JsonObject to parse
+     * @return The parsed BPMNDataObject
      */
     private static BPMNDataObject parseDataObject(JsonObject dataObjectJson) {
         String jsonElementId = dataObjectJson.get(ELEMENT_ID).getAsString();
@@ -189,66 +190,151 @@ public class BPMNDiagramParser {
         return new BPMNDataObject(name, jsonElementId);
     }
 
+    /**
+     * Parse a BPMNDataStore from a JsonObject
+     *
+     * @param dataStoreJson The JsonObject to parse
+     * @return The parsed BPMNDataStore
+     */
     private static BPMNDataStore parseDataStore(JsonObject dataStoreJson) {
         String jsonElementId = dataStoreJson.get(ELEMENT_ID).getAsString();
         String name = dataStoreJson.get(ELEMENT_NAME).getAsString();
         return new BPMNDataStore(name, jsonElementId);
     }
 
+    /**
+     * Parse a BPMNEndEvent from a JsonObject
+     *
+     * @param endEventJson The JsonObject to parse
+     * @return The parsed BPMNEndEvent
+     */
     private static BPMNEndEvent parseEndEvent(JsonObject endEventJson) {
         String jsonElementId = endEventJson.get(ELEMENT_ID).getAsString();
         String name = endEventJson.get(ELEMENT_NAME).getAsString();
-        return new BPMNEndEvent(name, jsonElementId);
+
+        BPMNEndEvent.BPMNEndEventType eventType = BPMNEndEvent.BPMNEndEventType.get(endEventJson.get("eventType").getAsString()).orElse(BPMNEndEvent.BPMNEndEventType.DEFAULT);
+
+        return new BPMNEndEvent(name, jsonElementId, eventType);
     }
 
+    /**
+     * Parse a BPMNGateway from a JsonObject
+     *
+     * @param gatewayJson The JsonObject to parse
+     * @return The parsed BPMNGateway
+     */
     private static BPMNGateway parseGateway(JsonObject gatewayJson) {
         String jsonElementId = gatewayJson.get(ELEMENT_ID).getAsString();
         String name = gatewayJson.get(ELEMENT_NAME).getAsString();
-        return new BPMNGateway(name, jsonElementId);
+
+        BPMNGateway.BPMNGatewayType gatewayType = BPMNGateway.BPMNGatewayType.get(gatewayJson.get("gatewayType").getAsString()).orElse(BPMNGateway.BPMNGatewayType.EXCLUSIVE);
+
+        return new BPMNGateway(name, jsonElementId, gatewayType);
     }
 
+    /**
+     * Parse a BPMNGroup from a JsonObject
+     *
+     * @param groupJson The JsonObject to parse
+     * @return The parsed BPMNGroup
+     */
     private static BPMNGroup parseGroup(JsonObject groupJson) {
         String jsonElementId = groupJson.get(ELEMENT_ID).getAsString();
         String name = groupJson.get(ELEMENT_NAME).getAsString();
         return new BPMNGroup(name, jsonElementId);
     }
 
+    /**
+     * Parse a BPMNIntermediateEvent from a JsonObject
+     *
+     * @param intermediateEventJson The JsonObject to parse
+     * @return The parsed BPMNIntermediateEvent
+     */
     private static BPMNIntermediateEvent parseIntermediateEvent(JsonObject intermediateEventJson) {
         String jsonElementId = intermediateEventJson.get(ELEMENT_ID).getAsString();
         String name = intermediateEventJson.get(ELEMENT_NAME).getAsString();
-        return new BPMNIntermediateEvent(name, jsonElementId);
+
+        BPMNIntermediateEvent.BPMNIntermediateEventType eventType = BPMNIntermediateEvent.BPMNIntermediateEventType.get(intermediateEventJson.get("eventType").getAsString())
+                .orElse(BPMNIntermediateEvent.BPMNIntermediateEventType.DEFAULT);
+
+        return new BPMNIntermediateEvent(name, jsonElementId, eventType);
     }
 
+    /**
+     * Parse a BPMNPool from a JsonObject
+     *
+     * @param poolJson The JsonObject to parse
+     * @return The parsed BPMNPool
+     */
     private static BPMNPool parsePool(JsonObject poolJson) {
         String jsonElementId = poolJson.get(ELEMENT_ID).getAsString();
         String name = poolJson.get(ELEMENT_NAME).getAsString();
         return new BPMNPool(name, jsonElementId);
     }
 
+    /**
+     * Parse a BPMNStartEvent from a JsonObject
+     *
+     * @param startEventJson The JsonObject to parse
+     * @return The parsed BPMNStartEvent
+     */
     private static BPMNStartEvent parseStartEvent(JsonObject startEventJson) {
         String jsonElementId = startEventJson.get(ELEMENT_ID).getAsString();
         String name = startEventJson.get(ELEMENT_NAME).getAsString();
-        return new BPMNStartEvent(name, jsonElementId);
+
+        BPMNStartEvent.BPMNStartEventType eventType = BPMNStartEvent.BPMNStartEventType.get(startEventJson.get("eventType").getAsString())
+                .orElse(BPMNStartEvent.BPMNStartEventType.DEFAULT);
+
+        return new BPMNStartEvent(name, jsonElementId, eventType);
     }
 
+    /**
+     * Parse a BPMNSubprocess from a JsonObject
+     *
+     * @param subprocessJson The JsonObject to parse
+     * @return The parsed BPMNSubprocess
+     */
     private static BPMNSubprocess parseSubprocess(JsonObject subprocessJson) {
         String jsonElementId = subprocessJson.get(ELEMENT_ID).getAsString();
         String name = subprocessJson.get(ELEMENT_NAME).getAsString();
         return new BPMNSubprocess(name, jsonElementId);
     }
 
+    /**
+     * Parse a BPMNSwimlane from a given JsonObject
+     *
+     * @param swimlaneJson The JsonObjectt to parse
+     * @return The parsed BPMNSwimlane
+     */
     private static BPMNSwimlane parseSwimlane(JsonObject swimlaneJson) {
         String jsonElementId = swimlaneJson.get(ELEMENT_ID).getAsString();
         String name = swimlaneJson.get(ELEMENT_NAME).getAsString();
         return new BPMNSwimlane(name, jsonElementId);
     }
 
+    /**
+     * Parse a BPMNTask from a given JsonObject
+     *
+     * @param taskJson The JsonObject to parse
+     * @return The parsed BPMNTask
+     */
     private static BPMNTask parseTask(JsonObject taskJson) {
         String jsonElementId = taskJson.get(ELEMENT_ID).getAsString();
         String name = taskJson.get(ELEMENT_NAME).getAsString();
-        return new BPMNTask(name, jsonElementId);
+
+        BPMNTask.BPMNTaskType taskType = BPMNTask.BPMNTaskType.get(taskJson.get("taskType").getAsString()).orElse(BPMNTask.BPMNTaskType.DEFAULT);
+
+        BPMNTask.BPMNMarker marker = BPMNTask.BPMNMarker.get(taskJson.get("marker").getAsString()).orElse(BPMNTask.BPMNMarker.NONE);
+
+        return new BPMNTask(name, jsonElementId, taskType, marker);
     }
 
+    /**
+     * Parse a BPMNTransaction from a given JsonObject
+     *
+     * @param transactionJson The JsonObject to parse
+     * @return The parsed BPMNTransaction
+     */
     private static BPMNTransaction parseTransaction(JsonObject transactionJson) {
         String jsonElementId = transactionJson.get(ELEMENT_ID).getAsString();
         String name = transactionJson.get(ELEMENT_NAME).getAsString();
@@ -256,22 +342,27 @@ public class BPMNDiagramParser {
     }
 
     /**
+     * Parse a BPMNFlow from a given JsonObject
      *
-     * @param flowJson
-     * @param activityElementMap
-     * @return
-     * @throws IOException
+     * @param flowJson   The JsonObject to parse
+     * @param elementMap A map containing all other diagram elements indexed by their ID
+     * @return The parsed BPMNFlow
+     * @throws IOException Thrown if either the source or the target elements are not found in the element map
      */
-    private static BPMNFlow parseFlow(JsonObject flowJson, Map<String, UMLElement> activityElementMap) throws IOException {
-        UMLElement source = UMLModelParser.findElement(flowJson, activityElementMap, RELATIONSHIP_SOURCE);
-        UMLElement target = UMLModelParser.findElement(flowJson, activityElementMap, RELATIONSHIP_TARGET);
+    private static BPMNFlow parseFlow(JsonObject flowJson, Map<String, UMLElement> elementMap) throws IOException {
+
+        String jsonElementId = flowJson.get(ELEMENT_ID).getAsString();
+        String name = flowJson.get(ELEMENT_NAME).getAsString();
+        UMLElement source = UMLModelParser.findElement(flowJson, elementMap, RELATIONSHIP_SOURCE);
+        UMLElement target = UMLModelParser.findElement(flowJson, elementMap, RELATIONSHIP_TARGET);
+
+        BPMNFlow.BPMNFlowType flowType = BPMNFlow.BPMNFlowType.get(flowJson.get("flowType").getAsString()).orElse(BPMNFlow.BPMNFlowType.SEQUENCE);
 
         if (source != null && target != null) {
-            return new BPMNFlow(source, target, flowJson.get(ELEMENT_ID).getAsString());
+            return new BPMNFlow(name, jsonElementId, flowType, source, target);
         }
         else {
             throw new IOException("Flow source " + source + " or target " + target + " not part of model!");
         }
     }
-
 }

@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.bpmn;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
 import com.google.common.base.CaseFormat;
 
@@ -15,10 +17,13 @@ public class BPMNGateway extends UMLElement implements Serializable {
 
     private final String name;
 
-    public BPMNGateway(String name, String jsonElementID) {
+    private final BPMNGatewayType gatewayType;
+
+    public BPMNGateway(String name, String jsonElementID, BPMNGatewayType gatewayType) {
         super(jsonElementID);
 
         this.name = name;
+        this.gatewayType = gatewayType;
     }
 
     @Override
@@ -31,7 +36,9 @@ public class BPMNGateway extends UMLElement implements Serializable {
             return 0;
         }
 
-        return NameSimilarity.levenshteinSimilarity(getName(), referenceNode.getName());
+        double gatewayTypeSimilarityFactor = (this.gatewayType == ((BPMNGateway) reference).gatewayType) ? 1.0 : 0.5;
+
+        return NameSimilarity.levenshteinSimilarity(getName(), referenceNode.getName()) * gatewayTypeSimilarityFactor;
     }
 
     @Override
@@ -47,5 +54,28 @@ public class BPMNGateway extends UMLElement implements Serializable {
     @Override
     public String toString() {
         return getName();
+    }
+
+    public BPMNGatewayType getGatewayType() {
+        return gatewayType;
+    }
+
+    public enum BPMNGatewayType {
+
+        COMPLEX("complex"), EVENT_BASED("event-based"), EXCLUSIVE("exclusive"), INCLUSIVE("inclusive"), PARALLEL("parallel");
+
+        private final String value;
+
+        BPMNGatewayType(String value) {
+            this.value = value;
+        }
+
+        public static Optional<BPMNGatewayType> get(String value) {
+            return Arrays.stream(BPMNGatewayType.values()).filter(element -> element.value.equals(value)).findFirst();
+        }
+
+        public String getValue() {
+            return value;
+        }
     }
 }

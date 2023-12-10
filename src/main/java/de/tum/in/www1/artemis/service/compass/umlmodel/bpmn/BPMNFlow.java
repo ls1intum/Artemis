@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.bpmn;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 
+import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
@@ -10,30 +13,38 @@ public class BPMNFlow extends UMLElement implements Serializable {
 
     public static final String BPMN_FLOW_TYPE = "BPMNFlow";
 
+    private final String name;
+
     private final UMLElement source;
 
     private final UMLElement target;
 
-    public BPMNFlow(UMLElement source, UMLElement target, String jsonElementID) {
+    private final BPMNFlowType flowType;
+
+    public BPMNFlow(String name, String jsonElementID, BPMNFlowType flowType, UMLElement source, UMLElement target) {
         super(jsonElementID);
 
+        this.name = name;
         this.source = source;
         this.target = target;
+        this.flowType = flowType;
     }
 
     @Override
     public double similarity(Similarity<UMLElement> reference) {
-        if (!(reference instanceof BPMNFlow referenceControlFlow)) {
+        if (!(reference instanceof BPMNFlow referenceFlow)) {
             return 0;
         }
 
         double similarity = 0;
-        double weight = 0.5;
 
-        similarity += referenceControlFlow.getSource().similarity(source) * weight;
-        similarity += referenceControlFlow.getTarget().similarity(target) * weight;
+        similarity += referenceFlow.getSource().similarity(source) * 0.4;
+        similarity += referenceFlow.getTarget().similarity(target) * 0.4;
+        similarity += NameSimilarity.levenshteinSimilarity(getName(), referenceFlow.getName()) * 0.2;
 
-        return ensureSimilarityRange(similarity);
+        double flowTypeSimilarityFactor = (this.flowType == ((BPMNFlow) reference).flowType) ? 1.0 : 0.5;
+
+        return ensureSimilarityRange(similarity * flowTypeSimilarityFactor);
     }
 
     @Override
@@ -43,7 +54,7 @@ public class BPMNFlow extends UMLElement implements Serializable {
 
     @Override
     public String getName() {
-        return getType();
+        return this.name;
     }
 
     @Override
@@ -69,14 +80,42 @@ public class BPMNFlow extends UMLElement implements Serializable {
         return target;
     }
 
+    /**
+     * Get the flow type of this BPMN flow
+     *
+     * @return the flow type of this BPMN flow
+     */
+    public BPMNFlowType getFlowType() {
+        return flowType;
+    }
+
     @Override
-    public boolean equals(Object obj) {
-        if (!super.equals(obj)) {
+    public boolean equals(Object object) {
+        if (!super.equals(object)) {
             return false;
         }
 
-        BPMNFlow otherFlow = (BPMNFlow) obj;
+        BPMNFlow otherFlow = (BPMNFlow) object;
 
-        return Objects.equals(otherFlow.getSource(), source) && Objects.equals(otherFlow.getTarget(), target);
+        return Objects.equals(otherFlow.getSource(), source) && Objects.equals(otherFlow.getTarget(), target) && otherFlow.flowType == ((BPMNFlow) object).flowType;
+    }
+
+    public enum BPMNFlowType {
+
+        SEQUENCE("sequence"), MESSAGE("message"), ASSOCIATION("association"), DATA_ASSOCIATION("data association");
+
+        private final String value;
+
+        BPMNFlowType(String value) {
+            this.value = value;
+        }
+
+        public static Optional<BPMNFlowType> get(String value) {
+            return Arrays.stream(BPMNFlowType.values()).filter(element -> element.value.equals(value)).findFirst();
+        }
+
+        public String getValue() {
+            return value;
+        }
     }
 }

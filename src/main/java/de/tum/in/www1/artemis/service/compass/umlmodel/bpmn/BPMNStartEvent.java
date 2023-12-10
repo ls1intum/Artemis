@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel.bpmn;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Objects;
-
-import com.google.common.base.CaseFormat;
+import java.util.Optional;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
@@ -15,10 +15,13 @@ public class BPMNStartEvent extends UMLElement implements Serializable {
 
     private final String name;
 
-    public BPMNStartEvent(String name, String jsonElementID) {
+    private final BPMNStartEventType eventType;
+
+    public BPMNStartEvent(String name, String jsonElementID, BPMNStartEventType eventType) {
         super(jsonElementID);
 
         this.name = name;
+        this.eventType = eventType;
     }
 
     @Override
@@ -31,7 +34,9 @@ public class BPMNStartEvent extends UMLElement implements Serializable {
             return 0;
         }
 
-        return NameSimilarity.levenshteinSimilarity(getName(), referenceNode.getName());
+        double eventTypeSimilarityFactor = (this.eventType == ((BPMNStartEvent) reference).eventType) ? 1.0 : 0.5;
+
+        return NameSimilarity.levenshteinSimilarity(getName(), referenceNode.getName()) * eventTypeSimilarityFactor;
     }
 
     @Override
@@ -41,11 +46,35 @@ public class BPMNStartEvent extends UMLElement implements Serializable {
 
     @Override
     public String getType() {
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, BPMN_START_EVENT_TYPE);
+        return BPMN_START_EVENT_TYPE;
     }
 
     @Override
     public String toString() {
         return getName();
     }
+
+    public BPMNStartEventType getEventType() {
+        return this.eventType;
+    }
+
+    public enum BPMNStartEventType {
+
+        DEFAULT("default"), MESSAGE("message"), TIMER("timer"), CONDITIONAL("conditional"), SIGNAL("signal");
+
+        private final String value;
+
+        BPMNStartEventType(String value) {
+            this.value = value;
+        }
+
+        public static Optional<BPMNStartEventType> get(String value) {
+            return Arrays.stream(BPMNStartEventType.values()).filter(element -> element.value.equals(value)).findFirst();
+        }
+
+        public String getValue() {
+            return value;
+        }
+    }
+
 }

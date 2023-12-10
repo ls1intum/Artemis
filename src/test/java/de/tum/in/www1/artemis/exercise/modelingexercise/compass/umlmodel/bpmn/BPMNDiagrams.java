@@ -8,17 +8,14 @@ import org.apache.commons.io.IOUtils;
 
 public final class BPMNDiagrams {
 
-    public static final String COMPONENT_MODEL_1;
+    public static final String BPMN_MODEL_1;
 
-    public static final String COMPONENT_MODEL_2;
-
-    public static final String COMPONENT_MODEL_3;
+    public static final String BPMN_MODEL_2;
 
     static {
         try {
-            COMPONENT_MODEL_1 = IOUtils.toString(BPMNDiagrams.class.getResource("componentModel1.json"), StandardCharsets.UTF_8);
-            COMPONENT_MODEL_2 = IOUtils.toString(BPMNDiagrams.class.getResource("componentModel2.json"), StandardCharsets.UTF_8);
-            COMPONENT_MODEL_3 = IOUtils.toString(BPMNDiagrams.class.getResource("componentModel3.json"), StandardCharsets.UTF_8);
+            BPMN_MODEL_1 = IOUtils.toString(BPMNDiagrams.class.getResource("bpmnModel1.json"), StandardCharsets.UTF_8);
+            BPMN_MODEL_2 = IOUtils.toString(BPMNDiagrams.class.getResource("bpmnModel2.json"), StandardCharsets.UTF_8);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
