@@ -114,6 +114,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Get a programmingExercise with template and solution participation, each with the latest result and feedbacks.
+     * NOTICE: this query is quite expensive because it loads all feedback and test cases, and it includes sub queries to retrieve the latest result
+     * IMPORTANT: you should generally avoid using this query except you really need all information!!
      *
      * @param exerciseId the id of the exercise that should be fetched.
      * @return the exercise with the given ID, if found.
