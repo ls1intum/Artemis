@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.staticcodeanalysis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -66,7 +65,8 @@ class StaticCodeAnalysisIntegrationTest {
     @Test
     void testParserExceptionThrown() {
         ReportParser parser = new ReportParser();
-        assertThatThrownBy(() -> parser.transformToJSONReport(null)).isInstanceOf(ParserException.class);
+        ParserException parserException = catchThrowableOfType(() -> parser.transformToJSONReport(null), ParserException.class);
+        assertThat(parserException).isNotNull();
     }
 
     @Test
