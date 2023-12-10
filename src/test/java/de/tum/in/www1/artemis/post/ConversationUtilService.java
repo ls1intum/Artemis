@@ -480,6 +480,18 @@ public class ConversationUtilService {
     }
 
     /**
+     * Creates and saves an announcement Channel for the given Course. The Channel is not course wide.
+     *
+     * @param course      The Course the Channel belongs to
+     * @param channelName The name of the Channel
+     * @return The created Channel
+     */
+    public Channel createAnnouncementChannel(Course course, String channelName) {
+        Channel channel = ConversationFactory.generateAnnouncementChannel(course, channelName, false);
+        return conversationRepository.save(channel);
+    }
+
+    /**
      * Creates and saves a ConversationParticipant for the given Conversation.
      *
      * @param conversation The Conversation the ConversationParticipant belongs to

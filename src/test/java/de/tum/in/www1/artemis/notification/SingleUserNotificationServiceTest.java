@@ -159,10 +159,17 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         lecture.setCourse(course);
         lecture.setTitle(LECTURE_TITLE);
 
+        channel = new Channel();
+        channel.setCourse(course);
+        channel.setName("test");
+        channel.setCreator(userTwo);
+        channel.setCreationDate(ZonedDateTime.now());
+
         post = new Post();
         post.setExercise(exercise);
         post.setLecture(lecture);
-        post.setAuthor(user);
+        post.setAuthor(userTwo);
+        post.setConversation(channel);
         post.setCourse(course);
         post.setTitle(POST_TITLE);
         post.setContent(POST_CONTENT);
@@ -170,11 +177,12 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         Post answerPostPost = new Post();
         answerPostPost.setExercise(exercise);
         answerPostPost.setLecture(lecture);
-        answerPostPost.setAuthor(user);
+        answerPostPost.setConversation(channel);
+        answerPostPost.setAuthor(userTwo);
         answerPostPost.setCourse(course);
         answerPost = new AnswerPost();
-        answerPost.setPost(new Post());
-        answerPost.setAuthor(user);
+        answerPost.setPost(answerPostPost);
+        answerPost.setAuthor(userThree);
         answerPost.setContent(ANSWER_POST_CONTENT);
 
         PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission = new PlagiarismSubmission<>();
@@ -216,11 +224,6 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         conversationParticipant3.setUser(userThree);
         groupChat.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2, conversationParticipant3));
 
-        channel = new Channel();
-        channel.setCourse(course);
-        channel.setName("test");
-        channel.setCreator(userTwo);
-        channel.setCreationDate(ZonedDateTime.now());
         channel.setConversationParticipants(Set.of(conversationParticipant1, conversationParticipant2, conversationParticipant3));
 
         dataExport = new DataExport();
@@ -250,38 +253,11 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         notificationSettingRepository.save(new NotificationSetting(user, false, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST));
         assertThat(notificationRepository.findAll()).as("No notifications should be present prior to the method call").isEmpty();
 
-        singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, answerPost, course);
+        singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo, NEW_REPLY_FOR_EXERCISE_POST);
 
         assertThat(notificationRepository.findAll()).as("The notification should have been saved to the DB").hasSize(1);
         // no web app notification or email should be sent
         verify(websocketMessagingService, never()).sendMessage(any(), any());
-    }
-
-    /**
-     * Test for notifyStudentGroupAboutAttachmentChange method
-     */
-    @Test
-    void testNotifyUserAboutNewAnswerForExercise() {
-        singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, answerPost, course);
-        verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_EXERCISE_POST_TITLE);
-    }
-
-    /**
-     * Test for notifyUserAboutNewAnswerForLecture method
-     */
-    @Test
-    void testNotifyUserAboutNewAnswerForLecture() {
-        singleUserNotificationService.notifyUserAboutNewReplyForLecture(post, answerPost, course);
-        verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_LECTURE_POST_TITLE);
-    }
-
-    /**
-     * Test for notifyUserAboutNewAnswerForCoursePost method
-     */
-    @Test
-    void testNotifyUserAboutNewAnswerForCoursePost() {
-        singleUserNotificationService.notifyUserAboutNewReplyForCoursePost(post, answerPost, course);
-        verifyRepositoryCallWithCorrectNotification(NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
 
     /**

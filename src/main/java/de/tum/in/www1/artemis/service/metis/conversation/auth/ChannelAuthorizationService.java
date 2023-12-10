@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -74,12 +77,6 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         if (isAnnouncementChannel) {
             if (!hasChannelModerationRights(channel.getId(), userToCheck)) {
                 throw new AccessForbiddenException("You are not allowed to post in this channel");
-            }
-        }
-        else {
-            var isChannelMember = isMember(channel.getId(), userToCheck.getId());
-            if (!isChannelMember) {
-                throw new AccessForbiddenException("User is not a member of the channel");
             }
         }
     }

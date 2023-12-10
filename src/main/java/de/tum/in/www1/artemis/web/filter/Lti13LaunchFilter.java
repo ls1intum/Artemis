@@ -59,7 +59,6 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         // Initialize targetLink as an empty string here to ensure it has a value even if an exception is caught later.
         String targetLink = "";
         OidcIdToken ltiIdToken = null;
-
         try {
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
 

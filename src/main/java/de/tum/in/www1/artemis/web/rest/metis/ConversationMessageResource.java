@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.CreatedConversationMessage;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -70,9 +71,17 @@ public class ConversationMessageResource {
     public ResponseEntity<Post> createMessage(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
         log.debug("POST createMessage invoked for course {} with post {}", courseId, post.getContent());
         long start = System.nanoTime();
-        Post createdMessage = conversationMessagingService.createMessage(courseId, post);
+        if (post.getId() != null) {
+            throw new BadRequestAlertException("A new message post cannot already have an ID", conversationMessagingService.getEntityName(), "idexists");
+        }
+        if (post.getConversation() == null || post.getConversation().getId() == null) {
+            throw new BadRequestAlertException("A new message post must have a conversation", conversationMessagingService.getEntityName(), "conversationnotset");
+        }
+        CreatedConversationMessage createdMessageData = conversationMessagingService.createMessage(courseId, post);
+        conversationMessagingService.notifyAboutMessageCreation(createdMessageData);
         log.info("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessage.getId())).body(createdMessage);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + createdMessageData.messageWithHiddenDetails().getId()))
+                .body(createdMessageData.messageWithHiddenDetails());
     }
 
     /**

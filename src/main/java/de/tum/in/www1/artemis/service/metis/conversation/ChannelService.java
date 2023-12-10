@@ -278,7 +278,6 @@ public class ChannelService {
      */
     public Channel createExamChannel(Exam exam, Optional<String> channelName) {
         Channel channelToCreate = createDefaultChannel(channelName, "exam-", exam.getTitle());
-        channelToCreate.setIsPublic(false);
         channelToCreate.setExam(exam);
         Channel createdChannel = createChannel(exam.getCourse(), channelToCreate, Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
         exam.setChannelName(createdChannel.getName());

@@ -60,7 +60,7 @@ public class Lti13ClientRegistration {
         toolConfiguration.setDomain(domain);
         toolConfiguration.setTargetLinkUri(serverUrl + "/courses/" + course.getId());
         toolConfiguration.setClaims(Arrays.asList("iss", "email", "sub", "name", "given_name", "family_name"));
-        Message deepLinkingMessage = new Message("LtiDeepLinkingRequest", serverUrl + CustomLti13Configurer.LTI13_BASE_PATH + "/deep-linking/" + course.getId());
+        Message deepLinkingMessage = new Message("LtiDeepLinkingRequest", serverUrl + CustomLti13Configurer.LTI13_DEEPLINKING_PATH + course.getId());
         toolConfiguration.setMessages(List.of(deepLinkingMessage));
         this.setLti13ToolConfiguration(toolConfiguration);
     }

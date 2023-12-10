@@ -125,7 +125,7 @@ public abstract class PostingService {
      * @param conversation conversation the participants are supposed be retrieved
      * @return users that should receive the new message
      */
-    protected Stream<ConversationNotificationRecipientSummary> getWebSocketRecipients(Conversation conversation) {
+    protected Stream<ConversationNotificationRecipientSummary> getNotificationRecipients(Conversation conversation) {
         if (conversation instanceof Channel channel && channel.getIsCourseWide()) {
             Course course = conversation.getCourse();
             return userRepository.findAllWebSocketRecipientsInCourseForConversation(conversation.getId(), course.getStudentGroupName(), course.getTeachingAssistantGroupName(),

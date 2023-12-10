@@ -7,9 +7,9 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import jakarta.mail.internet.MimeMessage;
-import jakarta.validation.*;
-import jakarta.validation.constraints.NotNull;
+import javax.mail.internet.MimeMessage;
+import javax.validation.*;
+import javax.validation.constraints.NotNull;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
