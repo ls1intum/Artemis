@@ -19,10 +19,12 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.google.gson.JsonObject;
+import com.google.gson.Gson;
 
 import de.tum.in.www1.artemis.domain.lti.Claims;
+import de.tum.in.www1.artemis.domain.lti.LtiAuthenticationResponseDTO;
 import de.tum.in.www1.artemis.exception.LtiEmailAlreadyInUseException;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
@@ -56,29 +58,37 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Initialize targetLink as an empty string here to ensure it has a value even if an exception is caught later.
-        String targetLink = "";
         try {
             OidcAuthenticationToken authToken = finishOidcFlow(request, response);
-
             OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
+            String targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
 
-            targetLink = ltiIdToken.getClaim(Claims.TARGET_LINK_URI).toString();
+            try {
+                // here we need to check if this is a deep-linking request or a launch request
+                if ("LtiDeepLinkingRequest".equals(ltiIdToken.getClaim(Claims.MESSAGE_TYPE))) {
+                    lti13Service.startDeepLinking(ltiIdToken);
+                }
+                else {
+                    lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
+                }
+            }
+            catch (LtiEmailAlreadyInUseException ex) {
+                // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
+                // We need targetLink to redirect user on the client-side after successful authentication
+                handleLtiEmailAlreadyInUseException(response, ltiIdToken);
+            }
 
-            lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
-
-            writeResponse(ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
+            writeResponse(targetLink, ltiIdToken, authToken.getAuthorizedClientRegistrationId(), response);
         }
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
             log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "LTI 1.3 Launch failed");
         }
-        catch (LtiEmailAlreadyInUseException ex) {
-            // LtiEmailAlreadyInUseException is thrown in case of user who has email address in use is not authenticated after targetLink is set
-            // We need targetLink to redirect user on the client-side after successful authentication
-            response.setHeader("TargetLinkUri", targetLink);
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "LTI 1.3 user authentication failed");
-        }
+    }
+
+    private void handleLtiEmailAlreadyInUseException(HttpServletResponse response, OidcIdToken ltiIdToken) {
+        this.lti13Service.buildLtiEmailInUseResponse(response, ltiIdToken);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
     }
 
     private OidcAuthenticationToken finishOidcFlow(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -97,18 +107,18 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         return ltiAuthToken;
     }
 
-    private void writeResponse(String targetLinkUri, HttpServletResponse response) throws IOException {
+    private void writeResponse(String targetLinkUri, OidcIdToken ltiIdToken, String clientRegistrationId, HttpServletResponse response) throws IOException {
         PrintWriter writer = response.getWriter();
 
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLinkUri);
-        lti13Service.buildLtiResponse(uriBuilder, response);
-
-        JsonObject json = new JsonObject();
-        json.addProperty("targetLinkUri", uriBuilder.build().toUriString());
+        if (SecurityUtils.isAuthenticated()) {
+            lti13Service.buildLtiResponse(uriBuilder, response);
+        }
+        LtiAuthenticationResponseDTO jsonResponse = new LtiAuthenticationResponseDTO(uriBuilder.build().toUriString(), ltiIdToken.getTokenValue(), clientRegistrationId);
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        writer.print(json);
+        writer.print(new Gson().toJson(jsonResponse));
         writer.flush();
     }
 }

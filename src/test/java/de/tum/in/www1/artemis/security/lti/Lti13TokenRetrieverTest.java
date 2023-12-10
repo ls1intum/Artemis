@@ -10,6 +10,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -29,10 +30,13 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.in.www1.artemis.domain.lti.Scopes;
 import de.tum.in.www1.artemis.security.OAuth2JWKSService;
@@ -160,6 +164,30 @@ class Lti13TokenRetrieverTest {
         verify(restTemplate).exchange(any(), eq(String.class));
 
         assertThat(token).isEqualTo("result");
+    }
+
+    @Test
+    void getJWTToken() throws NoSuchAlgorithmException, ParseException {
+        JWK jwk = generateKey();
+        when(oAuth2JWKSService.getJWK(any())).thenReturn(jwk);
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("customClaim1", "value1");
+        claims.put("customClaim2", "value2");
+
+        String token = lti13TokenRetriever.createDeepLinkingJWT(clientRegistration.getRegistrationId(), claims);
+
+        verify(oAuth2JWKSService).getJWK(clientRegistration.getRegistrationId());
+        assertThat(token).isNotNull();
+
+        SignedJWT signedJWT = SignedJWT.parse(token);
+        JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+
+        for (Map.Entry<String, Object> entry : claims.entrySet()) {
+            assertThat(entry.getValue()).isEqualTo(claimsSet.getClaim(entry.getKey()));
+        }
+        assertThat(JWSAlgorithm.RS256).isEqualTo(signedJWT.getHeader().getAlgorithm());
+        assertThat(JOSEObjectType.JWT).isEqualTo(signedJWT.getHeader().getType());
     }
 
     private JWK generateKey() throws NoSuchAlgorithmException {

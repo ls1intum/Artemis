@@ -17,8 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonSyntaxException;
 
 import de.tum.in.www1.artemis.domain.enumeration.*;
@@ -151,12 +149,10 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
-     * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
-     * It is not persisted as this setting can not be changed afterwards.
      * This is currently only supported for HASKELL and OCAML on BAMBOO, thus the default value is false.
      */
-    @Transient
-    private boolean checkoutSolutionRepositoryTransient = false;
+    @Column(name = "checkout_solution_repository", table = "programming_exercise_details", columnDefinition = "boolean default false")
+    private boolean checkoutSolutionRepository;
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -743,11 +739,11 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean getCheckoutSolutionRepository() {
-        return this.checkoutSolutionRepositoryTransient;
+        return this.checkoutSolutionRepository;
     }
 
     public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
-        this.checkoutSolutionRepositoryTransient = checkoutSolutionRepository;
+        this.checkoutSolutionRepository = checkoutSolutionRepository;
     }
 
     /**
@@ -896,10 +892,9 @@ public class ProgrammingExercise extends Exercise {
             return null;
         }
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.readValue(buildPlanConfiguration, Windfile.class);
+            return Windfile.deserialize(buildPlanConfiguration);
         }
-        catch (JsonSyntaxException | JsonProcessingException e) {
+        catch (JsonSyntaxException e) {
             log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
         }
         return null;
