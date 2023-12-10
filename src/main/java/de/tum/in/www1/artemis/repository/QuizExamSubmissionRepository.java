@@ -4,10 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.quiz.QuizExamSubmission;
 
@@ -36,8 +34,6 @@ public interface QuizExamSubmissionRepository extends JpaRepository<QuizExamSubm
      * @param examId the id of the exam
      * @return the quiz exam submission with the given exam id and its eagerly loaded submitted answers
      */
-    @Transactional
-    @Modifying
     @Query("""
                 SELECT DISTINCT qes
                 FROM QuizExamSubmission qes
