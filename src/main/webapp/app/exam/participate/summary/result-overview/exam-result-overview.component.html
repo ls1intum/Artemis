@@ -166,17 +166,15 @@
             </div>
         </jhi-collapsible-card>
 
-        <div *ngIf="isBonusGradingKeyDisplayed" class="col-md-6 mt-3 d-flex flex-column align-items-center">
-            <button class="btn btn-primary" (click)="toggleBonusGradingKey()">
-                <fa-icon [icon]="faAward"></fa-icon>
-                <span>&nbsp;{{ 'artemisApp.exam.examSummary.bonusGradeKeyButton' | artemisTranslate }}&nbsp;</span>
-                <span class="rotate-icon chevron-position" [class.rotated]="!isBonusGradingKeyCollapsed">
-                    <fa-icon [icon]="faChevronRight"></fa-icon>
-                </span>
-            </button>
-            <div [ngbCollapse]="isBonusGradingKeyCollapsed" class="mt-3 text-start">
+        <jhi-collapsible-card *ngIf="isBonusGradingKeyDisplayed" [isCardContentCollapsed]="isCollapsed['bonus-grading-key']" [toggleCollapse]="toggleCollapse('bonus-grading-key')">
+            <div class="header">
+                <fa-icon [icon]="faAward"></fa-icon>&nbsp;
+                {{ 'artemisApp.exam.examSummary.bonusGradeKeyButton' | artemisTranslate }}
+            </div>
+
+            <div class="collapsable-content">
                 <jhi-grade-key-table [studentGradeOrBonusPointsOrGradeBonus]="'' + (studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade ?? 0)" [forBonus]="true" />
             </div>
-        </div>
+        </jhi-collapsible-card>
     </div>
 </div>
