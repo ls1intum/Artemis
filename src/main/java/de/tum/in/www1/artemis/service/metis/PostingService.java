@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
@@ -71,38 +72,27 @@ public abstract class PostingService {
         // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
     }
 
     /**
      * Broadcasts a posting related event in a course under a specific topic via websockets
      *
      * @param postDTO    object including the affected post as well as the action
-     * @param course     course the posting belongs to
+     * @param courseId   the id of the course the posting belongs to
      * @param recipients the recipients for this broadcast, can be null
      */
-    protected void broadcastForPost(PostDTO postDTO, Course course, Set<User> recipients) {
-
+    protected void broadcastForPost(PostDTO postDTO, Long courseId, Set<User> recipients) {
         // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
         Conversation postConversation = postDTO.post().getConversation();
         if (postConversation != null) {
             postConversation.hideDetails();
         }
 
-        String specificTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX;
-        String genericTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + course.getId();
-
-        if (postDTO.post().getExercise() != null) {
-            specificTopicName += "exercises/" + postDTO.post().getExercise().getId();
-            websocketMessagingService.sendMessage(specificTopicName, postDTO);
-        }
-        else if (postDTO.post().getLecture() != null) {
-            specificTopicName += "lectures/" + postDTO.post().getLecture().getId();
-            websocketMessagingService.sendMessage(specificTopicName, postDTO);
-        }
-        else if (postConversation != null) {
+        if (postConversation != null) {
+            String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
-                websocketMessagingService.sendMessage(genericTopicName, postDTO);
+                websocketMessagingService.sendMessage(courseConversationTopic, postDTO);
             }
             else {
                 if (recipients == null) {
@@ -110,13 +100,15 @@ public abstract class PostingService {
                     recipients = conversationParticipantRepository.findConversationParticipantByConversationId(postConversation.getId()).stream()
                             .map(ConversationParticipant::getUser).collect(Collectors.toSet());
                 }
-                recipients.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), genericTopicName + "/conversations/" + postConversation.getId(), postDTO));
+                recipients.forEach(
+                        user -> websocketMessagingService.sendMessageToUser(user.getLogin(), courseConversationTopic + "/conversations/" + postConversation.getId(), postDTO));
             }
-
-            return;
+        }
+        else if (postDTO.post().getPlagiarismCase() != null) {
+            String plagiarismCaseTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "plagiarismCase/" + postDTO.post().getPlagiarismCase();
+            websocketMessagingService.sendMessage(plagiarismCaseTopic, postDTO);
         }
 
-        websocketMessagingService.sendMessage(genericTopicName, postDTO);
     }
 
     /**
@@ -147,23 +139,7 @@ public abstract class PostingService {
      */
     protected void mayUpdateOrDeletePostingElseThrow(Posting posting, User user, Course course) {
         if (!user.getId().equals(posting.getAuthor().getId())) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
-        }
-    }
-
-    /**
-     * Method to check if the possibly associated exercise is not an exam exercise
-     *
-     * @param post post that is checked
-     */
-    protected void preCheckPostValidity(Post post) {
-        // do not allow postings for exam exercises
-        if (post.getExercise() != null) {
-            Long exerciseId = post.getExercise().getId();
-            Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-            if (exercise.isExamExercise()) {
-                throw new BadRequestAlertException("Postings are not allowed for exam exercises", getEntityName(), "400", true);
-            }
+            throw new AccessForbiddenException("You are not allowed to edit this post");
         }
     }
 
@@ -187,11 +163,6 @@ public abstract class PostingService {
             throw new BadRequestAlertException("Communication and messaging is disabled for this course", getEntityName(), "400", true);
         }
         return course;
-    }
-
-    protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Long courseId) {
-        final Course course = courseRepository.findByIdElseThrow(courseId);
-        return preCheckUserAndCourseForCommunicationOrMessaging(user, course);
     }
 
     protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {

@@ -3,7 +3,9 @@
         "markdownEditor": {
             "commands": {
                 "katex": "Formula",
-                "fullscreen": "Fullscreen"
+                "fullscreen": "Fullscreen",
+                "userMention": "User Mention",
+                "channelReference": "Channel Reference"
             },
             "fileUpload": "Attach files by dragging & dropping or selecting them.",
             "guide": "Styling with Markdown is possible",

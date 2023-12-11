@@ -89,6 +89,7 @@
                         *ngFor="let command of defaultCommands | typeCheck: InteractiveSearchCommand"
                         [command]="command"
                         [editorContentString]="editorContentString"
+                        [ngbTooltip]="command.buttonTranslationString | artemisTranslate"
                     ></jhi-select-with-search>
 
                     <ng-container *ngFor="let command of defaultCommands | typeCheck: MultiOptionCommand | negatedTypeCheck: InteractiveSearchCommand">

@@ -12,6 +12,8 @@ import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -39,14 +41,20 @@ public class ReactionService {
 
     private final ConversationService conversationService;
 
+    private final PostRepository postRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
     public ReactionService(UserRepository userRepository, CourseRepository courseRepository, ReactionRepository reactionRepository, PostService postService,
-            AnswerPostService answerPostService, ConversationService conversationService) {
+            AnswerPostService answerPostService, ConversationService conversationService, PostRepository postRepository, AnswerPostRepository answerPostRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.reactionRepository = reactionRepository;
         this.postService = postService;
         this.answerPostService = answerPostService;
         this.conversationService = conversationService;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
     }
 
     /**
@@ -59,6 +67,7 @@ public class ReactionService {
      */
     public Reaction createReaction(Long courseId, Reaction reaction) {
         Posting posting = reaction.getPost() == null ? reaction.getAnswerPost() : reaction.getPost();
+        final Course course = courseRepository.findByIdElseThrow(courseId);
 
         // checks
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -73,7 +82,7 @@ public class ReactionService {
         Reaction savedReaction;
         if (posting instanceof Post) {
             Post post = postService.findPostOrMessagePostById(posting.getId());
-            mayInteractWithConversationIfConversationMessageElseThrow(user, post);
+            mayInteractWithConversationIfConversationMessageElseThrow(user, post, course);
             reaction.setPost(post);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
@@ -83,17 +92,26 @@ public class ReactionService {
                 post.setVoteCount(post.getVoteCount() + 1);
             }
 
-            // save post
-            postService.addReaction(post, reaction, courseId);
+            post.addReaction(reaction);
+            Post updatedPost = postRepository.save(post);
+            updatedPost.setConversation(post.getConversation());
+
+            postService.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null);
         }
         else {
             AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
-            mayInteractWithConversationIfConversationMessageElseThrow(user, answerPost.getPost());
+            mayInteractWithConversationIfConversationMessageElseThrow(user, answerPost.getPost(), course);
             reaction.setAnswerPost(answerPost);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
+            answerPost.addReaction(savedReaction);
+
             // save answer post
-            answerPostService.updateWithReaction(answerPost, reaction, courseId);
+            AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
+            updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
+
+            answerPostService.preparePostAndBroadcast(answerPost, course);
+
         }
         return savedReaction;
     }
@@ -118,7 +136,7 @@ public class ReactionService {
         Post updatedPost;
         if (reaction.getPost() != null) {
             updatedPost = reaction.getPost();
-            mayInteractWithConversationIfConversationMessageElseThrow(user, updatedPost);
+            mayInteractWithConversationIfConversationMessageElseThrow(user, updatedPost, course);
 
             if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
                 // decrease voteCount of post needed for sorting
@@ -126,26 +144,27 @@ public class ReactionService {
             }
 
             // remove reaction and persist post
-            postService.removeReaction(updatedPost, reaction, courseId);
+            updatedPost.removeReaction(reaction);
+            postRepository.save(updatedPost);
         }
         else {
             AnswerPost updatedAnswerPost = reaction.getAnswerPost();
-            mayInteractWithConversationIfConversationMessageElseThrow(user, updatedAnswerPost.getPost());
+            mayInteractWithConversationIfConversationMessageElseThrow(user, updatedAnswerPost.getPost(), course);
             updatedAnswerPost.removeReaction(reaction);
             updatedPost = updatedAnswerPost.getPost();
             // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
             // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
-            postService.preCheckUserAndCourseForCommunicationOrMessaging(reaction.getUser(), course);
             updatedPost.removeAnswerPost(updatedAnswerPost);
             updatedPost.addAnswerPost(updatedAnswerPost);
         }
-        postService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
+        postService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
         reactionRepository.deleteById(reactionId);
     }
 
-    private void mayInteractWithConversationIfConversationMessageElseThrow(User user, Post post) {
+    private void mayInteractWithConversationIfConversationMessageElseThrow(User user, Post post, Course course) {
         if (post.getConversation() != null) {
             conversationService.isMemberOrCreateForCourseWideElseThrow(post.getConversation().getId(), user, Optional.empty());
+            postService.preCheckUserAndCourseForCommunicationOrMessaging(user, course);
         }
     }
 }

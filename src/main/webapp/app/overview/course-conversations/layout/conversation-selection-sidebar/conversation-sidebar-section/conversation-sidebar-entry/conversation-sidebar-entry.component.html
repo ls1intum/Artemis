@@ -3,9 +3,9 @@
         <span class="conversation-name">
             <ng-container *ngIf="conversationAsChannel">
                 <jhi-channel-icon
-                    [isPublic]="conversationAsChannel.isPublic!"
-                    [isArchived]="conversationAsChannel.isArchived!"
-                    [isAnnouncementChannel]="conversationAsChannel.isAnnouncementChannel!"
+                    [isPublic]="(conversationAsChannel.isPublic || conversationAsChannel.isCourseWide) ?? false"
+                    [isArchived]="conversationAsChannel.isArchived ?? false"
+                    [isAnnouncementChannel]="conversationAsChannel.isAnnouncementChannel ?? false"
                 ></jhi-channel-icon>
             </ng-container>
             <ng-container *ngIf="getAsGroupChat(conversation) as groupChatDto">

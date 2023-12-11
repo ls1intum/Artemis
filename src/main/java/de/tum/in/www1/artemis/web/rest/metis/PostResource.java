@@ -10,22 +10,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.metis.PostService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -84,22 +82,6 @@ public class PostResource {
     }
 
     /**
-     * PUT /courses/{courseId}/posts/{postId}/display-priority : Update the display priority of an existing post
-     *
-     * @param courseId        id of the course the post belongs to
-     * @param postId          id of the post change the displayPriority for
-     * @param displayPriority new enum value for displayPriority, i.e. either PINNED, ARCHIVED, NONE
-     * @return ResponseEntity with status 200 (OK) containing the updated post in the response body,
-     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
-     */
-    @PutMapping("courses/{courseId}/posts/{postId}/display-priority")
-    @EnforceAtLeastTutor
-    public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
-        Post postWithUpdatedDisplayPriority = postService.changeDisplayPriority(courseId, postId, displayPriority);
-        return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
-    }
-
-    /**
      * GET /courses/{courseId}/posts/tags : Get all tags for posts in a certain course
      *
      * @param courseId id of the course the post belongs to
@@ -116,18 +98,21 @@ public class PostResource {
     /**
      * GET /courses/{courseId}/posts : Get all posts for a course by its id
      *
-     * @param pageable          pagination settings to fetch posts in smaller batches
-     * @param pagingEnabled     flag stating whether requesting component has paging enabled or not
      * @param postContextFilter request param for filtering posts
      * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
      *         or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @GetMapping("courses/{courseId}/posts")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Post>> getPostsInCourse(@ApiParam Pageable pageable, @RequestParam(defaultValue = "false") boolean pagingEnabled,
-            PostContextFilter postContextFilter) {
-
-        Page<Post> coursePosts = postService.getPostsInCourse(pagingEnabled, pageable, postContextFilter);
+    public ResponseEntity<List<Post>> getPostsInCourse(PostContextFilter postContextFilter) {
+        Page<Post> coursePosts;
+        if (postContextFilter.getPlagiarismCaseId() != null) {
+            coursePosts = new PageImpl<>(postService.getAllPlagiarismCasePosts(postContextFilter));
+        }
+        else {
+            throw new BadRequestAlertException("A post cannot be associated with more than one context if plagiarismCaseId is set", postService.getEntityName(),
+                    "noPlagiarismCase");
+        }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
 
         return new ResponseEntity<>(coursePosts.getContent(), headers, HttpStatus.OK);

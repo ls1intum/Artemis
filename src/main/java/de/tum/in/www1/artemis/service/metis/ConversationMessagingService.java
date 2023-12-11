@@ -155,7 +155,7 @@ public class ConversationMessagingService extends PostingService {
         Set<User> recipientUsers;
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
-            broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, null);
+            broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course.getId(), null);
             log.debug("      broadcastForPost DONE");
 
             recipientSummaries = getNotificationRecipients(conversation).collect(Collectors.toSet());
@@ -169,7 +169,7 @@ public class ConversationMessagingService extends PostingService {
             recipientUsers = mapToUsers(recipientSummaries);
 
             // TODO create notification
-            broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course, recipientUsers);
+            broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course.getId(), recipientUsers);
             log.debug("      broadcastForPost DONE");
         }
 
@@ -359,7 +359,7 @@ public class ConversationMessagingService extends PostingService {
         updatedPost.setConversation(conversation);
 
         // emit a post update via websocket
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course, null);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
 
         return updatedPost;
     }
@@ -387,7 +387,7 @@ public class ConversationMessagingService extends PostingService {
 
         conversationService.notifyAllConversationMembersAboutUpdate(conversation);
 
-        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course, null);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null);
     }
 
     /**
@@ -410,7 +410,7 @@ public class ConversationMessagingService extends PostingService {
 
         Post updatedMessage = conversationMessageRepository.save(message);
         message.getConversation().hideDetails();
-        broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course, null);
+        broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course.getId(), null);
         return updatedMessage;
     }
 
