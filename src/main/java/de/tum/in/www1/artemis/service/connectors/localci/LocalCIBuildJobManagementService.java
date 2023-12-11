@@ -76,19 +76,19 @@ public class LocalCIBuildJobManagementService {
      * @return A future that will be completed with the build result.
      * @throws LocalCIException If the build job could not be submitted to the executor service.
      */
-    public CompletableFuture<LocalCIBuildResult> addBuildJobToQueue(ProgrammingExerciseParticipation participation, String commitHash, boolean isRetry,
-            boolean isPushToTestRepository) {
+    public CompletableFuture<LocalCIBuildResult> executeBuildJob(ProgrammingExerciseParticipation participation, String commitHash, boolean isRetry, boolean isPushToTestRepository)
+            throws LocalCIException {
 
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
         ProjectType projectType = programmingExercise.getProjectType();
         String dockerImage = programmingLanguageConfiguration.getImage(programmingLanguage, Optional.ofNullable(projectType));
 
-        // Check if the Docker image is available. It should be available, because it is pulled during the creation of the programming exercise.
+        // Check if the Docker image is available. If not, pull it.
         localCIDockerService.pullDockerImage(dockerImage);
 
         // Prepare the Docker container name before submitting the build job to the executor service, so we can remove the container if something goes wrong.
-        String containerName = "artemis-local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+        String containerName = "local-ci-" + participation.getId() + "-" + ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 
         // Prepare a Callable that will later be called. It contains the actual steps needed to execute the build job.
         Callable<LocalCIBuildResult> buildJob = () -> localCIBuildJobExecutionService.runBuildJob(participation, commitHash, isPushToTestRepository, containerName, dockerImage);
@@ -167,6 +167,8 @@ public class LocalCIBuildJobManagementService {
         if (!isRetry) {
             programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation, error);
         }
+
+        localCIContainerService.deleteScriptFile(containerName);
 
         localCIContainerService.stopContainer(containerName);
     }
