@@ -20,7 +20,6 @@ import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-ex
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
@@ -122,11 +121,10 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     private updateProgrammingExerciseView() {
         const activeProgrammingComponent = this.activePageComponent as ProgrammingExerciseExamDiffComponent | undefined;
         if (activeProgrammingComponent) {
-            const programmingExercise = this.currentExercise! as ProgrammingExercise;
             activeProgrammingComponent.studentParticipation = this.currentExercise!.studentParticipations![0];
-            activeProgrammingComponent.exercise = programmingExercise;
+            activeProgrammingComponent.exercise = this.currentExercise!;
             activeProgrammingComponent.currentSubmission = this.currentSubmission as ProgrammingSubmission;
-            activeProgrammingComponent.previousSubmission = this.findPreviousProgrammingSubmission(programmingExercise, this.currentSubmission!);
+            activeProgrammingComponent.previousSubmission = this.findPreviousProgrammingSubmission(this.currentExercise!, this.currentSubmission!);
             activeProgrammingComponent.submissions = this.programmingSubmissions.filter((submission) => submission.participation?.exercise?.id === this.currentExercise?.id);
             activeProgrammingComponent.exerciseIdSubject.next(this.currentExercise!.id!);
         }
@@ -377,7 +375,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         let smallestDiff = Infinity;
         let timestampWithSmallestDiff = 0;
         if (exercise.type === ExerciseType.PROGRAMMING) {
-            timestampWithSmallestDiff = this.findClosestTimestampForExerciseInSubmissionArray(exercise as ProgrammingExercise, this.programmingSubmissions);
+            timestampWithSmallestDiff = this.findClosestTimestampForExerciseInSubmissionArray(exercise, this.programmingSubmissions);
         } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
             // file upload exercises only have one submission
             return this.fileUploadSubmissions.find((submission) => submission.participation?.exercise?.id === exercise.id);

@@ -453,9 +453,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 captureException(error);
             }
         } else if (this.studentExam?.exercises && this.activeExamPage) {
-            const index = this.studentExam.exercises.findIndex(
-                (exercise: Exercise) => !this.activeExamPage.isOverviewPage && !this.activeExamPage.isQuizExamPage && exercise.id === this.activeExamPage.exercise!.id,
-            );
+            const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
             this.exerciseIndex = index ? index : 0;
 
             // Reset the visited pages array so ngOnInit will be called for only the active page
@@ -626,7 +624,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.activeExamPage.isQuizExamPage = false;
         this.activeExamPage.exercise = exercise;
         // set current exercise Index
-        this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1: Exercise) => exercise1.id === exercise.id);
+        this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1) => exercise1.id === exercise.id);
 
         // if we do not have a valid participation for the exercise -> initialize it
         if (!ExamParticipationComponent.isExerciseParticipationValid(exercise)) {
