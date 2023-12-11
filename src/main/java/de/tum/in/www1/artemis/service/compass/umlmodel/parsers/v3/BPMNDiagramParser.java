@@ -212,7 +212,8 @@ public class BPMNDiagramParser {
         String jsonElementId = endEventJson.get(ELEMENT_ID).getAsString();
         String name = endEventJson.get(ELEMENT_NAME).getAsString();
 
-        BPMNEndEvent.BPMNEndEventType eventType = BPMNEndEvent.BPMNEndEventType.get(endEventJson.get("eventType").getAsString()).orElse(BPMNEndEvent.BPMNEndEventType.DEFAULT);
+        BPMNEndEvent.BPMNEndEventType eventType = BPMNEndEvent.BPMNEndEventType.fromValue(endEventJson.get("eventType").getAsString())
+                .orElse(BPMNEndEvent.BPMNEndEventType.DEFAULT);
 
         return new BPMNEndEvent(name, jsonElementId, eventType);
     }
@@ -227,7 +228,7 @@ public class BPMNDiagramParser {
         String jsonElementId = gatewayJson.get(ELEMENT_ID).getAsString();
         String name = gatewayJson.get(ELEMENT_NAME).getAsString();
 
-        BPMNGateway.BPMNGatewayType gatewayType = BPMNGateway.BPMNGatewayType.get(gatewayJson.get("gatewayType").getAsString()).orElse(BPMNGateway.BPMNGatewayType.EXCLUSIVE);
+        BPMNGateway.BPMNGatewayType gatewayType = BPMNGateway.BPMNGatewayType.fromValue(gatewayJson.get("gatewayType").getAsString()).orElse(BPMNGateway.BPMNGatewayType.EXCLUSIVE);
 
         return new BPMNGateway(name, jsonElementId, gatewayType);
     }
@@ -254,7 +255,7 @@ public class BPMNDiagramParser {
         String jsonElementId = intermediateEventJson.get(ELEMENT_ID).getAsString();
         String name = intermediateEventJson.get(ELEMENT_NAME).getAsString();
 
-        BPMNIntermediateEvent.BPMNIntermediateEventType eventType = BPMNIntermediateEvent.BPMNIntermediateEventType.get(intermediateEventJson.get("eventType").getAsString())
+        BPMNIntermediateEvent.BPMNIntermediateEventType eventType = BPMNIntermediateEvent.BPMNIntermediateEventType.fromValue(intermediateEventJson.get("eventType").getAsString())
                 .orElse(BPMNIntermediateEvent.BPMNIntermediateEventType.DEFAULT);
 
         return new BPMNIntermediateEvent(name, jsonElementId, eventType);
@@ -282,7 +283,7 @@ public class BPMNDiagramParser {
         String jsonElementId = startEventJson.get(ELEMENT_ID).getAsString();
         String name = startEventJson.get(ELEMENT_NAME).getAsString();
 
-        BPMNStartEvent.BPMNStartEventType eventType = BPMNStartEvent.BPMNStartEventType.get(startEventJson.get("eventType").getAsString())
+        BPMNStartEvent.BPMNStartEventType eventType = BPMNStartEvent.BPMNStartEventType.fromValue(startEventJson.get("eventType").getAsString())
                 .orElse(BPMNStartEvent.BPMNStartEventType.DEFAULT);
 
         return new BPMNStartEvent(name, jsonElementId, eventType);
@@ -322,9 +323,9 @@ public class BPMNDiagramParser {
         String jsonElementId = taskJson.get(ELEMENT_ID).getAsString();
         String name = taskJson.get(ELEMENT_NAME).getAsString();
 
-        BPMNTask.BPMNTaskType taskType = BPMNTask.BPMNTaskType.get(taskJson.get("taskType").getAsString()).orElse(BPMNTask.BPMNTaskType.DEFAULT);
+        BPMNTask.BPMNTaskType taskType = BPMNTask.BPMNTaskType.fromValue(taskJson.get("taskType").getAsString()).orElse(BPMNTask.BPMNTaskType.DEFAULT);
 
-        BPMNTask.BPMNMarker marker = BPMNTask.BPMNMarker.get(taskJson.get("marker").getAsString()).orElse(BPMNTask.BPMNMarker.NONE);
+        BPMNTask.BPMNMarker marker = BPMNTask.BPMNMarker.fromValue(taskJson.get("marker").getAsString()).orElse(BPMNTask.BPMNMarker.NONE);
 
         return new BPMNTask(name, jsonElementId, taskType, marker);
     }
@@ -356,7 +357,7 @@ public class BPMNDiagramParser {
         UMLElement source = UMLModelParser.findElement(flowJson, elementMap, RELATIONSHIP_SOURCE);
         UMLElement target = UMLModelParser.findElement(flowJson, elementMap, RELATIONSHIP_TARGET);
 
-        BPMNFlow.BPMNFlowType flowType = BPMNFlow.BPMNFlowType.get(flowJson.get("flowType").getAsString()).orElse(BPMNFlow.BPMNFlowType.SEQUENCE);
+        BPMNFlow.BPMNFlowType flowType = BPMNFlow.BPMNFlowType.fromValue(flowJson.get("flowType").getAsString()).orElse(BPMNFlow.BPMNFlowType.SEQUENCE);
 
         if (source != null && target != null) {
             return new BPMNFlow(name, jsonElementId, flowType, source, target);

@@ -118,7 +118,7 @@ public class BPMNEndEvent extends UMLElement implements Serializable {
          * @param value The value to retrieve the key for
          * @return The enum key corresponding to the given value
          */
-        public static Optional<BPMNEndEventType> get(String value) {
+        public static Optional<BPMNEndEventType> fromValue(String value) {
             return Arrays.stream(BPMNEndEventType.values()).filter(element -> element.value.equals(value)).findFirst();
         }
 

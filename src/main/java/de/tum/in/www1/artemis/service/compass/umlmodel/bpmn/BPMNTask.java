@@ -132,7 +132,7 @@ public class BPMNTask extends UMLElement implements Serializable {
          * @param value The value to retrieve the key for
          * @return The enum key corresponding to the given value
          */
-        public static Optional<BPMNTaskType> get(String value) {
+        public static Optional<BPMNTaskType> fromValue(String value) {
             return Arrays.stream(BPMNTaskType.values()).filter(element -> element.value.equals(value)).findFirst();
         }
 
@@ -170,7 +170,7 @@ public class BPMNTask extends UMLElement implements Serializable {
          * @param value The value to retrieve the key for
          * @return The enum key corresponding to the given value
          */
-        public static Optional<BPMNMarker> get(String value) {
+        public static Optional<BPMNMarker> fromValue(String value) {
             return Arrays.stream(BPMNMarker.values()).filter(element -> element.value.equals(value)).findFirst();
         }
 
