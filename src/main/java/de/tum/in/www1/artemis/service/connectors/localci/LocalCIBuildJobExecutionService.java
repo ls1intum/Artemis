@@ -355,7 +355,7 @@ public class LocalCIBuildJobExecutionService {
             case PYTHON -> {
                 return getPythonTestResultPaths();
             }
-            case ASSEMBLER, C, VHDL, HASKELL -> {
+            case ASSEMBLER, C, VHDL, HASKELL, OCAML, SWIFT -> {
                 return getCustomTestResultPaths(programmingExercise);
             }
             default -> throw new IllegalArgumentException("Programming language " + programmingExercise.getProgrammingLanguage() + " is not supported");
@@ -426,7 +426,7 @@ public class LocalCIBuildJobExecutionService {
                 // Read the contents of the tar entry as a string.
                 String xmlString = readTarEntryContent(testResultsTarInputStream);
 
-                processTestResultFile(xmlString, failedTests, successfulTests);
+                processTestResultFile(xmlString.replace("\n\t", ""), failedTests, successfulTests);
             }
         }
 
