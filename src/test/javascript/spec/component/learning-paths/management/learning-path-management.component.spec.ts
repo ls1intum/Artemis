@@ -5,7 +5,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { LearningPath } from 'app/entities/competency/learning-path.model';
 import { ArtemisTestModule } from '../../../test.module';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
@@ -16,6 +16,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { LearningPathService } from 'app/course/learning-paths/learning-path.service';
 import { HealthStatus, LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('LearningPathManagementComponent', () => {
     let fixture: ComponentFixture<LearningPathManagementComponent>;
@@ -38,7 +39,13 @@ describe('LearningPathManagementComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockComponent(NgbPagination)],
-            declarations: [LearningPathManagementComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
+            declarations: [
+                LearningPathManagementComponent,
+                MockComponent(ButtonComponent),
+                MockDirective(SortByDirective),
+                MockDirective(SortDirective),
+                MockPipe(ArtemisTranslatePipe),
+            ],
             providers: [
                 {
                     provide: ActivatedRoute,

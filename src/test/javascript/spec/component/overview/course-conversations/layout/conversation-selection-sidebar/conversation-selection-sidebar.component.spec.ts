@@ -284,10 +284,9 @@ examples.forEach((activeConversation) => {
                 fixture.detectChanges();
                 tick(301);
 
-                const refreshSpy = jest.fn().mockReturnValue(EMPTY);
-                Object.defineProperty(metisConversationService, 'forceRefresh', { value: refreshSpy });
-                component.onSettingsDidChange();
-                expect(refreshSpy).toHaveBeenCalledOnce();
+                const forceRefreshMock = jest.spyOn(metisConversationService, 'forceRefresh').mockReturnValue(EMPTY);
+                component.onSettingsChanged();
+                expect(forceRefreshMock).toHaveBeenCalledOnce();
             }));
 
             it('should run conversations update when favorite status is changed', fakeAsync(() => {

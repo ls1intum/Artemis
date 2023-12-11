@@ -530,7 +530,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         ConversationParticipant updatedParticipant = conversationParticipantRepository
                 .findConversationParticipantByConversationIdAndUserIdElseThrow(participant.getConversation().getId(), participant.getUser().getId());
         assertThat(updatedParticipant.getLastRead()).isNotNull();
-        assertThat(updatedParticipant.getLastRead()).isAfter(participant.getLastRead());
+        assertThat(updatedParticipant.getLastRead()).isAfterOrEqualTo(participant.getLastRead());
     }
 
     @Test

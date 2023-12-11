@@ -288,7 +288,8 @@ public class ProgrammingTriggerService {
     private void createSubmissionTriggerBuildAndNotifyUser(ProgrammingExerciseParticipation participation, String commitHash, SubmissionType submissionType) {
         ProgrammingSubmission submission = createSubmissionWithCommitHashAndSubmissionType(participation, commitHash, submissionType);
         try {
-            continuousIntegrationTriggerService.orElseThrow().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation());
+            continuousIntegrationTriggerService.orElseThrow().triggerBuild((ProgrammingExerciseParticipation) submission.getParticipation(), commitHash,
+                    submissionType.equals(SubmissionType.TEST));
             programmingMessagingService.notifyUserAboutSubmission(submission, participation.getProgrammingExercise().getId());
         }
         catch (Exception e) {
