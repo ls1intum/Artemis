@@ -38,7 +38,14 @@
     {{ 'artemisApp.exam.exercises' | artemisTranslate }}
 </h3>
 <div *ngFor="let exercise of studentExam?.exercises; let i = index" [id]="'exercise-' + exercise.id">
-    <jhi-collapsable-card [index]="i" [exercise]="exercise" [exerciseInfo]="exerciseInfos[exercise.id!]" [resultsPublished]="resultsArePublished" [exerciseInfos]="exerciseInfos">
+    <jhi-collapsable-card
+        [index]="i"
+        [exercise]="exercise"
+        [exerciseInfo]="exerciseInfos[exercise.id!]"
+        [resultsPublished]="resultsArePublished"
+        [exerciseInfos]="exerciseInfos"
+        [isCardContentCollapsed]="exerciseInfos[exercise.id!].isCollapsed"
+    >
         <div class="collapsable-content">
             <div class="clearfix">
                 <span class="exercise-buttons">

@@ -13,4 +13,6 @@ export class CollapsableCardComponent {
     @Input() exerciseInfo?: ResultSummaryExerciseInfo;
     @Input() resultsPublished: boolean;
     @Input() exerciseInfos: Record<number, ResultSummaryExerciseInfo>;
+
+    @Input() isCardContentCollapsed: boolean;
 }
