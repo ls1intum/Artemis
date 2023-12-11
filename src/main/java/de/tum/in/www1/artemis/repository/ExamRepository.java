@@ -424,7 +424,6 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @NotNull
     default Exam findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(long examId) {
         return findWithExerciseGroupsAndExercisesAndDetailsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
-
     }
 
     /**
