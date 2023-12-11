@@ -21,6 +21,7 @@ import { Course } from 'app/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
+import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
 let component: ExamResultOverviewComponent;
@@ -117,13 +118,24 @@ const programmingExerciseTwo = {
 } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise, programmingExerciseTwo, notIncludedTextExercise, bonusTextExercise];
 
-const textExerciseResult = { exerciseId: textExercise.id, achievedScore: 60, achievedPoints: 6, maxScore: textExercise.maxPoints } as ExerciseResult;
+const textExerciseResult = {
+    exerciseId: textExercise.id,
+    achievedScore: 60,
+    achievedPoints: 6,
+    maxScore: textExercise.maxPoints,
+} as ExerciseResult;
 
 describe('ExamResultOverviewComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), HttpClientTestingModule],
-            declarations: [ExamResultOverviewComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockComponent(GradingKeyTableComponent)],
+            declarations: [
+                ExamResultOverviewComponent,
+                MockComponent(FaIconComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(GradingKeyTableComponent),
+                MockComponent(CollapsibleCardComponent),
+            ],
             providers: [MockProvider(ExerciseService)],
         })
             .compileComponents()
