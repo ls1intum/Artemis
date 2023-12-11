@@ -1,0 +1,76 @@
+<div [hidden]="!isLinking" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+    <div class="modal-header">
+        <div class="col d-flex flex-row pt-3 pb-1">
+            <h4 class="modal-title" jhiTranslate="artemisApp.lti13.selectContentFromCourse" [translateValues]="{ title: course?.title }">
+                Select content from course {{ course?.title }}
+            </h4>
+            <jhi-help-icon class="ps-1" text="artemisApp.lti13.selectContentTooltip"></jhi-help-icon>
+        </div>
+    </div>
+    <div class="modal-body">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="thead-dark">
+                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                        <th class="d-md-table-cell"></th>
+                        <th jhiSortBy="id">
+                            id
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="type">
+                            {{ 'artemisApp.exercise.type' | artemisTranslate }}
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="title">
+                            {{ 'artemisApp.exercise.title' | artemisTranslate }}
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="title">
+                            {{ 'artemisApp.course.title' | artemisTranslate }}
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="semester">
+                            {{ 'artemisApp.course.semester' | artemisTranslate }}
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="releaseDate">
+                            {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="dueDate">
+                            {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="assessmentDueDate">
+                            {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let exercise of exercises" id="exercise-{{ exercise.id }}">
+                        <td class="d-md-table-cell">
+                            <input class="form-check-input" type="checkbox" (change)="toggleExercise(exercise)" [ngModel]="isExerciseSelected(exercise)" />
+                        </td>
+                        <td>{{ exercise.id ? exercise.id : '' }}</td>
+                        <td>{{ exercise.type ? exercise.type : '' }}</td>
+                        <td>{{ exercise.title ? exercise.title : '' }}</td>
+                        <td>{{ course.title ? course.title : '' }}</td>
+                        <td>{{ course.semester ? course.semester : '' }}</td>
+                        <td>{{ exercise.releaseDate | artemisDate }}</td>
+                        <td>{{ exercise.dueDate | artemisDate }}</td>
+                        <td>{{ exercise.assessmentDueDate | artemisDate }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <div>
+            <button type="submit" (click)="sendDeepLinkRequest()" class="btn btn-success">
+                <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.link"></span>
+            </button>
+        </div>
+    </div>
+</div>
+<h2 [hidden]="isLinking" jhiTranslate="artemisApp.lti13.deepLinking.linkedFailed">Error during deep linking</h2>

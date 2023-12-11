@@ -10,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -36,24 +35,16 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private final LocalCIDockerService localCIDockerService;
-
-    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
-
     public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService, LocalCIDockerService localCIDockerService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
-        this.localCIDockerService = localCIDockerService;
-        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        // Only check whether the docker image needed for the build plan exists.
-        localCIDockerService.pullDockerImage(
-                programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType())));
+        // Not implemented for local CI. no build plans must be created, because all the information for building
+        // a submission and running tests is contained in the participation.
     }
 
     @Override
@@ -100,11 +91,11 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
+    public String copyBuildPlan(ProgrammingExercise sourceExercise, String sourcePlanName, ProgrammingExercise targetExercise, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
         // No build plans exist for local CI. Only return a plan name.
         final String cleanPlanName = getCleanPlanName(targetPlanName);
-        return targetProjectKey + "-" + cleanPlanName;
+        return targetExercise.getProjectKey() + "-" + cleanPlanName;
     }
 
     @Override

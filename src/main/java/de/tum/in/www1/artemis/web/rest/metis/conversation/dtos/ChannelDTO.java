@@ -166,6 +166,10 @@ public class ChannelDTO extends ConversationDTO {
         return isCourseWide;
     }
 
+    public void setIsCourseWide(Boolean courseWide) {
+        isCourseWide = courseWide;
+    }
+
     @Override
     public String toString() {
         return "ChannelDTO{" + "subType='" + subType + '\'' + ", name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic="
