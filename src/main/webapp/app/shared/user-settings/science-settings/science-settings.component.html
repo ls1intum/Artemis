@@ -40,12 +40,12 @@
                         <input
                             type="checkbox"
                             class="form-check-input"
-                            [checked]="setting.optIn"
+                            [checked]="setting.active"
                             id="{{ setting.settingId }}"
-                            value="{{ setting.optIn }}"
+                            value="{{ setting.active }}"
                             (click)="toggleSetting($event)"
                         />
-                        <label class="form-check-label" for="{{ setting.settingId }}">WebApp</label>
+                        <label class="form-check-label" for="{{ setting.settingId }}">active</label>
                     </div>
                 </div>
             </div>

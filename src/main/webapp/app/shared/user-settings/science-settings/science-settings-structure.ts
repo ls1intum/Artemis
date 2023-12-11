@@ -17,7 +17,7 @@ export const scienceSettingsStructure: UserSettingsStructure<ScienceSetting> = {
                     key: 'activity',
                     descriptionKey: 'activityDescription',
                     settingId: SettingId.SCIENCE__GENERAL__ACTIVITY_TRACKING,
-                    active: false,
+                    active: true,
                 },
             ],
         },
