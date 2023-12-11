@@ -253,6 +253,16 @@ public class BambooMigrationService implements CIVCSMigrationService {
         return Optional.empty();
     }
 
+    /**
+     * Returns true if the build plan with the given id has a repository with the solution name.
+     *
+     * @param buildPlanId The key of the build plan, e.g. 'EIST16W1-BASE'.
+     * @return true if the build plan with the given id has a repository with the solution name
+     */
+    public boolean hasSolutionRepository(String buildPlanId) {
+        return getConnectedRepositoryId(buildPlanId, SOLUTION_REPO_NAME).isPresent();
+    }
+
     @Override
     public void overrideRepositoriesToCheckout(String buildPlanKey, List<AuxiliaryRepository> auxiliaryRepositoryList, ProgrammingLanguage programmingLanguage) {
         Optional<Long> testRepositoryId = getConnectedRepositoryId(buildPlanKey, TEST_REPO_NAME);

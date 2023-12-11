@@ -7,7 +7,6 @@ import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +21,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
  * REST controller for managing ApollonDiagram.
@@ -34,9 +32,6 @@ public class ApollonDiagramResource {
     private final Logger log = LoggerFactory.getLogger(ApollonDiagramResource.class);
 
     private static final String ENTITY_NAME = "apollonDiagram";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final ApollonDiagramRepository apollonDiagramRepository;
 
@@ -173,6 +168,6 @@ public class ApollonDiagramResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
         apollonDiagramRepository.delete(apollonDiagram);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, apollonDiagramId.toString())).build();
+        return ResponseEntity.ok().build();
     }
 }
