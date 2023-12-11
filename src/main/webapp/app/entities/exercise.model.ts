@@ -18,7 +18,6 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { CourseScores } from 'app/course/course-scores/course-scores';
-import { ExamExercise } from 'app/entities/exam-exercise';
 
 export enum DifficultyLevel {
     EASY = 'EASY',
@@ -72,7 +71,7 @@ export enum IncludedInOverallScore {
     NOT_INCLUDED = 'NOT_INCLUDED',
 }
 
-export abstract class Exercise implements BaseEntity, ExamExercise {
+export abstract class Exercise implements BaseEntity {
     public id?: number;
     public problemStatement?: string;
     public gradingInstructions?: string;
@@ -105,8 +104,6 @@ export abstract class Exercise implements BaseEntity, ExamExercise {
     public gradingCriteria?: GradingCriterion[];
     public exerciseGroup?: ExerciseGroup;
     public competencies?: Competency[];
-    public navigationTitle?: string;
-    public overviewTitle?: string;
     public plagiarismDetectionConfig?: PlagiarismDetectionConfig = DEFAULT_PLAGIARISM_DETECTION_CONFIG; // default value
 
     // transient objects which might not be set

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
@@ -17,7 +17,6 @@ import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { ExamExercise } from 'app/entities/exam-exercise';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -25,7 +24,7 @@ import { ExamExercise } from 'app/entities/exam-exercise';
     styleUrls: ['./exam-navigation-bar.component.scss'],
 })
 export class ExamNavigationBarComponent implements OnInit {
-    @Input() exercises: ExamExercise[] = [];
+    @Input() exercises: Exercise[] = [];
     @Input() exerciseIndex = 0;
     @Input() endDate: dayjs.Dayjs;
     @Input() overviewPageOpen: boolean;
@@ -33,7 +32,7 @@ export class ExamNavigationBarComponent implements OnInit {
     @Input() examTimeLineView = false;
     @Output() onPageChanged = new EventEmitter<{
         overViewChange: boolean;
-        exercise?: ExamExercise;
+        exercise?: Exercise;
         forceSave: boolean;
         submission?: ProgrammingSubmission | SubmissionVersion | FileUploadSubmission;
     }>();
@@ -88,10 +87,9 @@ export class ExamNavigationBarComponent implements OnInit {
 
         // If it is not an initial session, update the isSynced variable for out of sync submissions.
         this.exercises
-            .filter((exercise) => this.isItemProgrammingExercise(exercise) && exercise.studentParticipations)
+            .filter((exercise) => exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations)
             .forEach((exercise) => {
-                const programmingExercise = exercise as ProgrammingExercise;
-                const domain: DomainChange = [DomainType.PARTICIPATION, programmingExercise.studentParticipations![0]];
+                const domain: DomainChange = [DomainType.PARTICIPATION, exercise.studentParticipations![0]];
                 this.conflictService.setDomain(domain);
                 this.repositoryService.setDomain(domain);
 
@@ -108,11 +106,7 @@ export class ExamNavigationBarComponent implements OnInit {
             });
     }
 
-    private isItemProgrammingExercise(exercise: ExamExercise): exercise is ProgrammingExercise {
-        return exercise && exercise.type === ExerciseType.PROGRAMMING;
-    }
-
-    getExerciseButtonTooltip(exercise: ExamExercise): ButtonTooltipType {
+    getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         return this.examParticipationService.getExerciseButtonTooltip(exercise);
     }
 
@@ -232,7 +226,7 @@ export class ExamNavigationBarComponent implements OnInit {
         }
     }
 
-    isOnlyOfflineIDE(exercise: ExamExercise): boolean {
+    isOnlyOfflineIDE(exercise: Exercise): boolean {
         if (exercise instanceof ProgrammingExercise) {
             const programmingExercise = exercise as ProgrammingExercise;
             return programmingExercise.allowOfflineIde === true && programmingExercise.allowOnlineEditor === false;

@@ -3,13 +3,6 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
 import { ServerDateService } from 'app/shared/server-date.service';
-import { ExamExercise } from 'app/entities/exam-exercise';
-import { Exercise } from 'app/entities/exercise.model';
-import { QuizExamExercise } from 'app/entities/quiz-exam-exercise';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 /**
  * Calculates the individual end time based on the studentExam
@@ -100,47 +93,15 @@ export function isExamResultPublished(isTestRun: boolean, exam: Exam | undefined
     return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(serverDateService.now());
 }
 
-export function getExamExercises(studentExam: StudentExam, quizExamTitles: { title: string; navigationTitle: string }) {
-    let examExercises: ExamExercise[] = [];
-    if (studentExam.exercises) {
-        examExercises = studentExam.exercises.map((exercise: Exercise, index: number) => {
-            exercise.navigationTitle = `${index + 1}`;
-            exercise.overviewTitle = exercise.exerciseGroup?.title;
-            return exercise;
-        });
-    }
-    const hasQuizExam = (studentExam.exam?.quizExamMaxPoints ?? 0) > 0;
-    if (hasQuizExam) {
-        examExercises = [createQuizExamExercise(studentExam, quizExamTitles), ...examExercises];
-    }
-    return examExercises;
-}
-
-function createQuizExamExercise(studentExam: StudentExam, titles: { title: string; navigationTitle: string }): QuizExamExercise {
-    const { title, navigationTitle } = titles;
-    const quizExamExercise = new QuizExamExercise();
-    quizExamExercise.navigationTitle = navigationTitle;
-    quizExamExercise.exerciseGroup!.title = title;
-    quizExamExercise.overviewTitle = title;
-    quizExamExercise.title = title;
-    quizExamExercise.quizQuestions = studentExam.quizQuestions;
-    quizExamExercise.randomizeQuestionOrder = studentExam.exam?.randomizeQuizExamQuestionsOrder;
-    quizExamExercise.maxPoints = studentExam.exam?.quizExamMaxPoints;
-    return quizExamExercise;
-}
-
-export function asFileUploadExercise(exercise: ExamExercise): FileUploadExercise {
-    return exercise as FileUploadExercise;
-}
-
-export function asTextExercise(exercise: ExamExercise): TextExercise {
-    return exercise as TextExercise;
-}
-
-export function asProgrammingExercise(exercise: ExamExercise): ProgrammingExercise {
-    return exercise as ProgrammingExercise;
-}
-
-export function asModelingExercise(exercise: ExamExercise): ModelingExercise {
-    return exercise as ModelingExercise;
-}
+// function createQuizExam(studentExam: StudentExam, titles: { title: string; navigationTitle: string }): QuizExam {
+//     const { title, navigationTitle } = titles;
+//     const quizExamExercise = new QuizExam();
+//     quizExamExercise.navigationTitle = navigationTitle;
+//     quizExamExercise.exerciseGroup!.title = title;
+//     quizExamExercise.overviewTitle = title;
+//     quizExamExercise.title = title;
+//     quizExamExercise.quizQuestions = studentExam.quizQuestions;
+//     quizExamExercise.randomizeQuestionOrder = studentExam.exam?.randomizeQuizExamQuestionsOrder;
+//     quizExamExercise.maxPoints = studentExam.exam?.quizExamMaxPoints;
+//     return quizExamExercise;
+// }

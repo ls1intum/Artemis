@@ -1,19 +1,9 @@
-import { getExamExercises, isExamResultPublished } from 'app/exam/participate/exam.utils';
+import { isExamResultPublished } from 'app/exam/participate/exam.utils';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';
 import { TestBed } from '@angular/core/testing';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 let artemisServerDateService: ArtemisServerDateService;
 
@@ -53,56 +43,6 @@ describe('ExamUtils', () => {
 
             const resultsArePublished = isExamResultPublished(isTestRun, exam, artemisServerDateService);
             expect(resultsArePublished).toBeTrue();
-        });
-    });
-
-    describe('getExamExercises', () => {
-        it('should return the exam exercises if studentExam has exercises', () => {
-            const studentExam = new StudentExam();
-            const course = new Course();
-            studentExam.exercises = [new QuizExercise(course, undefined), new TextExercise(course, undefined)];
-            const examExercises = getExamExercises(studentExam, { title: 'Quiz Exam', navigationTitle: 'Quiz' });
-            expect(examExercises).toEqual(studentExam.exercises);
-        });
-
-        it('should return the exam exercises with quiz exam if studentExam has quiz exam', () => {
-            const studentExam = new StudentExam();
-            const exam = new Exam();
-            exam.quizExamMaxPoints = 100;
-            exam.randomizeQuizExamQuestionsOrder = true;
-            studentExam.exam = exam;
-            studentExam.quizQuestions = [new MultipleChoiceQuestion(), new DragAndDropQuestion()];
-            const examExercises = getExamExercises(studentExam, { title: 'Quiz Exam', navigationTitle: 'Quiz' });
-            const submission = new QuizSubmission();
-            submission.isSynced = true;
-            const exerciseGroup = new ExerciseGroup();
-            exerciseGroup.title = 'Quiz Exam';
-            expect(examExercises).toEqual([
-                {
-                    id: 0,
-                    type: ExerciseType.QUIZ,
-                    studentParticipations: [
-                        {
-                            initializationState: InitializationState.INITIALIZED,
-                            submissions: [submission],
-                        },
-                    ],
-                    navigationTitle: 'Quiz',
-                    overviewTitle: 'Quiz Exam',
-                    exerciseGroup: exerciseGroup,
-                    title: 'Quiz Exam',
-                    includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
-                    quizQuestions: studentExam.quizQuestions,
-                    maxPoints: exam.quizExamMaxPoints,
-                    randomizeQuestionOrder: exam.randomizeQuizExamQuestionsOrder,
-                },
-            ]);
-        });
-
-        it('should return empty exam exercises if studentExam has no exercises and no quiz exam', () => {
-            const studentExam = new StudentExam();
-            const examExercises = getExamExercises(studentExam, { title: 'Quiz Exam', navigationTitle: 'Quiz' });
-            expect(examExercises).toEqual([]);
         });
     });
 });

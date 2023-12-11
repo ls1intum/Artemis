@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -36,8 +36,6 @@ import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icon
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
-import { ExamExercise } from 'app/entities/exam-exercise';
-import { asFileUploadExercise, asModelingExercise, asProgrammingExercise, asTextExercise, getExamExercises } from 'app/exam/participate/exam.utils';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -68,8 +66,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
-    _studentExam: StudentExam;
-    examExercises: ExamExercise[];
+    studentExam: StudentExam;
 
     individualStudentEndDate: dayjs.Dayjs;
     individualStudentEndDateWithGracePeriod: dayjs.Dayjs;
@@ -95,19 +92,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     // Icons
     faCheckCircle = faCheckCircle;
-
-    @Input()
-    set studentExam(studentExam: StudentExam) {
-        this._studentExam = studentExam;
-        this.examExercises = getExamExercises(studentExam, {
-            title: this.translateService.instant('artemisApp.quizPool.title'),
-            navigationTitle: this.translateService.instant('artemisApp.quizPool.navigationTitle'),
-        });
-    }
-
-    get studentExam(): StudentExam {
-        return this._studentExam;
-    }
 
     isProgrammingExercise() {
         return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
@@ -138,11 +122,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     // Icons
     faGraduationCap = faGraduationCap;
-
-    asFileUploadExercise = asFileUploadExercise;
-    asModelingExercise = asModelingExercise;
-    asProgrammingExercise = asProgrammingExercise;
-    asTextExercise = asTextExercise;
 
     constructor(
         private websocketService: JhiWebsocketService,
@@ -244,7 +223,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (!this.activeExamPage || this.activeExamPage.isOverviewPage) {
             return -1;
         }
-        return this.examExercises.findIndex((exercise: ExamExercise) => exercise.id === this.activeExamPage.exercise!.id);
+        return this.studentExam.exercises!.findIndex((exercise: Exercise) => exercise.id === this.activeExamPage.exercise!.id);
     }
 
     get activePageComponent(): ExamPageComponent | undefined {
@@ -319,7 +298,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exercise to check
      * @returns true if valid, false otherwise
      */
-    private static isExerciseParticipationValid(exercise: ExamExercise): boolean {
+    private static isExerciseParticipationValid(exercise: Exercise): boolean {
         // check if there is at least one participation with state === Initialized or state === FINISHED
         return (
             exercise.studentParticipations !== undefined &&
@@ -457,7 +436,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 captureException(error);
             }
         } else if (this.studentExam?.exercises && this.activeExamPage) {
-            const index = this.examExercises.findIndex((exercise: ExamExercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
+            const index = this.studentExam.exercises.findIndex((exercise: Exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
             this.exerciseIndex = index ? index : 0;
 
             // Reset the visited pages array so ngOnInit will be called for only the active page
@@ -596,7 +575,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * update the current exercise from the navigation
      * @param exerciseChange
      */
-    onPageChange(exerciseChange: { overViewChange: boolean; exercise?: ExamExercise; forceSave: boolean }): void {
+    onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
@@ -619,11 +598,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * if not -> initialize participation and in case of programming exercises subscribe to latestSubmissions
      * @param exercise to initialize
      */
-    private initializeExercise(exercise: ExamExercise) {
+    private initializeExercise(exercise: Exercise) {
         this.activeExamPage.isOverviewPage = false;
         this.activeExamPage.exercise = exercise;
         // set current exercise Index
-        this.exerciseIndex = this.examExercises!.findIndex((exercise1: ExamExercise) => exercise1.id === exercise.id);
+        this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1: Exercise) => exercise1.id === exercise.id);
 
         // if we do not have a valid participation for the exercise -> initialize it
         if (!ExamParticipationComponent.isExerciseParticipationValid(exercise)) {
@@ -680,7 +659,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * In this case, no participation and not submission exist and first need to be created on the server before the student can work on this exercise locally
      * @param exercise
      */
-    createParticipationForExercise(exercise: ExamExercise): Observable<StudentParticipation | undefined> {
+    createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | undefined> {
         this.generateParticipationStatus.next('generating');
         return this.courseExerciseService.startExercise(exercise.id!).pipe(
             map((createdParticipation: StudentParticipation) => {
@@ -823,7 +802,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 distinctUntilChanged(),
                 tap((submissionStateObj) => {
                     const exerciseForSubmission = this.studentExam.exercises?.find(
-                        (programmingExercise: Exercise) =>
+                        (programmingExercise) =>
                             programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === submissionStateObj.participationId),
                     );
                     if (exerciseForSubmission?.studentParticipations && submissionStateObj.submission?.participation) {
@@ -837,7 +816,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             )
             .subscribe((programmingSubmissionObj) => {
                 const exerciseForSubmission = this.studentExam.exercises?.find(
-                    (programmingExercise: Exercise) =>
+                    (programmingExercise) =>
                         programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
                 );
                 if (
