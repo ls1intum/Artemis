@@ -358,6 +358,7 @@ public class LocalCIContainerService {
     public Path createBuildScript(ProgrammingExerciseParticipation participation, String containerName) {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         boolean hasSequentialTestRuns = programmingExercise.hasSequentialTestRuns();
+        boolean hasStaticCodeAnalysis = programmingExercise.isStaticCodeAnalysisEnabled();
 
         List<ScriptAction> actions = List.of();
 
@@ -405,7 +406,7 @@ public class LocalCIContainerService {
         if (actions.isEmpty()) {
             // Windfile actions are not defined, use default build script
             switch (programmingExercise.getProgrammingLanguage()) {
-                case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns);
+                case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns, hasStaticCodeAnalysis);
                 case PYTHON -> scriptForPython(buildScript);
                 default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
             }
@@ -422,11 +423,11 @@ public class LocalCIContainerService {
         return buildScriptPath;
     }
 
-    private void scriptForJavaKotlin(ProgrammingExercise programmingExercise, StringBuilder buildScript, boolean hasSequentialTestRuns) {
+    private void scriptForJavaKotlin(ProgrammingExercise programmingExercise, StringBuilder buildScript, boolean hasSequentialTestRuns, boolean hasStaticCodeAnalysis) {
         boolean isMaven = ProjectType.isMavenProject(programmingExercise.getProjectType());
 
-        if (hasSequentialTestRuns) {
-            if (isMaven) {
+        if (isMaven) {
+            if (hasSequentialTestRuns) {
                 buildScript.append("""
                         cd structural
                         mvn clean test
@@ -440,6 +441,20 @@ public class LocalCIContainerService {
             }
             else {
                 buildScript.append("""
+                        mvn clean test
+                        """);
+                if (hasStaticCodeAnalysis) {
+                    buildScript.append("""
+                            mvn checkstyle:checkstyle
+                            mvn pmd:pmd
+                            mvn spotbugs:spotbugs
+                            """);
+                }
+            }
+        }
+        else {
+            if (hasSequentialTestRuns) {
+                buildScript.append("""
                         chmod +x gradlew
                         ./gradlew clean structuralTests
                         if [ $? -eq 0 ]; then
@@ -447,18 +462,16 @@ public class LocalCIContainerService {
                         fi
                         """);
             }
-        }
-        else {
-            if (isMaven) {
-                buildScript.append("""
-                        mvn clean test
-                        """);
-            }
             else {
                 buildScript.append("""
                         chmod +x gradlew
                         ./gradlew clean test
                         """);
+                if (hasStaticCodeAnalysis) {
+                    buildScript.append("""
+                            ./gradlew check -x test
+                            """);
+                }
             }
         }
     }
