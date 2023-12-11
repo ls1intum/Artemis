@@ -18,6 +18,8 @@ type ExerciseInfo = {
     colorClass?: string;
 };
 
+type ResultOverviewSection = 'grading-table' | 'grading-key' | 'bonus-grading-key';
+
 @Component({
     selector: 'jhi-exam-result-overview',
     styleUrls: ['./exam-result-overview.component.scss'],
@@ -60,6 +62,12 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
      * - it is a test run (results are published immediately)
      */
     showResultOverview = false;
+
+    isCollapsed: Record<ResultOverviewSection, boolean> = {
+        'grading-table': false,
+        'grading-key': true,
+        'bonus-grading-key': true,
+    };
 
     constructor(
         private serverDateService: ArtemisServerDateService,
@@ -218,5 +226,9 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
 
     toggleBonusGradingKey(): void {
         this.isBonusGradingKeyCollapsed = !this.isBonusGradingKeyCollapsed;
+    }
+
+    toggleCollapse(resultOverviewSection: ResultOverviewSection) {
+        return () => (this.isCollapsed[resultOverviewSection] = !this.isCollapsed[resultOverviewSection]);
     }
 }
