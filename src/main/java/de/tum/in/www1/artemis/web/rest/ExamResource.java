@@ -561,7 +561,7 @@ public class ExamResource {
                 exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
             }
             else {
-                exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
+                exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, true);
             }
             examService.setExamProperties(exam);
             return ResponseEntity.ok(exam);
