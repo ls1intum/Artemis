@@ -6,6 +6,9 @@ import java.util.List;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
+/**
+ * Represents a BPMN diagram
+ */
 public class BPMNDiagram extends UMLDiagram {
 
     private final List<BPMNAnnotation> annotations;

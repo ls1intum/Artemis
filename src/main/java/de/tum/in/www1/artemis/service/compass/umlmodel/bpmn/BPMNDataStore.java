@@ -7,6 +7,9 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
+/**
+ * Represents a BPMN data store
+ */
 public class BPMNDataStore extends UMLElement implements Serializable {
 
     public static final String BPMN_DATA_STORE_TYPE = "BPMNDataStore";

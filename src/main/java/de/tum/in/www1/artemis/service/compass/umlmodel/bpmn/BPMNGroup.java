@@ -8,6 +8,9 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLContainerElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
+/**
+ * Represents a BPMN group
+ */
 public class BPMNGroup extends UMLContainerElement implements Serializable {
 
     public static final String BPMN_GROUP_TYPE = "BPMNGroup";

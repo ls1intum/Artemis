@@ -9,6 +9,9 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
+/**
+ * Represents a BPMN task
+ */
 public class BPMNTask extends UMLElement implements Serializable {
 
     public static final String BPMN_TASK_TYPE = "BPMNTask";

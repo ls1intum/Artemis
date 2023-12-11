@@ -9,6 +9,9 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
+/**
+ * Represents a BPMN flow
+ */
 public class BPMNFlow extends UMLElement implements Serializable {
 
     public static final String BPMN_FLOW_TYPE = "BPMNFlow";

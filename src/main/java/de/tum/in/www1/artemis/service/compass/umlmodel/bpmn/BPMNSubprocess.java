@@ -7,6 +7,9 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
+/**
+ * Represents a BPMN subprocess
+ */
 public class BPMNSubprocess extends UMLElement implements Serializable {
 
     public static final String BPMN_SUBPROCESS_TYPE = "BPMNSubprocess";

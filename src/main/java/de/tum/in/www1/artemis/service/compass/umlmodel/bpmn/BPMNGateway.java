@@ -11,6 +11,9 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
+/**
+ * Represents a BPMN gateway
+ */
 public class BPMNGateway extends UMLElement implements Serializable {
 
     public static final String BPMN_GATEWAY_TYPE = "BPMNGateway";

@@ -7,6 +7,9 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
+/**
+ * Represents a BPMN call activity
+ */
 public class BPMNCallActivity extends UMLElement implements Serializable {
 
     public static final String BPMN_CALL_ACTIVITY_TYPE = "BPMNCallActivity";

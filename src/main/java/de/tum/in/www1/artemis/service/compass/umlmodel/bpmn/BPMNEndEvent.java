@@ -9,6 +9,9 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
+/**
+ * Represents a BPMN end event
+ */
 public class BPMNEndEvent extends UMLElement implements Serializable {
 
     public static final String BPMN_END_EVENT_TYPE = "BPMNEndEvent";

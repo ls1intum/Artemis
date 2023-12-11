@@ -7,6 +7,9 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.Similarity;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
+/**
+ * Represents a BPMN annotation
+ */
 public class BPMNAnnotation extends UMLElement implements Serializable {
 
     public static final String BPMN_ANNOTATION_TYPE = "BPMNAnnotation";
