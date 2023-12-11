@@ -5,7 +5,15 @@ import {
     LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE,
     MENTIONED_IN_MESSAGE_TITLE,
     NEW_ANNOUNCEMENT_POST_TITLE,
+    NEW_COURSE_POST_TITLE,
+    NEW_EXAM_POST_TITLE,
+    NEW_EXERCISE_POST_TITLE,
+    NEW_LECTURE_POST_TITLE,
     NEW_MESSAGE_TITLE,
+    NEW_REPLY_FOR_COURSE_POST_TITLE,
+    NEW_REPLY_FOR_EXAM_POST_TITLE,
+    NEW_REPLY_FOR_EXERCISE_POST_TITLE,
+    NEW_REPLY_FOR_LECTURE_POST_TITLE,
     NEW_REPLY_MESSAGE_TITLE,
     Notification,
     QUIZ_EXERCISE_STARTED_TITLE,
@@ -21,6 +29,21 @@ import { NotificationSettingsService } from 'app/shared/user-settings/notificati
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
+const conversationMessageNotificationTitles = [
+    MENTIONED_IN_MESSAGE_TITLE,
+    NEW_ANNOUNCEMENT_POST_TITLE,
+    NEW_MESSAGE_TITLE,
+    NEW_REPLY_MESSAGE_TITLE,
+    NEW_EXERCISE_POST_TITLE,
+    NEW_LECTURE_POST_TITLE,
+    NEW_EXAM_POST_TITLE,
+    NEW_COURSE_POST_TITLE,
+    NEW_REPLY_FOR_EXERCISE_POST_TITLE,
+    NEW_REPLY_FOR_LECTURE_POST_TITLE,
+    NEW_REPLY_FOR_EXAM_POST_TITLE,
+    NEW_REPLY_FOR_COURSE_POST_TITLE,
+];
+
 @Component({
     selector: 'jhi-notification-popup',
     templateUrl: './notification-popup.component.html',
@@ -33,6 +56,8 @@ export class NotificationPopupComponent implements OnInit {
     QuizNotificationTitleHtmlConst = 'Quiz started';
 
     private studentExamExerciseIds: number[];
+
+    private readonly maxNotificationLength = 150;
 
     // Icons
     faTimes = faTimes;
@@ -77,8 +102,10 @@ export class NotificationPopupComponent implements OnInit {
 
         if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
             this.examExerciseUpdateService.navigateToExamExercise(target.exercise);
-        } else if (notification.title === NEW_REPLY_MESSAGE_TITLE || notification.title === NEW_MESSAGE_TITLE || notification.title === MENTIONED_IN_MESSAGE_TITLE) {
+        } else if (notification.title && conversationMessageNotificationTitles.includes(notification.title)) {
             const queryParams: Params = MetisConversationService.getQueryParamsForConversation(targetConversationId);
+            queryParams.messageId = target.id;
+
             const routeComponents: RouteComponents = MetisConversationService.getLinkForConversation(targetCourseId);
             // check if component reload is needed
             if (currentCourseId === undefined || currentCourseId !== targetCourseId || this.isUnderMessagesTabOfSpecificCourse(targetCourseId)) {
@@ -112,15 +139,7 @@ export class NotificationPopupComponent implements OnInit {
      * @param notification {Notification}
      */
     getNotificationTextTranslation(notification: Notification): string {
-        if (notification.textIsPlaceholder) {
-            const translation = this.artemisTranslatePipe.transform(notification.text, { placeholderValues: this.getParsedPlaceholderValues(notification) });
-            if (translation?.includes(translationNotFoundMessage)) {
-                return notification.text ?? 'No text found';
-            }
-            return translation;
-        } else {
-            return notification.text ?? 'No text found';
-        }
+        return this.notificationService.getNotificationTextTranslation(notification, this.maxNotificationLength);
     }
 
     private getParsedPlaceholderValues(notification: Notification): string[] {
@@ -154,12 +173,7 @@ export class NotificationPopupComponent implements OnInit {
             if (notification.title === LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE) {
                 this.checkIfNotificationAffectsCurrentStudentExamExercises(notification);
             }
-            if (
-                notification.title === NEW_MESSAGE_TITLE ||
-                notification.title === NEW_REPLY_MESSAGE_TITLE ||
-                notification.title === MENTIONED_IN_MESSAGE_TITLE ||
-                notification.title === NEW_ANNOUNCEMENT_POST_TITLE
-            ) {
+            if (notification.title && conversationMessageNotificationTitles.includes(notification.title)) {
                 if (this.notificationSettingsService.isNotificationAllowedBySettings(notification)) {
                     this.addMessageNotification(notification);
                     this.setRemovalTimeout(notification);
