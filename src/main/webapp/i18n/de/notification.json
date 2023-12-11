@@ -52,14 +52,18 @@
                 "programmingTestCasesChanged": "Testfälle für Programmieraufgaben geändert",
                 "newManualFeedbackRequest": "Eine neue Anfrage zu manuellem Feedback wurde eingereicht",
                 "duplicateTestCase": "Doppelte Testfälle wurden gefunden.",
+                "repositoryLocks": "Repository-Berechtigungen aktualisiert",
+                "buildRun": "Neubewertung der Einreichungen",
                 "illegalSubmission": "Unzulässige Einreichung eines Studenten",
-                "newExercisePost": "Neuer Aufgabenbeitrag",
-                "newLecturePost": "Neuer Vorlesungsbeitrag",
-                "newCoursePost": "Neuer kursweiter Beitrag",
+                "newExercisePost": "Neue Aufgabennachricht",
+                "newLecturePost": "Neue Vorlesungsnachricht",
+                "newCoursePost": "Neue kursweite Nachricht",
+                "newExamPost": "Neue Klausurnachricht",
                 "newAnnouncementPost": "Neue Ankündigung",
-                "newReplyForExercisePost": "Neue Antwort auf Aufgabenbeitrag",
-                "newReplyForLecturePost": "Neue Antwort auf Vorlesungsbeitrag",
-                "newReplyForCoursePost": "Neue Antwort auf Kursbeitrag",
+                "newReplyForExercisePost": "Neue Antwort auf Aufgabennachricht",
+                "newReplyForLecturePost": "Neue Antwort auf Vorlesungsnachricht",
+                "newReplyForCoursePost": "Neue Antwort auf kursweite Nachricht",
+                "newReplyForExamPost": "Neue Antwort auf Klausurnachricht",
                 "courseArchiveStarted": "Kursarchivierung gestartet",
                 "courseArchiveFinished": "Kursarchivierung beendet",
                 "courseArchiveFailed": "Kursarchivierung fehlgeschlagen",
@@ -135,7 +139,7 @@
                 "tutorialGroupMultipleRegistrationTutor": "{{ placeholderValues.1 }} Studenten wurden für deine Übungsgruppe {{ placeholderValues.2 }} von {{ placeholderValues.3 }} registriert.",
                 "tutorialGroupAssigned": "Du wurdest von {{ placeholderValues.2 }} zugeteilt die Übungsgruppe {{ placeholderValues.1 }} zu leiten.",
                 "tutorialGroupUnassigned": "Dir wurde die Leitung von Übungsgruppe {{ placeholderValues.1 }} von {{ placeholderValues.2 }} entzogen.",
-                "messageReply": "Du hast eine neue Antwort auf eine Nachricht von {{ placeholderValues.6 }} im Kurs {{ placeholderValues.0 }}.",
+                "messageReply": "Eine Nachricht in \"{{ placeholderValues.7 }}\" im Kurs \"{{ placeholderValues.0 }}\" hat eine neue Antwort: {{ placeholderValues.4 }}",
                 "deleteChannel": "Der Kanal {{ placeholderValues.1 }} wurde von {{ placeholderValues.2 }} im Kurs {{ placeholderValues.0 }} gelöscht.",
                 "removeUserChannel": "Du wurdest von {{ placeholderValues.1 }} von {{ placeholderValues.2 }} im Kurs {{ placeholderValues.0 }} aus dem Kanal entfernt.",
                 "addUserChannel": "Du wurdest dem Kanal {{ placeholderValues.1 }} von {{ placeholderValues.2 }} im Kurs {{ placeholderValues.0 }} hinzugefügt.",
@@ -161,9 +165,9 @@
                 "newMessage": "Neue Nachricht"
             },
             "text": {
-                "newMessageChannel": "Neue Nachricht im Kanal {{ placeholderValues.3 }} von {{ placeholderValues.4 }} im Kurs {{ placeholderValues.0 }}.",
-                "newMessageGroupChat": "Neue Nachricht im Gruppenchat von {{ placeholderValues.3 }} im Kurs {{ placeholderValues.0 }}.",
-                "newMessageDirect": "Neue Direktnachricht von {{ placeholderValues.3 }} im Kurs {{ placeholderValues.0 }}."
+                "newMessageChannel": "Neue Nachricht im Kanal \"{{ placeholderValues.3 }}\" im Kurs \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
+                "newMessageGroupChat": "Neue Nachricht im Gruppenchat von \"{{ placeholderValues.3 }}\" im Kurs \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
+                "newMessageDirect": "Neue Direktnachricht von \"{{ placeholderValues.3 }}\" im Kurs \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}"
             }
         }
     }

@@ -25,17 +25,10 @@ public class FeatureToggleService {
         features = hazelcastInstance.getMap("features");
 
         // Features that are neither enabled nor disabled should be enabled by default
-        // This ensures that all features (except learning paths) are enabled once the system starts up
+        // This ensures that all features are enabled once the system starts up
         for (Feature feature : Feature.values()) {
             if (!features.containsKey(feature)) {
-                if (feature == Feature.LearningPaths) {
-                    // disable learning paths per default
-                    // TODO: remove this once learning paths are deliverable
-                    features.put(feature, false);
-                }
-                else {
-                    features.put(feature, true);
-                }
+                features.put(feature, true);
             }
         }
     }
