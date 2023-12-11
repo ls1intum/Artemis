@@ -36,6 +36,27 @@
             </tr>
         </thead>
         <tbody>
+            <tr *ngIf="quizExam">
+                <td style="max-width: 30px"></td>
+                <td style="max-width: 30px">
+                    <div [ngbTooltip]="getIconTooltip(ExerciseType.QUIZ) | artemisTranslate">
+                        <fa-icon [icon]="getIcon(ExerciseType.QUIZ)" placement="right auto"></fa-icon>
+                    </div>
+                </td>
+                <td style="max-width: 100px; font-weight: bold">
+                    <a class="w-100" (click)="openQuizExam()">
+                        {{ 'artemisApp.quizPool.title' | artemisTranslate }}
+                    </a>
+                </td>
+                <td style="max-width: 30px">
+                    {{ quizExam?.maxPoints }}
+                </td>
+                <td style="max-width: 50px; font-weight: bold">
+                    <div style="max-width: 10px" [ngClass]="setQuizExamIconStatus()" [ngbTooltip]="'artemisApp.examParticipation.' + getQuizExamButtonTooltip() | artemisTranslate">
+                        <fa-icon [icon]="quizExamIcon"></fa-icon>
+                    </div>
+                </td>
+            </tr>
             <tr *ngFor="let item of examExerciseOverviewItems; let i = index">
                 <td style="max-width: 30px">
                     {{ i + 1 }}

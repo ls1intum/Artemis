@@ -36,6 +36,8 @@ import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icon
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
+import { QuizExam } from 'app/entities/quiz-exam.model';
+import { createQuizExam } from 'app/exam/participate/exam.utils';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -66,7 +68,17 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
-    studentExam: StudentExam;
+    _studentExam: StudentExam;
+    quizExam?: QuizExam;
+
+    set studentExam(studentExam: StudentExam) {
+        this._studentExam = studentExam;
+        this.quizExam = createQuizExam(studentExam, this.translateService.instant('artemisApp.quizPool.title'));
+    }
+
+    get studentExam(): StudentExam {
+        return this._studentExam;
+    }
 
     individualStudentEndDate: dayjs.Dayjs;
     individualStudentEndDateWithGracePeriod: dayjs.Dayjs;
@@ -94,7 +106,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     faCheckCircle = faCheckCircle;
 
     isProgrammingExercise() {
-        return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
+        return !this.activeExamPage.isOverviewPage && !this.activeExamPage.isQuizExamPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
     }
 
     isProgrammingExerciseWithCodeEditor(): boolean {
@@ -222,12 +234,17 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     get activePageIndex(): number {
         if (!this.activeExamPage || this.activeExamPage.isOverviewPage) {
             return -1;
+        } else if (this.activeExamPage.isQuizExamPage) {
+            return -2;
         }
         return this.studentExam.exercises!.findIndex((exercise: Exercise) => exercise.id === this.activeExamPage.exercise!.id);
     }
 
     get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
+        if (this.activeExamPage.isQuizExamPage) {
+            return this.currentPageComponents.get(0);
+        }
         return this.currentPageComponents.find(
             (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage.exercise!.id,
         );
@@ -436,7 +453,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 captureException(error);
             }
         } else if (this.studentExam?.exercises && this.activeExamPage) {
-            const index = this.studentExam.exercises.findIndex((exercise: Exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
+            const index = this.studentExam.exercises.findIndex(
+                (exercise: Exercise) => !this.activeExamPage.isOverviewPage && !this.activeExamPage.isQuizExamPage && exercise.id === this.activeExamPage.exercise!.id,
+            );
             this.exerciseIndex = index ? index : 0;
 
             // Reset the visited pages array so ngOnInit will be called for only the active page
@@ -575,7 +594,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * update the current exercise from the navigation
      * @param exerciseChange
      */
-    onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
+    onPageChange(exerciseChange: { overViewChange: boolean; quizExamChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
@@ -587,7 +606,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             captureException(error);
         }
         if (!exerciseChange.overViewChange) {
-            this.initializeExercise(exerciseChange.exercise!);
+            if (!exerciseChange.quizExamChange) {
+                this.initializeExercise(exerciseChange.exercise!);
+            } else {
+                this.initializeQuizExam();
+            }
         } else {
             this.initializeOverviewPage();
         }
@@ -600,6 +623,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      */
     private initializeExercise(exercise: Exercise) {
         this.activeExamPage.isOverviewPage = false;
+        this.activeExamPage.isQuizExamPage = false;
         this.activeExamPage.exercise = exercise;
         // set current exercise Index
         this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1: Exercise) => exercise1.id === exercise.id);
@@ -616,25 +640,38 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         participation.submissions = [ProgrammingSubmission.createInitialCleanSubmissionForExam()];
                         this.programmingSubmissionSubscriptions.push(subscription);
                     }
-                    this.activateActiveComponent();
+                    this.setVisitedAndActivateActiveComponent();
                 }
             });
         } else {
-            this.activateActiveComponent();
+            this.setVisitedAndActivateActiveComponent();
         }
     }
 
     private initializeOverviewPage() {
         this.activeExamPage.isOverviewPage = true;
+        this.activeExamPage.isQuizExamPage = false;
         this.activeExamPage.exercise = undefined;
         this.exerciseIndex = -1;
+    }
+
+    private initializeQuizExam() {
+        this.activeExamPage.isOverviewPage = false;
+        this.activeExamPage.isQuizExamPage = true;
+        this.activeExamPage.exercise = undefined;
+        this.exerciseIndex = -1;
+        this.activateActiveComponent();
     }
 
     /**
      * this will make sure that the component is displayed in the user interface
      */
-    private activateActiveComponent() {
+    private setVisitedAndActivateActiveComponent() {
         this.pageComponentVisited[this.activePageIndex] = true;
+        this.activateActiveComponent();
+    }
+
+    private activateActiveComponent() {
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onActivate();

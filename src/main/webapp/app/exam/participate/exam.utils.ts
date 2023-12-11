@@ -3,6 +3,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
 import { ServerDateService } from 'app/shared/server-date.service';
+import { QuizExam } from 'app/entities/quiz-exam.model';
 
 /**
  * Calculates the individual end time based on the studentExam
@@ -93,15 +94,21 @@ export function isExamResultPublished(isTestRun: boolean, exam: Exam | undefined
     return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(serverDateService.now());
 }
 
-// function createQuizExam(studentExam: StudentExam, titles: { title: string; navigationTitle: string }): QuizExam {
-//     const { title, navigationTitle } = titles;
-//     const quizExamExercise = new QuizExam();
-//     quizExamExercise.navigationTitle = navigationTitle;
-//     quizExamExercise.exerciseGroup!.title = title;
-//     quizExamExercise.overviewTitle = title;
-//     quizExamExercise.title = title;
-//     quizExamExercise.quizQuestions = studentExam.quizQuestions;
-//     quizExamExercise.randomizeQuestionOrder = studentExam.exam?.randomizeQuizExamQuestionsOrder;
-//     quizExamExercise.maxPoints = studentExam.exam?.quizExamMaxPoints;
-//     return quizExamExercise;
-// }
+/**
+ * Create a QuizExam given a StudentExam
+ *
+ *  @param studentExam the student exam from which to create the quiz exam
+ *  @param title the title of the quiz exam
+ */
+export function createQuizExam(studentExam: StudentExam, title: string): QuizExam | undefined {
+    if (studentExam.exam?.quizExamMaxPoints ?? 0 > 0) {
+        const quizExam = new QuizExam();
+        quizExam.title = title;
+        quizExam.exerciseGroup!.title = title;
+        quizExam.quizQuestions = studentExam.quizQuestions;
+        quizExam.randomizeQuestionOrder = studentExam.exam?.randomizeQuizExamQuestionsOrder;
+        quizExam.maxPoints = studentExam.exam?.quizExamMaxPoints;
+        return quizExam;
+    }
+    return undefined;
+}

@@ -99,7 +99,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             const firstSubmission = this.findFirstSubmission();
             this.currentSubmission = firstSubmission;
             this.exerciseIndex = this.findExerciseIndex(firstSubmission!);
-            this.examNavigationBarComponent.changePage(false, this.exerciseIndex, false, firstSubmission);
+            this.examNavigationBarComponent.changePage(false, false, this.exerciseIndex, false, firstSubmission);
         });
     }
 
@@ -341,7 +341,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         const exerciseIndex = this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.currentExercise?.id);
         this.exerciseIndex = exerciseIndex;
         this.currentSubmission = submission;
-        this.examNavigationBarComponent.changePage(false, exerciseIndex, false, submission);
+        this.examNavigationBarComponent.changePage(false, false, exerciseIndex, false, submission);
     }
 
     /**

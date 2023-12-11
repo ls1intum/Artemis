@@ -17,9 +17,11 @@
                 id="exam-navigation-bar"
                 class="sticky-top d-block"
                 [exercises]="studentExam.exercises!"
+                [quizExam]="quizExam"
                 [exerciseIndex]="exerciseIndex"
                 [endDate]="individualStudentEndDate"
                 [overviewPageOpen]="activePageIndex === -1"
+                [quizExamPageOpen]="activePageIndex === -2"
                 [examSessions]="studentExam.examSessions"
                 (onPageChanged)="onPageChange($event)"
                 (examAboutToEnd)="examEnded()"
@@ -27,7 +29,10 @@
             ></jhi-exam-navigation-bar>
             <!-- exercises -->
             <div [hidden]="activePageIndex !== -1">
-                <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)"></jhi-exam-exercise-overview-page>
+                <jhi-exam-exercise-overview-page [studentExam]="studentExam" [quizExam]="quizExam" (onPageChanged)="onPageChange($event)"></jhi-exam-exercise-overview-page>
+            </div>
+            <div *ngIf="quizExam" [hidden]="activePageIndex !== -2">
+                <jhi-quiz-submission-exam [quizConfiguration]="quizExam!" [studentSubmission]="quizExam!.submission!"></jhi-quiz-submission-exam>
             </div>
             <ng-container *ngFor="let exercise of studentExam.exercises; let i = index">
                 <ng-container *ngIf="exercise && exercise.studentParticipations && exercise.studentParticipations[0]">

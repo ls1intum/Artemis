@@ -1,13 +1,16 @@
 <div class="row justify-content-between align-items-start exam-navigation pt-3">
     <div class="col m-0">
-        <div class="col d-none d-lg-block h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0 && !overviewPageOpen">
+        <div class="col d-none d-lg-block h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0 && !overviewPageOpen && !quizExamPageOpen">
             {{ 'artemisApp.examParticipation.progress' | artemisTranslate: { current: exerciseIndex + 1, all: exercises.length } }}
         </div>
-        <div class="col d-block d-lg-none h3 m-0 text-overflow" style="flex: 0.2" *ngIf="exercises && exercises.length > 0 && !overviewPageOpen">
+        <div class="col d-block d-lg-none h3 m-0 text-overflow" style="flex: 0.2" *ngIf="exercises && exercises.length > 0 && !overviewPageOpen && !quizExamPageOpen">
             {{ 'artemisApp.examParticipation.progressSmall' | artemisTranslate: { current: exerciseIndex + 1, all: exercises.length } }}
         </div>
         <div class="h3 m-0 text-overflow d-block col" *ngIf="overviewPageOpen">
             {{ 'artemisApp.examParticipation.examOverview' | artemisTranslate }}
+        </div>
+        <div class="h3 m-0 text-overflow d-block col" *ngIf="quizExamPageOpen">
+            {{ 'artemisApp.quizPool.navigationTitle' | artemisTranslate }}
         </div>
         <div class="mt-2">
             <jhi-exam-live-events-button />
@@ -22,16 +25,33 @@
                     class="btn btn-primary w-100 synced"
                     [ngClass]="getOverviewStatus()"
                     [ngbTooltip]="'artemisApp.examParticipation.examOverview' | artemisTranslate"
-                    (click)="changePage(true, -1)"
+                    (click)="changePage(true, false, -1)"
                 >
                     <fa-icon [icon]="faBars"></fa-icon>
                 </button>
             </div>
             <div class="navigation-item">
-                <button class="btn btn-secondary w-100" (click)="changePage(false, exerciseIndex - 1, false)" [disabled]="exerciseIndex <= 0">
+                <button
+                    class="btn btn-secondary w-100"
+                    (click)="changePage(false, quizExam ? exerciseIndex == 0 : false, exerciseIndex - 1, false)"
+                    [disabled]="exerciseIndex + (quizExam ? 1 : 0) <= 0"
+                >
                     <span aria-hidden="true">&laquo;</span>
                     <span class="sr-only">Previous</span>
                 </button>
+            </div>
+            <!-- quiz exam item -->
+            <div *ngIf="quizExam" class="navigation-item">
+                <button
+                    *ngIf="!examTimeLineView"
+                    class="btn btn-primary w-100 synced"
+                    [ngClass]="setQuizExamButtonStatus()"
+                    [ngbTooltip]="!examTimeLineView ? ('artemisApp.examParticipation.' + getQuizExamButtonTooltip() | artemisTranslate) : ''"
+                    (click)="changePage(false, true, -1)"
+                >
+                    <fa-icon [icon]="icon"></fa-icon>
+                </button>
+                <div class="exerciseIndex">{{ 'artemisApp.quizPool.navigationTitle' | artemisTranslate }}</div>
             </div>
             <ng-container *ngFor="let exercise of exercises; let i = index">
                 <div
@@ -49,7 +69,7 @@
                         class="btn btn-primary w-100"
                         [ngClass]="setExerciseButtonStatus(i)"
                         [ngbTooltip]="!examTimeLineView ? ('artemisApp.examParticipation.' + getExerciseButtonTooltip(exercise) | artemisTranslate) : ''"
-                        (click)="changePage(false, i, false)"
+                        (click)="changePage(false, false, i, false)"
                     >
                         <fa-icon [icon]="icon"></fa-icon>
                     </button>
@@ -59,8 +79,8 @@
             <div class="navigation-item">
                 <button
                     class="btn btn-secondary w-100"
-                    (click)="changePage(false, overviewPageOpen ? 0 : exerciseIndex + 1, false)"
-                    [disabled]="exerciseIndex >= exercises.length - 1 || exerciseIndex < 0"
+                    (click)="changePage(false, !!(quizExam && overviewPageOpen), overviewPageOpen ? 0 : exerciseIndex + 1, false)"
+                    [disabled]="overviewPageOpen || exerciseIndex >= exercises.length - 1 || exerciseIndex + (quizExam ? 1 : 0) < 0"
                 >
                     <span aria-hidden="true">&raquo;</span>
                     <span class="sr-only">Next</span>
@@ -71,7 +91,13 @@
     <div class="col">
         <div *ngIf="!examTimeLineView" class="row justify-content-end align-items-start pe-2">
             <div class="d-flex mb-2 justify-content-end">
-                <button id="save" *ngIf="!overviewPageOpen" [class.invisible]="isProgrammingExercise() || isFileUploadExercise()" class="btn btn-primary" (click)="saveExercise()">
+                <button
+                    id="save"
+                    *ngIf="!overviewPageOpen"
+                    [class.invisible]="!quizExamPageOpen && (isProgrammingExercise() || isFileUploadExercise())"
+                    class="btn btn-primary"
+                    (click)="saveExercise()"
+                >
                     {{ 'artemisApp.examParticipation.' + (exerciseIndex >= exercises.length - 1 ? 'submitLastExercise' : 'submitOtherExercise') | artemisTranslate }}
                 </button>
                 <button id="hand-in-early" class="btn btn-danger ms-2" (click)="handInEarly()">

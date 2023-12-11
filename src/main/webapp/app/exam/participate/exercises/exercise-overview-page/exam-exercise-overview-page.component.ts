@@ -1,10 +1,11 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-item.model';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { QuizExam } from 'app/entities/quiz-exam.model';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
@@ -13,11 +14,15 @@ import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 })
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit, OnChanges {
     @Input() studentExam: StudentExam;
-    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise: Exercise; forceSave: boolean }>();
+    @Input() quizExam?: QuizExam;
+    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; quizExamChange: boolean; exercise?: Exercise; forceSave: boolean }>();
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
 
+    readonly ExerciseType = ExerciseType;
+
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
+    quizExamIcon = faEdit;
 
     constructor(
         protected changeDetectorReference: ChangeDetectorRef,
@@ -42,11 +47,27 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     }
 
     openExercise(exercise: Exercise) {
-        this.onPageChanged.emit({ overViewChange: false, exercise, forceSave: false });
+        this.onPageChanged.emit({ overViewChange: false, quizExamChange: false, exercise, forceSave: false });
+    }
+
+    /**
+     * Open quiz exam
+     */
+    openQuizExam() {
+        this.onPageChanged.emit({ overViewChange: false, quizExamChange: true, exercise: undefined, forceSave: false });
     }
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         return this.examParticipationService.getExerciseButtonTooltip(exercise);
+    }
+
+    /**
+     * Get tooltip for quiz exam button
+     *
+     * @return synced
+     */
+    getQuizExamButtonTooltip(): ButtonTooltipType {
+        return 'synced';
     }
 
     /**
@@ -77,5 +98,15 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
             item.icon = faEdit;
             return 'notSynced';
         }
+    }
+
+    /**
+     * Set quizExamIcon and return the icon status of the quiz exam
+     *
+     * @return synced
+     */
+    setQuizExamIconStatus() {
+        this.quizExamIcon = faEdit;
+        return 'synced';
     }
 }
