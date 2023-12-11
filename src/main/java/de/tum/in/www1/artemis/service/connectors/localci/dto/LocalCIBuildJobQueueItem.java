@@ -8,6 +8,8 @@ public class LocalCIBuildJobQueueItem implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private String id;
+
     private String name;
 
     private long participationId;
@@ -30,6 +32,7 @@ public class LocalCIBuildJobQueueItem implements Serializable {
     private boolean isPushToTestRepository;
 
     public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isPushToTestRepository) {
+        this.id = String.valueOf(participationId) + submissionDate;
         this.name = name;
         this.participationId = participationId;
         this.commitHash = commitHash;
@@ -37,6 +40,14 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         this.priority = priority;
         this.courseId = courseId;
         this.isPushToTestRepository = isPushToTestRepository;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getName() {

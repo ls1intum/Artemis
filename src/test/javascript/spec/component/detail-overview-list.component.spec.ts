@@ -57,12 +57,8 @@ describe('DetailOverviewList', () => {
         component.sections = sections;
         fixture.detectChanges();
         expect(component.headlines).toStrictEqual([{ id: 'headline-1', translationKey: 'headline.1' }]);
+        expect(component.headlinesRecord).toStrictEqual({ 'headline.1': 'headline-1' });
         expect(DetailOverviewListComponent).not.toBeNull();
-    });
-
-    it('should return headline id', () => {
-        component.headlines = [{ id: 'some-id', translationKey: 'translation.key' }];
-        expect(component.getHeadlineId('translation.key')).toBe('some-id');
     });
 
     it('should open git diff modal', () => {
