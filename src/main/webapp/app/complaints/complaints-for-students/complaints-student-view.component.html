@@ -28,11 +28,13 @@
                     <button
                         id="complain"
                         class="btn btn-primary"
-                        [class.not-allowed]="(!isExamMode && remainingNumberOfComplaints == 0) || !timeOfComplaintValid"
+                        [class.not-allowed]="(!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid"
                         (click)="formComplaintType = ComplaintType.COMPLAINT"
-                        [disabled]="(!isExamMode && remainingNumberOfComplaints == 0) || !timeOfComplaintValid"
+                        [disabled]="(!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid"
                         title="{{
-                            (!isExamMode && remainingNumberOfComplaints == 0) || !timeOfComplaintValid ? ('artemisApp.complaint.complaintNotAllowedTooltip' | artemisTranslate) : ''
+                            (!isExamMode && remainingNumberOfComplaints === 0) || !timeOfComplaintValid
+                                ? ('artemisApp.complaint.complaintNotAllowedTooltip' | artemisTranslate)
+                                : ''
                         }}"
                     >
                         {{ 'artemisApp.complaint.moreInfo' | artemisTranslate }}

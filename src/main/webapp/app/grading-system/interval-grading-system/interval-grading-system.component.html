@@ -31,7 +31,7 @@
                     <th [colSpan]="2">
                         <span>
                             {{
-                                this.gradingScale.gradeType == GradeType.GRADE
+                                this.gradingScale.gradeType === GradeType.GRADE
                                     ? ('artemisApp.gradingSystem.gradeName' | artemisTranslate)
                                     : ('artemisApp.gradingSystem.bonusPoints' | artemisTranslate)
                             }}
@@ -101,8 +101,8 @@
                                         step="0.5"
                                         min="0"
                                         (ngModelChange)="setPointsInterval(i, $event)"
-                                        [required]="maxPoints != undefined && maxPoints > 0"
-                                        [disabled]="maxPoints == undefined || maxPoints <= 0"
+                                        [required]="maxPoints !== undefined && maxPoints > 0"
+                                        [disabled]="maxPoints === undefined || maxPoints <= 0"
                                     />
                                 </td>
                             }

@@ -196,12 +196,12 @@
                 class="form-check-input"
                 name="feedbackSuggestionsEnabled"
                 [checked]="exercise.feedbackSuggestionsEnabled"
-                [disabled]="exercise.assessmentType == assessmentType.AUTOMATIC || readOnly"
+                [disabled]="exercise.assessmentType === assessmentType.AUTOMATIC || readOnly"
                 id="feedbackSuggestionsEnabled"
                 (change)="exercise.feedbackSuggestionsEnabled = !exercise.feedbackSuggestionsEnabled"
             />
             <label
-                [ngStyle]="exercise.assessmentType == assessmentType.AUTOMATIC ? { color: 'grey' } : {}"
+                [ngStyle]="exercise.assessmentType === assessmentType.AUTOMATIC ? { color: 'grey' } : {}"
                 class="form-control-label"
                 for="feedbackSuggestionsEnabled"
                 jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"
