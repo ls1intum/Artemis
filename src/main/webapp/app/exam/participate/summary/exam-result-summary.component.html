@@ -38,10 +38,8 @@
     {{ 'artemisApp.exam.exercises' | artemisTranslate }}
 </h3>
 <div *ngFor="let exercise of studentExam?.exercises; let i = index" [id]="'exercise-' + exercise.id">
-    <div class="question card">
-        <jhi-result-summary-exercise-card-header [index]="i" [exercise]="exercise" [exerciseInfo]="exerciseInfos[exercise.id!]" [resultsPublished]="resultsArePublished" />
-
-        <div class="card-body question-card-body" [ngbCollapse]="exerciseInfos[exercise.id!].isCollapsed">
+    <jhi-collapsable-card [index]="i" [exercise]="exercise" [exerciseInfo]="exerciseInfos[exercise.id!]" [resultsPublished]="resultsArePublished" [exerciseInfos]="exerciseInfos">
+        <div class="collapsable-content">
             <div class="clearfix">
                 <span class="exercise-buttons">
                     <a
@@ -177,7 +175,7 @@
                 {{ 'artemisApp.exam.examSummary.noSubmissionFound' | artemisTranslate }}
             </ng-template>
         </div>
-    </div>
+    </jhi-collapsable-card>
 </div>
 
 <button class="btn btn-light mx-auto d-block" (click)="scrollToOverviewOrTop()" id="back-to-overview-button">

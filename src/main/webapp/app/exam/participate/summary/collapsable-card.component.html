@@ -1,0 +1,7 @@
+<div class="question card">
+    <jhi-result-summary-exercise-card-header [index]="index" [exercise]="exercise" [exerciseInfo]="exerciseInfos[exercise.id!]" [resultsPublished]="resultsPublished" />
+
+    <div class="card-body question-card-body" [ngbCollapse]="exerciseInfos[exercise.id!].isCollapsed">
+        <ng-content select=".collapsable-content"></ng-content>
+    </div>
+</div>
