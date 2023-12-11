@@ -463,5 +463,9 @@ export class ExamResultSummaryComponent implements OnInit {
         };
     }
 
+    toggleCollapseExercise(exerciseInfo: ResultSummaryExerciseInfo) {
+        return () => (exerciseInfo!.isCollapsed = !exerciseInfo!.isCollapsed);
+    }
+
     protected readonly getIcon = getIcon;
 }
