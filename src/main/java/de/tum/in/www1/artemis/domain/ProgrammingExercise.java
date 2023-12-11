@@ -149,12 +149,10 @@ public class ProgrammingExercise extends Exercise {
 
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
-     * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
-     * It is not persisted as this setting can not be changed afterwards.
      * This is currently only supported for HASKELL and OCAML on BAMBOO, thus the default value is false.
      */
-    @Transient
-    private boolean checkoutSolutionRepositoryTransient = false;
+    @Column(name = "checkout_solution_repository", table = "programming_exercise_details", columnDefinition = "boolean default false")
+    private boolean checkoutSolutionRepository;
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -741,11 +739,11 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean getCheckoutSolutionRepository() {
-        return this.checkoutSolutionRepositoryTransient;
+        return this.checkoutSolutionRepository;
     }
 
     public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
-        this.checkoutSolutionRepositoryTransient = checkoutSolutionRepository;
+        this.checkoutSolutionRepository = checkoutSolutionRepository;
     }
 
     /**
