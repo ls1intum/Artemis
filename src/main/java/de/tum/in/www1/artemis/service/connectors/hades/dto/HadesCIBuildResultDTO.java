@@ -23,6 +23,15 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
 
     private final ZonedDateTime buildRunDate;
 
+    public HadesCIBuildResultDTO(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful,
+            ZonedDateTime buildRunDate) {
+        this.assignmentRepoBranchName = assignmentRepoBranchName;
+        this.assignmentRepoCommitHash = assignmentRepoCommitHash;
+        this.testsRepoCommitHash = testsRepoCommitHash;
+        this.isBuildSuccessful = isBuildSuccessful;
+        this.buildRunDate = buildRunDate;
+    }
+
     // Missing
 
     @Override
@@ -64,6 +73,11 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
     @Override
     public boolean hasLogs() {
         return false;
+    }
+
+    @Override
+    public List<BuildLogEntry> extractBuildLogs() {
+        return null;
     }
 
     @Override
