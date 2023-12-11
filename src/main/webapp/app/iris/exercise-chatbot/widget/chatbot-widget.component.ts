@@ -878,7 +878,6 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     }
 
     getConvertedErrorMap() {
-        console.log(this.error);
         if (this.error?.paramsMap) {
             return Object.fromEntries(this.error.paramsMap);
         }
