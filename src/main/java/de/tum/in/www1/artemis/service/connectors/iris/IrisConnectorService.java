@@ -93,14 +93,14 @@ public class IrisConnectorService {
      * @param template       The guidance program to execute
      * @param preferredModel The LLM model to be used (e.g., GPT3.5-turbo). Note: The used model might not be the
      *                           preferred model (e.g., if an error occurs or the preferredModel is not reachable)
-     * @param parameters     A map of argument variables required for the guidance template (if they are specified in
+     * @param argumentsDTO   A map of argument variables required for the guidance template (if they are specified in
      *                           the template)
      * @return The response of the type {@link IrisMessageResponseV2DTO}
      */
     @Async
-    public CompletableFuture<IrisMessageResponseV2DTO> sendRequestV2(String template, String preferredModel, Map<String, Object> parameters) {
+    public CompletableFuture<IrisMessageResponseV2DTO> sendRequestV2(String template, String preferredModel, Object argumentsDTO) {
         var endpoint = "/api/v2/messages";
-        var request = new IrisRequestV2DTO(template, preferredModel, parameters);
+        var request = new IrisRequestV2DTO(template, preferredModel, argumentsDTO);
         return tryGetResponse(endpoint, request, preferredModel, IrisMessageResponseV2DTO.class);
     }
 
