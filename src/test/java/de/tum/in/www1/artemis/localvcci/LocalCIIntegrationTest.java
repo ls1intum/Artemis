@@ -32,14 +32,14 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
-    private LocalCIConnectorService localCIConnectorService;
+    private LocalVCServletService localVCServletService;
 
     private LocalRepository studentAssignmentRepository;
 
@@ -88,7 +88,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Test
     void testInvalidLocalVCRepositoryUrl() {
         // The local repository cannot be resolved to a valid LocalVCRepositoryUrl as it is not located at the correct base path and is not a bare repository.
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.localGit.getRepository()))
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localVCServletService.processNewPush(commitHash, studentAssignmentRepository.localGit.getRepository()))
                 .withMessageContaining("Could not create valid repository URL from path");
     }
 
@@ -104,8 +104,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // student participation
         programmingExerciseStudentParticipationRepository.delete(studentParticipation);
-        assertThatExceptionOfType(LocalCIException.class)
-                .isThrownBy(() -> localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository()))
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository()))
                 .withMessageContaining(expectedErrorMessage);
 
         // solution participation
@@ -115,7 +114,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExercise.setSolutionParticipation(null);
         programmingExerciseRepository.save(programmingExercise);
         solutionProgrammingExerciseParticipationRepository.delete(solutionParticipation);
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localCIConnectorService.processNewPush(solutionCommitHash, solutionRepository.originGit.getRepository()))
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localVCServletService.processNewPush(solutionCommitHash, solutionRepository.originGit.getRepository()))
                 .withMessageContaining(expectedErrorMessage);
 
         // template participation
@@ -126,7 +125,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExerciseRepository.save(programmingExercise);
         templateProgrammingExerciseParticipationRepository.delete(templateParticipation);
 
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localCIConnectorService.processNewPush(templateCommitHash, templateRepository.originGit.getRepository()))
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localVCServletService.processNewPush(templateCommitHash, templateRepository.originGit.getRepository()))
                 .withMessageContaining(expectedErrorMessage);
 
         // team participation
@@ -144,7 +143,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         teamRepository.save(team);
         String teamCommitHash = localVCLocalCITestService.commitFile(teamLocalRepository.localRepoFile.toPath(), teamLocalRepository.localGit);
         teamLocalRepository.localGit.push().call();
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localCIConnectorService.processNewPush(teamCommitHash, teamLocalRepository.originGit.getRepository()))
+        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localVCServletService.processNewPush(teamCommitHash, teamLocalRepository.originGit.getRepository()))
                 .withMessageContaining(expectedErrorMessage);
 
         // Cleanup
@@ -159,7 +158,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Should still work because in that case the latest commit should be retrieved from the repository.
-        localCIConnectorService.processNewPush(null, studentAssignmentRepository.originGit.getRepository());
+        localVCServletService.processNewPush(null, studentAssignmentRepository.originGit.getRepository());
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
     }
 
@@ -170,7 +169,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Call processNewPush with a wrong commit hash. This should throw an exception.
         assertThatExceptionOfType(LocalCIException.class)
-                .isThrownBy(() -> localCIConnectorService.processNewPush(DUMMY_COMMIT_HASH, studentAssignmentRepository.originGit.getRepository()))
+                .isThrownBy(() -> localVCServletService.processNewPush(DUMMY_COMMIT_HASH, studentAssignmentRepository.originGit.getRepository()))
                 .withMessageContaining("Could not resolve commit hash");
 
     }
@@ -182,7 +181,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExercise.setProjectType(null);
         programmingExerciseRepository.save(programmingExercise);
 
-        localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
     }
 
@@ -205,7 +204,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
             }
         });
 
-        localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         // Should return a build result that indicates that the build failed.
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), null, 0, true);
     }
@@ -221,7 +220,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
         when(copyArchiveFromContainerCmd.exec()).thenThrow(new NotFoundException("Cannot find results"));
 
-        localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         // Should return a build result that indicates that the build failed.
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 0, true);
     }
@@ -243,7 +242,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
             }
         });
 
-        localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
 
         await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(studentParticipation), any()));
 
@@ -256,8 +255,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     void testFaultyResultFiles() throws IOException {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, WORKING_DIRECTORY + "/testing-dir/build/test-results/test");
-        localCIConnectorService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, "/testing-dir/build/test-results/test");
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
 
         await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(studentParticipation), any()));
 

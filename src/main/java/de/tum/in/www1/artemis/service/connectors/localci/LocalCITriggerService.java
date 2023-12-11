@@ -67,4 +67,5 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), commitHash, System.currentTimeMillis(), priority, courseId,
                 isPushToTestRepository);
     }
+
 }
