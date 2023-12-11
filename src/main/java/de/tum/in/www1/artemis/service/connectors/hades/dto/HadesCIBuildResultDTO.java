@@ -13,6 +13,18 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
 
+    private final String assignmentRepoBranchName;
+
+    private final String assignmentRepoCommitHash;
+
+    private final String testsRepoCommitHash;
+
+    private final boolean isBuildSuccessful;
+
+    private final ZonedDateTime buildRunDate;
+
+    // Missing
+
     @Override
     public ZonedDateTime getBuildRunDate() {
         return null;
@@ -35,6 +47,7 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
 
     @Override
     public boolean isBuildSuccessful() {
+        // TODO: implement for Hades
         return false;
     }
 

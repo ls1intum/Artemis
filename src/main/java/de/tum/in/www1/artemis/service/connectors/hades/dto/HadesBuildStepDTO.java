@@ -42,7 +42,6 @@ public class HadesBuildStepDTO implements Serializable {
         this.id = id;
         this.name = name;
         this.image = image;
-        this.metadata = metadata;
         this.script = script;
     }
 
@@ -51,7 +50,6 @@ public class HadesBuildStepDTO implements Serializable {
         this.name = name;
         this.image = image;
         this.metadata = metadata;
-        this.script = script;
     }
 
     public Integer getId() {
