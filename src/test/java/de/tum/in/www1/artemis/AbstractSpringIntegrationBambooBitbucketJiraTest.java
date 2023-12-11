@@ -34,9 +34,7 @@ import com.atlassian.bamboo.specs.api.exceptions.BambooSpecsPublishingException;
 import com.atlassian.bamboo.specs.util.BambooServer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.in.www1.artemis.connector.BambooRequestMockProvider;
-import de.tum.in.www1.artemis.connector.BitbucketRequestMockProvider;
-import de.tum.in.www1.artemis.connector.JiraRequestMockProvider;
+import de.tum.in.www1.artemis.connector.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -44,6 +42,7 @@ import de.tum.in.www1.artemis.domain.participation.AbstractBaseProgrammingExerci
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.service.TimeService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooResultService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.BambooService;
@@ -65,7 +64,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @ResourceLock("AbstractSpringIntegrationBambooBitbucketJiraTest")
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athena", "apollon", "iris", "lti" })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athena", "apollon", "iris", "lti", "aeolus" })
 public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends AbstractArtemisIntegrationTest {
 
     @SpyBean
@@ -97,6 +96,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     @SpyBean
     protected BambooServer bambooServer;
 
+    @SpyBean
+    protected OAuth2JWKSService oAuth2JWKSService;
+
     @Autowired
     protected BambooRequestMockProvider bambooRequestMockProvider;
 
@@ -107,11 +109,14 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     protected JiraRequestMockProvider jiraRequestMockProvider;
 
     @Autowired
+    protected AeolusRequestMockProvider aeolusRequestMockProvider;
+
+    @Autowired
     protected PasswordService passwordService;
 
     @AfterEach
     protected void resetSpyBeans() {
-        Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer, textBlockService);
+        Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer, textBlockService, oAuth2JWKSService);
         super.resetSpyBeans();
     }
 

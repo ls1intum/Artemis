@@ -1,5 +1,6 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewContainerRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewContainerRef } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
+import { ThemeService } from 'app/core/theme/theme.service';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { ShowdownExtension } from 'showdown';
@@ -65,6 +66,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnIni
     private injectableContentFoundSubscription: Subscription;
     private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;
+    private themeChangeSubscription: Subscription;
     private testCases?: ProgrammingExerciseTestCase[];
 
     // Icons
@@ -80,9 +82,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnIni
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseGradingService: ProgrammingExerciseGradingService,
-        private changeDetectorRef: ChangeDetectorRef,
+        themeService: ThemeService,
     ) {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
+        this.themeChangeSubscription = themeService.getCurrentThemeObservable().subscribe(() => {
+            this.updateMarkdown();
+        });
     }
 
     /**
@@ -325,6 +330,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnIni
         }
         if (this.testCasesSubscription) {
             this.testCasesSubscription.unsubscribe();
+        }
+        if (this.themeChangeSubscription) {
+            this.themeChangeSubscription.unsubscribe();
         }
     }
 }

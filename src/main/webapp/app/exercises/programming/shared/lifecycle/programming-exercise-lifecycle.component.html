@@ -168,16 +168,35 @@
             class="form-check-input"
             name="releaseTestsWithExampleSolution"
             [checked]="exercise.releaseTestsWithExampleSolution"
-            [disabled]="!exercise.exampleSolutionPublicationDate || readOnly"
+            [disabled]="(!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate) || readOnly"
             id="releaseTestsWithExampleSolution"
             (change)="toggleReleaseTests()"
         />
         <label
-            [ngStyle]="!exercise.exampleSolutionPublicationDate && !readOnly ? { color: 'grey' } : {}"
+            [ngStyle]="!exercise.exampleSolutionPublicationDate && !exercise.exerciseGroup?.exam?.exampleSolutionPublicationDate && !readOnly ? { color: 'grey' } : {}"
             class="form-control-label"
             for="releaseTestsWithExampleSolution"
             jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"
         ></label>
         <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'"></jhi-help-icon>
+    </div>
+
+    <div class="form-check" *ngIf="(isAthenaEnabled$ | async) && !isExamMode">
+        <input
+            type="checkbox"
+            class="form-check-input"
+            name="feedbackSuggestionsEnabled"
+            [checked]="exercise.feedbackSuggestionsEnabled"
+            [disabled]="exercise.assessmentType == assessmentType.AUTOMATIC || readOnly"
+            id="feedbackSuggestionsEnabled"
+            (change)="exercise.feedbackSuggestionsEnabled = !exercise.feedbackSuggestionsEnabled"
+        />
+        <label
+            [ngStyle]="exercise.assessmentType == assessmentType.AUTOMATIC ? { color: 'grey' } : {}"
+            class="form-control-label"
+            for="feedbackSuggestionsEnabled"
+            jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"
+        ></label>
+        <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'"></jhi-help-icon>
     </div>
 </div>

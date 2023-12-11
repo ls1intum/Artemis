@@ -12,7 +12,6 @@
                 durationLabelText="artemisApp.examManagement.editWorkingTime.label"
                 [(ngModel)]="workingTimeSeconds"
                 [allowNegative]="true"
-                [showRelative]="false"
                 [disabled]="isLoading"
             />
         </div>
@@ -29,8 +28,8 @@
                 confirmationText="artemisApp.examManagement.editWorkingTime.typeNameToConfirm"
                 [entityName]="exam.title!"
                 [disabled]="isLoading"
-                [(ngModel)]="confirmEntityName"
                 name="confirmEntityName"
+                ngModel
             />
         </div>
     </div>
@@ -42,8 +41,8 @@
             id="confirm"
             type="submit"
             class="btn btn-warning"
-            [style.cursor]="editForm.invalid || isLoading || !isWorkingTimeValid() ? 'not-allowed' : 'pointer'"
-            [disabled]="editForm.invalid || isLoading || !isWorkingTimeValid()"
+            [style.cursor]="editForm.invalid || isLoading || !isWorkingTimeChangeValid ? 'not-allowed' : 'pointer'"
+            [disabled]="editForm.invalid || isLoading || !isWorkingTimeChangeValid"
         >
             <span *ngIf="isLoading"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
             <fa-icon *ngIf="!isLoading" [icon]="faCheck"></fa-icon>&nbsp;

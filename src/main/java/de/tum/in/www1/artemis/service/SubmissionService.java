@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMI
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaSubmissionSelectionService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -59,10 +61,13 @@ public class SubmissionService {
 
     protected final FeedbackService feedbackService;
 
+    private final Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService) {
+            ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
+            Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -76,6 +81,7 @@ public class SubmissionService {
         this.participationRepository = participationRepository;
         this.complaintRepository = complaintRepository;
         this.feedbackService = feedbackService;
+        this.athenaSubmissionSelectionService = athenaSubmissionSelectionService;
     }
 
     /**
@@ -218,7 +224,58 @@ public class SubmissionService {
     }
 
     /**
-     * Given an exercise id, find a random submission for that exercise which still doesn't have any manual result.
+     * Given an exercise, find the submission to assess using Athena, if enabled.
+     *
+     * @param <S>                 the submission type
+     * @param exercise            the exercise for which we want to retrieve a submission without manual result
+     * @param skipAssessmentQueue skip the Athena assessment queue and return a random submission
+     * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param correctionRound     the correction round we want our submission to have results for
+     * @param findSubmissionById  method to find a submission by id
+     * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    public <S extends Submission> Optional<S> getAthenaSubmissionToAssess(Exercise exercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound,
+            Function<Long, Optional<S>> findSubmissionById) {
+        if (exercise.getFeedbackSuggestionsEnabled() && athenaSubmissionSelectionService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
+            var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
+            var athenaSubmissionId = athenaSubmissionSelectionService.get().getProposedSubmissionId(exercise, assessableSubmissions.stream().map(Submission::getId).toList());
+            if (athenaSubmissionId.isPresent()) {
+                var submission = findSubmissionById.apply(athenaSubmissionId.get());
+                // Test again if it is still assessable (Athena might have taken some time to respond and another assessment might have started in the meantime):
+                if (submission.isPresent() && (submission.get().getLatestResult() == null || !submission.get().getLatestResult().isManual())) {
+                    return submission;
+                }
+                else {
+                    log.debug("Athena proposed submission {} is not assessable anymore", athenaSubmissionId.get());
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Given an exercise, find a submission to assess using Athena (or alternatively randomly).
+     *
+     * @param <S>                 the submission type
+     * @param exercise            the exercise for which we want to retrieve a submission without manual result
+     * @param skipAssessmentQueue skip the Athena assessment queue and return a random submission
+     * @param correctionRound     the correction round we want our submission to have results for
+     * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param findSubmissionById  method to find a submission by id
+     * @return a submission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    public <S extends Submission> Optional<S> getRandomAssessableSubmission(Exercise exercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound,
+            Function<Long, Optional<S>> findSubmissionById) {
+        var submissionProposedByAthena = getAthenaSubmissionToAssess(exercise, skipAssessmentQueue, examMode, correctionRound, findSubmissionById);
+        if (submissionProposedByAthena.isPresent()) {
+            return submissionProposedByAthena;
+        }
+
+        return (Optional<S>) getRandomAssessableSubmission(exercise, examMode, correctionRound);
+    }
+
+    /**
+     * Given an exercise, find a random submission for that exercise which still doesn't have any manual result.
      * No manual result means that no user has started an assessment for the corresponding submission yet.
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      * If {@code correctionRound} is bigger than 0, only submissions are shown for which the user has not assessed the first result.

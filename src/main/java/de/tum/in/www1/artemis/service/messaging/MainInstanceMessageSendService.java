@@ -21,11 +21,13 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     @Override
     public void sendProgrammingExerciseSchedule(Long exerciseId) {
         instanceMessageReceiveService.processScheduleProgrammingExercise(exerciseId);
+        instanceMessageReceiveService.processSchedulePotentialAthenaExercise(exerciseId);
     }
 
     @Override
     public void sendProgrammingExerciseScheduleCancel(Long exerciseId) {
         instanceMessageReceiveService.processScheduleProgrammingExerciseCancel(exerciseId);
+        instanceMessageReceiveService.processPotentialAthenaExerciseScheduleCancel(exerciseId);
     }
 
     @Override
@@ -45,12 +47,12 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
 
     @Override
     public void sendTextExerciseSchedule(Long exerciseId) {
-        instanceMessageReceiveService.processScheduleTextExercise(exerciseId);
+        instanceMessageReceiveService.processSchedulePotentialAthenaExercise(exerciseId);
     }
 
     @Override
     public void sendTextExerciseScheduleCancel(Long exerciseId) {
-        instanceMessageReceiveService.processTextExerciseScheduleCancel(exerciseId);
+        instanceMessageReceiveService.processPotentialAthenaExerciseScheduleCancel(exerciseId);
     }
 
     @Override

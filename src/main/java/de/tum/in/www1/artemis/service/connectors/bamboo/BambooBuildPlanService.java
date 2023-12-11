@@ -11,6 +11,8 @@ import java.util.*;
 import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
@@ -46,18 +48,21 @@ import com.atlassian.bamboo.specs.util.BambooServer;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.UrlService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusRepository;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 
 @Service
 @Profile("bamboo")
 public class BambooBuildPlanService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BambooBuildPlanService.class);
 
     @Value("${artemis.continuous-integration.user}")
     private String bambooUser;
@@ -81,16 +86,20 @@ public class BambooBuildPlanService {
 
     private final Optional<VersionControlService> versionControlService;
 
+    private final Optional<AeolusBuildPlanService> aeolusBuildPlanService;
+
     private final UrlService urlService;
 
     public BambooBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Optional<VersionControlService> versionControlService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration, UrlService urlService, BambooInternalUrlService bambooInternalUrlService) {
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration, UrlService urlService, BambooInternalUrlService bambooInternalUrlService,
+            Optional<AeolusBuildPlanService> aeolusBuildPlanService) {
         this.resourceLoaderService = resourceLoaderService;
         this.bambooServer = bambooServer;
         this.versionControlService = versionControlService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.urlService = urlService;
         this.bambooInternalUrlService = bambooInternalUrlService;
+        this.aeolusBuildPlanService = aeolusBuildPlanService;
     }
 
     /**
@@ -112,14 +121,24 @@ public class BambooBuildPlanService {
         final String projectName = programmingExercise.getProjectName();
         final boolean recordTestwiseCoverage = Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && "SOLUTION".equals(planKey);
 
-        Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryUrl, testRepositoryUrl, programmingExercise.getCheckoutSolutionRepository(),
-                solutionRepositoryUrl, auxiliaryRepositories)
-                .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
-                        programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository(),
-                        recordTestwiseCoverage, programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
+        String assignedKey = null;
 
-        bambooServer.publish(plan);
-        setBuildPlanPermissionsForExercise(programmingExercise, plan.getKey().toString());
+        if (aeolusBuildPlanService.isPresent()) {
+            assignedKey = createCustomAeolusBuildPlanForExercise(programmingExercise, projectKey + "-" + planKey, planDescription, repositoryUrl, testRepositoryUrl,
+                    solutionRepositoryUrl, auxiliaryRepositories);
+        }
+
+        if (assignedKey == null) {
+            Plan plan = createDefaultBuildPlan(planKey, planDescription, projectKey, projectName, repositoryUrl, testRepositoryUrl,
+                    programmingExercise.getCheckoutSolutionRepository(), solutionRepositoryUrl, auxiliaryRepositories)
+                    .stages(createBuildStage(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType(), programmingExercise.getPackageName(),
+                            programmingExercise.hasSequentialTestRuns(), programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.getCheckoutSolutionRepository(),
+                            recordTestwiseCoverage, programmingExercise.getAuxiliaryRepositoriesForBuildPlan()));
+            bambooServer.publish(plan);
+            assignedKey = plan.getKey().toString();
+        }
+
+        setBuildPlanPermissionsForExercise(programmingExercise, assignedKey);
     }
 
     /**
@@ -545,5 +564,58 @@ public class BambooBuildPlanService {
      */
     private String[] getDefaultDockerRunArguments() {
         return programmingLanguageConfiguration.getDefaultDockerFlags().toArray(new String[0]);
+    }
+
+    /**
+     * Creates a custom Build Plan for a Programming Exercise using Aeolus. If the build plan could not be created, null is
+     * returned. Otherwise, the key of the created build plan is returned. Not the whole key is returned, only the build plan
+     * key, without the project key. Example: "PROJECT-BUILDPLANKEY" is created -> "BUILDPLANKEY" is returned, same as the
+     * default build plan creation.
+     *
+     * @param programmingExercise   the programming exercise for which to create the build plan
+     * @param buildPlanId           the id of the build plan
+     * @param planDescription       the description of the build plan
+     * @param repositoryUrl         the url of the assignment repository
+     * @param testRepositoryUrl     the url of the test repository
+     * @param solutionRepositoryUrl the url of the solution repository
+     * @param auxiliaryRepositories List of auxiliary repositories to be included in the build plan
+     * @return the key of the created build plan, or null if it could not be created
+     */
+    private String createCustomAeolusBuildPlanForExercise(ProgrammingExercise programmingExercise, String buildPlanId, String planDescription, VcsRepositoryUrl repositoryUrl,
+            VcsRepositoryUrl testRepositoryUrl, VcsRepositoryUrl solutionRepositoryUrl, List<AuxiliaryRepository.AuxRepoNameWithUrl> auxiliaryRepositories)
+            throws ContinuousIntegrationBuildPlanException {
+        if (aeolusBuildPlanService.isEmpty()) {
+            return null;
+        }
+        if (programmingExercise.getBuildPlanConfiguration() == null) {
+            // If no custom build plan configuration is present, we will use the default build plan creation
+            return null;
+        }
+        String assignedKey = null;
+        try {
+            Windfile windfile = programmingExercise.getWindfile();
+            Map<String, AeolusRepository> repositories = aeolusBuildPlanService.get().createRepositoryMapForWindfile(programmingExercise.getProgrammingLanguage(),
+                    programmingExercise.getBranch(), programmingExercise.getCheckoutSolutionRepository(), repositoryUrl, testRepositoryUrl, solutionRepositoryUrl,
+                    auxiliaryRepositories);
+
+            String resultHookUrl = artemisServerUrl + NEW_RESULT_RESOURCE_API_PATH;
+            windfile.setPreProcessingMetadata(buildPlanId, programmingExercise.getProjectName(), this.gitUser, resultHookUrl, planDescription, repositories);
+            String generatedKey = aeolusBuildPlanService.get().publishBuildPlan(windfile, AeolusTarget.BAMBOO);
+            /*
+             * Aeolus returns the key of the build plan in the format "PROJECT-BUILDPLANKEY". To stay consistent with the
+             * default build plan creation, we return only the build plan key.
+             */
+            if (generatedKey != null && generatedKey.contains("-")) {
+                assignedKey = generatedKey.split("-")[1];
+            }
+            else {
+                throw new ContinuousIntegrationBuildPlanException("Could not create custom build plan for exercise " + programmingExercise.getTitle());
+            }
+        }
+        catch (ContinuousIntegrationBuildPlanException e) {
+            LOGGER.error("Could not create custom build plan for exercise " + programmingExercise.getTitle() + " with id " + programmingExercise.getId()
+                    + ", will create default build plan", e);
+        }
+        return assignedKey;
     }
 }
