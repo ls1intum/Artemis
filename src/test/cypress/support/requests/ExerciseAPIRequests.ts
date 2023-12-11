@@ -30,15 +30,15 @@ import {
     ExerciseType,
     GET,
     MODELING_EXERCISE_BASE,
+    PATCH,
     POST,
     PROGRAMMING_EXERCISE_BASE,
-    PUT,
     ProgrammingExerciseAssessmentType,
     ProgrammingLanguage,
+    PUT,
     QUIZ_EXERCISE_BASE,
     TEXT_EXERCISE_BASE,
     UPLOAD_EXERCISE_BASE,
-    PATCH,
 } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
@@ -144,26 +144,6 @@ export class ExerciseAPIRequests {
             url: PROGRAMMING_EXERCISE_BASE + 'setup',
             method: POST,
             body: exercise,
-        });
-    }
-
-    private updateProgrammingExerciseTestCaseVisibility(programmingExerciseId: number, programmingExerciseTestCases: ProgrammingExerciseTestCase[], newVisibility: Visibility) {
-        const updatedTestCaseSettings: PatchProgrammingExerciseTestVisibilityDto = [];
-
-        for (let testCase of programmingExerciseTestCases) {
-            updatedTestCaseSettings.push({
-                id: testCase.id!,
-                weight: testCase.weight!,
-                bonusPoints: testCase.bonusPoints!,
-                bonusMultiplier: testCase.bonusMultiplier!,
-                visibility: newVisibility,
-            });
-        }
-
-        return cy.request({
-            url: `${BASE_API}programming-exercises/${programmingExerciseId}/update-test-cases`,
-            method: PATCH,
-            body: updatedTestCaseSettings,
         });
     }
 
@@ -589,6 +569,26 @@ export class ExerciseAPIRequests {
         return cy.request({
             url: EXERCISE_BASE + exerciseId + '/participations',
             method: POST,
+        });
+    }
+
+    private updateProgrammingExerciseTestCaseVisibility(programmingExerciseId: number, programmingExerciseTestCases: ProgrammingExerciseTestCase[], newVisibility: Visibility) {
+        const updatedTestCaseSettings: PatchProgrammingExerciseTestVisibilityDto = [];
+
+        for (const testCase of programmingExerciseTestCases) {
+            updatedTestCaseSettings.push({
+                id: testCase.id!,
+                weight: testCase.weight!,
+                bonusPoints: testCase.bonusPoints!,
+                bonusMultiplier: testCase.bonusMultiplier!,
+                visibility: newVisibility,
+            });
+        }
+
+        return cy.request({
+            url: `${BASE_API}programming-exercises/${programmingExerciseId}/update-test-cases`,
+            method: PATCH,
+            body: updatedTestCaseSettings,
         });
     }
 
