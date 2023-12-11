@@ -154,44 +154,28 @@
         </div>
     </jhi-collapsible-card>
 
-    <div class="exam-points-summary-container d-lg-flex">
-        <div class="container" *ngIf="gradingScaleExists">
-            <div class="row">
-                <div class="mt-3 d-flex flex-column align-items-center" [class]="isBonusGradingKeyDisplayed ? 'col-md-6' : 'col-md-12'">
-                    <button class="btn btn-primary" (click)="toggleGradingKey()">
-                        <fa-icon [icon]="faClipboard"></fa-icon>
-                        <span
-                            >&nbsp;{{
-                                isBonus
-                                    ? ('artemisApp.exam.examSummary.gradeKeyButtonBonus' | artemisTranslate)
-                                    : ('artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate)
-                            }}&nbsp;
-                        </span>
-                        <span class="rotate-icon chevron-position" [class.rotated]="!isGradingKeyCollapsed">
-                            <fa-icon [icon]="faChevronRight"></fa-icon>
-                        </span>
-                    </button>
+    <div *ngIf="gradingScaleExists">
+        <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['grading-key']" [toggleCollapse]="toggleCollapse('grading-key')">
+            <div class="header">
+                <fa-icon [icon]="faClipboard"></fa-icon> &nbsp;
+                {{ 'artemisApp.exam.examSummary.gradeKeyButton' | artemisTranslate }}
+            </div>
 
-                    <div [ngbCollapse]="isGradingKeyCollapsed" class="mt-3">
-                        <jhi-grade-key-table [studentGradeOrBonusPointsOrGradeBonus]="grade" />
-                    </div>
-                </div>
+            <div class="collapsable-content">
+                <jhi-grade-key-table [studentGradeOrBonusPointsOrGradeBonus]="grade" />
+            </div>
+        </jhi-collapsible-card>
 
-                <div *ngIf="isBonusGradingKeyDisplayed" class="col-md-6 mt-3 d-flex flex-column align-items-center">
-                    <button class="btn btn-primary" (click)="toggleBonusGradingKey()">
-                        <fa-icon [icon]="faAward"></fa-icon>
-                        <span>&nbsp;{{ 'artemisApp.exam.examSummary.bonusGradeKeyButton' | artemisTranslate }}&nbsp;</span>
-                        <span class="rotate-icon chevron-position" [class.rotated]="!isBonusGradingKeyCollapsed">
-                            <fa-icon [icon]="faChevronRight"></fa-icon>
-                        </span>
-                    </button>
-                    <div [ngbCollapse]="isBonusGradingKeyCollapsed" class="mt-3 text-start">
-                        <jhi-grade-key-table
-                            [studentGradeOrBonusPointsOrGradeBonus]="'' + (studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade ?? 0)"
-                            [forBonus]="true"
-                        />
-                    </div>
-                </div>
+        <div *ngIf="isBonusGradingKeyDisplayed" class="col-md-6 mt-3 d-flex flex-column align-items-center">
+            <button class="btn btn-primary" (click)="toggleBonusGradingKey()">
+                <fa-icon [icon]="faAward"></fa-icon>
+                <span>&nbsp;{{ 'artemisApp.exam.examSummary.bonusGradeKeyButton' | artemisTranslate }}&nbsp;</span>
+                <span class="rotate-icon chevron-position" [class.rotated]="!isBonusGradingKeyCollapsed">
+                    <fa-icon [icon]="faChevronRight"></fa-icon>
+                </span>
+            </button>
+            <div [ngbCollapse]="isBonusGradingKeyCollapsed" class="mt-3 text-start">
+                <jhi-grade-key-table [studentGradeOrBonusPointsOrGradeBonus]="'' + (studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade ?? 0)" [forBonus]="true" />
             </div>
         </div>
     </div>
