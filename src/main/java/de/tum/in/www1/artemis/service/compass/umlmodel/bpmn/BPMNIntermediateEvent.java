@@ -84,10 +84,18 @@ public class BPMNIntermediateEvent extends UMLElement implements Serializable {
         return getName();
     }
 
+    /**
+     * Get the event type of the intermediate event
+     *
+     * @return The event type of the intermediate event
+     */
     public BPMNIntermediateEventType getEventType() {
         return this.eventType;
     }
 
+    /**
+     * Represents the different types of BPMN intermediate events
+     */
     public enum BPMNIntermediateEventType {
 
         DEFAULT("default"), MESSAGE_CATCH("message-catch"), MESSAGE_THROW("message-throw"), TIMER_CATCH("timer-catch"), ESCALATION_THROW("escalation-throw"),
@@ -96,14 +104,30 @@ public class BPMNIntermediateEvent extends UMLElement implements Serializable {
 
         private final String value;
 
+        /**
+         * Construct an instance of the BPMNIntermediateEventType enum
+         *
+         * @param value The raw value of the entry
+         */
         BPMNIntermediateEventType(String value) {
             this.value = value;
         }
 
+        /**
+         * Get the enum key corresponding to the given value
+         *
+         * @param value The value to retrieve the key for
+         * @return The enum key corresponding to the given value
+         */
         public static Optional<BPMNIntermediateEventType> get(String value) {
             return Arrays.stream(BPMNIntermediateEventType.values()).filter(element -> element.value.equals(value)).findFirst();
         }
 
+        /**
+         * Get the value of an enum key
+         *
+         * @return The value of the enum key
+         */
         public String getValue() {
             return value;
         }

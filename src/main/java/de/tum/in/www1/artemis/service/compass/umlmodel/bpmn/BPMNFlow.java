@@ -130,20 +130,39 @@ public class BPMNFlow extends UMLElement implements Serializable {
         return Objects.equals(otherFlow.getSource(), source) && Objects.equals(otherFlow.getTarget(), target) && otherFlow.flowType == ((BPMNFlow) object).flowType;
     }
 
+    /**
+     * Represents the different types of BPMN flows
+     */
     public enum BPMNFlowType {
 
         SEQUENCE("sequence"), MESSAGE("message"), ASSOCIATION("association"), DATA_ASSOCIATION("data association");
 
         private final String value;
 
+        /**
+         * Construct an instance of the BPMNFlowType enum
+         *
+         * @param value The raw value of the entry
+         */
         BPMNFlowType(String value) {
             this.value = value;
         }
 
-        public static Optional<BPMNFlowType> get(String value) {
+        /**
+         * Get the enum key corresponding to the given value
+         *
+         * @param value The value to retrieve the key for
+         * @return The enum key corresponding to the given value
+         */
+        public static Optional<BPMNFlowType> fromValue(String value) {
             return Arrays.stream(BPMNFlowType.values()).filter(element -> element.value.equals(value)).findFirst();
         }
 
+        /**
+         * Get the value of an enum key
+         *
+         * @return The value of the enum key
+         */
         public String getValue() {
             return value;
         }

@@ -86,24 +86,48 @@ public class BPMNGateway extends UMLElement implements Serializable {
         return getName();
     }
 
+    /**
+     * Get the gateway type of the gateway
+     *
+     * @return The gateway type of the gateway
+     */
     public BPMNGatewayType getGatewayType() {
         return gatewayType;
     }
 
+    /**
+     * Represents the different types of BPMN gateways
+     */
     public enum BPMNGatewayType {
 
         COMPLEX("complex"), EVENT_BASED("event-based"), EXCLUSIVE("exclusive"), INCLUSIVE("inclusive"), PARALLEL("parallel");
 
         private final String value;
 
+        /**
+         * Construct an instance of the BPMNGatewayType enum
+         *
+         * @param value The raw value of the entry
+         */
         BPMNGatewayType(String value) {
             this.value = value;
         }
 
-        public static Optional<BPMNGatewayType> get(String value) {
+        /**
+         * Get the enum key corresponding to the given value
+         *
+         * @param value The value to retrieve the key for
+         * @return The enum key corresponding to the given value
+         */
+        public static Optional<BPMNGatewayType> fromValue(String value) {
             return Arrays.stream(BPMNGatewayType.values()).filter(element -> element.value.equals(value)).findFirst();
         }
 
+        /**
+         * Get the value of an enum key
+         *
+         * @return The value of the enum key
+         */
         public String getValue() {
             return value;
         }

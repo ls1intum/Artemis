@@ -90,47 +90,95 @@ public class BPMNTask extends UMLElement implements Serializable {
         return getName();
     }
 
+    /**
+     * Get the task type of the task
+     *
+     * @return The task type of the task
+     */
     public BPMNTaskType getTaskType() {
         return this.taskType;
     }
 
+    /**
+     * Get the marker of the task
+     *
+     * @return The marker of the task
+     */
     public BPMNMarker getMarker() {
         return this.marker;
     }
 
+    /**
+     * Represents the different types of BPMN tasks
+     */
     public enum BPMNTaskType {
 
         DEFAULT("default"), USER("user"), SEND("send"), RECEIVE("receive"), MANUAL("manual"), BUSINESS_RULE("business rule"), SCRIPT("script");
 
         private final String value;
 
+        /**
+         * Construct an instance of the BPMNTaskType enum
+         *
+         * @param value The raw value of the entry
+         */
         BPMNTaskType(String value) {
             this.value = value;
         }
 
+        /**
+         * Get the enum key corresponding to the given value
+         *
+         * @param value The value to retrieve the key for
+         * @return The enum key corresponding to the given value
+         */
         public static Optional<BPMNTaskType> get(String value) {
             return Arrays.stream(BPMNTaskType.values()).filter(element -> element.value.equals(value)).findFirst();
         }
 
+        /**
+         * Get the value of an enum key
+         *
+         * @return The value of the enum key
+         */
         public String getValue() {
             return value;
         }
     }
 
+    /**
+     * Represents the different types of BPMN markers
+     */
     public enum BPMNMarker {
 
         NONE("none"), PARALLEL_MULTI_INSTANCE("parallel multi instance"), SEQUENTIAL_MULTI_INSTANCE("sequential multi instance"), LOOP("loop");
 
         private final String value;
 
+        /**
+         * Construct an instance of the BPMNMarker enum
+         *
+         * @param value The raw value of the entry
+         */
         BPMNMarker(String value) {
             this.value = value;
         }
 
+        /**
+         * Get the enum key corresponding to the given value
+         *
+         * @param value The value to retrieve the key for
+         * @return The enum key corresponding to the given value
+         */
         public static Optional<BPMNMarker> get(String value) {
             return Arrays.stream(BPMNMarker.values()).filter(element -> element.value.equals(value)).findFirst();
         }
 
+        /**
+         * Get the value of an enum key
+         *
+         * @return The value of the enum key
+         */
         public String getValue() {
             return value;
         }

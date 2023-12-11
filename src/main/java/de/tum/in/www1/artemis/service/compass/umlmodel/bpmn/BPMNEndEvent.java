@@ -85,30 +85,48 @@ public class BPMNEndEvent extends UMLElement implements Serializable {
         return getName();
     }
 
+    /**
+     * Get the event type of the end event
+     *
+     * @return The event type of the end event
+     */
     public BPMNEndEventType getEventType() {
         return this.eventType;
     }
 
+    /**
+     * Represents the different types of BPMN end events
+     */
     public enum BPMNEndEventType {
 
         DEFAULT("default"), MESSAGE("message"), ESCALATION("escalation"), ERROR("error"), COMPENSATION("compensation"), SIGNAL("signal"), TERMINATE("terminate");
 
         private final String value;
 
+        /**
+         * Construct an instance of the BPMNEndEventType enum
+         *
+         * @param value The raw value of the entry
+         */
         BPMNEndEventType(String value) {
             this.value = value;
         }
 
         /**
-         * Retrieve
+         * Get the enum key corresponding to the given value
          *
-         * @param value
-         * @return
+         * @param value The value to retrieve the key for
+         * @return The enum key corresponding to the given value
          */
         public static Optional<BPMNEndEventType> get(String value) {
             return Arrays.stream(BPMNEndEventType.values()).filter(element -> element.value.equals(value)).findFirst();
         }
 
+        /**
+         * Get the value of an enum key
+         *
+         * @return The value of the enum key
+         */
         public String getValue() {
             return value;
         }

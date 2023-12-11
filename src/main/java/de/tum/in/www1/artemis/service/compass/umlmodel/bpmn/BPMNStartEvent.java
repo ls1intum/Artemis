@@ -85,24 +85,48 @@ public class BPMNStartEvent extends UMLElement implements Serializable {
         return getName();
     }
 
+    /**
+     * Get the event type of the start event
+     *
+     * @return The event type of the start event
+     */
     public BPMNStartEventType getEventType() {
         return this.eventType;
     }
 
+    /**
+     * Represents the different types of BPMN start events
+     */
     public enum BPMNStartEventType {
 
         DEFAULT("default"), MESSAGE("message"), TIMER("timer"), CONDITIONAL("conditional"), SIGNAL("signal");
 
         private final String value;
 
+        /**
+         * Construct an instance of the BPMNStartEventType enum
+         *
+         * @param value The raw value of the entry
+         */
         BPMNStartEventType(String value) {
             this.value = value;
         }
 
+        /**
+         * Get the enum key corresponding to the given value
+         *
+         * @param value The value to retrieve the key for
+         * @return The enum key corresponding to the given value
+         */
         public static Optional<BPMNStartEventType> get(String value) {
             return Arrays.stream(BPMNStartEventType.values()).filter(element -> element.value.equals(value)).findFirst();
         }
 
+        /**
+         * Get the value of an enum key
+         *
+         * @return The value of the enum key
+         */
         public String getValue() {
             return value;
         }
