@@ -25,9 +25,9 @@ import de.tum.in.www1.artemis.service.connectors.localci.scaparser.utils.XmlUtil
  */
 class StaticCodeAnalysisIntegrationTest {
 
-    private final static Path EXPECTED_FOLDER_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "expected");
+    private static final Path EXPECTED_FOLDER_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "expected");
 
-    private final static Path REPORTS_FOLDER_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports");
+    private static final Path REPORTS_FOLDER_PATH = Paths.get("src", "test", "resources", "test-data", "static-code-analysis", "reports");
 
     /**
      * Compares the parsed JSON report with the expected JSON report
