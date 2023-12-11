@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +19,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -85,12 +82,7 @@ public class QuizPoolResource {
         log.info("REST request to get QuizPool given examId : {}", examId);
 
         validateCourseRole(courseId);
-        Optional<QuizPool> quizPoolOptional = quizPoolService.findWithQuizQuestionsByExamId(examId);
-        if (quizPoolOptional.isEmpty()) {
-            throw new EntityNotFoundException(ENTITY_NAME, "examId=" + examId);
-        }
-
-        QuizPool quizPool = quizPoolOptional.get();
+        QuizPool quizPool = quizPoolService.findWithQuizQuestionsByExamId(examId).orElse(null);
         return ResponseEntity.ok().body(quizPool);
     }
 
