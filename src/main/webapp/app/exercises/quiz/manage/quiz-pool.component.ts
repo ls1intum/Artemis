@@ -34,7 +34,7 @@ export class QuizPoolComponent implements OnInit {
 
     faExclamationCircle = faExclamationCircle;
 
-    quizPool: QuizPool = new QuizPool();
+    quizPool: QuizPool;
     savedQuizPool: string;
     isSaving: boolean;
     isValid: boolean;
