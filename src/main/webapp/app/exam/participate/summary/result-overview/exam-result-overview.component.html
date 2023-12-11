@@ -4,7 +4,7 @@
     </h3>
 
     <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['grading-table']" [toggleCollapse]="toggleCollapse('grading-table')">
-        <div class="header">
+        <div class="header h5">
             {{ 'artemisApp.exam.examSummary.resultTable' | artemisTranslate }}
         </div>
 
@@ -157,7 +157,7 @@
 
     <div *ngIf="gradingScaleExists">
         <jhi-collapsible-card [isCardContentCollapsed]="isCollapsed['grading-key']" [toggleCollapse]="toggleCollapse('grading-key')">
-            <div class="header">
+            <div class="header h5">
                 <fa-icon [icon]="faClipboard"></fa-icon> &nbsp;
                 {{ 'artemisApp.exam.examSummary.gradeKey' | artemisTranslate }}
             </div>
@@ -168,7 +168,7 @@
         </jhi-collapsible-card>
 
         <jhi-collapsible-card *ngIf="isBonusGradingKeyDisplayed" [isCardContentCollapsed]="isCollapsed['bonus-grading-key']" [toggleCollapse]="toggleCollapse('bonus-grading-key')">
-            <div class="header">
+            <div class="header h5">
                 <fa-icon [icon]="faAward"></fa-icon>&nbsp;
                 {{ 'artemisApp.exam.examSummary.bonusGradeKey' | artemisTranslate }}
             </div>
