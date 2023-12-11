@@ -38,7 +38,7 @@
     {{ 'artemisApp.exam.exercises' | artemisTranslate }}
 </h3>
 <div *ngFor="let exercise of studentExam?.exercises; let i = index" [id]="'exercise-' + exercise.id">
-    <jhi-collapsable-card [isCardContentCollapsed]="exerciseInfos[exercise.id!].isCollapsed" [toggleCollapse]="toggleCollapseExercise(exerciseInfos[exercise.id!])">
+    <jhi-collapsible-card [isCardContentCollapsed]="exerciseInfos[exercise.id!].isCollapsed" [toggleCollapse]="toggleCollapseExercise(exerciseInfos[exercise.id!])">
         <div class="header">
             <jhi-result-summary-exercise-card-header [index]="i" [exercise]="exercise" [exerciseInfo]="exerciseInfos[exercise.id!]" [resultsPublished]="resultsArePublished" />
         </div>
@@ -178,7 +178,7 @@
                 {{ 'artemisApp.exam.examSummary.noSubmissionFound' | artemisTranslate }}
             </ng-template>
         </div>
-    </jhi-collapsable-card>
+    </jhi-collapsible-card>
 </div>
 
 <button class="btn btn-light mx-auto d-block" (click)="scrollToOverviewOrTop()" id="back-to-overview-button">
