@@ -32,6 +32,7 @@ describe('Programming exercise participation', () => {
             exerciseAPIRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.JAVA }).then((exerciseResponse) => {
                 exercise = exerciseResponse.body;
             });
+            cy.wait(20000);
         });
 
         it('Makes a failing submission', () => {
@@ -70,6 +71,7 @@ describe('Programming exercise participation', () => {
                 exerciseAPIRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C }).then((exerciseResponse) => {
                     exercise = exerciseResponse.body;
                 });
+                cy.wait(20000);
             });
 
             it('Makes a submission', () => {
@@ -90,6 +92,7 @@ describe('Programming exercise participation', () => {
             exerciseAPIRequest.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.PYTHON }).then((exerciseResponse) => {
                 exercise = exerciseResponse.body;
             });
+            cy.wait(20000);
         });
 
         it('Makes a submission', () => {
