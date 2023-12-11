@@ -1,44 +1,35 @@
 server:
   - changed-files:
-      - any-glob-to-any-file:
-          - src/main/java/**/*.java
+      - any-glob-to-any-file: src/main/java/**/*.java
 
 client:
   - changed-files:
-      - any-glob-to-any-file:
-          - src/main/webapp/**/*
+      - any-glob-to-any-file: src/main/webapp/**/*
 
 tests:
   - changed-files:
-      - any-glob-to-any-file:
-          - src/test/**/*
+      - any-glob-to-any-file: src/test/**/*
 
 cypress:
   - changed-files:
-      - any-glob-to-any-file:
-          - src/test/cypress/**/*
+      - any-glob-to-any-file: src/test/cypress/**/*
 
 database:
   - changed-files:
-      - any-glob-to-any-file:
-          - src/main/resources/config/liquibase/master.xml
+      - any-glob-to-any-file: src/main/resources/config/liquibase/master.xml
 
 documentation:
   - changed-files:
-      - any-glob-to-any-file:
-          - docs/**/*
+      - any-glob-to-any-file: docs/**/*
 
 docker:
   - changed-files:
-      - any-glob-to-any-file:
-          - docker/**/*
+      - any-glob-to-any-file: docker/**/*
 
 config-change:
   - changed-files:
-      - any-glob-to-any-file:
-          src/main/resources/config/*.yml
+      - any-glob-to-any-file: src/main/resources/config/*.yml
 
 template:
   - changed-files:
-      - any-glob-to-any-file:
-          - src/main/resources/templates/**/*
+      - any-glob-to-any-file: src/main/resources/templates/**/*
