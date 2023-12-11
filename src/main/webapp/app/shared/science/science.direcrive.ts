@@ -9,7 +9,7 @@ export class ScienceDirective {
     constructor(private scienceService: ScienceService) {}
 
     /**
-     * Function is executed when a MouseEvent is registered. Opens the delete Dialog
+     * Function is executed when a MouseEvent is registered. Sends request to science api
      */
     @HostListener('click')
     onClick() {
