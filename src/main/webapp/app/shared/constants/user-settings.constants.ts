@@ -30,6 +30,10 @@ export enum SettingId {
     NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST = 'notification.lecture-notification.new-lecture-post',
     NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST = 'notification.lecture-notification.new-reply-for-lecture-post',
 
+    // exam notification setting group
+    NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST = 'notification.exam-notification.new-exam-post',
+    NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST = 'notification.exam-notification.new-reply-for-exam-post',
+
     // tutorial group notification setting group
     NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION = 'notification.tutorial-group-notification.tutorial-group-registration',
     NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE = 'notification.tutorial-group-notification.tutorial-group-delete-update',
@@ -46,8 +50,8 @@ export enum SettingId {
 
     // user notification setting group
     NOTIFICATION__USER_NOTIFICATION__CONVERSATION_MESSAGE = 'notification.user-notification.conversation-message',
-
     NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE = 'notification.user-notification.new-reply-in-conversation',
+    NOTIFICATION__USER_NOTIFICATION__USER_MENTION = 'notification.user-notification.user-mention',
 
     // science settings settingIds
 

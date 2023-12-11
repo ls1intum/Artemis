@@ -23,6 +23,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() posting?: Posting;
     @Input() isReply?: boolean;
     @Output() userReferenceClicked = new EventEmitter<string>();
+    @Output() channelReferenceClicked = new EventEmitter<number>();
 
     showContent = false;
     currentlyLoadedPosts: Post[];
@@ -145,6 +146,15 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     queryParams = {
                         referenceUserLogin: this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex)),
                     } as Params;
+                } else if (ReferenceType.CHANNEL === referenceType) {
+                    // referenceStr: string to be displayed for the reference
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                    referenceStr = this.content.substring(this.content.indexOf(']', patternMatch.startIndex)! + 1, this.content.indexOf('(', patternMatch.startIndex)!);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+                    const channelId = parseInt(this.content.substring(this.content.indexOf('(', patternMatch.startIndex)! + 1, this.content.indexOf(')', patternMatch.startIndex)));
+                    queryParams = {
+                        channelId: isNaN(channelId) ? undefined : channelId,
+                    } as Params;
                 }
 
                 // determining the endIndex of the content after the reference
@@ -202,7 +212,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         // Group 9: reference pattern for Users
         // globally searched for, i.e. no return after first match
         const pattern =
-            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])/g;
+            /(?<POST>#\d+)|(?<PROGRAMMING>\[programming].*?\[\/programming])|(?<MODELING>\[modeling].*?\[\/modeling])|(?<QUIZ>\[quiz].*?\[\/quiz])|(?<TEXT>\[text].*?\[\/text])|(?<FILE_UPLOAD>\[file-upload].*?\[\/file-upload])|(?<LECTURE>\[lecture].*?\[\/lecture])|(?<ATTACHMENT>\[attachment].*?\[\/attachment])|(?<ATTACHMENT_UNITS>\[lecture-unit].*?\[\/lecture-unit])|(?<SLIDE>\[slide].*?\[\/slide])|(?<USER>\[user].*?\[\/user])|(?<CHANNEL>\[channel].*?\[\/channel])/g;
 
         // array with PatternMatch objects per reference found in the posting content
         const patternMatches: PatternMatch[] = [];

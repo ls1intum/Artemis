@@ -14,9 +14,10 @@ import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
 import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 
 @NgModule({
-    imports: [ArtemisSharedModule, FormsModule, ReactiveFormsModule, NgxGraphModule, ArtemisSharedComponentModule, RouterModule, FormDateTimePickerModule],
+    imports: [ArtemisSharedModule, FormsModule, ReactiveFormsModule, NgxGraphModule, ArtemisSharedComponentModule, RouterModule, FormDateTimePickerModule, NgbAccordionModule],
     declarations: [
         CompetencyFormComponent,
         CompetencyRingsComponent,
