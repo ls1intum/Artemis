@@ -226,25 +226,13 @@ public class ExamService {
      */
     @NotNull
     public Exam findByIdWithExerciseGroupsAndExercisesElseThrow(Long examId, boolean withDetails) {
-        log.debug("Request to get exam with exercise groups : {}", examId);
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        if (withDetails) {
-            for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-                for (Exercise exercise : exerciseGroup.getExercises()) {
-                    if (exercise instanceof ProgrammingExercise programmingExercise) {
-                        ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseRepository
-                                .findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(exercise.getId());
-                        programmingExercise.setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
-                        programmingExercise.setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
-                    }
-                    if (exercise instanceof QuizExercise quizExercise) {
-                        QuizExercise quizExerciseWithQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
-                        quizExercise.setQuizQuestions(quizExerciseWithQuestions.getQuizQuestions());
-                    }
-                }
-            }
+        log.debug("Request to get exam {} with exercise groups (with details: {})", examId, withDetails);
+        if (!withDetails) {
+            return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         }
-        return exam;
+        else {
+            return examRepository.findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(examId);
+        }
     }
 
     /**
