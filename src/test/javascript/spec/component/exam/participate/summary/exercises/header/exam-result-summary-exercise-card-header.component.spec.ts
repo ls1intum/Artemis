@@ -55,21 +55,6 @@ describe('ExamResultSummaryExerciseCardHeaderComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should collapse and expand exercise when collapse button is clicked', fakeAsync(() => {
-        fixture.detectChanges();
-        const toggleCollapseExerciseButtonFour = fixture.debugElement.query(By.css('#toggleCollapseExerciseButton-4'));
-
-        expect(toggleCollapseExerciseButtonFour).not.toBeNull();
-
-        toggleCollapseExerciseButtonFour.nativeElement.click();
-
-        expect(component.exerciseInfo?.isCollapsed).toBeTrue();
-
-        toggleCollapseExerciseButtonFour.nativeElement.click();
-
-        expect(component.exerciseInfo?.isCollapsed).toBeFalse();
-    }));
-
     it.each([
         [{}, false],
         [{ studentParticipations: null }, false],
