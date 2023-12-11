@@ -9,11 +9,6 @@
         <span jhiTranslate="artemisApp.quizExercise.home.createLabel">Create new Quiz</span>
         <fa-icon [icon]="faCheckDouble"></fa-icon>
     </button>
-    <button id="create-dd-quiz" class="btn btn-primary text-truncate mb-1 me-1" [routerLink]="['/course-management', course.id, 'apollon-diagrams']">
-        <fa-icon [icon]="faPlus"></fa-icon>
-        <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop">Create new Drag and Drop Model Quiz</span>
-        <fa-icon [icon]="faCheckDouble"></fa-icon>
-    </button>
     <button id="import-quiz-exercise" class="btn btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1" (click)="openImportModal()">
         <fa-icon [icon]="faFileImport"></fa-icon>
         <span class="hidden-sm-down" jhiTranslate="artemisApp.quizExercise.home.importLabel">Import Quiz</span>
