@@ -5,6 +5,7 @@ import { IrisHttpCodeEditorSessionService } from 'app/iris/http-code-editor-sess
 import { IrisHttpCodeEditorMessageService } from 'app/iris/http-code-editor-message.service';
 import { firstValueFrom } from 'rxjs';
 import { IrisExercisePlanStep } from 'app/entities/iris/iris-content-type.model';
+import { IrisSession } from 'app/entities/iris/iris-session.model';
 
 /**
  * The IrisCodeEditorSessionService is responsible for managing Iris code editor sessions and retrieving their associated messages.
@@ -16,10 +17,25 @@ export class IrisCodeEditorSessionService extends IrisSessionService {
      */
     constructor(
         stateStore: IrisStateStore,
-        irisSessionService: IrisHttpCodeEditorSessionService,
+        private irisSessionService: IrisHttpCodeEditorSessionService,
         private irisHttpCodeEditorMessageService: IrisHttpCodeEditorMessageService,
     ) {
         super(stateStore, irisSessionService, irisHttpCodeEditorMessageService);
+    }
+
+    async kickstartSession(exerciseId: number): Promise<IrisSession> {
+        return await firstValueFrom(this.irisSessionService.kickstartSession(exerciseId)).then((response) => response.body!);
+    }
+
+    /**
+     * Sets the executing status of an exercise plan.
+     * @param sessionId of the session in which the exercise plan exists
+     * @param messageId of the message which contains the exercise plan
+     * @param planId of the exercise plan
+     * @param executing executing status to be set
+     */
+    async setPlanExecuting(sessionId: number, messageId: number, planId: number, executing: boolean): Promise<boolean> {
+        return await firstValueFrom(this.irisHttpCodeEditorMessageService.setPlanExecuting(sessionId, messageId, planId, executing)).then((response) => response.body!);
     }
 
     /**

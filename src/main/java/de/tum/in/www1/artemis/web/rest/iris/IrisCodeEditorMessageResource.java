@@ -8,11 +8,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.iris.message.IrisExercisePlan;
 import de.tum.in.www1.artemis.domain.iris.message.IrisExercisePlanStep;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCodeEditorSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisExercisePlanStepRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisMessageContentRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.iris.session.IrisCodeEditorSessionService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -27,15 +29,61 @@ public class IrisCodeEditorMessageResource {
 
     private final IrisCodeEditorSessionService irisCodeEditorSessionService;
 
+    private final IrisMessageContentRepository irisMessageContentRepository;
+
     private final IrisExercisePlanStepRepository irisExercisePlanStepRepository;
 
     private final UserRepository userRepository;
 
-    public IrisCodeEditorMessageResource(IrisCodeEditorSessionService irisCodeEditorSessionService, IrisExercisePlanStepRepository irisExercisePlanStepRepository,
-            UserRepository userRepository) {
+    public IrisCodeEditorMessageResource(IrisCodeEditorSessionService irisCodeEditorSessionService, IrisMessageContentRepository irisMessageContentRepository,
+            IrisExercisePlanStepRepository irisExercisePlanStepRepository, UserRepository userRepository) {
         this.irisCodeEditorSessionService = irisCodeEditorSessionService;
+        this.irisMessageContentRepository = irisMessageContentRepository;
         this.irisExercisePlanStepRepository = irisExercisePlanStepRepository;
         this.userRepository = userRepository;
+    }
+
+    @PostMapping("code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/executing/{executing}")
+    @EnforceAtLeastEditor
+    public ResponseEntity<Boolean> setPlanExecuting(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long planId, @PathVariable boolean executing) {
+        var content = irisMessageContentRepository.findById(planId);
+        if (content.isEmpty()) {
+            throw new BadRequestException("Content with id " + planId + " does not exist");
+        }
+        if (!(content.get() instanceof IrisExercisePlan plan)) {
+            throw new BadRequestException("Content with id " + planId + " is not an exercise plan");
+        }
+
+        var session = checkIdsAndGetSession(sessionId, messageId, plan);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        irisCodeEditorSessionService.checkIsIrisActivated(session);
+        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, user);
+
+        plan.setExecuting(executing);
+        irisMessageContentRepository.save(plan);
+        return ResponseEntity.ok(executing);
+    }
+
+    @PostMapping("code-editor-sessions/{sessionId}/messages/{messageId}/contents/{planId}/execute")
+    @EnforceAtLeastEditor
+    public ResponseEntity<Void> executeExercisePlan(@PathVariable Long sessionId, @PathVariable Long messageId, @PathVariable Long planId) {
+        var content = irisMessageContentRepository.findById(planId);
+        if (content.isEmpty()) {
+            throw new BadRequestException("Content with id " + planId + " does not exist");
+        }
+        if (!(content.get() instanceof IrisExercisePlan plan)) {
+            throw new BadRequestException("Content with id " + planId + " is not an exercise plan");
+        }
+
+        var session = checkIdsAndGetSession(sessionId, messageId, plan);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+
+        irisCodeEditorSessionService.checkIsIrisActivated(session);
+        irisCodeEditorSessionService.checkHasAccessToIrisSession(session, user);
+        irisCodeEditorSessionService.executePlan(session, planId);
+        // Return with empty body now, the changes will be sent over the websocket when they are ready
+        return ResponseEntity.ok(null);
     }
 
     /**
@@ -97,6 +145,10 @@ public class IrisCodeEditorMessageResource {
         if (!Objects.equals(plan.getId(), planId)) {
             throw new ConflictException("The specified contentId is incorrect", "IrisExercisePlanComponent", "irisExercisePlanComponentConflict");
         }
+        return checkIdsAndGetSession(sessionId, messageId, plan);
+    }
+
+    private static IrisCodeEditorSession checkIdsAndGetSession(Long sessionId, Long messageId, IrisExercisePlan plan) {
         var message = plan.getMessage();
         if (!Objects.equals(message.getId(), messageId)) {
             throw new ConflictException("The specified messageId is incorrect", "IrisMessageContent", "irisMessageContentConflict");

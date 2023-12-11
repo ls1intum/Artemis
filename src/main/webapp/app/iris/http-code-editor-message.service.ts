@@ -15,6 +15,20 @@ export class IrisHttpCodeEditorMessageService extends IrisHttpMessageService {
      * @param sessionId of the session
      * @param messageId of the message
      * @param planId of the exercise plan
+     * @param executing of the exercise plan step
+     */
+    setPlanExecuting(sessionId: number, messageId: number, planId: number, executing: boolean): Response<boolean> {
+        return this.httpClient.post<boolean>(`${this.apiPrefix}/${this.sessionType}/${sessionId}/messages/${messageId}/contents/${planId}/executing/${executing}`, null, {
+            observe: 'response',
+        });
+    }
+
+    /**
+     * Execute the exercise plan, i.e. request the changes to be applied to the code editor.
+     *
+     * @param sessionId of the session
+     * @param messageId of the message
+     * @param planId of the exercise plan
      * @param stepId of the exercise plan step
      */
     executePlanStep(sessionId: number, messageId: number, planId: number, stepId: number): Response<void> {

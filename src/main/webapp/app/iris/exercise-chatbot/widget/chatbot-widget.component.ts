@@ -663,10 +663,13 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     /**
      * Pauses the execution of an exercise plan.
+     * @param messageId - The id of the message which contains the plan.
      * @param plan - The plan to pause.
      */
-    pausePlan(plan: IrisExercisePlan) {
-        plan.executing = false;
+    pausePlan(messageId: number, plan: IrisExercisePlan) {
+        if (this.sessionService instanceof IrisCodeEditorSessionService) {
+            this.sessionService.setPlanExecuting(this.sessionId, messageId, plan.id!, false).then((executing) => (plan.executing = executing));
+        }
     }
 
     /**
@@ -702,6 +705,9 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
      * @param plan - The plan to execute.
      */
     setExecuting(messageId: number, plan: IrisExercisePlan) {
+        if (!(this.sessionService instanceof IrisCodeEditorSessionService)) {
+            return;
+        }
         const nextStepIndex = this.getNextStepIndex(plan);
         if (nextStepIndex >= plan.steps.length) {
             console.error('Tried to execute plan that is already complete.');
@@ -712,12 +718,16 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             console.error('Could not find next step to execute.');
             return;
         }
-        plan.executing = true;
-        if (isInProgress(step)) {
-            console.log('Step already in progress, awaiting response.');
-            return;
-        }
-        this.executePlanStep(messageId, step);
+        this.sessionService
+            .setPlanExecuting(this.sessionId, messageId, plan.id!, true)
+            .then((executing) => (plan.executing = executing))
+            .then(() => {
+                if (!isInProgress(step)) {
+                    this.executePlanStep(messageId, step);
+                } else {
+                    console.log('Step already in progress, awaiting response.');
+                }
+            });
     }
 
     /**

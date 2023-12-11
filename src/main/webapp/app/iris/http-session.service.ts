@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
 
-type EntityResponseType = HttpResponse<IrisSession>;
+export type Response<T> = Observable<HttpResponse<T>>;
 
 /**
  * The `IrisHttpSessionService` provides methods for retrieving existing or creating new Iris sessions.
@@ -20,7 +20,7 @@ export abstract class IrisHttpSessionService {
      * @param {number} id of the entity (course or exercise)
      * @return {Observable<EntityResponseType>} an Observable of the HTTP response
      */
-    abstract getCurrentSession(id: number): Observable<EntityResponseType>;
+    abstract getCurrentSession(id: number): Response<IrisSession>;
 
     /**
      * creates a session for a course or exercise

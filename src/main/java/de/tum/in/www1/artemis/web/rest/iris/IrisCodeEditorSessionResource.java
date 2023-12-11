@@ -125,6 +125,32 @@ public class IrisCodeEditorSessionResource {
     }
 
     /**
+     * POST programming-exercises/{exerciseId}/code-editor-sessions/autogenerate: Create a new iris code editor session
+     * which automatically generates the repositories from the problem statement.
+     * This is intended for use with newly-created exercises where the repositories have just been generated.
+     * However, if there already exists an iris session for the exercise and user anyway, a new one is created.
+     *
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new iris code editor session
+     *         for the exercise
+     */
+    @PostMapping("programming-exercises/{exerciseId}/code-editor-sessions/kickstart")
+    @EnforceAtLeastEditor
+    public ResponseEntity<IrisSession> generateRepositoriesFromProblemStatement(@PathVariable Long exerciseId) throws URISyntaxException {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.CODE_EDITOR, exercise);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
+
+        var session = irisCodeEditorSessionService.createSession(exercise, user);
+        var kickstarterMessage = irisCodeEditorSessionService.createRepositoryGenerationPlan(session);
+        irisCodeEditorSessionService.executePlan(session, kickstarterMessage.getContent().get(0).getId());
+
+        var uriString = "/api/iris/code-editor-sessions/" + session.getId();
+        return ResponseEntity.created(new URI(uriString)).body(session);
+    }
+
+    /**
      * GET iris/code-editor-sessions/{sessionId}/active: Retrieve if Iris is active for a session This checks if the
      * used model is healthy.
      *

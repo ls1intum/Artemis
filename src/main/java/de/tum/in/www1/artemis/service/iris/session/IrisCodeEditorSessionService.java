@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.iris.session;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.BadRequestException;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -27,6 +29,7 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisCodeEditorSessionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisExercisePlanStepRepository;
+import de.tum.in.www1.artemis.repository.iris.IrisMessageContentRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -65,6 +68,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     private final IrisCodeEditorSessionRepository irisCodeEditorSessionRepository;
 
+    private final IrisMessageContentRepository irisMessageContentRepository;
+
     private final IrisExercisePlanStepRepository irisExercisePlanStepRepository;
 
     private final VersionControlService versionControlService;
@@ -83,8 +88,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     public IrisCodeEditorSessionService(IrisConnectorService irisConnectorService, IrisMessageService irisMessageService, IrisSettingsService irisSettingsService,
             IrisCodeEditorWebsocketService irisCodeEditorWebsocketService, AuthorizationCheckService authCheckService,
-            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, IrisExercisePlanStepRepository irisExercisePlanStepRepository,
-            VersionControlService versionControlService, GitService gitService, RepositoryService repositoryService,
+            IrisCodeEditorSessionRepository irisCodeEditorSessionRepository, IrisMessageContentRepository irisMessageContentRepository,
+            IrisExercisePlanStepRepository irisExercisePlanStepRepository, VersionControlService versionControlService, GitService gitService, RepositoryService repositoryService,
             TemplateProgrammingExerciseParticipationRepository templateParticipationRepository, SolutionProgrammingExerciseParticipationRepository solutionParticipationRepository,
             IrisSessionRepository irisSessionRepository, MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.irisConnectorService = irisConnectorService;
@@ -93,6 +98,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         this.irisCodeEditorWebsocketService = irisCodeEditorWebsocketService;
         this.authCheckService = authCheckService;
         this.irisCodeEditorSessionRepository = irisCodeEditorSessionRepository;
+        this.irisMessageContentRepository = irisMessageContentRepository;
         this.irisExercisePlanStepRepository = irisExercisePlanStepRepository;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
@@ -272,6 +278,47 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         return exercisePlan;
     }
 
+    public IrisMessage createRepositoryGenerationPlan(IrisCodeEditorSession session) {
+        IrisMessage message = session.newMessage();
+        IrisExercisePlan generationPlan = new IrisExercisePlan();
+        List<IrisExercisePlanStep> planSteps = new ArrayList<>();
+        planSteps.add(new IrisExercisePlanStep(ExerciseComponent.SOLUTION_REPOSITORY, "I will write a solution repository corresponding to the problem statement."));
+        planSteps.add(new IrisExercisePlanStep(ExerciseComponent.TEMPLATE_REPOSITORY,
+                "I will write a template repository corresponding to the problem statement and solution repository."));
+        planSteps.add(new IrisExercisePlanStep(ExerciseComponent.TEST_REPOSITORY,
+                "I will write a test repository corresponding to the problem statement, solution repository, template repository."));
+        generationPlan.setSteps(planSteps);
+        message.addContent(generationPlan);
+        return irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+    }
+
+    /**
+     * Create a loop that executes the plan until it is finished.
+     * We must perform a lookup of the plan in the database to ensure that we have the latest version
+     * (the client might have modified it).
+     *
+     * @param session the session
+     * @param planId  the id of the plan
+     */
+    @Async
+    public void executePlan(IrisCodeEditorSession session, long planId) {
+        var content = irisMessageContentRepository.findById(planId);
+        if (content.isEmpty()) {
+            return; // Must have been deleted somehow
+        }
+        if (!(content.get() instanceof IrisExercisePlan exercisePlan)) {
+            return; // Should not happen
+        }
+        if (!exercisePlan.isExecuting()) {
+            return; // Client paused execution
+        }
+        Optional<IrisExercisePlanStep> nextStep = exercisePlan.getNextStep();
+        if (nextStep.isEmpty()) {
+            return; // Plan is done executing
+        }
+        requestChangesToExerciseComponent(session, nextStep.get()).thenAccept(v -> this.executePlan(session, planId));
+    }
+
     /**
      * Requests exercise changes from the Iris model for the given session and exercise plan. This method sends a
      * request to the Iris model for each component in the exercise plan, and handles the response to extract the
@@ -280,7 +327,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * @param session      The IrisCodeEditorSession to request exercise changes for
      * @param exerciseStep The IrisExercisePlanComponent to request exercise changes for
      */
-    public void requestChangesToExerciseComponent(IrisCodeEditorSession session, IrisExercisePlanStep exerciseStep) {
+    public CompletableFuture<Void> requestChangesToExerciseComponent(IrisCodeEditorSession session, IrisExercisePlanStep exerciseStep) {
         irisExercisePlanStepRepository.setInProgress(exerciseStep);
         var exercise = session.getExercise();
         var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisCodeEditorSettings();
@@ -297,7 +344,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         // Add the instructions previously generated by Iris for this step of the plan
         params.put("instructions", exerciseStep.getInstructions());
 
-        irisConnectorService.sendRequestV2(template, settings.getPreferredModel(), params).handleAsync((response, err) -> {
+        return irisConnectorService.sendRequestV2(template, settings.getPreferredModel(), params).handleAsync((response, err) -> {
             if (err != null) {
                 log.error("Error while getting response from Iris model", err);
                 irisExercisePlanStepRepository.setFailed(exerciseStep);

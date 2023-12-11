@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    This changeset modifies the iris_exercise_plan_message_content table to add an 'executing' column.
+    This column will be used to indicate whether the plan is currently being executed, to enable
+    the plan to be executed automatically in the background.
+    -->
+    <changeSet id="20231208151515" author="michael_dyer">
+        <!-- Add column 'executing' to the existing iris_exercise_plan_message_content table -->
+        <addColumn tableName="iris_exercise_plan_message_content">
+            <column name="executing" type="boolean" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

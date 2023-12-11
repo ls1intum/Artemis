@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 import { IrisExerciseHttpSessionService } from 'app/iris/http-exercise-session.service';
 import { IrisRateLimitInformation } from 'app/iris/websocket.service';
+import { Response } from 'app/iris/http-session.service';
 
 export class HeartbeatDTO {
     active: boolean;
@@ -23,7 +23,7 @@ export class IrisHttpChatSessionService extends IrisExerciseHttpSessionService {
      * @param sessionId The ID of the session to check.
      * @return An Observable of the HTTP response containing a boolean value indicating the session's heartbeat status.
      */
-    getHeartbeat(sessionId: number): Observable<HttpResponse<HeartbeatDTO>> {
+    getHeartbeat(sessionId: number): Response<HeartbeatDTO> {
         return this.http.get<HeartbeatDTO>(`${this.apiPrefix}/${this.sessionType}/${sessionId}/active`, { observe: 'response' });
     }
 }

@@ -97,6 +97,18 @@
                     <button type="button" id="cancel-save" class="btn btn-secondary me-1" (click)="previousState()">
                         <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                     </button>
+
+                    <jhi-button
+                        *ngIf="isIrisEnabled() && !isEdit"
+                        id="save-with-iris-entity"
+                        [featureToggle]="FeatureToggle.ProgrammingExercises"
+                        [disabled]="getInvalidReasons().length > 0"
+                        [isLoading]="isSaving"
+                        [icon]="faSave"
+                        [title]="submitButtonTitle"
+                        (onClick)="saveWithIris()"
+                    >
+                    </jhi-button>
                     <jhi-button
                         id="save-entity"
                         [featureToggle]="FeatureToggle.ProgrammingExercises"

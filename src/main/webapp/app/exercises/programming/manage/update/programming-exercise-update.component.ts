@@ -35,6 +35,7 @@ import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-chatbot-button.component';
 import { ExerciseUpdate, IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
+import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -73,6 +74,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     programmingExercise: ProgrammingExercise;
     backupExercise: ProgrammingExercise;
     isSaving: boolean;
+    adaptRepositoriesWithIris = false;
     goBackAfterSaving = false;
     problemStatementLoaded = false;
     buildPlanLoaded = false;
@@ -165,6 +167,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
         private irisSettingsService: IrisSettingsService,
+        private irisCodeEditorSessionService: IrisCodeEditorSessionService,
         irisExerciseCreationWebsocketService: IrisExerciseCreationWebsocketService,
     ) {
         irisExerciseCreationWebsocketService.onExerciseUpdate().subscribe((exerciseUpdate: ExerciseUpdate) => {
@@ -594,6 +597,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.exerciseCategories = categories;
     }
 
+    saveWithIris() {
+        this.adaptRepositoriesWithIris = true;
+        this.save();
+    }
+
     save() {
         const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
         if (!this.modalService.hasOpenModals()) {
@@ -676,13 +684,17 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private onSaveSuccess(exercise: ProgrammingExercise) {
         this.isSaving = false;
 
-        if (this.goBackAfterSaving) {
-            this.navigationUtilService.navigateBack();
-
-            return;
+        if (this.adaptRepositoriesWithIris) {
+            this.irisCodeEditorSessionService
+                .kickstartSession(exercise.id!)
+                .catch((error) => this.alertService.error(`Error while adapting the repositories with Iris: ${error.message}`));
         }
 
-        this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
+        if (this.goBackAfterSaving) {
+            this.navigationUtilService.navigateBack();
+        } else {
+            this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
+        }
     }
 
     private onSaveError(error: HttpErrorResponse) {

@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisSession } from 'app/entities/iris/iris-session.model';
-import { IrisHttpSessionService } from 'app/iris/http-session.service';
-
-type EntityResponseType = HttpResponse<IrisSession>;
+import { IrisHttpSessionService, Response } from 'app/iris/http-session.service';
 
 /**
  * The `IrisHttpSessionService` provides methods for retrieving existing or creating new Iris sessions.
@@ -24,7 +22,7 @@ export abstract class IrisExerciseHttpSessionService extends IrisHttpSessionServ
      * @param {number} exerciseId of the exercise
      * @return {Observable<EntityResponseType>} an Observable of the HTTP response
      */
-    getCurrentSession(exerciseId: number): Observable<EntityResponseType> {
+    getCurrentSession(exerciseId: number): Response<IrisSession> {
         return this.http.get<IrisSession>(`${this.apiPrefix}/programming-exercises/${exerciseId}/${this.sessionType}/current`, { observe: 'response' });
     }
 
