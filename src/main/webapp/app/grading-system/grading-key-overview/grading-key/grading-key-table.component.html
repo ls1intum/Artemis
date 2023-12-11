@@ -16,7 +16,10 @@
             <tbody>
                 @if (plagiarismGrade === studentGradeOrBonusPointsOrGradeBonus) {
                     <tr [class.highlighted]="plagiarismGrade === studentGradeOrBonusPointsOrGradeBonus">
-                        <td>{{ plagiarismGrade }}<jhi-help-icon placement="auto" text="artemisApp.gradingSystem.plagiarismGradeHelp"></jhi-help-icon></td>
+                        <td>
+                            {{ plagiarismGrade }}
+                            <jhi-help-icon placement="auto" text="artemisApp.gradingSystem.plagiarismGradeHelp"></jhi-help-icon>
+                        </td>
                         <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
                         <td>&mdash;</td>
                         @if (hasPointsSet) {
@@ -26,7 +29,10 @@
                 }
                 @if (noParticipationGrade === studentGradeOrBonusPointsOrGradeBonus) {
                     <tr [class.highlighted]="noParticipationGrade === studentGradeOrBonusPointsOrGradeBonus">
-                        <td>{{ noParticipationGrade }}<jhi-help-icon placement="auto" text="artemisApp.gradingSystem.noParticipationGradeHelp"></jhi-help-icon></td>
+                        <td>
+                            {{ noParticipationGrade }}
+                            <jhi-help-icon placement="auto" text="artemisApp.gradingSystem.noParticipationGradeHelp"></jhi-help-icon>
+                        </td>
                         <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
                         <td>&mdash;</td>
                         @if (hasPointsSet) {
@@ -35,7 +41,7 @@
                     </tr>
                 }
                 @for (gradeStep of gradeSteps; track gradeStep; let last = $last) {
-                    <tr [class.highlighted]="gradeStep.gradeName == studentGradeOrBonusPointsOrGradeBonus || +gradeStep.gradeName === +studentGradeOrBonusPointsOrGradeBonus!">
+                    <tr [class.highlighted]="gradeStep.gradeName === studentGradeOrBonusPointsOrGradeBonus || +gradeStep.gradeName === +studentGradeOrBonusPointsOrGradeBonus!">
                         <td>{{ gradeStep.gradeName }}</td>
                         <td>
                             <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE : last | safeHtml"></span>

@@ -5,19 +5,21 @@
     @if (!isLoading) {
         <div class="top-bar">
             <div class="d-flex align-items-center">
-                <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab == 'test-cases' ? 'active' : ''">
+                <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab === 'test-cases' ? 'active' : ''">
                     <b>Test Cases</b>
                 </div>
                 @if (programmingExercise.staticCodeAnalysisEnabled) {
-                    <div class="tab-item code-analysis" (click)="selectTab('code-analysis')" [ngClass]="activeTab == 'code-analysis' ? 'active' : ''">
+                    <div class="tab-item code-analysis" (click)="selectTab('code-analysis')" [ngClass]="activeTab === 'code-analysis' ? 'active' : ''">
                         <b>Code Analysis</b>
                     </div>
                 }
-                <div class="tab-item submission-policy" (click)="selectTab('submission-policy')" [ngClass]="activeTab == 'submission-policy' ? 'active' : ''">
+                <div class="tab-item submission-policy" (click)="selectTab('submission-policy')" [ngClass]="activeTab === 'submission-policy' ? 'active' : ''">
                     <b>Submission Policy</b>
                 </div>
             </div>
-            <ng-template><div></div></ng-template>
+            <ng-template>
+                <div></div>
+            </ng-template>
             <div class="d-flex align-items-center">
                 @if (activeTab != 'submission-policy') {
                     <jhi-programming-exercise-configure-grading-status
