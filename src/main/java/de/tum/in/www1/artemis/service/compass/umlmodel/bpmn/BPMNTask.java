@@ -19,6 +19,14 @@ public class BPMNTask extends UMLElement implements Serializable {
 
     private final BPMNMarker marker;
 
+    /**
+     * Construct an instance of the BPMNTask class
+     *
+     * @param name          The name of the constructed task
+     * @param jsonElementID The JSON element ID of the constructed task
+     * @param taskType      The task type of the constructed task
+     * @param marker        The marker of the constructed task
+     */
     public BPMNTask(String name, String jsonElementID, BPMNTaskType taskType, BPMNMarker marker) {
         super(jsonElementID);
 
@@ -27,6 +35,12 @@ public class BPMNTask extends UMLElement implements Serializable {
         this.marker = marker;
     }
 
+    /**
+     * Calculate the similarity between the element and another given UML Element
+     *
+     * @param reference the reference object that should be compared to this object
+     * @return A similarity score between 0 and 1
+     */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
         if (!(reference instanceof BPMNTask referenceNode)) {
@@ -43,16 +57,31 @@ public class BPMNTask extends UMLElement implements Serializable {
         return NameSimilarity.levenshteinSimilarity(getName(), referenceNode.getName()) * taskTypeSimilarityFactor * markerSimilarityFactor;
     }
 
+    /**
+     * Get the name of the element
+     *
+     * @return The name of the element
+     */
     @Override
     public String getName() {
         return this.name;
     }
 
+    /**
+     * Get the type of the BPMN element
+     *
+     * @return The type of BPMN element
+     */
     @Override
     public String getType() {
         return BPMN_TASK_TYPE;
     }
 
+    /**
+     * Get a string representation for the task
+     *
+     * @return A string representation of the task
+     */
     @Override
     public String toString() {
         return getName();

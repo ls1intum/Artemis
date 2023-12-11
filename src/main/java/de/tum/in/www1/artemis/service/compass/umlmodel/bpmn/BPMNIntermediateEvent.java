@@ -17,6 +17,12 @@ public class BPMNIntermediateEvent extends UMLElement implements Serializable {
 
     private final BPMNIntermediateEventType eventType;
 
+    /**
+     * Construct an instance of the BPMNIntermediateEvent class
+     *
+     * @param name          The name of the constructed intermediate event
+     * @param jsonElementID The JSON element ID of the constructed intermediate event
+     */
     public BPMNIntermediateEvent(String name, String jsonElementID, BPMNIntermediateEventType eventType) {
         super(jsonElementID);
 
@@ -24,6 +30,12 @@ public class BPMNIntermediateEvent extends UMLElement implements Serializable {
         this.eventType = eventType;
     }
 
+    /**
+     * Calculate the similarity between the element and another given UML Element
+     *
+     * @param reference the reference object that should be compared to this object
+     * @return A similarity score between 0 and 1
+     */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
         if (!(reference instanceof BPMNIntermediateEvent referenceNode)) {
@@ -39,16 +51,31 @@ public class BPMNIntermediateEvent extends UMLElement implements Serializable {
         return NameSimilarity.levenshteinSimilarity(getName(), referenceNode.getName()) * eventTypeSimilarityFactor;
     }
 
+    /**
+     * Get the name of the element
+     *
+     * @return The name of the element
+     */
     @Override
     public String getName() {
         return this.name;
     }
 
+    /**
+     * Get the type of the BPMN element
+     *
+     * @return The type of BPMN element
+     */
     @Override
     public String getType() {
         return BPMN_INTERMEDIATE_EVENT_TYPE;
     }
 
+    /**
+     * Get a string representation for the intermediate event
+     *
+     * @return A string representation of the intermediate event
+     */
     @Override
     public String toString() {
         return getName();

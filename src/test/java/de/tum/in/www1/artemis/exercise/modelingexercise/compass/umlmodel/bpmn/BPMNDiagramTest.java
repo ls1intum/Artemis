@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 class BPMNDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
-    void similarityComponentDiagram_EqualModels() {
+    void similarityBpmnDiagramEqualModels() {
 
         double minimumSimilarity = 0.8;
         double expectedSimilarity = 100.0;
@@ -26,7 +26,7 @@ class BPMNDiagramTest extends AbstractUMLDiagramTest {
     }
 
     @Test
-    void similarityComponentDiagram_DifferentModels() {
+    void similarityBpmnDiagramDifferentModels() {
 
         double minimumSimilarity = 0.0;
         double expectedSimilarity = 15.07;
@@ -36,7 +36,7 @@ class BPMNDiagramTest extends AbstractUMLDiagramTest {
     }
 
     @Test
-    void parseDiagramModelCorrectly() throws IOException {
+    void parseBpmnDiagramModelCorrectly() throws IOException {
         UMLDiagram diagram = UMLModelParser.buildModelFromJSON(parseString(BPMNDiagrams.BPMN_MODEL_2).getAsJsonObject(), 1L);
         assertThat(diagram).isInstanceOf(BPMNDiagram.class);
         BPMNDiagram bpmnDiagram = (BPMNDiagram) diagram;

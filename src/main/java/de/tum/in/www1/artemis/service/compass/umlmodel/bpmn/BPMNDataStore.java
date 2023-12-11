@@ -13,12 +13,24 @@ public class BPMNDataStore extends UMLElement implements Serializable {
 
     private final String name;
 
+    /**
+     * Construct an instance of the BPMNDataStore class
+     *
+     * @param name          The name of the constructed data store
+     * @param jsonElementID The JSON element ID of the constructed data store
+     */
     public BPMNDataStore(String name, String jsonElementID) {
         super(jsonElementID);
 
         this.name = name;
     }
 
+    /**
+     * Calculate the similarity between the element and another given UML Element
+     *
+     * @param reference the reference object that should be compared to this object
+     * @return A similarity score between 0 and 1
+     */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
         if (!(reference instanceof BPMNDataStore referenceNode)) {
@@ -32,16 +44,31 @@ public class BPMNDataStore extends UMLElement implements Serializable {
         return NameSimilarity.levenshteinSimilarity(getName(), referenceNode.getName());
     }
 
+    /**
+     * Get the name of the element
+     *
+     * @return The name of the element
+     */
     @Override
     public String getName() {
         return this.name;
     }
 
+    /**
+     * Get the type of the BPMN element
+     *
+     * @return The type of BPMN element
+     */
     @Override
     public String getType() {
         return BPMN_DATA_STORE_TYPE;
     }
 
+    /**
+     * Get a string representation for the data store
+     *
+     * @return A string representation of the data store
+     */
     @Override
     public String toString() {
         return getName();

@@ -38,6 +38,26 @@ public class BPMNDiagram extends UMLDiagram {
 
     private final List<BPMNFlow> flows;
 
+    /**
+     * Construct an instance of the BPMNDiagram class
+     *
+     * @param modelSubmissionId  The ID of the submission this diagram instance was submitted for
+     * @param annotations        The BPMNAnnotation elements contained in this diagram
+     * @param callActivities     The BPMNCallActivity elements contained in this diagram
+     * @param dataObjects        The BPMNDataObject elements contained in this diagram
+     * @param dataStores         The BPMNDataStore elements contained in this diagram
+     * @param endEvents          The BPMNEndEvent elements contained in this diagram
+     * @param gateways           The BPMNGateway elements contained in this diagram
+     * @param groups             The BPMNGroup elements contained in this diagram
+     * @param intermediateEvents The BPMNIntermediateEvent elements contained in this diagram
+     * @param pools              The BPMNPool elements contained in this diagram
+     * @param startEvents        The BPMNStartEvent elements contained in this diagram
+     * @param subprocesses       The BPMNSubprocess elements contained in this diagram
+     * @param swimlanes          The BPMNSwimlane elements contained in this diagram
+     * @param tasks              The BPMNTask elements contained in this diagram
+     * @param transactions       The BPMNTransaction elements contained in this diagram
+     * @param flows              The BPMNFlow elements contained in this diagram
+     */
     public BPMNDiagram(long modelSubmissionId, List<BPMNAnnotation> annotations, List<BPMNCallActivity> callActivities, List<BPMNDataObject> dataObjects,
             List<BPMNDataStore> dataStores, List<BPMNEndEvent> endEvents, List<BPMNGateway> gateways, List<BPMNGroup> groups, List<BPMNIntermediateEvent> intermediateEvents,
             List<BPMNPool> pools, List<BPMNStartEvent> startEvents, List<BPMNSubprocess> subprocesses, List<BPMNSwimlane> swimlanes, List<BPMNTask> tasks,
@@ -60,6 +80,12 @@ public class BPMNDiagram extends UMLDiagram {
         this.flows = flows;
     }
 
+    /**
+     * Retrieve a diagram element via its JSON ID
+     *
+     * @param jsonElementId the id of the UML element
+     * @return The UMLElement corresponding to the given JSON ID
+     */
     @Override
     public UMLElement getElementByJSONID(String jsonElementId) {
 
@@ -72,6 +98,13 @@ public class BPMNDiagram extends UMLDiagram {
         return null;
     }
 
+    /**
+     * Get all first-level model elements. As we do not support second-level elements for BPMN
+     * diagrams as for example methods and attributes on class diagrams, this method simply
+     * returns all diagram elements.
+     *
+     * @return All elements in the diagram
+     */
     @Override
     public List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = new ArrayList<>();

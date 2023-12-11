@@ -19,6 +19,12 @@ public class BPMNGateway extends UMLElement implements Serializable {
 
     private final BPMNGatewayType gatewayType;
 
+    /**
+     * Construct an instance of the BPMNGateway class
+     *
+     * @param name          The name of the constructed gateway
+     * @param jsonElementID The JSON element ID of the constructed gateway
+     */
     public BPMNGateway(String name, String jsonElementID, BPMNGatewayType gatewayType) {
         super(jsonElementID);
 
@@ -26,6 +32,12 @@ public class BPMNGateway extends UMLElement implements Serializable {
         this.gatewayType = gatewayType;
     }
 
+    /**
+     * Calculate the similarity between the element and another given UML Element
+     *
+     * @param reference the reference object that should be compared to this object
+     * @return A similarity score between 0 and 1
+     */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
         if (!(reference instanceof BPMNGateway referenceNode)) {
@@ -41,16 +53,31 @@ public class BPMNGateway extends UMLElement implements Serializable {
         return NameSimilarity.levenshteinSimilarity(getName(), referenceNode.getName()) * gatewayTypeSimilarityFactor;
     }
 
+    /**
+     * Get the name of the element
+     *
+     * @return The name of the element
+     */
     @Override
     public String getName() {
         return this.name;
     }
 
+    /**
+     * Get the type of the BPMN element
+     *
+     * @return The type of BPMN element
+     */
     @Override
     public String getType() {
         return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, BPMN_GATEWAY_TYPE);
     }
 
+    /**
+     * Get a string representation for the gateway
+     *
+     * @return A string representation of the gateway
+     */
     @Override
     public String toString() {
         return getName();

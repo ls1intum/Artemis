@@ -17,6 +17,13 @@ public class BPMNEndEvent extends UMLElement implements Serializable {
 
     private final BPMNEndEventType eventType;
 
+    /**
+     * Construct an instance of the BPMNEndEvent class
+     *
+     * @param name          The name of the constructed end event
+     * @param jsonElementID The JSON element ID of the constructed end event
+     * @param endEventType  The event type of the constructed end event
+     */
     public BPMNEndEvent(String name, String jsonElementID, BPMNEndEventType endEventType) {
         super(jsonElementID);
 
@@ -24,6 +31,12 @@ public class BPMNEndEvent extends UMLElement implements Serializable {
         this.eventType = endEventType;
     }
 
+    /**
+     * Calculate the similarity between the element and another given UML Element
+     *
+     * @param reference the reference object that should be compared to this object
+     * @return A similarity score between 0 and 1
+     */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
         if (!(reference instanceof BPMNEndEvent referenceNode)) {
@@ -39,16 +52,31 @@ public class BPMNEndEvent extends UMLElement implements Serializable {
         return NameSimilarity.levenshteinSimilarity(getName(), referenceNode.getName()) * eventTypeSimilarityFactor;
     }
 
+    /**
+     * Get the name of the element
+     *
+     * @return The name of the element
+     */
     @Override
     public String getName() {
         return this.name;
     }
 
+    /**
+     * Get the type of the BPMN element
+     *
+     * @return The type of BPMN element
+     */
     @Override
     public String getType() {
         return BPMN_END_EVENT_TYPE;
     }
 
+    /**
+     * Get a string representation for the end event
+     *
+     * @return A string representation of the end event
+     */
     @Override
     public String toString() {
         return getName();
@@ -68,6 +96,12 @@ public class BPMNEndEvent extends UMLElement implements Serializable {
             this.value = value;
         }
 
+        /**
+         * Retrieve
+         *
+         * @param value
+         * @return
+         */
         public static Optional<BPMNEndEventType> get(String value) {
             return Arrays.stream(BPMNEndEventType.values()).filter(element -> element.value.equals(value)).findFirst();
         }

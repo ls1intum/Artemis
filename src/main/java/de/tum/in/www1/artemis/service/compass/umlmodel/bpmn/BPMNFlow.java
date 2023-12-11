@@ -21,6 +21,12 @@ public class BPMNFlow extends UMLElement implements Serializable {
 
     private final BPMNFlowType flowType;
 
+    /**
+     * Construct an instance of the BPMNFlow class
+     *
+     * @param name          The name of the constructed flow
+     * @param jsonElementID The JSON element ID of the constructed flow
+     */
     public BPMNFlow(String name, String jsonElementID, BPMNFlowType flowType, UMLElement source, UMLElement target) {
         super(jsonElementID);
 
@@ -30,6 +36,12 @@ public class BPMNFlow extends UMLElement implements Serializable {
         this.flowType = flowType;
     }
 
+    /**
+     * Calculate the similarity between the element and another given UML Element
+     *
+     * @param reference the reference object that should be compared to this object
+     * @return A similarity score between 0 and 1
+     */
     @Override
     public double similarity(Similarity<UMLElement> reference) {
         if (!(reference instanceof BPMNFlow referenceFlow)) {
@@ -47,16 +59,31 @@ public class BPMNFlow extends UMLElement implements Serializable {
         return ensureSimilarityRange(similarity * flowTypeSimilarityFactor);
     }
 
+    /**
+     * Get a string representation for the flow
+     *
+     * @return A string representation of the flow
+     */
     @Override
     public String toString() {
         return "Flow " + getSource().getName() + " --> " + getTarget().getName() + " (" + getType() + ")";
     }
 
+    /**
+     * Get the name of the element
+     *
+     * @return The name of the element
+     */
     @Override
     public String getName() {
         return this.name;
     }
 
+    /**
+     * Get the type of the BPMN element
+     *
+     * @return The type of BPMN element
+     */
     @Override
     public String getType() {
         return BPMN_FLOW_TYPE;
