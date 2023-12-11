@@ -102,8 +102,10 @@
                 "interval": "Intervall (%)",
                 "intervalPoints": "Intervall (Punkte)",
                 "gradeKeyButton": "Notenschlüssel ansehen",
+                "gradeKey": "Notenschlüssel",
                 "gradeKeyButtonBonus": "Bonusregeln ansehen",
-                "bonusGradeKeyButton": "Bonusnotenschlüssel ansehen"
+                "bonusGradeKey": "Bonusnotenschlüssel",
+                "resultTable": "Ergebnistabelle"
             },
             "title": "Klausur",
             "startExam": "Starten",

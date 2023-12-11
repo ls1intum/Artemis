@@ -102,8 +102,10 @@
                 "interval": "Interval (%)",
                 "intervalPoints": "Interval (Points)",
                 "gradeKeyButton": "View Grading Key",
+                "gradeKey": "Grading Key",
                 "gradeKeyButtonBonus": "View Bonus Rules",
-                "bonusGradeKeyButton": "View Bonus Grading Key"
+                "bonusGradeKey": "Bonus Grading Key",
+                "resultTable": "Result Table"
             },
             "title": "Exam",
             "startExam": "Start",
