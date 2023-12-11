@@ -1,7 +1,7 @@
 <div>
     <h6 *ngIf="!isExam">{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
     <div>
-        <table class="table table-striped">
+        <table class="table table-striped w-auto">
             <thead>
                 <tr>
                     <th>{{ isBonus ? ('artemisApp.exam.examSummary.bonus' | artemisTranslate) : ('artemisApp.exam.examSummary.grade' | artemisTranslate) }}</th>
