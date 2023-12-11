@@ -220,20 +220,20 @@ public class ExamService {
      * Also fetches the template and solution participation for programming exercises and questions for quiz exercises.
      *
      * @param examId      the id of the entity
-     * @param withDetails determines whether additional parameters such as participation, result, feedback for programming exercises and questions for the quiz should be loaded
+     * @param withDetails determines whether additional parameters such as template and solution participation for programming exercises
+     *                        and questions for the quiz should be loaded
      * @return the exam with exercise groups
      */
     @NotNull
     public Exam findByIdWithExerciseGroupsAndExercisesElseThrow(Long examId, boolean withDetails) {
         log.debug("Request to get exam with exercise groups : {}", examId);
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        // TODO: right now withDetails is always false, double check if we could get rid of the following code
         if (withDetails) {
             for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
                 for (Exercise exercise : exerciseGroup.getExercises()) {
                     if (exercise instanceof ProgrammingExercise programmingExercise) {
                         ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseRepository
-                                .findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(exercise.getId());
+                                .findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(exercise.getId());
                         programmingExercise.setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
                         programmingExercise.setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
                     }
