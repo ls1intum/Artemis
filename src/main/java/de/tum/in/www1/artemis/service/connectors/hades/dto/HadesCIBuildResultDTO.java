@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
@@ -77,11 +76,6 @@ public class HadesCIBuildResultDTO extends AbstractBuildResultNotificationDTO {
 
     @Override
     public List<BuildLogEntry> extractBuildLogs() {
-        return null;
-    }
-
-    @Override
-    public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
         return null;
     }
 
