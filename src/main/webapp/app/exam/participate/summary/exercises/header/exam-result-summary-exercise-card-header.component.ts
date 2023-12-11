@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
-import { faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ResultSummaryExerciseInfo } from 'app/exam/participate/summary/exam-result-summary.component';
 import { SubmissionType } from 'app/entities/submission.model';
 
@@ -13,12 +12,6 @@ export class ExamResultSummaryExerciseCardHeaderComponent {
     @Input() exercise: Exercise;
     @Input() exerciseInfo?: ResultSummaryExerciseInfo;
     @Input() resultsPublished: boolean;
-
-    faAngleRight = faAngleRight;
-
-    toggleCollapseExercise() {
-        this.exerciseInfo!.isCollapsed = !this.exerciseInfo!.isCollapsed;
-    }
 
     readonly SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
 }
