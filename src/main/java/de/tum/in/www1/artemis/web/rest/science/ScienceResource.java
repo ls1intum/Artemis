@@ -30,6 +30,7 @@ public class ScienceResource {
      * PUT science : Logs an event of the given type in the event list
      *
      * @param type the type of the event that should be logged
+     * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping("science")
     @EnforceAtLeastStudent
