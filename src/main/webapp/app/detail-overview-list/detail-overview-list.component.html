@@ -1,6 +1,6 @@
 <jhi-detail-overview-navigation-bar *ngIf="headlines" [sectionHeadlines]="headlines"></jhi-detail-overview-navigation-bar>
 <ng-container *ngFor="let section of sections">
-    <h3 [id]="getHeadlineId(section.headline)">{{ section.headline | artemisTranslate }}</h3>
+    <h3 [id]="headlinesRecord[section.headline]">{{ section.headline | artemisTranslate }}</h3>
     <dl>
         <ng-container *ngFor="let detail of section.details">
             <dt *ngIf="detail.title">

@@ -56,7 +56,10 @@ export class DetailOverviewListComponent implements OnInit {
     @Input()
     sections: DetailOverviewSection[];
 
+    // headline list for navigation bar
     headlines: { id: string; translationKey: string }[];
+    // headline record to avoid function call in html
+    headlinesRecord: Record<string, string>;
 
     // icons
     faExclamationTriangle = faExclamationTriangle;
@@ -75,10 +78,9 @@ export class DetailOverviewListComponent implements OnInit {
                 translationKey: section.headline,
             };
         });
-    }
-
-    getHeadlineId(headlineTranslationKey: string) {
-        return this.headlines.find((headline) => headline.translationKey === headlineTranslationKey)!.id;
+        this.headlinesRecord = this.headlines.reduce((previousValue, currentValue) => {
+            return { ...previousValue, [currentValue.translationKey]: currentValue.id };
+        }, {});
     }
 
     showGitDiff(gitDiff: ProgrammingExerciseGitDiffReport) {
