@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockModule } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExamSession } from 'app/entities/exam-session.model';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
 import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
@@ -11,7 +11,6 @@ import { MockTranslateService, TranslateTestingModule } from '../../../helpers/m
 import { ArtemisTestModule } from '../../../test.module';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { BehaviorSubject } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -21,6 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
 
 describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
@@ -268,19 +268,104 @@ describe('Exam Navigation Bar Component', () => {
         expect(comp.icon).toEqual(faCheck);
     });
 
-    it('setQuizExamButtonStatus should return synced if quizExamPageOpen is true', () => {
-        comp.quizExamPageOpen = true;
-        const status = comp.setQuizExamButtonStatus();
-        expect(status).toBe('synced active');
+    describe('getQuizExamButtonTooltip', () => {
+        it('should return synced when quizExam.submission exists and isSynced is true', () => {
+            comp.quizExam = {
+                type: ExerciseType.QUIZ,
+                submission: {
+                    isSynced: true,
+                    submitted: false,
+                },
+            };
+            const tooltip = comp.getQuizExamButtonTooltip();
+            expect(tooltip).toBe('synced');
+        });
+
+        it('should return notSynced when quizExam.submission exists and isSynced is false', () => {
+            comp.quizExam = {
+                type: ExerciseType.QUIZ,
+                submission: {
+                    isSynced: false,
+                    submitted: false,
+                },
+            };
+
+            const tooltip = comp.getQuizExamButtonTooltip();
+            expect(tooltip).toBe('notSynced');
+        });
     });
 
-    it('setQuizExamButtonStatus should return synced if quizExamPageOpen is false', () => {
-        const status = comp.setQuizExamButtonStatus();
-        expect(status).toBe('synced');
-    });
+    describe('setQuizExamButtonStatus', () => {
+        it('should return synced when quizExam.submission is undefined', () => {
+            comp.quizExam = {
+                type: ExerciseType.QUIZ,
+                submission: new QuizExamSubmission(),
+            };
 
-    it('setQuizExamButtonStatus should set the icon to faEdit before checking quizExamPageOpen', () => {
-        comp.setQuizExamButtonStatus();
-        expect(comp.icon).toBe(faEdit);
+            const result = comp.setQuizExamButtonStatus();
+
+            expect(result).toBe('synced');
+        });
+
+        it('should return synced active when quizExamPageOpen is true and quizExam.submission.isSynced is true', () => {
+            comp.quizExam = {
+                type: ExerciseType.QUIZ,
+                submission: {
+                    isSynced: true,
+                },
+            };
+            comp.quizExamPageOpen = true;
+
+            const result = comp.setQuizExamButtonStatus();
+
+            expect(result).toBe('synced active');
+        });
+
+        it('should return synced when quizExam.submission.isSynced is true and quizExamPageOpen is false', () => {
+            comp.quizExam = {
+                type: ExerciseType.QUIZ,
+                submission: {
+                    isSynced: true,
+                },
+            };
+            comp.quizExamPageOpen = false;
+
+            const result = comp.setQuizExamButtonStatus();
+
+            expect(result).toBe('synced');
+        });
+
+        it('should return synced when none of the input parameters are defined', () => {
+            const result = comp.setQuizExamButtonStatus();
+            expect(result).toBe('synced');
+        });
+
+        it('should return synced when quizExam.submission is defined, but quizExamPageOpen is undefined', () => {
+            comp.quizExam = {
+                type: ExerciseType.QUIZ,
+                submission: {
+                    isSynced: true,
+                },
+            };
+            comp.quizExamPageOpen = false;
+
+            const result = comp.setQuizExamButtonStatus();
+
+            expect(result).toBe('synced');
+        });
+
+        it('should return notSynced when quizExam.submission.isSubmitted is false and quizExam.submission.isSynced is false', () => {
+            comp.quizExam = {
+                type: ExerciseType.QUIZ,
+                submission: {
+                    isSynced: false,
+                    submitted: false,
+                },
+            };
+
+            const result = comp.setQuizExamButtonStatus();
+
+            expect(result).toBe('notSynced');
+        });
     });
 });

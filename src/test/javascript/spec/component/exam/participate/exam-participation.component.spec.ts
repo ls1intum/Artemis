@@ -53,6 +53,7 @@ import { ExamLiveEvent, ExamParticipationLiveEventsService } from 'app/exam/part
 import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/service/mock-exam-participation-live-events.service';
 import { ExamPage } from 'app/entities/exam-page.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
+import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -393,6 +394,8 @@ describe('ExamParticipationComponent', () => {
         firstParticipation.id = 2;
 
         studentExam.exercises = [firstExercise, secondExercise];
+        studentExam.exam!.quizExamMaxPoints = 100;
+        studentExam.quizQuestions = [new MultipleChoiceQuestion()];
         comp.examStarted(studentExam);
         expect(firstParticipation.submissions).toBeDefined();
         expect(firstParticipation.submissions!.length).toBeGreaterThan(0);
@@ -413,6 +416,9 @@ describe('ExamParticipationComponent', () => {
         // Initialize Exam Overview Page
         expect(comp.activeExamPage.exercise).toBeUndefined();
         expect(comp.activeExamPage.isOverviewPage).toBeTrue();
+
+        expect(comp.quizExam!.submission.isSynced).toBeTrue();
+        expect(comp.quizExam!.submission.submitted).toBeFalse();
     };
 
     it('should initialize exercises when exam starts', () => {
@@ -421,6 +427,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.testRun = true;
         comp.testStartTime = dayjs().subtract(1000, 'seconds');
         comp.exam = new Exam();
+        studentExam.exam = comp.exam;
         testExamStarted(studentExam);
     });
 
@@ -432,6 +439,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.workingTime = 100;
         comp.testStartTime = dayjs().subtract(1000, 'seconds');
         comp.exam = exam;
+        studentExam.exam = comp.exam;
         testExamStarted(studentExam);
     });
 
@@ -445,6 +453,7 @@ describe('ExamParticipationComponent', () => {
         const workingTime = 1000;
         const studentExam = new StudentExam();
         studentExam.workingTime = workingTime;
+        studentExam.exam = comp.exam;
         testExamStarted(studentExam);
         expect(comp.individualStudentEndDate).toEqual(startDate.add(workingTime, 'seconds'));
     });
