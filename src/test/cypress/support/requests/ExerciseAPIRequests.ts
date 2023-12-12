@@ -33,9 +33,9 @@ import {
     PATCH,
     POST,
     PROGRAMMING_EXERCISE_BASE,
+    PUT,
     ProgrammingExerciseAssessmentType,
     ProgrammingLanguage,
-    PUT,
     QUIZ_EXERCISE_BASE,
     TEXT_EXERCISE_BASE,
     UPLOAD_EXERCISE_BASE,
@@ -51,7 +51,7 @@ type PatchProgrammingExerciseTestVisibilityDto = {
     visibility: Visibility;
 }[];
 
-const MAX_RETRIES: number = 15;
+const MAX_RETRIES: number = 155;
 const RETRY_DELAY: number = 5000;
 
 /**
