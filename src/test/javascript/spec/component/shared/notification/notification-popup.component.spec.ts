@@ -201,5 +201,14 @@ describe('Notification Popup Component', () => {
             notificationPopupComponent.ngOnInit();
             expect(notificationPopupComponent.notifications).not.toBeEmpty();
         });
+
+        it('should add received message notification', () => {
+            jest.spyOn(router, 'isActive').mockReturnValue(true);
+            const replay = new ReplaySubject<Notification>();
+            jest.spyOn(notificationService, 'subscribeToSingleIncomingNotifications').mockReturnValue(replay);
+            replay.next(newMessageNotification);
+            notificationPopupComponent.ngOnInit();
+            expect(notificationPopupComponent.notifications).not.toBeEmpty();
+        });
     });
 });

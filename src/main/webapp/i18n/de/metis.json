@@ -49,7 +49,8 @@
             },
             "channel": {
                 "notAMember": "Du bist kein Mitglied des Kanals.",
-                "noChannel": "Es ist kein Kanal verfügbar."
+                "noChannel": "Es ist kein Kanal verfügbar.",
+                "invalidReference": "Du bist kein Mitglied im referenzierten Kanal."
             },
             "communication": {
                 "label": "Kommunikation",

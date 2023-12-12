@@ -55,10 +55,6 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     private List<Post> existingPostsWithAnswers;
 
-    private List<Post> existingPostsWithAnswersInExercise;
-
-    private List<Post> existingPostsWithAnswersInLecture;
-
     private List<Post> existingPostsWithAnswersCourseWide;
 
     private List<AnswerPost> existingAnswerPosts;
@@ -86,39 +82,14 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
         existingAnswerPosts = existingPostsAndConversationPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
 
         // get all existing posts with answers in exercise context
-        existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getExercise() != null).toList();
-
-        // get all existing posts with answers in lecture context
-        existingPostsWithAnswersInLecture = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getLecture() != null).toList();
+        List<Post> existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getExercise() != null)
+                .toList();
 
         // get all existing posts with answers in lecture context
         existingPostsWithAnswersCourseWide = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getCourseWideContext() != null)
                 .toList();
 
         courseId = existingPostsWithAnswersInExercise.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
-    }
-
-    // CREATE
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateAnswerPostInLecture() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
-        testAnswerPostCreation(answerPostToSave);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateAnswerPostInExercise() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
-        testAnswerPostCreation(answerPostToSave);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateAnswerPostCourseWide() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
-        testAnswerPostCreation(answerPostToSave);
     }
 
     @ParameterizedTest
@@ -140,18 +111,6 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
         // should increment answer count
         assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-    }
-
-    private void testAnswerPostCreation(AnswerPost answerPostToSave) throws Exception {
-        var countBefore = answerPostRepository.count();
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
-        // should not be automatically post resolving
-        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
-        // should increment answer count
-        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
-        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(countBefore + 1).isEqualTo(answerPostRepository.count());
     }
 
     @Test
@@ -184,45 +143,6 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
         courseRepository.saveAndFlush(persistedCourse);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateAnswerPostInLecture_asInstructor() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
-
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
-        // should increment answer count
-        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
-        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(answerPostRepository.findById(createdAnswerPost.getId())).isPresent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateAnswerPostInExercise_asInstructor() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
-
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
-        // should increment answer count
-        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
-        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(answerPostRepository.findById(createdAnswerPost.getId())).isPresent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateAnswerPostCourseWide_asInstructor() throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
-
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
-        // should increment answer count
-        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
-        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(answerPostRepository.findById(createdAnswerPost.getId())).isPresent();
     }
 
     @Test

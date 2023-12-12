@@ -52,4 +52,17 @@ public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
         buildPlanWrapper.addProgrammingExercise(exercise);
         return save(buildPlanWrapper);
     }
+
+    /**
+     * Copies the build plan from the source exercise to the target exercise.
+     *
+     * @param sourceExercise The exercise containing the build plan to be copied.
+     * @param targetExercise The exercise into which the build plan is copied.
+     */
+    default void copyBetweenExercises(ProgrammingExercise sourceExercise, ProgrammingExercise targetExercise) {
+        findByProgrammingExercises_IdWithProgrammingExercises(sourceExercise.getId()).ifPresent(buildPlan -> {
+            buildPlan.addProgrammingExercise(targetExercise);
+            save(buildPlan);
+        });
+    }
 }
