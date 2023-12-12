@@ -266,6 +266,7 @@
                                     [displayEditorModus]="true"
                                 ></jhi-programming-exercise-group-cell>
                             </td>
+                            <ng-container #test></ng-container>
                         </ng-container>
                         <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.QUIZ)">
                             <td class="align-middle">
