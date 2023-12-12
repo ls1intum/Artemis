@@ -632,7 +632,7 @@ describe('Metis Service', () => {
                 metisService.getFilteredPosts({ plagiarismCaseId: 1 } as PostContextFilter);
 
                 // Ensure subscribe to websocket was called
-                expect(websocketService.subscribe).not.toHaveBeenCalled();
+                expect(websocketService.subscribe).toHaveBeenCalledExactlyOnceWith('/topic/metis/plagiarismCase/1');
 
                 // Emulate receiving a message
                 const getPostsSpy = jest.spyOn(postService, 'getPosts');
@@ -661,8 +661,8 @@ describe('Metis Service', () => {
                 // set currentPostContextFilter appropriately
                 metisService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id } as PostContextFilter);
 
-                // Ensure subscribe to websocket was called
-                expect(websocketService.subscribe).toHaveBeenCalledOnce();
+                // Ensure subscribe to websocket was not called
+                expect(websocketService.subscribe).not.toHaveBeenCalled();
 
                 // Emulate receiving a message
                 const getPostsSpy = jest.spyOn(postService, 'getPosts');
