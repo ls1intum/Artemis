@@ -14,5 +14,5 @@ import de.tum.in.www1.artemis.domain.science.ScienceEventType;
 @Repository
 public interface ScienceEventRepository extends JpaRepository<ScienceEvent, Long> {
 
-    public Set<ScienceEvent> findAllByType(ScienceEventType type);
+    Set<ScienceEvent> findAllByType(ScienceEventType type);
 }

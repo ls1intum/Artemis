@@ -27,7 +27,7 @@
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="identity" type="int">
+            <column name="identity" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
             <column name="timestamp" type="datetime">

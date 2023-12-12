@@ -29,16 +29,16 @@ public class ScienceEventService {
      */
     public void logEvent(ScienceEventType type) {
         final Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        logEvent(type, auth.getPrincipal());
+        logEvent(type, auth.getName());
     }
 
     /**
      * Logs the event for the given principal with the current timestamp.
      *
      * @param type      the type of the event that should be logged
-     * @param principal the principal for whom the event should be logged
+     * @param principal the name of the principal for whom the event should be logged
      */
-    private void logEvent(ScienceEventType type, Object principal) {
+    private void logEvent(ScienceEventType type, String principal) {
         logEvent(type, principal, ZonedDateTime.now());
     }
 
@@ -46,12 +46,12 @@ public class ScienceEventService {
      * Logs the event for the given principal with the given timestamp.
      *
      * @param type      the type of the event that should be logged
-     * @param principal the principal for whom the event should be logged
+     * @param principal the name of the principal for whom the event should be logged
      * @param timestamp the time when the event happened
      */
-    private void logEvent(ScienceEventType type, Object principal, ZonedDateTime timestamp) {
+    private void logEvent(ScienceEventType type, String principal, ZonedDateTime timestamp) {
         ScienceEvent event = new ScienceEvent();
-        event.setIdentity(principal.hashCode());
+        event.setIdentity(principal);
         event.setTimestamp(timestamp);
         event.setType(type);
         scienceEventRepository.save(event);

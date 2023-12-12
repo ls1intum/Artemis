@@ -6,6 +6,6 @@ export abstract class AbstractScienceComponent {
         protected scienceService: ScienceService,
         private type: ScienceEventType,
     ) {
-        scienceService.logEvent(type);
+        scienceService.logEvent(type).subscribe();
     }
 }

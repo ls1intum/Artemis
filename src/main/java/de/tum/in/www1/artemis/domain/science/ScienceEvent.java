@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 public class ScienceEvent extends DomainObject {
 
     @Column(name = "identity", nullable = false)
-    private int identity;
+    private String identity;
 
     @Column(name = "timestamp", nullable = false)
     private ZonedDateTime timestamp;
@@ -31,11 +31,11 @@ public class ScienceEvent extends DomainObject {
     @Column(name = "event_type", nullable = false)
     private ScienceEventType type;
 
-    public int getIdentity() {
+    public String getIdentity() {
         return identity;
     }
 
-    public void setIdentity(int identity) {
+    public void setIdentity(String identity) {
         this.identity = identity;
     }
 

@@ -86,7 +86,7 @@
                 "newConversationMessageDescription": "Erhalte eine Mitteilung, wenn du eine neue Nachricht in einer Unterhaltung erhältst",
                 "conversationNewReplyMessageDescription": "Erhalte eine Mitteilung, wenn du eine neue Antwort in einer Unterhaltung erhältst",
                 "assignUnassignTutorialGroupDescription": "Erhalte eine Mitteilung, wenn du als Tutor:in der Leitung einer Übungsgruppe zugewiesen oder entzogen wurdest",
-                "activityDescription": "Teile welche Features von Artemis du nutzt und wie du mit ihnen interagierst. Die Informationen werden anonymisiert gespeichert und sind nicht für deine Lehrenden zugänglich."
+                "activityDescription": "Teile welche Features von Artemis du nutzt und wie du mit ihnen interagierst. Die Informationen sind nicht für deine Lehrenden oder andere Studierende zugänglich."
             }
         }
     }

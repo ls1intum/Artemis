@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.science;
 
-import javax.validation.Valid;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -34,9 +32,9 @@ public class ScienceResource {
      */
     @PutMapping("science")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> science(@Valid @RequestBody ScienceEventType type) {
+    public ResponseEntity<Void> science(@RequestBody String type) {
         log.debug("REST request to log science event of type {}", type);
-        scienceEventService.logEvent(type);
+        scienceEventService.logEvent(ScienceEventType.valueOf(type));
         return ResponseEntity.ok().build();
     }
 }
