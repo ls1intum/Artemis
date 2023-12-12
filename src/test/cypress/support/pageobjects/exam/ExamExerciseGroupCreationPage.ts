@@ -2,8 +2,7 @@ import { Exam } from 'app/entities/exam.model';
 
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { examAPIRequests, exerciseAPIRequest } from '../../artemis';
-import { AdditionalData, BASE_API, Exercise, ExerciseType, PUT } from '../../constants';
-import { POST } from '../../constants';
+import { AdditionalData, BASE_API, Exercise, ExerciseType, POST, PUT } from '../../constants';
 import { convertModelAfterMultiPart, generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Visibility } from 'app/entities/programming-exercise-test-case.model';
@@ -41,6 +40,12 @@ export class ExamExerciseGroupCreationPage {
                     additionalData!.quizExerciseID = quiz.quizQuestions![0].id;
                     exercise = { ...quiz, additionalData };
                 }
+
+                if (exerciseType === ExerciseType.PROGRAMMING) {
+                    const RETRY_NUMBER = 0;
+                    exerciseAPIRequest.changeProgrammingExerciseTestVisibility(exercise, Visibility.Always, RETRY_NUMBER);
+                }
+
                 resolve(exercise);
             });
         });
@@ -69,12 +74,7 @@ export class ExamExerciseGroupCreationPage {
                         .createProgrammingExercise({ exerciseGroup: groupResponse.body, title, assessmentType: additionalData.progExerciseAssessmentType })
                         .then((response) => {
                             processResponse(response);
-
-                            const exercise = { ...response.body, additionalData };
-                            const retryNumber = 0;
-                            exerciseAPIRequest.changeProgrammingExerciseTestVisibility(exercise, Visibility.Always, retryNumber);
                         });
-
                     break;
             }
         });
