@@ -2,3 +2,6 @@ artemis:
     hades:
         token: ""
         url: "http://localhost:8081"
+
+        images:
+            clone-image: ghcr.io/mtze/hades/hades-clone-container:latest

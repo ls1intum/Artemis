@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.hades;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
@@ -28,15 +30,21 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
     @Value("${artemis.user-management.internal-admin.password}")
     private String gitPassword;
 
+    @Value("${artemis.hades.images.clone-image}")
+    private String cloneDockerIamge;
+
     private final Logger log = LoggerFactory.getLogger(HadesCIService.class);
 
     private final RestTemplate restTemplate;
 
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+
     @Value("${artemis.hades.url}")
     private String hadesServerUrl;
 
-    public HadesCITriggerService(RestTemplate restTemplate) {
+    public HadesCITriggerService(RestTemplate restTemplate, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.restTemplate = restTemplate;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     @Override
@@ -54,7 +62,8 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
 
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, boolean isTestPush) throws ContinuousIntegrationException {
-        ContinuousIntegrationTriggerService.super.triggerBuild(participation, commitHash, isTestPush);
+        log.warn("Triggering with a test push is not supported for Hades. Triggering build without test push.");
+        triggerBuild(participation, commitHash);
     }
 
     private void postJob(HadesBuildJobDTO job) {
@@ -69,6 +78,10 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
 
     private HadesBuildJobDTO createJob(ProgrammingExerciseParticipation participation) {
 
+        var steps = new ArrayList<HadesBuildStepDTO>();
+
+        // Create Clone Step
+        // TODO: We need a solution to clone with less critical credentials - This requires changes in the localvc implementation
         var cloneMetadata = new HashMap<String, String>();
         cloneMetadata.put("REPOSITORY_DIR", "/shared");
         cloneMetadata.put("HADES_TEST_USERNAME", gitUsername);
@@ -80,11 +93,20 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         cloneMetadata.put("HADES_ASSIGNMENT_URL", participation.getRepositoryUrl());
         cloneMetadata.put("HADES_ASSIGNMENT_PATH", "./example/assignment");
 
-        var steps = new ArrayList<HadesBuildStepDTO>();
-        steps.add(new HadesBuildStepDTO(1, "Clone", "ghcr.io/mtze/hades/hades-clone-container:pr-28", cloneMetadata));
-        steps.add(new HadesBuildStepDTO(2, "Execute", "ls1tum/artemis-maven-template:java17-18", "cd ./example && ls -lah && ./gradlew clean test"));
+        steps.add(new HadesBuildStepDTO(1, "Clone", cloneDockerIamge, cloneMetadata));
 
-        return new HadesBuildJobDTO("Test", null, "2021-01-01T00:00:00.000Z", 1, steps);
+        // Create Execute Step
+        var image = programmingLanguageConfiguration.getImage(participation.getProgrammingExercise().getProgrammingLanguage(),
+                Optional.ofNullable(participation.getProgrammingExercise().getProjectType()));
+        // TODO: Get script from template
+        var script = "cd ./example && ls -lah && ./gradlew clean test";
+        steps.add(new HadesBuildStepDTO(2, "Execute", image, script));
+
+        // TODO: Create Results Step
+
+        // Create Hades Job
+        var timestamp = java.time.Instant.now().toString();
+        return new HadesBuildJobDTO("Test", null, timestamp, 1, steps);
     }
 
 }
