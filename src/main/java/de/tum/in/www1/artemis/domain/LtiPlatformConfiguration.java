@@ -103,6 +103,11 @@ public class LtiPlatformConfiguration extends DomainObject {
         this.tokenUri = tokenUri;
     }
 
+    @Nullable
+    public String getOriginalUrl() {
+        return originalUrl;
+    }
+
     public void setOriginalUrl(@Nullable String originalUrl) {
         this.originalUrl = originalUrl;
     }
@@ -116,6 +121,9 @@ public class LtiPlatformConfiguration extends DomainObject {
         this.customName = customName;
     }
 
+    /**
+     * Gets initialized online course configurations, or null if not initialized.
+     */
     public Set<OnlineCourseConfiguration> getOnlineCourseConfigurations() {
         return Hibernate.isInitialized(this.onlineCourseConfigurations) ? this.onlineCourseConfigurations : null;
     }
