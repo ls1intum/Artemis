@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -35,5 +38,27 @@ public interface LtiPlatformConfigurationRepository extends JpaRepository<LtiPla
     default LtiPlatformConfiguration findByIdElseThrow(Long platformId) throws EntityNotFoundException {
         return findById(platformId).orElseThrow(() -> new EntityNotFoundException("LtiPlatformConfiguration", platformId));
     }
+
+    /**
+     * Fetches an {@link LtiPlatformConfiguration} with its associated online courses eagerly loaded.
+     *
+     * @param id The ID of the LtiPlatformConfiguration.
+     * @return {@link LtiPlatformConfiguration} with eager-loaded courses, or {@code null} if not found.
+     * @throws EntityNotFoundException if no entity with the given ID is found.
+     */
+    @NotNull
+    default LtiPlatformConfiguration findLtiPlatformConfigurationWithEagerLoadedCoursesById(long id) throws EntityNotFoundException {
+        return Optional.ofNullable(findWithEagerOnlineCourseConfigurationsById(id)).orElseThrow(() -> new EntityNotFoundException("LtiPlatformConfiguration", id));
+    }
+
+    /**
+     * Retrieves an {@link LtiPlatformConfiguration} by ID with eager-loaded online courses.
+     * Intended for internal use with {@link EntityGraph} for optimized fetching.
+     *
+     * @param platformId The ID of the LtiPlatformConfiguration.
+     * @return {@link LtiPlatformConfiguration} with eager-loaded courses, or {@code null} if not found.
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfigurations" })
+    LtiPlatformConfiguration findWithEagerOnlineCourseConfigurationsById(long platformId);
 
 }

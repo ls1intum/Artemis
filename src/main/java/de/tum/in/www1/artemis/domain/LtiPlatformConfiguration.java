@@ -11,6 +11,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -102,11 +103,6 @@ public class LtiPlatformConfiguration extends DomainObject {
         this.tokenUri = tokenUri;
     }
 
-    @Nullable
-    public String getOriginalUrl() {
-        return originalUrl;
-    }
-
     public void setOriginalUrl(@Nullable String originalUrl) {
         this.originalUrl = originalUrl;
     }
@@ -121,11 +117,7 @@ public class LtiPlatformConfiguration extends DomainObject {
     }
 
     public Set<OnlineCourseConfiguration> getOnlineCourseConfigurations() {
-        return onlineCourseConfigurations;
-    }
-
-    public void setOnlineCourseConfigurations(Set<OnlineCourseConfiguration> onlineCourseConfigurations) {
-        this.onlineCourseConfigurations = onlineCourseConfigurations;
+        return Hibernate.isInitialized(this.onlineCourseConfigurations) ? this.onlineCourseConfigurations : null;
     }
 
 }

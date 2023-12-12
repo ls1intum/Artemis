@@ -129,8 +129,10 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
     public void addOnlineCourseConfigurationToLtiConfigurations(OnlineCourseConfiguration onlineCourseConfiguration) {
         if (onlineCourseConfiguration.getLtiPlatformConfiguration() != null) {
             Long platformId = onlineCourseConfiguration.getLtiPlatformConfiguration().getId();
-            LtiPlatformConfiguration platformConfiguration = ltiPlatformConfigurationRepository.findByIdElseThrow(platformId);
-            platformConfiguration.getOnlineCourseConfigurations().add(onlineCourseConfiguration);
+            LtiPlatformConfiguration platformConfiguration = ltiPlatformConfigurationRepository.findLtiPlatformConfigurationWithEagerLoadedCoursesById(platformId);
+
+            var setOfOnlineCourses = platformConfiguration.getOnlineCourseConfigurations();
+            setOfOnlineCourses.add(onlineCourseConfiguration);
             onlineCourseConfiguration.setLtiPlatformConfiguration(platformConfiguration);
         }
     }
