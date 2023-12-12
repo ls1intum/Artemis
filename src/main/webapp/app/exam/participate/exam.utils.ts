@@ -110,13 +110,14 @@ export function createQuizExam(studentExam: StudentExam, title: string): QuizExa
         quizExam.randomizeQuestionOrder = studentExam.exam?.randomizeQuizExamQuestionsOrder;
         quizExam.maxPoints = studentExam.exam?.quizExamMaxPoints;
         let quizExamSubmission;
-        if (quizExamSubmission) {
+        if (studentExam.quizExamSubmission) {
             quizExamSubmission = Object.assign({}, studentExam.quizExamSubmission);
         } else {
             quizExamSubmission = new QuizExamSubmission();
         }
         studentExam.quizExamSubmission = undefined;
-        quizExamSubmission.studentExam = studentExam;
+        quizExamSubmission.studentExam = new StudentExam();
+        quizExamSubmission.studentExam.id = studentExam.id;
         quizExam.submission = quizExamSubmission;
         return quizExam;
     }

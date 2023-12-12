@@ -67,7 +67,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
      * @return synced
      */
     getQuizExamButtonTooltip(): ButtonTooltipType {
-        return 'synced';
+        return this.examParticipationService.getButtonTooltip(this.quizExam?.submission, ExerciseType.QUIZ);
     }
 
     /**
@@ -105,8 +105,23 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
      *
      * @return synced
      */
-    setQuizExamIconStatus() {
+    setQuizExamIconStatus(): 'synced' | 'notSynced' {
+        // start with a yellow status (edit icon)
         this.quizExamIcon = faEdit;
-        return 'synced';
+        if (!this.quizExam?.submission) {
+            // in case no participation/submission yet exists -> display synced
+            return 'synced';
+        }
+        if (this.quizExam?.submission.submitted) {
+            this.quizExamIcon = faCheck;
+        }
+        if (this.quizExam?.submission.isSynced) {
+            // make status blue
+            return 'synced';
+        } else {
+            // make status yellow
+            this.quizExamIcon = faEdit;
+            return 'notSynced';
+        }
     }
 }

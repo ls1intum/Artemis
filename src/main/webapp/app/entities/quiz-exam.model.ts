@@ -14,7 +14,7 @@ export class QuizExam implements QuizConfiguration {
     public title?: string;
     public maxPoints?: number;
     public includedInOverallScore?: IncludedInOverallScore;
-    public submission?: QuizExamSubmission;
+    public submission: QuizExamSubmission;
 
     constructor() {
         this.id = 0;

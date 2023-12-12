@@ -324,13 +324,17 @@ export class ExamParticipationService {
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
+        return this.getButtonTooltip(submission, exercise.type);
+    }
+
+    getButtonTooltip(submission: Submission | undefined, exerciseType: ExerciseType | undefined) {
         // The submission might not yet exist for this exercise.
         // When the participant navigates to the exercise the submissions are created.
         // Until then show, that the exercise is synced
         if (!submission) {
             return 'synced';
         }
-        if (exercise.type !== ExerciseType.PROGRAMMING) {
+        if (exerciseType !== ExerciseType.PROGRAMMING) {
             return submission.isSynced ? 'synced' : 'notSynced';
         }
         if (submission.submitted && submission.isSynced) {

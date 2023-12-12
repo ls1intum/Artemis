@@ -115,7 +115,7 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     getQuizExamButtonTooltip(): ButtonTooltipType {
-        return 'synced';
+        return this.examParticipationService.getButtonTooltip(this.quizExam?.submission, ExerciseType.QUIZ);
     }
 
     triggerExamAboutToEnd() {
@@ -211,12 +211,23 @@ export class ExamNavigationBarComponent implements OnInit {
     /**
      * Set the icon of the quiz exam button and return the status of the button
      */
-    setQuizExamButtonStatus(): 'synced' | 'synced active' {
+    setQuizExamButtonStatus(): 'synced' | 'synced active' | 'notSynced' {
         this.icon = faEdit;
-        if (this.quizExamPageOpen) {
-            return 'synced active';
-        } else {
+        if (!this.quizExam?.submission) {
             return 'synced';
+        }
+        if (this.quizExam?.submission?.submitted) {
+            this.icon = faCheck;
+        }
+        if (this.quizExam?.submission?.isSynced) {
+            if (this.quizExamPageOpen) {
+                return 'synced active';
+            } else {
+                return 'synced';
+            }
+        } else {
+            this.icon = faEdit;
+            return 'notSynced';
         }
     }
 
