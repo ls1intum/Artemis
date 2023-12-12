@@ -1,5 +1,5 @@
 import { Course } from 'app/entities/course.model';
-import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, ReplaySubject, Subject } from 'rxjs';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 
@@ -40,9 +40,13 @@ export class MockMetisConversationService {
         return EMPTY;
     };
 
+    _hasUnreadMessages$: Subject<boolean> = new ReplaySubject<boolean>(1);
+
     forceRefresh(notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> {
         return EMPTY;
     }
+
+    markAsRead(): void {}
 
     acceptCodeOfConduct(course: Course) {}
 }

@@ -32,7 +32,7 @@ import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { Channel, ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { Channel, ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 
@@ -598,11 +598,6 @@ export class MetisService implements OnDestroy {
             this.subscriptionChannel = undefined;
         }
 
-        // channel is course-wide which is handled by the metis-notification service
-        if (!channel.includes('conversations')) {
-            return;
-        }
-
         // create new subscription
         this.subscriptionChannel = channel;
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
@@ -690,19 +685,17 @@ export class MetisService implements OnDestroy {
      * By calling the createWebsocketSubscription method with this channel as parameter, the metis service also subscribes to that messages in this channel
      */
     private createSubscriptionFromPostContextFilter(): void {
-        let channel = MetisWebsocketChannelPrefix;
-        if (this.currentPostContextFilter.conversationId && !getAsChannelDto(this.currentConversation)?.isCourseWide) {
-            channel = `/user${MetisWebsocketChannelPrefix}courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
+        if (this.currentPostContextFilter.plagiarismCaseId) {
+            const channel = MetisWebsocketChannelPrefix + 'plagiarismCase/' + this.currentPostContextFilter.plagiarismCaseId;
+            this.createWebsocketSubscription(channel);
         } else {
-            // subscribe to course as this is topic that is emitted on in every case
-            // channel += `courses/${this.courseId}`;
+            // No need for extra subscription since messaging topics are covered by other services
             if (this.subscriptionChannel) {
                 this.jhiWebsocketService.unsubscribe(this.subscriptionChannel);
                 this.subscriptionChannel = undefined;
             }
             return;
         }
-        this.createWebsocketSubscription(channel);
     }
 
     /**

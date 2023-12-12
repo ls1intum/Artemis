@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.metis.PostService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -53,7 +54,7 @@ public class PostResource {
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PostMapping("courses/{courseId}/posts")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastInstructor
     public ResponseEntity<Post> createPost(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
         log.debug("POST createPost invoked for course {} with post {}", courseId, post.getContent());
         long start = System.nanoTime();
@@ -72,7 +73,7 @@ public class PostResource {
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PutMapping("courses/{courseId}/posts/{postId}")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastInstructor
     public ResponseEntity<Post> updatePost(@PathVariable Long courseId, @PathVariable Long postId, @RequestBody Post post) {
         log.debug("PUT updatePost invoked for course {} with post {}", courseId, post.getContent());
         long start = System.nanoTime();
@@ -127,7 +128,7 @@ public class PostResource {
      *         or 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @DeleteMapping("courses/{courseId}/posts/{postId}")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastInstructor
     public ResponseEntity<Void> deletePost(@PathVariable Long courseId, @PathVariable Long postId) {
         log.debug("DELETE deletePost invoked for course {} on post {}", courseId, postId);
         long start = System.nanoTime();

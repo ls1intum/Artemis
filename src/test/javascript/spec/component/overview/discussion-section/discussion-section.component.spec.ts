@@ -45,6 +45,10 @@ import { Course, CourseInformationSharingConfiguration } from 'app/entities/cour
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 
 @Directive({
     // eslint-disable-next-line @angular-eslint/directive-selector
@@ -55,7 +59,7 @@ class InfiniteScrollStubDirective {
     @Output() scrolledUp = new EventEmitter<void>();
 }
 
-describe('PageDiscussionSectionComponent', () => {
+describe('DiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
     let fixture: ComponentFixture<DiscussionSectionComponent>;
     let metisService: MetisService;
@@ -71,6 +75,8 @@ describe('PageDiscussionSectionComponent', () => {
                 FormBuilder,
                 MockProvider(SessionStorageService),
                 MockProvider(ChannelService),
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },
@@ -181,8 +187,10 @@ describe('PageDiscussionSectionComponent', () => {
         component.ngOnInit();
         tick();
         fixture.detectChanges();
+        tick();
         component.posts = metisExercisePosts;
         fixture.detectChanges();
+        tick();
         const newPostButtons = getElements(fixture.debugElement, '.btn-primary');
         expect(newPostButtons).not.toBeNull();
         expect(newPostButtons).toHaveLength(1);

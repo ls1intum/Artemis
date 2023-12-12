@@ -75,7 +75,7 @@ public class AnswerPostService extends PostingService {
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
         postRepository.save(post);
 
-        preparePostAndBroadcast(savedAnswerPost, course);
+        preparePostAndBroadcast(savedAnswerPost, course, null);
 
         return savedAnswerPost;
     }
@@ -119,7 +119,7 @@ public class AnswerPostService extends PostingService {
             existingAnswerPost.setUpdatedDate(ZonedDateTime.now());
         }
         updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
-        this.preparePostAndBroadcast(updatedAnswerPost, course);
+        this.preparePostAndBroadcast(updatedAnswerPost, course, null);
         return updatedAnswerPost;
     }
 

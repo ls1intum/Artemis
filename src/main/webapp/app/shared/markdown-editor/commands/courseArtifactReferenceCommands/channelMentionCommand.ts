@@ -8,7 +8,6 @@ import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 
 export class ChannelMentionCommand extends InteractiveSearchCommand {
     buttonIcon = faHashtag;
-    buttonTranslationString = 'artemisApp.markdownEditor.commands.channelReference';
 
     private cachedResponse: HttpResponse<ChannelIdAndNameDTO[]>;
 

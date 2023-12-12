@@ -27,6 +27,8 @@ import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared
 import { metisCourse, metisPostExerciseUser1, metisUser1, sortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../../../helpers/mocks/service/mock-notification.service';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
@@ -52,6 +54,7 @@ describe('PostReactionsBarComponent', () => {
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },

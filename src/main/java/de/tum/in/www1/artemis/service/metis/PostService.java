@@ -179,8 +179,8 @@ public class PostService extends PostingService {
             plagiarismCasePosts = postRepository.findPostsByPlagiarismCaseId(postContextFilter.getPlagiarismCaseId());
 
             // protect sample solution, grading instructions, etc.
-            plagiarismCasePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
             plagiarismCasePosts.forEach(post -> post.setCourse(course));
+            setAuthorRoleOfPostings(plagiarismCasePosts);
 
             return plagiarismCasePosts;
         }

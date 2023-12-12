@@ -46,7 +46,8 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -167,7 +168,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(MetisConversationService),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: NotificationService, useClass: MockNotificationService },
             ],
         })
             .compileComponents()
@@ -238,25 +239,28 @@ describe('CourseOverviewComponent', () => {
         });
     });
 
-    it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
-        const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
-        metisConversationService._hasUnreadMessages$.next(hasNewMessages);
+    it.each([true, false])(
+        'should determine once if there are unread messages',
+        fakeAsync((hasNewMessages: boolean) => {
+            const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
+            metisConversationService._hasUnreadMessages$.next(hasNewMessages);
 
-        await component.ngOnInit();
+            component.ngOnInit();
 
-        route.snapshot.firstChild!.routeConfig!.path = 'exercises';
-        component.onSubRouteActivate({ controlConfiguration: undefined });
-
-        expect(component.hasUnreadMessages).toBe(hasNewMessages);
-
-        const tabs = ['messages', 'exercises', 'messages'];
-        tabs.forEach((tab) => {
-            route.snapshot.firstChild!.routeConfig!.path = tab;
+            route.snapshot.firstChild!.routeConfig!.path = 'exercises';
             component.onSubRouteActivate({ controlConfiguration: undefined });
 
-            expect(spy).toHaveBeenCalledOnce();
-        });
-    });
+            expect(component.hasUnreadMessages).toBe(hasNewMessages);
+
+            const tabs = ['messages', 'exercises', 'messages'];
+            tabs.forEach((tab) => {
+                route.snapshot.firstChild!.routeConfig!.path = tab;
+                component.onSubRouteActivate({ controlConfiguration: undefined });
+
+                expect(spy).toHaveBeenCalledOnce();
+            });
+        }),
+    );
 
     it('should not try to load message related data when not activated for course', () => {
         const unreadMessagesSpy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');

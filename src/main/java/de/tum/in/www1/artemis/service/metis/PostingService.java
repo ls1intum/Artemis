@@ -14,10 +14,8 @@ import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfigu
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.domain.notification.Notification;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -64,15 +62,16 @@ public abstract class PostingService {
      *
      * @param updatedAnswerPost answer post that was updated
      * @param course            course the answer post belongs to
+     * @param notification      notification for the update (can be null)
      */
-    protected void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course) {
+    protected void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course, Notification notification) {
         // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
         Post updatedPost = updatedAnswerPost.getPost();
         // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
         // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE, null, notification), course.getId(), null);
     }
 
     /**
@@ -87,9 +86,10 @@ public abstract class PostingService {
         Conversation postConversation = postDTO.post().getConversation();
         if (postConversation != null) {
             postConversation.hideDetails();
-        }
+            if (postDTO.post().getAnswers() != null) {
+                postDTO.post().getAnswers().forEach(answerPost -> answerPost.setPost(null));
+            }
 
-        if (postConversation != null) {
             String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
             if (postConversation instanceof Channel channel && channel.getIsCourseWide()) {
                 websocketMessagingService.sendMessage(courseConversationTopic, postDTO);
@@ -100,15 +100,32 @@ public abstract class PostingService {
                     recipients = conversationParticipantRepository.findConversationParticipantByConversationId(postConversation.getId()).stream()
                             .map(ConversationParticipant::getUser).collect(Collectors.toSet());
                 }
-                recipients.forEach(
-                        user -> websocketMessagingService.sendMessageToUser(user.getLogin(), courseConversationTopic + "/conversations/" + postConversation.getId(), postDTO));
+                recipients.forEach(user -> websocketMessagingService.sendMessage("/topic/user/" + user.getId() + "/notifications/conversations", postDTO));
             }
         }
         else if (postDTO.post().getPlagiarismCase() != null) {
-            String plagiarismCaseTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "plagiarismCase/" + postDTO.post().getPlagiarismCase();
+            String plagiarismCaseTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "plagiarismCase/" + postDTO.post().getPlagiarismCase().getId();
             websocketMessagingService.sendMessage(plagiarismCaseTopic, postDTO);
         }
+    }
 
+    /**
+     * Single casts a posting related event in a course to the provided recipients
+     *
+     * @param postDTO    object including the affected post as well as the action
+     * @param courseId   the id of the course the posting belongs to
+     * @param recipients the recipients for this single casts with optional individual dtos
+     */
+    protected void singleCastForPost(PostDTO postDTO, Long courseId, Map<User, PostDTO> recipients) {
+        // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
+        Conversation postConversation = postDTO.post().getConversation();
+        postConversation.hideDetails();
+
+        String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
+
+        recipients.forEach((user, dto) -> {
+            websocketMessagingService.sendMessageToUser(user.getLogin(), courseConversationTopic + "/conversations/" + postConversation.getId(), dto != null ? dto : postDTO);
+        });
     }
 
     /**

@@ -75,14 +75,32 @@ public class SingleUserNotificationService {
      * @param notificationSubject     is the subject of the notification (e.g. exercise, attachment)
      * @param notificationType        is the discriminator for the factory
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, Exercise -> user)
+     * @param skipWebSocket           whether to skip WebSocket notifications
+     */
+    private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation, User author,
+            boolean skipWebSocket) {
+        var singleUserNotification = createSingleUserNotification(notificationSubject, notificationType, (User) typeSpecificInformation, author);
+        saveAndSend(singleUserNotification, notificationSubject, author, skipWebSocket);
+    }
+
+    /**
+     * Auxiliary method to call the correct factory method and start the process to save & sent the notification
+     *
+     * @param notificationSubject     is the subject of the notification (e.g. exercise, attachment)
+     * @param notificationType        is the discriminator for the factory
+     * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, Exercise -> user)
      */
     private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation, User author) {
-        var singleUserNotification = switch (notificationType) {
+        notifyRecipientWithNotificationType(notificationSubject, notificationType, typeSpecificInformation, author, false);
+    }
+
+    private SingleUserNotification createSingleUserNotification(Object notificationSubject, NotificationType notificationType, User typeSpecificInformation, User author) {
+        return switch (notificationType) {
             // Exercise related
-            case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, (User) typeSpecificInformation);
+            case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, typeSpecificInformation);
             // Plagiarism related
             case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT ->
-                createNotification((PlagiarismCase) notificationSubject, notificationType, (User) typeSpecificInformation, author);
+                createNotification((PlagiarismCase) notificationSubject, notificationType, typeSpecificInformation, author);
             // Tutorial Group related
             case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR,
                     TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED ->
@@ -98,10 +116,9 @@ public class SingleUserNotificationService {
                     CONVERSATION_USER_MENTIONED ->
                 createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType, ((NewReplyNotificationSubject) notificationSubject).user,
                         ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
-            case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, (User) typeSpecificInformation);
+            case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
-        saveAndSend(singleUserNotification, notificationSubject, author);
     }
 
     /**
@@ -352,7 +369,20 @@ public class SingleUserNotificationService {
      * @param notificationType the type for the conversation
      */
     public void notifyUserAboutNewMessageReply(AnswerPost answerPost, User user, User responsibleUser, NotificationType notificationType) {
-        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), notificationType, null, responsibleUser);
+        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), notificationType, null, responsibleUser, true);
+    }
+
+    /**
+     * Create a notification for a message reply
+     *
+     * @param answerMessage the answerMessage of the user involved
+     * @param author        the author of the message reply
+     * @param conversation  conversation the message of the reply belongs to
+     */
+    public SingleUserNotification createNotificationAboutNewMessageReply(AnswerPost answerMessage, User author, Conversation conversation) {
+        User authorWithHiddenData = new User(author.getId(), null, author.getFirstName(), author.getLastName(), null, null);
+        return createSingleUserNotification(new NewReplyNotificationSubject(answerMessage, authorWithHiddenData, authorWithHiddenData),
+                getAnswerMessageNotificationType(conversation), null, author);
     }
 
     /**
@@ -394,15 +424,16 @@ public class SingleUserNotificationService {
      *
      * @param notification        that should be saved and sent
      * @param notificationSubject which information will be extracted to create the email
+     * @param skipWebSocket       whether to skipWebSocket notifications
      */
-    private void saveAndSend(SingleUserNotification notification, Object notificationSubject, User author) {
+    private void saveAndSend(SingleUserNotification notification, Object notificationSubject, User author, boolean skipWebSocket) {
         // do not save notifications that are not relevant for the user
         if (shouldNotificationBeSaved(notification)) {
             singleUserNotificationRepository.save(notification);
         }
         // we only want to notify one individual user therefore we can check the settings and filter preemptively
-        boolean isWebappNotificationAllowed = notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification,
-                notification.getRecipient(), WEBAPP);
+        boolean isWebappNotificationAllowed = !skipWebSocket
+                && notificationSettingsService.checkIfNotificationIsAllowedInCommunicationChannelBySettingsForGivenUser(notification, notification.getRecipient(), WEBAPP);
         if (isWebappNotificationAllowed) {
             websocketMessagingService.sendMessage(notification.getTopic(), notification);
         }

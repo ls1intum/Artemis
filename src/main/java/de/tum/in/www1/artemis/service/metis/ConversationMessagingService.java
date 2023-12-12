@@ -153,9 +153,14 @@ public class ConversationMessagingService extends PostingService {
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         Set<ConversationNotificationRecipientSummary> recipientSummaries;
         Set<User> recipientUsers;
+        ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, conversation, course,
+                createdConversationMessage.mentionedUsers());
+        PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE, null, notification);
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
-            broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course.getId(), null);
+            if (conversationService.isChannelVisibleToStudents(channel)) {
+                broadcastForPost(postDTO, course.getId(), null);
+            }
             log.debug("      broadcastForPost DONE");
 
             recipientSummaries = getNotificationRecipients(conversation).collect(Collectors.toSet());
@@ -168,22 +173,22 @@ public class ConversationMessagingService extends PostingService {
             log.debug("      getNotificationRecipients DONE");
             recipientUsers = mapToUsers(recipientSummaries);
 
-            // TODO create notification
-            broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course.getId(), recipientUsers);
+            broadcastForPost(postDTO, course.getId(), recipientUsers);
             log.debug("      broadcastForPost DONE");
         }
 
-        sendAndSaveNotifications(createdConversationMessage, recipientUsers, recipientSummaries);
+        sendAndSaveNotifications(notification, createdConversationMessage, recipientUsers, recipientSummaries);
     }
 
     /**
      * Sends and saves notifications for users that have not already been notified via broadcast notifications
      *
+     * @param notification               the notification for the message
      * @param createdConversationMessage the new message and associated data
      * @param recipientUsers             set of users that should receive notifications
      * @param recipientSummaries         set of setting summaries for the recipients
      */
-    private void sendAndSaveNotifications(CreatedConversationMessage createdConversationMessage, Set<User> recipientUsers,
+    private void sendAndSaveNotifications(ConversationNotification notification, CreatedConversationMessage createdConversationMessage, Set<User> recipientUsers,
             Set<ConversationNotificationRecipientSummary> recipientSummaries) {
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
         Post createdMessage = createdConversationMessage.messageWithHiddenDetails();
@@ -204,7 +209,6 @@ public class ConversationMessagingService extends PostingService {
         }
 
         Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, recipientSummaries, mentionedUsers);
-        ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, conversation, notificationRecipients, course, mentionedUsers);
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
 
         Set<String> onlineUserLogins = getLoginsOfSubscribedUsers("/topic/metis/" + "courses/" + course.getId());

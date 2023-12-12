@@ -41,7 +41,7 @@ public class ConversationNotification extends Notification {
         this.setNotificationDate(ZonedDateTime.now());
         this.setTitle(title);
         this.setText(text);
-        this.setAuthor(new User(author.getId()));
+        this.setAuthor(new User(author.getId(), null, author.getFirstName(), author.getLastName(), null, null));
         this.setPlaceholderValues(placeholderValues);
         this.setTextIsPlaceholder(textIsPlaceholder);
     }

@@ -49,12 +49,11 @@ public class ConversationNotificationService {
      *
      * @param createdMessage the new message
      * @param conversation   the conversation the message belongs to
-     * @param recipients     the users which should be notified about the new message
      * @param mentionedUsers users mentioned in the message
      * @param course         the course in which the message was posted
      * @return the created notification
      */
-    public ConversationNotification createNotification(Post createdMessage, Conversation conversation, Set<User> recipients, Course course, Set<User> mentionedUsers) {
+    public ConversationNotification createNotification(Post createdMessage, Conversation conversation, Course course, Set<User> mentionedUsers) {
         String notificationText;
         String[] placeholders;
         NotificationType notificationType = NotificationType.CONVERSATION_NEW_MESSAGE;
@@ -78,11 +77,11 @@ public class ConversationNotificationService {
                     conversationName, "oneToOneChat" };
         }
         var notification = createConversationMessageNotification(course.getId(), createdMessage, notificationType, notificationText, true, placeholders);
-        save(notification, createdMessage, course, recipients, mentionedUsers, placeholders);
+        save(notification, mentionedUsers, placeholders);
         return notification;
     }
 
-    private void save(ConversationNotification notification, Post createdMessage, Course course, Set<User> recipients, Set<User> mentionedUsers, String[] placeHolders) {
+    private void save(ConversationNotification notification, Set<User> mentionedUsers, String[] placeHolders) {
         conversationNotificationRepository.save(notification);
 
         Set<SingleUserNotification> mentionedUserNotifications = mentionedUsers.stream().map(mentionedUser -> SingleUserNotificationFactory

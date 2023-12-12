@@ -47,6 +47,8 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { MatSelectModule } from '@angular/material/select';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MockMetisConversationService } from '../../../helpers/mocks/service/mock-metis-conversation.service';
+import { NotificationService } from 'app/shared/notification/notification.service';
+import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -83,6 +85,7 @@ describe('CourseDiscussionComponent', () => {
             providers: [
                 FormBuilder,
                 MockProvider(SessionStorageService),
+                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },

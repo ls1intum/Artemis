@@ -457,7 +457,7 @@ export class NotificationService {
         if (!this.subscribedTopics.includes(conversationTopic)) {
             this.subscribedTopics.push(conversationTopic);
             this.jhiWebsocketService.subscribe(conversationTopic);
-            const subscription = this.jhiWebsocketService.receive(conversationTopic).subscribe(this.addConversationNotification);
+            const subscription = this.jhiWebsocketService.receive(conversationTopic).subscribe(this.handleNewPostDTO);
             this.wsSubscriptions.push(subscription);
         }
     }
@@ -476,26 +476,27 @@ export class NotificationService {
         this.jhiWebsocketService.subscribe(courseWideTopic);
         this.subscribedCourseWideChannelTopic = courseWideTopic;
 
-        this.courseWideChannelSubscription = this.jhiWebsocketService.receive(courseWideTopic).subscribe((postDTO: MetisPostDTO) => {
-            this._singlePostSubject$.next(postDTO);
-
-            if (postDTO.notification) {
-                this.addConversationNotification(postDTO.notification);
-            }
-        });
+        this.courseWideChannelSubscription = this.jhiWebsocketService.receive(courseWideTopic).subscribe(this.handleNewPostDTO);
     }
 
-    private addConversationNotification = (notification: Notification): void => {
-        if (notification.target) {
-            const target = JSON.parse(notification.target);
+    private handleNewPostDTO = (postDTO: MetisPostDTO): void => {
+        this._singlePostSubject$.next(postDTO);
+
+        if (postDTO.post?.answers) {
+            postDTO.post.answers = [...postDTO.post.answers];
+            postDTO.post.answers.forEach((answer) => (answer.post = { ...postDTO.post, answers: [] }));
+        }
+
+        if (postDTO.notification?.target) {
+            const target = JSON.parse(postDTO.notification.target);
             const targetCourseId = target.course;
             // Only add notification if it is not from the current user and the user is not already in the messages tab
             if (
-                notification.author?.id !== this.accountService.userIdentity?.id &&
+                postDTO.notification.author?.id !== this.accountService.userIdentity?.id &&
                 !this.isUnderMessagesTabOfSpecificCourse(targetCourseId) &&
-                this.notificationSettingsService.isNotificationAllowedBySettings(notification)
+                this.notificationSettingsService.isNotificationAllowedBySettings(postDTO.notification)
             ) {
-                this.addNotification(notification);
+                this.addNotification(postDTO.notification);
             }
         }
     };

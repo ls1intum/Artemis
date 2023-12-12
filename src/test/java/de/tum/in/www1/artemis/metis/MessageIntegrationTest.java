@@ -10,15 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
-
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -43,11 +36,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
@@ -101,19 +94,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ConversationNotificationRepository conversationNotificationRepository;
 
-    private List<Post> existingConversationPosts;
-
-    private List<Post> existingExercisePosts;
-
-    private List<Post> existingLecturePosts;
+    private List<Post> existingConversationMessages;
 
     private Course course;
 
     private Long courseId;
-
-    private Validator validator;
-
-    private ValidatorFactory validatorFactory;
 
     private static final int NUMBER_OF_POSTS = 5;
 
@@ -126,38 +111,29 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initTestCase() {
-        // used to test hibernate validation using custom PostContextConstraintValidator
-        validatorFactory = Validation.buildDefaultValidatorFactory();
-        validator = validatorFactory.getValidator();
-
         userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
 
         // initialize test setup and get all existing posts
         // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with conversation initialized): 14 posts in total
         List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
 
-        List<Post> existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList();
-
         // filters existing posts with conversation
-        existingConversationPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() != null).toList();
+        existingConversationMessages = existingPostsAndConversationPosts.stream().filter(
+                post -> post.getConversation() != null && !(post.getConversation() instanceof Channel channel && (channel.getExercise() != null || channel.getLecture() != null)))
+                .toList();
 
         // filter existing posts with exercise context
-        existingExercisePosts = existingPosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList();
+        List<Post> existingExercisePosts = existingPostsAndConversationPosts.stream()
+                .filter(coursePost -> (coursePost.getConversation() instanceof Channel channel && channel.getExercise() != null)).toList();
 
-        // filter existing posts with lecture context
-        existingLecturePosts = existingPosts.stream().filter(coursePost -> (coursePost.getLecture() != null)).toList();
+        // filter existing posts with first exercise context
+        Channel exerciseChannel = ((Channel) existingExercisePosts.get(0).getConversation());
+        Exercise exercise = exerciseChannel.getExercise();
 
-        course = existingExercisePosts.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        course = exercise.getCourseViaExerciseGroupOrCourseMember();
         courseUtilService.enableMessagingForCourse(course);
 
         courseId = course.getId();
-    }
-
-    @AfterEach
-    void tearDown() {
-        if (validatorFactory != null) {
-            validatorFactory.close();
-        }
     }
 
     @ParameterizedTest
@@ -396,7 +372,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         // attempt to save new post under someone else's conversation
-        postToSave.setConversation(existingConversationPosts.get(0).getConversation());
+        postToSave.setConversation(existingConversationMessages.get(0).getConversation());
         var requestingUser = userRepository.getUser();
 
         PostContextFilter postContextFilter = new PostContextFilter(courseId);
@@ -409,36 +385,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // conversation participants should not be notified
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testValidatePostContextConstraintViolation() throws Exception {
-        Post invalidPost = createPostWithOneToOneChat(TEST_PREFIX);
-        invalidPost.setCourseWideContext(CourseWideContext.RANDOM);
-        request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
-        Set<ConstraintViolation<Post>> constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations).hasSize(1);
-
-        invalidPost = createPostWithOneToOneChat(TEST_PREFIX);
-        invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
-        request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
-        constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations).hasSize(1);
-
-        invalidPost = createPostWithOneToOneChat(TEST_PREFIX);
-        invalidPost.setCourseWideContext(CourseWideContext.ORGANIZATION);
-        invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
-        request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
-        constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations).hasSize(1);
-
-        invalidPost = createPostWithOneToOneChat(TEST_PREFIX);
-        invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
-        invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
-        request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
-        constraintViolations = validator.validate(invalidPost);
-        assertThat(constraintViolations).hasSize(1);
     }
 
     @Test
@@ -460,12 +406,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetConversationPost() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
-        Long conversationId = existingConversationPosts.get(0).getConversation().getId();
+        Long conversationId = existingConversationMessages.get(0).getConversation().getId();
         params.add("conversationId", conversationId.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
-        assertThat(returnedPosts).hasSize(existingConversationPosts.stream().filter(post -> post.getConversation().getId() == conversationId).toList().size());
+        assertThat(returnedPosts).hasSize(existingConversationMessages.stream().filter(post -> post.getConversation().getId() == conversationId).toList().size());
     }
 
     @Test
@@ -477,7 +423,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
-        int numberOfCourseWidePosts = existingConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList()
+        int numberOfCourseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList()
                 .size();
         assertThat(returnedPosts).isNotEmpty();
         assertThat(returnedPosts).hasSize(numberOfCourseWidePosts);
@@ -488,13 +434,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetCourseWideMessagesFromOneChannel() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
-        var courseWidePosts = existingConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
+        var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
         var courseWideChannelId = courseWidePosts.get(0).getConversation().getId();
         params.add("courseWideChannelIds", courseWideChannelId.toString());
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
-        assertThat(returnedPosts).hasSize(existingConversationPosts.stream().filter(post -> post.getConversation().getId() == courseWideChannelId).toList().size());
+        assertThat(returnedPosts)
+                .hasSize(existingConversationMessages.stream().filter(post -> Objects.equals(post.getConversation().getId(), courseWideChannelId)).toList().size());
         assertThat(returnedPosts.size()).isLessThan(courseWidePosts.size());
     }
 
@@ -502,7 +449,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1")
     void testEditConversationPost() throws Exception {
         // conversation post of tutor1 must be only editable by them
-        Post conversationPostToUpdate = existingConversationPosts.get(0);
+        Post conversationPostToUpdate = existingConversationMessages.get(0);
         conversationPostToUpdate.setContent("User changes one of their conversation posts");
 
         Post updatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/messages/" + conversationPostToUpdate.getId(), conversationPostToUpdate, Post.class,
@@ -517,7 +464,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testPinPost_asTutor() throws Exception {
-        Post postToPin = existingConversationPosts.get(0);
+        Post postToPin = existingConversationMessages.get(0);
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("displayPriority", DisplayPriority.PINNED.toString());
 
@@ -533,7 +480,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1")
     void testEditConversationPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
         // conversation post of tutor1 must be only editable by them
-        Post conversationPostToUpdate = existingConversationPosts.get(0);
+        Post conversationPostToUpdate = existingConversationMessages.get(0);
         conversationPostToUpdate.setContent("User changes one of their conversation posts" + userMention);
 
         if (!isUserMentionValid) {
@@ -555,7 +502,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testEditConversationPost_forbidden() throws Exception {
         // conversation post of tutor1 must not be editable by tutor2
-        Post conversationPostToUpdate = existingConversationPosts.get(0);
+        Post conversationPostToUpdate = existingConversationMessages.get(0);
         conversationPostToUpdate.setContent("Tutor attempts to change some other user's conversation post");
 
         Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/messages/" + conversationPostToUpdate.getId(), conversationPostToUpdate, Post.class,
@@ -571,7 +518,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor1")
     void testDeleteConversationPost() throws Exception {
         // conversation post of tutor1 must be deletable by them
-        Post conversationPostToDelete = existingConversationPosts.get(0);
+        Post conversationPostToDelete = existingConversationMessages.get(0);
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.OK);
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isEmpty();
@@ -583,7 +530,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testDeleteConversationPost_forbidden() throws Exception {
         // conversation post of user must not be deletable by tutors
-        Post conversationPostToDelete = existingConversationPosts.get(0);
+        Post conversationPostToDelete = existingConversationMessages.get(0);
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.FORBIDDEN);
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isPresent();

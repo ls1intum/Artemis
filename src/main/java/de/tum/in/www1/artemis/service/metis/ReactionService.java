@@ -110,7 +110,7 @@ public class ReactionService {
             AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
             updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
 
-            answerPostService.preparePostAndBroadcast(answerPost, course);
+            answerPostService.preparePostAndBroadcast(answerPost, course, null);
 
         }
         return savedReaction;
