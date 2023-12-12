@@ -227,6 +227,7 @@ public class ExamService {
     @NotNull
     public Exam findByIdWithExerciseGroupsAndExercisesElseThrow(Long examId, boolean withDetails) {
         log.debug("Request to get exam {} with exercise groups (with details: {})", examId, withDetails);
+        log.debug("Test");
         if (!withDetails) {
             return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         }
