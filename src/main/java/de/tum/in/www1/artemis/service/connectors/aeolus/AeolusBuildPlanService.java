@@ -17,6 +17,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -108,6 +110,27 @@ public class AeolusBuildPlanService {
         }
         catch (RestClientException e) {
             LOGGER.error("Error while publishing build plan {} to Aeolus target {}", buildPlan, target, e);
+        }
+        return null;
+    }
+
+    public String generateBuildScript(Windfile windfile, AeolusTarget target) {
+        String buildPlan = new Gson().toJson(windfile);
+        String requestUrl = aeolusUrl + "/generate/" + target.getName();
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl);
+
+        MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
+        headers.add("Content-Type", "application/json");
+        HttpEntity<String> entity = new HttpEntity<>(buildPlan, headers);
+        try {
+            ResponseEntity<HashMap<String, String>> response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, entity, new ParameterizedTypeReference<>() {
+            });
+            if (response.getBody() != null) {
+                return response.getBody().get("result");
+            }
+        }
+        catch (RestClientException e) {
+            LOGGER.error("Error while generating build script for build plan {}", buildPlan, e);
         }
         return null;
     }

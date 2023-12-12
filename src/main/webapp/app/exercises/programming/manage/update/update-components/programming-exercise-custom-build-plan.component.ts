@@ -3,7 +3,7 @@ import { BuildAction, PlatformAction, ProgrammingExercise, ProgrammingLanguage, 
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
+import { AeolusPreview, AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -26,6 +26,15 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     active?: BuildAction = undefined;
 
     private _editor?: AceEditorComponent;
+    private _generatedEditor?: AceEditorComponent;
+
+    @ViewChild('generatedEditor', { static: false }) set generatedEditor(value: AceEditorComponent) {
+        this._generatedEditor = value;
+        if (this._generatedEditor) {
+            this.setupGeneratorEditor();
+            this._generatedEditor.setText('#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0');
+        }
+    }
 
     @ViewChild('editor', { static: false }) set editor(value: AceEditorComponent) {
         this._editor = value;
@@ -87,12 +96,25 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                             const windFile: WindFile = Object.assign(new WindFile(), templateFile);
                             const actions: BuildAction[] = [];
                             templateFile.actions.forEach((anyAction: any) => {
-                                if (anyAction.class === 'script-action' || anyAction.script) {
-                                    actions.push(Object.assign(new ScriptAction(), anyAction));
+                                let action: BuildAction | undefined = undefined;
+                                if (anyAction.script) {
+                                    action = Object.assign(new ScriptAction(), anyAction);
                                 } else {
-                                    actions.push(Object.assign(new PlatformAction(), anyAction));
+                                    action = Object.assign(new PlatformAction(), anyAction);
                                 }
+                                if (!action) {
+                                    return;
+                                }
+                                action.parameters = new Map<string, string | boolean | number>();
+                                if (anyAction.parameters) {
+                                    for (const key of Object.keys(anyAction.parameters)) {
+                                        action.parameters.set(key, anyAction.parameters[key]);
+                                    }
+                                }
+                                actions.push(action);
                             });
+                            // somehow, the returned content has a scriptActions field, which is not defined in the WindFile class
+                            delete windFile['scriptActions'];
                             windFile.actions = actions;
                             this.programmingExercise.windFile = windFile;
                         }
@@ -107,6 +129,10 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
 
     get editor(): AceEditorComponent | undefined {
         return this._editor;
+    }
+
+    get generatedEditor(): AceEditorComponent | undefined {
+        return this._generatedEditor;
     }
 
     faQuestionCircle = faQuestionCircle;
@@ -146,6 +172,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                 this.active = undefined;
                 this.code = '';
             }
+            this.generatePreview();
         }
     }
 
@@ -157,13 +184,58 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             newAction.runAlways = false;
             this.programmingExercise.windFile.actions.push(newAction);
             this.changeActiveAction(action);
+            this.generatePreview();
+        }
+    }
+
+    addParameter(): void {
+        if (this.active) {
+            if (!this.active.parameters) {
+                this.active.parameters = new Map<string, string | boolean | number>();
+            }
+            this.active.parameters.set('newParameter' + this.active.parameters.size, 'newValue');
+        }
+    }
+
+    deleteParameter(key: string): void {
+        if (this.active && this.active.parameters) {
+            this.active.parameters.delete(key);
+        }
+    }
+
+    generatePreview(): void {
+        if (this.programmingExercise.windFile) {
+            this.aeolusService.generatePreview(Object.assign({}, this.programmingExercise.windFile)).subscribe({
+                next: (file) => {
+                    const preview: AeolusPreview = Object.assign({}, JSON.parse(file));
+                    this.generatedEditor?.setText(preview.result);
+                },
+                error: () => {
+                    this.generatedEditor?.setText('#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0');
+                },
+            });
         }
     }
 
     codeChanged(code: string): void {
         if (this.active instanceof ScriptAction) {
             (this.active as ScriptAction).script = code;
+            this.generatePreview();
         }
+    }
+
+    protected getParameterKeys(): string[] {
+        if (this.active && this.active.parameters) {
+            return Array.from(this.active.parameters.keys());
+        }
+        return [];
+    }
+
+    protected getParameter(key: string): string | number | boolean {
+        if (this.active) {
+            return this.active.parameters.get(key) ?? '';
+        }
+        return '';
     }
 
     /**
@@ -184,6 +256,27 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             mode: 'ace/mode/sh',
         });
         this._editor.getEditor().renderer.setOptions({
+            showFoldWidgets: false,
+        });
+    }
+    /**
+     * Sets up an ace editor for the template or solution file.
+     */
+    setupGeneratorEditor(): void {
+        if (!this._generatedEditor) {
+            return;
+        }
+        this._generatedEditor.getEditor().setOptions({
+            animatedScroll: true,
+            maxLines: 35,
+            showPrintMargin: false,
+            readOnly: false,
+            highlightActiveLine: false,
+            highlightGutterLine: false,
+            minLines: 35,
+            mode: 'ace/mode/sh',
+        });
+        this._generatedEditor.getEditor().renderer.setOptions({
             showFoldWidgets: false,
         });
     }

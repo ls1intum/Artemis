@@ -104,6 +104,10 @@
             "publishBuildPlanUrl": "Build-Plan veröffentlichen",
             "customizeBuildPlanWithAeolus": "Build-Plan mit Aeolus anpassen",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
+            "script": "Script",
+            "parameters": "Parameter",
+            "dockerImage": "Docker Image",
+            "workdir": "Verzeichnis",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
                 "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"

@@ -40,9 +40,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
-import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
-import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
+import de.tum.in.www1.artemis.service.connectors.aeolus.*;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 
 /**
@@ -69,10 +67,14 @@ public class LocalCIContainerService {
 
     AeolusTemplateService aeolusTemplateService;
 
-    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService) {
+    Optional<AeolusBuildScriptProvider> aeolusBuildScriptProvider;
+
+    public LocalCIContainerService(DockerClient dockerClient, HostConfig hostConfig, AeolusTemplateService aeolusTemplateService,
+            Optional<AeolusBuildScriptProvider> aeolusBuildScriptProvider) {
         this.dockerClient = dockerClient;
         this.hostConfig = hostConfig;
         this.aeolusTemplateService = aeolusTemplateService;
+        this.aeolusBuildScriptProvider = aeolusBuildScriptProvider;
     }
 
     /**
@@ -363,6 +365,11 @@ public class LocalCIContainerService {
         List<ScriptAction> actions = List.of();
 
         Windfile windfile = programmingExercise.getWindfile();
+
+        String customScript = null;
+        if (aeolusBuildScriptProvider.isPresent()) {
+            customScript = aeolusBuildScriptProvider.get().getScriptFor(programmingExercise, true);
+        }
 
         if (windfile == null) {
             windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);

@@ -116,6 +116,10 @@
             "publishBuildPlanUrl": "Publish Build Plan",
             "customizeBuildPlanWithAeolus": "Customize Build Plan with Aeolus",
             "runActionAlways": "Always run, even if other actions fail",
+            "workdir": "Working Directory",
+            "parameters": "Parameters",
+            "dockerImage": "Docker Image",
+            "script": "Script",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
                 "alert": "At least one option (Offline IDE or Online Editor) must be selected"

@@ -2,7 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType, WindFile } from 'app/entities/programming-exercise.model';
+
+export interface AeolusPreview {
+    result: string;
+    key?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AeolusService {
@@ -26,6 +31,20 @@ export class AeolusService {
             sequentialRuns: !!sequentialRuns,
             testCoverage: !!coverage,
         };
-        return this.http.get<string>(`${this.resourceUrl}/templates/` + path, { responseType: 'text' as 'json', params });
+        return this.http.get<string>(`${this.resourceUrl}/templates/` + path, {
+            responseType: 'text' as 'json',
+            params,
+        });
+    }
+
+    generatePreview(windfile: WindFile): Observable<string> {
+        const headers = { 'Content-Type': 'application/json' };
+        windfile.metadata.id = 'testing';
+        windfile.metadata.name = 'testing';
+        windfile.metadata.description = 'testing';
+        return this.http.post<string>(`http://localhost:8090/generate/jenkins`, JSON.stringify(windfile), {
+            responseType: 'text' as 'json',
+            headers,
+        });
     }
 }
