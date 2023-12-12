@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -26,6 +24,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildAgentInformation;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
@@ -59,6 +58,8 @@ public class LocalCISharedBuildJobQueueService {
      */
     private final IMap<String, LocalCIBuildJobQueueItem> processingJobs;
 
+    private final IMap<String, LocalCIBuildAgentInformation> buildAgentInformation;
+
     private AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
     /**
@@ -83,6 +84,7 @@ public class LocalCISharedBuildJobQueueService {
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
@@ -119,6 +121,14 @@ public class LocalCISharedBuildJobQueueService {
 
     public List<LocalCIBuildJobQueueItem> getProcessingJobsForCourse(long courseId) {
         return processingJobs.values().stream().filter(job -> job.getCourseId() == courseId).toList();
+    }
+
+    public List<LocalCIBuildAgentInformation> getBuildAgentInformation() {
+        return buildAgentInformation.values().stream().toList();
+    }
+
+    private List<LocalCIBuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
+        return processingJobs.values().stream().filter(job -> Objects.equals(job.getBuildAgentAddress(), memberAddress)).toList();
     }
 
     /**
@@ -211,12 +221,39 @@ public class LocalCISharedBuildJobQueueService {
     private LocalCIBuildJobQueueItem addToProcessingJobs() {
         LocalCIBuildJobQueueItem buildJob = queue.poll();
         if (buildJob != null) {
+            String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+            buildJob.setBuildAgentAddress(hazelcastMemberAddress);
             buildJob.setBuildStartDate(System.currentTimeMillis());
             buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(180));
             processingJobs.put(buildJob.getId(), buildJob);
             localProcessingJobs.incrementAndGet();
+
+            updateBuildAgentInformation();
         }
         return buildJob;
+    }
+
+    private void updateBuildAgentInformation() {
+        // remove offline nodes
+        removeOfflineNodes();
+
+        // Add/update
+        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        List<LocalCIBuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
+        int numberOfCurrentBuildJobs = processingJobsOfMember.size();
+        int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
+        LocalCIBuildAgentInformation info = new LocalCIBuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember);
+        buildAgentInformation.put(memberAddress, info);
+    }
+
+    private void removeOfflineNodes() {
+        List<String> memberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> member.getAddress().toString()).toList();
+        // buildAgentInformation.keySet().removeIf(key -> !memberAddresses.contains(key));
+        for (String key : buildAgentInformation.keySet()) {
+            if (!memberAddresses.contains(key)) {
+                buildAgentInformation.remove(key);
+            }
+        }
     }
 
     /**
@@ -251,6 +288,7 @@ public class LocalCISharedBuildJobQueueService {
             log.error("Cannot process build job for participation with id {} because it could not be retrieved from the database.", buildJob.getParticipationId());
             processingJobs.remove(buildJob.getId());
             localProcessingJobs.decrementAndGet();
+            updateBuildAgentInformation();
             checkAvailabilityAndProcessNextBuild();
             return;
         }
@@ -286,6 +324,7 @@ public class LocalCISharedBuildJobQueueService {
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.getId());
             localProcessingJobs.decrementAndGet();
+            updateBuildAgentInformation();
 
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
@@ -294,6 +333,7 @@ public class LocalCISharedBuildJobQueueService {
 
             processingJobs.remove(buildJob.getId());
             localProcessingJobs.decrementAndGet();
+            updateBuildAgentInformation();
 
             if (buildJob.getRetryCount() > 0) {
                 log.error("Build job failed for the second time: {}", buildJob);
