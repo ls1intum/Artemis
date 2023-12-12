@@ -270,22 +270,17 @@
             },
             "tutorialFreePeriodsManagement": {
                 "explanation": "Definiere kursweite Tage, an denen keine Übungsgruppen stattfinden sollen. Dies kann verwendet werden, um Feiertage oder andere Tage zu definieren, an denen keine Übungsgruppen stattfinden sollen.",
-                "title": "Freie Zeiträume verwalten",
-                "createFreeDayButton": "Neuen freien Tag hinzufügen",
-                "createFreePeriodDuringDayButton": "Neuen freien Zeitraum während eines Tages hinzufügen",
-                "createFreePeriodButton": "Neuen freien Zeitraum hinzufügen",
-                "timeZoneExplanation": "Jeder Zeitraum wird in der Zeitzone {{ timeZone }} angezeigt",
+                "title": "Freie Tage verwalten",
+                "createFreePeriodButton": "Neuen freien Tag hinzufügen",
+                "timeZoneExplanation": "Jeder Tag wird in der Zeitzone {{ timeZone }} angezeigt",
                 "deleteDialog": {
                     "question": "Sicher, dass der freie Tag {{ title }} gelöscht werden soll?"
-                },
-                "deletePeriodDialog": {
-                    "question": "Sicher, dass der freie Zeitraum {{ title }} gelöscht werden soll?"
                 }
             },
-            "createTutorialFreeDay": {
+            "createTutorialFreePeriod": {
                 "title": "Freien Tag erstellen"
             },
-            "editTutorialFreeDay": {
+            "editTutorialFreePeriod": {
                 "title": "Freien Tag bearbeiten"
             },
             "tutorialGroupSessionManagement": {

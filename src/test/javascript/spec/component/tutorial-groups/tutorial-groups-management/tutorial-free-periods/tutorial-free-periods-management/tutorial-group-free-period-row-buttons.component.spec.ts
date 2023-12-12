@@ -4,10 +4,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { TutorialGroupFreePeriodRowButtonsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-period-row-buttons/tutorial-group-free-period-row-buttons.component';
-import { TutorialGroupFreeDayService } from 'app/course/tutorial-groups/services/tutorial-group-free-day.service';
+import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
 import { generateExampleTutorialGroupFreePeriod } from '../../../helpers/tutorialGroupFreePeriodExampleModel';
 import { HttpResponse } from '@angular/common/http';
@@ -20,10 +20,10 @@ import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups
 describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodRowButtonsComponent>;
     let component: TutorialGroupFreePeriodRowButtonsComponent;
-    let periodService: TutorialGroupFreeDayService;
+    let periodService: TutorialGroupFreePeriodService;
     const course = { id: 1 } as Course;
     let configuration: TutorialGroupsConfiguration;
-    let tutorialFreePeriod: TutorialGroupFreeDay;
+    let tutorialFreePeriod: TutorialGroupFreePeriod;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -35,13 +35,13 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [MockProvider(TutorialGroupFreeDayService), MockProvider(NgbModal)],
+            providers: [MockProvider(TutorialGroupFreePeriodService), MockProvider(NgbModal)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupFreePeriodRowButtonsComponent);
                 component = fixture.componentInstance;
-                periodService = TestBed.inject(TutorialGroupFreeDayService);
+                periodService = TestBed.inject(TutorialGroupFreePeriodService);
                 configuration = generateExampleTutorialGroupsConfiguration({});
                 tutorialFreePeriod = generateExampleTutorialGroupFreePeriod({});
                 setInputValues();

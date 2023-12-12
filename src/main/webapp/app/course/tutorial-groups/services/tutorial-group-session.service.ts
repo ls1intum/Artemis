@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { convertDateFromServer, toISO8601DateString } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { TutorialGroupFreeDayService } from 'app/course/tutorial-groups/services/tutorial-group-free-day.service';
+import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 
 type EntityResponseType = HttpResponse<TutorialGroupSession>;
 
@@ -21,7 +21,7 @@ export class TutorialGroupSessionService {
 
     constructor(
         private httpClient: HttpClient,
-        private tutorialGroupFreePeriodService: TutorialGroupFreeDayService,
+        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
     ) {}
     getOneOfTutorialGroup(courseId: number, tutorialGroupId: number, sessionId: number) {
         return this.httpClient
@@ -80,7 +80,7 @@ export class TutorialGroupSessionService {
         tutorialGroupSession.start = convertDateFromServer(tutorialGroupSession.start);
         tutorialGroupSession.end = convertDateFromServer(tutorialGroupSession.end);
         if (tutorialGroupSession.tutorialGroupFreePeriod) {
-            tutorialGroupSession.tutorialGroupFreePeriod = this.tutorialGroupFreePeriodService.convertTutorialGroupFreeDayDatesFromServer(
+            tutorialGroupSession.tutorialGroupFreePeriod = this.tutorialGroupFreePeriodService.convertTutorialGroupFreePeriodDatesFromServer(
                 tutorialGroupSession.tutorialGroupFreePeriod,
             );
         }

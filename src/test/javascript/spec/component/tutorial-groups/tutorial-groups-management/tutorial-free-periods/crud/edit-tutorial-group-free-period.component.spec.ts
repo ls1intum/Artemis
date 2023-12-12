@@ -9,8 +9,8 @@ import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/s
 import dayjs from 'dayjs/esm';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
 import { TutorialGroupFreePeriodFormStubComponent } from '../../../stubs/tutorial-group-free-period-form-stub.component';
-import { TutorialGroupFreeDayService } from 'app/course/tutorial-groups/services/tutorial-group-free-day.service';
-import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
+import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import {
     formDataToTutorialGroupFreePeriodDTO,
     generateExampleTutorialGroupFreePeriod,
@@ -24,8 +24,8 @@ import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tut
 describe('EditTutorialGroupFreePeriodComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupFreePeriodComponent>;
     let component: EditTutorialGroupFreePeriodComponent;
-    let periodService: TutorialGroupFreeDayService;
-    let examplePeriod: TutorialGroupFreeDay;
+    let periodService: TutorialGroupFreePeriodService;
+    let examplePeriod: TutorialGroupFreePeriod;
     let exampleConfiguration: TutorialGroupsConfiguration;
     const course = {
         id: 1,
@@ -36,14 +36,14 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [EditTutorialGroupFreePeriodComponent, LoadingIndicatorContainerStubComponent, TutorialGroupFreePeriodFormStubComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [MockProvider(TutorialGroupFreeDayService), MockProvider(AlertService), MockProvider(NgbActiveModal)],
+            providers: [MockProvider(TutorialGroupFreePeriodService), MockProvider(AlertService), MockProvider(NgbActiveModal)],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(EditTutorialGroupFreePeriodComponent);
                 component = fixture.componentInstance;
                 activeModal = TestBed.inject(NgbActiveModal);
-                periodService = TestBed.inject(TutorialGroupFreeDayService);
+                periodService = TestBed.inject(TutorialGroupFreePeriodService);
                 examplePeriod = generateExampleTutorialGroupFreePeriod({});
                 exampleConfiguration = generateExampleTutorialGroupsConfiguration({});
                 component.course = course;
@@ -69,12 +69,12 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should send PUT request upon form submission and navigate', () => {
-        const changedPeriod: TutorialGroupFreeDay = {
+        const changedPeriod: TutorialGroupFreePeriod = {
             ...examplePeriod,
             reason: 'Changed',
         };
 
-        const updateResponse: HttpResponse<TutorialGroupFreeDay> = new HttpResponse({
+        const updateResponse: HttpResponse<TutorialGroupFreePeriod> = new HttpResponse({
             body: changedPeriod,
             status: 200,
         });

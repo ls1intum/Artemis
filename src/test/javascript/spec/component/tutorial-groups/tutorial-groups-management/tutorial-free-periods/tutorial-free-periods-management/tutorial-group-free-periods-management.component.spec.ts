@@ -11,7 +11,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { Component, Input } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
@@ -29,7 +29,7 @@ import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-grou
 class TutorialGroupRowButtonsStubComponent {
     @Input() course: Course;
     @Input() tutorialGroupConfiguration: TutorialGroupsConfiguration;
-    @Input() tutorialFreePeriod: TutorialGroupFreeDay;
+    @Input() tutorialFreePeriod: TutorialGroupFreePeriod;
 }
 
 describe('TutorialGroupFreePeriodsManagementComponent', () => {
@@ -44,9 +44,9 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     let configurationService: TutorialGroupsConfigurationService;
     let findConfigurationSpy: jest.SpyInstance;
 
-    let firstOfJanuaryPeriod: TutorialGroupFreeDay;
-    let secondOfJanuaryPeriod: TutorialGroupFreeDay;
-    let thirdOfJanuaryPeriod: TutorialGroupFreeDay;
+    let firstOfJanuaryPeriod: TutorialGroupFreePeriod;
+    let secondOfJanuaryPeriod: TutorialGroupFreePeriod;
+    let thirdOfJanuaryPeriod: TutorialGroupFreePeriod;
 
     const router = new MockRouter();
     beforeEach(() => {
