@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, DoCheck, Input, IterableDiffer, IterableDiffers, OnInit } from '@angular/core';
-import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 
@@ -16,16 +16,16 @@ export class TutorialGroupFreeDaysOverviewComponent implements OnInit, DoCheck {
     ) {}
 
     @Input()
-    tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
+    tutorialGroupFreeDays: TutorialGroupFreeDay[] = [];
 
     @Input()
     timeZone?: string = undefined;
 
-    public isInThePast(tutorialGroupFreeDay: TutorialGroupFreePeriod): boolean {
+    public isInThePast(tutorialGroupFreeDay: TutorialGroupFreeDay): boolean {
         return tutorialGroupFreeDay.start!.isBefore(this.getCurrentDate());
     }
 
-    private diff: IterableDiffer<TutorialGroupFreePeriod>;
+    private diff: IterableDiffer<TutorialGroupFreeDay>;
 
     public getCurrentDate(): dayjs.Dayjs {
         return dayjs();

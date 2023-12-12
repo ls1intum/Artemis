@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/c
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { Subject, finalize } from 'rxjs';
-import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
+import { TutorialGroupFreeDayDTO, TutorialGroupFreeDayService } from 'app/course/tutorial-groups/services/tutorial-group-free-day.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -20,7 +20,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     isLoading = false;
 
     @Input()
-    tutorialGroupFreePeriod: TutorialGroupFreePeriod;
+    tutorialGroupFreePeriod: TutorialGroupFreeDay;
 
     @Input()
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
@@ -34,7 +34,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     formData: TutorialGroupFreePeriodFormData;
     constructor(
         private activeModal: NgbActiveModal,
-        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
+        private tutorialGroupFreePeriodService: TutorialGroupFreeDayService,
         private alertService: AlertService,
     ) {}
 
@@ -53,7 +53,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     updateTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
         const { date, reason } = formData;
 
-        const tutorialGroupFreePeriodDto = new TutorialGroupFreePeriodDTO();
+        const tutorialGroupFreePeriodDto = new TutorialGroupFreeDayDTO();
         tutorialGroupFreePeriodDto.date = date;
         tutorialGroupFreePeriodDto.reason = reason;
 

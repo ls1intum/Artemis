@@ -8,7 +8,7 @@ import { By } from '@angular/platform-browser';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
-import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
+import { TutorialGroupFreeDayService } from 'app/course/tutorial-groups/services/tutorial-group-free-day.service';
 import { TutorialGroupFreePeriodFormStubComponent } from '../../../stubs/tutorial-group-free-period-form-stub.component';
 import {
     formDataToTutorialGroupFreePeriodDTO,
@@ -21,7 +21,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 describe('CreateTutorialGroupFreePeriodComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupFreePeriodComponent>;
     let component: CreateTutorialGroupFreePeriodComponent;
-    let tutorialGroupFreePeriodService: TutorialGroupFreePeriodService;
+    let tutorialGroupFreePeriodService: TutorialGroupFreeDayService;
     const course = { id: 1, timeZone: 'Europe/Berlin' } as Course;
     const configurationId = 1;
     let activeModal: NgbActiveModal;
@@ -35,7 +35,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
                 TutorialGroupFreePeriodFormStubComponent,
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [MockProvider(TutorialGroupFreePeriodService), MockProvider(AlertService), MockProvider(NgbActiveModal)],
+            providers: [MockProvider(TutorialGroupFreeDayService), MockProvider(AlertService), MockProvider(NgbActiveModal)],
         })
             .compileComponents()
             .then(() => {
@@ -45,7 +45,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
                 component.tutorialGroupConfigurationId = configurationId;
                 component.course = course;
                 component.initialize();
-                tutorialGroupFreePeriodService = TestBed.inject(TutorialGroupFreePeriodService);
+                tutorialGroupFreePeriodService = TestBed.inject(TutorialGroupFreeDayService);
                 fixture.detectChanges();
             });
     });

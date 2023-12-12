@@ -10,7 +10,7 @@ import { map, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
@@ -33,7 +33,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
     course: Course;
     configuration?: TutorialGroupsConfiguration;
     isLoading = false;
-    tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
+    tutorialGroupFreeDays: TutorialGroupFreeDay[] = [];
 
     selectedFilter: filter = 'registered';
 

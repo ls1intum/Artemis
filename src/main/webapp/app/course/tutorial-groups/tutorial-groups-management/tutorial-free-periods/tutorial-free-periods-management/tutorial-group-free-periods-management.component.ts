@@ -6,7 +6,7 @@ import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/s
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/entities/course.model';
@@ -24,7 +24,7 @@ import { catchError, takeUntil } from 'rxjs/operators';
 export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDestroy {
     isLoading = false;
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
-    tutorialGroupFreePeriods: TutorialGroupFreePeriod[] = [];
+    tutorialGroupFreePeriods: TutorialGroupFreeDay[] = [];
     course: Course;
     faTimes = faTimes;
     faPlus = faPlus;
@@ -54,7 +54,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
         this.dialogErrorSource.unsubscribe();
     }
 
-    public isInThePast(tutorialGroupFreeDay: TutorialGroupFreePeriod): boolean {
+    public isInThePast(tutorialGroupFreeDay: TutorialGroupFreeDay): boolean {
         return tutorialGroupFreeDay.start!.isBefore(this.getCurrentDate());
     }
 

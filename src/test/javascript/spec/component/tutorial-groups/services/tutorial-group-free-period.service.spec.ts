@@ -1,20 +1,20 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
-import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
+import { TutorialGroupFreeDayDTO, TutorialGroupFreeDayService } from 'app/course/tutorial-groups/services/tutorial-group-free-day.service';
 import { generateExampleTutorialGroupFreePeriod } from '../helpers/tutorialGroupFreePeriodExampleModel';
-import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 
 describe('TutorialGroupFreePeriodService', () => {
-    let service: TutorialGroupFreePeriodService;
+    let service: TutorialGroupFreeDayService;
     let httpMock: HttpTestingController;
-    let elemDefault: TutorialGroupFreePeriod;
+    let elemDefault: TutorialGroupFreeDay;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
         });
-        service = TestBed.inject(TutorialGroupFreePeriodService);
+        service = TestBed.inject(TutorialGroupFreeDayService);
         httpMock = TestBed.inject(HttpTestingController);
 
         elemDefault = generateExampleTutorialGroupFreePeriod({});
@@ -40,7 +40,7 @@ describe('TutorialGroupFreePeriodService', () => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         service
-            .create(1, 1, new TutorialGroupFreePeriodDTO())
+            .create(1, 1, new TutorialGroupFreeDayDTO())
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
 
@@ -54,7 +54,7 @@ describe('TutorialGroupFreePeriodService', () => {
         const expected = { ...returnedFromService };
 
         service
-            .update(1, 1, 1, new TutorialGroupFreePeriodDTO())
+            .update(1, 1, 1, new TutorialGroupFreeDayDTO())
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
 

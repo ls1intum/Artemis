@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
-import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
+import { TutorialGroupFreeDayDTO, TutorialGroupFreeDayService } from 'app/course/tutorial-groups/services/tutorial-group-free-day.service';
 import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -17,7 +17,7 @@ import { Subject } from 'rxjs';
 export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();
 
-    tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodDTO = new TutorialGroupFreePeriodDTO();
+    tutorialGroupFreePeriodToCreate: TutorialGroupFreeDayDTO = new TutorialGroupFreeDayDTO();
     isLoading: boolean;
 
     @Input()
@@ -30,7 +30,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
 
     constructor(
         private activeModal: NgbActiveModal,
-        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
+        private tutorialGroupFreePeriodService: TutorialGroupFreeDayService,
         private alertService: AlertService,
     ) {}
 

@@ -8,7 +8,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
-import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { takeUntil } from 'rxjs/operators';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
@@ -34,7 +34,7 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
 
     readonly isMessagingEnabled = isMessagingEnabled;
 
-    tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
+    tutorialGroupFreeDays: TutorialGroupFreeDay[] = [];
 
     constructor(
         private tutorialGroupService: TutorialGroupsService,

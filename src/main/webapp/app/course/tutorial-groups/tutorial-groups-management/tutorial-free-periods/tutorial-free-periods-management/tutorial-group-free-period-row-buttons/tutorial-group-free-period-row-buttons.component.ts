@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
-import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
-import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
+import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreeDayService } from 'app/course/tutorial-groups/services/tutorial-group-free-day.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { EMPTY, Subject, from } from 'rxjs';
 import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
@@ -18,7 +18,7 @@ import { catchError, takeUntil } from 'rxjs/operators';
 export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     @Input() course: Course;
     @Input() tutorialGroupConfiguration: TutorialGroupsConfiguration;
-    @Input() tutorialFreePeriod: TutorialGroupFreePeriod;
+    @Input() tutorialFreePeriod: TutorialGroupFreeDay;
 
     @Output() tutorialFreePeriodDeleted = new EventEmitter<void>();
     @Output() tutorialFreePeriodEdited = new EventEmitter<void>();
@@ -32,7 +32,7 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     faTrash = faTrash;
 
     constructor(
-        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
+        private tutorialGroupFreePeriodService: TutorialGroupFreeDayService,
         private modalService: NgbModal,
     ) {}
 
