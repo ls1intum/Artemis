@@ -1,7 +1,9 @@
 <mat-expansion-panel [expanded]="expanded" [disabled]="true" class="exercise-hint-student-expansion-panel-wrapper">
     <mat-expansion-panel-header>
         <mat-panel-description>
-            <mat-panel-title><fa-icon [icon]="faQuestionCircle" size="2x"></fa-icon></mat-panel-title>
+            <mat-panel-title>
+                <fa-icon [icon]="faQuestionCircle" size="2x"></fa-icon>
+            </mat-panel-title>
             <mat-panel-description>
                 <div>
                     <div>{{ exerciseHint!.description }}</div>
@@ -29,8 +31,7 @@
                 <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
             </div>
         </div>
-    }
-    @if (!isLoading) {
+    } @else {
         <div>
             @if (exerciseHint?.content) {
                 <div class="p-3 mb-2 border border-1 border-secondary bg-light" [innerHTML]="exerciseHint!.content | htmlForMarkdown"></div>
