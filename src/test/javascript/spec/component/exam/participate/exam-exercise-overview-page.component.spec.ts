@@ -14,7 +14,6 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { QuizExam } from 'app/entities/quiz-exam.model';
-import { faEdit } from '@fortawesome/free-solid-svg-icons';
 
 describe('ExamExerciseOverviewPageComponent', () => {
     let fixture: ComponentFixture<ExamExerciseOverviewPageComponent>;
@@ -72,18 +71,59 @@ describe('ExamExerciseOverviewPageComponent', () => {
         expect(emitSpy).toHaveBeenCalledWith({ overViewChange: false, quizExamChange: true, exercise: undefined, forceSave: false });
     });
 
-    it('getQuizExamButtonTooltip should return synced', () => {
-        const result = comp.getQuizExamButtonTooltip();
-        expect(result).toBe('synced');
+    describe('getQuizExamButtonTooltip', () => {
+        it('should return synced when quizExam.submission exists and isSynced is true', () => {
+            comp.quizExam = {
+                type: ExerciseType.QUIZ,
+                submission: {
+                    isSynced: true,
+                    submitted: false,
+                },
+            };
+            const tooltip = comp.getQuizExamButtonTooltip();
+            expect(tooltip).toBe('synced');
+        });
+
+        it('should return notSynced when quizExam.submission exists and isSynced is false', () => {
+            comp.quizExam = {
+                type: ExerciseType.QUIZ,
+                submission: {
+                    isSynced: false,
+                    submitted: false,
+                },
+            };
+
+            const tooltip = comp.getQuizExamButtonTooltip();
+            expect(tooltip).toBe('notSynced');
+        });
     });
 
-    it('setQuizExamIconStatus should set the quizExamIcon to faEdit', () => {
-        comp.setQuizExamIconStatus();
-        expect(comp.quizExamIcon).toEqual(faEdit);
-    });
+    describe('setQuizExamButtonStatus', () => {
+        it('should return synced when quizExam is undefined', () => {
+            comp.quizExam = undefined;
 
-    it('setQuizExamIconStatus should return synced', () => {
-        const result = comp.setQuizExamIconStatus();
-        expect(result).toBe('synced');
+            const result = comp.setQuizExamIconStatus();
+
+            expect(result).toBe('synced');
+        });
+
+        it('should return synced when none of the input parameters are defined', () => {
+            const result = comp.setQuizExamIconStatus();
+            expect(result).toBe('synced');
+        });
+
+        it('should return notSynced when quizExam.submission.isSubmitted is false and quizExam.submission.isSynced is false', () => {
+            comp.quizExam = {
+                type: ExerciseType.QUIZ,
+                submission: {
+                    isSynced: false,
+                    submitted: false,
+                },
+            };
+
+            const result = comp.setQuizExamIconStatus();
+
+            expect(result).toBe('notSynced');
+        });
     });
 });

@@ -54,6 +54,7 @@ import { MockExamParticipationLiveEventsService } from '../../../helpers/mocks/s
 import { ExamPage } from 'app/entities/exam-page.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -617,6 +618,27 @@ describe('ExamParticipationComponent', () => {
             expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, submission);
             expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, syncedSubmission);
             expectSyncedSubmissions(submission, syncedSubmission);
+        }));
+
+        it('should sync quiz exam submissions', fakeAsync(() => {
+            const studentExam = new StudentExam();
+            studentExam.id = 1;
+            studentExam.exam = new Exam();
+            studentExam.exam.quizExamMaxPoints = 100;
+            studentExam.quizQuestions = [new MultipleChoiceQuestion()];
+            const submission = new QuizExamSubmission();
+            submission.isSynced = false;
+            submission.submitted = false;
+            submission.studentExam = new StudentExam();
+            submission.studentExam.id = studentExam.id;
+            studentExam.quizExamSubmission = submission;
+            const expectedSubmission = Object.assign({}, submission);
+            studentExam.exercises = [];
+            comp.studentExam = studentExam;
+            quizSubmissionUpdateSpy = jest.spyOn(examParticipationService, 'updateQuizExamSubmission').mockReturnValue(of(submission));
+            comp.triggerSave(false);
+            tick(500);
+            expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(expectedSubmission);
         }));
     });
 

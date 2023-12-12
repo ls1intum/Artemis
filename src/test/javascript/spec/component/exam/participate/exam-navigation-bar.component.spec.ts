@@ -335,7 +335,8 @@ describe('Exam Navigation Bar Component', () => {
             expect(result).toBe('synced');
         });
 
-        it('should return synced when none of the input parameters are defined', () => {
+        it('should return synced when quizExam is defined', () => {
+            comp.quizExam = undefined;
             const result = comp.setQuizExamButtonStatus();
             expect(result).toBe('synced');
         });
