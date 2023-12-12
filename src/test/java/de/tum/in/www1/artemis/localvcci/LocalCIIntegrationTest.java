@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
@@ -88,7 +88,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Test
     void testInvalidLocalVCRepositoryUrl() {
         // The local repository cannot be resolved to a valid LocalVCRepositoryUrl as it is not located at the correct base path and is not a bare repository.
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localVCServletService.processNewPush(commitHash, studentAssignmentRepository.localGit.getRepository()))
+        assertThatExceptionOfType(VersionControlException.class)
+                .isThrownBy(() -> localVCServletService.processNewPush(commitHash, studentAssignmentRepository.localGit.getRepository()))
                 .withMessageContaining("Could not create valid repository URL from path");
     }
 
@@ -104,7 +105,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // student participation
         programmingExerciseStudentParticipationRepository.delete(studentParticipation);
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository()))
+        assertThatExceptionOfType(VersionControlException.class)
+                .isThrownBy(() -> localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository()))
                 .withMessageContaining(expectedErrorMessage);
 
         // solution participation
@@ -114,7 +116,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExercise.setSolutionParticipation(null);
         programmingExerciseRepository.save(programmingExercise);
         solutionProgrammingExerciseParticipationRepository.delete(solutionParticipation);
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localVCServletService.processNewPush(solutionCommitHash, solutionRepository.originGit.getRepository()))
+        assertThatExceptionOfType(VersionControlException.class)
+                .isThrownBy(() -> localVCServletService.processNewPush(solutionCommitHash, solutionRepository.originGit.getRepository()))
                 .withMessageContaining(expectedErrorMessage);
 
         // template participation
@@ -125,7 +128,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         programmingExerciseRepository.save(programmingExercise);
         templateProgrammingExerciseParticipationRepository.delete(templateParticipation);
 
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localVCServletService.processNewPush(templateCommitHash, templateRepository.originGit.getRepository()))
+        assertThatExceptionOfType(VersionControlException.class)
+                .isThrownBy(() -> localVCServletService.processNewPush(templateCommitHash, templateRepository.originGit.getRepository()))
                 .withMessageContaining(expectedErrorMessage);
 
         // team participation
@@ -143,8 +147,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         teamRepository.save(team);
         String teamCommitHash = localVCLocalCITestService.commitFile(teamLocalRepository.localRepoFile.toPath(), teamLocalRepository.localGit);
         teamLocalRepository.localGit.push().call();
-        assertThatExceptionOfType(LocalCIException.class).isThrownBy(() -> localVCServletService.processNewPush(teamCommitHash, teamLocalRepository.originGit.getRepository()))
-                .withMessageContaining(expectedErrorMessage);
+        assertThatExceptionOfType(VersionControlException.class)
+                .isThrownBy(() -> localVCServletService.processNewPush(teamCommitHash, teamLocalRepository.originGit.getRepository())).withMessageContaining(expectedErrorMessage);
 
         // Cleanup
         solutionRepository.resetLocalRepo();
@@ -168,7 +172,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Call processNewPush with a wrong commit hash. This should throw an exception.
-        assertThatExceptionOfType(LocalCIException.class)
+        assertThatExceptionOfType(VersionControlException.class)
                 .isThrownBy(() -> localVCServletService.processNewPush(DUMMY_COMMIT_HASH, studentAssignmentRepository.originGit.getRepository()))
                 .withMessageContaining("Could not resolve commit hash");
 

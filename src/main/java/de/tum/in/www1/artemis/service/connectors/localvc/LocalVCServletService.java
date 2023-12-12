@@ -30,19 +30,15 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCAuthException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCForbiddenException;
-import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
+import de.tum.in.www1.artemis.exception.localvc.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIProgrammingLanguageFeatureService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService;
 import de.tum.in.www1.artemis.service.programming.*;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -82,7 +78,7 @@ public class LocalVCServletService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService;
+    private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
@@ -102,8 +98,9 @@ public class LocalVCServletService {
     public LocalVCServletService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
-            LocalCITriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService, ProgrammingMessagingService programmingMessagingService,
-            ProgrammingTriggerService programmingTriggerService, LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService) {
+            ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
+            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingLanguageFeatureService programmingLanguageFeatureService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -115,7 +112,7 @@ public class LocalVCServletService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
-        this.localCIProgrammingLanguageFeatureService = localCIProgrammingLanguageFeatureService;
+        this.programmingLanguageFeatureService = programmingLanguageFeatureService;
     }
 
     /**
@@ -307,8 +304,8 @@ public class LocalVCServletService {
      *
      * @param commitHash the hash of the last commit.
      * @param repository the remote repository which was pushed to.
-     * @throws LocalCIException        if something goes wrong preparing the queueing of the build job.
-     * @throws VersionControlException if the commit belongs to the wrong branch (i.e. not the default branch of the participation).
+     * @throws ContinuousIntegrationException if something goes wrong with the CI configuration.
+     * @throws VersionControlException        if the commit belongs to the wrong branch (i.e. not the default branch of the participation).
      */
     public void processNewPush(String commitHash, Repository repository) {
         long timeNanoStart = System.nanoTime();
@@ -326,16 +323,17 @@ public class LocalVCServletService {
             exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
         }
         catch (EntityNotFoundException e) {
-            throw new LocalCIException("Could not find programming exercise for project key " + projectKey, e);
+            throw new VersionControlException("Could not find programming exercise for project key " + projectKey, e);
         }
 
         ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         ProjectType projectType = exercise.getProjectType();
 
-        List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
+        // TODO: We should move this to the exercise creation and not in the push handling as it is not necessary to check this every time a push happens.
+        List<ProjectType> supportedProjectTypes = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
 
         if (projectType != null && !supportedProjectTypes.contains(exercise.getProjectType())) {
-            throw new LocalCIException("The project type " + exercise.getProjectType() + " is not supported by the local CI.");
+            throw new ContinuousIntegrationException("The project type " + exercise.getProjectType() + " is not supported by the configured CI System.");
         }
 
         ProgrammingExerciseParticipation participation;
@@ -345,7 +343,7 @@ public class LocalVCServletService {
                     true);
         }
         catch (EntityNotFoundException e) {
-            throw new LocalCIException("Could not find participation for repository " + repositoryTypeOrUserName + " of exercise " + exercise, e);
+            throw new VersionControlException("Could not find participation for repository " + repositoryTypeOrUserName + " of exercise " + exercise, e);
         }
 
         try {
@@ -366,7 +364,8 @@ public class LocalVCServletService {
         catch (GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
             // For exceptions happening inside runBuildJob(), the user is notified. See the addBuildJobToQueue() method in the LocalCIBuildJobManagementService for that.
-            throw new LocalCIException("Could not process new push to repository " + localVCRepositoryUrl.getURI() + " and commit " + commitHash + ". No build job was queued.", e);
+            throw new VersionControlException(
+                    "Could not process new push to repository " + localVCRepositoryUrl.getURI() + " and commit " + commitHash + ". No build job was queued.", e);
         }
 
         log.info("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUrl.getURI(), commitHash,
@@ -379,7 +378,7 @@ public class LocalVCServletService {
         }
         catch (LocalVCInternalException e) {
             // This means something is misconfigured.
-            throw new LocalCIException("Could not create valid repository URL from path " + repositoryFolderPath, e);
+            throw new VersionControlException("Could not create valid repository URL from path " + repositoryFolderPath, e);
         }
     }
 
@@ -396,7 +395,7 @@ public class LocalVCServletService {
      *
      * @param exercise   the exercise for which the push was made.
      * @param commitHash the hash of the last commit to the test repository.
-     * @throws LocalCIException if something unexpected goes wrong when creating the submission or triggering the build.
+     * @throws VersionControlException if something unexpected goes wrong when creating the submission or triggering the build.
      */
     private void processNewPushToTestRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation) {
         // Create a new submission for the solution repository.
@@ -405,7 +404,7 @@ public class LocalVCServletService {
             submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
         }
         catch (EntityNotFoundException | IllegalStateException e) {
-            throw new LocalCIException("Could not create submission for solution participation", e);
+            throw new VersionControlException("Could not create submission for solution participation", e);
         }
 
         programmingMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
@@ -415,7 +414,7 @@ public class LocalVCServletService {
             programmingTriggerService.setTestCasesChanged(exercise.getId(), true);
         }
         catch (EntityNotFoundException e) {
-            throw new LocalCIException("Could not set test cases changed flag", e);
+            throw new VersionControlException("Could not set test cases changed flag", e);
         }
 
         ciTriggerService.triggerBuild(solutionParticipation, commitHash);
@@ -436,7 +435,6 @@ public class LocalVCServletService {
      *
      * @param participation the participation for which the push was made
      * @param commit        the commit that was pushed
-     * @throws LocalCIException        if something unexpected goes wrong creating the submission or triggering the build
      * @throws VersionControlException if the commit belongs to the wrong branch (i.e. not the default branch of the participation)
      */
     private void processNewPushToRepository(ProgrammingExerciseParticipation participation, Commit commit) {
@@ -448,7 +446,7 @@ public class LocalVCServletService {
             submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit);
         }
         catch (EntityNotFoundException | IllegalStateException | IllegalArgumentException e) {
-            throw new LocalCIException("Could not process submission for participation: " + e.getMessage(), e);
+            throw new VersionControlException("Could not process submission for participation: " + e.getMessage(), e);
         }
 
         // Remove unnecessary information from the new submission.
@@ -456,14 +454,14 @@ public class LocalVCServletService {
         programmingMessagingService.notifyUserAboutSubmission(submission, participation.getExercise().getId());
     }
 
-    private Commit extractCommitInfo(String commitHash, Repository repository) throws IOException, GitAPIException {
+    private Commit extractCommitInfo(String commitHash, Repository repository) throws IOException, GitAPIException, VersionControlException {
         RevCommit revCommit;
         String branch = null;
 
         ObjectId objectId = repository.resolve(commitHash);
 
         if (objectId == null) {
-            throw new LocalCIException("Could not resolve commit hash " + commitHash + " in repository");
+            throw new VersionControlException("Could not resolve commit hash " + commitHash + " in repository");
         }
 
         revCommit = repository.parseCommit(objectId);
@@ -479,7 +477,7 @@ public class LocalVCServletService {
         git.close();
 
         if (revCommit == null || branch == null) {
-            throw new LocalCIException("Something went wrong retrieving the revCommit or the branch.");
+            throw new VersionControlException("Something went wrong retrieving the revCommit or the branch.");
         }
 
         Commit commit = new Commit();
