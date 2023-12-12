@@ -32,7 +32,7 @@
 <h3>
     {{ 'artemisApp.exam.exercises' | artemisTranslate }}
 </h3>
-<div *ngFor="let exercise of examExercises; let i = index" [id]="'exercise-' + exercise.id">
+<div *ngFor="let exercise of studentExam?.exercises; let i = index" [id]="'exercise-' + exercise.id">
     <div class="question card">
         <jhi-result-summary-exercise-card-header [index]="i" [exercise]="exercise" [exerciseInfo]="exerciseInfos[exercise.id!]" [resultsPublished]="resultsArePublished" />
 
@@ -107,7 +107,7 @@
                         <ng-container [ngSwitch]="exercise.type">
                             <jhi-text-exam-summary
                                 *ngSwitchCase="TEXT"
-                                [exercise]="asTextExercise(exercise)"
+                                [exercise]="exercise"
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
                                 [expandProblemStatement]="expandProblemStatement"
                                 [isAfterResultsArePublished]="resultsArePublished"
@@ -115,7 +115,7 @@
 
                             <jhi-modeling-exam-summary
                                 *ngSwitchCase="MODELING"
-                                [exercise]="asModelingExercise(exercise)"
+                                [exercise]="exercise"
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
                                 [isPrinting]="isPrinting"
                                 [expandProblemStatement]="expandProblemStatement"
@@ -133,7 +133,7 @@
                             <jhi-file-upload-exam-summary
                                 *ngSwitchCase="FILE_UPLOAD"
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
-                                [exercise]="asFileUploadExercise(exercise)"
+                                [exercise]="exercise"
                                 [expandProblemStatement]="expandProblemStatement"
                                 [isAfterResultsArePublished]="resultsArePublished"
                             />
@@ -142,7 +142,7 @@
                         <jhi-complaint-student-view
                             *ngIf="exerciseInfos[exercise.id!]!.submission! && exercise.type !== QUIZ && isAfterStudentReviewStart"
                             class="mb-2 mt-2 ms-3"
-                            [exercise]="asExercise(exercise)"
+                            [exercise]="exercise"
                             [participation]="exerciseInfos[exercise.id!]!.participation!"
                             [result]="exerciseInfos[exercise.id!]!.participation!.results?.[0]"
                             [exam]="examWithOnlyIdAndStudentReviewPeriod"
@@ -156,7 +156,7 @@
                 <!--  relax condition for programming exercises for the case that we get a submissions from websockets, but last changes in exam were not submitted -->
                 <ng-container *ngIf="exerciseInfos[exercise.id!]?.participation && exerciseInfos[exercise.id!]?.submission!; else noSubmission">
                     <jhi-programming-exam-summary
-                        [exercise]="asProgrammingExercise(exercise)"
+                        [exercise]="exercise"
                         [participation]="exerciseInfos[exercise.id!]!.participation!"
                         [submission]="exerciseInfos[exercise.id!]!.submission!"
                         [isTestRun]="isTestRun"

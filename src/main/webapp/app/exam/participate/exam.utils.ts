@@ -3,16 +3,8 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
 import { ServerDateService } from 'app/shared/server-date.service';
-import { ExamExercise } from 'app/entities/exam-exercise';
-import { Exercise } from 'app/entities/exercise.model';
-import { QuizExamExercise } from 'app/entities/quiz-exam-exercise';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { QuizExam } from 'app/entities/quiz-exam.model';
 import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
-import { cloneDeep } from 'lodash-es';
-import { InitializationState } from 'app/entities/participation/participation.model';
 
 /**
  * Calculates the individual end time based on the studentExam
@@ -103,74 +95,30 @@ export function isExamResultPublished(isTestRun: boolean, exam: Exam | undefined
     return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(serverDateService.now());
 }
 
-export function getExamExercises(studentExam: StudentExam, quizExamTitles: { title: string; navigationTitle: string }) {
-    let examExercises: ExamExercise[] = [];
-    if (studentExam.exercises) {
-        examExercises = studentExam.exercises.map((exercise: Exercise, index: number) => {
-            exercise.navigationTitle = `${index + 1}`;
-            exercise.overviewTitle = exercise.exerciseGroup?.title;
-            return exercise;
-        });
-    }
-    const hasQuizExam = (studentExam.exam?.quizExamMaxPoints ?? 0) > 0;
-    if (hasQuizExam) {
-        examExercises = [createQuizExamExercise(studentExam, quizExamTitles), ...examExercises];
-    }
-    return examExercises;
-}
-
 /**
- * Update quiz exam submission
+ * Create a QuizExam given a StudentExam
  *
- * @param examExercises List of exam exercises which contains quiz exam exercise to be updated
- * @param quizExamSubmission The new submission to be set
+ *  @param studentExam the student exam from which to create the quiz exam
+ *  @param title the title of the quiz exam
  */
-export function updateQuizExamExerciseSubmission(examExercises: ExamExercise[], quizExamSubmission: QuizExamSubmission) {
-    const quizExamExercise = examExercises[0];
-    quizExamExercise.studentParticipations![0].submissions = [quizExamSubmission];
-}
-
-function createQuizExamExercise(studentExam: StudentExam, titles: { title: string; navigationTitle: string }): QuizExamExercise {
-    const { title, navigationTitle } = titles;
-    const quizExamExercise = new QuizExamExercise();
-    quizExamExercise.navigationTitle = navigationTitle;
-    quizExamExercise.exerciseGroup!.title = title;
-    quizExamExercise.overviewTitle = title;
-    quizExamExercise.title = title;
-    quizExamExercise.quizQuestions = studentExam.quizQuestions;
-    quizExamExercise.randomizeQuestionOrder = studentExam.exam?.randomizeQuizExamQuestionsOrder;
-    quizExamExercise.maxPoints = studentExam.exam?.quizExamMaxPoints;
-    let quizExamSubmission = studentExam.quizExamSubmission;
-    if (!quizExamSubmission) {
-        quizExamSubmission = new QuizExamSubmission();
+export function createQuizExam(studentExam: StudentExam, title: string): QuizExam | undefined {
+    if (studentExam.exam?.quizExamMaxPoints ?? 0 > 0) {
+        const quizExam = new QuizExam();
+        quizExam.title = title;
+        quizExam.exerciseGroup!.title = title;
+        quizExam.quizQuestions = studentExam.quizQuestions;
+        quizExam.randomizeQuestionOrder = studentExam.exam?.randomizeQuizExamQuestionsOrder;
+        quizExam.maxPoints = studentExam.exam?.quizExamMaxPoints;
+        let quizExamSubmission;
+        if (quizExamSubmission) {
+            quizExamSubmission = Object.assign({}, studentExam.quizExamSubmission);
+        } else {
+            quizExamSubmission = new QuizExamSubmission();
+        }
+        studentExam.quizExamSubmission = undefined;
+        quizExamSubmission.studentExam = studentExam;
+        quizExam.submission = quizExamSubmission;
+        return quizExam;
     }
-    quizExamSubmission.studentExam = cloneDeep(studentExam);
-    quizExamSubmission.isSynced = true;
-    quizExamExercise.studentParticipations = [
-        {
-            initializationState: InitializationState.INITIALIZED,
-            submissions: [quizExamSubmission],
-        },
-    ];
-    return quizExamExercise;
-}
-
-export function asExercise(exercise: ExamExercise): Exercise {
-    return exercise as Exercise;
-}
-
-export function asFileUploadExercise(exercise: ExamExercise): FileUploadExercise {
-    return exercise as FileUploadExercise;
-}
-
-export function asTextExercise(exercise: ExamExercise): TextExercise {
-    return exercise as TextExercise;
-}
-
-export function asProgrammingExercise(exercise: ExamExercise): ProgrammingExercise {
-    return exercise as ProgrammingExercise;
-}
-
-export function asModelingExercise(exercise: ExamExercise): ModelingExercise {
-    return exercise as ModelingExercise;
+    return undefined;
 }

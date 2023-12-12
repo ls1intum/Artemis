@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -20,10 +20,6 @@ import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-ex
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ExamExercise } from 'app/entities/exam-exercise';
-import { asFileUploadExercise, asModelingExercise, asProgrammingExercise, asTextExercise, getExamExercises } from 'app/exam/participate/exam.utils';
-import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-student-exam-timeline',
@@ -46,22 +42,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         },
     };
 
-    _studentExam: StudentExam;
-    examExercises: ExamExercise[];
-
-    @Input()
-    set studentExam(studentExam: StudentExam) {
-        this._studentExam = studentExam;
-        this.examExercises = getExamExercises(studentExam, {
-            title: this.translateService.instant('artemisApp.quizPool.title'),
-            navigationTitle: this.translateService.instant('artemisApp.quizPool.navigationTitle'),
-        });
-    }
-
-    get studentExam(): StudentExam {
-        return this._studentExam;
-    }
-
+    studentExam: StudentExam;
     exerciseIndex: number;
     activeExamPage = new ExamPage();
     submissionTimeStamps: dayjs.Dayjs[] = [];
@@ -69,7 +50,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     programmingSubmissions: ProgrammingSubmission[] = [];
     fileUploadSubmissions: FileUploadSubmission[] = [];
 
-    currentExercise: ExamExercise | undefined;
+    currentExercise: Exercise | undefined;
     currentSubmission: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission | undefined;
     changesSubscription: Subscription;
     cachedDiffReports: Map<string, ProgrammingExerciseGitDiffReport> = new Map<string, ProgrammingExerciseGitDiffReport>();
@@ -80,18 +61,12 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
 
     private activatedRouteSubscription: Subscription;
 
-    asFileUploadExercise = asFileUploadExercise;
-    asModelingExercise = asModelingExercise;
-    asProgrammingExercise = asProgrammingExercise;
-    asTextExercise = asTextExercise;
-
     constructor(
         private activatedRoute: ActivatedRoute,
         private submissionService: SubmissionService,
         private submissionVersionService: SubmissionVersionService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private datePipe: ArtemisDatePipe,
-        private translateService: TranslateService,
     ) {}
 
     ngOnInit(): void {
@@ -123,7 +98,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             const firstSubmission = this.findFirstSubmission();
             this.currentSubmission = firstSubmission;
             this.exerciseIndex = this.findExerciseIndex(firstSubmission!);
-            this.examNavigationBarComponent.changePage(false, this.exerciseIndex, false, firstSubmission);
+            this.examNavigationBarComponent.changePage(false, false, this.exerciseIndex, false, firstSubmission);
         });
     }
 
@@ -146,11 +121,10 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
     private updateProgrammingExerciseView() {
         const activeProgrammingComponent = this.activePageComponent as ProgrammingExerciseExamDiffComponent | undefined;
         if (activeProgrammingComponent) {
-            const programmingExercise = this.currentExercise! as ProgrammingExercise;
             activeProgrammingComponent.studentParticipation = this.currentExercise!.studentParticipations![0];
-            activeProgrammingComponent.exercise = programmingExercise;
+            activeProgrammingComponent.exercise = this.currentExercise!;
             activeProgrammingComponent.currentSubmission = this.currentSubmission as ProgrammingSubmission;
-            activeProgrammingComponent.previousSubmission = this.findPreviousProgrammingSubmission(programmingExercise, this.currentSubmission!);
+            activeProgrammingComponent.previousSubmission = this.findPreviousProgrammingSubmission(this.currentExercise!, this.currentSubmission!);
             activeProgrammingComponent.submissions = this.programmingSubmissions.filter((submission) => submission.participation?.exercise?.id === this.currentExercise?.id);
             activeProgrammingComponent.exerciseIdSubject.next(this.currentExercise!.id!);
         }
@@ -260,7 +234,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
      * This method is called when the user clicks on the next or previous button in the navigation bar or on the slider.
      * @param exerciseChange contains the exercise to which the user wants to navigate to and the submission that should be displayed
      */
-    onPageChange(exerciseChange: { exercise?: ExamExercise; submission?: ProgrammingSubmission | SubmissionVersion | FileUploadSubmission }): void {
+    onPageChange(exerciseChange: { exercise?: Exercise; submission?: ProgrammingSubmission | SubmissionVersion | FileUploadSubmission }): void {
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
@@ -307,7 +281,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         return submissionVersion;
     }
 
-    initializeExercise(exercise: ExamExercise, submission: Submission | SubmissionVersion | undefined) {
+    initializeExercise(exercise: Exercise, submission: Submission | SubmissionVersion | undefined) {
         this.activeExamPage.exercise = exercise;
         // set current exercise index
         this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1) => exercise1.id === exercise.id);
@@ -365,7 +339,7 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
         const exerciseIndex = this.studentExam.exercises!.findIndex((examExercise) => examExercise.id === this.currentExercise?.id);
         this.exerciseIndex = exerciseIndex;
         this.currentSubmission = submission;
-        this.examNavigationBarComponent.changePage(false, exerciseIndex, false, submission);
+        this.examNavigationBarComponent.changePage(false, false, exerciseIndex, false, submission);
     }
 
     /**
@@ -396,12 +370,12 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
      * Finds the submission for the exercise with the closest timestamp to the current timestamp.
      * @param exercise The exercise for which the submission should be found.
      */
-    private findSubmissionForExerciseClosestToCurrentTimeStampForExercise(exercise: ExamExercise) {
+    private findSubmissionForExerciseClosestToCurrentTimeStampForExercise(exercise: Exercise) {
         const comparisonObject = dayjs(this.selectedTimestamp);
         let smallestDiff = Infinity;
         let timestampWithSmallestDiff = 0;
         if (exercise.type === ExerciseType.PROGRAMMING) {
-            timestampWithSmallestDiff = this.findClosestTimestampForExerciseInSubmissionArray(exercise as ProgrammingExercise, this.programmingSubmissions);
+            timestampWithSmallestDiff = this.findClosestTimestampForExerciseInSubmissionArray(exercise, this.programmingSubmissions);
         } else if (exercise.type === ExerciseType.FILE_UPLOAD) {
             // file upload exercises only have one submission
             return this.fileUploadSubmissions.find((submission) => submission.participation?.exercise?.id === exercise.id);

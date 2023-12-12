@@ -105,11 +105,17 @@ describe('Exam Navigation Bar Component', () => {
         const exerciseIndex = 1;
         const force = false;
 
-        comp.changePage(false, exerciseIndex, force);
+        comp.changePage(false, false, exerciseIndex, force);
 
         expect(comp.exerciseIndex).toEqual(exerciseIndex);
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
         expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(exerciseIndex);
+    });
+
+    it('should change to the quiz exam page', () => {
+        const emitSpy = jest.spyOn(comp.onPageChanged, 'emit');
+        comp.changePage(false, true, -1);
+        expect(emitSpy).toHaveBeenCalledWith({ overViewChange: false, quizExamChange: true, exercise: undefined, forceSave: false });
     });
 
     it('should not change the exercise with invalid index', () => {
@@ -121,7 +127,7 @@ describe('Exam Navigation Bar Component', () => {
         const exerciseIndex = 5;
         const force = false;
 
-        comp.changePage(false, exerciseIndex, force);
+        comp.changePage(false, false, exerciseIndex, force);
 
         expect(comp.exerciseIndex).toBe(0);
         expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
@@ -260,5 +266,21 @@ describe('Exam Navigation Bar Component', () => {
         comp.exerciseIndex = 0;
         expect(comp.setExerciseButtonStatus(1)).toBe('synced');
         expect(comp.icon).toEqual(faCheck);
+    });
+
+    it('setQuizExamButtonStatus should return synced if quizExamPageOpen is true', () => {
+        comp.quizExamPageOpen = true;
+        const status = comp.setQuizExamButtonStatus();
+        expect(status).toBe('synced active');
+    });
+
+    it('setQuizExamButtonStatus should return synced if quizExamPageOpen is false', () => {
+        const status = comp.setQuizExamButtonStatus();
+        expect(status).toBe('synced');
+    });
+
+    it('setQuizExamButtonStatus should set the icon to faEdit before checking quizExamPageOpen', () => {
+        comp.setQuizExamButtonStatus();
+        expect(comp.icon).toBe(faEdit);
     });
 });

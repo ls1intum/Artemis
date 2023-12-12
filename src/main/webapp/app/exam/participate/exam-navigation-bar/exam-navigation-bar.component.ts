@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
@@ -17,7 +17,7 @@ import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { ExamExercise } from 'app/entities/exam-exercise';
+import { QuizExam } from 'app/entities/quiz-exam.model';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -25,15 +25,18 @@ import { ExamExercise } from 'app/entities/exam-exercise';
     styleUrls: ['./exam-navigation-bar.component.scss'],
 })
 export class ExamNavigationBarComponent implements OnInit {
-    @Input() exercises: ExamExercise[] = [];
+    @Input() exercises: Exercise[] = [];
+    @Input() quizExam?: QuizExam;
     @Input() exerciseIndex = 0;
     @Input() endDate: dayjs.Dayjs;
     @Input() overviewPageOpen: boolean;
+    @Input() quizExamPageOpen: boolean;
     @Input() examSessions?: ExamSession[] = [];
     @Input() examTimeLineView = false;
     @Output() onPageChanged = new EventEmitter<{
         overViewChange: boolean;
-        exercise?: ExamExercise;
+        quizExamChange: boolean;
+        exercise?: Exercise;
         forceSave: boolean;
         submission?: ProgrammingSubmission | SubmissionVersion | FileUploadSubmission;
     }>();
@@ -88,10 +91,9 @@ export class ExamNavigationBarComponent implements OnInit {
 
         // If it is not an initial session, update the isSynced variable for out of sync submissions.
         this.exercises
-            .filter((exercise) => this.isItemProgrammingExercise(exercise) && exercise.studentParticipations)
+            .filter((exercise) => exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations)
             .forEach((exercise) => {
-                const programmingExercise = exercise as ProgrammingExercise;
-                const domain: DomainChange = [DomainType.PARTICIPATION, programmingExercise.studentParticipations![0]];
+                const domain: DomainChange = [DomainType.PARTICIPATION, exercise.studentParticipations![0]];
                 this.conflictService.setDomain(domain);
                 this.repositoryService.setDomain(domain);
 
@@ -108,12 +110,12 @@ export class ExamNavigationBarComponent implements OnInit {
             });
     }
 
-    private isItemProgrammingExercise(exercise: ExamExercise): exercise is ProgrammingExercise {
-        return exercise && exercise.type === ExerciseType.PROGRAMMING;
+    getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
+        return this.examParticipationService.getExerciseButtonTooltip(exercise);
     }
 
-    getExerciseButtonTooltip(exercise: ExamExercise): ButtonTooltipType {
-        return this.examParticipationService.getExerciseButtonTooltip(exercise);
+    getQuizExamButtonTooltip(): ButtonTooltipType {
+        return 'synced';
     }
 
     triggerExamAboutToEnd() {
@@ -122,25 +124,44 @@ export class ExamNavigationBarComponent implements OnInit {
     }
 
     /**
-     * @param overviewPage: user wants to switch to the overview page
-     * @param exerciseIndex: index of the exercise to switch to, if it should not be used, you can pass -1
-     * @param forceSave: true if forceSave shall be used.
+     *
+     * @param overviewPage user wants to switch to the overview page
+     * @param quizExamPage user wants to switch to the quiz exam page
+     * @param exerciseIndex index of the exercise to switch to, if it should not be used, you can pass -1
+     * @param forceSave true if forceSave shall be used.
      * @param submission the submission to be viewed, used in the exam timeline
      */
-    changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean, submission?: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission): void {
+    changePage(
+        overviewPage: boolean,
+        quizExamPage: boolean,
+        exerciseIndex: number,
+        forceSave?: boolean,
+        submission?: SubmissionVersion | ProgrammingSubmission | FileUploadSubmission,
+    ): void {
         if (!overviewPage) {
-            // out of index -> do nothing
-            if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
-                return;
+            if (quizExamPage) {
+                this.exerciseIndex = -1;
+                this.onPageChanged.emit({ overViewChange: false, quizExamChange: true, exercise: undefined, forceSave: !!forceSave });
+            } else {
+                // out of index -> do nothing
+                if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
+                    return;
+                }
+                // set index and emit event
+                this.exerciseIndex = exerciseIndex;
+                this.onPageChanged.emit({
+                    overViewChange: false,
+                    quizExamChange: false,
+                    exercise: this.exercises[this.exerciseIndex],
+                    forceSave: !!forceSave,
+                    submission: submission,
+                });
             }
-            // set index and emit event
-            this.exerciseIndex = exerciseIndex;
-            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave, submission: submission });
         } else if (overviewPage) {
             // set index and emit event
             this.exerciseIndex = -1;
             // save current exercise
-            this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
+            this.onPageChanged.emit({ overViewChange: true, quizExamChange: false, exercise: undefined, forceSave: false });
         }
         this.setExerciseButtonStatus(this.exerciseIndex);
     }
@@ -151,7 +172,7 @@ export class ExamNavigationBarComponent implements OnInit {
      */
     changeExerciseById(exerciseId: number) {
         const foundIndex = this.exercises.findIndex((exercise) => exercise.id === exerciseId);
-        this.changePage(false, foundIndex, true);
+        this.changePage(false, false, foundIndex, true);
     }
 
     /**
@@ -168,9 +189,9 @@ export class ExamNavigationBarComponent implements OnInit {
         if (changeExercise) {
             if (newIndex > this.exercises.length - 1) {
                 // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
-                this.changePage(false, this.exerciseIndex, true);
+                this.changePage(false, false, this.exerciseIndex, true);
             } else {
-                this.changePage(false, newIndex, true);
+                this.changePage(false, false, newIndex, true);
             }
         }
     }
@@ -185,6 +206,18 @@ export class ExamNavigationBarComponent implements OnInit {
 
     getOverviewStatus(): 'active' | '' {
         return this.overviewPageOpen ? 'active' : '';
+    }
+
+    /**
+     * Set the icon of the quiz exam button and return the status of the button
+     */
+    setQuizExamButtonStatus(): 'synced' | 'synced active' {
+        this.icon = faEdit;
+        if (this.quizExamPageOpen) {
+            return 'synced active';
+        } else {
+            return 'synced';
+        }
     }
 
     /**
@@ -220,7 +253,7 @@ export class ExamNavigationBarComponent implements OnInit {
         }
         if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {
             // make button blue (except for the current page)
-            if (exerciseIndex === this.exerciseIndex && !this.overviewPageOpen) {
+            if (exerciseIndex === this.exerciseIndex && !this.overviewPageOpen && !this.quizExamPageOpen) {
                 return 'synced active';
             } else {
                 return 'synced';
@@ -232,7 +265,7 @@ export class ExamNavigationBarComponent implements OnInit {
         }
     }
 
-    isOnlyOfflineIDE(exercise: ExamExercise): boolean {
+    isOnlyOfflineIDE(exercise: Exercise): boolean {
         if (exercise instanceof ProgrammingExercise) {
             const programmingExercise = exercise as ProgrammingExercise;
             return programmingExercise.allowOfflineIde === true && programmingExercise.allowOnlineEditor === false;

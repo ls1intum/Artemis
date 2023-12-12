@@ -10,8 +10,11 @@ import { ExamExerciseOverviewPageComponent } from 'app/exam/participate/exercise
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { StudentExam } from 'app/entities/student-exam.model';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { QuizExam } from 'app/entities/quiz-exam.model';
+import { faEdit } from '@fortawesome/free-solid-svg-icons';
 
 describe('ExamExerciseOverviewPageComponent', () => {
     let fixture: ComponentFixture<ExamExerciseOverviewPageComponent>;
@@ -31,7 +34,8 @@ describe('ExamExerciseOverviewPageComponent', () => {
 
         fixture = TestBed.createComponent(ExamExerciseOverviewPageComponent);
         comp = fixture.componentInstance;
-        comp.exercises = [
+        comp.studentExam = new StudentExam();
+        comp.studentExam.exercises = [
             {
                 id: 0,
                 type: ExerciseType.PROGRAMMING,
@@ -54,8 +58,32 @@ describe('ExamExerciseOverviewPageComponent', () => {
     it('should open the exercise', () => {
         jest.spyOn(comp.onPageChanged, 'emit');
 
-        comp.openExercise(comp.exercises![0]);
+        comp.openExercise(comp.studentExam.exercises![0]);
 
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
+    });
+
+    it('should emit an event with quizExamChange set to true when quizExamChange is true', () => {
+        comp.quizExam = new QuizExam();
+        const emitSpy = jest.spyOn(comp.onPageChanged, 'emit');
+
+        comp.openQuizExam();
+
+        expect(emitSpy).toHaveBeenCalledWith({ overViewChange: false, quizExamChange: true, exercise: undefined, forceSave: false });
+    });
+
+    it('getQuizExamButtonTooltip should return synced', () => {
+        const result = comp.getQuizExamButtonTooltip();
+        expect(result).toBe('synced');
+    });
+
+    it('setQuizExamIconStatus should set the quizExamIcon to faEdit', () => {
+        comp.setQuizExamIconStatus();
+        expect(comp.quizExamIcon).toEqual(faEdit);
+    });
+
+    it('setQuizExamIconStatus should return synced', () => {
+        const result = comp.setQuizExamIconStatus();
+        expect(result).toBe('synced');
     });
 });

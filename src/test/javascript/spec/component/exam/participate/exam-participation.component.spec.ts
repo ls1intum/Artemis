@@ -827,11 +827,10 @@ describe('ExamParticipationComponent', () => {
             exercise1.id = 15;
             const exercise2 = new ProgrammingExercise(new Course(), undefined);
             exercise2.id = 42;
-            const studentExam = new StudentExam();
-            studentExam.exercises = [exercise1, exercise2];
-            comp.studentExam = studentExam;
+            comp.studentExam = new StudentExam();
+            comp.studentExam.exercises = [exercise1, exercise2];
             const triggerSpy = jest.spyOn(comp, 'triggerSave');
-            const exerciseChange = { overViewChange: false, exercise: exercise2, forceSave: true };
+            const exerciseChange = { overViewChange: false, quizExamChange: false, exercise: exercise2, forceSave: true };
             const createParticipationForExerciseSpy = jest.spyOn(comp, 'createParticipationForExercise').mockReturnValue(of(new StudentParticipation()));
             comp.exam = new Exam();
             comp.onPageChange(exerciseChange);
@@ -849,13 +848,12 @@ describe('ExamParticipationComponent', () => {
             participation.submissions = [submission];
             exercise.studentParticipations = [participation];
             const triggerSpy = jest.spyOn(comp, 'triggerSave');
-            const exerciseChange = { overViewChange: false, exercise: exercise, forceSave: true };
+            const exerciseChange = { overViewChange: false, quizExamChange: false, exercise: exercise, forceSave: true };
             comp.exam = new Exam();
             comp.activeExamPage = new ExamPage();
             comp.activeExamPage.exercise = exercise;
-            const studentExam = new StudentExam();
-            studentExam.exercises = [exercise];
-            comp.studentExam = studentExam;
+            comp.studentExam = new StudentExam();
+            comp.studentExam.exercises = [exercise];
             comp.pageComponentVisited = [true];
             comp.examStartConfirmed = true;
             fixture.detectChanges();
@@ -866,6 +864,29 @@ describe('ExamParticipationComponent', () => {
 
             expect(triggerSpy).toHaveBeenCalledWith(true);
             expect(comp.exerciseIndex).toBe(0);
+        });
+
+        it('should initialize quiz exam when page is changed to quiz exam', () => {
+            const triggerSpy = jest.spyOn(comp, 'triggerSave');
+            const exerciseChange = { overViewChange: false, quizExamChange: true, exercise: undefined, forceSave: true };
+            const exam = new Exam();
+            exam.quizExamMaxPoints = 100;
+            comp.exam = exam;
+            comp.activeExamPage = new ExamPage();
+            comp.activeExamPage.isQuizExamPage = true;
+            const studentExam = new StudentExam();
+            studentExam.exam = exam;
+            comp.studentExam = studentExam;
+            comp.examStartConfirmed = true;
+            fixture.detectChanges();
+
+            comp.onPageChange(exerciseChange);
+
+            expect(triggerSpy).toHaveBeenCalledWith(true);
+            comp.activeExamPage.isOverviewPage = false;
+            comp.activeExamPage.isQuizExamPage = true;
+            comp.activeExamPage.exercise = undefined;
+            comp.exerciseIndex = -1;
         });
     });
 
@@ -885,9 +906,8 @@ describe('ExamParticipationComponent', () => {
 
             // Set initial component state
             comp.handInEarly = true;
-            const studentExam = new StudentExam();
-            studentExam.exercises = [exercise1, exercise2, exercise3];
-            comp.studentExam = studentExam;
+            comp.studentExam = new StudentExam();
+            comp.studentExam.exercises = [exercise1, exercise2, exercise3];
             comp.activeExamPage = {
                 isOverviewPage: false,
                 exercise: exercise2,
@@ -934,9 +954,8 @@ describe('ExamParticipationComponent', () => {
             comp.activeExamPage = new ExamPage();
             comp.activeExamPage.exercise = exercise1;
 
-            const studentExam = new StudentExam();
-            studentExam.exercises = [exercise0, exercise1];
-            comp.studentExam = studentExam;
+            comp.studentExam = new StudentExam();
+            comp.studentExam.exercises = [exercise0, exercise1];
 
             expect(comp.activePageIndex).toBe(1);
         });

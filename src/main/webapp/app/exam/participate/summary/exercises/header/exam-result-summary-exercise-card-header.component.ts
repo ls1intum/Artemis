@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
+import { Exercise } from 'app/entities/exercise.model';
 import { faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ResultSummaryExerciseInfo } from 'app/exam/participate/summary/exam-result-summary.component';
 import { SubmissionType } from 'app/entities/submission.model';
-import { ExamExercise } from 'app/entities/exam-exercise';
 
 @Component({
     selector: 'jhi-result-summary-exercise-card-header',
@@ -11,7 +11,7 @@ import { ExamExercise } from 'app/entities/exam-exercise';
 })
 export class ExamResultSummaryExerciseCardHeaderComponent {
     @Input() index: number;
-    @Input() exercise: ExamExercise;
+    @Input() exercise: Exercise;
     @Input() exerciseInfo?: ResultSummaryExerciseInfo;
     @Input() resultsPublished: boolean;
 

@@ -15,7 +15,6 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { captureException } from '@sentry/angular-ivy';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExamExercise } from 'app/entities/exam-exercise';
 import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
 
 export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
@@ -304,7 +303,7 @@ export class ExamParticipationService {
         return studentExam;
     }
 
-    public static getSubmissionForExercise(exercise: ExamExercise): Submission | undefined {
+    public static getSubmissionForExercise(exercise: Exercise): Submission | undefined {
         const studentParticipation = ExamParticipationService.getParticipationForExercise(exercise);
         if (studentParticipation && studentParticipation.submissions) {
             // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
@@ -317,13 +316,13 @@ export class ExamParticipationService {
      * @param exercise the exercise for which to get the participation
      * @return the first participation of the given exercise
      */
-    public static getParticipationForExercise(exercise: ExamExercise): StudentParticipation | undefined {
+    public static getParticipationForExercise(exercise: Exercise): StudentParticipation | undefined {
         if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0) {
             return exercise.studentParticipations[0];
         }
     }
 
-    getExerciseButtonTooltip(exercise: ExamExercise): ButtonTooltipType {
+    getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         // The submission might not yet exist for this exercise.
         // When the participant navigates to the exercise the submissions are created.

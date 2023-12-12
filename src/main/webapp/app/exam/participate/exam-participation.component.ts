@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -11,7 +11,7 @@ import { ModelingSubmissionService } from 'app/exercises/modeling/participate/mo
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
+import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -36,16 +36,8 @@ import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icon
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExamLiveEventType, ExamParticipationLiveEventsService, WorkingTimeUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
-import { ExamExercise } from 'app/entities/exam-exercise';
-import {
-    asFileUploadExercise,
-    asModelingExercise,
-    asProgrammingExercise,
-    asTextExercise,
-    getExamExercises,
-    updateQuizExamExerciseSubmission,
-} from 'app/exam/participate/exam.utils';
-import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
+import { QuizExam } from 'app/entities/quiz-exam.model';
+import { createQuizExam } from 'app/exam/participate/exam.utils';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -77,7 +69,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
     _studentExam: StudentExam;
-    examExercises: ExamExercise[];
+    quizExam?: QuizExam;
+
+    set studentExam(studentExam: StudentExam) {
+        this._studentExam = studentExam;
+        this.quizExam = createQuizExam(studentExam, this.translateService.instant('artemisApp.quizPool.title'));
+    }
+
+    get studentExam(): StudentExam {
+        return this._studentExam;
+    }
 
     individualStudentEndDate: dayjs.Dayjs;
     individualStudentEndDateWithGracePeriod: dayjs.Dayjs;
@@ -104,21 +105,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     // Icons
     faCheckCircle = faCheckCircle;
 
-    @Input()
-    set studentExam(studentExam: StudentExam) {
-        this._studentExam = studentExam;
-        this.examExercises = getExamExercises(studentExam, {
-            title: this.translateService.instant('artemisApp.quizPool.title'),
-            navigationTitle: this.translateService.instant('artemisApp.quizPool.navigationTitle'),
-        });
-    }
-
-    get studentExam(): StudentExam {
-        return this._studentExam;
-    }
-
     isProgrammingExercise() {
-        return !this.activeExamPage.isOverviewPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
+        return !this.activeExamPage.isOverviewPage && !this.activeExamPage.isQuizExamPage && this.activeExamPage.exercise!.type === ExerciseType.PROGRAMMING;
     }
 
     isProgrammingExerciseWithCodeEditor(): boolean {
@@ -146,11 +134,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
     // Icons
     faGraduationCap = faGraduationCap;
-
-    asFileUploadExercise = asFileUploadExercise;
-    asModelingExercise = asModelingExercise;
-    asProgrammingExercise = asProgrammingExercise;
-    asTextExercise = asTextExercise;
 
     constructor(
         private websocketService: JhiWebsocketService,
@@ -251,12 +234,17 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     get activePageIndex(): number {
         if (!this.activeExamPage || this.activeExamPage.isOverviewPage) {
             return -1;
+        } else if (this.activeExamPage.isQuizExamPage) {
+            return -2;
         }
-        return this.examExercises.findIndex((exercise: ExamExercise) => exercise.id === this.activeExamPage.exercise!.id);
+        return this.studentExam.exercises!.findIndex((exercise: Exercise) => exercise.id === this.activeExamPage.exercise!.id);
     }
 
     get activePageComponent(): ExamPageComponent | undefined {
         // we have to find the current component based on the activeExercise because the queryList might not be full yet (e.g. only 2 of 5 components initialized)
+        if (this.activeExamPage.isQuizExamPage) {
+            return this.currentPageComponents.get(0);
+        }
         return this.currentPageComponents.find(
             (submissionComponent) => !this.activeExamPage.isOverviewPage && (submissionComponent as ExamSubmissionComponent).getExerciseId() === this.activeExamPage.exercise!.id,
         );
@@ -272,7 +260,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.studentExam = studentExam;
 
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
-            const exercises: ExamExercise[] = this.examExercises!;
+            const exercises: Exercise[] = this.studentExam.exercises!;
             const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
             this.examParticipationService.setExamExerciseIds(exerciseIds);
             // set endDate with workingTime
@@ -283,10 +271,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
             }
             // initializes array which manages submission component and exam overview initialization
-            this.pageComponentVisited = new Array(this.examExercises!.length).fill(false);
+            this.pageComponentVisited = new Array(studentExam.exercises!.length).fill(false);
             // TODO: move to exam-participation.service after studentExam was retrieved
             // initialize all submissions as synced
-            this.examExercises.forEach((exercise: Exercise) => {
+            this.studentExam.exercises!.forEach((exercise: Exercise) => {
                 if (exercise.studentParticipations) {
                     exercise.studentParticipations!.forEach((participation) => {
                         if (participation.submissions && participation.submissions.length > 0) {
@@ -327,7 +315,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * @param exercise to check
      * @returns true if valid, false otherwise
      */
-    private static isExerciseParticipationValid(exercise: ExamExercise): boolean {
+    private static isExerciseParticipationValid(exercise: Exercise): boolean {
         // check if there is at least one participation with state === Initialized or state === FINISHED
         return (
             exercise.studentParticipations !== undefined &&
@@ -465,7 +453,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 captureException(error);
             }
         } else if (this.studentExam?.exercises && this.activeExamPage) {
-            const index = this.examExercises.findIndex((exercise: ExamExercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
+            const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
             this.exerciseIndex = index ? index : 0;
 
             // Reset the visited pages array so ngOnInit will be called for only the active page
@@ -604,7 +592,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * update the current exercise from the navigation
      * @param exerciseChange
      */
-    onPageChange(exerciseChange: { overViewChange: boolean; exercise?: ExamExercise; forceSave: boolean }): void {
+    onPageChange(exerciseChange: { overViewChange: boolean; quizExamChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
@@ -616,7 +604,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             captureException(error);
         }
         if (!exerciseChange.overViewChange) {
-            this.initializeExercise(exerciseChange.exercise!);
+            if (!exerciseChange.quizExamChange) {
+                this.initializeExercise(exerciseChange.exercise!);
+            } else {
+                this.initializeQuizExam();
+            }
         } else {
             this.initializeOverviewPage();
         }
@@ -627,11 +619,12 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * if not -> initialize participation and in case of programming exercises subscribe to latestSubmissions
      * @param exercise to initialize
      */
-    private initializeExercise(exercise: ExamExercise) {
+    private initializeExercise(exercise: Exercise) {
         this.activeExamPage.isOverviewPage = false;
+        this.activeExamPage.isQuizExamPage = false;
         this.activeExamPage.exercise = exercise;
         // set current exercise Index
-        this.exerciseIndex = this.examExercises!.findIndex((exercise1: ExamExercise) => exercise1.id === exercise.id);
+        this.exerciseIndex = this.studentExam.exercises!.findIndex((exercise1) => exercise1.id === exercise.id);
 
         // if we do not have a valid participation for the exercise -> initialize it
         if (!ExamParticipationComponent.isExerciseParticipationValid(exercise)) {
@@ -645,25 +638,38 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         participation.submissions = [ProgrammingSubmission.createInitialCleanSubmissionForExam()];
                         this.programmingSubmissionSubscriptions.push(subscription);
                     }
-                    this.activateActiveComponent();
+                    this.setVisitedAndActivateActiveComponent();
                 }
             });
         } else {
-            this.activateActiveComponent();
+            this.setVisitedAndActivateActiveComponent();
         }
     }
 
     private initializeOverviewPage() {
         this.activeExamPage.isOverviewPage = true;
+        this.activeExamPage.isQuizExamPage = false;
         this.activeExamPage.exercise = undefined;
         this.exerciseIndex = -1;
+    }
+
+    private initializeQuizExam() {
+        this.activeExamPage.isOverviewPage = false;
+        this.activeExamPage.isQuizExamPage = true;
+        this.activeExamPage.exercise = undefined;
+        this.exerciseIndex = -1;
+        this.activateActiveComponent();
     }
 
     /**
      * this will make sure that the component is displayed in the user interface
      */
-    private activateActiveComponent() {
+    private setVisitedAndActivateActiveComponent() {
         this.pageComponentVisited[this.activePageIndex] = true;
+        this.activateActiveComponent();
+    }
+
+    private activateActiveComponent() {
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onActivate();
@@ -688,7 +694,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * In this case, no participation and not submission exist and first need to be created on the server before the student can work on this exercise locally
      * @param exercise
      */
-    createParticipationForExercise(exercise: ExamExercise): Observable<StudentParticipation | undefined> {
+    createParticipationForExercise(exercise: Exercise): Observable<StudentParticipation | undefined> {
         this.generateParticipationStatus.next('generating');
         return this.courseExerciseService.startExercise(exercise.id!).pipe(
             map((createdParticipation: StudentParticipation) => {
@@ -740,8 +746,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
         // go through ALL student exam exercises and check if there are unsynced submissions
         // we do this, because due to connectivity problems, other submissions than the currently active one might have not been saved to the server yet
-        const submissionsToSync: { exercise: ExamExercise; submission: Submission }[] = [];
-        this.examExercises!.forEach((exercise: ExamExercise) => {
+        const submissionsToSync: { exercise: Exercise; submission: Submission }[] = [];
+        this.studentExam.exercises!.forEach((exercise: Exercise) => {
             if (exercise.studentParticipations) {
                 exercise.studentParticipations!.forEach((participation) => {
                     if (participation.submissions) {
@@ -758,10 +764,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         // save the studentExam in localStorage, so that we would be able to retrieve it later on, in case the student needs to reload the page while being offline
         this.examParticipationService.saveStudentExamToLocalStorage(this.courseId, this.examId, this.studentExam);
 
+        if (this.quizExam?.submission?.isSynced === false) {
+            this.examParticipationService.updateQuizExamSubmission(this.quizExam?.submission).subscribe({
+                next: (updatedSubmission) => {
+                    this.onSaveSubmissionSuccess(updatedSubmission);
+                },
+                error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+            });
+        }
+
         // if no connection available -> don't try to sync, except it is forced
         // based on the submissions that need to be saved and the exercise, we perform different actions
         if (forceSave || this.connected) {
-            submissionsToSync.forEach((submissionToSync: { exercise: ExamExercise; submission: Submission }) => {
+            submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
                         this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id!).subscribe({
@@ -779,21 +794,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // nothing to do here, because programming exercises are submitted differently
                         break;
                     case ExerciseType.QUIZ:
-                        if (submissionToSync.submission.submissionExerciseType === SubmissionExerciseType.QUIZ) {
-                            this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission as QuizSubmission).subscribe({
-                                next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
-                                error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
-                            });
-                        } else if (submissionToSync.submission.submissionExerciseType === SubmissionExerciseType.QUIZ_EXAM) {
-                            this.examParticipationService.updateQuizExamSubmission(submissionToSync.submission as QuizExamSubmission).subscribe({
-                                next: (updatedSubmission) => {
-                                    this.onSaveSubmissionSuccess(updatedSubmission);
-                                    this.studentExam.quizExamSubmission = updatedSubmission;
-                                    updateQuizExamExerciseSubmission(this.examExercises, updatedSubmission);
-                                },
-                                error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
-                            });
-                        }
+                        this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission as QuizSubmission).subscribe({
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error),
+                        });
                         break;
                     case ExerciseType.FILE_UPLOAD:
                         // nothing to do here, because file upload exercises are only submitted manually, not when you switch between exercises
@@ -842,7 +846,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 distinctUntilChanged(),
                 tap((submissionStateObj) => {
                     const exerciseForSubmission = this.studentExam.exercises?.find(
-                        (programmingExercise: Exercise) =>
+                        (programmingExercise) =>
                             programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === submissionStateObj.participationId),
                     );
                     if (exerciseForSubmission?.studentParticipations && submissionStateObj.submission?.participation) {
@@ -856,7 +860,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             )
             .subscribe((programmingSubmissionObj) => {
                 const exerciseForSubmission = this.studentExam.exercises?.find(
-                    (programmingExercise: Exercise) =>
+                    (programmingExercise) =>
                         programmingExercise.studentParticipations?.some((exerciseParticipation) => exerciseParticipation.id === programmingSubmissionObj.participationId),
                 );
                 if (
