@@ -42,7 +42,7 @@ export class AeolusService {
         windfile.metadata.id = 'testing';
         windfile.metadata.name = 'testing';
         windfile.metadata.description = 'testing';
-        return this.http.post<string>(`http://localhost:8090/generate/jenkins`, JSON.stringify(windfile), {
+        return this.http.post<string>(`http://localhost:8090/generate/cli`, JSON.stringify(windfile), {
             responseType: 'text' as 'json',
             headers,
         });
