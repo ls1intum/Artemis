@@ -76,12 +76,13 @@ class OnlineCourseConfigurationServiceTest {
     @Test
     void addOnlineCourseConfigurationToLtiConfigurationsSuccess() {
         LtiPlatformConfiguration ltiPlatformConfiguration = getMockLtiPlatformConfiguration();
-        when(ltiPlatformConfigurationRepository.findByIdElseThrow(ltiPlatformConfiguration.getId())).thenReturn(ltiPlatformConfiguration);
+        when(ltiPlatformConfigurationRepository.findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(ltiPlatformConfiguration.getId()))
+                .thenReturn(ltiPlatformConfiguration);
         OnlineCourseConfiguration onlineCourseConfiguration = getMockOnlineCourseConfiguration(ltiPlatformConfiguration);
 
         onlineCourseConfigurationService.addOnlineCourseConfigurationToLtiConfigurations(onlineCourseConfiguration);
 
-        verify(ltiPlatformConfigurationRepository).findByIdElseThrow(ltiPlatformConfiguration.getId());
+        verify(ltiPlatformConfigurationRepository).findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(ltiPlatformConfiguration.getId());
         assertThat(ltiPlatformConfiguration.getOnlineCourseConfigurations()).contains(onlineCourseConfiguration);
         assertThat(onlineCourseConfiguration.getLtiPlatformConfiguration()).isEqualTo(ltiPlatformConfiguration);
     }
@@ -89,7 +90,7 @@ class OnlineCourseConfigurationServiceTest {
     @Test
     void addOnlineCourseConfigurationToLtiConfigurationsThrowsEntityNotFound() {
         LtiPlatformConfiguration ltiPlatformConfiguration = getMockLtiPlatformConfiguration();
-        when(ltiPlatformConfigurationRepository.findByIdElseThrow(ltiPlatformConfiguration.getId()))
+        when(ltiPlatformConfigurationRepository.findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(ltiPlatformConfiguration.getId()))
                 .thenThrow(new EntityNotFoundException("LtiPlatformConfiguration", ltiPlatformConfiguration.getId()));
         OnlineCourseConfiguration onlineCourseConfiguration = getMockOnlineCourseConfiguration(ltiPlatformConfiguration);
 

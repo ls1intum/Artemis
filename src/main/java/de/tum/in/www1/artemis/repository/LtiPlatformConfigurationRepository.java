@@ -47,7 +47,7 @@ public interface LtiPlatformConfigurationRepository extends JpaRepository<LtiPla
      * @throws EntityNotFoundException if no entity with the given ID is found.
      */
     @NotNull
-    default LtiPlatformConfiguration findLtiPlatformConfigurationWithEagerLoadedCoursesById(long id) throws EntityNotFoundException {
+    default LtiPlatformConfiguration findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(long id) throws EntityNotFoundException {
         return Optional.ofNullable(findWithEagerOnlineCourseConfigurationsById(id)).orElseThrow(() -> new EntityNotFoundException("LtiPlatformConfiguration", id));
     }
 
