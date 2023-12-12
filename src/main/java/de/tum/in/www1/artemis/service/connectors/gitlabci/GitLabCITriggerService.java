@@ -31,6 +31,11 @@ public class GitLabCITriggerService implements ContinuousIntegrationTriggerServi
         triggerBuild(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise().getBranch());
     }
 
+    @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException {
+        triggerBuild(participation.getVcsRepositoryUrl(), commitHash);
+    }
+
     private void triggerBuild(VcsRepositoryUrl vcsRepositoryUrl, String branch) {
         final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(vcsRepositoryUrl);
         try {

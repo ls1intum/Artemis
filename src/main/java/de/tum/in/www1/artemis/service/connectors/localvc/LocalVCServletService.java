@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
+import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCIProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService;
 import de.tum.in.www1.artemis.service.programming.*;
@@ -73,7 +74,7 @@ public class LocalVCServletService {
 
     private final AuxiliaryRepositoryService auxiliaryRepositoryService;
 
-    private final LocalCITriggerService localCITriggerService;
+    private final ContinuousIntegrationTriggerService ciTriggerService;
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
@@ -101,7 +102,7 @@ public class LocalVCServletService {
     public LocalVCServletService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
-            LocalCITriggerService localCITriggerService, ProgrammingSubmissionService programmingSubmissionService, ProgrammingMessagingService programmingMessagingService,
+            LocalCITriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService, ProgrammingMessagingService programmingMessagingService,
             ProgrammingTriggerService programmingTriggerService, LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
@@ -110,7 +111,7 @@ public class LocalVCServletService {
         this.authorizationCheckService = authorizationCheckService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
-        this.localCITriggerService = localCITriggerService;
+        this.ciTriggerService = ciTriggerService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
@@ -417,7 +418,7 @@ public class LocalVCServletService {
             throw new LocalCIException("Could not set test cases changed flag", e);
         }
 
-        localCITriggerService.triggerBuild(solutionParticipation, commitHash);
+        ciTriggerService.triggerBuild(solutionParticipation, commitHash);
 
         try {
             programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);

@@ -15,4 +15,6 @@ public interface ContinuousIntegrationTriggerService {
      * @throws ContinuousIntegrationException if the request to the CI failed.
      */
     void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException;
+
+    void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException;
 }
