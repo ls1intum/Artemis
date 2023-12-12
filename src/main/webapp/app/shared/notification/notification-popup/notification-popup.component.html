@@ -23,7 +23,16 @@
                     {{ getNotificationTitleTranslation(notification) }}
                 </h5>
             </ng-template>
-            {{ getNotificationTextTranslation(notification) }}
+            <div class="text-break">
+                {{ getNotificationTextTranslation(notification) }}
+            </div>
+            <div class="text-end">
+                {{ 'artemisApp.notification.by' | artemisTranslate }}
+                <span *ngIf="notification.author; else noAuthor">{{ notification.author.name }}</span>
+                <ng-template #noAuthor>
+                    <span jhiTranslate="global.title"></span>
+                </ng-template>
+            </div>
         </div>
     </div>
 </div>

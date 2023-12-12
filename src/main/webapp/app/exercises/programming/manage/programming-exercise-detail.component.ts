@@ -39,7 +39,8 @@ import {
     faPencilAlt,
     faRobot,
     faTable,
-    faTimes,
+    faTrash,
+    faUndo,
     faUserCheck,
     faUsers,
     faWrench,
@@ -104,7 +105,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
-    faTimes = faTimes;
+    faUndo = faUndo;
+    faTrash = faTrash;
     faBook = faBook;
     faWrench = faWrench;
     faCheckDouble = faCheckDouble;
