@@ -46,6 +46,17 @@ public class HadesCITriggerService implements ContinuousIntegrationTriggerServic
         postJob(job);
     }
 
+    @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException {
+        log.warn("Triggering builds with a commit hash is not supported for Hades. Triggering build without commit hash.");
+        triggerBuild(participation);
+    }
+
+    @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, boolean isTestPush) throws ContinuousIntegrationException {
+        ContinuousIntegrationTriggerService.super.triggerBuild(participation, commitHash, isTestPush);
+    }
+
     private void postJob(HadesBuildJobDTO job) {
         try {
             var response = restTemplate.postForEntity(hadesServerUrl + "/build", job, JsonNode.class);
