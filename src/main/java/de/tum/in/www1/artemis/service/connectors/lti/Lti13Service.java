@@ -340,8 +340,9 @@ public class Lti13Service {
     /**
      * Initiates the deep linking process for a course based on the provided LTI ID token and client registration ID.
      *
-     * @param ltiIdToken The ID token containing the deep linking information.
-     * @throws BadRequestAlertException if the course is not found or LTI is not configured for the course.
+     * @param ltiIdToken           The ID token containing the deep linking information.
+     * @param clientRegistrationId The client registration ID associated with the LTI platform.
+     * @throws BadRequestAlertException if LTI is not configured.
      */
     public void startDeepLinking(OidcIdToken ltiIdToken, String clientRegistrationId) {
 

@@ -122,7 +122,9 @@ public class LtiPlatformConfiguration extends DomainObject {
     }
 
     /**
-     * Gets initialized online course configurations, or null if not initialized.
+     * Gets initialized online course configurations.
+     *
+     * @return Set of {@link OnlineCourseConfiguration} if initialized, or null if not.
      */
     public Set<OnlineCourseConfiguration> getOnlineCourseConfigurations() {
         return Hibernate.isInitialized(this.onlineCourseConfigurations) ? this.onlineCourseConfigurations : null;
