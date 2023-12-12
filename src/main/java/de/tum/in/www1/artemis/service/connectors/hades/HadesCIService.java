@@ -79,7 +79,7 @@ public class HadesCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
-        return false;
+        return true;
     }
 
     @Override
