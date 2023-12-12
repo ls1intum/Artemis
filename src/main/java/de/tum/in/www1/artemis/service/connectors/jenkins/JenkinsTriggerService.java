@@ -1,15 +1,20 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanService;
 
 @Profile("jenkins")
 @Service
 public class JenkinsTriggerService implements ContinuousIntegrationTriggerService {
+
+    private final Logger log = LoggerFactory.getLogger(JenkinsTriggerService.class);
 
     private final JenkinsBuildPlanService jenkinsBuildPlanService;
 
@@ -22,5 +27,11 @@ public class JenkinsTriggerService implements ContinuousIntegrationTriggerServic
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
         jenkinsBuildPlanService.triggerBuild(projectKey, planKey);
+    }
+
+    @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException {
+        log.warn("Triggering builds with a commit hash is not supported for Jenkins. Triggering build without commit hash.");
+        triggerBuild(participation);
     }
 }

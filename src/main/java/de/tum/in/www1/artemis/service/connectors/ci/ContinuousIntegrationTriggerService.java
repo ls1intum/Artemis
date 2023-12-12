@@ -27,4 +27,6 @@ public interface ContinuousIntegrationTriggerService {
     default void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, boolean isTestPush) throws ContinuousIntegrationException {
         triggerBuild(participation);
     }
+
+    void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException;
 }

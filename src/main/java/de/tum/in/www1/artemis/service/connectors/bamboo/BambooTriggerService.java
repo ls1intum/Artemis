@@ -14,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 
 @Service
@@ -46,5 +47,11 @@ public class BambooTriggerService implements ContinuousIntegrationTriggerService
             log.error("HttpError while triggering build plan {} with error: {}", buildPlan, e.getMessage());
             throw new BambooException("Communication failed when trying to trigger the Bamboo build plan " + buildPlan + " with the error: " + e.getMessage());
         }
+    }
+
+    @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException {
+        log.warn("Triggering builds with a commit hash is not supported for Bamboo. Triggering build without commit hash.");
+        triggerBuild(participation);
     }
 }
