@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 
@@ -38,6 +39,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
         triggerBuild(participation, null, false);
+    }
+
+    @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException {
+        triggerBuild(participation, commitHash, false);
     }
 
     /**
