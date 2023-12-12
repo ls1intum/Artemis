@@ -90,25 +90,25 @@ public class ConversationNotificationService {
         singleUserNotificationRepository.saveAll(mentionedUserNotifications);
     }
 
-    // public ConversationNotification notifyAboutNewMessage(Post createdMessage, ConversationNotification notification, Set<User> recipients, Course course,
-    // Set<User> mentionedUsers) {
-    //
-    // Set<SingleUserNotification> mentionedUserNotifications = mentionedUsers.stream().map(mentionedUser -> SingleUserNotificationFactory
-    // .createNotification(notification.getMessage(), NotificationType.CONVERSATION_USER_MENTIONED, notification.getText(), placeHolders, mentionedUser))
-    // .collect(Collectors.toSet());
-    // mentionedUserNotifications.forEach(singleUserNotification -> websocketMessagingService.sendMessage(singleUserNotification.getTopic(), singleUserNotification));
-    //
-    // sendNotificationViaWebSocket(notification, recipients.stream().filter(recipient -> !mentionedUsers.contains(recipient)).collect(Collectors.toSet()));
-    //
-    // Post notificationSubject = new Post();
-    // notificationSubject.setId(createdMessage.getId());
-    // notificationSubject.setConversation(createdMessage.getConversation());
-    // notificationSubject.setContent(createdMessage.getContent());
-    // notificationSubject.setTitle(createdMessage.getTitle());
-    // notificationSubject.setCourse(course);
-    // notificationSubject.setAuthor(createdMessage.getAuthor());
-    // generalInstantNotificationService.sendNotification(notification, recipients, notificationSubject);
-    // }
+    public void notifyAboutNewMessage(Post createdMessage, ConversationNotification notification, Set<User> recipients, Course course, Set<User> mentionedUsers) {
+
+        // Set<SingleUserNotification> mentionedUserNotifications = mentionedUsers.stream()
+        // .map(mentionedUser -> SingleUserNotificationFactory.createNotification(notification.getMessage(), NotificationType.CONVERSATION_USER_MENTIONED,
+        // notification.getText(), notification.getTransientPlaceholderValuesAsArray(), mentionedUser))
+        // .collect(Collectors.toSet());
+        // mentionedUserNotifications.forEach(singleUserNotification -> websocketMessagingService.sendMessage(singleUserNotification.getTopic(), singleUserNotification));
+        //
+        // sendNotificationViaWebSocket(notification, recipients.stream().filter(recipient -> !mentionedUsers.contains(recipient)).collect(Collectors.toSet()));
+
+        Post notificationSubject = new Post();
+        notificationSubject.setId(createdMessage.getId());
+        notificationSubject.setConversation(createdMessage.getConversation());
+        notificationSubject.setContent(createdMessage.getContent());
+        notificationSubject.setTitle(createdMessage.getTitle());
+        notificationSubject.setCourse(course);
+        notificationSubject.setAuthor(createdMessage.getAuthor());
+        generalInstantNotificationService.sendNotification(notification, recipients, notificationSubject);
+    }
 
     private void sendNotificationViaWebSocket(ConversationNotification notification, Set<User> recipients) {
         recipients.forEach(user -> websocketMessagingService.sendMessage(notification.getTopic(user.getId()), notification));

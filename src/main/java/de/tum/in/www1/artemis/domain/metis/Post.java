@@ -85,6 +85,13 @@ public class Post extends Posting {
     @Column(name = "vote_count")
     private int voteCount;
 
+    public Post() {
+    }
+
+    public Post(long id) {
+        this.setId(id);
+    }
+
     public String getTitle() {
         return title;
     }

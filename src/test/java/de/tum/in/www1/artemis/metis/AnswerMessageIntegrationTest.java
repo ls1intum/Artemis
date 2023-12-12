@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.in.www1.artemis.course.CourseUtilService;
@@ -33,7 +34,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -71,31 +71,39 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     private List<Post> existingPostsWithAnswersCourseWide;
 
+    private List<Post> existingCourseWideMessages;
+
     private Long courseId;
+
+    private User student1;
 
     @BeforeEach
     void initTestCase() {
 
         userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
+        student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
-        List<Post> existingPostsAndConversationPostsWithAnswers = conversationUtilService.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
-                .filter(coursePost -> (coursePost.getAnswers() != null)).toList();
+        List<Post> existingPostsAndConversationPosts = conversationUtilService.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX);
 
-        List<Post> existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() == null).toList();
+        List<Post> existingPostsAndConversationPostsWithAnswers = existingPostsAndConversationPosts.stream()
+                .filter(coursePost -> coursePost.getAnswers() != null && !coursePost.getAnswers().isEmpty()).toList();
 
         existingConversationPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() != null).toList();
 
-        // get all existing posts with answers in exercise context
-        List<Post> existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream()
-                .filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getExercise() != null).toList();
-
-        // get all existing posts with answers in lecture context
-        existingPostsWithAnswersCourseWide = existingPostsWithAnswers.stream().filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getCourseWideContext() != null)
+        existingCourseWideMessages = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide())
                 .toList();
 
-        Course course = existingPostsWithAnswersInExercise.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        // get all existing posts with answers in exercise context
+        List<Post> existingPostsWithAnswersInExercise = existingConversationPostsWithAnswers.stream()
+                .filter(coursePost -> coursePost.getConversation() instanceof Channel channel && channel.getExercise() != null).toList();
+
+        // get all existing posts with answers in lecture context
+        existingPostsWithAnswersCourseWide = existingConversationPostsWithAnswers.stream()
+                .filter(coursePost -> coursePost.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
+
+        Course course = ((Channel) existingPostsWithAnswersInExercise.get(0).getConversation()).getExercise().getCourseViaExerciseGroupOrCourseMember();
         courseUtilService.enableMessagingForCourse(course);
         courseId = course.getId();
     }
@@ -111,7 +119,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         persistedCourse = courseRepository.saveAndFlush(persistedCourse);
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(courseInformationSharingConfiguration);
 
-        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(2));
 
         var countBefore = answerPostRepository.count();
 
@@ -123,13 +131,14 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
 
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(existingConversationPostsWithAnswers.get(2))));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateAnswerInGeneralCourseWideChannel() throws Exception {
-        testCreateChannelAnswer((Channel) existingConversationPostsWithAnswers.get(3).getConversation(), NotificationType.NEW_REPLY_FOR_COURSE_POST);
+        testCreateChannelAnswer((Channel) existingConversationPostsWithAnswers.get(3).getConversation(), NotificationType.NEW_REPLY_FOR_COURSE_POST, 1);
     }
 
     @Test
@@ -138,7 +147,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         Course course = courseRepository.findByIdElseThrow(courseId);
         Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
         Channel channel = lectureUtilService.addLectureChannel(lecture);
-        testCreateChannelAnswer(channel, NotificationType.NEW_REPLY_FOR_LECTURE_POST);
+        testCreateChannelAnswer(channel, NotificationType.NEW_REPLY_FOR_LECTURE_POST, 1);
     }
 
     @Test
@@ -147,7 +156,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         Course course = courseRepository.findWithEagerExercisesById(courseId);
         Exercise exercise = course.getExercises().stream().findFirst().orElseThrow();
         Channel channel = exerciseUtilService.addChannelToExercise(exercise);
-        testCreateChannelAnswer(channel, NotificationType.NEW_REPLY_FOR_EXERCISE_POST);
+        testCreateChannelAnswer(channel, NotificationType.NEW_REPLY_FOR_EXERCISE_POST, 1);
     }
 
     @Test
@@ -156,7 +165,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         Course course = courseRepository.findByIdElseThrow(courseId);
         Exam exam = examUtilService.addExam(course);
         Channel channel = examUtilService.addExamChannel(exam, "exam channel");
-        testCreateChannelAnswer(channel, NotificationType.NEW_REPLY_FOR_EXAM_POST);
+        testCreateChannelAnswer(channel, NotificationType.NEW_REPLY_FOR_EXAM_POST, 1);
     }
 
     @Test
@@ -166,11 +175,11 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         Channel channel = conversationUtilService.createPublicChannel(course, "test");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
-        testCreateChannelAnswer(channel, NotificationType.CONVERSATION_NEW_REPLY_MESSAGE);
+        testCreateChannelAnswer(channel, NotificationType.CONVERSATION_NEW_REPLY_MESSAGE, 2);
     }
 
-    private void testCreateChannelAnswer(Channel channel, NotificationType notificationType) throws Exception {
-        Post message = existingConversationPostsWithAnswers.get(3);
+    private void testCreateChannelAnswer(Channel channel, NotificationType notificationType, int wantedNumberOfWSMessages) throws Exception {
+        Post message = existingConversationPostsWithAnswers.get(0);
         message.setConversation(channel);
         Post savedMessage = conversationMessageRepository.save(message);
 
@@ -186,12 +195,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
 
         // conversation participants should be notified
-        if (channel.getIsCourseWide()) {
-            verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(anyString(), eq(new PostDTO(savedMessage, MetisCrudAction.UPDATE)));
-        }
-        else {
-            verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), eq(new PostDTO(savedMessage, MetisCrudAction.UPDATE)));
-        }
+        verify(websocketMessagingService, timeout(2000).times(wantedNumberOfWSMessages)).sendMessage(anyString(),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(savedMessage)));
+
         verify(singleUserNotificationService, timeout(2000).times(1)).notifyUserAboutNewMessageReply(eq(createdAnswerPost), any(), any(), eq(notificationType));
     }
 
@@ -199,7 +205,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @MethodSource("userMentionProvider")
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testCreateConversationAnswerPostWithUserMention(String userMention, boolean isUserMentionValid) throws Exception {
-        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(2));
         answerPostToSave.setContent(userMention);
 
         var countBefore = answerPostRepository.count();
@@ -218,7 +224,8 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
 
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(existingConversationPostsWithAnswers.get(2))));
     }
 
     @Test
@@ -286,7 +293,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     void testCreateConversationAnswerPost_forbidden() throws Exception {
         // only participants of a conversation can create posts for it
         // attempt to save new answerPost under someone elses conversation
-        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(2));
 
         var countBefore = answerPostRepository.count();
 
@@ -305,7 +312,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testEditConversationAnswerPost() throws Exception {
         // conversation answerPost of student1 must be editable by them
-        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(2).getAnswers().iterator().next();
         conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts");
 
         AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToUpdate.getId(),
@@ -314,7 +321,8 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(conversationAnswerPostToUpdate).isEqualTo(updatedAnswerPost);
 
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(updatedAnswerPost.getPost())));
     }
 
     @ParameterizedTest
@@ -338,7 +346,8 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(conversationAnswerPostToUpdate).isEqualTo(updatedAnswerPost);
 
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000)).sendMessage(anyString(),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(existingConversationPostsWithAnswers.get(0))));
     }
 
     @Test
@@ -358,19 +367,214 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testMarkMessageAsResolved_asTutor() throws Exception {
-        // conversation post of student1 must be resolvable by tutors
-        AnswerPost resolvingAnswerPost = existingConversationPostsWithAnswers.get(3).getAnswers().iterator().next();
-        resolvingAnswerPost.setResolvesPost(true);
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_WithUnresolvedPosts() throws Exception {
+        // filterToUnresolved set true; will fetch all unresolved posts of current course
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("courseWideChannelIds", "");
+        params.add("filterToUnresolved", "true");
+        params.add("size", "50");
 
-        AnswerPost updatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + resolvingAnswerPost.getId(), resolvingAnswerPost,
-                AnswerPost.class, HttpStatus.OK);
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+        // get posts of current user and compare
+        List<Post> unresolvedPosts = existingCourseWideMessages.stream()
+                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))).toList();
 
-        assertThat(resolvingAnswerPost).isEqualTo(updatedAnswerPost);
+        assertThat(returnedPosts).isEqualTo(unresolvedPosts);
+    }
 
-        // confirm that the post is marked as resolved when it has a resolving answer
-        assertThat(conversationMessageRepository.findMessagePostByIdElseThrow(updatedAnswerPost.getPost().getId()).isResolved()).isTrue();
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_WithOwnAndUnresolvedPosts() throws Exception {
+        // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToUnresolved", "true");
+        params.add("filterToOwn", "true");
+        params.add("courseWideChannelIds", "");
+        params.add("size", "50");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+        // get unresolved posts of current user and compare
+        List<Post> resolvedPosts = existingCourseWideMessages.stream().filter(post -> student1.getId().equals(post.getAuthor().getId())
+                && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost())))).toList();
+
+        assertThat(returnedPosts).isEqualTo(resolvedPosts);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_WithUnresolvedPostsWithCourseWideContent() throws Exception {
+        // filterToUnresolved set true; will fetch all unresolved posts of current course
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToUnresolved", "true");
+        params.add("courseWideChannelIds", "");
+        params.add("size", "50");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> unresolvedPosts = existingCourseWideMessages.stream()
+                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))).toList();
+
+        assertThat(returnedPosts).isEqualTo(unresolvedPosts);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseWideMessages_WithOwnAndUnresolvedPostsWithCourseWideContent() throws Exception {
+        // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToUnresolved", "true");
+        params.add("filterToOwn", "true");
+        params.add("courseWideChannelIds", "");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+        // get unresolved posts of current user and compare
+        List<Post> resolvedPosts = existingCourseWideMessages.stream().filter(
+                post -> student1.getId().equals(post.getAuthor().getId()) && post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost())))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(resolvedPosts);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAnsweredOrReactedPostsByUserForCourse() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToAnsweredOrReacted", "true");
+        params.add("courseWideChannelIds", "");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream()
+                .filter(post -> post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(answerPost.getAuthor().getId()))
+                        || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(post.getAuthor().getId())))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOwnAndAnsweredOrReactedPostsByUserForCourse() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToAnsweredOrReacted", "true");
+        params.add("filterToOwn", "true");
+        params.add("courseWideChannelIds", "");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream().filter(
+                post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                        || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(post.getAuthor().getId()))))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetUnresolvedAnsweredOrReactedPostsByUserForCourse() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToAnsweredOrReacted", "true");
+        params.add("filterToUnresolved", "true");
+        params.add("courseWideChannelIds", "");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream()
+                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(answerPost.getAuthor().getId()))
+                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourse() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToOwn", "true");
+        params.add("filterToUnresolved", "true");
+        params.add("filterToAnsweredOrReacted", "true");
+        params.add("courseWideChannelIds", "");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream().filter(
+                post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId())))))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetOwnAndAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToAnsweredOrReacted", "true");
+        params.add("filterToOwn", "true");
+        params.add("courseWideChannelIds", "");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream().filter(
+                post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                        || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetUnresolvedAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToAnsweredOrReacted", "true");
+        params.add("filterToUnresolved", "true");
+        params.add("courseWideChannelIds", "");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream()
+                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("filterToOwn", "true");
+        params.add("filterToUnresolved", "true");
+        params.add("filterToAnsweredOrReacted", "true");
+        params.add("courseWideChannelIds", "");
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
+        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream().filter(
+                post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
+                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId())))))
+                .toList();
+
+        assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
     }
 
     @Test
@@ -452,13 +656,14 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1")
     void testDeleteConversationPost() throws Exception {
         // conversation post of student1 must be deletable by them
-        AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
+        AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.get(2).getAnswers().iterator().next();
         request.delete("/api/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToDelete.getId(), HttpStatus.OK);
 
         assertThat(answerPostRepository.findById(conversationAnswerPostToDelete.getId())).isEmpty();
 
         // both conversation participants should be notified
-        verify(websocketMessagingService, timeout(2000).times(2)).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(existingConversationPostsWithAnswers.get(2))));
     }
 
     @Test

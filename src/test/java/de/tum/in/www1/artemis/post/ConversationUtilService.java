@@ -226,21 +226,23 @@ public class ConversationUtilService {
         List<Post> posts = createPostsWithinCourse(userPrefix);
 
         // add answer for one post in each context (lecture, exercise, course-wide, conversation)
-        Post lecturePost = posts.stream().filter(coursePost -> coursePost.getLecture() != null).findFirst().orElseThrow();
+        Post lecturePost = posts.stream().filter(coursePost -> coursePost.getConversation() instanceof Channel channel && channel.getLecture() != null).findFirst().orElseThrow();
         lecturePost.setAnswers(createBasicAnswers(lecturePost, userPrefix));
         lecturePost.getAnswers().addAll(createBasicAnswers(lecturePost, userPrefix));
         postRepository.save(lecturePost);
 
-        Post exercisePost = posts.stream().filter(coursePost -> coursePost.getExercise() != null).findFirst().orElseThrow();
+        Post exercisePost = posts.stream().filter(coursePost -> coursePost.getConversation() instanceof Channel channel && channel.getExercise() != null).findFirst().orElseThrow();
         exercisePost.setAnswers(createBasicAnswers(exercisePost, userPrefix));
         postRepository.save(exercisePost);
 
         // resolved post
-        Post courseWidePost = posts.stream().filter(coursePost -> coursePost.getCourseWideContext() != null).findFirst().orElseThrow();
+        Post courseWidePost = posts.stream().filter(
+                coursePost -> coursePost.getConversation() instanceof Channel channel && channel.getIsCourseWide() && channel.getExercise() == null && channel.getLecture() == null)
+                .findFirst().orElseThrow();
         courseWidePost.setAnswers(createBasicAnswersThatResolves(courseWidePost, userPrefix));
         postRepository.save(courseWidePost);
 
-        Post conversationPost = posts.stream().filter(coursePost -> coursePost.getConversation() != null).findFirst().orElseThrow();
+        Post conversationPost = posts.stream().filter(coursePost -> coursePost.getConversation() instanceof OneToOneChat).findFirst().orElseThrow();
         conversationPost.setAnswers(createBasicAnswers(conversationPost, userPrefix));
         postRepository.save(conversationPost);
 
@@ -248,6 +250,11 @@ public class ConversationUtilService {
                 .findFirst().orElseThrow();
         studentConversationPost.setAnswers(createBasicAnswers(studentConversationPost, userPrefix));
         postRepository.save(studentConversationPost);
+
+        Post plagiarismPost = posts.stream().filter(coursePost -> coursePost.getPlagiarismCase() != null).findFirst().orElseThrow();
+        plagiarismPost.setAnswers(createBasicAnswers(plagiarismPost, userPrefix));
+        plagiarismPost.getAnswers().addAll(createBasicAnswers(plagiarismPost, userPrefix));
+        postRepository.save(plagiarismPost);
 
         return posts;
     }

@@ -430,7 +430,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         answerPost.setPost(post);
 
         singleUserNotificationService.notifyUserAboutNewMessageReply(answerPost, user, userTwo, CONVERSATION_NEW_REPLY_MESSAGE);
-        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + user.getId() + "/notifications"), (Object) any());
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();
 
         SingleUserNotificationService.NewReplyNotificationSubject notificationSubject = new SingleUserNotificationService.NewReplyNotificationSubject(answerPost, user, userTwo);

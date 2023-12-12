@@ -87,7 +87,7 @@ public abstract class PostingService {
         if (postConversation != null) {
             postConversation.hideDetails();
             if (postDTO.post().getAnswers() != null) {
-                postDTO.post().getAnswers().forEach(answerPost -> answerPost.setPost(null));
+                postDTO.post().getAnswers().forEach(answerPost -> answerPost.setPost(new Post(answerPost.getPost().getId())));
             }
 
             String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;

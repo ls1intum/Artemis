@@ -173,6 +173,14 @@ public class ConversationMessagingService extends PostingService {
             log.debug("      getNotificationRecipients DONE");
             recipientUsers = mapToUsers(recipientSummaries);
 
+            if (conversation instanceof OneToOneChat) {
+                var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
+                if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created
+                    // Another websocket notification
+                    conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, recipientUsers);
+                }
+            }
+
             broadcastForPost(postDTO, course.getId(), recipientUsers);
             log.debug("      broadcastForPost DONE");
         }
@@ -200,14 +208,6 @@ public class ConversationMessagingService extends PostingService {
                 .map(user -> new User(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getLangKey(), user.getEmail())).collect(Collectors.toSet());
         recipientUsers.addAll(mentionedUsers);
 
-        if (conversation instanceof OneToOneChat) {
-            var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
-            if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created
-                // Another websocket notification
-                conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, recipientUsers);
-            }
-        }
-
         Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, recipientSummaries, mentionedUsers);
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
 
@@ -230,7 +230,7 @@ public class ConversationMessagingService extends PostingService {
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
         // Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, recipientSummaries, mentionedUsers);
-        // conversationNotificationService.notifyAboutNewMessage(createdMessage, conversation, notificationRecipients, course, mentionedUsers);
+        conversationNotificationService.notifyAboutNewMessage(createdMessage, notification, notificationRecipients, course, mentionedUsers);
         // log.debug(" conversationNotificationService.notifyAboutNewMessage DONE");
 
         if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {

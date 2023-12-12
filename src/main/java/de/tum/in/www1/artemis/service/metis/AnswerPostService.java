@@ -99,6 +99,7 @@ public class AnswerPostService extends PostingService {
         }
         AnswerPost existingAnswerPost = this.findById(answerPostId);
         final Course course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.isAtLeastStudentInCourse(course, user);
         parseUserMentions(course, answerPost.getContent());
 
         AnswerPost updatedAnswerPost;
@@ -195,7 +196,7 @@ public class AnswerPostService extends PostingService {
      */
     void mayMarkAnswerPostAsResolvingElseThrow(AnswerPost answerPost, User user, Course course) {
         if (!answerPost.getPost().getAuthor().equals(user)) {
-            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+            authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         }
     }
 
