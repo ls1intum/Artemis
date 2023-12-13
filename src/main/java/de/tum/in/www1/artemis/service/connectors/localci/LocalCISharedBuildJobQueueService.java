@@ -89,6 +89,9 @@ public class LocalCISharedBuildJobQueueService {
         this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.queue.addItemListener(new BuildJobItemListener(), true);
+
+        // Add build agent information of local hazelcast member to map on initialization
+        updateLocalBuildAgentInformation();
     }
 
     /**
@@ -228,13 +231,12 @@ public class LocalCISharedBuildJobQueueService {
             processingJobs.put(buildJob.getId(), buildJob);
             localProcessingJobs.incrementAndGet();
 
-            updateBuildAgentInformation();
+            updateLocalBuildAgentInformation();
         }
         return buildJob;
     }
 
-    private void updateBuildAgentInformation() {
-        // remove offline nodes
+    private void updateLocalBuildAgentInformation() {
         removeOfflineNodes();
 
         // Add/update
@@ -288,7 +290,7 @@ public class LocalCISharedBuildJobQueueService {
             log.error("Cannot process build job for participation with id {} because it could not be retrieved from the database.", buildJob.getParticipationId());
             processingJobs.remove(buildJob.getId());
             localProcessingJobs.decrementAndGet();
-            updateBuildAgentInformation();
+            updateLocalBuildAgentInformation();
             checkAvailabilityAndProcessNextBuild();
             return;
         }
@@ -324,7 +326,7 @@ public class LocalCISharedBuildJobQueueService {
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.getId());
             localProcessingJobs.decrementAndGet();
-            updateBuildAgentInformation();
+            updateLocalBuildAgentInformation();
 
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
@@ -333,7 +335,7 @@ public class LocalCISharedBuildJobQueueService {
 
             processingJobs.remove(buildJob.getId());
             localProcessingJobs.decrementAndGet();
-            updateBuildAgentInformation();
+            updateLocalBuildAgentInformation();
 
             if (buildJob.getRetryCount() > 0) {
                 log.error("Build job failed for the second time: {}", buildJob);
