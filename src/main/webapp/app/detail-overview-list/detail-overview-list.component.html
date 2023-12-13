@@ -90,9 +90,15 @@
                             [participationType]="detail.data.type"
                             [participation]="detail.data.participation!"
                             [exercise]="detail.data.exercise"
-                        ></jhi-programming-exercise-instructor-status>
-                        <jhi-programming-exercise-instructor-trigger-build-button
-                            *ngIf="detail.data.participation?.results && detail.data.exercise.isAtLeastEditor"
+                            [participation]="detail.data.exercise?.templateParticipation!"
+                            [personalParticipation]="true"
+                        ></jhi-programming-exercise-instructions>
+                    </dd>
+                }
+                @case (DetailType.ProgrammingTimeline) {
+                    <dd>
+                        <jhi-programming-exercise-lifecycle
+                            [isExamMode]="detail.data.isExamMode"
                             [exercise]="detail.data.exercise"
                             [participation]="detail.data.participation!"
                         ></jhi-programming-exercise-instructor-trigger-build-button>
@@ -211,4 +217,4 @@
             </ng-container>
         </ng-container>
     </dl>
-</ng-container>
+}

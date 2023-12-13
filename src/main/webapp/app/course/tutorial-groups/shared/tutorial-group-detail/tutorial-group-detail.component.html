@@ -1,7 +1,7 @@
 <div class="tutorial-group-detail">
     <h2>{{ tutorialGroup.title }}</h2>
     <hr />
-    <ng-container *ngIf="header">
+    @if (header) {
         <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
         <hr />
     </ng-container>

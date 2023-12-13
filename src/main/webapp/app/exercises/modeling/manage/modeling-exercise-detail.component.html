@@ -1,29 +1,37 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div *ngIf="modelingExercise">
-            <div class="d-flex align-items-center">
-                <h2><span jhiTranslate="artemisApp.modelingExercise.detail.title">Modeling Exercise</span> {{ modelingExercise.id }}</h2>
-                <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+        @if (modelingExercise) {
+            <div>
+                <div class="d-flex align-items-center">
+                    <h2><span jhiTranslate="artemisApp.modelingExercise.detail.title">Modeling Exercise</span> {{ modelingExercise.id }}</h2>
+                    <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+                </div>
+                <hr />
+                <div class="text-start">
+                    @if (course) {
+                        <jhi-non-programming-exercise-detail-common-actions [isExamExercise]="isExamExercise" [course]="course!" [exercise]="modelingExercise">
+                        </jhi-non-programming-exercise-detail-common-actions>
+                    }
+                </div>
+                <hr />
+                <div class="mb-1">
+                    <button (click)="buildModelClusters()" class="btn btn-primary btn-sm me-1" jhiTranslate="artemisApp.modelingExercise.buildClusters.action">
+                        Build Clusters
+                    </button>
+                    <button (click)="deleteModelClusters()" class="btn btn-primary btn-sm" jhiTranslate="artemisApp.modelingExercise.deleteClusters.action">Delete Clusters</button>
+                </div>
+                @if (!modelingExercise.releaseDate || dayjs(modelingExercise.releaseDate).isBefore(dayjs())) {
+                    <div class="mt-3">
+                        <jhi-exercise-detail-statistics
+                            [exercise]="modelingExercise"
+                            [doughnutStats]="doughnutStats"
+                            [exerciseType]="ExerciseType.MODELING"
+                            class="d-flex justify-content-around"
+                        ></jhi-exercise-detail-statistics>
+                    </div>
+                }
+                <jhi-detail-overview-list [sections]="detailOverviewSections"></jhi-detail-overview-list>
             </div>
-            <hr />
-            <div class="text-start">
-                <jhi-non-programming-exercise-detail-common-actions *ngIf="course" [isExamExercise]="isExamExercise" [course]="course!" [exercise]="modelingExercise">
-                </jhi-non-programming-exercise-detail-common-actions>
-            </div>
-            <hr />
-            <div class="mb-1">
-                <button (click)="buildModelClusters()" class="btn btn-primary btn-sm me-1" jhiTranslate="artemisApp.modelingExercise.buildClusters.action">Build Clusters</button>
-                <button (click)="deleteModelClusters()" class="btn btn-primary btn-sm" jhiTranslate="artemisApp.modelingExercise.deleteClusters.action">Delete Clusters</button>
-            </div>
-            <div *ngIf="!modelingExercise.releaseDate || dayjs(modelingExercise.releaseDate).isBefore(dayjs())" class="mt-3">
-                <jhi-exercise-detail-statistics
-                    [exercise]="modelingExercise"
-                    [doughnutStats]="doughnutStats"
-                    [exerciseType]="ExerciseType.MODELING"
-                    class="d-flex justify-content-around"
-                ></jhi-exercise-detail-statistics>
-            </div>
-            <jhi-detail-overview-list [sections]="detailOverviewSections"></jhi-detail-overview-list>
-        </div>
+        }
     </div>
 </div>

@@ -1,7 +1,9 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
     <div class="row justify-content-center">
-        <div *ngIf="tutorialGroup && course" class="col-12">
-            <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup" [course]="course"> </jhi-tutorial-group-detail>
-        </div>
+        @if (tutorialGroup && course) {
+            <div class="col-12">
+                <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup" [course]="course"> </jhi-tutorial-group-detail>
+            </div>
+        }
     </div>
 </jhi-loading-indicator-container>

@@ -1,6 +1,5 @@
 <h5 class="mb-3">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title' | artemisTranslate }}</h5>
-
-<ng-container *ngFor="let suspiciousSessionsSet of suspiciousSessions; let i = index">
+@for (suspiciousSessionsSet of suspiciousSessions; track suspiciousSessionsSet; let i = $index) {
     <p class="mb-0">
         {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.case' | artemisTranslate }}
         <span class="bold">{{ i + 1 }}</span>
@@ -8,10 +7,12 @@
     <p>
         {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.reasons' | artemisTranslate }}
         <!-- all sessions have the same reasons, so we can just use the first one -->
-        <ng-container *ngFor="let reason of suspiciousSessionsSet.examSessions.at(0)?.suspiciousReasons; let i = index">
+        @for (reason of suspiciousSessionsSet.examSessions.at(0)?.suspiciousReasons; track reason; let i = $index) {
             <span class="bold" [jhiTranslate]="mapEnumToTranslationString(reason)" [translateValues]="{ range: ipSubnet }"></span>
-            <span *ngIf="i < suspiciousSessionsSet.examSessions.at(0)?.suspiciousReasons?.length! - 1">,</span>
-        </ng-container>
+            @if (i < suspiciousSessionsSet.examSessions.at(0)?.suspiciousReasons?.length! - 1) {
+                <span>,</span>
+            }
+        }
     </p>
     <div style="overflow-x: auto" class="table-responsive">
         <table class="table">
@@ -28,4 +29,4 @@
             <tbody jhi-suspicious-sessions [suspiciousSessions]="suspiciousSessionsSet"></tbody>
         </table>
     </div>
-</ng-container>
+}

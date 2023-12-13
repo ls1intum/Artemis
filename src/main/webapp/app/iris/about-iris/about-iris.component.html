@@ -19,15 +19,18 @@
             </div>
         </div>
     </div>
-
     <div class="mb-5 ms-2" style="margin-right: 70px">
-        <div *ngFor="let key of objectKeys(bulletPoints)">
-            <h4 class="mb-3 font-weight-bold">{{ 'artemisApp.exerciseChatbot.subheading' + key | artemisTranslate }}</h4>
-            <ul>
-                <li *ngFor="let item of array(bulletPoints[key]); let i = index">
-                    <span [jhiTranslate]="'artemisApp.exerciseChatbot.text' + key + '_' + (i + 1)"></span>
-                </li>
-            </ul>
-        </div>
+        @for (key of objectKeys(bulletPoints); track key) {
+            <div>
+                <h4 class="mb-3 font-weight-bold">{{ 'artemisApp.exerciseChatbot.subheading' + key | artemisTranslate }}</h4>
+                <ul>
+                    @for (item of array(bulletPoints[key]); track item; let i = $index) {
+                        <li>
+                            <span [jhiTranslate]="'artemisApp.exerciseChatbot.text' + key + '_' + (i + 1)"></span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
     </div>
 </div>

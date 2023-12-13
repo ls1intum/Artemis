@@ -1,42 +1,54 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div class="channels-overview" *ngIf="isInitialized">
-        <div class="modal-header">
-            <h4 class="modal-title">
-                <span>{{ 'artemisApp.dialogs.channelOverview.title.' + channelSubType | artemisTranslate: { courseTitle: course.title } }}</span>
-            </h4>
-            <button type="button" class="btn-close" (click)="clear()"></button>
-        </div>
-        <div class="modal-body">
-            <!-- Overview Table -->
-            <div *ngIf="channels && channels.length > 0" class="form-group mt-4">
-                <div class="table-wrapper-scroll-y scrollbar">
-                    <ul class="list-group">
-                        <li *ngFor="let channel of channels; trackBy: trackIdentity" [id]="'channel-' + channel.id" class="list-group-item">
-                            <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)"></jhi-channel-item>
-                        </li>
-                    </ul>
-                </div>
+    @if (isInitialized) {
+        <div class="channels-overview">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    <span>{{ 'artemisApp.dialogs.channelOverview.title.' + channelSubType | artemisTranslate: { courseTitle: course.title } }}</span>
+                </h4>
+                <button type="button" class="btn-close" (click)="clear()"></button>
             </div>
-            <div *ngIf="otherChannels && otherChannels.length > 0" class="form-group mt-4">
-                <div (click)="otherChannelsAreCollapsed = !otherChannelsAreCollapsed" class="other-channels">
-                    <fa-icon [icon]="faChevronRight" [rotate]="!otherChannelsAreCollapsed ? 90 : undefined"></fa-icon>
-                    <span class="h5">{{ 'artemisApp.dialogs.channelOverview.otherChannels' | artemisTranslate }}</span>
-                </div>
-                <div [(ngbCollapse)]="otherChannelsAreCollapsed">
-                    <div class="table-wrapper-scroll-y scrollbar mt-2">
-                        <ul class="list-group">
-                            <li *ngFor="let channel of otherChannels; trackBy: trackIdentity" [id]="'channel-' + channel.id" class="list-group-item">
-                                <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)"></jhi-channel-item>
-                            </li>
-                        </ul>
+            <div class="modal-body">
+                <!-- Overview Table -->
+                @if (channels && channels.length > 0) {
+                    <div class="form-group mt-4">
+                        <div class="table-wrapper-scroll-y scrollbar">
+                            <ul class="list-group">
+                                @for (channel of channels; track trackIdentity($index, channel)) {
+                                    <li [id]="'channel-' + channel.id" class="list-group-item">
+                                        <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)"></jhi-channel-item>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
                     </div>
-                </div>
+                }
+                @if (otherChannels && otherChannels.length > 0) {
+                    <div class="form-group mt-4">
+                        <div (click)="otherChannelsAreCollapsed = !otherChannelsAreCollapsed" class="other-channels">
+                            <fa-icon [icon]="faChevronRight" [rotate]="!otherChannelsAreCollapsed ? 90 : undefined"></fa-icon>
+                            <span class="h5">{{ 'artemisApp.dialogs.channelOverview.otherChannels' | artemisTranslate }}</span>
+                        </div>
+                        <div [(ngbCollapse)]="otherChannelsAreCollapsed">
+                            <div class="table-wrapper-scroll-y scrollbar mt-2">
+                                <ul class="list-group">
+                                    @for (channel of otherChannels; track trackIdentity($index, channel)) {
+                                        <li [id]="'channel-' + channel.id" class="list-group-item">
+                                            <jhi-channel-item [channel]="channel" (channelAction)="onChannelAction($event)"></jhi-channel-item>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer justify-content-between">
+                @if (createChannelFn && canCreateChannel(course)) {
+                    <button type="button" class="btn btn-secondary" (click)="openCreateChannelDialog($event)" id="createChannel">
+                        {{ 'artemisApp.dialogs.channelOverview.createChannelButton' | artemisTranslate }}
+                    </button>
+                }
             </div>
         </div>
-        <div class="modal-footer justify-content-between">
-            <button *ngIf="createChannelFn && canCreateChannel(course)" type="button" class="btn btn-secondary" (click)="openCreateChannelDialog($event)" id="createChannel">
-                {{ 'artemisApp.dialogs.channelOverview.createChannelButton' | artemisTranslate }}
-            </button>
-        </div>
-    </div>
+    }
 </jhi-loading-indicator-container>
