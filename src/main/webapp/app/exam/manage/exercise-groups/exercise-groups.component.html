@@ -2,318 +2,365 @@
     <div class="d-flex flex-column justify-content-center">
         <h4 class="mb-0">{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</h4>
     </div>
-    <div *ngIf="course?.isAtLeastEditor" class="ms-auto d-flex flex-wrap">
-        <a class="btn btn-primary me-1" id="import-group" (click)="openExerciseGroupImportModal()">
-            <fa-icon [icon]="faPlus"></fa-icon>
-            <span class="hidden-sm-down" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"> Import Exercise Group</span>
-        </a>
-        <a class="btn btn-primary jh-create-entity create-course" id="create-new-group" routerLink="new">
-            <fa-icon [icon]="faPlus"></fa-icon>
-            <span class="hidden-sm-down" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"> Create new Exercise Group </span>
-        </a>
-    </div>
+    @if (course?.isAtLeastEditor) {
+        <div class="ms-auto d-flex flex-wrap">
+            <a class="btn btn-primary me-1" id="import-group" (click)="openExerciseGroupImportModal()">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span class="hidden-sm-down" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"> Import Exercise Group</span>
+            </a>
+            <a class="btn btn-primary jh-create-entity create-course" id="create-new-group" routerLink="new">
+                <fa-icon [icon]="faPlus"></fa-icon>
+                <span class="hidden-sm-down" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"> Create new Exercise Group </span>
+            </a>
+        </div>
+    }
 </div>
 <div class="mt-3 text-end" id="number-groups" style="font-size: 0.85rem">
     {{ 'artemisApp.examManagement.numberOfExerciseGroups' | artemisTranslate }} {{ exerciseGroups ? exerciseGroups.length : 0 }}
 </div>
-<div *ngFor="let exerciseGroup of exerciseGroups; let i = index" class="exercise-group mt-3" id="{{ 'group-' + exerciseGroup.id }}">
-    <div class="d-flex p-3 header flex-wrap">
-        <div class="me-3 d-flex justify-content-center" style="align-items: center">
-            <a (click)="moveUp(i)" [class.disabled]="i === 0" class="border-0 p-0 me-1 bg-transparent">
-                <fa-icon [icon]="faAngleUp" style="font-size: 1.3rem"></fa-icon>
-            </a>
-            <a (click)="moveDown(i)" [class.disabled]="i >= exerciseGroups!.length - 1" class="border-0 p-0 bg-transparent">
-                <fa-icon [icon]="faAngleDown" style="font-size: 1.3rem"></fa-icon>
-            </a>
-        </div>
-        <div class="d-flex flex-column justify-content-center">
-            <h5 class="group-title font-weight-bold mb-0">{{ exerciseGroup.title }}</h5>
-        </div>
-        <div class="d-flex flex-column justify-content-center ms-1">
-            <jhi-help-icon text="artemisApp.examManagement.exerciseGroup.titleInfo"></jhi-help-icon>
-        </div>
-        <div class="d-flex flex-column justify-content-center ms-3">
-            <span class="d-block rounded px-2 py-1 opt-badge" style="font-size: 0.85rem">
-                {{
-                    (exerciseGroup.isMandatory ? 'artemisApp.examManagement.exerciseGroup.mandatory' : 'artemisApp.examManagement.exerciseGroup.optional')
-                        | artemisTranslate
-                        | lowercase
-                }}
-            </span>
-        </div>
-        <div class="d-flex justify-content-end" style="flex: 1">
+@for (exerciseGroup of exerciseGroups; track exerciseGroup; let i = $index) {
+    <div class="exercise-group mt-3" id="{{ 'group-' + exerciseGroup.id }}">
+        <div class="d-flex p-3 header flex-wrap">
+            <div class="me-3 d-flex justify-content-center" style="align-items: center">
+                <a (click)="moveUp(i)" [class.disabled]="i === 0" class="border-0 p-0 me-1 bg-transparent">
+                    <fa-icon [icon]="faAngleUp" style="font-size: 1.3rem"></fa-icon>
+                </a>
+                <a (click)="moveDown(i)" [class.disabled]="i >= exerciseGroups!.length - 1" class="border-0 p-0 bg-transparent">
+                    <fa-icon [icon]="faAngleDown" style="font-size: 1.3rem"></fa-icon>
+                </a>
+            </div>
             <div class="d-flex flex-column justify-content-center">
-                <div class="btn-group flex-btn-group-container">
-                    <div class="btn-group-vertical me-1 mb-1" *ngIf="course?.isAtLeastEditor" style="justify-content: end">
-                        <a [routerLink]="[exerciseGroup.id, 'file-upload-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
-                            <fa-icon [icon]="faPlus"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.fileUploadExercise.home.createLabel' | artemisTranslate }}</span>
-                            <fa-icon [icon]="faFileUpload"></fa-icon>
-                        </a>
-                        <a (click)="openImportModal(exerciseGroup, exerciseType.FILE_UPLOAD)" class="btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="faFileImport"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.fileUploadExercise.home.importLabel' | artemisTranslate }}</span>
-                            <fa-icon [icon]="faFileUpload"></fa-icon>
-                        </a>
-                    </div>
-                    <div class="btn-group-vertical me-1 mb-1" *ngIf="course?.isAtLeastEditor" style="justify-content: end">
-                        <a [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="add-quiz-exercise btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
-                            <fa-icon [icon]="faPlus"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.quizExercise.home.createLabel' | artemisTranslate }}</span>
-                            <fa-icon [icon]="faCheckDouble"></fa-icon>
-                        </a>
-                        <a (click)="openImportModal(exerciseGroup, exerciseType.QUIZ)" class="btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="faFileImport"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.quizExercise.home.importLabel' | artemisTranslate }}</span>
-                            <fa-icon [icon]="faCheckDouble"></fa-icon>
-                        </a>
-                    </div>
-                    <div class="btn-group-vertical me-1 mb-1" *ngIf="course?.isAtLeastEditor">
-                        <a [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="add-text-exercise btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="faPlus"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.textExercise.home.createLabel' | artemisTranslate }}</span>
-                            <fa-icon [icon]="faFont"></fa-icon>
-                        </a>
-                        <a (click)="openImportModal(exerciseGroup, exerciseType.TEXT)" class="btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="faFileImport"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.textExercise.home.importLabel' | artemisTranslate }}</span>
-                            <fa-icon [icon]="faFont"></fa-icon>
-                        </a>
-                    </div>
-                    <div class="btn-group-vertical me-1 mb-1" *ngIf="course?.isAtLeastEditor">
-                        <a [routerLink]="[exerciseGroup.id, 'modeling-exercises', 'new']" class="add-modeling-exercise btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="faPlus"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.modelingExercise.home.createLabel' | artemisTranslate }}</span>
-                            <fa-icon [icon]="faProjectDiagram"></fa-icon>
-                        </a>
-                        <a (click)="openImportModal(exerciseGroup, exerciseType.MODELING)" class="btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="faFileImport"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.modelingExercise.home.importLabel' | artemisTranslate }}</span>
-                            <fa-icon [icon]="faProjectDiagram"></fa-icon>
-                        </a>
-                    </div>
-                    <div class="btn-group-vertical me-1 mb-1" *ngIf="course?.isAtLeastEditor">
-                        <a [routerLink]="[exerciseGroup.id, 'programming-exercises', 'new']" class="add-programming-exercise btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="faPlus"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.programmingExercise.home.createLabel' | artemisTranslate }}</span>
-                            <fa-icon [icon]="faKeyboard"></fa-icon>
-                        </a>
-                        <a (click)="openImportModal(exerciseGroup, exerciseType.PROGRAMMING)" class="btn btn-info btn-sm me-1 mb-1">
-                            <fa-icon [icon]="faFileImport"></fa-icon>
-                            <span class="d-none d-xl-inline">{{ 'artemisApp.programmingExercise.home.importLabel' | artemisTranslate }}</span>
-                            <fa-icon [icon]="faKeyboard"></fa-icon>
-                        </a>
-                    </div>
-                    <div class="btn-group-vertical me-1 mb-1">
-                        <div class="d-flex flex-column me-1 mb-1" *ngIf="course?.isAtLeastEditor">
-                            <a [routerLink]="[exerciseGroup.id, 'edit']" class="edit-group btn btn-warning btn-sm me-1 mb-1">
-                                <fa-icon [icon]="faWrench"></fa-icon>
-                                <span class="d-none d-xl-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
-                            </a>
-                            <button
-                                *ngIf="
-                                    exerciseGroup.id && course?.isAtLeastInstructor && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING);
-                                    else containsNoProgrammingExercise
-                                "
-                                jhiDeleteButton
-                                [entityTitle]="exerciseGroup.title || ''"
-                                deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
-                                deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
-                                [additionalChecks]="{
-                                    deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
-                                    deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
-                                }"
-                                (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
-                                [dialogError]="dialogError"
-                                class="delete-group mb-0"
-                            >
-                                <fa-icon [icon]="faTrash"></fa-icon>
-                            </button>
-                            <ng-template #containsNoProgrammingExercise>
-                                <button
-                                    *ngIf="exerciseGroup.id && course?.isAtLeastInstructor"
-                                    jhiDeleteButton
-                                    [entityTitle]="exerciseGroup.title || ''"
-                                    deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
-                                    deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
-                                    (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
-                                    [dialogError]="dialogError"
-                                    class="delete-group mb-0"
-                                >
-                                    <fa-icon [icon]="faTrash"></fa-icon>
-                                </button>
-                            </ng-template>
+                <h5 class="group-title font-weight-bold mb-0">{{ exerciseGroup.title }}</h5>
+            </div>
+            <div class="d-flex flex-column justify-content-center ms-1">
+                <jhi-help-icon text="artemisApp.examManagement.exerciseGroup.titleInfo"></jhi-help-icon>
+            </div>
+            <div class="d-flex flex-column justify-content-center ms-3">
+                <span class="d-block rounded px-2 py-1 opt-badge" style="font-size: 0.85rem">
+                    {{
+                        (exerciseGroup.isMandatory ? 'artemisApp.examManagement.exerciseGroup.mandatory' : 'artemisApp.examManagement.exerciseGroup.optional')
+                            | artemisTranslate
+                            | lowercase
+                    }}
+                </span>
+            </div>
+            <div class="d-flex justify-content-end" style="flex: 1">
+                <div class="d-flex flex-column justify-content-center">
+                    <div class="btn-group flex-btn-group-container">
+                        @if (course?.isAtLeastEditor) {
+                            <div class="btn-group-vertical me-1 mb-1" style="justify-content: end">
+                                <a [routerLink]="[exerciseGroup.id, 'file-upload-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
+                                    <fa-icon [icon]="faPlus"></fa-icon>
+                                    <span class="d-none d-xl-inline">{{ 'artemisApp.fileUploadExercise.home.createLabel' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="faFileUpload"></fa-icon>
+                                </a>
+                                <a (click)="openImportModal(exerciseGroup, exerciseType.FILE_UPLOAD)" class="btn btn-info btn-sm me-1 mb-1">
+                                    <fa-icon [icon]="faFileImport"></fa-icon>
+                                    <span class="d-none d-xl-inline">{{ 'artemisApp.fileUploadExercise.home.importLabel' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="faFileUpload"></fa-icon>
+                                </a>
+                            </div>
+                        }
+                        @if (course?.isAtLeastEditor) {
+                            <div class="btn-group-vertical me-1 mb-1" style="justify-content: end">
+                                <a [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="add-quiz-exercise btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
+                                    <fa-icon [icon]="faPlus"></fa-icon>
+                                    <span class="d-none d-xl-inline">{{ 'artemisApp.quizExercise.home.createLabel' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="faCheckDouble"></fa-icon>
+                                </a>
+                                <a (click)="openImportModal(exerciseGroup, exerciseType.QUIZ)" class="btn btn-info btn-sm me-1 mb-1">
+                                    <fa-icon [icon]="faFileImport"></fa-icon>
+                                    <span class="d-none d-xl-inline">{{ 'artemisApp.quizExercise.home.importLabel' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="faCheckDouble"></fa-icon>
+                                </a>
+                            </div>
+                        }
+                        @if (course?.isAtLeastEditor) {
+                            <div class="btn-group-vertical me-1 mb-1">
+                                <a [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="add-text-exercise btn btn-info btn-sm me-1 mb-1">
+                                    <fa-icon [icon]="faPlus"></fa-icon>
+                                    <span class="d-none d-xl-inline">{{ 'artemisApp.textExercise.home.createLabel' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="faFont"></fa-icon>
+                                </a>
+                                <a (click)="openImportModal(exerciseGroup, exerciseType.TEXT)" class="btn btn-info btn-sm me-1 mb-1">
+                                    <fa-icon [icon]="faFileImport"></fa-icon>
+                                    <span class="d-none d-xl-inline">{{ 'artemisApp.textExercise.home.importLabel' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="faFont"></fa-icon>
+                                </a>
+                            </div>
+                        }
+                        @if (course?.isAtLeastEditor) {
+                            <div class="btn-group-vertical me-1 mb-1">
+                                <a [routerLink]="[exerciseGroup.id, 'modeling-exercises', 'new']" class="add-modeling-exercise btn btn-info btn-sm me-1 mb-1">
+                                    <fa-icon [icon]="faPlus"></fa-icon>
+                                    <span class="d-none d-xl-inline">{{ 'artemisApp.modelingExercise.home.createLabel' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="faProjectDiagram"></fa-icon>
+                                </a>
+                                <a (click)="openImportModal(exerciseGroup, exerciseType.MODELING)" class="btn btn-info btn-sm me-1 mb-1">
+                                    <fa-icon [icon]="faFileImport"></fa-icon>
+                                    <span class="d-none d-xl-inline">{{ 'artemisApp.modelingExercise.home.importLabel' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="faProjectDiagram"></fa-icon>
+                                </a>
+                            </div>
+                        }
+                        @if (course?.isAtLeastEditor) {
+                            <div class="btn-group-vertical me-1 mb-1">
+                                <a [routerLink]="[exerciseGroup.id, 'programming-exercises', 'new']" class="add-programming-exercise btn btn-info btn-sm me-1 mb-1">
+                                    <fa-icon [icon]="faPlus"></fa-icon>
+                                    <span class="d-none d-xl-inline">{{ 'artemisApp.programmingExercise.home.createLabel' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="faKeyboard"></fa-icon>
+                                </a>
+                                <a (click)="openImportModal(exerciseGroup, exerciseType.PROGRAMMING)" class="btn btn-info btn-sm me-1 mb-1">
+                                    <fa-icon [icon]="faFileImport"></fa-icon>
+                                    <span class="d-none d-xl-inline">{{ 'artemisApp.programmingExercise.home.importLabel' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="faKeyboard"></fa-icon>
+                                </a>
+                            </div>
+                        }
+                        <div class="btn-group-vertical me-1 mb-1">
+                            @if (course?.isAtLeastEditor) {
+                                <div class="d-flex flex-column me-1 mb-1">
+                                    <a [routerLink]="[exerciseGroup.id, 'edit']" class="edit-group btn btn-warning btn-sm me-1 mb-1">
+                                        <fa-icon [icon]="faWrench"></fa-icon>
+                                        <span class="d-none d-xl-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                                    </a>
+                                    @if (
+                                        exerciseGroup.id &&
+                                        course?.isAtLeastInstructor &&
+                                        exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)
+                                    ) {
+                                        <button
+                                            jhiDeleteButton
+                                            [entityTitle]="exerciseGroup.title || ''"
+                                            deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
+                                            deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
+                                            [additionalChecks]="{
+                                                deleteStudentReposBuildPlans: 'artemisApp.programmingExercise.delete.studentReposBuildPlans',
+                                                deleteBaseReposBuildPlans: 'artemisApp.programmingExercise.delete.baseReposBuildPlans'
+                                            }"
+                                            (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
+                                            [dialogError]="dialogError"
+                                            class="delete-group mb-0"
+                                        >
+                                            <fa-icon [icon]="faTrash"></fa-icon>
+                                        </button>
+                                    } @else {
+                                        @if (exerciseGroup.id && course?.isAtLeastInstructor) {
+                                            <button
+                                                jhiDeleteButton
+                                                [entityTitle]="exerciseGroup.title || ''"
+                                                deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.question"
+                                                deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
+                                                (delete)="deleteExerciseGroup(exerciseGroup.id, $event)"
+                                                [dialogError]="dialogError"
+                                                class="delete-group mb-0"
+                                            >
+                                                <fa-icon [icon]="faTrash"></fa-icon>
+                                            </button>
+                                        }
+                                    }
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="p-3">
-        <div *ngIf="exerciseGroup.exercises" style="overflow-x: auto">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th class="d-md-table-cell">
-                            <span>{{ 'global.field.id' | artemisTranslate }}</span>
-                        </th>
-                        <th>
-                            <span>{{ 'artemisApp.examManagement.exerciseGroup.type' | artemisTranslate }}</span>
-                        </th>
-                        <th>
-                            <span>{{ 'artemisApp.examManagement.exerciseGroup.title' | artemisTranslate }}</span>
-                        </th>
-                        <th>
-                            <span>{{ 'artemisApp.examManagement.exerciseGroup.points' | artemisTranslate }}</span>
-                        </th>
-                        <th>
-                            <span>{{ 'artemisApp.exercise.bonus' | artemisTranslate }}</span>
-                        </th>
-                        <th>
-                            <span>{{ 'artemisApp.exercise.includedCompletely' | artemisTranslate }}</span>
-                        </th>
-                        <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING)">
-                            <th>
-                                <span>{{ 'artemisApp.exercise.shortName' | artemisTranslate }}</span>
-                            </th>
-                            <th>
-                                <span>{{ 'artemisApp.programmingExercise.repositories' | artemisTranslate }}</span>
-                            </th>
-                            <th>
-                                <span>{{ 'artemisApp.programmingExercise.buildplans' | artemisTranslate }}</span>
-                            </th>
-                            <th>
-                                <span>{{ 'artemisApp.programmingExercise.participationMode' | artemisTranslate }}</span>
-                            </th>
-                        </ng-container>
-                        <th *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.QUIZ)">
-                            <span>{{ 'artemisApp.quizExercise.questions' | artemisTranslate }}</span>
-                        </th>
-                        <th *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)">
-                            <span>{{ 'artemisApp.modelingExercise.diagramType' | artemisTranslate }}</span>
-                        </th>
-                        <th *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.FILE_UPLOAD)">
-                            <span>{{ 'artemisApp.fileUploadExercise.filePattern' | artemisTranslate }}</span>
-                        </th>
-                        <th
-                            *ngIf="
-                                exerciseGroup.id &&
-                                (exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING) ||
-                                    exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.TEXT) ||
-                                    exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING))
-                            "
-                        >
-                            <span>{{ 'artemisApp.assessmentMode' | artemisTranslate }}</span>
-                        </th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="exercises">
-                    <tr *ngFor="let exercise of exerciseGroup.exercises">
-                        <td class="align-middle">
-                            <a
-                                *ngIf="course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ"
-                                [routerLink]="['/course-management', course.id, 'exams', examId, 'exercise-groups', exerciseGroup.id, exercise.type + '-exercises', exercise.id]"
-                            >
-                                <span>{{ exercise.id }}</span>
-                            </a>
-                            <span *ngIf="!course.isAtLeastEditor || exercise.type === exerciseType.QUIZ">{{ exercise.id }}</span>
-                        </td>
-                        <td class="align-middle" style="font-size: 1.35rem">
-                            <fa-icon [icon]="exerciseIcon(exercise)"></fa-icon>
-                        </td>
-                        <td class="align-middle">
-                            <a
-                                *ngIf="course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ"
-                                [routerLink]="['/course-management', course.id, 'exams', examId, 'exercise-groups', exerciseGroup.id, exercise.type + '-exercises', exercise.id]"
-                            >
-                                <span>{{ exercise.title }}</span>
-                            </a>
-                            <span *ngIf="!course.isAtLeastEditor || exercise.type === exerciseType.QUIZ">{{ exercise.title }}</span>
-                        </td>
-                        <td class="align-middle">
-                            {{ exercise.maxPoints }}
-                        </td>
-                        <td class="align-middle">{{ exercise.bonusPoints }}</td>
-                        <td class="align-middle">{{ exerciseService.isIncludedInScore(exercise) }}</td>
-                        <!-- Programming exercise specific cells -->
-                        <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)">
-                            <td class="align-middle">
-                                <jhi-programming-exercise-group-cell
-                                    *ngIf="exercise.type === exerciseType.PROGRAMMING"
-                                    [exercise]="exercise"
-                                    [displayShortName]="true"
-                                ></jhi-programming-exercise-group-cell>
-                            </td>
-                            <td class="align-middle">
-                                <jhi-programming-exercise-group-cell
-                                    *ngIf="exercise.type === exerciseType.PROGRAMMING"
-                                    [exercise]="exercise"
-                                    [displayRepositoryUrl]="true"
-                                ></jhi-programming-exercise-group-cell>
-                            </td>
-                            <td class="align-middle">
-                                <jhi-programming-exercise-group-cell
-                                    *ngIf="exercise.type === exerciseType.PROGRAMMING"
-                                    [exercise]="exercise"
-                                    [displayTemplateUrls]="true"
-                                ></jhi-programming-exercise-group-cell>
-                            </td>
-                            <td class="align-middle">
-                                <jhi-programming-exercise-group-cell
-                                    *ngIf="exercise.type === exerciseType.PROGRAMMING"
-                                    [exercise]="exercise"
-                                    [displayEditorModus]="true"
-                                ></jhi-programming-exercise-group-cell>
-                            </td>
-                        </ng-container>
-                        <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.QUIZ)">
-                            <td class="align-middle">
-                                <jhi-quiz-exercise-group-cell [exercise]="exercise"></jhi-quiz-exercise-group-cell>
-                            </td>
-                        </ng-container>
-                        <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING)">
-                            <td class="align-middle">
-                                <jhi-modeling-exercise-group-cell [exercise]="exercise"></jhi-modeling-exercise-group-cell>
-                            </td>
-                        </ng-container>
-                        <ng-container *ngIf="exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.FILE_UPLOAD)">
-                            <td class="align-middle">
-                                <jhi-file-upload-exercise-group-cell [exercise]="exercise"></jhi-file-upload-exercise-group-cell>
-                            </td>
-                        </ng-container>
-                        <ng-container
-                            *ngIf="
-                                exerciseGroup.id &&
-                                (exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING) ||
-                                    exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.TEXT) ||
-                                    exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING))
-                            "
-                        >
-                            <td class="align-middle">
-                                <div *ngIf="exercise.type === exerciseType.PROGRAMMING || exercise.type === exerciseType.MODELING || exercise.type === exerciseType.TEXT">
-                                    {{ 'artemisApp.AssessmentType.' + exercise.assessmentType | artemisTranslate }}
-                                </div>
-                            </td>
-                        </ng-container>
-                        <td class="align-middle">
-                            <jhi-exam-exercise-row-buttons
-                                class="d-flex justify-content-end"
-                                *ngIf="exercise.id && exerciseGroup.id"
-                                [course]="course"
-                                [exam]="exam"
-                                [exercise]="exercise"
-                                [exerciseGroupId]="exerciseGroup.id"
-                                [latestIndividualEndDate]="latestIndividualEndDate"
-                                (onDeleteExercise)="removeExercise(exercise.id, exerciseGroup.id)"
-                            ></jhi-exam-exercise-row-buttons>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="p-3">
+            @if (exerciseGroup.exercises) {
+                <div style="overflow-x: auto">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th class="d-md-table-cell">
+                                    <span>{{ 'global.field.id' | artemisTranslate }}</span>
+                                </th>
+                                <th>
+                                    <span>{{ 'artemisApp.examManagement.exerciseGroup.type' | artemisTranslate }}</span>
+                                </th>
+                                <th>
+                                    <span>{{ 'artemisApp.examManagement.exerciseGroup.title' | artemisTranslate }}</span>
+                                </th>
+                                <th>
+                                    <span>{{ 'artemisApp.examManagement.exerciseGroup.points' | artemisTranslate }}</span>
+                                </th>
+                                <th>
+                                    <span>{{ 'artemisApp.exercise.bonus' | artemisTranslate }}</span>
+                                </th>
+                                <th>
+                                    <span>{{ 'artemisApp.exercise.includedCompletely' | artemisTranslate }}</span>
+                                </th>
+                                @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING)) {
+                                    <th>
+                                        <span>{{ 'artemisApp.exercise.shortName' | artemisTranslate }}</span>
+                                    </th>
+                                    <th>
+                                        <span>{{ 'artemisApp.programmingExercise.repositories' | artemisTranslate }}</span>
+                                    </th>
+                                    <th>
+                                        <span>{{ 'artemisApp.programmingExercise.buildplans' | artemisTranslate }}</span>
+                                    </th>
+                                    <th>
+                                        <span>{{ 'artemisApp.programmingExercise.participationMode' | artemisTranslate }}</span>
+                                    </th>
+                                }
+                                @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.QUIZ)) {
+                                    <th>
+                                        <span>{{ 'artemisApp.quizExercise.questions' | artemisTranslate }}</span>
+                                    </th>
+                                }
+                                @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)) {
+                                    <th>
+                                        <span>{{ 'artemisApp.modelingExercise.diagramType' | artemisTranslate }}</span>
+                                    </th>
+                                }
+                                @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.FILE_UPLOAD)) {
+                                    <th>
+                                        <span>{{ 'artemisApp.fileUploadExercise.filePattern' | artemisTranslate }}</span>
+                                    </th>
+                                }
+                                @if (
+                                    exerciseGroup.id &&
+                                    (exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING) ||
+                                        exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.TEXT) ||
+                                        exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING))
+                                ) {
+                                    <th>
+                                        <span>{{ 'artemisApp.assessmentMode' | artemisTranslate }}</span>
+                                    </th>
+                                }
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="exercises">
+                            @for (exercise of exerciseGroup.exercises; track exercise) {
+                                <tr>
+                                    <td class="align-middle">
+                                        @if (course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ) {
+                                            <a
+                                                [routerLink]="[
+                                                    '/course-management',
+                                                    course.id,
+                                                    'exams',
+                                                    examId,
+                                                    'exercise-groups',
+                                                    exerciseGroup.id,
+                                                    exercise.type + '-exercises',
+                                                    exercise.id
+                                                ]"
+                                            >
+                                                <span>{{ exercise.id }}</span>
+                                            </a>
+                                        }
+                                        @if (!course.isAtLeastEditor || exercise.type === exerciseType.QUIZ) {
+                                            <span>{{ exercise.id }}</span>
+                                        }
+                                    </td>
+                                    <td class="align-middle" style="font-size: 1.35rem">
+                                        <fa-icon [icon]="exerciseIcon(exercise)"></fa-icon>
+                                    </td>
+                                    <td class="align-middle">
+                                        @if (course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ) {
+                                            <a
+                                                [routerLink]="[
+                                                    '/course-management',
+                                                    course.id,
+                                                    'exams',
+                                                    examId,
+                                                    'exercise-groups',
+                                                    exerciseGroup.id,
+                                                    exercise.type + '-exercises',
+                                                    exercise.id
+                                                ]"
+                                            >
+                                                <span>{{ exercise.title }}</span>
+                                            </a>
+                                        }
+                                        @if (!course.isAtLeastEditor || exercise.type === exerciseType.QUIZ) {
+                                            <span>{{ exercise.title }}</span>
+                                        }
+                                    </td>
+                                    <td class="align-middle">
+                                        {{ exercise.maxPoints }}
+                                    </td>
+                                    <td class="align-middle">{{ exercise.bonusPoints }}</td>
+                                    <td class="align-middle">{{ exerciseService.isIncludedInScore(exercise) }}</td>
+                                    <!-- Programming exercise specific cells -->
+                                    @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)) {
+                                        <td class="align-middle">
+                                            @if (exercise.type === exerciseType.PROGRAMMING) {
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayShortName]="true"></jhi-programming-exercise-group-cell>
+                                            }
+                                        </td>
+                                        <td class="align-middle">
+                                            @if (exercise.type === exerciseType.PROGRAMMING) {
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayRepositoryUrl]="true"></jhi-programming-exercise-group-cell>
+                                            }
+                                        </td>
+                                        <td class="align-middle">
+                                            @if (exercise.type === exerciseType.PROGRAMMING) {
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayTemplateUrls]="true"></jhi-programming-exercise-group-cell>
+                                            }
+                                        </td>
+                                        <td class="align-middle">
+                                            @if (exercise.type === exerciseType.PROGRAMMING) {
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayEditorModus]="true"></jhi-programming-exercise-group-cell>
+                                            }
+                                        </td>
+                                    }
+                                    @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.QUIZ)) {
+                                        <td class="align-middle">
+                                            <jhi-quiz-exercise-group-cell [exercise]="exercise"></jhi-quiz-exercise-group-cell>
+                                        </td>
+                                    }
+                                    @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING)) {
+                                        <td class="align-middle">
+                                            <jhi-modeling-exercise-group-cell [exercise]="exercise"></jhi-modeling-exercise-group-cell>
+                                        </td>
+                                    }
+                                    @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.FILE_UPLOAD)) {
+                                        <td class="align-middle">
+                                            <jhi-file-upload-exercise-group-cell [exercise]="exercise"></jhi-file-upload-exercise-group-cell>
+                                        </td>
+                                    }
+                                    @if (
+                                        exerciseGroup.id &&
+                                        (exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING) ||
+                                            exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.TEXT) ||
+                                            exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING))
+                                    ) {
+                                        <td class="align-middle">
+                                            @if (exercise.type === exerciseType.PROGRAMMING || exercise.type === exerciseType.MODELING || exercise.type === exerciseType.TEXT) {
+                                                <div>
+                                                    {{ 'artemisApp.AssessmentType.' + exercise.assessmentType | artemisTranslate }}
+                                                </div>
+                                            }
+                                        </td>
+                                    }
+                                    <td class="align-middle">
+                                        @if (exercise.id && exerciseGroup.id) {
+                                            <jhi-exam-exercise-row-buttons
+                                                class="d-flex justify-content-end"
+                                                [course]="course"
+                                                [exam]="exam"
+                                                [exercise]="exercise"
+                                                [exerciseGroupId]="exerciseGroup.id"
+                                                [latestIndividualEndDate]="latestIndividualEndDate"
+                                                (onDeleteExercise)="removeExercise(exercise.id, exerciseGroup.id)"
+                                            ></jhi-exam-exercise-row-buttons>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            @if (!exerciseGroup.exercises) {
+                <div>
+                    {{ 'artemisApp.examManagement.exerciseGroup.noExercises' | artemisTranslate }}
+                </div>
+            }
         </div>
-        <div *ngIf="!exerciseGroup.exercises">
-            {{ 'artemisApp.examManagement.exerciseGroup.noExercises' | artemisTranslate }}
-        </div>
     </div>
-</div>
+}

@@ -23,62 +23,73 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
                 <option value="submission_penalty">{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.optionLabel' | artemisTranslate }}</option>
             </select>
         </div>
-        <form [formGroup]="form" *ngIf="!isNonePolicy">
-            <div class="row mb-3">
-                <div class="col">
-                    <ng-container>
-                        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle" for="field_submissionLimitExceededPenalty"
-                            >Submission limit</label
-                        >
-                        <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription"></jhi-help-icon>
-                        <div class="input-group">
-                            <input
-                                required
-                                type="number"
-                                formControlName="submissionLimit"
-                                class="form-control"
-                                step="1"
-                                name="submissionLimit"
-                                id="field_submissionLimit"
-                                (input)="updateSubmissionLimit()"
-                            />
-                        </div>
-                        <ng-container *ngFor="let e of submissionLimitControl.errors! | keyvalue">
-                            <div *ngIf="submissionLimitControl.invalid && (submissionLimitControl.dirty || submissionLimitControl.touched)" class="alert alert-danger">
-                                <div [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning' + '.' + e.key"></div>
+        @if (!isNonePolicy) {
+            <form [formGroup]="form">
+                <div class="row mb-3">
+                    <div class="col">
+                        <ng-container>
+                            <label
+                                class="label-narrow"
+                                jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle"
+                                for="field_submissionLimitExceededPenalty"
+                                >Submission limit</label
+                            >
+                            <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionLimitDescription"></jhi-help-icon>
+                            <div class="input-group">
+                                <input
+                                    required
+                                    type="number"
+                                    formControlName="submissionLimit"
+                                    class="form-control"
+                                    step="1"
+                                    name="submissionLimit"
+                                    id="field_submissionLimit"
+                                    (input)="updateSubmissionLimit()"
+                                />
                             </div>
+                            @for (e of submissionLimitControl.errors! | keyvalue; track e) {
+                                @if (submissionLimitControl.invalid && (submissionLimitControl.dirty || submissionLimitControl.touched)) {
+                                    <div class="alert alert-danger">
+                                        <div [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionLimitWarning' + '.' + e.key"></div>
+                                    </div>
+                                }
+                            }
                         </ng-container>
-                    </ng-container>
-                </div>
-                <div class="col">
-                    <ng-container *ngIf="this.isSubmissionPenaltyPolicy">
-                        <label
-                            class="label-narrow"
-                            jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldTitle"
-                            for="field_submissionLimitExceededPenalty"
-                            >Penalty after Exceeding Submission limit</label
-                        >
-                        <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription"></jhi-help-icon>
-                        <div class="input-group">
-                            <input
-                                required
-                                type="number"
-                                class="form-control"
-                                formControlName="exceedingPenalty"
-                                name="submissionLimitExceededPenalty"
-                                id="field_submissionLimitExceededPenalty"
-                                (input)="updateExceedingPenalty()"
-                            />
-                        </div>
-                        <ng-container *ngFor="let e of exceedingPenaltyControl.errors! | keyvalue">
-                            <div *ngIf="exceedingPenaltyControl.invalid && (exceedingPenaltyControl.dirty || exceedingPenaltyControl.touched)" class="alert alert-danger">
-                                <div [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning' + '.' + e.key"></div>
+                    </div>
+                    <div class="col">
+                        @if (this.isSubmissionPenaltyPolicy) {
+                            <label
+                                class="label-narrow"
+                                jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldTitle"
+                                for="field_submissionLimitExceededPenalty"
+                                >Penalty after Exceeding Submission limit</label
+                            >
+                            <jhi-help-icon text="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.exceedingLimitDescription"></jhi-help-icon>
+                            <div class="input-group">
+                                <input
+                                    required
+                                    type="number"
+                                    class="form-control"
+                                    formControlName="exceedingPenalty"
+                                    name="submissionLimitExceededPenalty"
+                                    id="field_submissionLimitExceededPenalty"
+                                    (input)="updateExceedingPenalty()"
+                                />
                             </div>
-                        </ng-container>
-                    </ng-container>
+                            @for (e of exceedingPenaltyControl.errors! | keyvalue; track e) {
+                                @if (exceedingPenaltyControl.invalid && (exceedingPenaltyControl.dirty || exceedingPenaltyControl.touched)) {
+                                    <div class="alert alert-danger">
+                                        <div
+                                            [jhiTranslate]="'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInputFieldValidationWarning' + '.' + e.key"
+                                        ></div>
+                                    </div>
+                                }
+                            }
+                        }
+                    </div>
                 </div>
-            </div>
-        </form>
+            </form>
+        }
     `,
     styleUrls: ['../../programming/manage/programming-exercise-form.scss'],
 })

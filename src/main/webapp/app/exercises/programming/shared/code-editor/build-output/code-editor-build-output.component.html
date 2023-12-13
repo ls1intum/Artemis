@@ -6,18 +6,26 @@
         </h3>
         <fa-icon class="ms-auto clickable" [icon]="faChevronDown"></fa-icon>
     </div>
-    <div class="card-body" *ngIf="!isBuilding && !rawBuildLogs.length">
-        <p class="text-center no-buildoutput" jhiTranslate="artemisApp.editor.noBuildOutput">No build results available</p>
-    </div>
-    <div class="card-body" *ngIf="isBuilding">
-        <p class="text-center is-building"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.building">Building...</span></p>
-    </div>
-    <div class="card-body build-output__content" *ngIf="!isBuilding && rawBuildLogs.length">
-        <div class="buildoutput d-flex flex-column">
-            <span *ngFor="let logEntry of rawBuildLogs" class="build-output__entry">
-                <span class="build-output__entry-date">{{ logEntry.time | artemisDate: 'short' : true }}</span>
-                <span class="build-output__entry-text">{{ logEntry.log }}</span>
-            </span>
+    @if (!isBuilding && !rawBuildLogs.length) {
+        <div class="card-body">
+            <p class="text-center no-buildoutput" jhiTranslate="artemisApp.editor.noBuildOutput">No build results available</p>
         </div>
-    </div>
+    }
+    @if (isBuilding) {
+        <div class="card-body">
+            <p class="text-center is-building"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon> <span jhiTranslate="artemisApp.editor.building">Building...</span></p>
+        </div>
+    }
+    @if (!isBuilding && rawBuildLogs.length) {
+        <div class="card-body build-output__content">
+            <div class="buildoutput d-flex flex-column">
+                @for (logEntry of rawBuildLogs; track logEntry) {
+                    <span class="build-output__entry">
+                        <span class="build-output__entry-date">{{ logEntry.time | artemisDate: 'short' : true }}</span>
+                        <span class="build-output__entry-text">{{ logEntry.log }}</span>
+                    </span>
+                }
+            </div>
+        </div>
+    }
 </div>

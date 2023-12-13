@@ -5,7 +5,6 @@
     </div>
     <jhi-close-circle (click)="popover.close()"></jhi-close-circle>
 </ng-template>
-
 <div
     class="connection-warning"
     [ngClass]="{ disconnected: disconnected }"
@@ -18,5 +17,7 @@
     (click)="popover?.toggle()"
 >
     <fa-icon [icon]="faWifi"></fa-icon>
-    <fa-icon id="pulse-icon" *ngIf="disconnected && !isOnExamParticipationPage" [icon]="faWifi"></fa-icon>
+    @if (disconnected && !isOnExamParticipationPage) {
+        <fa-icon id="pulse-icon" [icon]="faWifi"></fa-icon>
+    }
 </div>
