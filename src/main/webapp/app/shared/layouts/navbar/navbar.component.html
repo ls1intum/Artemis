@@ -1,76 +1,98 @@
 <ng-template #iconMenu>
     <div id="navbar-icon-menu" [ngClass]="{ evenly: isNavbarNavVertical, 'in-menu': iconsMovedToMenu }">
-        <jhi-notification-sidebar *ngIf="currAccount && !isExamActive"></jhi-notification-sidebar>
+        @if (currAccount && !isExamActive) {
+            <jhi-notification-sidebar></jhi-notification-sidebar>
+        }
         <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu ? 'bottom' : 'bottom-right'"></jhi-theme-switch>
-        <div
-            *ngIf="isAuthenticated()"
-            ngbDropdown
-            class="dropdown pointer"
-            display="dynamic"
-            [placement]="'bottom-right'"
-            routerLinkActive="active"
-            [routerLinkActiveOptions]="{ exact: true }"
-            [autoClose]="true"
-        >
-            <a class="guided-tour-account nav-link dropdown-toggle" ngbDropdownToggle id="account-menu">
-                <span *ngIf="!getImageUrl()">
-                    <fa-icon [icon]="faUser"></fa-icon>
-                    <span jhiTranslate="global.menu.account.main" *ngIf="!currAccount">Account</span>
-                    <span *ngIf="currAccount">{{ currAccount.login }}</span>
-                </span>
-                <span *ngIf="getImageUrl()">
-                    <img [src]="getImageUrl()" class="profile-image img-circle" alt="Avatar" />
-                </span>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
-                <li>
-                    <a class="dropdown-item" [routerLink]="['/user-settings']" (click)="collapseNavbar()">
-                        <fa-icon [icon]="faCog" [fixedWidth]="true"></fa-icon>
-                        <span>{{ 'global.menu.settings' | artemisTranslate }}</span>
-                    </a>
-                </li>
-                <div class="dropdown-divider"></div>
-                <li>
-                    <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.language">Language</h6>
-                </li>
-                <div *ngIf="languages && languages.length > 1">
-                    <li *ngFor="let language of languages">
-                        <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language); collapseNavbar()">{{ language | findLanguageFromKey }}</a>
+        @if (isAuthenticated()) {
+            <div
+                ngbDropdown
+                class="dropdown pointer"
+                display="dynamic"
+                [placement]="'bottom-right'"
+                routerLinkActive="active"
+                [routerLinkActiveOptions]="{ exact: true }"
+                [autoClose]="true"
+            >
+                <a class="guided-tour-account nav-link dropdown-toggle" ngbDropdownToggle id="account-menu">
+                    @if (!getImageUrl()) {
+                        <span>
+                            <fa-icon [icon]="faUser"></fa-icon>
+                            @if (!currAccount) {
+                                <span jhiTranslate="global.menu.account.main">Account</span>
+                            }
+                            @if (currAccount) {
+                                <span>{{ currAccount.login }}</span>
+                            }
+                        </span>
+                    }
+                    @if (getImageUrl()) {
+                        <span>
+                            <img [src]="getImageUrl()" class="profile-image img-circle" alt="Avatar" />
+                        </span>
+                    }
+                </a>
+                <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
+                    <li>
+                        <a class="dropdown-item" [routerLink]="['/user-settings']" (click)="collapseNavbar()">
+                            <fa-icon [icon]="faCog" [fixedWidth]="true"></fa-icon>
+                            <span>{{ 'global.menu.settings' | artemisTranslate }}</span>
+                        </a>
                     </li>
-                </div>
-                <ng-template [ngIf]="isTourAvailable">
                     <div class="dropdown-divider"></div>
                     <li>
-                        <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.guidedTutorial">Guided Tutorial</h6>
+                        <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.language">Language</h6>
                     </li>
+                    @if (languages && languages.length > 1) {
+                        <div>
+                            @for (language of languages; track language) {
+                                <li>
+                                    <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language); collapseNavbar()">{{
+                                        language | findLanguageFromKey
+                                    }}</a>
+                                </li>
+                            }
+                        </div>
+                    }
+                    @if (isTourAvailable) {
+                        <div class="dropdown-divider"></div>
+                        <li>
+                            <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.guidedTutorial">Guided Tutorial</h6>
+                        </li>
+                        <li>
+                            <a class="dropdown-item guided-tour" [jhiTranslate]="this.guidedTourInitLabel()" (click)="this.guidedTourService.initGuidedTour()">Start tutorial</a>
+                        </li>
+                    }
+                    <div class="dropdown-divider"></div>
+                    @if (isRegistrationEnabled) {
+                        <li>
+                            <a class="dropdown-item" routerLink="/account/settings" routerLinkActive="active" (click)="collapseNavbar()">
+                                <fa-icon [icon]="faWrench" [fixedWidth]="true"></fa-icon>
+                                <span jhiTranslate="global.menu.account.settings">Settings</span>
+                            </a>
+                        </li>
+                    }
+                    @if (passwordResetEnabled) {
+                        <li>
+                            <a class="dropdown-item" routerLink="/account/password" routerLinkActive="active" (click)="collapseNavbar()">
+                                <fa-icon [icon]="faLock" [fixedWidth]="true"></fa-icon>
+                                <span jhiTranslate="global.menu.account.password">Password</span>
+                            </a>
+                        </li>
+                    }
                     <li>
-                        <a class="dropdown-item guided-tour" [jhiTranslate]="this.guidedTourInitLabel()" (click)="this.guidedTourService.initGuidedTour()">Start tutorial</a>
+                        @if (currAccount) {
+                            <a class="dropdown-item" (click)="logout()" id="logout">
+                                <fa-icon [icon]="faSignOutAlt" [fixedWidth]="true"></fa-icon>
+                                <span jhiTranslate="global.menu.account.logout">Sign out</span>
+                            </a>
+                        }
                     </li>
-                </ng-template>
-                <div class="dropdown-divider"></div>
-                <li *ngIf="isRegistrationEnabled">
-                    <a class="dropdown-item" routerLink="/account/settings" routerLinkActive="active" (click)="collapseNavbar()">
-                        <fa-icon [icon]="faWrench" [fixedWidth]="true"></fa-icon>
-                        <span jhiTranslate="global.menu.account.settings">Settings</span>
-                    </a>
-                </li>
-                <li *ngIf="passwordResetEnabled">
-                    <a class="dropdown-item" routerLink="/account/password" routerLinkActive="active" (click)="collapseNavbar()">
-                        <fa-icon [icon]="faLock" [fixedWidth]="true"></fa-icon>
-                        <span jhiTranslate="global.menu.account.password">Password</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="dropdown-item" *ngIf="currAccount" (click)="logout()" id="logout">
-                        <fa-icon [icon]="faSignOutAlt" [fixedWidth]="true"></fa-icon>
-                        <span jhiTranslate="global.menu.account.logout">Sign out</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
+                </ul>
+            </div>
+        }
     </div>
 </ng-template>
-
 <nav class="navbar jh-navbar" [class.expanded]="!isCollapsed">
     <div class="jh-logo-container">
         <a class="navbar-brand" routerLink="/" (click)="collapseNavbar()">
@@ -92,9 +114,9 @@
             <jhi-connection-warning class="align-self-center"></jhi-connection-warning>
             <jhi-loading-notification class="align-self-center"></jhi-loading-notification>
         </div>
-        <ng-container *ngIf="!iconsMovedToMenu && isCollapsed">
+        @if (!iconsMovedToMenu && isCollapsed) {
             <ng-container *ngTemplateOutlet="iconMenu"></ng-container>
-        </ng-container>
+        }
         <div class="toggler-wrapper">
             <a
                 class="toggler"
@@ -111,15 +133,16 @@
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed">
         <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical">
-            <li *ngIf="currAccount && !isExamActive" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-                <a class="guided-tour-overview nav-link" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
-                    <span>
-                        <fa-icon [icon]="faThLarge"></fa-icon>
-                        <span jhiTranslate="global.menu.overview">Course Overview</span>
-                    </span>
-                </a>
-            </li>
-
+            @if (currAccount && !isExamActive) {
+                <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+                    <a class="guided-tour-overview nav-link" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
+                        <span>
+                            <fa-icon [icon]="faThLarge"></fa-icon>
+                            <span jhiTranslate="global.menu.overview">Course Overview</span>
+                        </span>
+                    </a>
+                </li>
+            }
             <li
                 *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                 ngbDropdown
@@ -127,14 +150,15 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
             >
-                <a *ngIf="!isExamActive" class="guided-tour-course-admin nav-link" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
-                    <span>
-                        <fa-icon [icon]="faThList"></fa-icon>
-                        <span jhiTranslate="global.menu.course">Course Management</span>
-                    </span>
-                </a>
+                @if (!isExamActive) {
+                    <a class="guided-tour-course-admin nav-link" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
+                        <span>
+                            <fa-icon [icon]="faThList"></fa-icon>
+                            <span jhiTranslate="global.menu.course">Course Management</span>
+                        </span>
+                    </a>
+                }
             </li>
-
             <li
                 *jhiHasAnyAuthority="'ROLE_ADMIN'"
                 ngbDropdown
@@ -143,12 +167,14 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
             >
-                <a *ngIf="!isExamActive" class="guided-tour-admin nav-link dropdown-toggle" ngbDropdownToggle id="admin-menu">
-                    <span>
-                        <fa-icon [icon]="faUserPlus"></fa-icon>
-                        <span jhiTranslate="global.menu.admin.main">Server Administration</span>
-                    </span>
-                </a>
+                @if (!isExamActive) {
+                    <a class="guided-tour-admin nav-link dropdown-toggle" ngbDropdownToggle id="admin-menu">
+                        <span>
+                            <fa-icon [icon]="faUserPlus"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.main">Server Administration</span>
+                        </span>
+                    </a>
+                }
                 <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/upcoming-exams-and-exercises" routerLinkActive="active" (click)="collapseNavbar()">
@@ -228,72 +254,85 @@
                             <span jhiTranslate="global.menu.admin.logs">Logs</span>
                         </a>
                     </li>
-                    <li *ngIf="openApiEnabled">
-                        <a class="dropdown-item" href="api.html" target="_blank" rel="noreferrer noopener" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faBook" [fixedWidth]="true"></fa-icon>
-                            <span jhiTranslate="global.menu.admin.apidocs">API</span>
-                        </a>
-                    </li>
-                    <li *ngIf="irisEnabled">
-                        <a class="dropdown-item" routerLink="/admin/iris" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faRobot" [fixedWidth]="true"></fa-icon>
-                            <span jhiTranslate="global.menu.admin.iris">Iris Settings</span>
-                        </a>
-                    </li>
-                    <li *ngIf="ltiEnabled">
+                    @if (openApiEnabled) {
+                        <li>
+                            <a class="dropdown-item" href="api.html" target="_blank" rel="noreferrer noopener" (click)="collapseNavbar()">
+                                <fa-icon [icon]="faBook" [fixedWidth]="true"></fa-icon>
+                                <span jhiTranslate="global.menu.admin.apidocs">API</span>
+                            </a>
+                        </li>
+                    }
+                    @if (irisEnabled) {
+                        <li>
+                            <a class="dropdown-item" routerLink="/admin/iris" routerLinkActive="active" (click)="collapseNavbar()">
+                                <fa-icon [icon]="faRobot" [fixedWidth]="true"></fa-icon>
+                                <span jhiTranslate="global.menu.admin.iris">Iris Settings</span>
+                            </a>
+                        </li>
+                    }
+                    @if (ltiEnabled) {
                         <a class="dropdown-item" routerLink="/admin/lti-configuration" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faPuzzlePiece" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.lti">LTI Configuration</span>
                         </a>
-                    </li>
+                    }
                     <!-- jhipster-needle-add-element-to-admin-menu - JHipster will add entities to the admin menu here -->
                 </ul>
             </li>
-
-            <li ngbDropdown class="nav-item dropdown pointer" display="dynamic" *ngIf="!currAccount && languages && languages.length > 1">
-                <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">
-                    <span>
-                        <fa-icon [icon]="faFlag"></fa-icon>
-                        <span jhiTranslate="global.menu.language">Language</span>
-                    </span>
-                </a>
-                <ul class="dropdown-menu" ngbDropdownMenu>
-                    <li *ngFor="let language of languages">
-                        <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language); collapseNavbar()">{{ language | findLanguageFromKey }}</a>
-                    </li>
-                </ul>
-            </li>
+            @if (!currAccount && languages && languages.length > 1) {
+                <li ngbDropdown class="nav-item dropdown pointer" display="dynamic">
+                    <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">
+                        <span>
+                            <fa-icon [icon]="faFlag"></fa-icon>
+                            <span jhiTranslate="global.menu.language">Language</span>
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu" ngbDropdownMenu>
+                        @for (language of languages; track language) {
+                            <li>
+                                <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language); collapseNavbar()">{{ language | findLanguageFromKey }}</a>
+                            </li>
+                        }
+                    </ul>
+                </li>
+            }
         </ul>
-        <ng-container *ngIf="!isCollapsed || iconsMovedToMenu">
+        @if (!isCollapsed || iconsMovedToMenu) {
             <ng-container *ngTemplateOutlet="iconMenu"></ng-container>
-        </ng-container>
+        }
     </div>
 </nav>
 <jhi-system-notification></jhi-system-notification>
 <div class="breadcrumb-container">
-    <div *ngIf="!isExamActive && breadcrumbs && breadcrumbs.length > 0">
-        <ol class="breadcrumb">
-            <li *ngFor="let breadcrumb of breadcrumbs; let i = index" class="breadcrumb-item">
-                <a
-                    class="breadcrumb-link"
-                    id="bread-crumb-{{ i }}"
-                    [routerLink]="breadcrumb.uri"
-                    routerLinkActive="active"
-                    [routerLinkActiveOptions]="{ exact: true }"
-                    *ngIf="breadcrumb && breadcrumb.translate"
-                    >{{ breadcrumb.label | artemisTranslate }}</a
-                >
-                <a
-                    class="breadcrumb-link"
-                    id="bread-crumb-plain-{{ i }}"
-                    [routerLink]="breadcrumb.uri"
-                    routerLinkActive="active"
-                    [routerLinkActiveOptions]="{ exact: true }"
-                    *ngIf="breadcrumb && !breadcrumb.translate"
-                    >{{ breadcrumb.label }}</a
-                >
-            </li>
-        </ol>
-    </div>
+    @if (!isExamActive && breadcrumbs && breadcrumbs.length > 0) {
+        <div>
+            <ol class="breadcrumb">
+                @for (breadcrumb of breadcrumbs; track breadcrumb; let i = $index) {
+                    <li class="breadcrumb-item">
+                        @if (breadcrumb && breadcrumb.translate) {
+                            <a
+                                class="breadcrumb-link"
+                                id="bread-crumb-{{ i }}"
+                                [routerLink]="breadcrumb.uri"
+                                routerLinkActive="active"
+                                [routerLinkActiveOptions]="{ exact: true }"
+                                >{{ breadcrumb.label | artemisTranslate }}</a
+                            >
+                        }
+                        @if (breadcrumb && !breadcrumb.translate) {
+                            <a
+                                class="breadcrumb-link"
+                                id="bread-crumb-plain-{{ i }}"
+                                [routerLink]="breadcrumb.uri"
+                                routerLinkActive="active"
+                                [routerLinkActiveOptions]="{ exact: true }"
+                                >{{ breadcrumb.label }}</a
+                            >
+                        }
+                    </li>
+                }
+            </ol>
+        </div>
+    }
 </div>
 <jhi-guided-tour></jhi-guided-tour>

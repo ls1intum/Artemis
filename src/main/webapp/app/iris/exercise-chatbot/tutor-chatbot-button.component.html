@@ -1,4 +1,8 @@
-<div class="chatbot-button" *ngIf="!chatOpen">
-    <jhi-iris-logo [size]="IrisLogoSize.MEDIUM" [look]="IrisLogoLookDirection.LEFT" (click)="handleButtonClick()" />
-    <fa-icon *ngIf="hasNewMessages" [icon]="faCircle" size="xl" class="unread-indicator"></fa-icon>
-</div>
+@if (!chatOpen) {
+    <div class="chatbot-button">
+        <jhi-iris-logo [size]="IrisLogoSize.MEDIUM" [look]="IrisLogoLookDirection.LEFT" (click)="handleButtonClick()" />
+        @if (hasNewMessages) {
+            <fa-icon [icon]="faCircle" size="xl" class="unread-indicator"></fa-icon>
+        }
+    </div>
+}

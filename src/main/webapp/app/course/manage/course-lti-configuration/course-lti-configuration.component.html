@@ -3,17 +3,12 @@
         <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course?.title }">
             LTI Configuration for course {{ course?.title }}
         </h4>
-
-        <a
-            *ngIf="course.isAtLeastInstructor"
-            id="edit-course"
-            [routerLink]="['/course-management', course.id!, 'lti-configuration', 'edit']"
-            class="tab-item btn btn-warning btn-md"
-        >
-            <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
-        </a>
+        @if (course.isAtLeastInstructor) {
+            <a id="edit-course" [routerLink]="['/course-management', course.id!, 'lti-configuration', 'edit']" class="tab-item btn btn-warning btn-md">
+                <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+            </a>
+        }
     </div>
-
     <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs mt-4">
         <ng-container ngbNavItem [ngbNavItem]="1">
             <a ngbNavLink jhiTranslate="artemisApp.lti.generalConfiguration">General Configuration</a>
@@ -24,14 +19,12 @@
                 <dd>
                     <span>{{ onlineCourseConfiguration?.userPrefix }}</span>
                 </dd>
-
                 <dt>
                     <span>{{ 'artemisApp.lti.requireExistingUser' | artemisTranslate }}</span>
                 </dt>
                 <dd>
                     <span>{{ (onlineCourseConfiguration?.requireExistingUser ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
                 </dd>
-
                 <dt>
                     <span>{{ 'artemisApp.lti.ltiLaunchTarget' | artemisTranslate }}</span>
                     <jhi-help-icon text="artemisApp.lti.launchTargetTooltip"></jhi-help-icon>
@@ -39,21 +32,18 @@
                 <dd>
                     <span>New Window</span>
                 </dd>
-
                 <dt>
                     <span>{{ 'artemisApp.lti.scored' | artemisTranslate }}</span>
                 </dt>
                 <dd>
                     <span>True</span>
                 </dd>
-
                 <dt>
                     <span>{{ 'artemisApp.lti.requestUsername' | artemisTranslate }}</span>
                 </dt>
                 <dd>
                     <span>True</span>
                 </dd>
-
                 <dt>
                     <span>{{ 'artemisApp.lti.requestEmail' | artemisTranslate }}</span>
                     <jhi-help-icon text="artemisApp.lti.requestUserEmailTooltip"></jhi-help-icon>
@@ -73,7 +63,6 @@
                     <span>{{ onlineCourseConfiguration?.ltiKey }}</span>
                     <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiKey ?? ''"></jhi-copy-icon-button>
                 </dd>
-
                 <dt>
                     <span>{{ 'artemisApp.lti.ltiSecret' | artemisTranslate }}</span>
                 </dt>
@@ -127,22 +116,24 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr *ngFor="let exercise of exercises" id="exercise-{{ exercise.id }}">
-                                        <td>{{ exercise.id ? exercise.id : '' }}</td>
-                                        <td>{{ exercise.type ? exercise.type : '' }}</td>
-                                        <td>{{ exercise.title ? exercise.title : '' }}</td>
-                                        <td>
-                                            {{ getExerciseLti10LaunchUrl(exercise) }}
-                                            <jhi-copy-icon-button [copyText]="getExerciseLti10LaunchUrl(exercise)"></jhi-copy-icon-button>
-                                        </td>
-                                        <td>
-                                            {{ getExerciseLti13LaunchUrl(exercise) }}
-                                            <jhi-copy-icon-button [copyText]="getExerciseLti13LaunchUrl(exercise)"></jhi-copy-icon-button>
-                                        </td>
-                                        <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
-                                        <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
-                                        <td>{{ exercise.assessmentDueDate ? exercise.assessmentDueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
-                                    </tr>
+                                    @for (exercise of exercises; track exercise) {
+                                        <tr id="exercise-{{ exercise.id }}">
+                                            <td>{{ exercise.id ? exercise.id : '' }}</td>
+                                            <td>{{ exercise.type ? exercise.type : '' }}</td>
+                                            <td>{{ exercise.title ? exercise.title : '' }}</td>
+                                            <td>
+                                                {{ getExerciseLti10LaunchUrl(exercise) }}
+                                                <jhi-copy-icon-button [copyText]="getExerciseLti10LaunchUrl(exercise)"></jhi-copy-icon-button>
+                                            </td>
+                                            <td>
+                                                {{ getExerciseLti13LaunchUrl(exercise) }}
+                                                <jhi-copy-icon-button [copyText]="getExerciseLti13LaunchUrl(exercise)"></jhi-copy-icon-button>
+                                            </td>
+                                            <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                            <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                            <td>{{ exercise.assessmentDueDate ? exercise.assessmentDueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                        </tr>
+                                    }
                                 </tbody>
                             </table>
                         </div>
