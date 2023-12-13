@@ -417,7 +417,7 @@ public class LocalVCServletService {
             throw new VersionControlException("Could not set test cases changed flag", e);
         }
 
-        ciTriggerService.triggerBuild(solutionParticipation, commitHash);
+        ciTriggerService.triggerBuild(solutionParticipation, commitHash, true);
 
         try {
             programmingTriggerService.triggerTemplateBuildAndNotifyUser(exercise.getId(), submission.getCommitHash(), SubmissionType.TEST);
