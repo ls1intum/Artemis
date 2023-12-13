@@ -7,102 +7,117 @@
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeBuildPlansWithAeolusTooltip"></jhi-help-icon>
         <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
     </div>
-    <div class="row m-1" *ngIf="programmingExercise.customizeBuildPlanWithAeolus">
-        <div
-            *ngIf="programmingExercise.windFile && programmingExercise.windFile.metadata && programmingExercise.windFile.metadata.docker"
-            (change)="generatePreview()"
-            class="mb-2"
-        >
-            <label>
-                <span jhiTranslate="artemisApp.programmingExercise.dockerImage">Docker Image</span>
-            </label>
-            <input
-                required
-                type="text"
-                class="form-control"
-                name="dockerImage"
-                id="field_dockerImage"
-                [(ngModel)]="programmingExercise.windFile.metadata.docker.image"
-                (change)="generatePreview()"
-            />
-        </div>
-        <div class="col-3 col-md-3">
-            <div class="d-flex flex-column h-100 justify-content-between">
-                <div class="list-group">
-                    <ng-container *ngFor="let action of this.programmingExercise.windFile?.actions">
-                        <ng-container *ngIf="isScriptAction(action)">
-                            <div
-                                class="list-group-item mb-1"
-                                [ngClass]="{ active: active?.name === action.name }"
-                                (click)="changeActiveAction(action.name)"
-                                (change)="generatePreview()"
-                            >
-                                <div class="d-flex w-100 justify-content-between">
-                                    <p class="mb-0">{{ action.name }}</p>
-                                    <div>
-                                        <button type="button" class="btn-close" (click)="deleteAction(action.name)" aria-label="Remove"></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </ng-container>
-                    </ng-container>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-primary" (click)="addAction('new action')">Add Action</button>
-                </div>
-            </div>
-        </div>
-        <div class="card col-4 col-md-4" *ngIf="active">
-            <div class="card-header">
-                <div class="form-group">
-                    <input required type="text" class="form-control" name="actionName" id="field_actionName" [(ngModel)]="active.name" (change)="generatePreview()" />
+    @if (programmingExercise.customizeBuildPlanWithAeolus) {
+        <div class="row m-1">
+            @if (programmingExercise.windFile && programmingExercise.windFile.metadata && programmingExercise.windFile.metadata.docker) {
+                <div (change)="generatePreview()" class="mb-2">
+                    <label>
+                        <span jhiTranslate="artemisApp.programmingExercise.dockerImage">Docker Image</span>
+                    </label>
                     <input
-                        class="form-control mt-2"
+                        required
                         type="text"
-                        name="workdir"
-                        id="field_workdir"
-                        [placeholder]="'artemisApp.programmingExercise.workdir' | artemisTranslate"
-                        [(ngModel)]="active.workdir"
+                        class="form-control"
+                        name="dockerImage"
+                        id="field_dockerImage"
+                        [(ngModel)]="programmingExercise.windFile.metadata.docker.image"
                         (change)="generatePreview()"
                     />
-                    <div class="form-check mt-2">
-                        <label class="form-check-label" for="field_alwaysrun" *ngIf="active">
-                            <input class="form-check-input" type="checkbox" name="runAlways" id="field_alwaysrun" [(ngModel)]="active.runAlways" (change)="generatePreview()" />
-                            <label class="form-check-label custom-control-label" for="field_alwaysrun" jhiTranslate="artemisApp.programmingExercise.runActionAlways">
-                                Always run, even if other actions fail
-                            </label>
-                        </label>
+                </div>
+            }
+            <div class="col-3 col-md-3">
+                <div class="d-flex flex-column h-100 justify-content-between">
+                    <div class="list-group">
+                        @for (action of this.programmingExercise.windFile?.actions; track action) {
+                            @if (isScriptAction(action)) {
+                                <div
+                                    class="list-group-item mb-1"
+                                    [ngClass]="{ active: active?.name === action.name }"
+                                    (click)="changeActiveAction(action.name)"
+                                    (change)="generatePreview()"
+                                >
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <p class="mb-0">{{ action.name }}</p>
+                                        <div>
+                                            <button type="button" class="btn-close" (click)="deleteAction(action.name)" aria-label="Remove"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-primary" (click)="addAction('new action')">Add Action</button>
                     </div>
                 </div>
             </div>
-            <div class="card-text">
-                <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2">Script</label>
-                <jhi-ace-editor #editor *ngIf="needsEditor()" (textChanged)="codeChanged($event)" />
-                <label jhiTranslate="artemisApp.programmingExercise.parameters" class="mb-2">Parameters</label>
-                <div class="list-group">
-                    <ng-container *ngFor="let parameter of getParameterKeys()">
-                        <div class="list-group-item mb-1">
-                            <div class="d-flex w-100 justify-content-between align-items-center">
-                                <input id="{{ parameter }}-key" type="text" class="form-control" placeholder="{{ parameter }}" value="{{ parameter }}" />
-                                <span class="input-group-text">=</span>
-                                <input id="{{ parameter }}-value" type="text" class="form-control" placeholder="{{ parameter }}" value="{{ getParameter(parameter) }}" />
-                                <div>
-                                    <button type="button" class="btn-close ml-2" (click)="deleteParameter(parameter)" aria-label="Remove"></button>
-                                </div>
+            @if (active) {
+                <div class="card col-4 col-md-4">
+                    <div class="card-header">
+                        <div class="form-group">
+                            <input required type="text" class="form-control" name="actionName" id="field_actionName" [(ngModel)]="active.name" (change)="generatePreview()" />
+                            <input
+                                class="form-control mt-2"
+                                type="text"
+                                name="workdir"
+                                id="field_workdir"
+                                [placeholder]="'artemisApp.programmingExercise.workdir' | artemisTranslate"
+                                [(ngModel)]="active.workdir"
+                                (change)="generatePreview()"
+                            />
+                            <div class="form-check mt-2">
+                                @if (active) {
+                                    <label class="form-check-label" for="field_alwaysrun">
+                                        <input
+                                            class="form-check-input"
+                                            type="checkbox"
+                                            name="runAlways"
+                                            id="field_alwaysrun"
+                                            [(ngModel)]="active.runAlways"
+                                            (change)="generatePreview()"
+                                        />
+                                        <label class="form-check-label custom-control-label" for="field_alwaysrun" jhiTranslate="artemisApp.programmingExercise.runActionAlways">
+                                            Always run, even if other actions fail
+                                        </label>
+                                    </label>
+                                }
                             </div>
                         </div>
-                    </ng-container>
+                    </div>
+                    <div class="card-text">
+                        <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2">Script</label>
+                        @if (needsEditor()) {
+                            <jhi-ace-editor #editor (textChanged)="codeChanged($event)" />
+                        }
+                        <label jhiTranslate="artemisApp.programmingExercise.parameters" class="mb-2">Parameters</label>
+                        <div class="list-group">
+                            @for (parameter of getParameterKeys(); track parameter) {
+                                <div class="list-group-item mb-1">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <input id="{{ parameter }}-key" type="text" class="form-control" placeholder="{{ parameter }}" value="{{ parameter }}" />
+                                        <span class="input-group-text">=</span>
+                                        <input id="{{ parameter }}-value" type="text" class="form-control" placeholder="{{ parameter }}" value="{{ getParameter(parameter) }}" />
+                                        <div>
+                                            <button type="button" class="btn-close ml-2" (click)="deleteParameter(parameter)" aria-label="Remove"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-outline-primary mb-2" (click)="addParameter()">Add Parameter</button>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <button type="button" class="btn btn-outline-primary mb-2" (click)="addParameter()">Add Parameter</button>
+            }
+            @if (active) {
+                <div class="card col-5 col-md-5">
+                    <div class="card-header">This is generated from your input</div>
+                    <div class="card-text">
+                        <jhi-ace-editor #generatedEditor />
+                    </div>
                 </div>
-            </div>
+            }
         </div>
-        <div class="card col-5 col-md-5" *ngIf="active">
-            <div class="card-header">This is generated from your input</div>
-            <div class="card-text">
-                <jhi-ace-editor #generatedEditor />
-            </div>
-        </div>
-    </div>
+    }
 </div>
