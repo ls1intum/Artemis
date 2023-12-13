@@ -1,40 +1,54 @@
 <div class="card-footer code-editor-status text-nowrap">
-    <div id="commit_state" [ngSwitch]="commitState">
-        <div *ngSwitchCase="CommitState.UNDEFINED">
-            <span ngbTooltip="{{ 'artemisApp.editor.changesUndefinedTooltip' | artemisTranslate }}">
-                <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-info me-1"></fa-icon>
-                <span class="text-info">{{ 'artemisApp.editor.changesUndefined' | artemisTranslate }}</span>
-            </span>
-        </div>
-        <div *ngSwitchCase="CommitState.COULD_NOT_BE_RETRIEVED">
-            <span ngbTooltip="{{ 'artemisApp.editor.changesErrorTooltip' | artemisTranslate }}">
-                <fa-icon [icon]="faTimesCircle" class="text-danger me-1"></fa-icon>
-                <span class="text-danger">{{ 'artemisApp.editor.changesError' | artemisTranslate }}</span>
-            </span>
-        </div>
-        <div *ngSwitchCase="CommitState.CONFLICT">
-            <span ngbTooltip="{{ 'artemisApp.editor.changesConflictTooltip' | artemisTranslate }}">
-                <fa-icon [icon]="faTimesCircle" class="text-danger me-1"></fa-icon>
-                <span class="text-danger">{{ 'artemisApp.editor.changesConflict' | artemisTranslate }}</span>
-            </span>
-        </div>
-        <div *ngSwitchCase="CommitState.CLEAN">
-            <span ngbTooltip="{{ 'artemisApp.editor.changesSubmittedTooltip' | artemisTranslate }}">
-                <fa-icon [icon]="faCheckCircle" class="text-success me-1"></fa-icon>
-                <span class="text-info">{{ 'artemisApp.editor.changesSubmitted' | artemisTranslate }}</span>
-            </span>
-        </div>
-        <div *ngSwitchCase="CommitState.UNCOMMITTED_CHANGES">
-            <span ngbTooltip="{{ 'artemisApp.editor.unsubmittedChangesTooltip' | artemisTranslate }}">
-                <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1"></fa-icon>
-                <span class="text-info">{{ 'artemisApp.editor.unsubmittedChanges' | artemisTranslate }}</span>
-            </span>
-        </div>
-        <div *ngSwitchCase="CommitState.COMMITTING">
-            <span ngbTooltip="{{ 'artemisApp.editor.submittingChangesTooltip' | artemisTranslate }}">
-                <fa-icon [icon]="faCircleNotch" class="text-info me-1" [spin]="true"></fa-icon>
-                <span class="text-info">{{ 'artemisApp.editor.submittingChanges' | artemisTranslate }}</span>
-            </span>
-        </div>
+    <div id="commit_state">
+        @switch (commitState) {
+            @case (CommitState.UNDEFINED) {
+                <div>
+                    <span ngbTooltip="{{ 'artemisApp.editor.changesUndefinedTooltip' | artemisTranslate }}">
+                        <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-info me-1"></fa-icon>
+                        <span class="text-info">{{ 'artemisApp.editor.changesUndefined' | artemisTranslate }}</span>
+                    </span>
+                </div>
+            }
+            @case (CommitState.COULD_NOT_BE_RETRIEVED) {
+                <div>
+                    <span ngbTooltip="{{ 'artemisApp.editor.changesErrorTooltip' | artemisTranslate }}">
+                        <fa-icon [icon]="faTimesCircle" class="text-danger me-1"></fa-icon>
+                        <span class="text-danger">{{ 'artemisApp.editor.changesError' | artemisTranslate }}</span>
+                    </span>
+                </div>
+            }
+            @case (CommitState.CONFLICT) {
+                <div>
+                    <span ngbTooltip="{{ 'artemisApp.editor.changesConflictTooltip' | artemisTranslate }}">
+                        <fa-icon [icon]="faTimesCircle" class="text-danger me-1"></fa-icon>
+                        <span class="text-danger">{{ 'artemisApp.editor.changesConflict' | artemisTranslate }}</span>
+                    </span>
+                </div>
+            }
+            @case (CommitState.CLEAN) {
+                <div>
+                    <span ngbTooltip="{{ 'artemisApp.editor.changesSubmittedTooltip' | artemisTranslate }}">
+                        <fa-icon [icon]="faCheckCircle" class="text-success me-1"></fa-icon>
+                        <span class="text-info">{{ 'artemisApp.editor.changesSubmitted' | artemisTranslate }}</span>
+                    </span>
+                </div>
+            }
+            @case (CommitState.UNCOMMITTED_CHANGES) {
+                <div>
+                    <span ngbTooltip="{{ 'artemisApp.editor.unsubmittedChangesTooltip' | artemisTranslate }}">
+                        <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1"></fa-icon>
+                        <span class="text-info">{{ 'artemisApp.editor.unsubmittedChanges' | artemisTranslate }}</span>
+                    </span>
+                </div>
+            }
+            @case (CommitState.COMMITTING) {
+                <div>
+                    <span ngbTooltip="{{ 'artemisApp.editor.submittingChangesTooltip' | artemisTranslate }}">
+                        <fa-icon [icon]="faCircleNotch" class="text-info me-1" [spin]="true"></fa-icon>
+                        <span class="text-info">{{ 'artemisApp.editor.submittingChanges' | artemisTranslate }}</span>
+                    </span>
+                </div>
+            }
+        }
     </div>
 </div>

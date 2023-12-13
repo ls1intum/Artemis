@@ -1,32 +1,39 @@
 <div class="editable-instruction-container__status__container">
-    <ng-container *ngIf="invalidTestCases.length + missingTestCases.length > 0; else testCasesOk">
+    @if (invalidTestCases.length + missingTestCases.length > 0) {
         <div id="instruction_analysis_test-case-issues" class="editable-instruction-container__status__item">
             <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="testCasesTooltipContent"></fa-icon>
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues">Test case issues.</span>
         </div>
-    </ng-container>
-    <ng-template #testCasesOk>
+    } @else {
         <div id="instruction_analysis_test-case-ok" class="editable-instruction-container__status__item">
             <fa-icon [icon]="faCheckCircle" class="text-success me-1"></fa-icon>
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok">Test cases ok.</span>
         </div>
-    </ng-template>
+    }
     <ng-template #testCasesTooltipContent>
         <div class="text-start w-100">
-            <div *ngIf="invalidTestCases.length">
-                <span [innerHTML]="'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCases' | artemisTranslate: { number: invalidTestCases.length }"
-                    >There are {{ invalidTestCases.length }} test cases that are part of the problem statement but can't be found in your test repository:</span
-                >
-                <ul>
-                    <li *ngFor="let test of invalidTestCases">{{ test }}</li>
-                </ul>
-            </div>
-            <div *ngIf="missingTestCases.length" class="text-start">
-                <span>{{ 'artemisApp.programmingExercise.testCaseAnalysis.missingTestCases' | artemisTranslate: { number: missingTestCases.length } }}</span>
-                <ul>
-                    <li *ngFor="let test of missingTestCases">{{ test }}</li>
-                </ul>
-            </div>
+            @if (invalidTestCases.length) {
+                <div>
+                    <span [innerHTML]="'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCases' | artemisTranslate: { number: invalidTestCases.length }"
+                        >There are {{ invalidTestCases.length }} test cases that are part of the problem statement but can't be found in your test repository:</span
+                    >
+                    <ul>
+                        @for (test of invalidTestCases; track test) {
+                            <li>{{ test }}</li>
+                        }
+                    </ul>
+                </div>
+            }
+            @if (missingTestCases.length) {
+                <div class="text-start">
+                    <span>{{ 'artemisApp.programmingExercise.testCaseAnalysis.missingTestCases' | artemisTranslate: { number: missingTestCases.length } }}</span>
+                    <ul>
+                        @for (test of missingTestCases; track test) {
+                            <li>{{ test }}</li>
+                        }
+                    </ul>
+                </div>
+            }
         </div>
     </ng-template>
     <jhi-task-count-warning [numOfTasks]="numOfTasks"></jhi-task-count-warning>

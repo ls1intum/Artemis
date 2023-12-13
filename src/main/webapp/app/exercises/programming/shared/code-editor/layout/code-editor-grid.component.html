@@ -3,45 +3,52 @@
     <nav class="editor-statusbar">
         <ng-content select="[editorNavbar]"></ng-content>
     </nav>
-
     <div class="editor-main">
         <div class="editor-main__content">
             <!-- File browser -->
             <div #fileBrowser class="editor-sidebar-left collapsable">
                 <ng-content select="[editorSidebarLeft]"></ng-content>
                 <!-- Required for resizing; don't remove empty span -->
-                <fa-icon *ngIf="!fileBrowserIsCollapsed" [icon]="faGripLinesVertical" id="draggableIconForFileBrowser" class="rg-sidebar-left text-lightgrey">
-                    <span></span>
-                </fa-icon>
-                <span *ngIf="fileBrowserIsCollapsed" class="separator"></span>
+                @if (!fileBrowserIsCollapsed) {
+                    <fa-icon [icon]="faGripLinesVertical" id="draggableIconForFileBrowser" class="rg-sidebar-left text-lightgrey">
+                        <span></span>
+                    </fa-icon>
+                }
+                @if (fileBrowserIsCollapsed) {
+                    <span class="separator"></span>
+                }
             </div>
-
             <!-- Editor -->
             <div class="guided-tour-editor editor-center">
                 <ng-content select="[editorCenter]"></ng-content>
             </div>
-
             <!-- Instructions -->
             <div #instructions class="editor-sidebar-right collapsable">
-                <fa-icon *ngIf="!rightPanelIsCollapsed" [icon]="faGripLinesVertical" id="draggableIconForInstructions" class="rg-sidebar-right text-lightgrey">
-                    <span></span>
-                </fa-icon>
-                <span *ngIf="rightPanelIsCollapsed" class="separator"></span>
+                @if (!rightPanelIsCollapsed) {
+                    <fa-icon [icon]="faGripLinesVertical" id="draggableIconForInstructions" class="rg-sidebar-right text-lightgrey">
+                        <span></span>
+                    </fa-icon>
+                }
+                @if (rightPanelIsCollapsed) {
+                    <span class="separator"></span>
+                }
                 <ng-content select="[editorSidebarRight]"></ng-content>
             </div>
         </div>
-
         <!-- Required for resizing; don't remove empty span -->
         <fa-icon [icon]="faGripLines" class="rg-main-bottom text-lightgrey"><span></span></fa-icon>
     </div>
-
     <!-- Build Output -->
     <div #buildOutput class="editor-bottom collapsable">
         <ng-content select="[editorBottomArea]" class="editor-bottom-resizable"></ng-content>
         <!-- Required for resizing; don't remove empty span -->
-        <fa-icon *ngIf="!buildOutputIsCollapsed" [icon]="faGripLines" id="draggableIconForBuildOutput" class="rg-bottom-bottom text-lightgrey"><span></span></fa-icon>
+        @if (!buildOutputIsCollapsed) {
+            <fa-icon [icon]="faGripLines" id="draggableIconForBuildOutput" class="rg-bottom-bottom text-lightgrey"><span></span></fa-icon>
+        }
     </div>
-    <div *ngIf="isTutorAssessment">
-        <ng-content select="[editorBottom]"></ng-content>
-    </div>
+    @if (isTutorAssessment) {
+        <div>
+            <ng-content select="[editorBottom]"></ng-content>
+        </div>
+    }
 </div>
