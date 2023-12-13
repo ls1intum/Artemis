@@ -38,8 +38,8 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReport
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildScriptProvider;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
@@ -135,7 +135,7 @@ public class ProgrammingExerciseService {
 
     private final Optional<IrisSettingsService> irisSettingsService;
 
-    private final Optional<AeolusBuildScriptProvider> aeolusBuildScriptProvider;
+    private final Optional<BuildScriptGenerationService> buildScriptGenerationService;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
@@ -149,7 +149,7 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService,
-            Optional<AeolusBuildScriptProvider> aeolusBuildScriptProvider) {
+            Optional<BuildScriptGenerationService> buildScriptGenerationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -177,7 +177,7 @@ public class ProgrammingExerciseService {
         this.channelService = channelService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.irisSettingsService = irisSettingsService;
-        this.aeolusBuildScriptProvider = aeolusBuildScriptProvider;
+        this.buildScriptGenerationService = buildScriptGenerationService;
     }
 
     /**
@@ -378,8 +378,8 @@ public class ProgrammingExerciseService {
         giveCIProjectPermissions(programmingExercise);
 
         Windfile windfile = programmingExercise.getWindfile();
-        if (windfile != null && aeolusBuildScriptProvider.isPresent()) {
-            aeolusBuildScriptProvider.get().getScriptFor(programmingExercise);
+        if (windfile != null && buildScriptGenerationService.isPresent()) {
+            buildScriptGenerationService.get().saveScript(programmingExercise);
         }
 
         // if the exercise is imported from a file, the changes fixing the project name will trigger a first build anyway, so

@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
 
 /**
  * Handles the request to {@link de.tum.in.www1.artemis.web.rest.AeolusTemplateResource} and Artemis internal
@@ -41,9 +42,13 @@ public class AeolusTemplateService {
 
     private final Map<String, Windfile> templateCache = new ConcurrentHashMap<>();
 
-    public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService) {
+    private final BuildScriptProvider buildScriptProvider;
+
+    public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
+            BuildScriptProvider buildScriptProvider) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.resourceLoaderService = resourceLoaderService;
+        this.buildScriptProvider = buildScriptProvider;
     }
 
     /**
@@ -87,7 +92,7 @@ public class AeolusTemplateService {
      */
     public Windfile getWindfileFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage)
             throws IOException {
-        String templateFileName = buildAeolusTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage);
+        String templateFileName = buildScriptProvider.buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "yaml");
         String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
         if (templateCache.containsKey(uniqueKey)) {
             return templateCache.get(uniqueKey);
@@ -149,31 +154,5 @@ public class AeolusTemplateService {
         dockerConfig.setParameters(programmingLanguageConfiguration.getDefaultDockerFlags());
         metadata.setDocker(dockerConfig);
         windfile.setMetadata(metadata);
-    }
-
-    /**
-     * Returns the file content of the template file for the given language and project type with the different options
-     *
-     * @param projectType    The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
-     * @param staticAnalysis whether the static analysis template should be used
-     * @param sequentialRuns whether the sequential runs template should be used
-     * @param testCoverage   whether the test coverage template should be used
-     * @return The filename of the requested configuration
-     */
-    private String buildAeolusTemplateName(Optional<ProjectType> projectType, Boolean staticAnalysis, Boolean sequentialRuns, Boolean testCoverage) {
-        List<String> fileNameComponents = new ArrayList<>();
-
-        fileNameComponents.add(projectType.map(Enum::name).orElse("default").toLowerCase());
-
-        if (staticAnalysis) {
-            fileNameComponents.add("static");
-        }
-        if (sequentialRuns) {
-            fileNameComponents.add("sequential");
-        }
-        if (testCoverage) {
-            fileNameComponents.add("coverage");
-        }
-        return String.join("_", fileNameComponents) + ".yaml";
     }
 }
