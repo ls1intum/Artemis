@@ -148,6 +148,11 @@
                                     <ngb-highlight [result]="user.name" [term]="searchTerm"></ngb-highlight>
                                 </td>
                                 <td>
+                                    @if (!user.activated) {
+                                        <button class="btn btn-danger btn-sm" (click)="setActive(user, true)" jhiTranslate="artemisApp.userManagement.deactivated">
+                                            Deactivated
+                                        </button>
+                                    }
                                     @if (user.activated) {
                                         <button
                                             class="btn btn-success btn-sm"
@@ -156,10 +161,6 @@
                                             jhiTranslate="artemisApp.userManagement.activated"
                                         >
                                             Activated
-                                        </button>
-                                    } @else {
-                                        <button class="btn btn-danger btn-sm" (click)="setActive(user, true)" jhiTranslate="artemisApp.userManagement.deactivated">
-                                            Deactivated
                                         </button>
                                     }
                                 </td>

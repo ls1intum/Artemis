@@ -2,7 +2,8 @@
     <div class="text-center">
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
     </div>
-} @else {
+}
+@if (!isLoading) {
     <div [class]="codeHints?.length ? '' : 'text-center'">
         @if (codeHints?.length) {
             <button
@@ -50,9 +51,9 @@
         @for (codeHint of codeHints; track codeHint) {
             <mat-expansion-panel class="code-hint-creation-expansion-panel-wrapper">
                 <mat-expansion-panel-header>
-                    <mat-panel-title>
-                        <td>{{ codeHint.title }}</td>
-                    </mat-panel-title>
+                    <mat-panel-title
+                        ><td>{{ codeHint.title }}</td></mat-panel-title
+                    >
                     <mat-panel-description>
                         {{ codeHint?.programmingExerciseTask?.taskName }}
                     </mat-panel-description>

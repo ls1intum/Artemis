@@ -43,12 +43,12 @@ export class AuditsComponent implements OnInit {
         this.handleNavigation();
     }
 
-    get canLoad(): boolean {
+    canLoad(): boolean {
         return this.fromDate !== '' && this.toDate !== '';
     }
 
     transition(): void {
-        if (this.canLoad) {
+        if (this.canLoad()) {
             this.router.navigate(['/admin/audits'], {
                 queryParams: {
                     page: this.page,

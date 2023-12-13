@@ -4,7 +4,8 @@
             <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
         </div>
     </div>
-} @else {
+}
+@if (!isLoading) {
     <div>
         @for (node of path; track node; let last = $last) {
             <div>

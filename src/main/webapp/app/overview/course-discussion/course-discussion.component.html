@@ -144,7 +144,9 @@
                 <div class="col-12 post-result-information">
                     {{ 'artemisApp.metis.loadingPosts' | artemisTranslate }}
                 </div>
-            } @else {
+            }
+            <!-- information on loaded posts -->
+            @if (!isLoading) {
                 <div class="ms-2 col-12 post-result-information">
                     {{ totalItems === 0 ? ('artemisApp.metis.noPosts' | artemisTranslate) : ('artemisApp.metis.postNumberInformation' | artemisTranslate: { number: totalItems }) }}
                 </div>

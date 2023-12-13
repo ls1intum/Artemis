@@ -1,10 +1,11 @@
 <h3 class="top-container flex-wrap flex-lg-nowrap">
     <!--back button only used in assessment dashboard-->
     <div class="row-container me-2">
+        @if (!isTestRun) {
+            <span jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
+        }
         @if (isTestRun) {
             <span jhiTranslate="artemisApp.assessment.testRunAssessment">Test Run Assessment</span>
-        } @else {
-            <span jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
         }
         @if (isIllegalSubmission) {
             <span class="badge bg-danger ms-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission">
@@ -179,8 +180,7 @@
                     </button>
                 }
                 <ng-template #nextSubmissionShortcut>
-                    {{ 'artemisApp.assessment.button.control' | artemisTranslate }} + Shift +
-                    <fa-icon [icon]="faSquareCaretRight"></fa-icon>
+                    {{ 'artemisApp.assessment.button.control' | artemisTranslate }} + Shift + <fa-icon [icon]="faSquareCaretRight"></fa-icon>
                 </ng-template>
                 @if (assessNextVisible) {
                     <button

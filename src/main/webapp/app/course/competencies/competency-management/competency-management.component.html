@@ -4,7 +4,8 @@
             <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
         </div>
     </div>
-} @else {
+}
+@if (!isLoading) {
     <div>
         <div class="d-flex flex-wrap">
             <div class="my-auto d-flex align-items-center">
@@ -271,8 +272,7 @@
                                 </td>
                                 <td class="text-end">
                                     <button id="removeButton" class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
-                                        <fa-icon [icon]="faTrash"></fa-icon>
-                                        {{ 'artemisApp.competency.competencyCard.remove' | artemisTranslate }}
+                                        <fa-icon [icon]="faTrash"></fa-icon> {{ 'artemisApp.competency.competencyCard.remove' | artemisTranslate }}
                                     </button>
                                 </td>
                             </tr>

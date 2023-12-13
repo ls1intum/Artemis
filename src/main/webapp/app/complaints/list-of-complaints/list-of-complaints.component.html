@@ -96,10 +96,14 @@
                             <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | artemisTranslate }}</a>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
+                    }
+                    @if (course?.isAtLeastInstructor) {
                         <th jhiSortBy="student.name">
                             <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | artemisTranslate }}</a>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
+                    }
+                    @if (course?.isAtLeastInstructor) {
                         <th jhiSortBy="complaintResponse.reviewer.name">
                             <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a>
                             <fa-icon [icon]="faSort"></fa-icon>
@@ -143,9 +147,13 @@
                             <td>
                                 <span>{{ complaint.student?.login }}</span>
                             </td>
+                        }
+                        @if (course?.isAtLeastInstructor) {
                             <td>
                                 <span>{{ complaint.student?.name }}</span>
                             </td>
+                        }
+                        @if (course?.isAtLeastInstructor) {
                             <td>
                                 <span>{{ complaint.complaintResponse?.reviewer?.name }}</span>
                             </td>

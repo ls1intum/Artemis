@@ -180,6 +180,8 @@
                     <a class="btn btn-primary summery ms-4" [routerLink]="'./summary'">
                         <span jhiTranslate="artemisApp.exam.summary">Summary</span>
                     </a>
+                }
+                @if (course?.isAtLeastInstructor) {
                     <div ngbTooltip="{{ 'artemisApp.examTimeline.disabledTooltip' | artemisTranslate }}" [disableTooltip]="studentExam?.submitted!">
                         <button class="btn btn-primary mb-auto ms-5" [routerLink]="'./exam-timeline'" [disabled]="!studentExam.submitted">
                             <span jhiTranslate="artemisApp.examTimeline.breadcrumb">Timeline</span>

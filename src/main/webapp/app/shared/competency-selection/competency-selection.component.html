@@ -16,7 +16,8 @@
                     <span class="sr-only">Loading...</span>
                 </div>
             </div>
-        } @else {
+        }
+        @if (!isLoading) {
             <select
                 class="form-select"
                 id="competency-input-field"

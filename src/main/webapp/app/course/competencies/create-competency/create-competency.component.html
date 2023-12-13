@@ -4,7 +4,8 @@
             <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
         </div>
     </div>
-} @else {
+}
+@if (!isLoading) {
     <div class="container">
         <div class="d-flex align-items-center">
             <h3>{{ 'artemisApp.competency.createCompetency.title' | artemisTranslate }}</h3>

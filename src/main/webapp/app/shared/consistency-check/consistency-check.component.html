@@ -14,7 +14,8 @@
                         <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
                     </div>
                 </div>
-            } @else {
+            }
+            @if (!isLoading) {
                 <div class="mt-3 text-center">
                     @if (inconsistencies != undefined && inconsistencies.length == 0) {
                         <div>

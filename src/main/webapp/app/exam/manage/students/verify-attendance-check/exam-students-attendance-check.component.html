@@ -5,7 +5,8 @@
                 <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
             </div>
         </div>
-    } @else {
+    }
+    @if (!isLoading) {
         <div class="d-flex border-bottom pb-2 mt-3">
             @if (!hasExamStarted) {
                 <div>
