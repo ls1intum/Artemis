@@ -9,13 +9,17 @@
         <label class="form-control-label" jhiTranslate="artemisApp.lti.userPrefix" for="field_userPrefix">User Prefix</label>
         <jhi-help-icon text="artemisApp.lti.edit.userPrefixTooltip"></jhi-help-icon>
         <input required type="text" class="form-control" name="userPrefix" id="field_userPrefix" formControlName="userPrefix" />
-        <ng-container *ngIf="userPrefix.invalid && (userPrefix.dirty || userPrefix.touched)">
-            <div *ngIf="(userPrefix.errors! | keyvalue | removekeys: ['required']).length > 0" class="alert alert-danger">
-                <div *ngFor="let e of userPrefix.errors! | keyvalue | removekeys: ['required']">
-                    <div [jhiTranslate]="'artemisApp.lti.edit.form.userPrefix' + '.' + e.key"></div>
+        @if (userPrefix.invalid && (userPrefix.dirty || userPrefix.touched)) {
+            @if ((userPrefix.errors! | keyvalue | removekeys: ['required']).length > 0) {
+                <div class="alert alert-danger">
+                    @for (e of userPrefix.errors! | keyvalue | removekeys: ['required']; track e) {
+                        <div>
+                            <div [jhiTranslate]="'artemisApp.lti.edit.form.userPrefix' + '.' + e.key"></div>
+                        </div>
+                    }
                 </div>
-            </div>
-        </ng-container>
+            }
+        }
     </div>
     <div class="form-group">
         <input
@@ -55,16 +59,17 @@
                         }}
                     </button>
                     <div ngbDropdownMenu>
-                        <button
-                            type="button"
-                            *ngFor="let platform of ltiConfiguredPlatforms"
-                            (click)="setPlatform(platform)"
-                            [class.selected]="platform.id === onlineCourseConfiguration.ltiPlatformConfiguration?.id"
-                            [ngbTooltip]="platform.customName"
-                            ngbDropdownItem
-                        >
-                            {{ getLtiPlatform(platform) }}
-                        </button>
+                        @for (platform of ltiConfiguredPlatforms; track platform) {
+                            <button
+                                type="button"
+                                (click)="setPlatform(platform)"
+                                [class.selected]="platform.id === onlineCourseConfiguration.ltiPlatformConfiguration?.id"
+                                [ngbTooltip]="platform.customName"
+                                ngbDropdownItem
+                            >
+                                {{ getLtiPlatform(platform) }}
+                            </button>
+                        }
                     </div>
                 </div>
             </div>

@@ -1,74 +1,100 @@
-<div *ngIf="quizExercise">
-    <div class="row">
-        <div class="col-md-8 offset-md-2 text-center">
-            <h3>{{ quizExercise.title }}</h3>
-            <div class="row">
-                <div class="col-md-4 text-start" *ngIf="question">
-                    <h3>{{ question.title }} <span class="invalid-question" *ngIf="question.invalid" jhiTranslate="artemisApp.showStatistic.invalid"></span></h3>
-                    <h4 [innerHTML]="questionTextRendered"></h4>
-                    <ol type="A" *ngIf="question.answerOptions">
-                        <li *ngFor="let answer of question.answerOptions; let i = index">
-                            <span class="d-flex" [innerHTML]="answerTextRendered[i]"></span>&nbsp;<span
-                                class="invalid-question"
-                                *ngIf="answer.invalid"
-                                jhiTranslate="artemisApp.showStatistic.invalid"
-                            ></span>
-                        </li>
-                    </ol>
-                </div>
-                <div #containerRef class="col-md-8 text-center">
-                    <p>&nbsp;</p>
-                    <div class="row">
-                        <div class="col-md-7 text-start">
-                            <p id="text" class="chart-title-text">
-                                <span *ngIf="rated" jhiTranslate="artemisApp.showStatistic.questionStatistic.titleRated"></span>
-                                <span *ngIf="!rated" jhiTranslate="artemisApp.showStatistic.questionStatistic.titleUnrated"></span>
-                            </p>
+@if (quizExercise) {
+    <div>
+        <div class="row">
+            <div class="col-md-8 offset-md-2 text-center">
+                <h3>{{ quizExercise.title }}</h3>
+                <div class="row">
+                    @if (question) {
+                        <div class="col-md-4 text-start">
+                            <h3>
+                                {{ question.title }}
+                                @if (question.invalid) {
+                                    <span class="invalid-question" jhiTranslate="artemisApp.showStatistic.invalid"></span>
+                                }
+                            </h3>
+                            <h4 [innerHTML]="questionTextRendered"></h4>
+                            @if (question.answerOptions) {
+                                <ol type="A">
+                                    @for (answer of question.answerOptions; track answer; let i = $index) {
+                                        <li>
+                                            <span class="d-flex" [innerHTML]="answerTextRendered[i]"></span>&nbsp;
+                                            @if (answer.invalid) {
+                                                <span class="invalid-question" jhiTranslate="artemisApp.showStatistic.invalid"></span>
+                                            }
+                                        </li>
+                                    }
+                                </ol>
+                            }
                         </div>
-                        <div class="col-md-5 text-end">
-                            <p class="chart-title-text">
-                                <span>{{ participants }} </span><span jhiTranslate="artemisApp.showStatistic.participants"></span>
-                            </p>
+                    }
+                    <div #containerRef class="col-md-8 text-center">
+                        <p>&nbsp;</p>
+                        <div class="row">
+                            <div class="col-md-7 text-start">
+                                <p id="text" class="chart-title-text">
+                                    @if (rated) {
+                                        <span jhiTranslate="artemisApp.showStatistic.questionStatistic.titleRated"></span>
+                                    }
+                                    @if (!rated) {
+                                        <span jhiTranslate="artemisApp.showStatistic.questionStatistic.titleUnrated"></span>
+                                    }
+                                </p>
+                            </div>
+                            <div class="col-md-5 text-end">
+                                <p class="chart-title-text">
+                                    <span>{{ participants }} </span><span jhiTranslate="artemisApp.showStatistic.participants"></span>
+                                </p>
+                            </div>
                         </div>
+                        <ngx-charts-bar-vertical
+                            [view]="[containerRef.offsetWidth, 350]"
+                            [results]="ngxData"
+                            [scheme]="ngxColor"
+                            [showDataLabel]="true"
+                            [showXAxisLabel]="true"
+                            [showYAxisLabel]="true"
+                            [xAxisLabel]="xAxisLabel"
+                            [yAxisLabel]="yAxisLabel"
+                            [xAxis]="true"
+                            [yAxis]="true"
+                            [yScaleMax]="maxScale"
+                            [tooltipDisabled]="true"
+                            [rotateXAxisTicks]="true"
+                            [maxXAxisTickLength]="17"
+                            [dataLabelFormatting]="bindFormatting"
+                            [roundEdges]="false"
+                        >
+                        </ngx-charts-bar-vertical>
+                        <div class="col-md-12 text-center button-row">
+                            <button (click)="switchSolution()" type="button" class="btn btn-primary">
+                                @if (showSolution) {
+                                    <fa-icon [icon]="faCheckCircle"></fa-icon>
+                                }
+                                @if (!showSolution) {
+                                    <fa-icon [icon]="faTimesCircle"></fa-icon>
+                                }
+                                @if (showSolution) {
+                                    <span jhiTranslate="artemisApp.showStatistic.hideSolution"></span>
+                                }
+                                @if (!showSolution) {
+                                    <span jhiTranslate="artemisApp.showStatistic.showSolution"></span>
+                                }
+                            </button>
+                            <button (click)="switchRated()" type="button" class="btn btn-primary">
+                                <fa-icon [icon]="faSync"></fa-icon>
+                                @if (rated) {
+                                    <span jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
+                                }
+                                @if (!rated) {
+                                    <span jhiTranslate="artemisApp.showStatistic.switchToRated"></span>
+                                }
+                            </button>
+                        </div>
+                        <p>&nbsp;</p>
                     </div>
-                    <ngx-charts-bar-vertical
-                        [view]="[containerRef.offsetWidth, 350]"
-                        [results]="ngxData"
-                        [scheme]="ngxColor"
-                        [showDataLabel]="true"
-                        [showXAxisLabel]="true"
-                        [showYAxisLabel]="true"
-                        [xAxisLabel]="xAxisLabel"
-                        [yAxisLabel]="yAxisLabel"
-                        [xAxis]="true"
-                        [yAxis]="true"
-                        [yScaleMax]="maxScale"
-                        [tooltipDisabled]="true"
-                        [rotateXAxisTicks]="true"
-                        [maxXAxisTickLength]="17"
-                        [dataLabelFormatting]="bindFormatting"
-                        [roundEdges]="false"
-                    >
-                    </ngx-charts-bar-vertical>
-
-                    <div class="col-md-12 text-center button-row">
-                        <button (click)="switchSolution()" type="button" class="btn btn-primary">
-                            <fa-icon *ngIf="showSolution" [icon]="faCheckCircle"></fa-icon>
-                            <fa-icon *ngIf="!showSolution" [icon]="faTimesCircle"></fa-icon>
-                            <span *ngIf="showSolution" jhiTranslate="artemisApp.showStatistic.hideSolution"></span>
-                            <span *ngIf="!showSolution" jhiTranslate="artemisApp.showStatistic.showSolution"></span>
-                        </button>
-
-                        <button (click)="switchRated()" type="button" class="btn btn-primary">
-                            <fa-icon [icon]="faSync"></fa-icon>
-                            <span *ngIf="rated" jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
-                            <span *ngIf="!rated" jhiTranslate="artemisApp.showStatistic.switchToRated"></span>
-                        </button>
-                    </div>
-                    <p>&nbsp;</p>
                 </div>
             </div>
         </div>
+        <jhi-quiz-statistics-footer></jhi-quiz-statistics-footer>
     </div>
-    <jhi-quiz-statistics-footer></jhi-quiz-statistics-footer>
-</div>
+}

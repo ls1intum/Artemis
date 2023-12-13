@@ -1,3 +1,5 @@
 <div class="row">
-    <jhi-overview-lti-course-card *ngFor="let course of courses" class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-3" [course]="course"></jhi-overview-lti-course-card>
+    @for (course of courses; track course) {
+        <jhi-overview-lti-course-card class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-3" [course]="course"></jhi-overview-lti-course-card>
+    }
 </div>

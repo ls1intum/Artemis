@@ -1,7 +1,6 @@
 <ng-container>
     <ng-content></ng-content>
     <button
-        [ngSwitch]="mode"
         type="button"
         class="btn d-none d-sm-block"
         style="position: absolute"
@@ -15,10 +14,20 @@
         (click)="toggleFullscreen()"
         [ngbTooltip]="'artemisApp.modelingEditor.fullscreen.tooltip' | artemisTranslate"
     >
-        <fa-icon [icon]="faCompress" *ngSwitchCase="'compact'"></fa-icon>
-        <span *ngSwitchCase="'extended'"
-            ><ng-container *ngIf="!isFullScreen(); else exitButtonText"> {{ 'artemisApp.modelingEditor.fullscreen.enterButtonText' | artemisTranslate }}</ng-container>
-            <ng-template #exitButtonText>{{ 'artemisApp.modelingEditor.fullscreen.exitButtonText' | artemisTranslate }}</ng-template>
-        </span>
+        @switch (mode) {
+            @case ('compact') {
+                <fa-icon [icon]="faCompress"></fa-icon>
+            }
+            @case ('extended') {
+                <span>
+                    @if (!isFullScreen()) {
+                        {{ 'artemisApp.modelingEditor.fullscreen.enterButtonText' | artemisTranslate }}
+                    } @else {
+                        {{ 'artemisApp.modelingEditor.fullscreen.exitButtonText' | artemisTranslate }}
+                    }
+                    <ng-template #exitButtonText>{{ 'artemisApp.modelingEditor.fullscreen.exitButtonText' | artemisTranslate }}</ng-template>
+                </span>
+            }
+        }
     </button>
 </ng-container>

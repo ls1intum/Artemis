@@ -1,108 +1,126 @@
-<div *ngIf="isLoading" class="d-flex justify-content-center">
-    <div class="spinner-border" role="status">
-        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
-    </div>
-</div>
-
-<div *ngIf="!isLoading && lecture">
-    <!-- Lecture Unit Rows-->
-    <div class="w-100 d-flex justify-content-end" *ngIf="showCreationCard" [class.justify-content-center]="!lectureUnits?.length">
-        <jhi-unit-creation-card></jhi-unit-creation-card>
-    </div>
-    <div class="component-container" cdkDropList (cdkDropListDropped)="drop($event)">
-        <div
-            class="lecture-unit-container"
-            [class.attachment]="lectureUnit.type === LectureUnitType.ATTACHMENT"
-            *ngFor="let lectureUnit of lectureUnits; index as i; trackBy: identify"
-            cdkDrag
-        >
-            <div class="custom-handle d-none d-sm-flex">
-                <svg viewBox="3 1 5 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="4.5" cy="2.5" r=".6" fill="currentColor" />
-                    <circle cx="4.5" cy="4.5" r=".6" fill="currentColor" />
-                    <circle cx="4.5" cy="6.499" r=".6" fill="currentColor" />
-                    <circle cx="4.5" cy="8.499" r=".6" fill="currentColor" />
-                    <circle cx="4.5" cy="10.498" r=".6" fill="currentColor" />
-                    <circle cx="4.5" cy="12.498" r=".6" fill="currentColor" />
-                    <circle cx="6.5" cy="2.5" r=".6" fill="currentColor" />
-                    <circle cx="6.5" cy="4.5" r=".6" fill="currentColor" />
-                    <circle cx="6.5" cy="6.499" r=".6" fill="currentColor" />
-                    <circle cx="6.5" cy="8.499" r=".6" fill="currentColor" />
-                    <circle cx="6.5" cy="10.498" r=".6" fill="currentColor" />
-                    <circle cx="6.5" cy="12.498" r=".6" fill="currentColor" />
-                </svg>
-            </div>
-            <div class="lecture-unit-type-container" [ngSwitch]="lectureUnit.type">
-                <div class="unit-badges d-flex flex-column gap-1">
-                    <div class="badge bg-info">
-                        {{
-                            getLectureUnitReleaseDate(lectureUnit)
-                                ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (getLectureUnitReleaseDate(lectureUnit) | artemisDate)
-                                : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
-                        }}
-                    </div>
-                    <div class="badge bg-info attachment-badge" *ngSwitchCase="LectureUnitType.ATTACHMENT">
-                        {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
-                    </div>
-                </div>
-
-                <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!"></jhi-exercise-unit>
-                <div *ngSwitchCase="LectureUnitType.ATTACHMENT">
-                    <jhi-attachment-unit [attachmentUnit]="lectureUnit" [isPresentationMode]="true"></jhi-attachment-unit>
-                </div>
-                <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit" [isPresentationMode]="true"></jhi-video-unit>
-                <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit" [isPresentationMode]="true"></jhi-text-unit>
-                <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" [isPresentationMode]="true"></jhi-online-unit>
-            </div>
-            <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
-                <jhi-competencies-popover
-                    *ngIf="lecture.course?.id && showCompetencies"
-                    [courseId]="lecture.course!.id!"
-                    [competencies]="lectureUnit.competencies || []"
-                    [navigateTo]="'competencyManagement'"
-                ></jhi-competencies-popover>
-                <div class="d-flex gap-1 w-100">
-                    <ng-container *ngIf="this.emitEditEvents; else editLink">
-                        <button
-                            type="button"
-                            *ngIf="editButtonAvailable(lectureUnit)"
-                            class="btn btn-primary btn-sm edit flex-grow-1"
-                            (click)="onEditButtonClicked(lectureUnit)"
-                            [ngbTooltip]="'entity.action.edit' | artemisTranslate"
-                        >
-                            <fa-icon [icon]="faPencilAlt"></fa-icon>
-                        </button>
-                    </ng-container>
-                    <ng-template #editLink>
-                        <a
-                            type="button"
-                            *ngIf="editButtonAvailable(lectureUnit)"
-                            class="btn btn-primary btn-sm edit flex-grow-1"
-                            [routerLink]="['./', routerEditLinksBase[lectureUnit.type!], lectureUnit.id, 'edit']"
-                            [ngbTooltip]="'entity.action.edit' | artemisTranslate"
-                        >
-                            <fa-icon [icon]="faPencilAlt"></fa-icon>
-                        </a>
-                    </ng-template>
-                    <button
-                        type="button"
-                        class="btn btn-danger btn-sm flex-grow-1"
-                        *ngIf="lecture.isAtLeastInstructor"
-                        jhiDeleteButton
-                        [renderButtonStyle]="false"
-                        [renderButtonText]="false"
-                        [ngbTooltip]="'entity.action.' + getActionType(lectureUnit) | artemisTranslate"
-                        [actionType]="getActionType(lectureUnit)"
-                        [entityTitle]="lectureUnitService.getLectureUnitName(lectureUnit) || ''"
-                        [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
-                        [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
-                        (delete)="deleteLectureUnit(lectureUnit.id!)"
-                        [dialogError]="dialogError$"
-                    >
-                        <fa-icon [icon]="faTrash"></fa-icon>
-                    </button>
-                </div>
-            </div>
+@if (isLoading) {
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
         </div>
     </div>
-</div>
+}
+@if (!isLoading && lecture) {
+    <div>
+        <!-- Lecture Unit Rows-->
+        @if (showCreationCard) {
+            <div class="w-100 d-flex justify-content-end" [class.justify-content-center]="!lectureUnits?.length">
+                <jhi-unit-creation-card></jhi-unit-creation-card>
+            </div>
+        }
+        <div class="component-container" cdkDropList (cdkDropListDropped)="drop($event)">
+            @for (lectureUnit of lectureUnits; track identify(i, lectureUnit); let i = $index) {
+                <div class="lecture-unit-container" [class.attachment]="lectureUnit.type === LectureUnitType.ATTACHMENT" cdkDrag>
+                    <div class="custom-handle d-none d-sm-flex">
+                        <svg viewBox="3 1 5 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="4.5" cy="2.5" r=".6" fill="currentColor" />
+                            <circle cx="4.5" cy="4.5" r=".6" fill="currentColor" />
+                            <circle cx="4.5" cy="6.499" r=".6" fill="currentColor" />
+                            <circle cx="4.5" cy="8.499" r=".6" fill="currentColor" />
+                            <circle cx="4.5" cy="10.498" r=".6" fill="currentColor" />
+                            <circle cx="4.5" cy="12.498" r=".6" fill="currentColor" />
+                            <circle cx="6.5" cy="2.5" r=".6" fill="currentColor" />
+                            <circle cx="6.5" cy="4.5" r=".6" fill="currentColor" />
+                            <circle cx="6.5" cy="6.499" r=".6" fill="currentColor" />
+                            <circle cx="6.5" cy="8.499" r=".6" fill="currentColor" />
+                            <circle cx="6.5" cy="10.498" r=".6" fill="currentColor" />
+                            <circle cx="6.5" cy="12.498" r=".6" fill="currentColor" />
+                        </svg>
+                    </div>
+                    <div class="lecture-unit-type-container">
+                        @switch (lectureUnit.type) {
+                            <div class="unit-badges d-flex flex-column gap-1">
+                                <div class="badge bg-info">
+                                    {{
+                                        getLectureUnitReleaseDate(lectureUnit)
+                                            ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (getLectureUnitReleaseDate(lectureUnit) | artemisDate)
+                                            : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
+                                    }}
+                                </div>
+                                @case (LectureUnitType.ATTACHMENT) {
+                                    <div class="badge bg-info attachment-badge">
+                                        {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
+                                    </div>
+                                }
+                            </div>
+                            @case (LectureUnitType.EXERCISE) {
+                                <jhi-exercise-unit [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!"></jhi-exercise-unit>
+                            }
+                            @case (LectureUnitType.ATTACHMENT) {
+                                <div>
+                                    <jhi-attachment-unit [attachmentUnit]="lectureUnit" [isPresentationMode]="true"></jhi-attachment-unit>
+                                </div>
+                            }
+                            @case (LectureUnitType.VIDEO) {
+                                <jhi-video-unit [videoUnit]="lectureUnit" [isPresentationMode]="true"></jhi-video-unit>
+                            }
+                            @case (LectureUnitType.TEXT) {
+                                <jhi-text-unit [textUnit]="lectureUnit" [isPresentationMode]="true"></jhi-text-unit>
+                            }
+                            @case (LectureUnitType.ONLINE) {
+                                <jhi-online-unit [onlineUnit]="lectureUnit" [isPresentationMode]="true"></jhi-online-unit>
+                            }
+                        }
+                    </div>
+                    <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
+                        @if (lecture.course?.id && showCompetencies) {
+                            <jhi-competencies-popover
+                                [courseId]="lecture.course!.id!"
+                                [competencies]="lectureUnit.competencies || []"
+                                [navigateTo]="'competencyManagement'"
+                            ></jhi-competencies-popover>
+                        }
+                        <div class="d-flex gap-1 w-100">
+                            @if (this.emitEditEvents) {
+                                @if (editButtonAvailable(lectureUnit)) {
+                                    <button
+                                        type="button"
+                                        class="btn btn-primary btn-sm edit flex-grow-1"
+                                        (click)="onEditButtonClicked(lectureUnit)"
+                                        [ngbTooltip]="'entity.action.edit' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                    </button>
+                                }
+                            } @else {
+                                @if (editButtonAvailable(lectureUnit)) {
+                                    <a
+                                        type="button"
+                                        class="btn btn-primary btn-sm edit flex-grow-1"
+                                        [routerLink]="['./', routerEditLinksBase[lectureUnit.type!], lectureUnit.id, 'edit']"
+                                        [ngbTooltip]="'entity.action.edit' | artemisTranslate"
+                                    >
+                                        <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                    </a>
+                                }
+                            }
+                            @if (lecture.isAtLeastInstructor) {
+                                <button
+                                    type="button"
+                                    class="btn btn-danger btn-sm flex-grow-1"
+                                    jhiDeleteButton
+                                    [renderButtonStyle]="false"
+                                    [renderButtonText]="false"
+                                    [ngbTooltip]="'entity.action.' + getActionType(lectureUnit) | artemisTranslate"
+                                    [actionType]="getActionType(lectureUnit)"
+                                    [entityTitle]="lectureUnitService.getLectureUnitName(lectureUnit) || ''"
+                                    [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
+                                    [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
+                                    (delete)="deleteLectureUnit(lectureUnit.id!)"
+                                    [dialogError]="dialogError$"
+                                >
+                                    <fa-icon [icon]="faTrash"></fa-icon>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

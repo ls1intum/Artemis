@@ -13,33 +13,36 @@ import { ButtonType } from 'app/shared/components/button.component';
     selector: 'jhi-programming-exercise-grading-submission-policy-configuration-actions',
     template: `
         <div align="right">
-            <jhi-button
-                *ngIf="exercise.isAtLeastInstructor"
-                [btnType]="ButtonType.PRIMARY"
-                [title]="'artemisApp.programmingExercise.submissionPolicy.updateButton.title'"
-                [tooltip]="'artemisApp.programmingExercise.submissionPolicy.updateButton.tooltip'"
-                (onClick)="onUpdate.emit()"
-                [icon]="faSave"
-                [disabled]="
-                    isSaving || exercise.submissionPolicy == undefined || (exercise.submissionPolicy?.type === SubmissionPolicyType.NONE && !hadPolicyBefore) || formInvalid
-                "
-            ></jhi-button>
-            <jhi-button
-                *ngIf="exercise.isAtLeastInstructor && hadPolicyBefore && exercise.submissionPolicy!.active"
-                [btnType]="ButtonType.ERROR"
-                [title]="'artemisApp.programmingExercise.submissionPolicy.deactivateButton.title'"
-                [tooltip]="'artemisApp.programmingExercise.submissionPolicy.deactivateButton.tooltip'"
-                (onClick)="onToggle.emit()"
-                [disabled]="isSaving"
-            ></jhi-button>
-            <jhi-button
-                *ngIf="exercise.isAtLeastInstructor && hadPolicyBefore && !exercise.submissionPolicy!.active"
-                [btnType]="ButtonType.SUCCESS"
-                [title]="'artemisApp.programmingExercise.submissionPolicy.activateButton.title'"
-                [tooltip]="'artemisApp.programmingExercise.submissionPolicy.activateButton.tooltip'"
-                (onClick)="onToggle.emit()"
-                [disabled]="isSaving"
-            ></jhi-button>
+            @if (exercise.isAtLeastInstructor) {
+                <jhi-button
+                    [btnType]="ButtonType.PRIMARY"
+                    [title]="'artemisApp.programmingExercise.submissionPolicy.updateButton.title'"
+                    [tooltip]="'artemisApp.programmingExercise.submissionPolicy.updateButton.tooltip'"
+                    (onClick)="onUpdate.emit()"
+                    [icon]="faSave"
+                    [disabled]="
+                        isSaving || exercise.submissionPolicy === undefined || (exercise.submissionPolicy?.type === SubmissionPolicyType.NONE && !hadPolicyBefore) || formInvalid
+                    "
+                ></jhi-button>
+            }
+            @if (exercise.isAtLeastInstructor && hadPolicyBefore && exercise.submissionPolicy!.active) {
+                <jhi-button
+                    [btnType]="ButtonType.ERROR"
+                    [title]="'artemisApp.programmingExercise.submissionPolicy.deactivateButton.title'"
+                    [tooltip]="'artemisApp.programmingExercise.submissionPolicy.deactivateButton.tooltip'"
+                    (onClick)="onToggle.emit()"
+                    [disabled]="isSaving"
+                ></jhi-button>
+            }
+            @if (exercise.isAtLeastInstructor && hadPolicyBefore && !exercise.submissionPolicy!.active) {
+                <jhi-button
+                    [btnType]="ButtonType.SUCCESS"
+                    [title]="'artemisApp.programmingExercise.submissionPolicy.activateButton.title'"
+                    [tooltip]="'artemisApp.programmingExercise.submissionPolicy.activateButton.tooltip'"
+                    (onClick)="onToggle.emit()"
+                    [disabled]="isSaving"
+                ></jhi-button>
+            }
         </div>
     `,
 })
