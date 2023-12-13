@@ -23,7 +23,7 @@ public abstract class IrisWebsocketService {
 
     protected void send(User user, String sessionType, Long sessionId, Object payload) {
         String irisWebsocketTopic = String.format("%s/%s/%s", IRIS_WEBSOCKET_TOPIC_PREFIX, sessionType, sessionId);
-        log.info("Sending message to user {} on topic {}: {}", user.getLogin(), irisWebsocketTopic, payload);
+        log.debug("Sending message to user {} on topic {}: {}", user.getLogin(), irisWebsocketTopic, payload);
         websocketMessagingService.sendMessageToUser(user.getLogin(), irisWebsocketTopic, payload);
     }
 

@@ -289,4 +289,27 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowComplaintsForAutomaticAssessment');
         expectElementToBeDisabled(checkbox);
     });
+
+    it.each([true, false])('should enable checkbox to include tests in example solution', (examMode: boolean) => {
+        comp.exercise = exercise;
+        comp.isExamMode = examMode;
+        if (!examMode) {
+            exercise.course = new Course();
+            exercise.course.complaintsEnabled = true;
+        } else {
+            comp.exercise.exampleSolutionPublicationDate = undefined;
+            comp.exercise.exerciseGroup = { exam: { exampleSolutionPublicationDate } };
+        }
+        fixture.detectChanges();
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution');
+        expectElementToBeEnabled(checkbox);
+    });
+
+    it('should disable checkbox to include tests in example solution without example solution publication date', () => {
+        comp.exercise = exercise;
+        comp.exercise.exampleSolutionPublicationDate = undefined;
+        fixture.detectChanges();
+        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#releaseTestsWithExampleSolution');
+        expectElementToBeDisabled(checkbox);
+    });
 });
