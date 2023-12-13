@@ -75,7 +75,6 @@ public class SingleUserNotificationService {
      * @param notificationSubject     is the subject of the notification (e.g. exercise, attachment)
      * @param notificationType        is the discriminator for the factory
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, Exercise -> user)
-     * @param skipWebSocket           whether to skip WebSocket notifications
      */
     private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation, User author) {
         var singleUserNotification = createSingleUserNotification(notificationSubject, notificationType, (User) typeSpecificInformation, author);
@@ -360,6 +359,7 @@ public class SingleUserNotificationService {
     public void notifyUserAboutNewMessageReply(AnswerPost answerPost, SingleUserNotification notification, User user, User responsibleUser, NotificationType notificationType) {
         notification.setRecipient(user);
         notification.setTitle(findCorrespondingNotificationTitleOrThrow(notificationType));
+        notification.setAuthor(responsibleUser);
         saveAndSend(notification, new NewReplyNotificationSubject(answerPost, user, responsibleUser), responsibleUser, true);
     }
 

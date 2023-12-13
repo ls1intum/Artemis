@@ -493,18 +493,11 @@ export class NotificationService {
     };
 
     public handleNotification(postDTO: MetisPostDTO) {
-        console.log(postDTO);
         const notification = postDTO.notification;
         if (notification?.target) {
-            const target = JSON.parse(notification.target);
-            const targetCourseId = target.course;
-            // Only add notification if it is not from the current user and the user is not already in the messages tab
+            // Only add notification if it is not from the current user and allowed by settings
             const user = this.accountService.userIdentity;
-            if (
-                notification.author?.id !== user?.id &&
-                !this.isUnderMessagesTabOfSpecificCourse(targetCourseId) &&
-                this.notificationSettingsService.isNotificationAllowedBySettings(notification)
-            ) {
+            if (notification.author?.id !== user?.id && this.notificationSettingsService.isNotificationAllowedBySettings(notification)) {
                 user && this.changeTitleIfMentioned(user, postDTO, notification);
                 if (this.shouldNotify(postDTO, user?.id)) {
                     this.addNotification(notification);
@@ -514,7 +507,6 @@ export class NotificationService {
     }
 
     private shouldNotify(postDTO: MetisPostDTO, userId: number | undefined) {
-        console.log(postDTO, userId);
         if (
             !getAsChannelDto(postDTO.post.conversation)?.isCourseWide ||
             postDTO.action !== MetisPostAction.UPDATE ||
