@@ -59,7 +59,7 @@ export class LtiConfigurationComponent implements OnInit {
      * Gets the deep linking url
      */
     getDeepLinkingUrl(): string {
-        return `${location.origin}/api/public/lti13/deep-linking`; // Needs to match url in CustomLti13Configurer
+        return `${location.origin}/lti/deep-linking`; // Needs to match url in CustomLti13Configurer
     }
 
     /**
