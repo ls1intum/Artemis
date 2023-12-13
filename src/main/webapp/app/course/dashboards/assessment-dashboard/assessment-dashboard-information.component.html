@@ -1,10 +1,9 @@
 <div class="row mt-3 g-3">
     <div class="col-12 col-md-6 col-lg-7 mt-0">
-        @if (!isExamMode) {
-            <span style="font-size: 16px" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.courseInformation"></span>
-        }
         @if (isExamMode) {
             <span style="font-size: 16px" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.examInformation"></span>
+        } @else {
+            <span style="font-size: 16px" jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.courseInformation"></span>
         }
         <!-- chart -->
         @if (numberOfSubmissions.total !== 0) {
@@ -18,7 +17,10 @@
                     [legendPosition]="legendPosition"
                     [animations]="false"
                 >
-                    <ng-template #tooltipTemplate let-model="model"> {{ ((model.value * 100) / this.numberOfSubmissions.total).toFixed(2) }}% </ng-template>
+                    <ng-template #tooltipTemplate let-model="model">
+                        {{ ((model.value * 100) / this.numberOfSubmissions.total).toFixed(2) }}
+                        %
+                    </ng-template>
                 </ngx-charts-pie-chart>
             </div>
         }
@@ -30,7 +32,62 @@
             [panelHeader]="'artemisApp.assessmentDashboard.assessmentInformation' | artemisTranslate"
             [panelDescriptionHeader]="'artemisApp.exerciseAssessmentDashboard.totalYours' | artemisTranslate"
         >
-            @if (!isExamMode) {
+            @if (isExamMode) {
+                <div>
+                    <div class="row g-0 mb-1">
+                        <div class="col-7">
+                            {{ 'artemisApp.assessmentDashboard.assessments' | artemisTranslate }}
+                        </div>
+                        <div class="col-5">
+                            ({{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total * numberOfCorrectionRounds }}) ({{ totalAssessmentPercentage }}%) |
+                            {{ numberOfTutorAssessments }}
+                        </div>
+                    </div>
+                    <div class="row g-0 mb-1">
+                        <div class="col-7">
+                            {{ 'artemisApp.assessmentDashboard.complaints' | artemisTranslate }}
+                        </div>
+                        <div class="col-5">
+                            @if (course?.isAtLeastInstructor) {
+                                <div>
+                                    <a [routerLink]="complaintsLink" [queryParams]="{ correctionRound: numberOfCorrectionRounds - 1 }">
+                                        {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }})
+                                    </a>
+                                    | {{ complaints.tutor }}
+                                </div>
+                            }
+                            <!-- TODO: make those links work (REST calls to fetch for individual students do not exist yet) -->
+                            <!-- this value is not yet available for exam mode. As soon as the leaderboards exist add it again. {{ complaints.tutor }} -->
+                            @if (course && !course.isAtLeastInstructor) {
+                                <div>{{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) | -</div>
+                            }
+                        </div>
+                    </div>
+                    <div class="row g-0 mb-1">
+                        <div class="col-7">
+                            {{ 'artemisApp.assessmentDashboard.assessmentLocks' | artemisTranslate }}
+                        </div>
+                        <div class="col-5">
+                            {{ assessmentLocks.total }}
+                            |
+                            <a [routerLink]="assessmentLocksLink" [queryParams]="{ tutorId: tutorId }">
+                                {{ assessmentLocks.tutor }}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row g-0 mb-1">
+                        <div class="col-7">
+                            {{ 'artemisApp.assessmentDashboard.totalAssessmentsForCorrectionrounds' | artemisTranslate }}
+                        </div>
+                        <div class="col-5">
+                            {{ numberOfAssessmentsOfCorrectionRounds[0].inTime }}
+                            @if (numberOfAssessmentsOfCorrectionRounds[1]) {
+                                <span> - {{ numberOfAssessmentsOfCorrectionRounds[1].inTime }}</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            } @else {
                 <div>
                     <div class="row g-0 mb-1">
                         <div class="col-7">
@@ -118,62 +175,6 @@
                             }
                             |
                             {{ ratings.tutor }}
-                        </div>
-                    </div>
-                </div>
-            }
-            @if (isExamMode) {
-                <div>
-                    <div class="row g-0 mb-1">
-                        <div class="col-7">
-                            {{ 'artemisApp.assessmentDashboard.assessments' | artemisTranslate }}
-                        </div>
-                        <div class="col-5">
-                            ({{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total * numberOfCorrectionRounds }}) ({{ totalAssessmentPercentage }}%) |
-                            {{ numberOfTutorAssessments }}
-                        </div>
-                    </div>
-                    <div class="row g-0 mb-1">
-                        <div class="col-7">
-                            {{ 'artemisApp.assessmentDashboard.complaints' | artemisTranslate }}
-                        </div>
-                        <div class="col-5">
-                            @if (course?.isAtLeastInstructor) {
-                                <div>
-                                    <a [routerLink]="complaintsLink" [queryParams]="{ correctionRound: numberOfCorrectionRounds - 1 }">
-                                        {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }})
-                                    </a>
-                                    | {{ complaints.tutor }}
-                                </div>
-                            }
-                            <!-- TODO: make those links work (REST calls to fetch for individual students do not exist yet) -->
-                            <!-- this value is not yet available for exam mode. As soon as the leaderboards exist add it again. {{ complaints.tutor }} -->
-                            @if (course && !course.isAtLeastInstructor) {
-                                <div>{{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) | -</div>
-                            }
-                        </div>
-                    </div>
-                    <div class="row g-0 mb-1">
-                        <div class="col-7">
-                            {{ 'artemisApp.assessmentDashboard.assessmentLocks' | artemisTranslate }}
-                        </div>
-                        <div class="col-5">
-                            {{ assessmentLocks.total }}
-                            |
-                            <a [routerLink]="assessmentLocksLink" [queryParams]="{ tutorId: tutorId }">
-                                {{ assessmentLocks.tutor }}
-                            </a>
-                        </div>
-                    </div>
-                    <div class="row g-0 mb-1">
-                        <div class="col-7">
-                            {{ 'artemisApp.assessmentDashboard.totalAssessmentsForCorrectionrounds' | artemisTranslate }}
-                        </div>
-                        <div class="col-5">
-                            {{ numberOfAssessmentsOfCorrectionRounds[0].inTime }}
-                            @if (numberOfAssessmentsOfCorrectionRounds[1]) {
-                                <span> - {{ numberOfAssessmentsOfCorrectionRounds[1].inTime }}</span>
-                            }
                         </div>
                     </div>
                 </div>

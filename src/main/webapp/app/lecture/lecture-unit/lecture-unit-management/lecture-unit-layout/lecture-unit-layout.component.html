@@ -4,8 +4,7 @@
             <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
         </div>
     </div>
-}
-@if (!isLoading) {
+} @else {
     <div class="container">
         <ng-content></ng-content>
     </div>

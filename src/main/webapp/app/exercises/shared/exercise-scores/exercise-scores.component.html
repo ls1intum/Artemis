@@ -11,7 +11,7 @@
         @if (this.rangeFilter) {
             <h4 class="d-flex align-items-center">
                 <span class="me-2">
-                    <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
+                    <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }} : </strong>
                     <span class="ms-1">{{ 'artemisApp.exercise.showingOnlyInRange' | artemisTranslate: { range: this.rangeFilter.toString() } }}</span>
                 </span>
                 <button type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter">
@@ -195,8 +195,7 @@
                                     <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamShortName' | artemisTranslate }}</span>
                                     <fa-icon [icon]="controls.iconForSortPropField('team.shortName')"></fa-icon>
                                 </span>
-                            }
-                            @if (!exercise.teamMode) {
+                            } @else {
                                 <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.login')">
                                     <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentId' | artemisTranslate }}</span>
                                     <fa-icon [icon]="controls.iconForSortPropField('student.login')"></fa-icon>
