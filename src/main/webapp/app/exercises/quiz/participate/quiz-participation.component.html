@@ -2,8 +2,8 @@
     @if (quizExercise) {
         <div class="quiz-header container">
             <h2>
+                {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }} - {{ quizExercise.title }}
                 @switch (mode) {
-                    {{ quizExercise.course?.title ? quizExercise.course?.title : quizExercise.exerciseGroup?.exam?.course?.title }} - {{ quizExercise.title }}
                     @case ('practice') {
                         <span class="in-parentheses" jhiTranslate="artemisApp.quizExercise.practiceMode"></span>
                     }
@@ -217,9 +217,11 @@
                             }
                             @if (mode === 'live') {
                                 <jhi-connection-status class="connection-status-quiz">
-                                    @if (unsavedChanges) {
-                                        <span innerContent jhiTranslate="artemisApp.quizExercise.unsavedChanges" class="in-parentheses"></span>
-                                    }
+                                    <ng-container innerContent>
+                                        @if (unsavedChanges) {
+                                            <span jhiTranslate="artemisApp.quizExercise.unsavedChanges" class="in-parentheses"></span>
+                                        }
+                                    </ng-container>
                                 </jhi-connection-status>
                             }
                             @if (mode === 'practice') {

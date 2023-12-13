@@ -44,8 +44,8 @@
                     }
                 </span>
             </div>
-            @if (exercise.submissionPolicy && exercise.submissionPolicy.active && numberOfSubmissionsForSubmissionPolicy !== undefined) {
-                <div submissionPolicy>
+            <div submissionPolicy>
+                @if (exercise.submissionPolicy && exercise.submissionPolicy.active && numberOfSubmissionsForSubmissionPolicy !== undefined) {
                     <br />
                     <span>
                         {{
@@ -61,8 +61,8 @@
                             }}
                         </span>
                     }
-                </div>
-            }
+                }
+            </div>
             <!-- prettier-ignore -->
             <div editorToolbar class="d-inline-flex align-items-center">
               @if (repositoryIsLocked) {

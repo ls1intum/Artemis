@@ -106,53 +106,56 @@
 }
 <jhi-resizeable-container class="col-12 mt-3">
     <!--region Left Panel-->
-    @if (state.ui === UIStates.SUBMISSION) {
-        <span left-header jhiTranslate="artemisApp.exampleSubmission.exampleSubmission">Example submission</span>
-    }
-    @if (state.ui === UIStates.SUBMISSION) {
-        <textarea
-            id="example-text-submission-input"
-            left-body
-            [(ngModel)]="submission!.text"
-            (ngModelChange)="unsavedSubmissionChanges = true"
-            style="width: 100%; height: 50vh"
-        ></textarea>
-    }
-    @if (state.ui === UIStates.ASSESSMENT) {
-        <jhi-score-display left-header [maxPoints]="exercise?.maxPoints || 0" [score]="totalScore" [maxBonusPoints]="exercise?.bonusPoints || 0"></jhi-score-display>
-    }
-    @if (state.ui === UIStates.ASSESSMENT) {
-        <jhi-text-assessment-area
-            left-body
-            class="guided-tour-assessment-editor guided-tour-complete-assessment-editor"
-            [allowManualBlockSelection]="!this.toComplete"
-            [submission]="submission!"
-            [(textBlockRefs)]="textBlockRefs"
-            [readOnly]="readOnly || (!!exercise && !exercise.isAtLeastEditor && !toComplete)"
-            (textBlockRefsChange)="validateFeedback()"
-            (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
-        ></jhi-text-assessment-area>
-    }
+    <ng-container left-header>
+        @if (state.ui === UIStates.SUBMISSION) {
+            <span jhiTranslate="artemisApp.exampleSubmission.exampleSubmission">Example submission</span>
+        }
+        @if (state.ui === UIStates.ASSESSMENT) {
+            <jhi-score-display [maxPoints]="exercise?.maxPoints || 0" [score]="totalScore" [maxBonusPoints]="exercise?.bonusPoints || 0"></jhi-score-display>
+        }
+    </ng-container>
+    <ng-container left-body>
+        @if (state.ui === UIStates.SUBMISSION) {
+            <textarea
+                id="example-text-submission-input"
+                [(ngModel)]="submission!.text"
+                (ngModelChange)="unsavedSubmissionChanges = true"
+                style="width: 100%; height: 50vh"
+            ></textarea>
+        }
+        @if (state.ui === UIStates.ASSESSMENT) {
+            <jhi-text-assessment-area
+                class="guided-tour-assessment-editor guided-tour-complete-assessment-editor"
+                [allowManualBlockSelection]="!this.toComplete"
+                [submission]="submission!"
+                [(textBlockRefs)]="textBlockRefs"
+                [readOnly]="readOnly || (!!exercise && !exercise.isAtLeastEditor && !toComplete)"
+                (textBlockRefsChange)="validateFeedback()"
+                (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
+            ></jhi-text-assessment-area>
+        }
+    </ng-container>
     <!--endregion-->
     <!--region Right Panel-->
     <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
     <span right-header jhiTranslate="artemisApp.textAssessment.instructions">Instructions</span>
-    @if (state.ui === UIStates.SUBMISSION) {
-        <div right-body class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.exampleSubmissionInstruction"></div>
-    }
-    @if (state.ui === UIStates.ASSESSMENT) {
-        <div right-body class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></div>
-    }
-    @if (exercise) {
-        <jhi-assessment-instructions
-            id="instructions"
-            right-body
-            [exercise]="exercise"
-            [isAssessmentTraining]="toComplete"
-            [showAssessmentInstructions]="state.ui === UIStates.ASSESSMENT"
-            class="markdown-preview"
-        ></jhi-assessment-instructions>
-    }
+    <ng-container right-body>
+        @if (state.ui === UIStates.SUBMISSION) {
+            <div class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.exampleSubmissionInstruction"></div>
+        }
+        @if (state.ui === UIStates.ASSESSMENT) {
+            <div class="alert alert-info text-center mb-4" role="alert" jhiTranslate="artemisApp.textAssessment.assessmentInstruction"></div>
+        }
+        @if (exercise) {
+            <jhi-assessment-instructions
+                id="instructions"
+                [exercise]="exercise"
+                [isAssessmentTraining]="toComplete"
+                [showAssessmentInstructions]="state.ui === UIStates.ASSESSMENT"
+                class="markdown-preview"
+            ></jhi-assessment-instructions>
+        }
+    </ng-container>
     <!--endregion-->
 </jhi-resizeable-container>
 @if (state.ui === UIStates.ASSESSMENT) {

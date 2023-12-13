@@ -61,28 +61,32 @@
         (onFileLoad)="fileLoad($event)"
     >
     </jhi-code-editor-ace>
-    @if (showEditorInstructions) {
-        <jhi-code-editor-instructions
-            editorSidebarRight
-            (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
-            (onError)="onError($event)"
-            [isAssessmentMode]="isTutorAssessment"
-        >
-            <ng-content select="[editorSidebar]"></ng-content>
-        </jhi-code-editor-instructions>
-    }
-    @if (buildable) {
-        <jhi-code-editor-build-output
-            editorBottomArea
-            [participation]="participation"
-            (onAnnotations)="onAnnotations($event)"
-            (onError)="onError($event)"
-            (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"
-        ></jhi-code-editor-build-output>
-    }
-    @if (isTutorAssessment) {
-        <div editorBottom>
-            <ng-content select="[editorBottom]"></ng-content>
-        </div>
-    }
+    <ng-container editorSidebarRight>
+        @if (showEditorInstructions) {
+            <jhi-code-editor-instructions
+                (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.Instructions)"
+                (onError)="onError($event)"
+                [isAssessmentMode]="isTutorAssessment"
+            >
+                <ng-content select="[editorSidebar]"></ng-content>
+            </jhi-code-editor-instructions>
+        }
+    </ng-container>
+    <ng-container editorBottomArea>
+        @if (buildable) {
+            <jhi-code-editor-build-output
+                [participation]="participation"
+                (onAnnotations)="onAnnotations($event)"
+                (onError)="onError($event)"
+                (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"
+            ></jhi-code-editor-build-output>
+        }
+    </ng-container>
+    <ng-container editorBottom>
+        @if (isTutorAssessment) {
+            <div>
+                <ng-content select="[editorBottom]"></ng-content>
+            </div>
+        }
+    </ng-container>
 </jhi-code-editor-grid>

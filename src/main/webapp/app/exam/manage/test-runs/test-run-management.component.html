@@ -108,11 +108,6 @@
                                                         <span jhiTranslate="artemisApp.exam.summary">Summary</span>
                                                     </a>
                                                 }
-                                                <ng-template #submitted>
-                                                    <a class="btn btn-primary btn-sm me-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
-                                                        <span jhiTranslate="artemisApp.exam.summary">Summary</span>
-                                                    </a>
-                                                </ng-template>
                                             } @else {
                                                 <a class="btn btn-primary btn-sm me-1 mb-1" [routerLink]="'../test-runs/' + testRun.id + '/summary'">
                                                     <span jhiTranslate="artemisApp.exam.summary">Summary</span>

@@ -24,7 +24,7 @@
                     <th [colSpan]="2">
                         <span>
                             {{
-                                this.gradingScale.gradeType == GradeType.GRADE
+                                this.gradingScale.gradeType === GradeType.GRADE
                                     ? ('artemisApp.gradingSystem.gradeName' | artemisTranslate)
                                     : ('artemisApp.gradingSystem.bonusPoints' | artemisTranslate)
                             }}
@@ -80,8 +80,8 @@
                                 type="number"
                                 step="0.5"
                                 min="0"
-                                [required]="maxPoints != undefined && maxPoints > 0"
-                                [disabled]="maxPoints == undefined || maxPoints <= 0"
+                                [required]="maxPoints !== undefined && maxPoints > 0"
+                                [disabled]="maxPoints === undefined || maxPoints <= 0"
                                 (change)="setPercentage(gradeStep, true)"
                             />
                         </td>
@@ -94,8 +94,8 @@
                                 type="number"
                                 step="0.5"
                                 min="0"
-                                [required]="maxPoints != undefined && maxPoints > 0"
-                                [disabled]="maxPoints == undefined || maxPoints <= 0"
+                                [required]="maxPoints !== undefined && maxPoints > 0"
+                                [disabled]="maxPoints === undefined || maxPoints <= 0"
                                 (change)="setPercentage(gradeStep, false)"
                             />
                         </td>
@@ -111,7 +111,8 @@
                         }
                         <td>
                             <button (click)="deleteGradeStep(i)" type="button" class="btn btn-danger" style="float: right">
-                                <fa-icon [icon]="faTimes"></fa-icon> <span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span>
+                                <fa-icon [icon]="faTimes"></fa-icon>
+                                <span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span>
                             </button>
                         </td>
                     </tr>
@@ -121,7 +122,8 @@
     </div>
     <div style="margin-bottom: 1em">
         <button (click)="createGradeStep()" class="btn btn-success me-1 mb-1" type="button">
-            <fa-icon [icon]="faPlus"></fa-icon> <span jhiTranslate="artemisApp.gradingSystem.add">Add Grade Step</span>
+            <fa-icon [icon]="faPlus"></fa-icon>
+            <span jhiTranslate="artemisApp.gradingSystem.add">Add Grade Step</span>
         </button>
     </div>
     <div>
@@ -139,7 +141,7 @@
                 [dialogError]="dialogError$"
                 [disabled]="isLoading"
             >
-                <fa-icon [icon]="faTimes"> <span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span></fa-icon>
+                <fa-icon [icon]="faTimes"><span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span></fa-icon>
             </button>
         }
         @if (shouldShowGradingStepsAboveMaxPointsWarning()) {

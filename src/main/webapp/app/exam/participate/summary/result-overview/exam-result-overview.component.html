@@ -54,7 +54,7 @@
                             </td>
                             <td>
                                 @if (exerciseInfos[exercise.id!] !== undefined && exerciseInfos[exercise.id!].achievedPercentage !== undefined) {
-                                    <span [class]="exerciseInfos[exercise.id!].colorClass"> {{ exerciseInfos[exercise.id!].achievedPercentage }}% </span>
+                                    <span [class]="exerciseInfos[exercise.id!].colorClass"> {{ exerciseInfos[exercise.id!].achievedPercentage }} % </span>
                                 } @else {
                                     -
                                 }
@@ -83,7 +83,7 @@
                         </th>
                         <th>
                             @if (studentExamWithGrade.studentResult.overallScoreAchieved !== undefined) {
-                                <span [class]="hasPassed ? 'text-success' : 'text-danger'"> {{ overallAchievedPercentageRoundedByCourseSettings }}% </span>
+                                <span [class]="hasPassed ? 'text-success' : 'text-danger'"> {{ overallAchievedPercentageRoundedByCourseSettings }} % </span>
                             } @else {
                                 <span>-</span>
                             }
@@ -142,7 +142,7 @@
                                 <tr>
                                     <td>
                                         {{
-                                            'artemisApp.exam.examSummary.' + (studentExamWithGrade.studentResult.gradeWithBonus != undefined ? 'gradeBeforeBonus' : 'grade')
+                                            'artemisApp.exam.examSummary.' + (studentExamWithGrade.studentResult.gradeWithBonus !== undefined ? 'gradeBeforeBonus' : 'grade')
                                                 | artemisTranslate
                                         }}:
                                     </td>

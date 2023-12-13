@@ -1,16 +1,16 @@
 <div class="editable-instruction-container">
     <!-- The position of the markdown-editor in the html should not be changed, as it is used for resizing!-->
-    <jhi-markdown-editor
-        class="editable-instruction-container__editor"
-        [showLineNumbers]="true"
-        [domainCommands]="domainCommands"
-        [markdown]="exercise.problemStatement"
-        (markdownChange)="updateProblemStatement($event)"
-        (onPreviewSelect)="generateHtml()"
-        [showDefaultPreview]="false"
-        [minHeightEditor]="500"
-    >
-        @if (exercise) {
+    @if (exercise) {
+        <jhi-markdown-editor
+            class="editable-instruction-container__editor"
+            [showLineNumbers]="true"
+            [domainCommands]="domainCommands"
+            [markdown]="exercise.problemStatement"
+            (markdownChange)="updateProblemStatement($event)"
+            (onPreviewSelect)="generateHtml()"
+            [showDefaultPreview]="false"
+            [minHeightEditor]="500"
+        >
             <jhi-programming-exercise-instructions
                 id="preview"
                 class="editable-instruction-container__instructions"
@@ -19,8 +19,8 @@
                 [generateHtmlEvents]="generateHtmlSubject.asObservable()"
                 [personalParticipation]="false"
             ></jhi-programming-exercise-instructions>
-        }
-    </jhi-markdown-editor>
+        </jhi-markdown-editor>
+    }
     @if (editMode) {
         <button
             id="save-instructions-button"

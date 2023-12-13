@@ -271,12 +271,10 @@
                         </li>
                     }
                     @if (ltiEnabled) {
-                        <li>
-                            <a class="dropdown-item" routerLink="/admin/lti-configuration" routerLinkActive="active" (click)="collapseNavbar()">
-                                <fa-icon [icon]="faPuzzlePiece" [fixedWidth]="true"></fa-icon>
-                                <span jhiTranslate="global.menu.admin.lti">LTI Configuration</span>
-                            </a>
-                        </li>
+                        <a class="dropdown-item" routerLink="/admin/lti-configuration" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="faPuzzlePiece" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.lti">LTI Configuration</span>
+                        </a>
                     }
                     <!-- jhipster-needle-add-element-to-admin-menu - JHipster will add entities to the admin menu here -->
                 </ul>
