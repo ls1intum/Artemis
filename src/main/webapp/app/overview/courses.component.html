@@ -1,37 +1,46 @@
-<div *ngIf="nextRelevantExam && nextRelevantCourseForExam" class="row">
-    <h3 class="col mb-3 fw-medium">
-        {{ 'artemisApp.studentDashboard.examTitle' | artemisTranslate: { course: nextRelevantCourseForExam.title } }}
-    </h3>
-    <div class="col-12 mb-5">
-        <div class="row justify-content-between align-items-center exam-container ps-3 pe-3" (click)="openExam()">
-            <div class="mb-4 mt-4 d-flex" style="width: unset">
-                <fa-icon [icon]="faPenAlt" size="2x"></fa-icon>
-                <h4 class="ms-2 fw-medium">{{ nextRelevantExam.title }}</h4>
-            </div>
-            <div class="text-end mb-4 mt-4" style="width: unset">
-                <div *ngIf="nextRelevantExam.startDate">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: nextRelevantExam.startDate | artemisDate } }}</div>
-                <div *ngIf="nextRelevantExam.examMaxPoints">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate: { points: nextRelevantExam.examMaxPoints } }}</div>
+@if (nextRelevantExam && nextRelevantCourseForExam) {
+    <div class="row">
+        <h3 class="col mb-3 fw-medium">
+            {{ 'artemisApp.studentDashboard.examTitle' | artemisTranslate: { course: nextRelevantCourseForExam.title } }}
+        </h3>
+        <div class="col-12 mb-5">
+            <div class="row justify-content-between align-items-center exam-container ps-3 pe-3" (click)="openExam()">
+                <div class="mb-4 mt-4 d-flex" style="width: unset">
+                    <fa-icon [icon]="faPenAlt" size="2x"></fa-icon>
+                    <h4 class="ms-2 fw-medium">{{ nextRelevantExam.title }}</h4>
+                </div>
+                <div class="text-end mb-4 mt-4" style="width: unset">
+                    @if (nextRelevantExam.startDate) {
+                        <div>{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: nextRelevantExam.startDate | artemisDate } }}</div>
+                    }
+                    @if (nextRelevantExam.examMaxPoints) {
+                        <div>{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate: { points: nextRelevantExam.examMaxPoints } }}</div>
+                    }
+                </div>
             </div>
         </div>
     </div>
-</div>
-
-<div class="row mb-1" *ngIf="nextRelevantExercise && nextRelevantCourse">
-    <div class="col">
-        <h3 class="fw-medium">
-            <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
-                {{ 'artemisApp.studentDashboard.exerciseTitle' | artemisTranslate: { course: nextRelevantCourse.title } }}
-            </span>
-            <ng-template #noDueDate>
-                {{ 'artemisApp.studentDashboard.exerciseTitleWithoutDueDate' | artemisTranslate: { course: nextRelevantCourse.title } }}
-            </ng-template>
-        </h3>
+}
+@if (nextRelevantExercise && nextRelevantCourse) {
+    <div class="row mb-1">
+        <div class="col">
+            <h3 class="fw-medium">
+                @if (nextRelevantExercise.dueDate) {
+                    <span>
+                        {{ 'artemisApp.studentDashboard.exerciseTitle' | artemisTranslate: { course: nextRelevantCourse.title } }}
+                    </span>
+                } @else {
+                    {{ 'artemisApp.studentDashboard.exerciseTitleWithoutDueDate' | artemisTranslate: { course: nextRelevantCourse.title } }}
+                }
+            </h3>
+        </div>
     </div>
-</div>
-
-<div class="row mb-3" *ngIf="nextRelevantExercise && nextRelevantCourse">
-    <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="nextRelevantCourse"></jhi-course-exercise-row>
-</div>
+}
+@if (nextRelevantExercise && nextRelevantCourse) {
+    <div class="row mb-3">
+        <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="nextRelevantCourse"></jhi-course-exercise-row>
+    </div>
+}
 <div class="row mb-3 justify-content-between">
     <div class="col-sm-8">
         <h3 class="fw-medium" jhiTranslate="artemisApp.studentDashboard.title">Your current courses</h3>
@@ -41,6 +50,7 @@
     </div>
 </div>
 <div class="row">
-    <jhi-overview-course-card *ngFor="let course of courses" class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-3" [course]="course" [hasGuidedTour]="course === courseForGuidedTour">
-    </jhi-overview-course-card>
+    @for (course of courses; track course) {
+        <jhi-overview-course-card class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-3" [course]="course" [hasGuidedTour]="course === courseForGuidedTour"> </jhi-overview-course-card>
+    }
 </div>

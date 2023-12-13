@@ -7,84 +7,98 @@
         </div>
     </div>
 </div>
-
-<div *ngIf="submissions.length > 0">
-    <div class="table-responsive">
-        <table class="table table-striped exercise-table">
-            <thead>
-                <tr>
-                    <th class="th-link">Id</th>
-                    <th class="th-link" jhiTranslate="artemisApp.assessment.locks.type">Type</th>
-                    <th class="th-link" jhiTranslate="artemisApp.assessment.locks.exercise">Exercise</th>
-                    <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</th>
-                    <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</th>
-                    <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</th>
-                    <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let submission of submissions; let i = index">
-                    <td>{{ submission.id }}</td>
-                    <td>
-                        <fa-icon
-                            [icon]="getIcon(submission.participation!.exercise!.type)"
-                            placement="right auto"
-                            [ngbTooltip]="getIconTooltip(submission.participation!.exercise!.type) | artemisTranslate"
-                        ></fa-icon>
-                    </td>
-                    <td>{{ submission.participation!.exercise!.title || '' }}</td>
-                    <td>{{ submission.submissionDate | artemisDate: 'long-date' }}</td>
-                    <td>{{ submission.participation!.submissions ? submission.participation!.submissions.length : 0 }}</td>
-                    <td>
-                        <span *ngIf="submission.latestResult?.score != undefined">{{ submission.latestResult!.score }}%</span>
-                    </td>
-                    <td>
-                        <span>
-                            <a
-                                *ngIf="submission.participation!.exercise!.type === ExerciseType.TEXT"
-                                [routerLink]="[
-                                    '/course-management',
-                                    courseId,
-                                    'text-exercises',
-                                    submission.participation!.exercise!.id!,
-                                    'participations',
-                                    submission.participation!.id!,
-                                    'submissions',
-                                    submission.id!,
-                                    'assessment'
-                                ]"
-                                class="btn btn-outline-secondary btn-sm mb-1"
-                            >
-                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
-                            </a>
-                            <a
-                                *ngIf="submission.participation!.exercise!.type !== ExerciseType.TEXT"
-                                [routerLink]="[
-                                    '/course-management',
-                                    courseId,
-                                    submission.participation!.exercise!.type + '-exercises',
-                                    submission.participation!.exercise!.id!,
-                                    'submissions',
-                                    submission.id,
-                                    'assessment'
-                                ]"
-                                class="btn btn-outline-secondary btn-sm mb-1"
-                            >
-                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.open' | artemisTranslate }}
-                            </a>
-                        </span>
-                        <span>
-                            <button *ngIf="!submission.latestResult!.completionDate" (click)="cancelAssessment(submission)" class="btn btn-outline-secondary btn-sm mb-1">
-                                <fa-icon [icon]="faBan" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
-                            </button>
-                        </span>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+@if (submissions.length > 0) {
+    <div>
+        <div class="table-responsive">
+            <table class="table table-striped exercise-table">
+                <thead>
+                    <tr>
+                        <th class="th-link">Id</th>
+                        <th class="th-link" jhiTranslate="artemisApp.assessment.locks.type">Type</th>
+                        <th class="th-link" jhiTranslate="artemisApp.assessment.locks.exercise">Exercise</th>
+                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionDate">Submission date</th>
+                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.submissionCount">Submission count</th>
+                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.score">Score</th>
+                        <th class="th-link" jhiTranslate="artemisApp.assessment.dashboard.columns.action">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (submission of submissions; track submission; let i = $index) {
+                        <tr>
+                            <td>{{ submission.id }}</td>
+                            <td>
+                                <fa-icon
+                                    [icon]="getIcon(submission.participation!.exercise!.type)"
+                                    placement="right auto"
+                                    [ngbTooltip]="getIconTooltip(submission.participation!.exercise!.type) | artemisTranslate"
+                                ></fa-icon>
+                            </td>
+                            <td>{{ submission.participation!.exercise!.title || '' }}</td>
+                            <td>{{ submission.submissionDate | artemisDate: 'long-date' }}</td>
+                            <td>{{ submission.participation!.submissions ? submission.participation!.submissions.length : 0 }}</td>
+                            <td>
+                                @if (submission.latestResult?.score != undefined) {
+                                    <span>{{ submission.latestResult!.score }}%</span>
+                                }
+                            </td>
+                            <td>
+                                <span>
+                                    @if (submission.participation!.exercise!.type === ExerciseType.TEXT) {
+                                        <a
+                                            [routerLink]="[
+                                                '/course-management',
+                                                courseId,
+                                                'text-exercises',
+                                                submission.participation!.exercise!.id!,
+                                                'participations',
+                                                submission.participation!.id!,
+                                                'submissions',
+                                                submission.id!,
+                                                'assessment'
+                                            ]"
+                                            class="btn btn-outline-secondary btn-sm mb-1"
+                                        >
+                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>&nbsp;{{
+                                                'artemisApp.assessment.dashboard.actions.open' | artemisTranslate
+                                            }}
+                                        </a>
+                                    }
+                                    @if (submission.participation!.exercise!.type !== ExerciseType.TEXT) {
+                                        <a
+                                            [routerLink]="[
+                                                '/course-management',
+                                                courseId,
+                                                submission.participation!.exercise!.type + '-exercises',
+                                                submission.participation!.exercise!.id!,
+                                                'submissions',
+                                                submission.id,
+                                                'assessment'
+                                            ]"
+                                            class="btn btn-outline-secondary btn-sm mb-1"
+                                        >
+                                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>&nbsp;{{
+                                                'artemisApp.assessment.dashboard.actions.open' | artemisTranslate
+                                            }}
+                                        </a>
+                                    }
+                                </span>
+                                <span>
+                                    @if (!submission.latestResult!.completionDate) {
+                                        <button (click)="cancelAssessment(submission)" class="btn btn-outline-secondary btn-sm mb-1">
+                                            <fa-icon [icon]="faBan" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
+                                        </button>
+                                    }
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
-</div>
-
-<div style="margin-top: 10px" *ngIf="submissions.length === 0">
-    <p jhiTranslate="artemisApp.assessment.locks.empty">No Assessments locked by you!</p>
-</div>
+}
+@if (submissions.length === 0) {
+    <div style="margin-top: 10px">
+        <p jhiTranslate="artemisApp.assessment.locks.empty">No Assessments locked by you!</p>
+    </div>
+}
