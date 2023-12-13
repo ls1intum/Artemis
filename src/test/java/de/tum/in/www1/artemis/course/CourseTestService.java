@@ -3168,6 +3168,12 @@ public class CourseTestService {
         assertThat(response).usingRecursiveComparison().ignoringFields("id").isEqualTo(ocConfiguration);
     }
 
+    /**
+     * Tests fetching online courses for an LTI dashboard using a client ID.
+     * Verifies the response matches the expected course details.
+     *
+     * @throws Exception if any error occurs during the test execution.
+     */
     public void testFindAllOnlineCoursesForLtiDashboard() throws Exception {
         LtiPlatformConfiguration ltiPlatformConfiguration = new LtiPlatformConfiguration();
         ltiPlatformConfiguration.setRegistrationId("registrationId");
@@ -3190,14 +3196,12 @@ public class CourseTestService {
 
         String jsonResponse = request.get("/api/courses/for-lti-dashboard?clientId=" + clientId, HttpStatus.OK, String.class);
         List<OnlineCourseDTO> receivedCourseForDashboard = objectMapper.readValue(jsonResponse, new TypeReference<List<OnlineCourseDTO>>() {
+            // This empty block is necessary to provide type information for JSON deserialization
         });
-        // Assert the list size
+
         assertThat(receivedCourseForDashboard).hasSize(1);
 
-        // Assuming the list contains at least one element
         OnlineCourseDTO dto = receivedCourseForDashboard.get(0);
-
-        // Assert the course ID, title, short name, and registration ID
         assertThat(dto.id()).isEqualTo(course.getId());
         assertThat(dto.title()).isEqualTo(course.getTitle());
         assertThat(dto.shortName()).isEqualTo(course.getShortName());
