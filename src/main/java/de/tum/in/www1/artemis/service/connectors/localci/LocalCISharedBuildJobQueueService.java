@@ -294,6 +294,14 @@ public class LocalCISharedBuildJobQueueService {
             checkAvailabilityAndProcessNextBuild();
             return;
         }
+        catch (IllegalArgumentException e) {
+            log.error("Cannot process build job for participation with id {} because of an unexpected error.", buildJob.getParticipationId(), e);
+            processingJobs.remove(buildJob.getId());
+            localProcessingJobs.decrementAndGet();
+            updateLocalBuildAgentInformation();
+            checkAvailabilityAndProcessNextBuild();
+            return;
+        }
 
         // For some reason, it is possible that the participation object does not have the programming exercise
         if (participation.getProgrammingExercise() == null) {
