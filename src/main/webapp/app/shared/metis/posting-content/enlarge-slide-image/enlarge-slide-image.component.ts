@@ -6,7 +6,7 @@ export interface DialogData {
 }
 
 @Component({
-    templateUrl: './enlarge-slide-image-component.html',
+    templateUrl: './enlarge-slide-image.component.html',
 })
 export class EnlargeSlideImageComponent {
     constructor(@Inject(MAT_DIALOG_DATA) public data: DialogData) {}

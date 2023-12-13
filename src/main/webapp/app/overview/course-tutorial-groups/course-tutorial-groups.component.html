@@ -11,7 +11,6 @@
             (ngModelChange)="onFilterChange($event)"
         />
         <label class="btn btn-outline-secondary" for="registered-filter">{{ 'artemisApp.pages.courseTutorialGroups.registeredFilter' | artemisTranslate }}</label>
-
         <input
             type="radio"
             class="btn-check"
@@ -25,27 +24,26 @@
         <label class="btn btn-outline-secondary" for="all-filter">{{ 'artemisApp.pages.courseTutorialGroups.allFilter' | artemisTranslate }}</label>
     </div>
 </ng-template>
-
 <div class="my-2">
     <div class="row">
         <div class="col-12" [ngClass]="{ 'col-xl-8': tutorialGroupFreeDays && tutorialGroupFreeDays.length > 0 }">
-            <ng-container [ngSwitch]="selectedFilter">
-                <jhi-course-tutorial-groups-overview
-                    *ngSwitchCase="'all'"
-                    [tutorialGroups]="tutorialGroups"
-                    [course]="course"
-                    [configuration]="configuration"
-                ></jhi-course-tutorial-groups-overview>
-                <jhi-course-tutorial-groups-registered
-                    *ngSwitchCase="'registered'"
-                    [registeredTutorialGroups]="registeredTutorialGroups"
-                    [course]="course"
-                    [configuration]="configuration"
-                ></jhi-course-tutorial-groups-registered>
-            </ng-container>
+            @switch (selectedFilter) {
+                @case ('all') {
+                    <jhi-course-tutorial-groups-overview [tutorialGroups]="tutorialGroups" [course]="course" [configuration]="configuration"></jhi-course-tutorial-groups-overview>
+                }
+                @case ('registered') {
+                    <jhi-course-tutorial-groups-registered
+                        [registeredTutorialGroups]="registeredTutorialGroups"
+                        [course]="course"
+                        [configuration]="configuration"
+                    ></jhi-course-tutorial-groups-registered>
+                }
+            }
         </div>
-        <div class="col-12 col-xl-4" *ngIf="tutorialGroupFreeDays && tutorialGroupFreeDays.length > 0">
-            <jhi-tutorial-group-free-days-overview [tutorialGroupFreeDays]="tutorialGroupFreeDays"></jhi-tutorial-group-free-days-overview>
-        </div>
+        @if (tutorialGroupFreeDays && tutorialGroupFreeDays.length > 0) {
+            <div class="col-12 col-xl-4">
+                <jhi-tutorial-group-free-days-overview [tutorialGroupFreeDays]="tutorialGroupFreeDays"></jhi-tutorial-group-free-days-overview>
+            </div>
+        }
     </div>
 </div>
