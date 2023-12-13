@@ -69,7 +69,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         List<LtiPlatformConfiguration> expectedPlatforms = Arrays.asList(platform1, platform2);
         doReturn(expectedPlatforms).when(ltiPlatformConfigurationRepository).findAll();
 
-        MvcResult mvcResult = request.getMvc().perform(get("/api/admin/lti-platforms")).andExpect(status().isOk()).andReturn();
+        MvcResult mvcResult = request.getMvc().perform(get("/api/lti-platforms")).andExpect(status().isOk()).andReturn();
 
         String jsonContent = mvcResult.getResponse().getContentAsString();
         List<LtiPlatformConfiguration> actualPlatforms = objectMapper.readValue(jsonContent, new TypeReference<>() {
@@ -81,9 +81,9 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
-    void getAllConfiguredLtiPlatformsAsInstructor() throws Exception {
-        request.get("/api/admin/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
+    @WithMockUser(username = TEST_PREFIX + "student", roles = "STUDENT")
+    void getAllConfiguredLtiPlatformsAsStudent() throws Exception {
+        request.get("/api/lti-platforms", HttpStatus.FORBIDDEN, Object.class);
     }
 
     @Test

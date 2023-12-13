@@ -185,6 +185,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "tutorialGroupsConfiguration" })
     Course findWithEagerTutorialGroupConfigurationsById(long courseId);
 
+    @EntityGraph(attributePaths = { "onlineCourseConfiguration", "onlineCourseConfiguration.ltiPlatformConfiguration" })
+    @Query("SELECT c FROM Course c WHERE c.onlineCourse = TRUE AND c.onlineCourseConfiguration.ltiPlatformConfiguration.registrationId = :registrationId")
+    Set<Course> findOnlineCoursesWithRegistrationIdEager(String registrationId);
+
     List<Course> findAllByShortName(String shortName);
 
     Optional<Course> findById(long courseId);

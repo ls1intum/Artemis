@@ -55,6 +55,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.OnlineCourseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.user.UserNameAndLoginDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
@@ -300,6 +301,28 @@ public class CourseResource {
         courseRepository.save(course);
 
         return ResponseEntity.ok(onlineCourseConfiguration);
+    }
+
+    /**
+     * GET courses/for-lti-dashboard : Retrieves a list of online courses for a specific LTI dashboard based on the client ID.
+     *
+     * @param clientId the client ID of the LTI platform used to filter the courses.
+     * @return a {@link ResponseEntity} containing a list of {@link OnlineCourseDTO} for the courses the user has access to.
+     */
+    @GetMapping("courses/for-lti-dashboard")
+    @EnforceAtLeastInstructor
+    @Profile("lti")
+    public ResponseEntity<List<OnlineCourseDTO>> findAllOnlineCoursesForLtiDashboard(@RequestParam("clientId") String clientId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get all online courses the user {} has access to", user.getLogin());
+
+        Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);
+
+        List<OnlineCourseDTO> onlineCourseDTOS = courses.stream()
+                .map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(), c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId()))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(onlineCourseDTOS);
     }
 
     /**

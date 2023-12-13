@@ -31,7 +31,7 @@ describe('LtiConfigurationService', () => {
             expect(platforms).toEqual(dummyLtiPlatforms);
         });
 
-        const req = httpMock.expectOne('api/admin/lti-platforms');
+        const req = httpMock.expectOne('api/lti-platforms');
         expect(req.request.method).toBe('GET');
         req.flush(dummyLtiPlatforms);
     });

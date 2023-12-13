@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.admin;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,19 +49,6 @@ public class AdminLtiConfigurationResource {
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
         this.ltiDynamicRegistrationService = ltiDynamicRegistrationService;
         this.authCheckService = authCheckService;
-    }
-
-    /**
-     * GET lti platforms : Get all configured lti platforms
-     *
-     * @return ResponseEntity containing a list of all lti platforms with status 200 (OK)
-     */
-    @GetMapping("lti-platforms")
-    @EnforceAdmin
-    public ResponseEntity<List<LtiPlatformConfiguration>> getAllConfiguredLtiPlatforms() {
-        log.debug("REST request to get all configured lti platforms");
-        List<LtiPlatformConfiguration> platforms = ltiPlatformConfigurationRepository.findAll();
-        return new ResponseEntity<>(platforms, HttpStatus.OK);
     }
 
     /**

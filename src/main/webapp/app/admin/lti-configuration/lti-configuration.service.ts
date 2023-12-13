@@ -11,7 +11,7 @@ export class LtiConfigurationService {
      * Sends a GET request to retrieve all lti platform configurations
      */
     findAll(): Observable<LtiPlatformConfiguration[]> {
-        return this.http.get<LtiPlatformConfiguration[]>('api/admin/lti-platforms');
+        return this.http.get<LtiPlatformConfiguration[]>('api/lti-platforms');
     }
 
     /**

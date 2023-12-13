@@ -84,9 +84,6 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     }
 
     redirectUserToTargetLink(data: any): void {
-        // const ltiIdToken = error.headers.get('ltiIdToken');
-        // const clientRegistrationId = error.headers.get('clientRegistrationId');
-
         const ltiIdToken = data.error['ltiIdToken'];
         const clientRegistrationId = data.error['clientRegistrationId'];
 

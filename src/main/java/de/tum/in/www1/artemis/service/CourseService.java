@@ -352,6 +352,18 @@ public class CourseService {
     }
 
     /**
+     * Gets a set of all online courses for a specific LTI platform registration, filtered by the instructor user.
+     *
+     * @param registrationId the registration ID of the LTI platform to filter courses.
+     * @param user           the User object representing the instructor whose courses are to be fetched.
+     * @return a set of {@link Course} objects where the user is an instructor, related to the specified LTI platform.
+     */
+    public Set<Course> findAllOnlineCoursesForPlatformForUser(String registrationId, User user) {
+        return courseRepository.findOnlineCoursesWithRegistrationIdEager(registrationId).stream().filter(course -> authCheckService.isInstructorInCourse(course, user))
+                .collect(Collectors.toSet());
+    }
+
+    /**
      * Deletes all elements associated with the course including:
      * <ul>
      * <li>The Course</li>
