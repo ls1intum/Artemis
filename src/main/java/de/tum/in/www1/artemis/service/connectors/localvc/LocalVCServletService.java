@@ -78,8 +78,6 @@ public class LocalVCServletService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
-
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
@@ -99,8 +97,7 @@ public class LocalVCServletService {
             ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService, AuthorizationCheckService authorizationCheckService,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService) {
+            ProgrammingMessagingService programmingMessagingService, ProgrammingTriggerService programmingTriggerService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -112,7 +109,6 @@ public class LocalVCServletService {
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
         this.programmingTriggerService = programmingTriggerService;
-        this.programmingLanguageFeatureService = programmingLanguageFeatureService;
     }
 
     /**
@@ -324,16 +320,6 @@ public class LocalVCServletService {
         }
         catch (EntityNotFoundException e) {
             throw new VersionControlException("Could not find programming exercise for project key " + projectKey, e);
-        }
-
-        ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
-        ProjectType projectType = exercise.getProjectType();
-
-        // TODO: We should move this to the exercise creation and not in the push handling as it is not necessary to check this every time a push happens.
-        List<ProjectType> supportedProjectTypes = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
-
-        if (projectType != null && !supportedProjectTypes.contains(exercise.getProjectType())) {
-            throw new ContinuousIntegrationException("The project type " + exercise.getProjectType() + " is not supported by the configured CI System.");
         }
 
         ProgrammingExerciseParticipation participation;
