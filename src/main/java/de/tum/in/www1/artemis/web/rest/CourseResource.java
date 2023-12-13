@@ -1197,14 +1197,15 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/statistics")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex) {
+    public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex,
+            @RequestParam Optional<Integer> periodSize) {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
         var chartEndDate = courseService.determineEndDateForActiveStudents(course);
-        var spanEndDate = chartEndDate.plusWeeks(17 * periodIndex);
-        var returnedSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, 17);
-        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, 17, chartEndDate);
+        var spanEndDate = chartEndDate.plusWeeks(periodSize.orElse(17) * periodIndex);
+        var returnedSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, periodSize.orElse(17));
+        var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, periodSize.orElse(17), chartEndDate);
         // We omit data concerning the time before the start date
         return ResponseEntity.ok(activeStudents.subList(activeStudents.size() - returnedSpanSize, activeStudents.size()));
     }

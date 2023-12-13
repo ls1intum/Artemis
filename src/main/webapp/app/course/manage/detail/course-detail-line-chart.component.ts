@@ -27,7 +27,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
 
     LEFT = false;
     RIGHT = true;
-    readonly displayedNumberOfWeeks = 17;
+    readonly displayedNumberOfWeeks = 5;
     showsCurrentWeek = true;
 
     // Chart related
@@ -88,6 +88,10 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         this.amountOfStudents = this.translateService.instant('artemisApp.courseStatistics.amountOfStudents');
         this.updateXAxisLabel();
         this.determineDisplayedPeriod(this.course, this.displayedNumberOfWeeks);
+        console.log('spanSize', this.currentSpanSize);
+        console.log('initial data', this.initialStats);
+        console.log('data', this.data);
+        console.log('current offset to endDate', this.currentOffsetToEndDate);
         /*
         if the course has a start date and already ended
         (i.e. the time difference between today and the course end date is at least one week), we show the lifetime overview by default.
@@ -98,6 +102,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         } else {
             this.displayDefaultChartScope();
         }
+        // this.reloadChart();
     }
 
     /**
@@ -121,6 +126,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
             const allValues = [];
             for (let i = 0; i < array.length; i++) {
                 allValues.push(roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course));
+                console.log(this.dataCopy);
                 this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course); // allValues[i];
                 this.absoluteSeries[i]['absoluteValue'] = array[i];
             }
@@ -202,10 +208,11 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         this.loading = true;
         // Only use the pre-loaded stats once
         if (!this.initialStats) {
+            console.log('uhaaaaaa');
             return;
         }
         this.createLabels();
-        this.processDataAndCreateChart(this.initialStats);
+        this.processDataAndCreateChart(this.initialStats.slice(Math.max(this.initialStats.length - this.displayedNumberOfWeeks, 0)));
         this.data = this.dataCopy;
     }
 

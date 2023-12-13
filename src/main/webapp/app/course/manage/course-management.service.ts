@@ -102,7 +102,7 @@ export class CourseManagementService {
      * @param periodIndex the period of the statistics we want to have
      */
     getStatisticsData(courseId: number, periodIndex: number): Observable<number[]> {
-        const params = new HttpParams().set('periodIndex', '' + periodIndex);
+        const params = { periodIndex, periodSize: 5 };
         return this.http.get<number[]>(`${this.resourceUrl}/${courseId}/statistics`, { params });
     }
 
