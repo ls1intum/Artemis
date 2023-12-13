@@ -46,6 +46,10 @@ public class AthenaRequestMockProvider {
 
     private AutoCloseable closeable;
 
+    public static final String ATHENA_MODULE_TEXT_TEST = "module_text_test";
+
+    public static final String ATHENA_MODULE_PROGRAMMING_TEST = "module_programming_test";
+
     public AthenaRequestMockProvider(@Qualifier("athenaRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate,
             @Qualifier("veryShortTimeoutAthenaRestTemplate") RestTemplate veryShortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;

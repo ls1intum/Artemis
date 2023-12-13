@@ -13,17 +13,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
-import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
-import de.tum.in.www1.artemis.security.annotations.ManualConfig;
+import de.tum.in.www1.artemis.security.annotations.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaFeedbackSuggestionsService;
+import de.tum.in.www1.artemis.service.connectors.athena.AthenaModuleService;
 import de.tum.in.www1.artemis.service.connectors.athena.AthenaRepositoryExportService;
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
@@ -43,6 +41,8 @@ public class AthenaResource {
     @Value("${artemis.athena.secret}")
     private String athenaSecret;
 
+    private final CourseRepository courseRepository;
+
     private final TextExerciseRepository textExerciseRepository;
 
     private final TextSubmissionRepository textSubmissionRepository;
@@ -57,13 +57,16 @@ public class AthenaResource {
 
     private final AthenaRepositoryExportService athenaRepositoryExportService;
 
+    private final AthenaModuleService athenaModuleService;
+
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
-    public AthenaResource(TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository,
+    public AthenaResource(CourseRepository courseRepository, TextExerciseRepository textExerciseRepository, TextSubmissionRepository textSubmissionRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuthorizationCheckService authCheckService, AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService,
-            AthenaRepositoryExportService athenaRepositoryExportService) {
+            AthenaRepositoryExportService athenaRepositoryExportService, AthenaModuleService athenaModuleService) {
+        this.courseRepository = courseRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.textSubmissionRepository = textSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -71,6 +74,7 @@ public class AthenaResource {
         this.authCheckService = authCheckService;
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.athenaRepositoryExportService = athenaRepositoryExportService;
+        this.athenaModuleService = athenaModuleService;
     }
 
     @FunctionalInterface
@@ -127,6 +131,34 @@ public class AthenaResource {
     public ResponseEntity<List<ProgrammingFeedbackDTO>> getProgrammingFeedbackSuggestions(@PathVariable long exerciseId, @PathVariable long submissionId) {
         return getFeedbackSuggestions(exerciseId, submissionId, programmingExerciseRepository::findByIdElseThrow, programmingSubmissionRepository::findByIdElseThrow,
                 athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
+    }
+
+    @GetMapping("athena/programming-exercises/{courseId}/available-modules")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<String>> getAvailableModulesForProgrammingExercises(@PathVariable long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        log.debug("REST request to get available Athena modules for programming exercises in Course {}", course.getTitle());
+        // todo error handling
+        var modules = athenaModuleService.getAthenaProgrammingModulesForCourse(course);
+        return ResponseEntity.ok(modules);
+    }
+
+    @GetMapping("athena/text-exercises/{courseId}/available-modules")
+    @EnforceAtLeastEditor
+    public ResponseEntity<List<String>> getAvailableModulesForTextExercises(@PathVariable long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        log.debug("REST request to get available Athena modules for text exercises in Course {}", course.getTitle());
+        // todo error handling
+        var modules = athenaModuleService.getAthenaTextModulesForCourse(course);
+        return ResponseEntity.ok(modules);
+    }
+
+    @GetMapping("public/athena/restricted-modules")
+    @EnforceNothing
+    @ManualConfig
+    public ResponseEntity<List<String>> getRestrictedModules() {
+        // TODO Athena: Just for testing, remove afterwards
+        return ResponseEntity.ok(athenaModuleService.getRestrictedModules());
     }
 
     /**

@@ -63,7 +63,7 @@ public class AthenaRepositoryExportService {
      * @throws AccessForbiddenException if the feedback suggestions are not enabled for the given exercise
      */
     private void checkFeedbackSuggestionsEnabledElseThrow(Exercise exercise) {
-        if (!exercise.getFeedbackSuggestionsEnabled()) {
+        if (!exercise.isFeedbackSuggestionsEnabled()) {
             log.error("Feedback suggestions are not enabled for exercise {}", exercise.getId());
             throw new ServiceUnavailableException("Feedback suggestions are not enabled for exercise");
         }

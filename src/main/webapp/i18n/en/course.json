@@ -82,6 +82,10 @@
                 "label": "Learning Paths Enabled",
                 "tooltip": "Enables generation of individualized learning paths for students consisting of competencies and their linked learning materials."
             },
+            "restrictedAthenaModulesAccess": {
+                "label": "Access to Restricted Athena Modules Enabled",
+                "tooltip": "If this option is selected, the course's exercises can also use restricted Athena modules for feedback generation."
+            },
             "onlineCourse": {
                 "title": "Online Course",
                 "description": "Activate this checkbox for external online courses (e.g. on edX/Moodle) so that students can use this Artemis course (via the LTI interface). This also allows automatic account creation if enabled by the Artemis system administrator. You can further configure this in the LTI Configuration page."

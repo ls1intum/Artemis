@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
+import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
@@ -27,7 +29,7 @@ import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Autowired
-    private AthenaModuleUrlHelper athenaModuleUrlHelper;
+    private AthenaModuleService athenaModuleService;
 
     @Mock
     private TextBlockRepository textBlockRepository;
@@ -62,13 +64,13 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @BeforeEach
     void setUp() {
-        athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), athenaModuleUrlHelper,
+        athenaFeedbackSendingService = new AthenaFeedbackSendingService(athenaRequestMockProvider.getRestTemplate(), athenaModuleService,
                 new AthenaDTOConverter(textBlockRepository, textExerciseRepository, programmingExerciseRepository));
 
         athenaRequestMockProvider.enableMockingOfRequests();
 
         textExercise = textExerciseUtilService.createSampleTextExercise(null);
-        textExercise.setFeedbackSuggestionsEnabled(true);
+        textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
         when(textExerciseRepository.findByIdWithGradingCriteriaElseThrow(textExercise.getId())).thenReturn(textExercise);
 
         textSubmission = new TextSubmission(2L).text("Test - This is what the feedback references - Submission");
@@ -86,7 +88,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         result.setParticipation(participation);
 
         programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setFeedbackSuggestionsEnabled(true);
+        programmingExercise.setFeedbackSuggestionModule(ATHENA_MODULE_PROGRAMMING_TEST);
         when(programmingExerciseRepository.findByIdWithGradingCriteriaElseThrow(programmingExercise.getId())).thenReturn(programmingExercise);
 
         programmingSubmission = new ProgrammingSubmission();
@@ -184,9 +186,9 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Test
     void testSendFeedbackWithFeedbackSuggestionsDisabled() {
-        textExercise.setFeedbackSuggestionsEnabled(false);
+        textExercise.setFeedbackSuggestionModule(null);
         assertThatThrownBy(() -> athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback))).isInstanceOf(IllegalArgumentException.class);
-        programmingExercise.setFeedbackSuggestionsEnabled(false);
+        programmingExercise.setFeedbackSuggestionModule(null);
         assertThatThrownBy(() -> athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback)))
                 .isInstanceOf(IllegalArgumentException.class);
     }

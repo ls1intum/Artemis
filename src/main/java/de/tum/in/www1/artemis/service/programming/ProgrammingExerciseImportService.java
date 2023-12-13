@@ -280,7 +280,8 @@ public class ProgrammingExerciseImportService {
 
         if (newExercise.isExamExercise()) {
             // Disable feedback suggestions on exam exercises (currently not supported)
-            newExercise.setFeedbackSuggestionsEnabled(false);
+            // TODO Athena: Check that only allowed athena modules are used
+            newExercise.setFeedbackSuggestionModule(null);
         }
 
         final var importedProgrammingExercise = programmingExerciseImportBasicService.importProgrammingExerciseBasis(originalProgrammingExercise, newExercise);

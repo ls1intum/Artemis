@@ -199,6 +199,9 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Integer accuracyOfScores = 1; // default value
 
+    @Column(name = "restricted_athena_modules_access", nullable = false)
+    private boolean restrictedAthenaModulesAccess = false; // default is false
+
     /**
      * Note: Currently just used in the scope of the tutorial groups feature
      */
@@ -801,6 +804,14 @@ public class Course extends DomainObject {
 
     public void setAccuracyOfScores(Integer accuracyOfScores) {
         this.accuracyOfScores = accuracyOfScores;
+    }
+
+    public boolean getRestrictedAthenaModulesAccess() {
+        return restrictedAthenaModulesAccess;
+    }
+
+    public void setRestrictedAthenaModulesAccess(boolean restrictedAthenaModulesAccess) {
+        this.restrictedAthenaModulesAccess = restrictedAthenaModulesAccess;
     }
 
     public Set<TutorialGroup> getTutorialGroups() {

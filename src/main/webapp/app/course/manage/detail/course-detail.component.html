@@ -238,6 +238,14 @@
                     [innerHTML]="course.courseInformationSharingMessagingCodeOfConduct | htmlForMarkdown"
                 ></dd>
             </ng-container>
+            <!--            TODO: Add info about athena-->
+            <div *ngIf="isAthenaEnabled">
+                <dt><span jhiTranslate="artemisApp.course.restrictedAthenaModulesAccess.label">Access to Restricted Athena Modules Enabled</span></dt>
+                <dd id="course-restricted-athena-module-access">
+                    <span *ngIf="this.course.restrictedAthenaModulesAccess">{{ 'global.generic.yes' | artemisTranslate }}</span>
+                    <span *ngIf="!this.course.restrictedAthenaModulesAccess">{{ 'global.generic.no' | artemisTranslate }}</span>
+                </dd>
+            </div>
             <div *ngIf="irisEnabled && irisChatEnabled">
                 <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.chat">Iris Chat</span></dt>
                 <dd>

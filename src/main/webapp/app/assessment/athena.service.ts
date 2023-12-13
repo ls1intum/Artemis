@@ -8,6 +8,7 @@ import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER
 import { TextBlock } from 'app/entities/text-block.model';
 import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { PROFILE_ATHENA } from 'app/app.constants';
 
 @Injectable({ providedIn: 'root' })
 export class AthenaService {
@@ -19,19 +20,32 @@ export class AthenaService {
     ) {}
 
     public isEnabled(): Observable<boolean> {
-        return this.profileService.getProfileInfo().pipe(switchMap((profileInfo) => of(profileInfo.activeProfiles.includes('athena'))));
+        return this.profileService.getProfileInfo().pipe(switchMap((profileInfo) => of(profileInfo.activeProfiles.includes(PROFILE_ATHENA))));
+    }
+
+    // TODO Athena: Add methods to get available modules
+    public getAvailableModules(courseId: number, exercise: Exercise): Observable<string[]> {
+        return this.isEnabled().pipe(
+            switchMap((isAthenaEnabled) => {
+                if (!isAthenaEnabled) {
+                    return of([] as string[]);
+                }
+                return this.http
+                    .get<string[]>(`${this.resourceUrl}/${exercise.type}-exercises/${courseId}/available-modules`, { observe: 'response' })
+                    .pipe(switchMap((res: HttpResponse<string[]>) => of(res.body!)));
+            }),
+        );
     }
 
     /**
-     * Get feedback suggestions for the given submission from Athena - for programming exercises
-     * Currently, this is separate for programming and text exercises (will be changed)
+     * Get feedback suggestions for the given submission from Athena
      *
      * @param exercise
      * @param submissionId the id of the submission
      * @return observable that emits the feedback suggestions
      */
     private getFeedbackSuggestions<T>(exercise: Exercise, submissionId: number): Observable<T[]> {
-        if (!exercise.feedbackSuggestionsEnabled) {
+        if (!exercise.feedbackSuggestionModule) {
             return of([]);
         }
         return this.isEnabled().pipe(

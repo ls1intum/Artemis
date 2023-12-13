@@ -101,8 +101,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     @Column(name = "second_correction_enabled")
     private Boolean secondCorrectionEnabled = false;
 
-    @Column(name = "feedback_suggestions_enabled") // enables Athena
-    private Boolean feedbackSuggestionsEnabled = false;
+    // TODO Athena: adapt to new exercise model: instead of using a boolean, we just use the module name (enabled) or null
+    @Column(name = "feedback_suggestion_module") // Athena module name (Athena enabled) or null
+    private String feedbackSuggestionModule;
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
@@ -783,12 +784,16 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.secondCorrectionEnabled = secondCorrectionEnabled;
     }
 
-    public boolean getFeedbackSuggestionsEnabled() {
-        return Boolean.TRUE.equals(feedbackSuggestionsEnabled);
+    public String getFeedbackSuggestionModule() {
+        return feedbackSuggestionModule;
     }
 
-    public void setFeedbackSuggestionsEnabled(boolean feedbackSuggestionsEnabled) {
-        this.feedbackSuggestionsEnabled = feedbackSuggestionsEnabled;
+    public void setFeedbackSuggestionModule(String feedbackSuggestionModule) {
+        this.feedbackSuggestionModule = feedbackSuggestionModule;
+    }
+
+    public boolean isFeedbackSuggestionsEnabled() {
+        return feedbackSuggestionModule != null;
     }
 
     public List<GradingCriterion> getGradingCriteria() {

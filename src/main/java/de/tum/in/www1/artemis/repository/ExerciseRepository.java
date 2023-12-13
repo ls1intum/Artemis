@@ -9,11 +9,10 @@ import java.util.*;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.metrics.ExerciseTypeMetricsEntry;
@@ -529,13 +528,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Set<Exercise> getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(long userId);
 
     /**
-     * Finds all exercises filtered by feedback suggestions and due date.
+     * Finds all exercises filtered by feedback suggestion modules not null and due date.
      *
-     * @param feedbackSuggestionsEnabled - filter by feedback suggestions enabled
-     * @param dueDate                    - filter by due date
+     * @param dueDate - filter by due date
      * @return Set of Exercises
      */
-    Set<Exercise> findByFeedbackSuggestionsEnabledAndDueDateIsAfter(boolean feedbackSuggestionsEnabled, ZonedDateTime dueDate);
+    Set<Exercise> findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime dueDate);
 
     /**
      * Find all exercises feedback suggestions (Athena) and with *Due Date* in the future.
@@ -543,8 +541,19 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      * @return Set of Exercises
      */
     default Set<Exercise> findAllFeedbackSuggestionsEnabledExercisesWithFutureDueDate() {
-        return findByFeedbackSuggestionsEnabledAndDueDateIsAfter(true, ZonedDateTime.now());
+        return findByFeedbackSuggestionModuleNotNullAndDueDateIsAfter(ZonedDateTime.now());
     }
+
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Exercise e
+            SET e.feedbackSuggestionModule = NULL
+            WHERE e.course.id = :courseId
+                  AND e.feedbackSuggestionModule IN :restrictedFeedbackSuggestionModule
+            """)
+    void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
+            @Param("restrictedFeedbackSuggestionModule") Set<String> restrictedFeedbackSuggestionModule);
 
     /**
      * For an explanation, see {@link de.tum.in.www1.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long,long)}

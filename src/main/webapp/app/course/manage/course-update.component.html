@@ -361,6 +361,24 @@
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.learningPaths.tooltip' | artemisTranslate }}"></fa-icon>
                     </div>
                 </div>
+                <div class="form-check" *ngIf="this.isAdmin && this.isAthenaEnabled">
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        name="restrictedAthenaModulesEnabled"
+                        id="field_restrictedAthenaModulesEnabled"
+                        [checked]="course.restrictedAthenaModulesAccess"
+                        (change)="this.changeRestrictedAthenaModulesEnabled()"
+                    />
+                    <label class="form-control-label" jhiTranslate="artemisApp.course.restrictedAthenaModulesAccess.label" for="field_restrictedAthenaModulesEnabled">
+                        Access to Restricted Athena Modules Enabled
+                    </label>
+                    <fa-icon
+                        [icon]="faQuestionCircle"
+                        class="text-secondary"
+                        ngbTooltip="{{ 'artemisApp.course.restrictedAthenaModulesAccess.tooltip' | artemisTranslate }}"
+                    ></fa-icon>
+                </div>
                 <div class="form-check" *ngIf="ltiEnabled && !this.course.enrollmentEnabled">
                     <input
                         type="checkbox"
