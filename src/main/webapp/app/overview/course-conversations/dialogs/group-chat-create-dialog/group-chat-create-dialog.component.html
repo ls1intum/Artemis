@@ -1,32 +1,40 @@
-<div *ngIf="isInitialized">
-    <div class="modal-header">
-        <h4 class="modal-title">
-            <span> {{ 'artemisApp.dialogs.createGroupChat.title' | artemisTranslate }} </span>
-        </h4>
-        <button type="button" class="btn-close dismiss" (click)="clear()"></button>
+@if (isInitialized) {
+    <div>
+        <div class="modal-header">
+            <h4 class="modal-title">
+                <span> {{ 'artemisApp.dialogs.createGroupChat.title' | artemisTranslate }} </span>
+            </h4>
+            <button type="button" class="btn-close dismiss" (click)="clear()"></button>
+        </div>
+        <div class="modal-body">
+            <form (ngSubmit)="onSubmit()" [formGroup]="form">
+                <jhi-course-users-selector
+                    formControlName="selectedUsers"
+                    [courseId]="course.id!"
+                    [label]="'artemisApp.dialogs.createGroupChat.userSelectorLabel' | artemisTranslate"
+                ></jhi-course-users-selector>
+                @if (selectedUsersControl?.invalid && (selectedUsersControl?.dirty || selectedUsersControl?.touched)) {
+                    <div class="alert alert-danger">
+                        @if (selectedUsersControl?.errors?.required) {
+                            <div>
+                                {{ 'artemisApp.dialogs.createGroupChat.requiredError' | artemisTranslate }}
+                            </div>
+                        }
+                        @if (selectedUsersControl?.errors?.maxlength) {
+                            <div>
+                                {{ 'artemisApp.dialogs.createGroupChat.maxError' | artemisTranslate: { max: 9 } }}
+                            </div>
+                        }
+                    </div>
+                }
+                <div class="row">
+                    <div class="col-12 text-end">
+                        <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
+                            <span>{{ 'artemisApp.dialogs.createGroupChat.confirmButton' | artemisTranslate }}</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
-    <div class="modal-body">
-        <form (ngSubmit)="onSubmit()" [formGroup]="form">
-            <jhi-course-users-selector
-                formControlName="selectedUsers"
-                [courseId]="course.id!"
-                [label]="'artemisApp.dialogs.createGroupChat.userSelectorLabel' | artemisTranslate"
-            ></jhi-course-users-selector>
-            <div *ngIf="selectedUsersControl?.invalid && (selectedUsersControl?.dirty || selectedUsersControl?.touched)" class="alert alert-danger">
-                <div *ngIf="selectedUsersControl?.errors?.required">
-                    {{ 'artemisApp.dialogs.createGroupChat.requiredError' | artemisTranslate }}
-                </div>
-                <div *ngIf="selectedUsersControl?.errors?.maxlength">
-                    {{ 'artemisApp.dialogs.createGroupChat.maxError' | artemisTranslate: { max: 9 } }}
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12 text-end">
-                    <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
-                        <span>{{ 'artemisApp.dialogs.createGroupChat.confirmButton' | artemisTranslate }}</span>
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
+}
