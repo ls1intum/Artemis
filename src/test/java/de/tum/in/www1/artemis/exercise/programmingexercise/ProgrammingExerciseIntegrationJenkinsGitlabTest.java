@@ -134,7 +134,8 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
         params.add("deleteStudentReposBuildPlans", "true");
         params.add("deleteBaseReposBuildPlans", "true");
 
-        for (final var planName : List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2", TEMPLATE.getName(), SOLUTION.getName())) {
+        for (final var planName : List.of(TEST_PREFIX + "student1", TEST_PREFIX + "student2", TEST_PREFIX + "student3", TEST_PREFIX + "student3", TEMPLATE.getName(),
+                SOLUTION.getName())) {
             jenkinsRequestMockProvider.mockDeleteBuildPlanNotFound(projectKey, projectKey + "-" + planName.toUpperCase());
         }
 
