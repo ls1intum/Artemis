@@ -41,16 +41,22 @@
                     <span> ({{ 'artemisApp.examParticipation.nameDisplay' | artemisTranslate: { fullName: accountName } }}) </span>
                 </div>
             </div>
-            <div *ngIf="fullname.touched" class="row justify-content-center">
-                <div class="form-group w-60">
-                    <div class="alert alert-danger mt-1" *ngIf="!confirmed">
-                        <span [innerHTML]="'artemisApp.exam.notConfirmed' | artemisTranslate"></span>
-                    </div>
-                    <div class="alert alert-danger mt-1" *ngIf="fullname.errors?.['pattern']">
-                        <span [innerHTML]="'artemisApp.exam.falseName' | artemisTranslate"></span>
+            @if (fullname.touched) {
+                <div class="row justify-content-center">
+                    <div class="form-group w-60">
+                        @if (!confirmed) {
+                            <div class="alert alert-danger mt-1">
+                                <span [innerHTML]="'artemisApp.exam.notConfirmed' | artemisTranslate"></span>
+                            </div>
+                        }
+                        @if (fullname.errors?.['pattern']) {
+                            <div class="alert alert-danger mt-1">
+                                <span [innerHTML]="'artemisApp.exam.falseName' | artemisTranslate"></span>
+                            </div>
+                        }
                     </div>
                 </div>
-            </div>
+            }
         </div>
         <div class="container d-flex flex-column align-items-center justify-content-center">
             <div class="text-center">
