@@ -259,7 +259,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     void testFaultyResultFiles() throws IOException {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, "/testing-dir/build/test-results/test");
+        localVCLocalCITestService.mockTestResults(dockerClient, FAULTY_FILES_TEST_RESULTS_PATH, WORKING_DIRECTORY + "/testing-dir/build/test-results/test");
         localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
         await().untilAsserted(() -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(studentParticipation), any()));
 
@@ -270,10 +270,11 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     private void verifyUserNotification(Participation participation) {
         BuildTriggerWebsocketError expectedError = new BuildTriggerWebsocketError(
                 "java.util.concurrent.ExecutionException: de.tum.in.www1.artemis.exception.LocalCIException: Error while parsing test results", participation.getId());
-        verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(participation), argThat((BuildTriggerWebsocketError actualError) -> {
-            assertThat(actualError.getError()).isEqualTo(expectedError.getError());
-            assertThat(actualError.getParticipationId()).isEqualTo(expectedError.getParticipationId());
-            return true;
-        }));
+        await().untilAsserted(
+                () -> verify(programmingMessagingService).notifyUserAboutSubmissionError(Mockito.eq(participation), argThat((BuildTriggerWebsocketError actualError) -> {
+                    assertThat(actualError.getError()).isEqualTo(expectedError.getError());
+                    assertThat(actualError.getParticipationId()).isEqualTo(expectedError.getParticipationId());
+                    return true;
+                })));
     }
 }
