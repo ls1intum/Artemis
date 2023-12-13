@@ -1,3 +1,5 @@
-<span *ngIf="visible" style="float: right" class="badge bg-primary mb-2 mt-1">
-    {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }} / {{ maxLength }}
-</span>
+@if (visible) {
+    <span style="float: right" class="badge bg-primary mb-2 mt-1">
+        {{ 'artemisApp.textExercise.characterCount' | artemisTranslate: { count: characterCount } }} / {{ maxLength }}
+    </span>
+}

@@ -5,20 +5,34 @@
 >
     <div class="card-header d-flex justify-content-left text-white bg-primary" (click)="toggleEditorCollapse($event)">
         <h3 class="card-title">
-            <span *ngIf="!collapsed">
-                <fa-icon [icon]="farListAlt"></fa-icon>
-                <span *ngIf="!isAssessmentMode" class="ms-2" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
-                <span *ngIf="isAssessmentMode" class="ms-2" jhiTranslate="artemisApp.exercise.instructions">Instructions</span>
-            </span>
-            <span class="collapsed-instructions-card" *ngIf="collapsed">
-                <fa-icon class="top-icon" [icon]="faChevronLeft"></fa-icon>
-                <fa-icon [icon]="farListAlt" class="fa-rotate-90" id="panel-symbol"></fa-icon>
-                <span *ngIf="!isAssessmentMode" class="header" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
-                <span *ngIf="isAssessmentMode" class="header" jhiTranslate="artemisApp.exercise.instructions">Instructions</span>
-                <fa-icon class="bottom-icon" [icon]="faChevronLeft"></fa-icon>
-            </span>
+            @if (!collapsed) {
+                <span>
+                    <fa-icon [icon]="farListAlt"></fa-icon>
+                    @if (!isAssessmentMode) {
+                        <span class="ms-2" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+                    }
+                    @if (isAssessmentMode) {
+                        <span class="ms-2" jhiTranslate="artemisApp.exercise.instructions">Instructions</span>
+                    }
+                </span>
+            }
+            @if (collapsed) {
+                <span class="collapsed-instructions-card">
+                    <fa-icon class="top-icon" [icon]="faChevronLeft"></fa-icon>
+                    <fa-icon [icon]="farListAlt" class="fa-rotate-90" id="panel-symbol"></fa-icon>
+                    @if (!isAssessmentMode) {
+                        <span class="header" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
+                    }
+                    @if (isAssessmentMode) {
+                        <span class="header" jhiTranslate="artemisApp.exercise.instructions">Instructions</span>
+                    }
+                    <fa-icon class="bottom-icon" [icon]="faChevronLeft"></fa-icon>
+                </span>
+            }
         </h3>
-        <fa-icon *ngIf="!collapsed" class="ms-auto clickable" [icon]="faChevronRight"></fa-icon>
+        @if (!collapsed) {
+            <fa-icon class="ms-auto clickable" [icon]="faChevronRight"></fa-icon>
+        }
     </div>
     <div style="display: contents" [hidden]="collapsed">
         <ng-content></ng-content>

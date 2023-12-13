@@ -168,65 +168,67 @@
             </div>
         </div>
         <div cdkDropList (cdkDropListDropped)="onReorderAnswerOptionDrop($event)">
-            <div class="answer-border" *ngFor="let answer of question.answerOptions" cdkDrag>
-                <div class="question-options row align-items-start">
-                    <div class="col-3 col-lg-1 drag-handle">
-                        <div class="answer-handle re-evaluate-order-button text-center" cdkDragHandle style="width: 100%">
-                            <fa-icon [icon]="faArrowsAltV" size="2x"></fa-icon>
+            @for (answer of question.answerOptions; track answer) {
+                <div class="answer-border" cdkDrag>
+                    <div class="question-options row align-items-start">
+                        <div class="col-3 col-lg-1 drag-handle">
+                            <div class="answer-handle re-evaluate-order-button text-center" cdkDragHandle style="width: 100%">
+                                <fa-icon [icon]="faArrowsAltV" size="2x"></fa-icon>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-9 col-lg-7 option-text">
-                        <!-- TODO: Fix file upload -->
-                        <jhi-markdown-editor
-                            [markdown]="markdownMap.get(answer.id!)"
-                            [editorMode]="editorMode"
-                            [metaCommands]="[]"
-                            [defaultCommands]="[]"
-                            [headerCommands]="[]"
-                            [domainCommands]="[]"
-                            [colorCommands]="[]"
-                            [showEditButton]="false"
-                            [showPreviewButton]="false"
-                            (markdownChange)="onAnswerOptionChange($event, answer)"
-                            [enableFileUpload]="false"
-                            class="editor"
-                            style="width: 65%"
-                        ></jhi-markdown-editor>
-                    </div>
-                    <div class="col-12 col-lg-4">
-                        <div class="form-group question-options-actions text-center d-flex flex-wrap">
-                            <button
-                                class="btn btn-outline-secondary"
-                                [hidden]="isAnswerInvalid(answer)"
-                                (click)="setAnswerInvalid(answer)"
-                                jhiTranslate="artemisApp.quizExercise.re-evaluate.setAnswerInvalid"
-                            ></button>
-                            <button
-                                class="btn btn-outline-secondary"
-                                [hidden]="!isAnswerInvalid(answer)"
-                                [disabled]="isAnswerInvalid(answer)"
-                                jhiTranslate="artemisApp.quizExercise.re-evaluate.answerIsInvalid"
-                            ></button>
-                            <button
-                                class="btn btn-outline-secondary"
-                                type="button"
-                                (click)="resetAnswer(answer)"
-                                [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetAnswer' | artemisTranslate"
-                            >
-                                <fa-icon [icon]="faUndo"></fa-icon>
-                            </button>
-                            <button
-                                class="btn btn-outline-secondary"
-                                type="button"
-                                (click)="deleteAnswer(answer)"
-                                [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.deleteAnswer' | artemisTranslate"
-                            >
-                                <fa-icon [icon]="faTrash"></fa-icon>
-                            </button>
+                        <div class="col-9 col-lg-7 option-text">
+                            <!-- TODO: Fix file upload -->
+                            <jhi-markdown-editor
+                                [markdown]="markdownMap.get(answer.id!)"
+                                [editorMode]="editorMode"
+                                [metaCommands]="[]"
+                                [defaultCommands]="[]"
+                                [headerCommands]="[]"
+                                [domainCommands]="[]"
+                                [colorCommands]="[]"
+                                [showEditButton]="false"
+                                [showPreviewButton]="false"
+                                (markdownChange)="onAnswerOptionChange($event, answer)"
+                                [enableFileUpload]="false"
+                                class="editor"
+                                style="width: 65%"
+                            ></jhi-markdown-editor>
+                        </div>
+                        <div class="col-12 col-lg-4">
+                            <div class="form-group question-options-actions text-center d-flex flex-wrap">
+                                <button
+                                    class="btn btn-outline-secondary"
+                                    [hidden]="isAnswerInvalid(answer)"
+                                    (click)="setAnswerInvalid(answer)"
+                                    jhiTranslate="artemisApp.quizExercise.re-evaluate.setAnswerInvalid"
+                                ></button>
+                                <button
+                                    class="btn btn-outline-secondary"
+                                    [hidden]="!isAnswerInvalid(answer)"
+                                    [disabled]="isAnswerInvalid(answer)"
+                                    jhiTranslate="artemisApp.quizExercise.re-evaluate.answerIsInvalid"
+                                ></button>
+                                <button
+                                    class="btn btn-outline-secondary"
+                                    type="button"
+                                    (click)="resetAnswer(answer)"
+                                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetAnswer' | artemisTranslate"
+                                >
+                                    <fa-icon [icon]="faUndo"></fa-icon>
+                                </button>
+                                <button
+                                    class="btn btn-outline-secondary"
+                                    type="button"
+                                    (click)="deleteAnswer(answer)"
+                                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.deleteAnswer' | artemisTranslate"
+                                >
+                                    <fa-icon [icon]="faTrash"></fa-icon>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            }
         </div>
     </div>
 </div>

@@ -9,20 +9,23 @@
         >
         </jhi-posting-markdown-editor>
         <div class="col text-end">
-            <div class="alert alert-warning alert-dismissible text-start fade show" role="alert" *ngIf="!warningDismissed">
-                <button type="button" class="btn-close" (click)="closeAlert()" aria-label="Close"></button>
-                <h4 class="alert-heading">{{ 'artemisApp.messageWarning.headerText' | artemisTranslate }}</h4>
-                <p>{{ 'artemisApp.messageWarning.mainParagraph' | artemisTranslate }}</p>
-                <hr />
-                <p class="mb-0">{{ 'artemisApp.messageWarning.lastParagraph' | artemisTranslate }}</p>
-            </div>
-            <button
-                *ngIf="editType === EditType.UPDATE"
-                jhi-posting-button
-                [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate"
-                class="btn btn-sm btn-outline-secondary"
-                (click)="isModalOpen.emit()"
-            ></button>
+            @if (!warningDismissed) {
+                <div class="alert alert-warning alert-dismissible text-start fade show" role="alert">
+                    <button type="button" class="btn-close" (click)="closeAlert()" aria-label="Close"></button>
+                    <h4 class="alert-heading">{{ 'artemisApp.messageWarning.headerText' | artemisTranslate }}</h4>
+                    <p>{{ 'artemisApp.messageWarning.mainParagraph' | artemisTranslate }}</p>
+                    <hr />
+                    <p class="mb-0">{{ 'artemisApp.messageWarning.lastParagraph' | artemisTranslate }}</p>
+                </div>
+            }
+            @if (editType === EditType.UPDATE) {
+                <button
+                    jhi-posting-button
+                    [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate"
+                    class="btn btn-sm btn-outline-secondary"
+                    (click)="isModalOpen.emit()"
+                ></button>
+            }
             <button
                 jhi-posting-button
                 [buttonLoading]="isLoading"
