@@ -1,38 +1,44 @@
 <div class="notification-popup-container">
-    <div *ngFor="let notification of notifications; let i = index" (click)="removeNotification(i); navigateToTarget(notification)">
-        <div class="icon-container d-flex flex-column justify-content-center p-4">
-            <div *ngIf="notification.title === LiveExamExerciseUpdateNotificationTitleHtmlConst; else displayQuizIcon">
-                <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+    @for (notification of notifications; track notification; let i = $index) {
+        <div (click)="removeNotification(i); navigateToTarget(notification)">
+            <div class="icon-container d-flex flex-column justify-content-center p-4">
+                @if (notification.title === LiveExamExerciseUpdateNotificationTitleHtmlConst) {
+                    <div>
+                        <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+                    </div>
+                } @else {
+                    @if (notification.title === QuizNotificationTitleHtmlConst) {
+                        <fa-icon [icon]="faCheckDouble"></fa-icon>
+                    } @else {
+                        <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
+                    }
+                }
             </div>
-            <ng-template #displayQuizIcon>
-                <fa-icon *ngIf="notification.title === QuizNotificationTitleHtmlConst; else displayMessageIcon" [icon]="faCheckDouble"></fa-icon>
-            </ng-template>
-            <ng-template #displayMessageIcon>
-                <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
-            </ng-template>
+            <div class="pe-4 py-3">
+                <button class="m-0 px-1 py-0" (click)="removeNotification(i)">
+                    <fa-icon [icon]="faTimes"></fa-icon>
+                </button>
+                @if (notification.title === LiveExamExerciseUpdateNotificationTitleHtmlConst) {
+                    <div>
+                        <h5 class="pe-4">{{ 'artemisApp.notification.liveExamExerciseUpdateNotification' | artemisTranslate }}</h5>
+                    </div>
+                } @else {
+                    <h5 class="pe-4">
+                        {{ getNotificationTitleTranslation(notification) }}
+                    </h5>
+                }
+                <div class="text-break">
+                    {{ getNotificationTextTranslation(notification) }}
+                </div>
+                <div class="text-end">
+                    {{ 'artemisApp.notification.by' | artemisTranslate }}
+                    @if (notification.author) {
+                        <span>{{ notification.author.name }}</span>
+                    } @else {
+                        <span jhiTranslate="global.title"></span>
+                    }
+                </div>
+            </div>
         </div>
-        <div class="pe-4 py-3">
-            <button class="m-0 px-1 py-0" (click)="removeNotification(i)">
-                <fa-icon [icon]="faTimes"></fa-icon>
-            </button>
-            <div *ngIf="notification.title === LiveExamExerciseUpdateNotificationTitleHtmlConst; else displayNormalNotificationTitle">
-                <h5 class="pe-4">{{ 'artemisApp.notification.liveExamExerciseUpdateNotification' | artemisTranslate }}</h5>
-            </div>
-            <ng-template #displayNormalNotificationTitle>
-                <h5 class="pe-4">
-                    {{ getNotificationTitleTranslation(notification) }}
-                </h5>
-            </ng-template>
-            <div class="text-break">
-                {{ getNotificationTextTranslation(notification) }}
-            </div>
-            <div class="text-end">
-                {{ 'artemisApp.notification.by' | artemisTranslate }}
-                <span *ngIf="notification.author; else noAuthor">{{ notification.author.name }}</span>
-                <ng-template #noAuthor>
-                    <span jhiTranslate="global.title"></span>
-                </ng-template>
-            </div>
-        </div>
-    </div>
+    }
 </div>

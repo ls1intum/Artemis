@@ -1,13 +1,15 @@
 <mat-form-field class="post-tag-list" appearance="outline">
     <mat-chip-grid #chipList aria-label="Tag selection">
-        <mat-chip-row *ngFor="let tag of tags" (removed)="onItemRemove(tag)" class="post-tag">
-            <div class="custom-tag">
-                {{ tag }}
-                <button matChipRemove>
-                    <fa-icon [icon]="faTimes" class="post-tag-remove"></fa-icon>
-                </button>
-            </div>
-        </mat-chip-row>
+        @for (tag of tags; track tag) {
+            <mat-chip-row (removed)="onItemRemove(tag)" class="post-tag">
+                <div class="custom-tag">
+                    {{ tag }}
+                    <button matChipRemove>
+                        <fa-icon [icon]="faTimes" class="post-tag-remove"></fa-icon>
+                    </button>
+                </div>
+            </mat-chip-row>
+        }
         <input
             [hidden]="tags && tags.length >= 3"
             class="post-tag-input"
@@ -21,8 +23,10 @@
         />
     </mat-chip-grid>
     <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onItemSelect($event)">
-        <mat-option *ngFor="let tag of existingPostTags | async" [value]="tag" class="tag-option">
-            {{ tag }}
-        </mat-option>
+        @for (tag of existingPostTags | async; track tag) {
+            <mat-option [value]="tag" class="tag-option">
+                {{ tag }}
+            </mat-option>
+        }
     </mat-autocomplete>
 </mat-form-field>

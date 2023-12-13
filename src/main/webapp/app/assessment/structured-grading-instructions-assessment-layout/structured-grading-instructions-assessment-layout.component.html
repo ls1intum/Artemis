@@ -1,43 +1,51 @@
-<div class="mb-2" *ngIf="criteria">
-    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="expandAll()">
-        <fa-icon [icon]="faExpand"></fa-icon> <span>{{ 'artemisApp.assessmentInstructions.expandAll' | artemisTranslate }}</span>
-    </button>
-    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="collapseAll()">
-        <fa-icon [icon]="faCompress"></fa-icon> <span>{{ 'artemisApp.assessmentInstructions.collapseAll' | artemisTranslate }}</span>
-    </button>
-</div>
-
-<div *ngIf="allowDrop" class="alert alert-info">
-    <fa-icon [icon]="faInfoCircle"></fa-icon>
-    <span>{{ 'artemisApp.exercise.dragDropInstruction' | artemisTranslate }}</span>
-</div>
-
-<div *ngFor="let criterion of criteria; let criterionIndex = index">
-    <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
-        <div
-            class="rounded"
-            *ngFor="let instruction of criterion!.structuredGradingInstructions; let instructionIndex = index"
-            draggable="{{ allowDrop }}"
-            (dragstart)="disableDrag()"
-            (dragstart)="drag($event, instruction)"
-            id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
-            [style.background-color]="setInstrColour(instruction)"
-        >
-            <table class="table layout-table">
-                <tbody>
-                    <tr>
-                        <td [innerHTML]="setScore(instruction.credits)" class="td-score"></td>
-                        <td [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
-                        <td [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown" [ngbTooltip]="setTooltip(instruction)"></td>
-                        <td class="td-usage-count">
-                            <span *ngIf="instruction!.usageCount && instruction!.usageCount !== 0; else usageCountInfinity">{{ instruction.usageCount }}</span>
-                            <ng-template #usageCountInfinity>&#8734;</ng-template>
-                            <jhi-help-icon text="artemisApp.exercise.usageCountHint"></jhi-help-icon>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </jhi-expandable-section>
-    <br />
-</div>
+@if (criteria) {
+    <div class="mb-2">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="expandAll()">
+            <fa-icon [icon]="faExpand"></fa-icon> <span>{{ 'artemisApp.assessmentInstructions.expandAll' | artemisTranslate }}</span>
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="collapseAll()">
+            <fa-icon [icon]="faCompress"></fa-icon> <span>{{ 'artemisApp.assessmentInstructions.collapseAll' | artemisTranslate }}</span>
+        </button>
+    </div>
+}
+@if (allowDrop) {
+    <div class="alert alert-info">
+        <fa-icon [icon]="faInfoCircle"></fa-icon>
+        <span>{{ 'artemisApp.exercise.dragDropInstruction' | artemisTranslate }}</span>
+    </div>
+}
+@for (criterion of criteria; track criterion; let criterionIndex = $index) {
+    <div>
+        <jhi-expandable-section [hasTranslation]="false" [headerKey]="criterion.title" [isSubHeader]="true">
+            @for (instruction of criterion!.structuredGradingInstructions; track instruction; let instructionIndex = $index) {
+                <div
+                    class="rounded"
+                    draggable="{{ allowDrop }}"
+                    (dragstart)="disableDrag()"
+                    (dragstart)="drag($event, instruction)"
+                    id="criterion-{{ criterionIndex }}-instruction-{{ instructionIndex }}"
+                    [style.background-color]="setInstrColour(instruction)"
+                >
+                    <table class="table layout-table">
+                        <tbody>
+                            <tr>
+                                <td [innerHTML]="setScore(instruction.credits)" class="td-score"></td>
+                                <td [innerHTML]="instruction!.gradingScale! | htmlForMarkdown"></td>
+                                <td [innerHTML]="instruction!.instructionDescription! | htmlForMarkdown" [ngbTooltip]="setTooltip(instruction)"></td>
+                                <td class="td-usage-count">
+                                    @if (instruction!.usageCount && instruction!.usageCount !== 0) {
+                                        <span>{{ instruction.usageCount }}</span>
+                                    } @else {
+                                        &#8734;
+                                    }
+                                    <jhi-help-icon text="artemisApp.exercise.usageCountHint"></jhi-help-icon>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </jhi-expandable-section>
+        <br />
+    </div>
+}

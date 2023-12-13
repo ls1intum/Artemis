@@ -1,12 +1,13 @@
-<jhi-button
-    *ngIf="participationBuildCanBeTriggered && (showForSuccessfulSubmissions || participationHasLatestSubmissionWithoutResult)"
-    [btnSize]="btnSize"
-    [btnType]="participationHasLatestSubmissionWithoutResult ? ButtonType.ERROR : ButtonType.PRIMARY"
-    [icon]="faRedo"
-    [disabled]="isRetrievingBuildStatus"
-    [isLoading]="isBuilding"
-    (onClick)="triggerBuild($event)"
-    [tooltip]="participationHasLatestSubmissionWithoutResult ? 'artemisApp.programmingExercise.resubmitOnFailedSubmission' : 'artemisApp.programmingExercise.resubmit'"
-    [featureToggle]="FeatureToggle.ProgrammingExercises"
->
-</jhi-button>
+@if (participationBuildCanBeTriggered && (showForSuccessfulSubmissions || participationHasLatestSubmissionWithoutResult)) {
+    <jhi-button
+        [btnSize]="btnSize"
+        [btnType]="participationHasLatestSubmissionWithoutResult ? ButtonType.ERROR : ButtonType.PRIMARY"
+        [icon]="faRedo"
+        [disabled]="isRetrievingBuildStatus"
+        [isLoading]="isBuilding"
+        (onClick)="triggerBuild($event)"
+        [tooltip]="participationHasLatestSubmissionWithoutResult ? 'artemisApp.programmingExercise.resubmitOnFailedSubmission' : 'artemisApp.programmingExercise.resubmit'"
+        [featureToggle]="FeatureToggle.ProgrammingExercises"
+    >
+    </jhi-button>
+}

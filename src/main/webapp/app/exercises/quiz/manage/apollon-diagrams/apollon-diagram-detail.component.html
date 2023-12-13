@@ -19,12 +19,12 @@
             </button>
         </div>
     </div>
-
-    <div class="form-group mb-3" *ngIf="apollonDiagram">
-        <label class="form-control-label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_title">Title</label>
-        <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram.title" />
-    </div>
-
+    @if (apollonDiagram) {
+        <div class="form-group mb-3">
+            <label class="form-control-label" jhiTranslate="artemisApp.apollonDiagram.title" for="field_title">Title</label>
+            <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram.title" />
+        </div>
+    }
     <div #editorContainer style="width: 100%; height: calc(100vh - 400px)"></div>
 </div>
 <div class="modal-footer">
