@@ -31,15 +31,14 @@ import {
     messagesBetweenUser1User2,
     metisCourse,
     metisExercise,
-    metisExerciseChannel,
+    metisExerciseChannelDto,
     metisExercisePosts,
     metisLecture,
-    metisLectureChannel,
+    metisLectureChannelDto,
     metisPostTechSupport,
 } from '../../../helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { PostContextFilter } from 'app/shared/metis/metis.util';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -114,7 +113,7 @@ describe('DiscussionSectionComponent', () => {
                 getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: metisLectureChannel,
+                            body: metisLectureChannelDto,
                             status: 200,
                         }),
                     ),
@@ -122,7 +121,7 @@ describe('DiscussionSectionComponent', () => {
                 getChannelOfExerciseSpy = jest.spyOn(channelService, 'getChannelOfExercise').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: metisExerciseChannel,
+                            body: metisExerciseChannelDto,
                             status: 200,
                         }),
                     ),
@@ -144,7 +143,7 @@ describe('DiscussionSectionComponent', () => {
         tick();
         expect(component.course).toEqual(metisCourse);
         expect(component.createdPost).toBeDefined();
-        expect(component.channel).toEqual(metisLectureChannel);
+        expect(component.channel).toEqual(metisLectureChannelDto);
         expect(getChannelOfLectureSpy).toHaveBeenCalled();
         expect(component.posts).toEqual(messagesBetweenUser1User2.reverse());
     }));
@@ -156,7 +155,7 @@ describe('DiscussionSectionComponent', () => {
         tick();
         expect(component.course).toEqual(metisCourse);
         expect(component.createdPost).toBeDefined();
-        expect(component.channel).toEqual(metisExerciseChannel);
+        expect(component.channel).toEqual(metisExerciseChannelDto);
         expect(getChannelOfExerciseSpy).toHaveBeenCalled();
         expect(component.posts).toEqual(messagesBetweenUser1User2.reverse());
     }));
@@ -275,15 +274,11 @@ describe('DiscussionSectionComponent', () => {
         component.setChannel(1);
 
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-            { ...component.currentPostContextFilter, conversationId: metisExerciseChannel.id } as PostContextFilter,
+            { ...component.currentPostContextFilter, conversationId: metisExerciseChannelDto.id } as PostContextFilter,
             true,
-            {
-                ...new ChannelDTO(),
-                id: metisExerciseChannel.id,
-                isCourseWide: true,
-            },
+            metisExerciseChannelDto,
         );
-        expect(component.channel).toBe(metisExerciseChannel);
+        expect(component.channel).toBe(metisExerciseChannelDto);
     }));
 
     it('loads lecture messages if communication only', fakeAsync(() => {
@@ -292,12 +287,12 @@ describe('DiscussionSectionComponent', () => {
 
         component.setChannel(1);
 
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ ...component.currentPostContextFilter, conversationId: metisLectureChannel.id }, true, {
-            ...new ChannelDTO(),
-            id: metisLectureChannel.id,
-            isCourseWide: true,
-        });
-        expect(component.channel).toBe(metisLectureChannel);
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
+            { ...component.currentPostContextFilter, conversationId: metisLectureChannelDto.id },
+            true,
+            metisLectureChannelDto,
+        );
+        expect(component.channel).toBe(metisLectureChannelDto);
     }));
 
     it('should react to srcoll up event', fakeAsync(() => {

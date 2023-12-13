@@ -9,6 +9,7 @@ import {
     CONVERSATION_CREATE_GROUP_CHAT_TITLE,
     DATA_EXPORT_CREATED_TITLE,
     DATA_EXPORT_FAILED_TITLE,
+    MENTIONED_IN_MESSAGE_TITLE,
     MESSAGE_REPLY_IN_CONVERSATION_TEXT,
     NEW_MESSAGE_TITLE,
     NEW_REPLY_FOR_EXAM_POST_TITLE,
@@ -33,17 +34,23 @@ import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChangeDetectorRef } from '@angular/core';
+import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { MetisPostAction } from 'app/shared/metis/metis.util';
+import { Post } from 'app/entities/metis/post.model';
+import { User } from 'app/core/user/user.model';
 
 describe('Notification Service', () => {
     const resourceUrl = 'api/notifications';
 
     let notificationService: NotificationService;
     let httpMock: HttpTestingController;
-    let router: Router;
+    let router: MockRouter;
     let artemisTranslatePipe: ArtemisTranslatePipe;
+    let accountService: MockAccountService;
 
     let websocketService: JhiWebsocketService;
     let wsSubscribeStub: jest.SpyInstance;
+    let wsUnsubscribeStub: jest.SpyInstance;
     let wsReceiveNotificationStub: jest.SpyInstance;
     let wsNotificationSubject: Subject<Notification | undefined>;
     let tutorialGroup: TutorialGroup;
@@ -176,11 +183,13 @@ describe('Notification Service', () => {
         });
 
         httpMock = TestBed.inject(HttpTestingController);
-        router = TestBed.inject(Router);
+        router = TestBed.inject(Router) as any;
 
         websocketService = TestBed.inject(JhiWebsocketService);
         artemisTranslatePipe = TestBed.inject(ArtemisTranslatePipe);
+        accountService = TestBed.inject(AccountService) as any;
         wsSubscribeStub = jest.spyOn(websocketService, 'subscribe');
+        wsUnsubscribeStub = jest.spyOn(websocketService, 'unsubscribe');
         wsNotificationSubject = new Subject<Notification | undefined>();
         wsReceiveNotificationStub = jest.spyOn(websocketService, 'receive').mockReturnValue(wsNotificationSubject);
 
@@ -198,6 +207,7 @@ describe('Notification Service', () => {
         httpMock.expectOne({ method: 'GET', url: 'api/notification-settings' });
         httpMock.verify();
         jest.restoreAllMocks();
+        jest.clearAllTimers();
     });
 
     describe('Service methods', () => {
@@ -391,6 +401,77 @@ describe('Notification Service', () => {
             jest.spyOn(artemisTranslatePipe, 'transform').mockReturnValue('Hello, [abc]Test(user123)[/def] [abc]Test[/abc]');
             const result = notificationService.getNotificationTextTranslation(notification, 50);
             expect(result).toBe('Hello, [abc]Test(user123)[/def] [abc]Test[/abc]');
+        });
+
+        it('should subscribe to course-wide channel topic on NavigationEnd to /courses URL', () => {
+            router.setUrl('/courses/' + 1);
+            expect(wsSubscribeStub).toHaveBeenCalledWith('/topic/metis/courses/1');
+            expect(wsSubscribeStub).toHaveBeenCalledTimes(6);
+            expect(wsReceiveNotificationStub).toHaveBeenCalledWith('/topic/metis/courses/1');
+        });
+
+        it('should clear course-wide channel subscription on NavigationEnd to a non-course URL', () => {
+            router.setUrl('/courses/' + 1);
+            router.setUrl('/courses');
+
+            expect(wsUnsubscribeStub).toHaveBeenCalledExactlyOnceWith('/topic/metis/courses/1');
+            expect(wsSubscribeStub).toHaveBeenCalledTimes(6);
+        });
+
+        it('should switch course-wide channel subscriptions on NavigationEnd', () => {
+            router.setUrl('/courses/' + 1);
+            router.setUrl('/courses/' + 2);
+
+            expect(wsUnsubscribeStub).toHaveBeenCalledExactlyOnceWith('/topic/metis/courses/1');
+            expect(wsSubscribeStub).toHaveBeenCalledWith('/topic/metis/courses/2');
+            expect(wsSubscribeStub).toHaveBeenCalledTimes(7);
+        });
+
+        it('should not subscribe to same course-wide channel topic twice', () => {
+            router.setUrl('/courses/' + 1);
+            router.setUrl('/courses/' + 1 + '/exercises');
+
+            expect(wsSubscribeStub).toHaveBeenCalledWith('/topic/metis/courses/1');
+            expect(wsSubscribeStub).toHaveBeenCalledTimes(6);
+            expect(wsUnsubscribeStub).not.toHaveBeenCalled();
+        });
+
+        it('should add notification if it is from another user and allowed by settings', () => {
+            const notification = { author: { id: 1 }, target: 'target', notificationDate: dayjs() } as Notification;
+            const postDTO: MetisPostDTO = {
+                post: { author: { id: 1 }, content: 'Content' } as Post,
+                action: MetisPostAction.CREATE,
+                notification,
+            };
+
+            notificationService.handleNotification(postDTO);
+            expect(notificationService.notifications).toStrictEqual([notification]);
+        });
+
+        it('should not add notification if it is from the current user', () => {
+            jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ id: 1, login: 'test', name: 'A B' } as User);
+            const postDTO: MetisPostDTO = {
+                post: { author: { id: 1 }, content: 'Content' } as Post,
+                action: MetisPostAction.CREATE,
+                notification: { author: { id: 1 }, target: 'target' } as Notification,
+            };
+
+            notificationService.handleNotification(postDTO);
+
+            expect(notificationService.notifications).toBeEmpty();
+        });
+
+        it('should change notification title if the current user is mentioned in a CREATE action', () => {
+            jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ id: 1, login: 'test', name: 'A B' } as User);
+            const postDTO: MetisPostDTO = {
+                post: { author: { id: 2 }, content: '[user]A B(test)[/user]' } as Post,
+                notification: { author: { id: 2 }, target: 'target', title: NEW_MESSAGE_TITLE } as Notification,
+                action: MetisPostAction.CREATE,
+            };
+
+            notificationService.handleNotification(postDTO);
+
+            expect(postDTO.notification?.title).toBe(MENTIONED_IN_MESSAGE_TITLE);
         });
     });
 });
