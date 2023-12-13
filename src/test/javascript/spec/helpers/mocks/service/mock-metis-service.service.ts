@@ -9,10 +9,13 @@ import { Course } from 'app/entities/course.model';
 import { Params } from '@angular/router';
 import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 
 let pageType: PageType;
 
 export class MockMetisService {
+    currentConversation = undefined;
+
     get tags(): Observable<string[]> {
         return of(metisTags);
     }
@@ -35,6 +38,10 @@ export class MockMetisService {
 
     setPageType(newPageType: PageType) {
         pageType = newPageType;
+    }
+
+    getCurrentConversation(): ConversationDto | undefined {
+        return this.currentConversation;
     }
 
     createPost = (post: Post): Observable<Post> => of(post);

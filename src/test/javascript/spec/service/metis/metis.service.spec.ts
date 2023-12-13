@@ -31,6 +31,7 @@ import {
     metisExercise,
     metisExercisePosts,
     metisLecture,
+    metisLectureChannelDto,
     metisLecturePosts,
     metisPostExerciseUser1,
     metisPostInChannel,
@@ -716,5 +717,10 @@ describe('Metis Service', () => {
             });
             tick();
         }));
+
+        it('should return current conversation', () => {
+            metisService.getFilteredPosts({ conversationId: metisLectureChannelDto.id } as PostContextFilter, false, metisLectureChannelDto);
+            expect(metisService.getCurrentConversation()).toBe(metisLectureChannelDto);
+        });
     });
 });
