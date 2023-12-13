@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.notifications;
 
 import static de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType.*;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createAnnouncementNotification;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
 
@@ -95,8 +96,7 @@ public class GroupNotificationService {
         for (GroupNotificationType group : groups) {
             GroupNotification resultingGroupNotification = switch (notificationType) {
                 // Post Types
-                case NEW_EXERCISE_POST, NEW_LECTURE_POST, NEW_COURSE_POST, NEW_ANNOUNCEMENT_POST ->
-                    createNotification((Post) notificationSubject, author, group, notificationType, (Course) typeSpecificInformation);
+                case NEW_ANNOUNCEMENT_POST -> createAnnouncementNotification((Post) notificationSubject, author, group, (Course) typeSpecificInformation);
                 // Post Reply Types
                 case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) ((List<Posting>) notificationSubject).get(0),
                         (AnswerPost) ((List<Posting>) notificationSubject).get(1), author, group, notificationType, (Course) typeSpecificInformation);

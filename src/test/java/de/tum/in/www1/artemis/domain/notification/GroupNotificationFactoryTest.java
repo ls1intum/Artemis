@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.domain.notification;
 
 import static de.tum.in.www1.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.HIGH;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.MEDIUM;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createAnnouncementNotification;
 import static de.tum.in.www1.artemis.domain.notification.GroupNotificationFactory.createNotification;
 import static de.tum.in.www1.artemis.domain.notification.NotificationConstants.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
@@ -218,7 +220,7 @@ class GroupNotificationFactoryTest {
                 break;
             }
             case POST: {
-                createdNotification = createNotification(post, user, groupNotificationType, notificationType, course);
+                createdNotification = createAnnouncementNotification(post, user, groupNotificationType, course);
                 break;
             }
             case POST_REPLY: {

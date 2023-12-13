@@ -5,27 +5,16 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
-import org.commonmark.node.Node;
-import org.commonmark.parser.Parser;
-import org.commonmark.renderer.html.HtmlRenderer;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Lists;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
-import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
@@ -260,7 +249,7 @@ public class PostService extends PostingService {
      */
     public List<Post> getSimilarPosts(Long courseId, Post post) {
         PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        List<Post> coursePosts = this.getCoursePosts(postContextFilter, false, null).stream()
+        List<Post> coursePosts = this.getCoursePosts(postContextFilter).stream()
                 .sorted(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost))).toList();
 
         // sort course posts by calculated similarity scores
@@ -274,28 +263,16 @@ public class PostService extends PostingService {
      * and ensures that sensitive information is filtered out
      *
      * @param postContextFilter filter object
-     * @param pagingEnabled     whether to return a page or all records
-     * @param pageable          page object describing page number and row count per page to be fetched
      * @return page of posts that belong to the course
      */
-    private Page<Post> getCoursePosts(PostContextFilter postContextFilter, boolean pagingEnabled, Pageable pageable) {
+    private Page<Post> getCoursePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
         preCheckUserAndCourseForCommunication(user, postContextFilter.getCourseId());
-        if (postContextFilter.getLectureIds() != null) {
-            for (Long lectureId : postContextFilter.getLectureIds()) {
-                preCheckLecture(user, postContextFilter.getCourseId(), lectureId);
-            }
-        }
-        if (postContextFilter.getExerciseIds() != null) {
-            for (Long exerciseId : postContextFilter.getExerciseIds()) {
-                preCheckExercise(user, postContextFilter.getCourseId(), exerciseId);
-            }
-        }
 
         // retrieve posts
-        Page<Post> coursePosts = postRepository.findPosts(postContextFilter, user.getId(), pagingEnabled, pageable);
+        Page<Post> coursePosts = postRepository.findPosts(postContextFilter, user.getId(), false, null);
 
         // protect sample solution, grading instructions, etc.
         coursePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
@@ -332,58 +309,6 @@ public class PostService extends PostingService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
         if (!lecture.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Lecture", METIS_POST_ENTITY_NAME, "idNull");
-        }
-    }
-
-    /**
-     * Sends notification to affected groups
-     *
-     * @param post post that triggered the notification
-     */
-    private void sendNotification(Post post, Course course) {
-        // create post for notification
-        Post postForNotification = new Post();
-        postForNotification.setId(post.getId());
-        postForNotification.setAuthor(post.getAuthor());
-        postForNotification.setCourse(course);
-        postForNotification.setCourseWideContext(post.getCourseWideContext());
-        postForNotification.setLecture(post.getLecture());
-        postForNotification.setExercise(post.getExercise());
-        postForNotification.setCreationDate(post.getCreationDate());
-        postForNotification.setTitle(post.getTitle());
-
-        // create html content
-        Parser parser = Parser.builder().build();
-        String htmlPostContent;
-        try {
-            Node document = parser.parse(post.getContent());
-            HtmlRenderer renderer = HtmlRenderer.builder().build();
-            htmlPostContent = renderer.render(document);
-        }
-        catch (Exception e) {
-            htmlPostContent = "";
-        }
-        postForNotification.setContent(htmlPostContent);
-
-        // notify via course
-        if (post.getCourseWideContext() != null) {
-            if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT) {
-                groupNotificationService.notifyAllGroupsAboutNewAnnouncement(postForNotification, course);
-                return;
-            }
-            groupNotificationService.notifyAllGroupsAboutNewCoursePost(postForNotification, course);
-            return;
-        }
-        // notify via exercise
-        if (post.getExercise() != null) {
-            groupNotificationService.notifyAllGroupsAboutNewPostForExercise(postForNotification, course);
-            // protect sample solution, grading instructions, etc.
-            post.getExercise().filterSensitiveInformation();
-            return;
-        }
-        // notify via lecture
-        if (post.getLecture() != null) {
-            groupNotificationService.notifyAllGroupsAboutNewPostForLecture(postForNotification, course);
         }
     }
 }

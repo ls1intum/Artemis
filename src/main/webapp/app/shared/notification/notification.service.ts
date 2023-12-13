@@ -202,7 +202,7 @@ export class NotificationService {
             this.addNotifications([notification]);
         }
 
-        // Single notifications should also be sent through the single notification subject for the notifcation popup
+        // Single notifications should also be sent through the single notification subject for the notification popup
         this.singleNotificationSubject.next(notification);
     }
 

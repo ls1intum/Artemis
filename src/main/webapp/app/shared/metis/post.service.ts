@@ -48,15 +48,6 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.sortingOrder) {
             params = params.set('sortingOrder', postContextFilter.sortingOrder.toString());
         }
-        if (postContextFilter.courseWideContexts?.length) {
-            params = params.set('courseWideContexts', postContextFilter.courseWideContexts.toString());
-        }
-        if (postContextFilter.lectureIds?.length) {
-            params = params.set('lectureIds', postContextFilter.lectureIds.toString());
-        }
-        if (postContextFilter.exerciseIds?.length) {
-            params = params.set('exerciseIds', postContextFilter.exerciseIds.toString());
-        }
         if (postContextFilter.courseWideChannelIds) {
             params = params.set('courseWideChannelIds', postContextFilter.courseWideChannelIds.toString());
         }

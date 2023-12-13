@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.repository.specs;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.persistence.criteria.*;
@@ -30,57 +29,6 @@ public class PostSpecs {
             Predicate coursePostsWithExerciseContext = criteriaBuilder.equal(joinedExercises.get(Exercise_.COURSE).get(Course_.ID), courseId);
             return criteriaBuilder.or(coursePosts, coursePostsWithLectureContext, coursePostsWithExerciseContext);
         };
-    }
-
-    /**
-     * Specification to fetch Posts belonging to a Lecture
-     *
-     * @param lectureId id of the lecture the Posts belong to
-     * @return specification used to chain DB operations
-     */
-    public static Specification<Post> getLectureSpecification(Long[] lectureId) {
-        return ((root, query, criteriaBuilder) -> {
-            if (lectureId == null) {
-                return null;
-            }
-            else {
-                return root.get(Post_.LECTURE).get(Lecture_.ID).in(Arrays.asList(lectureId));
-            }
-        });
-    }
-
-    /**
-     * Specification to fetch Posts belonging to an Exercise
-     *
-     * @param exerciseId id of the exercise the Posts belong to
-     * @return specification used to chain DB operations
-     */
-    public static Specification<Post> getExerciseSpecification(Long[] exerciseId) {
-        return ((root, query, criteriaBuilder) -> {
-            if (exerciseId == null) {
-                return null;
-            }
-            else {
-                return root.get(Post_.EXERCISE).get(Exercise_.ID).in(Arrays.asList(exerciseId));
-            }
-        });
-    }
-
-    /**
-     * Specification to fetch Posts by CourseWideContext
-     *
-     * @param courseWideContext context of the Posts within the current course
-     * @return specification used to chain DB operations
-     */
-    public static Specification<Post> getCourseWideContextSpecification(CourseWideContext[] courseWideContext) {
-        return ((root, query, criteriaBuilder) -> {
-            if (courseWideContext == null) {
-                return null;
-            }
-            else {
-                return root.get(Post_.COURSE_WIDE_CONTEXT).in(Arrays.asList(courseWideContext));
-            }
-        });
     }
 
     /**

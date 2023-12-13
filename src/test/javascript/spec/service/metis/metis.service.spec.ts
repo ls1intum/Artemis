@@ -189,62 +189,6 @@ describe('Metis Service', () => {
             expect(postServiceSpy).toHaveBeenCalledOnce();
         });
 
-        it('should get posts for lecture filter', () => {
-            const postServiceSpy = jest.spyOn(postService, 'getPosts');
-            metisService.getFilteredPosts({ lectureIds: [metisLecture.id!] }, false);
-            expect(postServiceSpy).toHaveBeenCalledOnce();
-
-            // don't change filter
-            metisService.getFilteredPosts({ lectureIds: [metisLecture.id!] }, false);
-            expect(postServiceSpy).toHaveBeenCalledOnce();
-
-            // change filter
-            metisService.getFilteredPosts({ lectureIds: undefined, exerciseIds: [metisExercise.id!] }, false);
-            expect(postServiceSpy).toHaveBeenCalledTimes(2);
-
-            // change filter
-            metisService.getFilteredPosts(
-                {
-                    lectureIds: undefined,
-                    exerciseIds: undefined,
-                    courseId: metisCourse.id,
-                },
-                false,
-            );
-            expect(postServiceSpy).toHaveBeenCalledTimes(3);
-        });
-
-        it('should get posts for exercise filter', () => {
-            const postServiceSpy = jest.spyOn(postService, 'getPosts');
-            metisService.getFilteredPosts({ exerciseIds: [metisExercise.id!] }, false);
-            expect(postServiceSpy).toHaveBeenCalledOnce();
-
-            // don't change filter
-            metisService.getFilteredPosts({ exerciseIds: [metisExercise.id!] }, false);
-            expect(postServiceSpy).toHaveBeenCalledOnce();
-
-            // change filter
-            metisService.getFilteredPosts({ lectureIds: [metisLecture.id!], exerciseIds: undefined }, false);
-            expect(postServiceSpy).toHaveBeenCalledTimes(2);
-
-            // change filter
-            metisService.getFilteredPosts(
-                {
-                    lectureIds: undefined,
-                    exerciseIds: undefined,
-                    courseWideContexts: [CourseWideContext.RANDOM],
-                },
-                false,
-            );
-            expect(postServiceSpy).toHaveBeenCalledTimes(3);
-        });
-
-        it('should get posts for course-context filter', () => {
-            const postServiceSpy = jest.spyOn(postService, 'getPosts');
-            metisService.getFilteredPosts({ courseWideContexts: [CourseWideContext.RANDOM] });
-            expect(postServiceSpy).toHaveBeenCalledOnce();
-        });
-
         it('should get posts for course', () => {
             const postServiceSpy = jest.spyOn(postService, 'getPosts');
             metisService.getFilteredPosts({ courseId: course.id });

@@ -1,17 +1,9 @@
 package de.tum.in.www1.artemis.domain.notification;
 
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.HIGH;
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.MEDIUM;
 import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createAttachmentUpdatedTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createCoursePostTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createCourseTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createDuplicateTestCaseTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExamExerciseTargetWithExerciseUpdate;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExamProgrammingExerciseOrTestCaseTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExercisePostTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExerciseReleasedTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createExerciseUpdatedTarget;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.createLecturePostTarget;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 
 import java.util.List;
 
@@ -199,48 +191,19 @@ public class GroupNotificationFactory {
      * @param post                  for which a notification should be created
      * @param author                of the notification
      * @param groupNotificationType user group type the notification should target
-     * @param notificationType      type of the notification that should be created
      * @param course                the post belongs to
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Post post, User author, GroupNotificationType groupNotificationType, NotificationType notificationType, Course course) {
+    public static GroupNotification createAnnouncementNotification(Post post, User author, GroupNotificationType groupNotificationType, Course course) {
         String title;
         String text;
         String[] placeholderValues;
-        String uniquePlaceholderValue = null;
         GroupNotification notification;
-        switch (notificationType) {
-            case NEW_EXERCISE_POST -> {
-                Exercise exercise = post.getExercise();
-                title = NotificationConstants.NEW_EXERCISE_POST_TITLE;
-                text = NotificationConstants.NEW_EXERCISE_POST_TEXT;
-                uniquePlaceholderValue = exercise.getTitle();
-            }
-            case NEW_LECTURE_POST -> {
-                Lecture lecture = post.getLecture();
-                title = NotificationConstants.NEW_LECTURE_POST_TITLE;
-                text = NotificationConstants.NEW_LECTURE_POST_TEXT;
-                uniquePlaceholderValue = lecture.getTitle();
-            }
-            case NEW_COURSE_POST -> {
-                title = NotificationConstants.NEW_COURSE_POST_TITLE;
-                text = NotificationConstants.NEW_COURSE_POST_TEXT;
-            }
-            case NEW_ANNOUNCEMENT_POST -> {
-                title = NotificationConstants.NEW_ANNOUNCEMENT_POST_TITLE;
-                text = NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT;
-            }
-            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
-        }
-        placeholderValues = ArrayUtils.addAll(NotificationFactory.generatePlaceholderValuesForMessageNotifications(course, post),
-                (uniquePlaceholderValue != null ? new String[] { uniquePlaceholderValue } : new String[0]));
+        title = NotificationConstants.NEW_ANNOUNCEMENT_POST_TITLE;
+        text = NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT;
+        placeholderValues = ArrayUtils.addAll(NotificationFactory.generatePlaceholderValuesForMessageNotifications(course, post));
         notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
-        notification.setTransientAndStringTarget(switch (notificationType) {
-            case NEW_EXERCISE_POST -> createExercisePostTarget(post, course);
-            case NEW_LECTURE_POST -> createLecturePostTarget(post, course);
-            case NEW_COURSE_POST, NEW_ANNOUNCEMENT_POST -> createCoursePostTarget(post, course);
-            default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
-        });
+        notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
         return notification;
     }
 

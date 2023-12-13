@@ -240,25 +240,6 @@ public class Post extends Posting {
     }
 
     /**
-     * Helper method to determine if a given post has the same context, i.e. either same exercise, lecture or course-wide context
-     *
-     * @param otherPost post that is compared to
-     * @return boolean flag indicating if same context or not
-     */
-    public boolean hasSameContext(Post otherPost) {
-        if (getExercise() != null && otherPost.getExercise() != null && getExercise().getId().equals(otherPost.getExercise().getId())) {
-            return true;
-        }
-        else if (getLecture() != null && otherPost.getLecture() != null && getLecture().getId().equals(otherPost.getLecture().getId())) {
-            return true;
-        }
-        else if (getPlagiarismCase() != null && otherPost.getPlagiarismCase() != null && getPlagiarismCase().getId().equals(otherPost.getPlagiarismCase().getId())) {
-            return true;
-        }
-        return getCourseWideContext() != null && otherPost.getCourseWideContext() != null && getCourseWideContext() == otherPost.getCourseWideContext();
-    }
-
-    /**
      * Helper method to extract the course a Post belongs to, which is found in different locations based on the Post's context
      *
      * @return the course Post belongs to

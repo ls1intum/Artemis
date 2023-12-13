@@ -20,7 +20,6 @@ import { ConversationDto } from 'app/entities/metis/conversation/conversation.mo
 })
 export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges {
     pinTooltip: string;
-    archiveTooltip: string;
     displayPriority: DisplayPriority;
     canPin = false;
     readonly DisplayPriority = DisplayPriority;
@@ -115,10 +114,10 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
      *
      */
     getPinTooltip(): string {
-        if (this.currentUserIsAtLeastTutor && this.displayPriority === DisplayPriority.PINNED) {
+        if (this.canPin && this.displayPriority === DisplayPriority.PINNED) {
             return 'artemisApp.metis.removePinPostTutorTooltip';
         }
-        if (this.currentUserIsAtLeastTutor && this.displayPriority !== DisplayPriority.PINNED) {
+        if (this.canPin && this.displayPriority !== DisplayPriority.PINNED) {
             return 'artemisApp.metis.pinPostTutorTooltip';
         }
         return 'artemisApp.metis.pinnedPostTooltip';
@@ -137,22 +136,8 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         return showIcon;
     }
 
-    /**
-     * provides the tooltip for the archive icon dependent on the user authority and the archive state of a posting
-     */
-    getArchiveTooltip(): string {
-        if (this.currentUserIsAtLeastTutor && this.displayPriority === DisplayPriority.ARCHIVED) {
-            return 'artemisApp.metis.removeArchivePostTutorTooltip';
-        }
-        if (this.currentUserIsAtLeastTutor && this.displayPriority !== DisplayPriority.ARCHIVED) {
-            return 'artemisApp.metis.archivePostTutorTooltip';
-        }
-        return 'artemisApp.metis.archivedPostTooltip';
-    }
-
     private resetTooltipsAndPriority() {
         this.displayPriority = this.posting.displayPriority!;
         this.pinTooltip = this.getPinTooltip();
-        this.archiveTooltip = this.getArchiveTooltip();
     }
 }
