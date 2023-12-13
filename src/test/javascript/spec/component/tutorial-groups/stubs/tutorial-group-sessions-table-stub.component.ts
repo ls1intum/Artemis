@@ -6,7 +6,9 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
     selector: 'jhi-tutorial-group-sessions-table',
     template: `
         <div>
-            <div jhi-session-row *ngFor="let session of sessions" [extraColumn]="extraColumn" [session]="session" [timeZone]="timeZone" [showIdColumn]="showIdColumn"></div>
+            @for (session of sessions; track session) {
+                <div jhi-session-row [extraColumn]="extraColumn" [session]="session" [timeZone]="timeZone" [showIdColumn]="showIdColumn"></div>
+            }
         </div>
     `,
 })
@@ -35,12 +37,16 @@ export class TutorialGroupSessionsTableStubComponent {
     selector: '[jhi-session-row]',
     template: `
         <div>
-            <div *ngIf="showIdColumn">
-                <span>{{ session.id }}</span>
-            </div>
-            <div *ngIf="extraColumn">
-                <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }"></ng-template>
-            </div>
+            @if (showIdColumn) {
+                <div>
+                    <span>{{ session.id }}</span>
+                </div>
+            }
+            @if (extraColumn) {
+                <div>
+                    <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }"></ng-template>
+                </div>
+            }
         </div>
     `,
 })

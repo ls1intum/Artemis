@@ -5,19 +5,24 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 @Component({
     selector: 'jhi-programming-submission-policy-status',
     template: `
-        <div submissionPolicy *ngIf="exercise.submissionPolicy && exercise.submissionPolicy.active && submissionCount !== undefined">
-            <span>
-                {{
-                    'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
-                        | artemisTranslate: { submissionCount: submissionCount, totalSubmissions: exercise.submissionPolicy.submissionLimit }
-                }}
-            </span>
-            <span *ngIf="exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY">
-                {{
-                    'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel' | artemisTranslate: { points: exercise.submissionPolicy.exceedingPenalty }
-                }}
-            </span>
-        </div>
+        @if (exercise.submissionPolicy && exercise.submissionPolicy.active && submissionCount !== undefined) {
+            <div submissionPolicy>
+                <span>
+                    {{
+                        'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
+                            | artemisTranslate: { submissionCount: submissionCount, totalSubmissions: exercise.submissionPolicy.submissionLimit }
+                    }}
+                </span>
+                @if (exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
+                    <span>
+                        {{
+                            'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
+                                | artemisTranslate: { points: exercise.submissionPolicy.exceedingPenalty }
+                        }}
+                    </span>
+                }
+            </div>
+        }
     `,
 })
 export class ProgrammingSubmissionPolicyStatusComponent {

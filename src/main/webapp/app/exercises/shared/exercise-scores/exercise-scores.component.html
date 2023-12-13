@@ -1,317 +1,347 @@
-<div *ngIf="exercise">
-    <h2>
-        <span *ngIf="exercise.course">{{ exercise.course?.title }} - {{ exercise.title }}</span>
-        <span *ngIf="exercise.exerciseGroup">{{ exercise.exerciseGroup?.exam?.title }} - {{ exercise.title }}</span>
-    </h2>
-    <h4 *ngIf="this.rangeFilter" class="d-flex align-items-center">
-        <span class="me-2">
-            <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
-            <span class="ms-1">{{ 'artemisApp.exercise.showingOnlyInRange' | artemisTranslate: { range: this.rangeFilter.toString() } }}</span>
-        </span>
-        <button type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter">Reset submission filter</button>
-    </h4>
-    <div class="d-flex flex-wrap">
-        <div class="d-flex flex-fill align-items-center mr-auto">
-            <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
-                <button class="btn btn-primary" ngbDropdownToggle id="filter-dropdown-button">
-                    <fa-icon [icon]="faFilter"></fa-icon>
-                    <span class="d-s-none d-md-inline"
-                        >{{ 'artemisApp.exercise.scoresFilter' | artemisTranslate: { filter: ('artemisApp.exercise.show' + resultCriteria.filterProp | artemisTranslate) } }} ({{
-                            participationsPerFilter.get(resultCriteria.filterProp) ?? 0
-                        }})
-                    </span>
+@if (exercise) {
+    <div>
+        <h2>
+            @if (exercise.course) {
+                <span>{{ exercise.course?.title }} - {{ exercise.title }}</span>
+            }
+            @if (exercise.exerciseGroup) {
+                <span>{{ exercise.exerciseGroup?.exam?.title }} - {{ exercise.title }}</span>
+            }
+        </h2>
+        @if (this.rangeFilter) {
+            <h4 class="d-flex align-items-center">
+                <span class="me-2">
+                    <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
+                    <span class="ms-1">{{ 'artemisApp.exercise.showingOnlyInRange' | artemisTranslate: { range: this.rangeFilter.toString() } }}</span>
+                </span>
+                <button type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter">
+                    Reset submission filter
                 </button>
-                <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-                    <ng-container *ngFor="let filter of FilterProp | keyvalue">
-                        <li *ngIf="isFilterRelevantForConfiguration(filter.value)">
-                            <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                                <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateParticipationFilter(filter.value)" [value]="filter.value" />
-                                <span class="ms-1">
-                                    {{ 'artemisApp.exercise.show' + filter.value | artemisTranslate }}
-                                    ({{ participationsPerFilter.get(filter.value) ?? 0 }})
-                                </span>
-                            </label>
-                        </li>
-                    </ng-container>
-                </ul>
-            </div>
-            <span *ngIf="filteredParticipations.length && participationsPerFilter.get(resultCriteria.filterProp) != filteredParticipations.length">
-                {{
-                    'artemisApp.exercise.showingOfResults'
-                        | artemisTranslate
-                            : {
-                                  filtered: participationsPerFilter.get(resultCriteria.filterProp),
-                                  total: filteredParticipations.length,
-                                  percent: ((participationsPerFilter.get(resultCriteria.filterProp) ?? 0) * 100) / filteredParticipations.length | number: '1.0-1'
-                              }
-                }}
-            </span>
-        </div>
-        <div class="p-2">
-            <div class="button-toolbar">
-                <a
-                    *ngIf="!exercise.exerciseGroup"
-                    [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'participations']"
-                    class="btn btn-primary btn-sm me-1"
-                >
-                    <fa-icon [icon]="faListAlt"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                </a>
-                <a
-                    *ngIf="exercise.exerciseGroup"
-                    [routerLink]="[
-                        '/course-management',
-                        course.id,
-                        'exams',
-                        exercise.exerciseGroup!.exam!.id!,
-                        'exercise-groups',
-                        exercise.exerciseGroup!.id!,
-                        exercise.type + '-exercises',
-                        exercise.id,
-                        'participations'
-                    ]"
-                    class="btn btn-primary btn-sm me-1"
-                >
-                    <fa-icon [icon]="faListAlt"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-                </a>
-                <jhi-external-submission *ngIf="exercise.isAtLeastInstructor" class="d-inline-block me-1 mb-1" [exercise]="exercise"></jhi-external-submission>
-                <button
-                    jhi-exercise-action-button
-                    [buttonIcon]="faDownload"
-                    class="btn btn-info btn-sm me-1"
-                    [buttonLabel]="'entity.action.export' | artemisTranslate"
-                    [hideLabelMobile]="false"
-                    [ngbPopover]="popContent"
-                    [autoClose]="'outside'"
-                    placement="bottom-right auto"
-                    container="body"
-                    #exportPopover="ngbPopover"
-                ></button>
-                <ng-template #popContent>
-                    <h5 jhiTranslate="artemisApp.exercise.export.options"></h5>
-                    <button *ngIf="exercise.isAtLeastInstructor" class="btn btn-info btn-sm me-1" (click)="exportNames()">
-                        <fa-icon [icon]="faDownload"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.export.names">Export Names</span>
+            </h4>
+        }
+        <div class="d-flex flex-wrap">
+            <div class="d-flex flex-fill align-items-center mr-auto">
+                <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                    <button class="btn btn-primary" ngbDropdownToggle id="filter-dropdown-button">
+                        <fa-icon [icon]="faFilter"></fa-icon>
+                        <span class="d-s-none d-md-inline"
+                            >{{
+                                'artemisApp.exercise.scoresFilter' | artemisTranslate: { filter: ('artemisApp.exercise.show' + resultCriteria.filterProp | artemisTranslate) }
+                            }}
+                            ({{ participationsPerFilter.get(resultCriteria.filterProp) ?? 0 }})
+                        </span>
                     </button>
-                    <jhi-exercise-scores-export-button *ngIf="exercise.isAtLeastInstructor" [exercise]="exercise"></jhi-exercise-scores-export-button>
-                    <jhi-programming-assessment-repo-export
-                        *ngIf="exercise.type === ExerciseType.PROGRAMMING"
-                        [programmingExercises]="[exercise]"
-                        class="me-1"
-                        (buttonPressed)="closeExportPopover()"
-                    ></jhi-programming-assessment-repo-export>
-                    <jhi-exercise-submission-export
-                        *ngIf="
+                    <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                        @for (filter of FilterProp | keyvalue; track filter) {
+                            @if (isFilterRelevantForConfiguration(filter.value)) {
+                                <li>
+                                    <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
+                                        <input type="radio" [ngModel]="resultCriteria.filterProp" (click)="updateParticipationFilter(filter.value)" [value]="filter.value" />
+                                        <span class="ms-1">
+                                            {{ 'artemisApp.exercise.show' + filter.value | artemisTranslate }}
+                                            ({{ participationsPerFilter.get(filter.value) ?? 0 }})
+                                        </span>
+                                    </label>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </div>
+                @if (filteredParticipations.length && participationsPerFilter.get(resultCriteria.filterProp) != filteredParticipations.length) {
+                    <span>
+                        {{
+                            'artemisApp.exercise.showingOfResults'
+                                | artemisTranslate
+                                    : {
+                                          filtered: participationsPerFilter.get(resultCriteria.filterProp),
+                                          total: filteredParticipations.length,
+                                          percent: ((participationsPerFilter.get(resultCriteria.filterProp) ?? 0) * 100) / filteredParticipations.length | number: '1.0-1'
+                                      }
+                        }}
+                    </span>
+                }
+            </div>
+            <div class="p-2">
+                <div class="button-toolbar">
+                    @if (!exercise.exerciseGroup) {
+                        <a [routerLink]="['/course-management', course.id, exercise.type + '-exercises', exercise.id, 'participations']" class="btn btn-primary btn-sm me-1">
+                            <fa-icon [icon]="faListAlt"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                        </a>
+                    }
+                    @if (exercise.exerciseGroup) {
+                        <a
+                            [routerLink]="[
+                                '/course-management',
+                                course.id,
+                                'exams',
+                                exercise.exerciseGroup!.exam!.id!,
+                                'exercise-groups',
+                                exercise.exerciseGroup!.id!,
+                                exercise.type + '-exercises',
+                                exercise.id,
+                                'participations'
+                            ]"
+                            class="btn btn-primary btn-sm me-1"
+                        >
+                            <fa-icon [icon]="faListAlt"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                        </a>
+                    }
+                    @if (exercise.isAtLeastInstructor) {
+                        <jhi-external-submission class="d-inline-block me-1 mb-1" [exercise]="exercise"></jhi-external-submission>
+                    }
+                    <button
+                        jhi-exercise-action-button
+                        [buttonIcon]="faDownload"
+                        class="btn btn-info btn-sm me-1"
+                        [buttonLabel]="'entity.action.export' | artemisTranslate"
+                        [hideLabelMobile]="false"
+                        [ngbPopover]="popContent"
+                        [autoClose]="'outside'"
+                        placement="bottom-right auto"
+                        container="body"
+                        #exportPopover="ngbPopover"
+                    ></button>
+                    <ng-template #popContent>
+                        <h5 jhiTranslate="artemisApp.exercise.export.options"></h5>
+                        @if (exercise.isAtLeastInstructor) {
+                            <button class="btn btn-info btn-sm me-1" (click)="exportNames()">
+                                <fa-icon [icon]="faDownload"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.export.names">Export Names</span>
+                            </button>
+                        }
+                        @if (exercise.isAtLeastInstructor) {
+                            <jhi-exercise-scores-export-button [exercise]="exercise"></jhi-exercise-scores-export-button>
+                        }
+                        @if (exercise.type === ExerciseType.PROGRAMMING) {
+                            <jhi-programming-assessment-repo-export
+                                [programmingExercises]="[exercise]"
+                                class="me-1"
+                                (buttonPressed)="closeExportPopover()"
+                            ></jhi-programming-assessment-repo-export>
+                        }
+                        @if (
                             exercise.isAtLeastInstructor &&
                             (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.FILE_UPLOAD)
-                        "
-                        [exerciseId]="exercise.id!"
-                        [exerciseType]="exercise.type"
-                        class="me-1"
-                    ></jhi-exercise-submission-export>
-                </ng-template>
-                <button class="btn btn-primary btn-sm" (click)="refresh()">
-                    <fa-icon [icon]="faSync"></fa-icon>
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
-                </button>
+                        ) {
+                            <jhi-exercise-submission-export [exerciseId]="exercise.id!" [exerciseType]="exercise.type" class="me-1"></jhi-exercise-submission-export>
+                        }
+                    </ng-template>
+                    <button class="btn btn-primary btn-sm" (click)="refresh()">
+                        <fa-icon [icon]="faSync"></fa-icon>
+                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-    <jhi-data-table
-        [isLoading]="isLoading"
-        entityType="participation"
-        [allEntities]="filteredParticipations"
-        entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
-        showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
-        [searchPlaceholderTranslation]="exercise.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents'"
-        [searchFields]="exercise.teamMode ? ['team.shortName', 'team.name', 'team.students.login', 'team.students.name'] : ['student.login', 'student.name']"
-        [searchTextFromEntity]="searchTextFromParticipation"
-        [searchResultFormatter]="searchParticipationFormatter"
-        [customFilterKey]="resultCriteria.filterProp"
-        [customFilter]="filterParticipationsByProp"
-    >
-        <ng-template let-settings="settings" let-controls="controls">
-            <ngx-datatable
-                class="bootstrap"
-                [limit]="settings.limit"
-                [sortType]="settings.sortType"
-                [columnMode]="settings.columnMode"
-                [headerHeight]="settings.headerHeight"
-                [footerHeight]="settings.footerHeight"
-                [rowHeight]="settings.rowHeight"
-                [rows]="settings.rows"
-                [rowClass]="settings.rowClass"
-                [scrollbarH]="settings.scrollbarH"
-            >
-                <ngx-datatable-column prop="" [minWidth]="50" [width]="60">
-                    <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex">
-                        {{ rowIndex + 1 }}
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="180">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort(exercise.teamMode ? 'team.name' : 'student.name')">
-                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.name' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField(exercise.teamMode ? 'team.name' : 'student.name')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <span *ngIf="exercise.isAtLeastInstructor">
-                            <a [routerLink]="getExerciseParticipationsLink(value.id)">
-                                {{ value.student?.name || value.team?.name }}
-                            </a>
-                        </span>
-                        <span *ngIf="!exercise.isAtLeastInstructor">
-                            {{ value.student?.name || value.team?.name }}
-                        </span>
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="110">
-                    <ng-template ngx-datatable-header-template>
-                        <span *ngIf="exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('team.shortName')">
-                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamShortName' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('team.shortName')"></fa-icon>
-                        </span>
-                        <span *ngIf="!exercise.teamMode" class="datatable-header-cell-wrapper" (click)="controls.onSort('student.login')">
-                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentId' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('student.login')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <a *ngIf="exercise.teamMode; else defaultMode" [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'teams', value.team.id]">
-                            {{ value.team.shortName }}
-                        </a>
-                        <ng-template #defaultMode>
-                            {{ value.student.login }}
+        <jhi-data-table
+            [isLoading]="isLoading"
+            entityType="participation"
+            [allEntities]="filteredParticipations"
+            entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
+            showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
+            [searchPlaceholderTranslation]="exercise.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents'"
+            [searchFields]="exercise.teamMode ? ['team.shortName', 'team.name', 'team.students.login', 'team.students.name'] : ['student.login', 'student.name']"
+            [searchTextFromEntity]="searchTextFromParticipation"
+            [searchResultFormatter]="searchParticipationFormatter"
+            [customFilterKey]="resultCriteria.filterProp"
+            [customFilter]="filterParticipationsByProp"
+        >
+            <ng-template let-settings="settings" let-controls="controls">
+                <ngx-datatable
+                    class="bootstrap"
+                    [limit]="settings.limit"
+                    [sortType]="settings.sortType"
+                    [columnMode]="settings.columnMode"
+                    [headerHeight]="settings.headerHeight"
+                    [footerHeight]="settings.footerHeight"
+                    [rowHeight]="settings.rowHeight"
+                    [rows]="settings.rows"
+                    [rowClass]="settings.rowClass"
+                    [scrollbarH]="settings.scrollbarH"
+                >
+                    <ngx-datatable-column prop="" [minWidth]="50" [width]="60">
+                        <ng-template ngx-datatable-cell-template let-rowIndex="rowIndex">
+                            {{ rowIndex + 1 }}
                         </ng-template>
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="" [sortable]="true" [minWidth]="130" [width]="140">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last()?.completionDate')">
-                            <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.completionDate' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.completionDate')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value.results?.last()?.completionDate | artemisDate }}
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="" [sortable]="true" [minWidth]="250" [width]="260">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last()?.score')">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.lastResult' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.score')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <jhi-result *ngIf="value.results?.last()" [exercise]="exercise" [result]="value.results?.last()" [participation]="value"></jhi-result>
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="" *ngIf="newManualResultAllowed || exercise.allowComplaintsForAutomaticAssessments" [sortable]="true" [minWidth]="130" [width]="140">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last().assessmentType')">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.type' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('results?.last().assessmentType')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value.results?.last().assessmentType }}
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column *ngIf="exercise.type === ExerciseType.PROGRAMMING && afterDueDate" prop="" [minWidth]="100" [width]="110">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('testRun')">
-                            <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.participation.practice"> Practice </span>
-                            <fa-icon [icon]="controls.iconForSortPropField('testRun')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ (value.testRun ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="110">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('submissionCount')">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.submissionCount' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('submissionCount')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="w-100 text-center">
-                            <a *ngIf="exercise.isAtLeastInstructor; else displayTextOnly" [routerLink]="getExerciseParticipationsLink(value.id)">
-                                {{ value.submissionCount }}
-                            </a>
-                            <ng-template #displayTextOnly>
-                                {{ value.submissionCount }}
-                            </ng-template>
-                        </div>
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="" [sortable]="true" [minWidth]="80" [width]="90">
-                    <ng-template ngx-datatable-header-template>
-                        <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last()?.durationInMinutes')">
-                            <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.duration' | artemisTranslate }}</span>
-                            <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.durationInMinutes')"></fa-icon>
-                        </span>
-                    </ng-template>
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        {{ value.results?.last()?.durationInMinutes ? (value.results?.last()?.durationInMinutes | artemisDurationFromSeconds: true) : '-' }}
-                    </ng-template>
-                </ngx-datatable-column>
-
-                <ngx-datatable-column prop="" *ngIf="exercise.isAtLeastInstructor" [minWidth]="350" [width]="400">
-                    <ng-template ngx-datatable-cell-template let-value="value">
-                        <div class="button-header">
-                            <div class="mb-2" *ngIf="exercise.type === ExerciseType.PROGRAMMING">
-                                <ng-container *ngIf="getRepositoryLink(value)">
-                                    <a *ngIf="!localVCEnabled; else cloneRepoButton" class="btn btn-primary btn-sm me-1" href="{{ getRepositoryLink(value) }}">
-                                        <fa-icon [icon]="faCodeBranch" class="me-1"></fa-icon>
-                                        Repository
+                    </ngx-datatable-column>
+                    <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="180">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort(exercise.teamMode ? 'team.name' : 'student.name')">
+                                <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.name' | artemisTranslate }}</span>
+                                <fa-icon [icon]="controls.iconForSortPropField(exercise.teamMode ? 'team.name' : 'student.name')"></fa-icon>
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            @if (exercise.isAtLeastInstructor) {
+                                <span>
+                                    <a [routerLink]="getExerciseParticipationsLink(value.id)">
+                                        {{ value.student?.name || value.team?.name }}
                                     </a>
-                                    <ng-template #cloneRepoButton>
-                                        <jhi-clone-repo-button class="me-1" [smallButtons]="true" [repositoryUrl]="getRepositoryLink(value) || ''"></jhi-clone-repo-button>
-                                    </ng-template>
-                                </ng-container>
-                                <a
-                                    *ngIf="buildPlanId(value) && !localVCEnabled"
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    href="{{ value.buildPlanUrl }}"
-                                    class="btn btn-primary btn-sm me-1"
-                                >
-                                    <fa-icon class="me-1" [icon]="farFileCode"></fa-icon>
-                                    Build plan
+                                </span>
+                            }
+                            @if (!exercise.isAtLeastInstructor) {
+                                <span>
+                                    {{ value.student?.name || value.team?.name }}
+                                </span>
+                            }
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="110">
+                        <ng-template ngx-datatable-header-template>
+                            @if (exercise.teamMode) {
+                                <span class="datatable-header-cell-wrapper" (click)="controls.onSort('team.shortName')">
+                                    <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamShortName' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="controls.iconForSortPropField('team.shortName')"></fa-icon>
+                                </span>
+                            }
+                            @if (!exercise.teamMode) {
+                                <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.login')">
+                                    <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentId' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="controls.iconForSortPropField('student.login')"></fa-icon>
+                                </span>
+                            }
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            @if (exercise.teamMode) {
+                                <a [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'teams', value.team.id]">
+                                    {{ value.team.shortName }}
                                 </a>
-                                <a
-                                    [routerLink]="['/courses', course.id, 'programming-exercises', exercise.id, 'code-editor', value.id]"
-                                    class="btn btn-info btn-sm me-1"
-                                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-                                >
-                                    <fa-icon class="me-1" [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
-                                    Online editor
-                                </a>
+                            } @else {
+                                {{ value.student.login }}
+                            }
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column prop="" [sortable]="true" [minWidth]="130" [width]="140">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last()?.completionDate')">
+                                <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.completionDate' | artemisTranslate }}</span>
+                                <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.completionDate')"></fa-icon>
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            {{ value.results?.last()?.completionDate | artemisDate }}
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column prop="" [sortable]="true" [minWidth]="250" [width]="260">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last()?.score')">
+                                <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.lastResult' | artemisTranslate }}</span>
+                                <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.score')"></fa-icon>
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            @if (value.results?.last()) {
+                                <jhi-result [exercise]="exercise" [result]="value.results?.last()" [participation]="value"></jhi-result>
+                            }
+                        </ng-template>
+                    </ngx-datatable-column>
+                    @if (newManualResultAllowed || exercise.allowComplaintsForAutomaticAssessments) {
+                        <ngx-datatable-column prop="" [sortable]="true" [minWidth]="130" [width]="140">
+                            <ng-template ngx-datatable-header-template>
+                                <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last().assessmentType')">
+                                    <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.type' | artemisTranslate }}</span>
+                                    <fa-icon [icon]="controls.iconForSortPropField('results?.last().assessmentType')"></fa-icon>
+                                </span>
+                            </ng-template>
+                            <ng-template ngx-datatable-cell-template let-value="value">
+                                {{ value.results?.last().assessmentType }}
+                            </ng-template>
+                        </ngx-datatable-column>
+                    }
+                    @if (exercise.type === ExerciseType.PROGRAMMING && afterDueDate) {
+                        <ngx-datatable-column prop="" [minWidth]="100" [width]="110">
+                            <ng-template ngx-datatable-header-template>
+                                <span class="datatable-header-cell-wrapper" (click)="controls.onSort('testRun')">
+                                    <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.participation.practice"> Practice </span>
+                                    <fa-icon [icon]="controls.iconForSortPropField('testRun')"></fa-icon>
+                                </span>
+                            </ng-template>
+                            <ng-template ngx-datatable-cell-template let-value="value">
+                                {{ (value.testRun ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
+                            </ng-template>
+                        </ngx-datatable-column>
+                    }
+                    <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="110">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('submissionCount')">
+                                <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.submissionCount' | artemisTranslate }}</span>
+                                <fa-icon [icon]="controls.iconForSortPropField('submissionCount')"></fa-icon>
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            <div class="w-100 text-center">
+                                @if (exercise.isAtLeastInstructor) {
+                                    <a [routerLink]="getExerciseParticipationsLink(value.id)">
+                                        {{ value.submissionCount }}
+                                    </a>
+                                } @else {
+                                    {{ value.submissionCount }}
+                                }
                             </div>
-                            <jhi-manage-assessment-buttons
-                                [course]="course"
-                                [exercise]="exercise"
-                                [participation]="value"
-                                [isLoading]="isLoading"
-                                (refresh)="refresh()"
-                            ></jhi-manage-assessment-buttons>
-                        </div>
-                    </ng-template>
-                </ngx-datatable-column>
-            </ngx-datatable>
-        </ng-template>
-    </jhi-data-table>
-</div>
+                        </ng-template>
+                    </ngx-datatable-column>
+                    <ngx-datatable-column prop="" [sortable]="true" [minWidth]="80" [width]="90">
+                        <ng-template ngx-datatable-header-template>
+                            <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last()?.durationInMinutes')">
+                                <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.duration' | artemisTranslate }}</span>
+                                <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.durationInMinutes')"></fa-icon>
+                            </span>
+                        </ng-template>
+                        <ng-template ngx-datatable-cell-template let-value="value">
+                            {{ value.results?.last()?.durationInMinutes ? (value.results?.last()?.durationInMinutes | artemisDurationFromSeconds: true) : '-' }}
+                        </ng-template>
+                    </ngx-datatable-column>
+                    @if (exercise.isAtLeastInstructor) {
+                        <ngx-datatable-column prop="" [minWidth]="350" [width]="400">
+                            <ng-template ngx-datatable-cell-template let-value="value">
+                                <div class="button-header">
+                                    @if (exercise.type === ExerciseType.PROGRAMMING) {
+                                        <div class="mb-2">
+                                            @if (getRepositoryLink(value)) {
+                                                @if (!localVCEnabled) {
+                                                    <a class="btn btn-primary btn-sm me-1" href="{{ getRepositoryLink(value) }}">
+                                                        <fa-icon [icon]="faCodeBranch" class="me-1"></fa-icon>
+                                                        Repository
+                                                    </a>
+                                                } @else {
+                                                    <jhi-clone-repo-button
+                                                        class="me-1"
+                                                        [smallButtons]="true"
+                                                        [repositoryUrl]="getRepositoryLink(value) || ''"
+                                                    ></jhi-clone-repo-button>
+                                                }
+                                            }
+                                            @if (buildPlanId(value) && !localVCEnabled) {
+                                                <a target="_blank" rel="noreferrer" href="{{ value.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">
+                                                    <fa-icon class="me-1" [icon]="farFileCode"></fa-icon>
+                                                    Build plan
+                                                </a>
+                                            }
+                                            <a
+                                                [routerLink]="['/courses', course.id, 'programming-exercises', exercise.id, 'code-editor', value.id]"
+                                                class="btn btn-info btn-sm me-1"
+                                                [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                                            >
+                                                <fa-icon class="me-1" [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                                                Online editor
+                                            </a>
+                                        </div>
+                                    }
+                                    <jhi-manage-assessment-buttons
+                                        [course]="course"
+                                        [exercise]="exercise"
+                                        [participation]="value"
+                                        [isLoading]="isLoading"
+                                        (refresh)="refresh()"
+                                    ></jhi-manage-assessment-buttons>
+                                </div>
+                            </ng-template>
+                        </ngx-datatable-column>
+                    }
+                </ngx-datatable>
+            </ng-template>
+        </jhi-data-table>
+    </div>
+}
