@@ -1,91 +1,118 @@
-<div class="table-responsive" *ngIf="quizExercises && filteredQuizExercises.length > 0">
-    <table class="table table-striped">
-        <thead>
-            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                <th *ngIf="course.isAtLeastInstructor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(quizExercises)" [ngModel]="allChecked" />
-                </th>
-                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release">Release</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                <!-- releaseDate works similar to Exam.visibleDate -->
-                <th jhiSortBy="startTime"><span jhiTranslate="artemisApp.exercise.start">Start</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                <!-- startTime works similar to Exam.startDate -->
-                <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due">Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                <th jhiSortBy="duration"><span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely">Included</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                <th>{{ 'artemisApp.quizExercise.quizLifecycle' | artemisTranslate }}</th>
-                <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories">Categories</span></th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr *ngFor="let quizExercise of filteredQuizExercises; trackBy: trackId" id="exercise-card-{{ quizExercise.id }}">
-                <td *ngIf="quizExercise.isAtLeastInstructor" class="d-md-table-cell">
-                    <input class="form-check-input" type="checkbox" (change)="toggleExercise(quizExercise)" [ngModel]="isExerciseSelected(quizExercise)" />
-                </td>
-                <td>
-                    <a *ngIf="quizExercise.isAtLeastTutor; else readOnlyId" [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id]"
-                        >{{ quizExercise.id }}
-                    </a>
-                    <ng-template #readOnlyId>{{ quizExercise.id }}</ng-template>
-                </td>
-                <td>
-                    <a *ngIf="quizExercise.isAtLeastTutor; else showTitle" [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id]">
-                        {{ quizExercise.title }}
-                    </a>
-                    <ng-template #showTitle>{{ quizExercise.title }}</ng-template>
-                </td>
-                <td>
-                    <span *ngIf="quizExercise.status === QuizStatus.CLOSED">{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
-                    <span *ngIf="quizExercise.status === QuizStatus.INVISIBLE">{{ 'artemisApp.quizExercise.quizStatus.invisible' | artemisTranslate }}</span>
-                    <span *ngIf="quizExercise.status === QuizStatus.VISIBLE">{{ 'artemisApp.quizExercise.quizStatus.visible' | artemisTranslate }}</span>
-                    <span *ngIf="quizExercise.status === QuizStatus.ACTIVE">{{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}</span>
-                    <span *ngIf="quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE">{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
-                </td>
-                <td>{{ quizExercise.releaseDate ? (quizExercise.releaseDate | artemisDate: 'long' : true) : '-' }}</td>
-                <td>{{ quizExercise.quizBatches?.[0]?.startTime ? (quizExercise.quizBatches![0]!.startTime | artemisDate: 'long' : true) : '-' }}</td>
-                <td>{{ quizExercise.dueDate ? (quizExercise.dueDate | artemisDate: 'long' : true) : '-' }}</td>
-                <td>
-                    {{ fullMinutesForSeconds(quizExercise.duration!) }}
-                    <span jhiTranslate="{{ quizExercise.duration! % 60 ? 'artemisApp.quizExercise.minutesShort' : 'artemisApp.quizExercise.minutes' }}"></span>
-                    <span *ngIf="quizExercise.duration! % 60">
-                        {{ quizExercise.duration! % 60 }}
-                        <span jhiTranslate="artemisApp.quizExercise.secondsShort"></span>
-                    </span>
-                </td>
-                <td>{{ quizExercise.maxPoints }}</td>
-                <td>{{ exerciseService.isIncludedInScore(quizExercise) }}</td>
-                <td class="text-end">
-                    <div class="">
-                        <jhi-quiz-exercise-lifecycle-buttons
-                            [quizExercise]="quizExercise"
-                            (loadOne)="loadOne($event)"
-                            (handleNewQuizExercise)="handleNewQuizExercise($event)"
-                        ></jhi-quiz-exercise-lifecycle-buttons>
-                    </div>
-                </td>
-                <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="quizExercise"></jhi-exercise-categories></td>
-                <td class="text-end">
-                    <jhi-quiz-exercise-manage-buttons [quizExercise]="quizExercise"></jhi-quiz-exercise-manage-buttons>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <div *ngIf="selectedExercises.length > 0">
-        <button
-            *ngIf="course.isAtLeastInstructor"
-            jhiDeleteButton
-            [entityTitle]="'Delete All Quiz Exercises'"
-            deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
-            (delete)="deleteMultipleExercises(selectedExercises, quizExerciseService)"
-            [dialogError]="dialogError$"
-            id="delete-all-quiz"
-            class="mb-1"
-        >
-            <fa-icon [icon]="faTrash"></fa-icon>
-        </button>
+@if (quizExercises && filteredQuizExercises.length > 0) {
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                    @if (course.isAtLeastInstructor) {
+                        <th class="d-md-table-cell">
+                            <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(quizExercises)" [ngModel]="allChecked" />
+                        </th>
+                    }
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release">Release</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <!-- releaseDate works similar to Exam.visibleDate -->
+                    <th jhiSortBy="startTime"><span jhiTranslate="artemisApp.exercise.start">Start</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <!-- startTime works similar to Exam.startDate -->
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due">Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="duration"><span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely">Included</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th>{{ 'artemisApp.quizExercise.quizLifecycle' | artemisTranslate }}</th>
+                    <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories">Categories</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (quizExercise of filteredQuizExercises; track trackId($index, quizExercise)) {
+                    <tr id="exercise-card-{{ quizExercise.id }}">
+                        @if (quizExercise.isAtLeastInstructor) {
+                            <td class="d-md-table-cell">
+                                <input class="form-check-input" type="checkbox" (change)="toggleExercise(quizExercise)" [ngModel]="isExerciseSelected(quizExercise)" />
+                            </td>
+                        }
+                        <td>
+                            @if (quizExercise.isAtLeastTutor) {
+                                <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id]">{{ quizExercise.id }} </a>
+                            } @else {
+                                {{ quizExercise.id }}
+                            }
+                        </td>
+                        <td>
+                            @if (quizExercise.isAtLeastTutor) {
+                                <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id]">
+                                    {{ quizExercise.title }}
+                                </a>
+                            } @else {
+                                {{ quizExercise.title }}
+                            }
+                        </td>
+                        <td>
+                            @if (quizExercise.status === QuizStatus.CLOSED) {
+                                <span>{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
+                            }
+                            @if (quizExercise.status === QuizStatus.INVISIBLE) {
+                                <span>{{ 'artemisApp.quizExercise.quizStatus.invisible' | artemisTranslate }}</span>
+                            }
+                            @if (quizExercise.status === QuizStatus.VISIBLE) {
+                                <span>{{ 'artemisApp.quizExercise.quizStatus.visible' | artemisTranslate }}</span>
+                            }
+                            @if (quizExercise.status === QuizStatus.ACTIVE) {
+                                <span>{{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}</span>
+                            }
+                            @if (quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE) {
+                                <span>{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
+                            }
+                        </td>
+                        <td>{{ quizExercise.releaseDate ? (quizExercise.releaseDate | artemisDate: 'long' : true) : '-' }}</td>
+                        <td>{{ quizExercise.quizBatches?.[0]?.startTime ? (quizExercise.quizBatches![0]!.startTime | artemisDate: 'long' : true) : '-' }}</td>
+                        <td>{{ quizExercise.dueDate ? (quizExercise.dueDate | artemisDate: 'long' : true) : '-' }}</td>
+                        <td>
+                            {{ fullMinutesForSeconds(quizExercise.duration!) }}
+                            <span jhiTranslate="{{ quizExercise.duration! % 60 ? 'artemisApp.quizExercise.minutesShort' : 'artemisApp.quizExercise.minutes' }}"></span>
+                            @if (quizExercise.duration! % 60) {
+                                <span>
+                                    {{ quizExercise.duration! % 60 }}
+                                    <span jhiTranslate="artemisApp.quizExercise.secondsShort"></span>
+                                </span>
+                            }
+                        </td>
+                        <td>{{ quizExercise.maxPoints }}</td>
+                        <td>{{ exerciseService.isIncludedInScore(quizExercise) }}</td>
+                        <td class="text-end">
+                            <div class="">
+                                <jhi-quiz-exercise-lifecycle-buttons
+                                    [quizExercise]="quizExercise"
+                                    (loadOne)="loadOne($event)"
+                                    (handleNewQuizExercise)="handleNewQuizExercise($event)"
+                                ></jhi-quiz-exercise-lifecycle-buttons>
+                            </div>
+                        </td>
+                        <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="quizExercise"></jhi-exercise-categories></td>
+                        <td class="text-end">
+                            <jhi-quiz-exercise-manage-buttons [quizExercise]="quizExercise"></jhi-quiz-exercise-manage-buttons>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (selectedExercises.length > 0) {
+            <div>
+                @if (course.isAtLeastInstructor) {
+                    <button
+                        jhiDeleteButton
+                        [entityTitle]="'Delete All Quiz Exercises'"
+                        deleteQuestion="artemisApp.exerciseActions.deleteMultipleExercisesQuestion"
+                        (delete)="deleteMultipleExercises(selectedExercises, quizExerciseService)"
+                        [dialogError]="dialogError$"
+                        id="delete-all-quiz"
+                        class="mb-1"
+                    >
+                        <fa-icon [icon]="faTrash"></fa-icon>
+                    </button>
+                }
+            </div>
+        }
     </div>
-</div>
+}

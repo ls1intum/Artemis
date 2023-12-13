@@ -1,85 +1,79 @@
-<ng-container *ngIf="exercise">
+@if (exercise) {
     <div class="d-flex flex-wrap gap-2">
         <!-- Edit -->
-        <a *ngIf="exercise.isAtLeastEditor" [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm">
-            <fa-icon [icon]="faWrench"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"> Edit</span>
-        </a>
-
+        @if (exercise.isAtLeastEditor) {
+            <a [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm">
+                <fa-icon [icon]="faWrench"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"> Edit</span>
+            </a>
+        }
         <!-- Participations  -->
-        <a *ngIf="course" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm">
-            <fa-icon [icon]="faListAlt"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
-        </a>
-
+        @if (course) {
+            <a [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm">
+                <fa-icon [icon]="faListAlt"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+            </a>
+        }
         <!-- Teams -->
-        <a *ngIf="exercise.teamMode && exercise.isAtLeastTutor" [routerLink]="teamBaseResource + 'teams'" class="btn btn-primary btn-sm">
-            <fa-icon [icon]="faUsers"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
-        </a>
-
+        @if (exercise.teamMode && exercise.isAtLeastTutor) {
+            <a [routerLink]="teamBaseResource + 'teams'" class="btn btn-primary btn-sm">
+                <fa-icon [icon]="faUsers"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
+            </a>
+        }
         <!-- Exercise Dashboard -->
-        <a
-            *ngIf="
-                exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.MANUAL || exercise.allowComplaintsForAutomaticAssessments
-            "
-            [routerLink]="shortBaseResource + 'assessment-dashboard/' + exercise.id"
-            class="btn btn-info btn-sm"
-        >
-            <fa-icon [icon]="faUserCheck"></fa-icon>
-            <span class="d-none d-md-inline">{{ 'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate }}</span>
-        </a>
-
+        @if (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.MANUAL || exercise.allowComplaintsForAutomaticAssessments) {
+            <a [routerLink]="shortBaseResource + 'assessment-dashboard/' + exercise.id" class="btn btn-info btn-sm">
+                <fa-icon [icon]="faUserCheck"></fa-icon>
+                <span class="d-none d-md-inline">{{ 'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate }}</span>
+            </a>
+        }
         <!-- Scores -->
-        <a *ngIf="course && exercise.isAtLeastTutor" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
-            <fa-icon [icon]="faTable"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
-        </a>
-
+        @if (course && exercise.isAtLeastTutor) {
+            <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
+                <fa-icon [icon]="faTable"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+            </a>
+        }
         <!--Statistics -->
-        <a *ngIf="exercise.isAtLeastTutor && course" [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm">
-            <fa-icon [icon]="faChartBar"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="statistics.statistics-title">Statistics</span>
-        </a>
-
+        @if (exercise.isAtLeastTutor && course) {
+            <a [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm">
+                <fa-icon [icon]="faChartBar"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="statistics.statistics-title">Statistics</span>
+            </a>
+        }
         <!-- Example Submission -->
-        <a
-            *ngIf="exercise.isAtLeastEditor && (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT)"
-            [routerLink]="baseResource + 'example-submissions'"
-            class="btn btn-success btn-sm"
-            id="example-submissions-button"
-        >
-            <fa-icon [icon]="faBook"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
-        </a>
-
+        @if (exercise.isAtLeastEditor && (exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT)) {
+            <a [routerLink]="baseResource + 'example-submissions'" class="btn btn-success btn-sm" id="example-submissions-button">
+                <fa-icon [icon]="faBook"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
+            </a>
+        }
         <!-- Tutor Effort Statistics -->
-        <a *ngIf="exercise.isAtLeastInstructor && exercise.type === ExerciseType.TEXT" [routerLink]="baseResource + 'tutor-effort-statistics'" class="btn btn-success btn-sm">
-            <fa-icon [icon]="faChartBar"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title">Tutor Effort Statistics</span>
-        </a>
-
+        @if (exercise.isAtLeastInstructor && exercise.type === ExerciseType.TEXT) {
+            <a [routerLink]="baseResource + 'tutor-effort-statistics'" class="btn btn-success btn-sm">
+                <fa-icon [icon]="faChartBar"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title">Tutor Effort Statistics</span>
+            </a>
+        }
         <!-- Plagiarism -->
-        <a
-            *ngIf="(exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && exercise.isAtLeastEditor"
-            class="btn btn-info btn-sm"
-            id="check-plagiarism-download"
-            routerLink="plagiarism"
-        >
-            <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Plagiarism</span>
-        </a>
-
+        @if ((exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && exercise.isAtLeastEditor) {
+            <a class="btn btn-info btn-sm" id="check-plagiarism-download" routerLink="plagiarism">
+                <span jhiTranslate="artemisApp.textExercise.checkPlagiarism">Plagiarism</span>
+            </a>
+        }
         <!-- Delete exercise -->
-        <button
-            *ngIf="exercise.isAtLeastInstructor"
-            jhiDeleteButton
-            [entityTitle]="exercise.title || ''"
-            deleteQuestion="artemisApp.exercise.delete.question"
-            deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-            (delete)="deleteExercise()"
-            [dialogError]="dialogError$"
-        >
-            <fa-icon [icon]="faTrash"></fa-icon>
-        </button>
+        @if (exercise.isAtLeastInstructor) {
+            <button
+                jhiDeleteButton
+                [entityTitle]="exercise.title || ''"
+                deleteQuestion="artemisApp.exercise.delete.question"
+                deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
+                (delete)="deleteExercise()"
+                [dialogError]="dialogError$"
+            >
+                <fa-icon [icon]="faTrash"></fa-icon>
+            </button>
+        }
     </div>
-</ng-container>
+}
