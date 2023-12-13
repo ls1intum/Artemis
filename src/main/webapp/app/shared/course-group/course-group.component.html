@@ -5,17 +5,20 @@
             <ng-content></ng-content>
         </h2>
         <div class="d-flex mt-1 mb-1 gap-1">
-            <jhi-user-import-button
-                *ngIf="course?.isAtLeastInstructor"
-                [courseId]="course.id!"
-                [courseGroup]="courseGroup!"
-                (finish)="importFinish.emit()"
-                [tutorialGroup]="tutorialGroup"
-            ></jhi-user-import-button>
-            <button *ngIf="course?.isAtLeastInstructor && allGroupUsers.length > 0" class="btn btn-primary btn-sm" (click)="exportUserInformation()">
-                <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
-                <span jhiTranslate="artemisApp.instructorDashboard.exportCSV">&nbsp;Export Users</span>
-            </button>
+            @if (course?.isAtLeastInstructor) {
+                <jhi-user-import-button
+                    [courseId]="course.id!"
+                    [courseGroup]="courseGroup!"
+                    (finish)="importFinish.emit()"
+                    [tutorialGroup]="tutorialGroup"
+                ></jhi-user-import-button>
+            }
+            @if (course?.isAtLeastInstructor && allGroupUsers.length > 0) {
+                <button class="btn btn-primary btn-sm" (click)="exportUserInformation()">
+                    <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
+                    <span jhiTranslate="artemisApp.instructorDashboard.exportCSV">&nbsp;Export Users</span>
+                </button>
+            }
         </div>
     </div>
     <jhi-data-table
@@ -59,13 +62,13 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a *ngIf="isAdmin; else showId" routerLink="/admin/user-management/{{ value?.login }}"> {{ value.id }} </a>
-                        <ng-template #showId>
+                        @if (isAdmin) {
+                            <a routerLink="/admin/user-management/{{ value?.login }}"> {{ value.id }} </a>
+                        } @else {
                             {{ value?.id }}
-                        </ng-template>
+                        }
                     </ng-template>
                 </ngx-datatable-column>
-
                 <ngx-datatable-column prop="login" [minWidth]="150" [width]="200" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">
@@ -77,7 +80,6 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-
                 <ngx-datatable-column prop="visibleRegistrationNumber" [minWidth]="150" [width]="200" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('visibleRegistrationNumber')">
@@ -89,7 +91,6 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-
                 <ngx-datatable-column prop="name" [minWidth]="150" [width]="250" [maxWidth]="250">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
@@ -101,7 +102,6 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-
                 <ngx-datatable-column prop="email" [minWidth]="150" [width]="250">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
@@ -113,7 +113,6 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-
                 <ngx-datatable-column prop="" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template> </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">

@@ -1,16 +1,21 @@
 <div class="display-container">
     <span>{{ score || 0 }}&nbsp;</span>
-    <span *ngIf="maxPoints">/&nbsp;{{ maxPoints }}&nbsp;</span>
+    @if (maxPoints) {
+        <span>/&nbsp;{{ maxPoints }}&nbsp;</span>
+    }
     <span jhiTranslate="artemisApp.modelingAssessment.points">Points&nbsp;</span>
-    <span *ngIf="bonusPoints">(Bonus:&nbsp;{{ bonusPoints }})&nbsp;</span>
-    <fa-icon
-        *ngIf="maxBonusPoints"
-        [icon]="faQuestionCircle"
-        placement="bottom auto"
-        ngbTooltip="{{
-            'artemisApp.assessment.dashboard.bonusPointExplanation'
-                | artemisTranslate: { maxPoints: maxPoints, maxBonusPoints: maxBonusPoints, maxPointsWithBonus: maxPointsWithBonus, maxPercentage: maxPercentage }
-        }}"
-    >
-    </fa-icon>
+    @if (bonusPoints) {
+        <span>(Bonus:&nbsp;{{ bonusPoints }})&nbsp;</span>
+    }
+    @if (maxBonusPoints) {
+        <fa-icon
+            [icon]="faQuestionCircle"
+            placement="bottom auto"
+            ngbTooltip="{{
+                'artemisApp.assessment.dashboard.bonusPointExplanation'
+                    | artemisTranslate: { maxPoints: maxPoints, maxBonusPoints: maxBonusPoints, maxPointsWithBonus: maxPointsWithBonus, maxPercentage: maxPercentage }
+            }}"
+        >
+        </fa-icon>
+    }
 </div>

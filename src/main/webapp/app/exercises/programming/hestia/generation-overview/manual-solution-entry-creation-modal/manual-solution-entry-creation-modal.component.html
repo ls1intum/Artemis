@@ -6,16 +6,26 @@
     <div class="modal-body">
         <div class="form-group">
             <label class="label-narrow" for="field_test" jhiTranslate="artemisApp.programmingExerciseSolutionEntry.test">Test Name</label>
-            <jhi-help-icon *ngIf="codeHint" text="artemisApp.programmingExerciseSolutionEntry.testOnlyForCurrentTask"></jhi-help-icon>
-            <select *ngIf="testCases?.length" class="form-select" required name="test" [(ngModel)]="this.solutionEntry.testCase" id="field_test">
-                <option *ngFor="let testCase of testCases" [ngValue]="testCase">{{ testCase?.testName }}</option>
-            </select>
+            @if (codeHint) {
+                <jhi-help-icon text="artemisApp.programmingExerciseSolutionEntry.testOnlyForCurrentTask"></jhi-help-icon>
+            }
+            @if (testCases?.length) {
+                <select class="form-select" required name="test" [(ngModel)]="this.solutionEntry.testCase" id="field_test">
+                    @for (testCase of testCases; track testCase) {
+                        <option [ngValue]="testCase">{{ testCase?.testName }}</option>
+                    }
+                </select>
+            }
         </div>
         <div class="form-group">
             <label class="label-narrow" for="field_path" jhiTranslate="artemisApp.programmingExerciseSolutionEntry.file">File</label>
-            <select *ngIf="solutionRepositoryFileNames?.length" class="form-select" required name="path" [(ngModel)]="this.solutionEntry.filePath" id="field_path">
-                <option *ngFor="let fileName of solutionRepositoryFileNames" [ngValue]="fileName">{{ fileName }}</option>
-            </select>
+            @if (solutionRepositoryFileNames?.length) {
+                <select class="form-select" required name="path" [(ngModel)]="this.solutionEntry.filePath" id="field_path">
+                    @for (fileName of solutionRepositoryFileNames; track fileName) {
+                        <option [ngValue]="fileName">{{ fileName }}</option>
+                    }
+                </select>
+            }
         </div>
         <div class="d-flex flex-row">
             <jhi-solution-entry class="flex-grow-1" [solutionEntry]="solutionEntry" [enableEditing]="true"></jhi-solution-entry>

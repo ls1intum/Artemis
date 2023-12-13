@@ -2,7 +2,6 @@ import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Subject, lastValueFrom, of } from 'rxjs';
 import { range as _range } from 'lodash-es';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
-import { MockHttpService } from '../helpers/mocks/service/mock-http.service';
 import {
     ExerciseSubmissionState,
     ProgrammingSubmissionService,
@@ -20,6 +19,7 @@ import { MockProgrammingExerciseParticipationService } from '../helpers/mocks/se
 import { HttpClient } from '@angular/common/http';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 describe('ProgrammingSubmissionService', () => {
     let websocketService: JhiWebsocketService;
@@ -28,6 +28,7 @@ describe('ProgrammingSubmissionService', () => {
     let participationService: ProgrammingExerciseParticipationService;
     let submissionService: ProgrammingSubmissionService;
 
+    let httpMock: HttpTestingController;
     let httpGetStub: jest.SpyInstance;
     let wsSubscribeStub: jest.SpyInstance;
     let wsUnsubscribeStub: jest.SpyInstance;
@@ -53,9 +54,9 @@ describe('ProgrammingSubmissionService', () => {
         result2 = { id: 32, submission: currentSubmission2 } as any;
 
         TestBed.configureTestingModule({
+            imports: [HttpClientTestingModule],
             providers: [
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
-                { provide: HttpClient, useClass: MockHttpService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
             ],
@@ -68,6 +69,7 @@ describe('ProgrammingSubmissionService', () => {
                 participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
                 participationService = TestBed.inject(ProgrammingExerciseParticipationService);
 
+                httpMock = TestBed.inject(HttpTestingController);
                 httpGetStub = jest.spyOn(httpService, 'get');
                 wsSubscribeStub = jest.spyOn(websocketService, 'subscribe');
                 wsUnsubscribeStub = jest.spyOn(websocketService, 'unsubscribe');
@@ -258,18 +260,26 @@ describe('ProgrammingSubmissionService', () => {
         // @ts-ignore
         const fetchLatestPendingSubmissionSpy = jest.spyOn(submissionService, 'fetchLatestPendingSubmissionByParticipationId');
 
-        httpGetStub.mockReturnValue(of(pendingSubmissions));
-
         // This load the submissions for participation 1 and 2, but not for 3.
         lastValueFrom(submissionService.getSubmissionStateOfExercise(exerciseId));
+        const request = httpMock.expectOne('api/programming-exercises/3/latest-pending-submissions');
+
+        // When retrieving the status of participation 1 we should wait until a result of the exercise request is present
         submissionService.getLatestPendingSubmissionByParticipationId(participation1.id!, exerciseId, true).subscribe(({ submissionState: state, submission: sub }) => {
             submissionState = state;
             submission = sub;
         });
+        expect(fetchLatestPendingSubmissionSpy).not.toHaveBeenCalled();
 
-        expect(httpGetStub).toHaveBeenCalledOnce();
-        expect(httpGetStub).toHaveBeenCalledWith('api/programming-exercises/3/latest-pending-submissions');
-        // Fetching the latest pending submission should not trigger a rest call for a cached submission.
+        request.flush(pendingSubmissions);
+        expect(submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
+        expect(submission).toEqual(currentSubmission);
+
+        // Fetching the latest pending submission again should not trigger a rest call for a cached submission.
+        submissionService.getLatestPendingSubmissionByParticipationId(participation1.id!, exerciseId, true).subscribe(({ submissionState: state, submission: sub }) => {
+            submissionState = state;
+            submission = sub;
+        });
         expect(fetchLatestPendingSubmissionSpy).not.toHaveBeenCalled();
         expect(submissionState).toBe(ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION);
         expect(submission).toEqual(currentSubmission);
