@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.iris.message;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.persistence.*;
 
@@ -23,6 +24,9 @@ public class IrisExercisePlan extends IrisMessageContent {
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<IrisExercisePlanStep> steps;
 
+    @Column(name = "executing")
+    private boolean executing;
+
     public List<IrisExercisePlanStep> getSteps() {
         return steps;
     }
@@ -41,6 +45,32 @@ public class IrisExercisePlan extends IrisMessageContent {
         if (this.steps != null) {
             this.steps.forEach(step -> step.setPlan(this));
         }
+    }
+
+    public boolean isExecuting() {
+        return executing;
+    }
+
+    public void setExecuting(boolean executing) {
+        this.executing = executing;
+    }
+
+    public Optional<IrisExercisePlanStep> getNextStep() {
+        var nextStepIndex = getNextStepIndex();
+        if (nextStepIndex < steps.size()) {
+            return Optional.of(steps.get(nextStepIndex));
+        }
+        return Optional.empty();
+    }
+
+    private int getNextStepIndex() {
+        for (int i = steps.size() - 1; i >= 0; i--) {
+            var step = steps.get(i);
+            if (step.getExecutionStage() == IrisExercisePlanStep.ExecutionStage.COMPLETE) {
+                return i + 1;
+            }
+        }
+        return 0;
     }
 
     @Override

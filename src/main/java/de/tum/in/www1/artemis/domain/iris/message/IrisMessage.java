@@ -99,6 +99,11 @@ public class IrisMessage extends DomainObject {
         }
     }
 
+    public IrisMessage withContent(IrisMessageContent... content) {
+        addContent(content);
+        return this;
+    }
+
     @JsonProperty
     public Integer getMessageDifferentiator() {
         return messageDifferentiator;

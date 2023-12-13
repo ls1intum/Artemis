@@ -15,7 +15,7 @@ import {
 import { NavigationStart, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components/button.component';
-import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -66,6 +66,7 @@ import { DOCUMENT } from '@angular/common';
 import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
+import { IrisExerciseCreationSessionService } from 'app/iris/exercise-creation-session.service';
 
 @Component({
     selector: 'jhi-chatbot-widget',
@@ -104,6 +105,8 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     faThumbsDown = faThumbsDown;
     faRedo = faRedo;
 
+    @Input() paramsOnSend: () => Record<string, unknown> = () => ({});
+
     // ViewChilds
     @ViewChild('chatBody') chatBody!: ElementRef;
     @ViewChild('scrollArrow') scrollArrow!: ElementRef;
@@ -127,7 +130,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     shouldLoadGreetingMessage = true;
     fadeState = '';
     courseId: number;
-    exerciseId: number;
+    exerciseId?: number;
     sessionService: IrisSessionService;
     shouldShowEmptyMessageError = false;
     currentMessageCount: number;
@@ -161,7 +164,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     ) {
         this.stateStore = data.stateStore;
         this.courseId = data.courseId;
-        this.exerciseId = data.exerciseId;
+        this.exerciseId = Number.isNaN(data.exerciseId) ? undefined : data.exerciseId;
         this.sessionService = data.sessionService;
         this.navigationSubscription = this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
@@ -169,6 +172,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             }
         });
         this.fullSize = data.fullSize ?? false;
+        this.paramsOnSend = data.paramsOnSend;
     }
 
     ngOnInit() {
@@ -322,6 +326,9 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
         if (this.isChatSession()) {
             return this.translateService.instant('artemisApp.exerciseChatbot.tutorFirstMessage');
         }
+        if (this.isExerciseCreationSession()) {
+            return this.translateService.instant('artemisApp.exerciseChatbot.exerciseCreationFirstMessage');
+        }
         this.importExerciseUrl = `/course-management/${this.courseId}/programming-exercises/import/${this.exerciseId}`;
         return this.translateService
             .instant('artemisApp.exerciseChatbot.codeEditorFirstMessage')
@@ -352,6 +359,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
      * Handles the send button click event and sends the user's message.
      */
     onSend(): void {
+        console.log(this.paramsOnSend());
         if (this.error?.fatal) {
             return;
         }
@@ -360,15 +368,18 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             return;
         }
         if (this.newMessageTextContent) {
+            console.log('Sending message: ' + this.newMessageTextContent);
             const message = this.newUserMessage(this.newMessageTextContent);
             const timeoutId = setTimeout(() => {
                 // will be cleared by the store automatically
                 this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.IRIS_SERVER_RESPONSE_TIMEOUT));
                 this.scrollToBottom('smooth');
             }, 20000);
+            const params = this.paramsOnSend();
+            console.log('Sending params: ' + JSON.stringify(params));
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-                .then(() => this.sessionService.sendMessage(this.sessionId, message))
+                .then(() => this.sessionService.sendMessage(this.sessionId, message, params))
                 .then(() => this.scrollToBottom('smooth'))
                 .catch((error) => this.handleIrisError(error));
             this.newMessageTextContent = '';
@@ -390,9 +401,9 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
             .then(() => {
                 if (message.id) {
-                    return this.sessionService.resendMessage(this.sessionId, message);
+                    return this.sessionService.resendMessage(this.sessionId, message, this.paramsOnSend());
                 } else {
-                    return this.sessionService.sendMessage(this.sessionId, message);
+                    return this.sessionService.sendMessage(this.sessionId, message, this.paramsOnSend());
                 }
             })
             .then(() => {
@@ -495,7 +506,11 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
         this.modalService.open(content).result.then((result: string) => {
             if (result === 'confirm') {
                 this.isLoading = false;
-                this.createNewSession();
+                if (this.sessionService instanceof IrisExerciseCreationSessionService) {
+                    this.createNewCourseSession();
+                } else {
+                    this.createNewSession();
+                }
             }
         });
     }
@@ -893,11 +908,20 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     }
 
     createNewSession() {
-        this.sessionService.createNewSession(this.exerciseId);
+        console.log('ExerciseId: ' + this.exerciseId + ' CourseId: ' + this.courseId);
+        this.sessionService.createNewSession(this.exerciseId ?? this.courseId);
+    }
+
+    createNewCourseSession() {
+        this.sessionService.createNewSession(this.courseId);
     }
 
     isChatSession() {
         return this.sessionService instanceof IrisChatSessionService;
+    }
+
+    isExerciseCreationSession() {
+        return this.sessionService instanceof IrisExerciseCreationSessionService;
     }
 
     protected readonly IrisSender = IrisSender;

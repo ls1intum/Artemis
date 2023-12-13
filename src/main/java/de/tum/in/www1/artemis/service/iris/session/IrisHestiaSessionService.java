@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
@@ -71,7 +73,7 @@ public class IrisHestiaSessionService implements IrisSessionSubServiceInterface 
     }
 
     @Override
-    public void requestAndHandleResponse(IrisSession irisSession) {
+    public void requestAndHandleResponse(IrisSession irisSession, JsonNode clientParams) {
         throw new UnsupportedOperationException("Requesting and handling responses is not supported for Iris Hestia sessions");
     }
 

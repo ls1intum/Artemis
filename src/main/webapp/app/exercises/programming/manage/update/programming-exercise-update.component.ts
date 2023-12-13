@@ -1,5 +1,5 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable, Subject } from 'rxjs';
@@ -31,13 +31,20 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
 import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
+import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-chatbot-button.component';
+import { ExerciseUpdate, IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
+import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
     styleUrls: ['../programming-exercise-form.scss'],
+    providers: [IrisCodeEditorSessionService],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
+    @ViewChild(IrisExerciseCreationChatbotButtonComponent, { static: false }) chatbotButton: IrisExerciseCreationChatbotButtonComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
@@ -136,6 +143,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     public modePickerOptions: ModePickerOption<ProjectType>[] = [];
 
+    irisSettings?: IrisSettings;
+
     // Icons
     faSave = faSave;
     faBan = faBan;
@@ -157,7 +166,42 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
-    ) {}
+        private irisSettingsService: IrisSettingsService,
+        irisExerciseCreationWebsocketService: IrisExerciseCreationWebsocketService,
+    ) {
+        irisExerciseCreationWebsocketService.onExerciseUpdate().subscribe((exerciseUpdate: ExerciseUpdate) => {
+            this.handleProblemStatementUpdate(exerciseUpdate);
+        });
+    }
+
+    private handleProblemStatementUpdate(exerciseUpdate: ExerciseUpdate) {
+        if (exerciseUpdate.problemStatement) {
+            this.programmingExercise.problemStatement = exerciseUpdate.problemStatement;
+        }
+        if (exerciseUpdate.metadata) {
+            this.programmingExercise.title = exerciseUpdate.metadata.title;
+            this.programmingExercise.shortName = exerciseUpdate.metadata.shortName;
+        }
+    }
+
+    isIrisEnabled() {
+        return this.irisSettings?.irisCodeEditorSettings?.enabled;
+    }
+
+    getFormDataAndProblemStatement = (): Record<string, unknown> => {
+        const getValue = function (fieldName: string) {
+            const value = (<HTMLInputElement>document.getElementById(fieldName))?.value || null;
+            console.log('Value of ' + fieldName + ': ' + value);
+            return value;
+        };
+        return {
+            problemStatement: this.programmingExercise.problemStatement,
+            metadata: {
+                title: getValue('field_title'),
+                shortName: getValue('field_shortName'),
+            },
+        };
+    };
 
     /**
      * Activate or deactivate the wizard mode for easier exercise creation.
@@ -466,6 +510,11 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProductionEnvironment = profileInfo.inProduction;
+            }
+            if (profileInfo?.activeProfiles?.includes('iris')) {
+                this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                    this.irisSettings = settings;
+                });
             }
         });
 

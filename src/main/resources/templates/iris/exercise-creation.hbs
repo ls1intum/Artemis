@@ -1,0 +1,158 @@
+{{#block hidden=True}}
+    {{#system~}}
+        You are drafting the problem statement of a programming exercise.
+        The exercise has the following information:
+        {{metadata}}
+        The current problem statement for the exercise is:
+        {{problemStatement}}
+    {{~/system}}
+    {{#each (truncate chatHistory 5)}}
+        {{#if (equal this.sender "user")}}
+            {{#user~}}
+                {{#each this.content}}{{this.contentAsString}}{{/each}}
+            {{~/user}}
+        {{else}}
+            {{#assistant~}}
+                {{#each this.content}}{{this.contentAsString}}{{/each}}
+            {{~/assistant}}
+        {{/if}}
+    {{/each}}
+    {{#system~}}
+        Do you want to update the problem statement? Respond with Yes or No.
+    {{~/system}}
+    {{#assistant~}}
+        {{gen 'updateProblemStatement' temperature=0.5 max_tokens=2}}
+    {{~/assistant}}
+    {{#system~}}
+        Do you want to update the exercise metadata? Respond with Yes or No.
+    {{~/system}}
+    {{#assistant~}}
+        {{gen 'updateMetadata' temperature=0.5 max_tokens=2}}
+    {{~/assistant}}
+    {{#if (equal updateProblemStatement 'Yes')}}
+        {{set 'updateProblemStatement' True}}
+    {{else}}
+        {{set 'updateProblemStatement' False}}
+    {{/if}}
+    {{#if (equal updateMetadata 'Yes')}}
+        {{set 'updateMetadata' True}}
+    {{else}}
+        {{set 'updateMetadata' False}}
+    {{/if}}
+{{/block}}
+
+{{#if updateProblemStatement}}
+    {{#block hidden=True}}
+        {{#system~}}
+            You are drafting the problem statement of a programming exercise.
+            The exercise has the following information:
+            {{metadata}}
+            The problem statement of an exercise provides the students with an overview of the exercise.
+            It typically starts with an engaging thematic story hook to introduce the technical content of the exercise.
+            Then it gives a detailed description of the system to be implemented, which trains the students on a specific programming skill.
+            The expected behavior of the program is illustrated with sample input values and their corresponding output values.
+            It is also possible to include a UML class diagram in PlantUML syntax illustrating the system to be implemented and the relationships between its components.
+            Do not surround the UML diagram with ```.
+            The current problem statement for the exercise is:
+            {{problemStatement}}
+        {{~/system}}
+        {{#each (truncate chatHistory 5)}}
+            {{#if (equal this.sender "user")}}
+                {{#user~}}
+                    {{#each this.content}}{{this.contentAsString}}{{/each}}
+                {{~/user}}
+            {{else}}
+                {{#assistant~}}
+                    {{#each this.content}}{{this.contentAsString}}{{/each}}
+                {{~/assistant}}
+            {{/if}}
+        {{/each}}
+        {{#system~}}
+            Rewrite the problem statement.
+        {{~/system}}
+        {{#assistant~}}
+            {{gen 'updatedProblemStatement' temperature=0.5 max_tokens=2000}}
+        {{~/assistant}}
+    {{/block}}
+{{else}}
+    {{set 'updatedProblemStatement' problemStatement}}
+{{/if}}
+
+{{#if updateMetadata}}
+    {{#block hidden=True}}
+        {{#system~}}
+            Here is the problem statement of a programming exercise.
+            {{updatedProblemStatement}}
+            You are updating meta-information about this exercise.
+            The metadata must be a JSON object matching this JSON schema:
+            {
+                title: "the exercise title",
+                shortName: "a short lowercase database-friendly title",
+            };
+            Here is the current metadata:
+            {{metadata}}
+        {{~/system}}
+        {{#each (truncate chatHistory 5)}}
+            {{#if (equal this.sender "user")}}
+                {{#user~}}
+                    {{#each this.content}}{{this.contentAsString}}{{/each}}
+                {{~/user}}
+            {{else}}
+                {{#assistant~}}
+                    {{#each this.content}}{{this.contentAsString}}{{/each}}
+                {{~/assistant}}
+            {{/if}}
+        {{/each}}
+        {{#system~}}
+            Rewrite the metadata to be consistent with the problem statement and the user requirements.
+        {{~/system}}
+        {{#assistant~}}
+            {{gen 'updatedMetadata' temperature=0.2 max_tokens=300}}
+        {{~/assistant}}
+    {{/block}}
+{{else}}
+    {{set 'updatedMetadata' metadata}}
+{{/if}}
+
+{{#block hidden=True}}
+    {{#system~}}
+        You are a helpful assistant in creating a programming exercise.
+        {{#if updateProblemStatement}}
+            You have updated the problem statement.
+            It used to be:
+            {{problemStatement}}
+            It is now:
+            {{updatedProblemStatement}}
+        {{else}}
+            The problem statement of the exercise is:
+            {{problemStatement}}
+        {{/if}}
+        {{#if updateMetadata}}
+            You have updated the metadata.
+            It used to be:
+            {{metadata}}
+            It is now:
+            {{updatedMetadata}}
+        {{else}}
+            The metadata of the exercise is:
+            {{metadata}}
+        {{/if}}
+    {{~/system}}
+    {{#each (truncate chatHistory 5)}}
+        {{#if (equal this.sender "user")}}
+            {{#user~}}
+                {{#each this.content}}{{this.contentAsString}}{{/each}}
+            {{~/user}}
+        {{else}}
+            {{#assistant~}}
+                {{#each this.content}}{{this.contentAsString}}{{/each}}
+            {{~/assistant}}
+        {{/if}}
+    {{/each}}
+    {{#system~}}
+        Say something to the user.
+    {{~/system}}
+    {{#assistant~}}
+        {{gen 'response' temperature=0.7 max_tokens=300}}
+    {{~/assistant}}
+{{/block}}

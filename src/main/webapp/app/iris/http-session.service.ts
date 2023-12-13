@@ -11,28 +11,21 @@ type EntityResponseType = HttpResponse<IrisSession>;
  */
 @Injectable({ providedIn: 'root' })
 export abstract class IrisHttpSessionService {
-    protected apiPrefix = 'api/iris';
+    protected readonly apiPrefix = 'api/iris';
 
-    protected constructor(
-        protected http: HttpClient,
-        protected sessionType: string,
-    ) {}
+    protected constructor(protected http: HttpClient) {}
 
     /**
-     * gets the current session by the exerciseId
-     * @param {number} exerciseId of the exercise
+     * gets the current session by the id of the owning entity (course or exercise)
+     * @param {number} id of the entity (course or exercise)
      * @return {Observable<EntityResponseType>} an Observable of the HTTP response
      */
-    getCurrentSession(exerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<IrisSession>(`${this.apiPrefix}/programming-exercises/${exerciseId}/${this.sessionType}/current`, { observe: 'response' });
-    }
+    abstract getCurrentSession(id: number): Observable<EntityResponseType>;
 
     /**
-     * creates a session for a programming exercise
-     * @param {number} exerciseId of the session in which the message should be created
+     * creates a session for a course or exercise
+     * @param {number} id of the entity (course or exercise) in which the message should be created
      * @return {Observable<EntityResponseType>} an Observable of the HTTP responses
      */
-    createSession(exerciseId: number): Observable<IrisSession> {
-        return this.http.post<never>(`${this.apiPrefix}/programming-exercises/${exerciseId}/${this.sessionType}`, {});
-    }
+    abstract createSession(id: number): Observable<IrisSession>;
 }
