@@ -39,7 +39,8 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
         this.isAnswerOfAnnouncement = getAsChannelDto(this.posting.post?.conversation)?.isAnnouncementChannel ?? false;
         const isCourseWideChannel = getAsChannelDto(this.posting.post?.conversation)?.isCourseWide ?? false;
         const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
-        const mayEditOrDeleteOtherUsersAnswer = (isCourseWideChannel && isAtLeastInstructorInCourse) || this.hasChannelModerationRights;
+        const mayEditOrDeleteOtherUsersAnswer =
+            (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDto(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
         this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
     }
 

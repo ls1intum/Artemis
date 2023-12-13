@@ -41,7 +41,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     private messagesContainerHeight = 700;
     currentSortDirection = SortDirection.DESCENDING;
 
-    channel: Channel;
+    channel: ChannelDTO;
     isNotAChannelMember: boolean;
     noChannelAvailable: boolean;
     collapsed = false;
@@ -129,7 +129,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     setChannel(courseId: number): void {
         const getChannel = () => {
             return {
-                next: (channel: Channel) => {
+                next: (channel: ChannelDTO) => {
                     this.channel = channel ?? undefined;
                     this.resetFormGroup();
                     this.setFilterAndSort();
@@ -140,10 +140,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                         return;
                     }
 
-                    const channelDTO = new ChannelDTO();
-                    channelDTO.isCourseWide = true;
-                    channelDTO.id = this.channel.id;
-                    this.metisService.getFilteredPosts(this.currentPostContextFilter, true, channelDTO);
+                    this.metisService.getFilteredPosts(this.currentPostContextFilter, true, this.channel);
 
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -162,12 +159,12 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         if (this.lecture?.id) {
             this.channelService
                 .getChannelOfLecture(courseId, this.lecture.id)
-                .pipe(map((res: HttpResponse<Channel>) => res.body))
+                .pipe(map((res: HttpResponse<ChannelDTO>) => res.body))
                 .subscribe(getChannel());
         } else if (this.exercise?.id) {
             this.channelService
                 .getChannelOfExercise(courseId, this.exercise.id)
-                .pipe(map((res: HttpResponse<Channel>) => res.body))
+                .pipe(map((res: HttpResponse<ChannelDTO>) => res.body))
                 .subscribe(getChannel());
         }
     }
@@ -178,7 +175,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      */
     createEmptyPost(): void {
         if (this.channel) {
-            const conversation = this.channel;
+            const conversation = this.channel as Channel;
             this.shouldSendMessage = false;
             this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, undefined, conversation);
         } else {

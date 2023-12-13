@@ -28,13 +28,8 @@ import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.CreatedConversationMessage;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
-import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
-import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
-import de.tum.in.www1.artemis.domain.notification.NotificationConstants;
-import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
-import de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory;
+import de.tum.in.www1.artemis.domain.metis.conversation.*;
+import de.tum.in.www1.artemis.domain.notification.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
@@ -403,12 +398,18 @@ public class ConversationMessagingService extends PostingService {
     public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = preCheckUserAndCourseForMessaging(user, courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         Post message = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         message.setDisplayPriority(displayPriority);
 
-        conversationService.isMemberOrCreateForCourseWideElseThrow(message.getConversation().getId(), user, Optional.empty());
+        Conversation conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(message.getConversation().getId(), user, Optional.empty())
+                .orElse(message.getConversation());
+
+        if (conversation instanceof Channel && !channelAuthorizationService.hasChannelModerationRights(conversation.getId(), user)
+                || conversation instanceof GroupChat && !user.getId().equals(conversation.getCreator().getId())) {
+            throw new AccessForbiddenException("You are not allowed to change the display priority of messages in this conversation");
+        }
 
         Post updatedMessage = conversationMessageRepository.save(message);
         message.getConversation().hideDetails();

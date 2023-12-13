@@ -35,7 +35,8 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
         this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
         const isCourseWideChannel = getAsChannelDto(this.posting.conversation)?.isCourseWide ?? false;
         const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
-        const mayEditOrDeleteOtherUsersAnswer = (isCourseWideChannel && isAtLeastInstructorInCourse) || this.hasChannelModerationRights;
+        const mayEditOrDeleteOtherUsersAnswer =
+            (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDto(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
         this.mayEditOrDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
     }
 

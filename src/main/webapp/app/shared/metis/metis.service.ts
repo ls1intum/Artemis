@@ -85,6 +85,10 @@ export class MetisService implements OnDestroy {
         return this.totalNumberOfPosts$.asObservable();
     }
 
+    getCurrentConversation(): ConversationDto | undefined {
+        return this.currentConversation;
+    }
+
     static getLinkForLecturePost(courseId: number, lectureId: number): RouteComponents {
         return ['/courses', courseId, 'lectures', lectureId];
     }

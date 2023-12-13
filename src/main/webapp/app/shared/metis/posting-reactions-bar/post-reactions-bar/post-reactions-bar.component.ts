@@ -7,6 +7,11 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
+import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
@@ -17,6 +22,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     pinTooltip: string;
     archiveTooltip: string;
     displayPriority: DisplayPriority;
+    canPin = false;
     readonly DisplayPriority = DisplayPriority;
 
     // Icons
@@ -33,7 +39,10 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     @Output() openThread = new EventEmitter<void>();
 
-    constructor(metisService: MetisService) {
+    constructor(
+        metisService: MetisService,
+        private accountService: AccountService,
+    ) {
         super(metisService);
     }
 
@@ -43,6 +52,29 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     ngOnInit() {
         super.ngOnInit();
         this.resetTooltipsAndPriority();
+
+        const currentConversation = this.metisService.getCurrentConversation();
+        this.setCanPin(currentConversation);
+    }
+
+    /**
+     * Checks whether the user can pin the message in the conversation
+     *
+     * @param currentConversation the conversation the post belongs to
+     */
+    private setCanPin(currentConversation: ConversationDto | undefined) {
+        if (!currentConversation) {
+            this.canPin = false;
+            return;
+        }
+
+        if (isChannelDto(currentConversation)) {
+            this.canPin = currentConversation.hasChannelModerationRights ?? false;
+        } else if (isGroupChatDto(currentConversation)) {
+            this.canPin = currentConversation.creator?.id === this.accountService.userIdentity?.id;
+        } else if (isOneToOneChatDto(currentConversation)) {
+            this.canPin = true;
+        }
     }
 
     /**
