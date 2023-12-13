@@ -24,30 +24,41 @@
     </div>
     <div class="row"></div>
     <br />
-    <div class="table-responsive" *ngIf="courses">
-        <div class="course-table-container mb-3" *ngFor="let semester of courseSemesters">
-            <div class="control-label my-3" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
-                <fa-icon size="2x" class="pe-3" [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp"></fa-icon>
-                <span *ngIf="semester !== '' && semester !== 'test'" style="font-size: 24px"> {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }} </span>
-                <span *ngIf="semester === ''" style="font-size: 24px">
-                    {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ 'global.generic.unset' | artemisTranslate }}
-                </span>
-                <span *ngIf="semester === 'test'" style="font-size: 24px">
-                    {{ 'artemisApp.course.testCourse.plural' | artemisTranslate }}
-                </span>
-            </div>
-            <div *ngIf="!semesterCollapsed[semester]">
-                <jhi-course-management-card
-                    *ngFor="let course of coursesBySemester[semester]"
-                    class="col-md-8"
-                    [course]="course"
-                    [courseStatistics]="statistics[course.id!]"
-                    [courseWithExercises]="coursesWithExercises[course.id!]"
-                    [courseWithUsers]="coursesWithUsers[course.id!]"
-                    [isGuidedTour]="course === courseForGuidedTour"
-                ></jhi-course-management-card>
-            </div>
-            <div class="collapsed"></div>
+    @if (courses) {
+        <div class="table-responsive">
+            @for (semester of courseSemesters; track semester) {
+                <div class="course-table-container mb-3">
+                    <div class="control-label my-3" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
+                        <fa-icon size="2x" class="pe-3" [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp"></fa-icon>
+                        @if (semester !== '' && semester !== 'test') {
+                            <span style="font-size: 24px"> {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }} </span>
+                        }
+                        @if (semester === '') {
+                            <span style="font-size: 24px"> {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ 'global.generic.unset' | artemisTranslate }} </span>
+                        }
+                        @if (semester === 'test') {
+                            <span style="font-size: 24px">
+                                {{ 'artemisApp.course.testCourse.plural' | artemisTranslate }}
+                            </span>
+                        }
+                    </div>
+                    @if (!semesterCollapsed[semester]) {
+                        <div>
+                            @for (course of coursesBySemester[semester]; track course) {
+                                <jhi-course-management-card
+                                    class="col-md-8"
+                                    [course]="course"
+                                    [courseStatistics]="statistics[course.id!]"
+                                    [courseWithExercises]="coursesWithExercises[course.id!]"
+                                    [courseWithUsers]="coursesWithUsers[course.id!]"
+                                    [isGuidedTour]="course === courseForGuidedTour"
+                                ></jhi-course-management-card>
+                            }
+                        </div>
+                    }
+                    <div class="collapsed"></div>
+                </div>
+            }
         </div>
-    </div>
+    }
 </div>
