@@ -40,6 +40,7 @@ import { ExerciseUpdate, IrisExerciseCreationWebsocketService } from 'app/iris/e
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
     styleUrls: ['../programming-exercise-form.scss'],
+    providers: [IrisCodeEditorSessionService],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     @ViewChild(IrisExerciseCreationChatbotButtonComponent, { static: false }) chatbotButton: IrisExerciseCreationChatbotButtonComponent;

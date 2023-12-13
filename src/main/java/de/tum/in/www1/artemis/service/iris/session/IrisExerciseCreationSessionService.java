@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
+import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisMessageResponseV2DTO;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.iris.IrisDefaultTemplateService;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
@@ -50,9 +51,9 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Profile("iris")
 public class IrisExerciseCreationSessionService implements IrisSessionSubServiceInterface {
 
-    private static String loadTemplate() {
+    private static String loadTemplate(String fileName) {
         try {
-            return Files.readString(Path.of("src", "main", "resources", "templates", "iris", "exercise-creation-test.hbs")).trim();
+            return Files.readString(Path.of("src", "main", "resources", "templates", "iris", fileName)).trim();
         }
         catch (IOException e) {
             throw new RuntimeException("Failed to load Iris template", e);
@@ -138,42 +139,64 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
         if (!clientParams.path("metadata").isObject()) {
             throw new BadRequestException("Exercise metadata is not an object: " + clientParams.path("metadata"));
         }
-        var template = irisDefaultTemplateService.load("exercise-creation.hbs");
+
         var settings = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false).irisCodeEditorSettings();
+        String template = loadTemplate("exercise-creation-chat.hbs");
+        String preferredModel = settings.getPreferredModel();
         String problemStatement = clientParams.path("problemStatement").asText();
         ObjectNode metadata = (ObjectNode) clientParams.path("metadata");
         var params = new IrisExerciseCreationRequestDTO(problemStatement, metadata, session.getMessages());
-        irisConnectorService.sendRequestV2(loadTemplate(), settings.getPreferredModel(), params).handleAsync((response, throwable) -> {
-            if (throwable != null) {
-                log.error("Failed to get Iris response", throwable);
-                irisExerciseCreationWebsocketService.sendException(session, throwable);
+
+        irisConnectorService.sendRequestV2(template, preferredModel, params).handleAsync((chatResponse, chatErr) -> {
+            if (!checkPyrisResponse(chatResponse, chatErr, session)) {
                 return null;
             }
-            if (response == null || response.content() == null) {
-                log.error("Iris response is null");
-                irisExerciseCreationWebsocketService.sendException(session, new IrisParseResponseException("Iris did not respond"));
+            IrisMessage chatMessage = receiveIrisMessage(chatResponse.content(), session);
+            irisExerciseCreationWebsocketService.sendMessage(chatMessage, null, null);
+
+            var adapt = chatResponse.content().path("wantsToAdapt").asBoolean();
+            if (!adapt) {
                 return null;
             }
-            log.info("Received Iris response: {}", response);
-            if (!response.content().has("response")) {
-                log.error("Iris response did not have a response message for the user");
-                irisExerciseCreationWebsocketService.sendException(session, new IrisParseResponseException("Iris did not respond"));
+            var adaptTemplate = loadTemplate("exercise-creation-adapt.hbs");
+            var adaptParams = new IrisExerciseCreationRequestDTO(problemStatement, metadata, chatMessage.getSession().getMessages());
+            return irisConnectorService.sendRequestV2(adaptTemplate, preferredModel, adaptParams).handleAsync((adaptResponse, adaptErr) -> {
+                if (!checkPyrisResponse(adaptResponse, adaptErr, session)) {
+                    return null;
+                }
+                IrisMessage adaptMessage = receiveIrisMessage(adaptResponse.content(), session);
+                String updatedProblemStatement = getProblemStatement(adaptResponse.content());
+                IrisExerciseMetadataDTO updatedMetadata = getUpdatedMetadata(adaptResponse.content(), metadata);
+                irisExerciseCreationWebsocketService.sendMessage(adaptMessage, updatedProblemStatement, updatedMetadata);
                 return null;
-            }
-            var irisMessage = getResponse(response.content());
-            var updatedProblemStatement = getProblemStatement(response.content());
-            var updatedMetadata = getUpdatedMetadata(response.content(), metadata);
-            var savedMessage = irisMessageService.saveMessage(irisMessage, session, IrisMessageSender.LLM);
-            irisExerciseCreationWebsocketService.sendMessage(savedMessage, updatedProblemStatement, updatedMetadata);
-            return null;
+            });
         });
     }
 
-    private IrisMessage getResponse(JsonNode content) {
-        var message = new IrisMessage();
-        var chatWindowResponse = content.required("response").asText();
-        message.addContent(new IrisTextMessageContent(chatWindowResponse));
-        return message;
+    private IrisMessage receiveIrisMessage(JsonNode content, IrisSession session) {
+        String adaptResponseText = content.get("response").asText();
+        IrisMessage adaptMessage = new IrisMessage().withContent(new IrisTextMessageContent(adaptResponseText));
+        return irisMessageService.saveMessage(adaptMessage, session, IrisMessageSender.LLM);
+    }
+
+    private boolean checkPyrisResponse(IrisMessageResponseV2DTO response, Throwable throwable, IrisExerciseCreationSession session) {
+        if (throwable != null) {
+            log.error("Failed to get Iris response", throwable);
+            irisExerciseCreationWebsocketService.sendException(session, throwable);
+            return false;
+        }
+        if (response == null || response.content() == null) {
+            log.error("Iris response is null");
+            irisExerciseCreationWebsocketService.sendException(session, new IrisParseResponseException("Iris did not respond"));
+            return false;
+        }
+        log.info("Received Iris response: {}", response);
+        if (!response.content().has("response")) {
+            log.error("Iris response did not have a response message for the user");
+            irisExerciseCreationWebsocketService.sendException(session, new IrisParseResponseException("Iris did not respond"));
+            return false;
+        }
+        return true;
     }
 
     private String getProblemStatement(JsonNode content) {

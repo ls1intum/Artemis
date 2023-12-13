@@ -66,6 +66,7 @@ import { DOCUMENT } from '@angular/common';
 import { IrisChatSessionService } from 'app/iris/chat-session.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.service';
+import { IrisExerciseCreationSessionService } from 'app/iris/exercise-creation-session.service';
 
 @Component({
     selector: 'jhi-chatbot-widget',
@@ -129,7 +130,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     shouldLoadGreetingMessage = true;
     fadeState = '';
     courseId: number;
-    exerciseId: number;
+    exerciseId?: number;
     sessionService: IrisSessionService;
     shouldShowEmptyMessageError = false;
     currentMessageCount: number;
@@ -163,7 +164,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     ) {
         this.stateStore = data.stateStore;
         this.courseId = data.courseId;
-        this.exerciseId = data.exerciseId;
+        this.exerciseId = Number.isNaN(data.exerciseId) ? undefined : data.exerciseId;
         this.sessionService = data.sessionService;
         this.navigationSubscription = this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
@@ -324,6 +325,9 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     getFirstMessageContent(): string {
         if (this.isChatSession()) {
             return this.translateService.instant('artemisApp.exerciseChatbot.tutorFirstMessage');
+        }
+        if (this.isExerciseCreationSession()) {
+            return this.translateService.instant('artemisApp.exerciseChatbot.exerciseCreationFirstMessage');
         }
         this.importExerciseUrl = `/course-management/${this.courseId}/programming-exercises/import/${this.exerciseId}`;
         return this.translateService
@@ -899,11 +903,16 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     }
 
     createNewSession() {
-        this.sessionService.createNewSession(this.exerciseId);
+        console.log('ExerciseId: ' + this.exerciseId + ' CourseId: ' + this.courseId);
+        this.sessionService.createNewSession(this.exerciseId ?? this.courseId);
     }
 
     isChatSession() {
         return this.sessionService instanceof IrisChatSessionService;
+    }
+
+    isExerciseCreationSession() {
+        return this.sessionService instanceof IrisExerciseCreationSessionService;
     }
 
     protected readonly IrisSender = IrisSender;
