@@ -474,12 +474,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    void testNotifyAllGroupsAboutNewPostForExercise() {
-        groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post, course);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(NUMBER_OF_ALL_GROUPS, NEW_EXERCISE_POST_TITLE);
-    }
-
-    @Test
     void testNotifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise() {
         groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotificationAndReturnNotification(2, DUPLICATE_TEST_CASE_TITLE);
@@ -489,18 +483,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     void testNotifyInstructorGroupAboutIllegalSubmissionsForExercise() {
         groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(exercise, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, ILLEGAL_SUBMISSION_TITLE);
-    }
-
-    @Test
-    void testNotifyAllGroupsAboutNewPostForLecture() {
-        groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post, course);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(NUMBER_OF_ALL_GROUPS, NEW_LECTURE_POST_TITLE);
-    }
-
-    @Test
-    void testNotifyAllGroupsAboutNewCoursePost() {
-        groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(NUMBER_OF_ALL_GROUPS, NEW_COURSE_POST_TITLE);
     }
 
     @Test

@@ -397,7 +397,8 @@ public class SingleUserNotificationService {
         mentionedUsers.stream().filter(user -> {
             boolean isChannelAndCourseWide = post.getConversation() instanceof Channel channel && channel.getIsCourseWide();
             boolean isChannelVisibleToStudents = !(post.getConversation() instanceof Channel channel) || conversationService.isChannelVisibleToStudents(channel);
-            boolean isChannelVisibleToMentionedUser = isChannelVisibleToStudents || authorizationCheckService.isAtLeastTeachingAssistantInCourse(post.getCourse(), user);
+            boolean isChannelVisibleToMentionedUser = isChannelVisibleToStudents
+                    || authorizationCheckService.isAtLeastTeachingAssistantInCourse(post.getConversation().getCourse(), user);
 
             // Only send a notification to the mentioned user if...
             // (for course-wide channels) ...the course-wide channel is visible

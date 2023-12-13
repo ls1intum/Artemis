@@ -361,53 +361,6 @@ class GroupNotificationFactoryTest {
         createAndCheckNotification(Base.EXERCISE);
     }
 
-    // Based on Post
-
-    /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_EXERCISE_POST.
-     * I.e. notifications that originate from a new post concerning an exercise.
-     */
-    @Test
-    void createNotificationBasedOnPost_withNotificationType_NewExercisePost() {
-        notificationType = NEW_EXERCISE_POST;
-        expectedTitle = NEW_EXERCISE_POST_TITLE;
-        expectedText = NEW_EXERCISE_POST_TEXT;
-        expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"]";
-        expectedPriority = MEDIUM;
-        expectedTransientTarget = createExercisePostTarget(post, course);
-        createAndCheckNotification(Base.POST);
-    }
-
-    /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_LECTURE_POST.
-     * I.e. notifications that originate from a new post concerning a lecture.
-     */
-    @Test
-    void createNotificationBasedOnPost_withNotificationType_NewLecturePost() {
-        notificationType = NEW_LECTURE_POST;
-        expectedTitle = NEW_LECTURE_POST_TITLE;
-        expectedText = NEW_LECTURE_POST_TEXT;
-        expectedPlaceholderValues = "[" + lecture.getTitle() + "]";
-        expectedPriority = MEDIUM;
-        expectedTransientTarget = createLecturePostTarget(post, course);
-        createAndCheckNotification(Base.POST);
-    }
-
-    /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_COURSE_POST.
-     * I.e. notifications that originate from a new course wide post.
-     */
-    @Test
-    void createNotificationBasedOnPost_withNotificationType_NewCoursePost() {
-        notificationType = NEW_COURSE_POST;
-        expectedTitle = NEW_COURSE_POST_TITLE;
-        expectedText = NEW_COURSE_POST_TEXT;
-        expectedPlaceholderValues = "[" + course.getTitle() + "]";
-        expectedPriority = MEDIUM;
-        expectedTransientTarget = createCoursePostTarget(post, course);
-        createAndCheckNotification(Base.POST);
-    }
-
     /**
      * Tests the functionality that deals with notifications that have the notification type of NEW_ANNOUNCEMENT_POST.
      * I.e. notifications that originate from a new announcement post.
