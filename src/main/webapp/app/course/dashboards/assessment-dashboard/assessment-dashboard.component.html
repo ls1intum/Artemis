@@ -2,248 +2,294 @@
     <div class="row align-items-center justify-content-end">
         <div class="col-12 col-lg-7 general-info">
             <div class="d-flex align-items-center">
-                <h2 *ngIf="!isExamMode">{{ 'artemisApp.assessmentDashboard.pageHeader' | artemisTranslate }} {{ course?.title }}</h2>
-                <h2 *ngIf="isExamMode">
-                    {{
-                        !isTestRun
-                            ? ('artemisApp.assessmentDashboard.pageHeaderExam' | artemisTranslate)
-                            : ('artemisApp.assessmentDashboard.pageHeaderExamTestRun' | artemisTranslate)
-                    }}
-                    {{ exam?.title }}
-                </h2>
+                @if (!isExamMode) {
+                    <h2>{{ 'artemisApp.assessmentDashboard.pageHeader' | artemisTranslate }} {{ course?.title }}</h2>
+                }
+                @if (isExamMode) {
+                    <h2>
+                        {{
+                            !isTestRun
+                                ? ('artemisApp.assessmentDashboard.pageHeaderExam' | artemisTranslate)
+                                : ('artemisApp.assessmentDashboard.pageHeaderExamTestRun' | artemisTranslate)
+                        }}
+                        {{ exam?.title }}
+                    </h2>
+                }
                 <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
             </div>
         </div>
         <div class="col-12 col-lg-5">
-            <div *ngIf="!isExamMode" class="d-flex justify-content-lg-end">
-                <a *ngIf="course && course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md">
-                    <fa-icon [icon]="faTable"></fa-icon>
-                    <span jhiTranslate="entity.action.scores">Scores</span>
-                </a>
-                <a *ngIf="course && course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-info btn-md ms-1 me-1">
-                    <fa-icon [icon]="faClipboard"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
-                </a>
-                <a *ngIf="course && course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-info btn-md">
-                    <fa-icon [icon]="faHeartBroken"></fa-icon>
-                    <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
-                </a>
+            @if (!isExamMode) {
+                <div class="d-flex justify-content-lg-end">
+                    @if (course && course.isAtLeastInstructor) {
+                        <a [routerLink]="['/course-management', course.id, 'scores']" class="tab-item btn btn-info btn-md">
+                            <fa-icon [icon]="faTable"></fa-icon>
+                            <span jhiTranslate="entity.action.scores">Scores</span>
+                        </a>
+                    }
+                    @if (course && course.isAtLeastInstructor) {
+                        <a [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-info btn-md ms-1 me-1">
+                            <fa-icon [icon]="faClipboard"></fa-icon> <span jhitranslate="artemisApp.course.gradingSystem">Grading Key</span>
+                        </a>
+                    }
+                    @if (course && course.isAtLeastInstructor) {
+                        <a [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-info btn-md">
+                            <fa-icon [icon]="faHeartBroken"></fa-icon>
+                            <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+    @if (isExamMode && !isTestRun) {
+        <div class="row justify-content-between">
+            <div class="col-md-8">
+                <h4>
+                    <span class="me-2">{{ 'artemisApp.exam.endDate' | artemisTranslate }}: {{ exam?.endDate | artemisDate }}</span>
+                </h4>
+                <h4>
+                    <span class="me-2">{{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}: {{ exam?.publishResultsDate | artemisDate }}</span>
+                </h4>
+            </div>
+            @if (course?.isAtLeastInstructor) {
+                <jhi-exam-assessment-buttons class="assessment-button-row"></jhi-exam-assessment-buttons>
+            }
+        </div>
+    }
+</div>
+@if (isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1) {
+    <div style="margin-top: 1em" class="alert alert-warning" jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint">
+        Hint: The second correction is not applicable to test runs.
+    </div>
+}
+@if (course) {
+    <div>
+        <div id="assessment-statistics" class="guided-tour-assessment-stats">
+            <div class="container-fluid">
+                <jhi-assessment-dashboard-information
+                    [isExamMode]="isExamMode"
+                    [feedbackRequestEnabled]="course.requestMoreFeedbackEnabled!"
+                    [complaintsEnabled]="course.complaintsEnabled!"
+                    [numberOfTutorAssessments]="numberOfTutorAssessments"
+                    [course]="course"
+                    [tutorId]="tutor.id!"
+                    [examId]="examId"
+                    [totalNumberOfAssessments]="totalNumberOfAssessments"
+                    [numberOfSubmissions]="numberOfSubmissions"
+                    [numberOfCorrectionRounds]="numberOfCorrectionRounds"
+                    [totalAssessmentPercentage]="totalAssessmentPercentage"
+                    [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
+                    [complaints]="complaints"
+                    [moreFeedbackRequests]="moreFeedbackRequests"
+                    [assessmentLocks]="assessmentLocks"
+                    [ratings]="ratings"
+                >
+                </jhi-assessment-dashboard-information>
             </div>
         </div>
-    </div>
-    <div *ngIf="isExamMode && !isTestRun" class="row justify-content-between">
-        <div class="col-md-8">
-            <h4>
-                <span class="me-2">{{ 'artemisApp.exam.endDate' | artemisTranslate }}: {{ exam?.endDate | artemisDate }}</span>
-            </h4>
-            <h4>
-                <span class="me-2">{{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}: {{ exam?.publishResultsDate | artemisDate }}</span>
-            </h4>
-        </div>
-        <jhi-exam-assessment-buttons *ngIf="course?.isAtLeastInstructor" class="assessment-button-row"></jhi-exam-assessment-buttons>
-    </div>
-</div>
-
-<div
-    *ngIf="isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1"
-    style="margin-top: 1em"
-    class="alert alert-warning"
-    jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint"
->
-    Hint: The second correction is not applicable to test runs.
-</div>
-
-<div *ngIf="course">
-    <div id="assessment-statistics" class="guided-tour-assessment-stats">
-        <div class="container-fluid">
-            <jhi-assessment-dashboard-information
-                [isExamMode]="isExamMode"
-                [feedbackRequestEnabled]="course.requestMoreFeedbackEnabled!"
-                [complaintsEnabled]="course.complaintsEnabled!"
-                [numberOfTutorAssessments]="numberOfTutorAssessments"
-                [course]="course"
-                [tutorId]="tutor.id!"
-                [examId]="examId"
-                [totalNumberOfAssessments]="totalNumberOfAssessments"
-                [numberOfSubmissions]="numberOfSubmissions"
-                [numberOfCorrectionRounds]="numberOfCorrectionRounds"
-                [totalAssessmentPercentage]="totalAssessmentPercentage"
-                [numberOfAssessmentsOfCorrectionRounds]="numberOfAssessmentsOfCorrectionRounds"
-                [complaints]="complaints"
-                [moreFeedbackRequests]="moreFeedbackRequests"
-                [assessmentLocks]="assessmentLocks"
-                [ratings]="ratings"
-            >
-            </jhi-assessment-dashboard-information>
-        </div>
-    </div>
-    <div class="container-fluid mt-4">
-        <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
-        <div *ngIf="!isTestRun" class="guided-tour-form-check col-6 align-baseline">
-            <div class="form-check form-check-inline">
-                <input
-                    class="form-check-input"
-                    type="checkbox"
-                    name="hideFinishedExercise"
-                    id="field_hideFinishedExercise"
-                    [ngModel]="hideFinishedExercises"
-                    (ngModelChange)="triggerFinishedExercises()"
-                />
-                <label class="form-check-label" for="field_hideFinishedExercise">
-                    {{ 'artemisApp.assessmentDashboard.hideFinishedExercises' | artemisTranslate }}
-                </label>
+        <div class="container-fluid mt-4">
+            <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
+            @if (!isTestRun) {
+                <div class="guided-tour-form-check col-6 align-baseline">
+                    <div class="form-check form-check-inline">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="hideFinishedExercise"
+                            id="field_hideFinishedExercise"
+                            [ngModel]="hideFinishedExercises"
+                            (ngModelChange)="triggerFinishedExercises()"
+                        />
+                        <label class="form-check-label" for="field_hideFinishedExercise">
+                            {{ 'artemisApp.assessmentDashboard.hideFinishedExercises' | artemisTranslate }}
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="hideOptional"
+                            id="field_hideOptional"
+                            [ngModel]="hideOptional"
+                            (ngModelChange)="triggerOptionalExercises()"
+                        />
+                        <label class="form-check-label" for="field_hideOptional">
+                            {{ 'artemisApp.assessmentDashboard.hideOptional' | artemisTranslate }}
+                        </label>
+                    </div>
+                </div>
+            }
+            <div class="row table-responsive">
+                <table class="table exercise-table guided-tour-exercise-table">
+                    <thead>
+                        <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" (sortChange)="sortRows()">
+                            <th jhiSortBy="type">
+                                <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseType' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="title">
+                                <a class="th-link">{{ 'artemisApp.assessmentDashboard.exercise' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            @if (!isTestRun) {
+                                <th>{{ 'artemisApp.assessmentDashboard.yourStatus' | artemisTranslate }}</th>
+                            }
+                            <th jhiSortBy="averageRating">
+                                <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseAverageRating' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            @if (!isExamMode) {
+                                <th jhiSortBy="dueDate">
+                                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseDueDate' | artemisTranslate }}</a>
+                                    <fa-icon [icon]="faSort"></fa-icon>
+                                </th>
+                            }
+                            @if (!isExamMode) {
+                                <th jhiSortBy="assessmentDueDate">
+                                    <a class="th-link">{{ 'artemisApp.assessmentDashboard.assessmentsDueDate' | artemisTranslate }}</a>
+                                    <fa-icon [icon]="faSort"></fa-icon>
+                                </th>
+                            }
+                            <th>{{ 'artemisApp.assessmentDashboard.actions' | artemisTranslate }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (exercise of currentlyShownExercises; track exercise) {
+                            <tr>
+                                <td>
+                                    <fa-icon [icon]="getIcon(exercise.type)" placement="right auto" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate"></fa-icon>
+                                </td>
+                                <td>
+                                    <span>{{ exercise.title }}</span>
+                                    <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
+                                    <span class="badge bg-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
+                                </td>
+                                @if (!isTestRun && exercise.tutorParticipations && exercise.tutorParticipations![0]) {
+                                    <td>
+                                        <jhi-tutor-participation-graph
+                                            [exercise]="exercise"
+                                            [class.guided-tour]="exercise === exerciseForGuidedTour"
+                                            [tutorParticipation]="exercise.tutorParticipations![0]"
+                                            [numberOfSubmissions]="exercise.numberOfSubmissions"
+                                            [totalNumberOfAssessments]="exercise.totalNumberOfAssessments"
+                                            [numberOfComplaints]="exercise.numberOfComplaints || 0"
+                                            [numberOfOpenComplaints]="exercise.numberOfOpenComplaints || 0"
+                                            [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests || 0"
+                                            [numberOfOpenMoreFeedbackRequests]="exercise.numberOfOpenMoreFeedbackRequests || 0"
+                                            [numberOfAssessmentsOfCorrectionRounds]="exercise.numberOfAssessmentsOfCorrectionRounds"
+                                        >
+                                        </jhi-tutor-participation-graph>
+                                    </td>
+                                }
+                                <td>
+                                    @if (exercise.averageRating !== undefined) {
+                                        <span> {{ exercise.averageRating.toFixed(1) }} ⭐️ ({{ exercise.numberOfRatings }}) </span>
+                                    }
+                                    @if (exercise.averageRating === undefined) {
+                                        <span> n.a. </span>
+                                    }
+                                </td>
+                                @if (!isExamMode) {
+                                    <td>
+                                        <span placement="right auto" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
+                                            {{ exercise.dueDate | artemisTimeAgo }}
+                                        </span>
+                                    </td>
+                                }
+                                @if (!isExamMode) {
+                                    <td>
+                                        <span placement="right auto" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
+                                            {{ exercise.assessmentDueDate | artemisTimeAgo }}
+                                        </span>
+                                    </td>
+                                }
+                                <td>
+                                    @if (!exercise.teamMode) {
+                                        <ng-container>
+                                            <a
+                                                id="open-exercise-dashboard"
+                                                [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
+                                                class="btn btn-info btn-sm me-1 mb-1"
+                                                [class.guided-tour]="exercise === exerciseForGuidedTour"
+                                            >
+                                                <span class="d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                                            </a>
+                                        </ng-container>
+                                    } @else {
+                                        <a
+                                            [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']"
+                                            [queryParams]="{ filter: TeamFilterProp.OWN }"
+                                            class="btn btn-info btn-sm me-1 mb-1"
+                                            [class.guided-tour]="exercise === exerciseForGuidedTour"
+                                        >
+                                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams">Exercise Teams</span>
+                                        </a>
+                                    }
+                                    @if (
+                                        course?.isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1
+                                    ) {
+                                        <ng-container class="col-lg-3 col-md-6 col-sm-6">
+                                            <jhi-second-correction-enable-button
+                                                class="me-1 mb-1"
+                                                (ngModelChange)="toggleSecondCorrection(exercise.id!)"
+                                                [secondCorrectionEnabled]="exercise.secondCorrectionEnabled"
+                                                [togglingSecondCorrectionButton]="isTogglingSecondCorrection.get(exercise.id!)!"
+                                            ></jhi-second-correction-enable-button>
+                                        </ng-container>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" name="hideOptional" id="field_hideOptional" [ngModel]="hideOptional" (ngModelChange)="triggerOptionalExercises()" />
-                <label class="form-check-label" for="field_hideOptional">
-                    {{ 'artemisApp.assessmentDashboard.hideOptional' | artemisTranslate }}
-                </label>
+        </div>
+        @if (course && course.isAtLeastInstructor && tutorIssues.length > 0) {
+            <div class="container-fluid mt-4">
+                <h4>{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.title' | artemisTranslate }}</h4>
+                @for (issue of tutorIssues; track issue) {
+                    <ul>
+                        @if (issue.averageTutorValue < issue.allowedRange.lowerBound) {
+                            <li>
+                                {{
+                                    issue.translationKey + '.below'
+                                        | artemisTranslate
+                                            : {
+                                                  tutorName: issue.tutorName,
+                                                  numberOfTutorItems: issue.numberOfTutorItems,
+                                                  averageTutorValue: issue.averageTutorValue.toFixed(1),
+                                                  threshold: issue.allowedRange.lowerBound.toFixed(1)
+                                              }
+                                }}
+                            </li>
+                        }
+                        @if (issue.averageTutorValue > issue.allowedRange.upperBound) {
+                            <li>
+                                {{
+                                    issue.translationKey + '.above'
+                                        | artemisTranslate
+                                            : {
+                                                  tutorName: issue.tutorName,
+                                                  numberOfTutorItems: issue.numberOfTutorItems,
+                                                  averageTutorValue: issue.averageTutorValue.toFixed(1),
+                                                  threshold: issue.allowedRange.upperBound.toFixed(1)
+                                              }
+                                }}
+                            </li>
+                        }
+                    </ul>
+                }
             </div>
-        </div>
-        <div class="row table-responsive">
-            <table class="table exercise-table guided-tour-exercise-table">
-                <thead>
-                    <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" (sortChange)="sortRows()">
-                        <th jhiSortBy="type">
-                            <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseType' | artemisTranslate }}</a>
-                            <fa-icon [icon]="faSort"></fa-icon>
-                        </th>
-                        <th jhiSortBy="title">
-                            <a class="th-link">{{ 'artemisApp.assessmentDashboard.exercise' | artemisTranslate }}</a>
-                            <fa-icon [icon]="faSort"></fa-icon>
-                        </th>
-                        <th *ngIf="!isTestRun">{{ 'artemisApp.assessmentDashboard.yourStatus' | artemisTranslate }}</th>
-                        <th jhiSortBy="averageRating">
-                            <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseAverageRating' | artemisTranslate }}</a>
-                            <fa-icon [icon]="faSort"></fa-icon>
-                        </th>
-                        <th jhiSortBy="dueDate" *ngIf="!isExamMode">
-                            <a class="th-link">{{ 'artemisApp.assessmentDashboard.exerciseDueDate' | artemisTranslate }}</a>
-                            <fa-icon [icon]="faSort"></fa-icon>
-                        </th>
-                        <th jhiSortBy="assessmentDueDate" *ngIf="!isExamMode">
-                            <a class="th-link">{{ 'artemisApp.assessmentDashboard.assessmentsDueDate' | artemisTranslate }}</a>
-                            <fa-icon [icon]="faSort"></fa-icon>
-                        </th>
-                        <th>{{ 'artemisApp.assessmentDashboard.actions' | artemisTranslate }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let exercise of currentlyShownExercises">
-                        <td>
-                            <fa-icon [icon]="getIcon(exercise.type)" placement="right auto" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate"></fa-icon>
-                        </td>
-                        <td>
-                            <span>{{ exercise.title }}</span>
-                            <jhi-not-released-tag [exercise]="exercise"></jhi-not-released-tag>
-                            <span class="badge bg-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
-                        </td>
-                        <td *ngIf="!isTestRun && exercise.tutorParticipations && exercise.tutorParticipations![0]">
-                            <jhi-tutor-participation-graph
-                                [exercise]="exercise"
-                                [class.guided-tour]="exercise === exerciseForGuidedTour"
-                                [tutorParticipation]="exercise.tutorParticipations![0]"
-                                [numberOfSubmissions]="exercise.numberOfSubmissions"
-                                [totalNumberOfAssessments]="exercise.totalNumberOfAssessments"
-                                [numberOfComplaints]="exercise.numberOfComplaints || 0"
-                                [numberOfOpenComplaints]="exercise.numberOfOpenComplaints || 0"
-                                [numberOfMoreFeedbackRequests]="exercise.numberOfMoreFeedbackRequests || 0"
-                                [numberOfOpenMoreFeedbackRequests]="exercise.numberOfOpenMoreFeedbackRequests || 0"
-                                [numberOfAssessmentsOfCorrectionRounds]="exercise.numberOfAssessmentsOfCorrectionRounds"
-                            >
-                            </jhi-tutor-participation-graph>
-                        </td>
-                        <td>
-                            <span *ngIf="exercise.averageRating !== undefined"> {{ exercise.averageRating.toFixed(1) }} ⭐️ ({{ exercise.numberOfRatings }}) </span>
-                            <span *ngIf="exercise.averageRating === undefined"> n.a. </span>
-                        </td>
-                        <td *ngIf="!isExamMode">
-                            <span placement="right auto" [hidden]="!exercise.dueDate" ngbTooltip="{{ exercise.dueDate | artemisDate }}">
-                                {{ exercise.dueDate | artemisTimeAgo }}
-                            </span>
-                        </td>
-                        <td *ngIf="!isExamMode">
-                            <span placement="right auto" [hidden]="!exercise.assessmentDueDate" ngbTooltip="{{ exercise.assessmentDueDate | artemisDate }}">
-                                {{ exercise.assessmentDueDate | artemisTimeAgo }}
-                            </span>
-                        </td>
-
-                        <td>
-                            <ng-container *ngIf="!exercise.teamMode; else teamsLink">
-                                <ng-container>
-                                    <a
-                                        id="open-exercise-dashboard"
-                                        [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
-                                        class="btn btn-info btn-sm me-1 mb-1"
-                                        [class.guided-tour]="exercise === exerciseForGuidedTour"
-                                    >
-                                        <span class="d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
-                                    </a>
-                                </ng-container>
-                            </ng-container>
-
-                            <ng-template #teamsLink>
-                                <a
-                                    [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']"
-                                    [queryParams]="{ filter: TeamFilterProp.OWN }"
-                                    class="btn btn-info btn-sm me-1 mb-1"
-                                    [class.guided-tour]="exercise === exerciseForGuidedTour"
-                                >
-                                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams">Exercise Teams</span>
-                                </a>
-                            </ng-template>
-
-                            <ng-container
-                                class="col-lg-3 col-md-6 col-sm-6"
-                                *ngIf="course?.isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1"
-                            >
-                                <jhi-second-correction-enable-button
-                                    class="me-1 mb-1"
-                                    (ngModelChange)="toggleSecondCorrection(exercise.id!)"
-                                    [secondCorrectionEnabled]="exercise.secondCorrectionEnabled"
-                                    [togglingSecondCorrectionButton]="isTogglingSecondCorrection.get(exercise.id!)!"
-                                ></jhi-second-correction-enable-button>
-                            </ng-container>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        }
+        <div class="container-fluid pt-4">
+            @if (!isExamMode) {
+                <h4>{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h4>
+            }
+            @if (isExamMode) {
+                <h4>{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.examTitle' | artemisTranslate }}</h4>
+            }
+            <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
         </div>
     </div>
-
-    <div *ngIf="course && course.isAtLeastInstructor && tutorIssues.length > 0" class="container-fluid mt-4">
-        <h4>{{ 'artemisApp.assessmentDashboard.tutorPerformanceIssues.title' | artemisTranslate }}</h4>
-        <ul *ngFor="let issue of tutorIssues">
-            <li *ngIf="issue.averageTutorValue < issue.allowedRange.lowerBound">
-                {{
-                    issue.translationKey + '.below'
-                        | artemisTranslate
-                            : {
-                                  tutorName: issue.tutorName,
-                                  numberOfTutorItems: issue.numberOfTutorItems,
-                                  averageTutorValue: issue.averageTutorValue.toFixed(1),
-                                  threshold: issue.allowedRange.lowerBound.toFixed(1)
-                              }
-                }}
-            </li>
-            <li *ngIf="issue.averageTutorValue > issue.allowedRange.upperBound">
-                {{
-                    issue.translationKey + '.above'
-                        | artemisTranslate
-                            : {
-                                  tutorName: issue.tutorName,
-                                  numberOfTutorItems: issue.numberOfTutorItems,
-                                  averageTutorValue: issue.averageTutorValue.toFixed(1),
-                                  threshold: issue.allowedRange.upperBound.toFixed(1)
-                              }
-                }}
-            </li>
-        </ul>
-    </div>
-
-    <div class="container-fluid pt-4">
-        <h4 *ngIf="!isExamMode">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.courseTitle' | artemisTranslate }}</h4>
-        <h4 *ngIf="isExamMode">{{ 'artemisApp.assessmentDashboard.tutorLeaderboard.examTitle' | artemisTranslate }}</h4>
-
-        <jhi-tutor-leaderboard [exam]="exam" [tutorsData]="stats.tutorLeaderboardEntries" [course]="course"></jhi-tutor-leaderboard>
-    </div>
-</div>
+}

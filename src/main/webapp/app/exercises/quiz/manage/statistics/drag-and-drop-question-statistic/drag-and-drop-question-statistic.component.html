@@ -1,123 +1,164 @@
-<div class="row" *ngIf="quizExercise">
-    <div class="col-md-8 offset-md-2 text-center">
-        <h3 *ngIf="quizExercise.title !== question.title">{{ quizExercise.title }}</h3>
-        <div class="row">
-            <div *ngIf="question" class="col">
-                <h3>{{ question.title }} <span class="invalid-question" *ngIf="question.invalid" jhiTranslate="artemisApp.showStatistic.invalid"></span></h3>
-                <h4 [innerHTML]="questionTextRendered"></h4>
-                <div #containerRef>
-                    <div class="row">
-                        <div class="col-md-7 text-start">
-                            <p id="text" class="chart-title-text">
-                                <span *ngIf="rated" jhiTranslate="artemisApp.showStatistic.questionStatistic.titleRated"></span>
-                                <span *ngIf="!rated" jhiTranslate="artemisApp.showStatistic.questionStatistic.titleUnrated"></span>
-                            </p>
-                        </div>
-                        <div class="col-md-5 text-end">
-                            <p class="chart-title-text">
-                                <span>{{ participants }} </span><span jhiTranslate="artemisApp.showStatistic.participants"></span>
-                            </p>
-                        </div>
-                    </div>
-                    <ngx-charts-bar-vertical
-                        [view]="[containerRef.offsetWidth, 525]"
-                        [results]="ngxData"
-                        [scheme]="ngxColor"
-                        [showDataLabel]="true"
-                        [showXAxisLabel]="true"
-                        [showYAxisLabel]="true"
-                        [xAxisLabel]="xAxisLabel"
-                        [yAxisLabel]="yAxisLabel"
-                        [xAxis]="true"
-                        [yAxis]="true"
-                        [yScaleMax]="maxScale"
-                        [tooltipDisabled]="true"
-                        [rotateXAxisTicks]="false"
-                        [maxXAxisTickLength]="17"
-                        [dataLabelFormatting]="bindFormatting"
-                        [roundEdges]="false"
-                    >
-                    </ngx-charts-bar-vertical>
-                    <div class="col-md-12 text-center button-row">
-                        <button (click)="switchSolution()" type="button" class="btn btn-primary show-solution">
-                            <fa-icon *ngIf="showSolution" [icon]="faCheckCircle"></fa-icon>&nbsp; <fa-icon *ngIf="!showSolution" [icon]="faTimesCircle"></fa-icon>&nbsp;
-                            <span *ngIf="showSolution" jhiTranslate="artemisApp.showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
-                            <span *ngIf="!showSolution" jhiTranslate="artemisApp.showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>
-                        </button>
-
-                        <button (click)="switchRated()" type="button" class="btn btn-primary">
-                            <fa-icon [icon]="faSync"></fa-icon>&nbsp;
-                            <span *ngIf="rated" jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
-                            <span *ngIf="!rated" jhiTranslate="artemisApp.showStatistic.switchToRated"></span>
-                        </button>
-                    </div>
-                    <p>&nbsp;</p>
-                    <div class="drag-and-drop-quizStatistic-picture col-md-8 offset-md-2">
-                        <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath"></jhi-secured-image>
-                        <div class="click-layer">
-                            <div *ngIf="!showSolution">
-                                <div
-                                    id="drop-location"
-                                    class="drop-location"
-                                    *ngFor="let dropLocation of question.dropLocations; let i = index"
-                                    [ngStyle]="{
-                                        top: dropLocation.posY! / 2 + '%',
-                                        left: dropLocation.posX! / 2 + '%',
-                                        width: dropLocation.width! / 2 + '%',
-                                        height: dropLocation.height! / 2 + '%'
-                                    }"
-                                >
-                                    <div class="letter">
-                                        <span>{{ getLetter(i) + '.' }}</span>
-                                    </div>
-                                    <div class="invalid" *ngIf="dropLocation.invalid">
-                                        <span jhiTranslate="artemisApp.showStatistic.invalid"></span>
-                                    </div>
+@if (quizExercise) {
+    <div class="row">
+        <div class="col-md-8 offset-md-2 text-center">
+            @if (quizExercise.title !== question.title) {
+                <h3>{{ quizExercise.title }}</h3>
+            }
+            <div class="row">
+                @if (question) {
+                    <div class="col">
+                        <h3>
+                            {{ question.title }}
+                            @if (question.invalid) {
+                                <span class="invalid-question" jhiTranslate="artemisApp.showStatistic.invalid"></span>
+                            }
+                        </h3>
+                        <h4 [innerHTML]="questionTextRendered"></h4>
+                        <div #containerRef>
+                            <div class="row">
+                                <div class="col-md-7 text-start">
+                                    <p id="text" class="chart-title-text">
+                                        @if (rated) {
+                                            <span jhiTranslate="artemisApp.showStatistic.questionStatistic.titleRated"></span>
+                                        }
+                                        @if (!rated) {
+                                            <span jhiTranslate="artemisApp.showStatistic.questionStatistic.titleUnrated"></span>
+                                        }
+                                    </p>
+                                </div>
+                                <div class="col-md-5 text-end">
+                                    <p class="chart-title-text">
+                                        <span>{{ participants }} </span><span jhiTranslate="artemisApp.showStatistic.participants"></span>
+                                    </p>
                                 </div>
                             </div>
-                            <div *ngIf="showSolution">
-                                <div
-                                    class="drop-location solution"
-                                    *ngFor="let dropLocation of question.dropLocations; let i = index"
-                                    [ngStyle]="{
-                                        top: dropLocation.posY! / 2 + '%',
-                                        left: dropLocation.posX! / 2 + '%',
-                                        width: dropLocation.width! / 2 + '%',
-                                        height: dropLocation.height! / 2 + '%'
-                                    }"
-                                >
-                                    <div class="letter-solution">
-                                        <span>{{ getLetter(i) + '.' }}</span>
-                                    </div>
-                                    <div class="invalid" *ngIf="dropLocation.invalid">
-                                        <span jhiTranslate="artemisApp.showStatistic.invalid"></span>
-                                    </div>
-                                    <jhi-drag-item
-                                        *ngIf="correctDragItemForDropLocation(dropLocation)"
-                                        [dragItem]="correctDragItemForDropLocation(dropLocation)!"
-                                        [clickDisabled]="true"
-                                        [minWidth]="'100%'"
-                                    ></jhi-drag-item>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="drag-and-drop-quizStatistic-picture" *ngIf="!showSolution">
-                        <h4>Drag-Items:</h4>
-                        <div class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
-                            <jhi-drag-item
-                                *ngFor="let dragItem of question.dragItems"
-                                [dragItem]="dragItem"
-                                [invalid]="!!dragItem.invalid"
-                                [clickDisabled]="true"
-                                [minWidth]="'100%'"
+                            <ngx-charts-bar-vertical
+                                [view]="[containerRef.offsetWidth, 525]"
+                                [results]="ngxData"
+                                [scheme]="ngxColor"
+                                [showDataLabel]="true"
+                                [showXAxisLabel]="true"
+                                [showYAxisLabel]="true"
+                                [xAxisLabel]="xAxisLabel"
+                                [yAxisLabel]="yAxisLabel"
+                                [xAxis]="true"
+                                [yAxis]="true"
+                                [yScaleMax]="maxScale"
+                                [tooltipDisabled]="true"
+                                [rotateXAxisTicks]="false"
+                                [maxXAxisTickLength]="17"
+                                [dataLabelFormatting]="bindFormatting"
+                                [roundEdges]="false"
                             >
-                            </jhi-drag-item>
+                            </ngx-charts-bar-vertical>
+                            <div class="col-md-12 text-center button-row">
+                                <button (click)="switchSolution()" type="button" class="btn btn-primary show-solution">
+                                    @if (showSolution) {
+                                        <fa-icon [icon]="faCheckCircle"></fa-icon>
+                                    }
+                                    &nbsp;
+                                    @if (!showSolution) {
+                                        <fa-icon [icon]="faTimesCircle"></fa-icon>
+                                    }
+                                    &nbsp;
+                                    @if (showSolution) {
+                                        <span jhiTranslate="artemisApp.showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
+                                    }
+                                    @if (!showSolution) {
+                                        <span jhiTranslate="artemisApp.showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>
+                                    }
+                                </button>
+                                <button (click)="switchRated()" type="button" class="btn btn-primary">
+                                    <fa-icon [icon]="faSync"></fa-icon>&nbsp;
+                                    @if (rated) {
+                                        <span jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
+                                    }
+                                    @if (!rated) {
+                                        <span jhiTranslate="artemisApp.showStatistic.switchToRated"></span>
+                                    }
+                                </button>
+                            </div>
+                            <p>&nbsp;</p>
+                            <div class="drag-and-drop-quizStatistic-picture col-md-8 offset-md-2">
+                                @if (question.backgroundFilePath) {
+                                    <jhi-secured-image [src]="question.backgroundFilePath"></jhi-secured-image>
+                                }
+                                <div class="click-layer">
+                                    @if (!showSolution) {
+                                        <div>
+                                            @for (dropLocation of question.dropLocations; track dropLocation; let i = $index) {
+                                                <div
+                                                    id="drop-location"
+                                                    class="drop-location"
+                                                    [ngStyle]="{
+                                                        top: dropLocation.posY! / 2 + '%',
+                                                        left: dropLocation.posX! / 2 + '%',
+                                                        width: dropLocation.width! / 2 + '%',
+                                                        height: dropLocation.height! / 2 + '%'
+                                                    }"
+                                                >
+                                                    <div class="letter">
+                                                        <span>{{ getLetter(i) + '.' }}</span>
+                                                    </div>
+                                                    @if (dropLocation.invalid) {
+                                                        <div class="invalid">
+                                                            <span jhiTranslate="artemisApp.showStatistic.invalid"></span>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                    @if (showSolution) {
+                                        <div>
+                                            @for (dropLocation of question.dropLocations; track dropLocation; let i = $index) {
+                                                <div
+                                                    class="drop-location solution"
+                                                    [ngStyle]="{
+                                                        top: dropLocation.posY! / 2 + '%',
+                                                        left: dropLocation.posX! / 2 + '%',
+                                                        width: dropLocation.width! / 2 + '%',
+                                                        height: dropLocation.height! / 2 + '%'
+                                                    }"
+                                                >
+                                                    <div class="letter-solution">
+                                                        <span>{{ getLetter(i) + '.' }}</span>
+                                                    </div>
+                                                    @if (dropLocation.invalid) {
+                                                        <div class="invalid">
+                                                            <span jhiTranslate="artemisApp.showStatistic.invalid"></span>
+                                                        </div>
+                                                    }
+                                                    @if (correctDragItemForDropLocation(dropLocation)) {
+                                                        <jhi-drag-item
+                                                            [dragItem]="correctDragItemForDropLocation(dropLocation)!"
+                                                            [clickDisabled]="true"
+                                                            [minWidth]="'100%'"
+                                                        ></jhi-drag-item>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            @if (!showSolution) {
+                                <div class="drag-and-drop-quizStatistic-picture">
+                                    <h4>Drag-Items:</h4>
+                                    @if (question.dragItems && question.dragItems.length) {
+                                        <div class="drag-items">
+                                            @for (dragItem of question.dragItems; track dragItem) {
+                                                <jhi-drag-item [dragItem]="dragItem" [invalid]="!!dragItem.invalid" [clickDisabled]="true" [minWidth]="'100%'"> </jhi-drag-item>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
                         </div>
                     </div>
-                </div>
+                }
             </div>
         </div>
+        <jhi-quiz-statistics-footer></jhi-quiz-statistics-footer>
     </div>
-    <jhi-quiz-statistics-footer></jhi-quiz-statistics-footer>
-</div>
+}
