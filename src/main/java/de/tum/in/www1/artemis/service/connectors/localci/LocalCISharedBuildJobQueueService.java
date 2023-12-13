@@ -294,7 +294,7 @@ public class LocalCISharedBuildJobQueueService {
             checkAvailabilityAndProcessNextBuild();
             return;
         }
-        catch (IllegalArgumentException e) {
+        catch (Exception e) {
             log.error("Cannot process build job for participation with id {} because of an unexpected error.", buildJob.getParticipationId(), e);
             processingJobs.remove(buildJob.getId());
             localProcessingJobs.decrementAndGet();
