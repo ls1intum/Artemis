@@ -1,80 +1,93 @@
 <div>
-    <div *ngIf="course">
-        <jhi-header-course [course]="course"></jhi-header-course>
-        <div class="tab-bar">
-            <a class="tab-link" id="exam-tab" *ngIf="course.exams && hasVisibleExams()" jhiOrionFilter [showInOrionWindow]="false" routerLink="exams" routerLinkActive="active">
-                <fa-icon [icon]="faGraduationCap"></fa-icon>
-                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</span>
-            </a>
-            <a class="tab-link" routerLink="exercises" routerLinkActive="active">
-                <fa-icon [icon]="faListAlt"></fa-icon>
-                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>
-            </a>
-            <a class="tab-link" *ngIf="course.lectures" jhiOrionFilter [showInOrionWindow]="false" routerLink="lectures" routerLinkActive="active">
-                <fa-icon [icon]="faFilePdf"></fa-icon>
-                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
-            </a>
-            <a class="tab-link guided-tour" jhiOrionFilter [showInOrionWindow]="false" routerLink="statistics" routerLinkActive="active">
-                <fa-icon [icon]="faChartBar"></fa-icon>
-                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
-            </a>
-            <a class="tab-link" *ngIf="isCommunicationEnabled(course)" jhiOrionFilter [showInOrionWindow]="false" routerLink="discussion" routerLinkActive="active">
-                <fa-icon [icon]="faComment"></fa-icon>
-                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.communication">Communication</span>
-            </a>
-            <a
-                class="tab-link"
-                *ngIf="isMessagingEnabled(course) || isCommunicationEnabled(course)"
-                [ngClass]="{ newMessage: !messagesRouteLoaded && hasUnreadMessages }"
-                jhiOrionFilter
-                [showInOrionWindow]="false"
-                routerLink="messages"
-                routerLinkActive="active"
-            >
-                <fa-icon [icon]="faComments"></fa-icon>
-                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</span>
-            </a>
-            <a
-                class="tab-link"
-                *ngIf="hasTutorialGroups()"
-                [jhiFeatureToggleHide]="FeatureToggle.TutorialGroups"
-                jhiOrionFilter
-                [showInOrionWindow]="false"
-                routerLink="tutorial-groups"
-                routerLinkActive="active"
-            >
-                <fa-icon [icon]="faPersonChalkboard"></fa-icon>
-                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.tutorialGroups">Tutorial Groups</span>
-            </a>
-            <a class="tab-link" *ngIf="hasCompetencies()" jhiOrionFilter [showInOrionWindow]="false" routerLink="competencies" routerLinkActive="active">
-                <fa-icon [icon]="faFlag"></fa-icon>
-                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.competencies">Competencies</span>
-            </a>
-            <a
-                class="tab-link"
-                *ngIf="hasCompetencies() && course?.learningPathsEnabled"
-                [jhiFeatureToggleHide]="FeatureToggle.LearningPaths"
-                jhiOrionFilter
-                [showInOrionWindow]="false"
-                routerLink="learning-path"
-                routerLinkActive="active"
-            >
-                <fa-icon [icon]="faNetworkWired"></fa-icon>
-                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.learningPath">Learning Path</span>
-            </a>
-            <div class="controls">
-                <ng-container #controlsViewContainer></ng-container>
-                <button class="btn btn-primary btn-md" (click)="loadCourse(true)" [disabled]="refreshingCourse">
-                    <fa-icon [icon]="faSync" [spin]="refreshingCourse"></fa-icon>
-                    <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
-                </button>
+    @if (course) {
+        <div>
+            <jhi-header-course [course]="course"></jhi-header-course>
+            <div class="tab-bar">
+                @if (course.exams && hasVisibleExams()) {
+                    <a class="tab-link" id="exam-tab" jhiOrionFilter [showInOrionWindow]="false" routerLink="exams" routerLinkActive="active">
+                        <fa-icon [icon]="faGraduationCap"></fa-icon>
+                        <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</span>
+                    </a>
+                }
+                <a class="tab-link" routerLink="exercises" routerLinkActive="active">
+                    <fa-icon [icon]="faListAlt"></fa-icon>
+                    <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exercises">Exercise</span>
+                </a>
+                @if (course.lectures) {
+                    <a class="tab-link" jhiOrionFilter [showInOrionWindow]="false" routerLink="lectures" routerLinkActive="active">
+                        <fa-icon [icon]="faFilePdf"></fa-icon>
+                        <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
+                    </a>
+                }
+                <a class="tab-link guided-tour" jhiOrionFilter [showInOrionWindow]="false" routerLink="statistics" routerLinkActive="active">
+                    <fa-icon [icon]="faChartBar"></fa-icon>
+                    <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.statistics">Statistics</span>
+                </a>
+                @if (isCommunicationEnabled(course)) {
+                    <a class="tab-link" jhiOrionFilter [showInOrionWindow]="false" routerLink="discussion" routerLinkActive="active">
+                        <fa-icon [icon]="faComment"></fa-icon>
+                        <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.communication">Communication</span>
+                    </a>
+                }
+                @if (isMessagingEnabled(course) || isCommunicationEnabled(course)) {
+                    <a
+                        class="tab-link"
+                        [ngClass]="{ newMessage: !messagesRouteLoaded && hasUnreadMessages }"
+                        jhiOrionFilter
+                        [showInOrionWindow]="false"
+                        routerLink="messages"
+                        routerLinkActive="active"
+                    >
+                        <fa-icon [icon]="faComments"></fa-icon>
+                        <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</span>
+                    </a>
+                }
+                @if (hasTutorialGroups()) {
+                    <a
+                        class="tab-link"
+                        [jhiFeatureToggleHide]="FeatureToggle.TutorialGroups"
+                        jhiOrionFilter
+                        [showInOrionWindow]="false"
+                        routerLink="tutorial-groups"
+                        routerLinkActive="active"
+                    >
+                        <fa-icon [icon]="faPersonChalkboard"></fa-icon>
+                        <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.tutorialGroups">Tutorial Groups</span>
+                    </a>
+                }
+                @if (hasCompetencies()) {
+                    <a class="tab-link" jhiOrionFilter [showInOrionWindow]="false" routerLink="competencies" routerLinkActive="active">
+                        <fa-icon [icon]="faFlag"></fa-icon>
+                        <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.competencies">Competencies</span>
+                    </a>
+                }
+                @if (hasCompetencies() && course?.learningPathsEnabled) {
+                    <a
+                        class="tab-link"
+                        [jhiFeatureToggleHide]="FeatureToggle.LearningPaths"
+                        jhiOrionFilter
+                        [showInOrionWindow]="false"
+                        routerLink="learning-path"
+                        routerLinkActive="active"
+                    >
+                        <fa-icon [icon]="faNetworkWired"></fa-icon>
+                        <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.learningPath">Learning Path</span>
+                    </a>
+                }
+                <div class="controls">
+                    <ng-container #controlsViewContainer></ng-container>
+                    <button class="btn btn-primary btn-md" (click)="loadCourse(true)" [disabled]="refreshingCourse">
+                        <fa-icon [icon]="faSync" [spin]="refreshingCourse"></fa-icon>
+                        <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
+                    </button>
+                </div>
+            </div>
+            <div class="course-body-container">
+                <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()"></router-outlet>
+                <div class="refresh-overlay" [class.active]="refreshingCourse">
+                    <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                </div>
             </div>
         </div>
-        <div class="course-body-container">
-            <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()"></router-outlet>
-            <div class="refresh-overlay" [class.active]="refreshingCourse">
-                <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
-            </div>
-        </div>
-    </div>
+    }
 </div>
