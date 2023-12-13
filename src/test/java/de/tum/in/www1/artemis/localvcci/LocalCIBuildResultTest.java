@@ -11,7 +11,7 @@ class LocalCIBuildResultTest extends AbstractSpringIntegrationLocalCILocalVCTest
 
     @Test
     void testUnsupportedMethods() {
-        LocalCIBuildResult localCIBuildResult = new LocalCIBuildResult(null, null, null, true, null, null);
+        LocalCIBuildResult localCIBuildResult = new LocalCIBuildResult(null, null, null, true, null, null, null);
 
         assertThat(localCIBuildResult.extractBuildLogs()).isEmpty();
         assertThat(localCIBuildResult.getTestwiseCoverageReports()).isEmpty();
