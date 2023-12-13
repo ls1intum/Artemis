@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfigu
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.notification.ConversationNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
@@ -71,17 +72,18 @@ public abstract class PostingService {
         // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE, null, notification), course.getId(), null);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE, null, notification), course.getId(), null, null);
     }
 
     /**
      * Broadcasts a posting related event in a course under a specific topic via websockets
      *
-     * @param postDTO    object including the affected post as well as the action
-     * @param courseId   the id of the course the posting belongs to
-     * @param recipients the recipients for this broadcast, can be null
+     * @param postDTO        object including the affected post as well as the action
+     * @param courseId       the id of the course the posting belongs to
+     * @param recipients     the recipients for this broadcast, can be null
+     * @param mentionedUsers the users mentioned in the message, can be null
      */
-    protected void broadcastForPost(PostDTO postDTO, Long courseId, Set<User> recipients) {
+    protected void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients, Set<User> mentionedUsers) {
         // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
         Conversation postConversation = postDTO.post().getConversation();
         if (postConversation != null) {
@@ -98,9 +100,15 @@ public abstract class PostingService {
                 if (recipients == null) {
                     // send to all participants of the conversation
                     recipients = conversationParticipantRepository.findConversationParticipantByConversationId(postConversation.getId()).stream()
-                            .map(ConversationParticipant::getUser).collect(Collectors.toSet());
+                            .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsHidden() != null && participant.getIsHidden(),
+                                    false))
+                            .collect(Collectors.toSet());
                 }
-                recipients.forEach(user -> websocketMessagingService.sendMessage("/topic/user/" + user.getId() + "/notifications/conversations", postDTO));
+                recipients.forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", new PostDTO(
+                        postDTO.post(), postDTO.action(), postDTO.conversation(),
+                        recipient.isConversationHidden() && postDTO.notification() instanceof ConversationNotification && !mentionedUsers.contains(new User(recipient.userId()))
+                                ? null
+                                : postDTO.notification())));
             }
         }
         else if (postDTO.post().getPlagiarismCase() != null) {

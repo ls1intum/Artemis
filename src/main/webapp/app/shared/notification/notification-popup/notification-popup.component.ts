@@ -165,7 +165,7 @@ export class NotificationPopupComponent implements OnInit {
 
     private addNotification(notification: Notification): void {
         // Only add a notification if it does not already exist.
-        if (notification && !this.notifications.some(({ id }) => id === notification.id)) {
+        if (notification && !this.notifications.some(({ id }) => notification.id && id === notification.id)) {
             if (notification.title === QUIZ_EXERCISE_STARTED_TITLE) {
                 this.addQuizNotification(notification);
                 this.setRemovalTimeout(notification);

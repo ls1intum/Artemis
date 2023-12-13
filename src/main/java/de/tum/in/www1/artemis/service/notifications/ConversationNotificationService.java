@@ -76,7 +76,7 @@ public class ConversationNotificationService {
             placeholders = new String[] { course.getTitle(), createdMessage.getContent(), createdMessage.getCreationDate().toString(), createdMessage.getAuthor().getName(),
                     conversationName, "oneToOneChat" };
         }
-        var notification = createConversationMessageNotification(course.getId(), createdMessage, notificationType, notificationText, true, placeholders);
+        ConversationNotification notification = createConversationMessageNotification(course.getId(), createdMessage, notificationType, notificationText, true, placeholders);
         save(notification, mentionedUsers, placeholders);
         return notification;
     }
@@ -90,16 +90,15 @@ public class ConversationNotificationService {
         singleUserNotificationRepository.saveAll(mentionedUserNotifications);
     }
 
-    public void notifyAboutNewMessage(Post createdMessage, ConversationNotification notification, Set<User> recipients, Course course, Set<User> mentionedUsers) {
-
-        // Set<SingleUserNotification> mentionedUserNotifications = mentionedUsers.stream()
-        // .map(mentionedUser -> SingleUserNotificationFactory.createNotification(notification.getMessage(), NotificationType.CONVERSATION_USER_MENTIONED,
-        // notification.getText(), notification.getTransientPlaceholderValuesAsArray(), mentionedUser))
-        // .collect(Collectors.toSet());
-        // mentionedUserNotifications.forEach(singleUserNotification -> websocketMessagingService.sendMessage(singleUserNotification.getTopic(), singleUserNotification));
-        //
-        // sendNotificationViaWebSocket(notification, recipients.stream().filter(recipient -> !mentionedUsers.contains(recipient)).collect(Collectors.toSet()));
-
+    /**
+     * Sends push end email notifications to the provided recipients
+     *
+     * @param createdMessage the new message in a conversation
+     * @param notification   the notification to send
+     * @param recipients     the set of recipients for the notifcation
+     * @param course         the course of the new message
+     */
+    public void notifyAboutNewMessage(Post createdMessage, ConversationNotification notification, Set<User> recipients, Course course) {
         Post notificationSubject = new Post();
         notificationSubject.setId(createdMessage.getId());
         notificationSubject.setConversation(createdMessage.getConversation());

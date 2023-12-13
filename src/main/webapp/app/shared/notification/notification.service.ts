@@ -42,13 +42,14 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { MetisWebsocketChannelPrefix, RouteComponents } from 'app/shared/metis/metis.util';
+import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
 const notificationsPerPage = 25;
 
@@ -214,7 +215,7 @@ export class NotificationService {
 
                 if (
                     this.notificationSettingsService.isNotificationAllowedBySettings(notification) &&
-                    !this.notifications.some(({ id }) => id === notification.id) &&
+                    !this.notifications.some(({ id }) => notification.id && id === notification.id) &&
                     notification.notificationDate
                 ) {
                     this.notifications.push(notification);
@@ -480,26 +481,60 @@ export class NotificationService {
     }
 
     private handleNewPostDTO = (postDTO: MetisPostDTO): void => {
-        this._singlePostSubject$.next(postDTO);
-
         if (postDTO.post?.answers) {
             postDTO.post.answers = [...postDTO.post.answers];
             postDTO.post.answers.forEach((answer) => (answer.post = { ...postDTO.post, answers: [] }));
         }
 
-        if (postDTO.notification?.target) {
-            const target = JSON.parse(postDTO.notification.target);
-            const targetCourseId = target.course;
-            // Only add notification if it is not from the current user and the user is not already in the messages tab
-            if (
-                postDTO.notification.author?.id !== this.accountService.userIdentity?.id &&
-                !this.isUnderMessagesTabOfSpecificCourse(targetCourseId) &&
-                this.notificationSettingsService.isNotificationAllowedBySettings(postDTO.notification)
-            ) {
-                this.addNotification(postDTO.notification);
-            }
+        this._singlePostSubject$.next(postDTO);
+        if (postDTO.action !== MetisPostAction.CREATE || !getAsChannelDto(postDTO.post.conversation)?.isCourseWide) {
+            this.handleNotification(postDTO);
         }
     };
+
+    public handleNotification(postDTO: MetisPostDTO) {
+        console.log(postDTO);
+        const notification = postDTO.notification;
+        if (notification?.target) {
+            const target = JSON.parse(notification.target);
+            const targetCourseId = target.course;
+            // Only add notification if it is not from the current user and the user is not already in the messages tab
+            const user = this.accountService.userIdentity;
+            if (
+                notification.author?.id !== user?.id &&
+                !this.isUnderMessagesTabOfSpecificCourse(targetCourseId) &&
+                this.notificationSettingsService.isNotificationAllowedBySettings(notification)
+            ) {
+                user && this.changeTitleIfMentioned(user, postDTO, notification);
+                if (this.shouldNotify(postDTO, user?.id)) {
+                    this.addNotification(notification);
+                }
+            }
+        }
+    }
+
+    private shouldNotify(postDTO: MetisPostDTO, userId: number | undefined) {
+        console.log(postDTO, userId);
+        if (
+            !getAsChannelDto(postDTO.post.conversation)?.isCourseWide ||
+            postDTO.action !== MetisPostAction.UPDATE ||
+            !userId ||
+            postDTO.notification?.title === MENTIONED_IN_MESSAGE_TITLE
+        ) {
+            return true;
+        }
+
+        return postDTO.post.author?.id === userId || postDTO.post.answers?.map((answer) => answer.author?.id).includes(userId);
+    }
+
+    private changeTitleIfMentioned(user: User, postDTO: MetisPostDTO, notification: Notification) {
+        const mentionMatch = `[user]${user?.name}(${user?.login})[/user]`;
+        if (postDTO.action === MetisPostAction.CREATE && postDTO.post.content?.includes(mentionMatch)) {
+            notification.title = MENTIONED_IN_MESSAGE_TITLE;
+        } else if (postDTO.action === MetisPostAction.UPDATE && postDTO.post.answers?.last()?.content?.includes(mentionMatch)) {
+            notification.title = MENTIONED_IN_MESSAGE_TITLE;
+        }
+    }
 
     private subscribeToQuizUpdates(courses: Course[]): void {
         courses.forEach((course) => {

@@ -96,7 +96,7 @@ public class ReactionService {
             Post updatedPost = postRepository.save(post);
             updatedPost.setConversation(post.getConversation());
 
-            postService.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null);
+            postService.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
         }
         else {
             AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
@@ -157,7 +157,7 @@ public class ReactionService {
             updatedPost.removeAnswerPost(updatedAnswerPost);
             updatedPost.addAnswerPost(updatedAnswerPost);
         }
-        postService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
+        postService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
         reactionRepository.deleteById(reactionId);
     }
 

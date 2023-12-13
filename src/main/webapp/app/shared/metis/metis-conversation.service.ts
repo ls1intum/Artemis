@@ -70,6 +70,9 @@ export class MetisConversationService implements OnDestroy {
         this.activeConversationSubscription = this.notificationService.newOrUpdatedMessage.subscribe((postDTO: MetisPostDTO) => {
             if (postDTO.action === MetisPostAction.CREATE && postDTO.post.author?.id !== this.userId) {
                 this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
+                if (this.conversationsOfUser.find((conv) => conv.id === postDTO.post.conversation?.id && !conv.isHidden)) {
+                    this.notificationService.handleNotification(postDTO);
+                }
             }
         });
 

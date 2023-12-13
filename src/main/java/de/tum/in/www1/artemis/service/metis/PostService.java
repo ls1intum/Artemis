@@ -154,7 +154,7 @@ public class PostService extends PostingService {
 
         Post updatedPost = postRepository.save(existingPost);
 
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
         return updatedPost;
     }
 
@@ -205,7 +205,7 @@ public class PostService extends PostingService {
 
         // delete
         postRepository.deleteById(postId);
-        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null, null);
     }
 
     /**

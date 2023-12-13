@@ -156,7 +156,7 @@ public class AnswerPostService extends PostingService {
         // delete
         answerPostRepository.deleteById(answerPostId);
 
-        broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
     }
 
     /**

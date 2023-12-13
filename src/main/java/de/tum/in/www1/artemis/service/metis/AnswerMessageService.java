@@ -103,7 +103,7 @@ public class AnswerMessageService extends PostingService {
         setAuthorRoleForPosting(savedAnswerMessage, course);
         SingleUserNotification notification = singleUserNotificationService.createNotificationAboutNewMessageReply(savedAnswerMessage, author, conversation);
         this.preparePostAndBroadcast(savedAnswerMessage, course, notification);
-        this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, mentionedUsers, savedAnswerMessage, author);
+        this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, notification, mentionedUsers, savedAnswerMessage, author);
         return savedAnswerMessage;
     }
 
@@ -197,7 +197,7 @@ public class AnswerMessageService extends PostingService {
         // delete
         answerPostRepository.deleteById(answerMessageId);
 
-        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course.getId(), null);
+        broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course.getId(), null, null);
     }
 
     /**

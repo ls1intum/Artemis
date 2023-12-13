@@ -152,40 +152,38 @@ public class ConversationMessagingService extends PostingService {
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         Set<ConversationNotificationRecipientSummary> recipientSummaries;
-        Set<User> recipientUsers;
         ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, conversation, course,
                 createdConversationMessage.mentionedUsers());
         PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE, null, notification);
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
             if (conversationService.isChannelVisibleToStudents(channel)) {
-                broadcastForPost(postDTO, course.getId(), null);
+                broadcastForPost(postDTO, course.getId(), null, null);
             }
             log.debug("      broadcastForPost DONE");
 
             recipientSummaries = getNotificationRecipients(conversation).collect(Collectors.toSet());
             log.debug("      getNotificationRecipients DONE");
-            recipientUsers = mapToUsers(recipientSummaries);
         }
         else {
             // In all other cases we need the list of participants to send the WS messages to the correct topics. Hence, the db query has to be made before sending WS messages
             recipientSummaries = getNotificationRecipients(conversation).collect(Collectors.toSet());
             log.debug("      getNotificationRecipients DONE");
-            recipientUsers = mapToUsers(recipientSummaries);
 
             if (conversation instanceof OneToOneChat) {
                 var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
                 if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created
                     // Another websocket notification
-                    conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, recipientUsers);
+                    conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, mapToUsers(recipientSummaries));
                 }
             }
 
-            broadcastForPost(postDTO, course.getId(), recipientUsers);
+            broadcastForPost(postDTO, course.getId(), recipientSummaries, createdConversationMessage.mentionedUsers());
+
             log.debug("      broadcastForPost DONE");
         }
 
-        sendAndSaveNotifications(notification, createdConversationMessage, recipientUsers, recipientSummaries);
+        sendAndSaveNotifications(notification, createdConversationMessage, recipientSummaries);
     }
 
     /**
@@ -193,12 +191,10 @@ public class ConversationMessagingService extends PostingService {
      *
      * @param notification               the notification for the message
      * @param createdConversationMessage the new message and associated data
-     * @param recipientUsers             set of users that should receive notifications
      * @param recipientSummaries         set of setting summaries for the recipients
      */
-    private void sendAndSaveNotifications(ConversationNotification notification, CreatedConversationMessage createdConversationMessage, Set<User> recipientUsers,
+    private void sendAndSaveNotifications(ConversationNotification notification, CreatedConversationMessage createdConversationMessage,
             Set<ConversationNotificationRecipientSummary> recipientSummaries) {
-        // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
         Post createdMessage = createdConversationMessage.messageWithHiddenDetails();
         User author = createdMessage.getAuthor();
         Conversation conversation = createdConversationMessage.completeConversation();
@@ -206,9 +202,12 @@ public class ConversationMessagingService extends PostingService {
 
         Set<User> mentionedUsers = createdConversationMessage.mentionedUsers().stream()
                 .map(user -> new User(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getLangKey(), user.getEmail())).collect(Collectors.toSet());
-        recipientUsers.addAll(mentionedUsers);
 
         Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, recipientSummaries, mentionedUsers);
+        // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
+        notificationRecipients.addAll(mentionedUsers);
+
+        conversationNotificationService.notifyAboutNewMessage(createdMessage, notification, notificationRecipients, course);
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
 
         Set<String> onlineUserLogins = getLoginsOfSubscribedUsers("/topic/metis/" + "courses/" + course.getId());
@@ -216,7 +215,7 @@ public class ConversationMessagingService extends PostingService {
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         // broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE, null, notification), course, recipientUsers);
-        log.debug("      broadcastForPost DONE");
+        // log.debug(" broadcastForPost DONE");
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
         log.debug("      incrementUnreadMessagesCountOfParticipants DONE");
         // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
@@ -230,11 +229,10 @@ public class ConversationMessagingService extends PostingService {
         // creation of message posts should not trigger entity creation alert
         // Websocket notification 3
         // Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, recipientSummaries, mentionedUsers);
-        conversationNotificationService.notifyAboutNewMessage(createdMessage, notification, notificationRecipients, course, mentionedUsers);
-        // log.debug(" conversationNotificationService.notifyAboutNewMessage DONE");
 
         if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
-            saveAnnouncementNotification(createdMessage, channel, course, recipientUsers);
+            saveAnnouncementNotification(createdMessage, channel, course, notificationRecipients);
+            log.debug("      saveAnnouncementNotification DONE");
         }
         log.debug("      notifyAboutMessageCreation DONE");
     }
@@ -363,7 +361,7 @@ public class ConversationMessagingService extends PostingService {
         updatedPost.setConversation(conversation);
 
         // emit a post update via websocket
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
 
         return updatedPost;
     }
@@ -391,7 +389,7 @@ public class ConversationMessagingService extends PostingService {
 
         conversationService.notifyAllConversationMembersAboutUpdate(conversation);
 
-        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course.getId(), null, null);
     }
 
     /**
@@ -414,7 +412,7 @@ public class ConversationMessagingService extends PostingService {
 
         Post updatedMessage = conversationMessageRepository.save(message);
         message.getConversation().hideDetails();
-        broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course.getId(), null);
+        broadcastForPost(new PostDTO(message, MetisCrudAction.UPDATE), course.getId(), null, null);
         return updatedMessage;
     }
 

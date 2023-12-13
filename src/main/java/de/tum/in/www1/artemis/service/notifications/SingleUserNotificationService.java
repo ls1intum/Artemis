@@ -77,21 +77,9 @@ public class SingleUserNotificationService {
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, Exercise -> user)
      * @param skipWebSocket           whether to skip WebSocket notifications
      */
-    private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation, User author,
-            boolean skipWebSocket) {
-        var singleUserNotification = createSingleUserNotification(notificationSubject, notificationType, (User) typeSpecificInformation, author);
-        saveAndSend(singleUserNotification, notificationSubject, author, skipWebSocket);
-    }
-
-    /**
-     * Auxiliary method to call the correct factory method and start the process to save & sent the notification
-     *
-     * @param notificationSubject     is the subject of the notification (e.g. exercise, attachment)
-     * @param notificationType        is the discriminator for the factory
-     * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, Exercise -> user)
-     */
     private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation, User author) {
-        notifyRecipientWithNotificationType(notificationSubject, notificationType, typeSpecificInformation, author, false);
+        var singleUserNotification = createSingleUserNotification(notificationSubject, notificationType, (User) typeSpecificInformation, author);
+        saveAndSend(singleUserNotification, notificationSubject, author, false);
     }
 
     private SingleUserNotification createSingleUserNotification(Object notificationSubject, NotificationType notificationType, User typeSpecificInformation, User author) {
@@ -364,12 +352,15 @@ public class SingleUserNotificationService {
      * Notify a user about new message reply in a conversation.
      *
      * @param answerPost       the answerPost of the user involved
+     * @param notification     the notification template to be used
      * @param user             the user that is involved in the message reply
      * @param responsibleUser  the responsibleUser sending the message reply
      * @param notificationType the type for the conversation
      */
-    public void notifyUserAboutNewMessageReply(AnswerPost answerPost, User user, User responsibleUser, NotificationType notificationType) {
-        notifyRecipientWithNotificationType(new NewReplyNotificationSubject(answerPost, user, responsibleUser), notificationType, null, responsibleUser, true);
+    public void notifyUserAboutNewMessageReply(AnswerPost answerPost, SingleUserNotification notification, User user, User responsibleUser, NotificationType notificationType) {
+        notification.setRecipient(user);
+        notification.setTitle(findCorrespondingNotificationTitleOrThrow(notificationType));
+        saveAndSend(notification, new NewReplyNotificationSubject(answerPost, user, responsibleUser), responsibleUser, true);
     }
 
     /**
@@ -389,12 +380,13 @@ public class SingleUserNotificationService {
      * Notifies involved users about the new answer message, i.e. the author of the original message, users that have also replied, and mentioned users
      *
      * @param post               the message the answer belongs to
+     * @param notification       the notification template to be used
      * @param mentionedUsers     users mentioned in the answer message
      * @param savedAnswerMessage the answer message
      * @param author             the author of the answer message
      */
     @Async
-    public void notifyInvolvedUsersAboutNewMessageReply(Post post, Set<User> mentionedUsers, AnswerPost savedAnswerMessage, User author) {
+    public void notifyInvolvedUsersAboutNewMessageReply(Post post, SingleUserNotification notification, Set<User> mentionedUsers, AnswerPost savedAnswerMessage, User author) {
         SecurityUtils.setAuthorizationObject(); // required for async
         Set<User> usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
         // do not notify the author of the post if they are not part of the conversation (e.g. if they left or have been removed from the conversation)
@@ -411,11 +403,11 @@ public class SingleUserNotificationService {
             // (for course-wide channels) ...the course-wide channel is visible
             // (for all other cases) ...the user is a member of the conversation
             return (isChannelAndCourseWide && isChannelVisibleToMentionedUser) || conversationService.isMember(post.getConversation().getId(), user.getId());
-        }).forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, mentionedUser, author, CONVERSATION_USER_MENTIONED));
+        }).forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, mentionedUser, author, CONVERSATION_USER_MENTIONED));
 
         Conversation conv = conversationService.getConversationById(post.getConversation().getId());
         usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved))
-                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, userInvolved, author, getAnswerMessageNotificationType(conv)));
+                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, userInvolved, author, getAnswerMessageNotificationType(conv)));
     }
 
     /**
