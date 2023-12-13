@@ -1,38 +1,49 @@
-<div class="border p-2" *ngIf="showAssessmentInstructions">
-    <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions">
-        <p class="markdown-preview" [innerHTML]="gradingInstructions"></p>
-    </jhi-expandable-section>
-    <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.structuredGradingInstructions">
-        <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly" [criteria]="criteria"></jhi-structured-grading-instructions-assessment-layout>
-    </jhi-expandable-section>
-</div>
-
+@if (showAssessmentInstructions) {
+    <div class="border p-2">
+        <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions">
+            <p class="markdown-preview" [innerHTML]="gradingInstructions"></p>
+        </jhi-expandable-section>
+        <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.structuredGradingInstructions">
+            <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly" [criteria]="criteria"></jhi-structured-grading-instructions-assessment-layout>
+        </jhi-expandable-section>
+    </div>
+}
 <h3 *jhiExtensionPoint="overrideTitle">{{ exercise.title }}</h3>
-<jhi-expandable-section headerKey="artemisApp.assessmentInstructions.problemStatement" [ngSwitch]="exercise.type">
-    <ng-container *ngSwitchCase="ExerciseType.PROGRAMMING">
-        <jhi-programming-exercise-instructions
-            [exercise]="programmingExercise!"
-            [participation]="programmingParticipation ? programmingParticipation : programmingExercise!.templateParticipation!"
-            [personalParticipation]="false"
-        ></jhi-programming-exercise-instructions>
-    </ng-container>
-    <p class="markdown-preview" [innerHTML]="problemStatement" *ngSwitchDefault></p>
+<jhi-expandable-section headerKey="artemisApp.assessmentInstructions.problemStatement">
+    @switch (exercise.type) {
+        @case (ExerciseType.PROGRAMMING) {
+            <jhi-programming-exercise-instructions
+                [exercise]="programmingExercise!"
+                [participation]="programmingParticipation ? programmingParticipation : programmingExercise!.templateParticipation!"
+                [personalParticipation]="false"
+            ></jhi-programming-exercise-instructions>
+        }
+        @default {
+            <p class="markdown-preview" [innerHTML]="problemStatement"></p>
+        }
+    }
 </jhi-expandable-section>
-
-<jhi-expandable-section headerKey="artemisApp.assessmentInstructions.sampleSolution" [ngSwitch]="exercise.type">
-    <ng-container *ngSwitchCase="ExerciseType.PROGRAMMING">
-        <div class="mb-3">
-            <a jhiSecureLink [href]="programmingExercise?.solutionParticipation?.repositoryUrl">
-                <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution">Example solution repository</jhi-button>
-            </a>
-        </div>
-    </ng-container>
-    <ng-container *ngSwitchDefault>
-        <jhi-modeling-editor *ngIf="sampleSolutionModel" [readOnly]="true" [diagramType]="sampleSolutionDiagramType!" [umlModel]="sampleSolutionModel!" />
-        <p class="markdown-preview" *ngIf="sampleSolutionExplanation" [innerHTML]="sampleSolutionExplanation!"></p>
-    </ng-container>
+<jhi-expandable-section headerKey="artemisApp.assessmentInstructions.sampleSolution">
+    @switch (exercise.type) {
+        @case (ExerciseType.PROGRAMMING) {
+            <div class="mb-3">
+                <a jhiSecureLink [href]="programmingExercise?.solutionParticipation?.repositoryUrl">
+                    <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution">Example solution repository</jhi-button>
+                </a>
+            </div>
+        }
+        @default {
+            @if (sampleSolutionModel) {
+                <jhi-modeling-editor [readOnly]="true" [diagramType]="sampleSolutionDiagramType!" [umlModel]="sampleSolutionModel!" />
+            }
+            @if (sampleSolutionExplanation) {
+                <p class="markdown-preview" [innerHTML]="sampleSolutionExplanation!"></p>
+            }
+        }
+    }
 </jhi-expandable-section>
-
-<jhi-expandable-section *ngIf="isAssessmentTraining" headerKey="artemisApp.assessmentInstructions.trainingEvaluationCriteria.title">
-    <p jhiTranslate="artemisApp.assessmentInstructions.trainingEvaluationCriteria.description"></p>
-</jhi-expandable-section>
+@if (isAssessmentTraining) {
+    <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.trainingEvaluationCriteria.title">
+        <p jhiTranslate="artemisApp.assessmentInstructions.trainingEvaluationCriteria.description"></p>
+    </jhi-expandable-section>
+}

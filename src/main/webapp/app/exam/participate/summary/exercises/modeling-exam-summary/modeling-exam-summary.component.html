@@ -1,16 +1,15 @@
 <div>
-    <jhi-modeling-submission
-        *ngIf="exercise?.studentParticipations?.length && exercise?.studentParticipations?.[0]?.id; else noSubmission"
-        [participationId]="exercise.studentParticipations![0].id"
-        [displayHeader]="false"
-        [isPrinting]="isPrinting"
-        [expandProblemStatement]="expandProblemStatement"
-        [inputExercise]="isAfterResultsArePublished ? undefined : exercise"
-        [inputSubmission]="isAfterResultsArePublished ? undefined : submission"
-        [inputParticipation]="isAfterResultsArePublished ? undefined : exercise.studentParticipations![0]"
-    />
-
-    <ng-template #noSubmission>
+    @if (exercise?.studentParticipations?.length && exercise?.studentParticipations?.[0]?.id) {
+        <jhi-modeling-submission
+            [participationId]="exercise.studentParticipations![0].id"
+            [displayHeader]="false"
+            [isPrinting]="isPrinting"
+            [expandProblemStatement]="expandProblemStatement"
+            [inputExercise]="isAfterResultsArePublished ? undefined : exercise"
+            [inputSubmission]="isAfterResultsArePublished ? undefined : submission"
+            [inputParticipation]="isAfterResultsArePublished ? undefined : exercise.studentParticipations![0]"
+        />
+    } @else {
         <div>No submission</div>
-    </ng-template>
+    }
 </div>
