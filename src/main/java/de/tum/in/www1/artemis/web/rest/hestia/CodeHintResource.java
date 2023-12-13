@@ -1,16 +1,16 @@
 package de.tum.in.www1.artemis.web.rest.hestia;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.hestia.CodeHintService;
-import de.tum.in.www1.artemis.service.iris.IrisSettingsService;
+import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -41,11 +41,11 @@ public class CodeHintResource {
 
     private final CodeHintService codeHintService;
 
-    private final IrisSettingsService irisSettingsService;
+    private final Optional<IrisSettingsService> irisSettingsService;
 
     public CodeHintResource(AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseSolutionEntryRepository solutionEntryRepository, CodeHintRepository codeHintRepository, CodeHintService codeHintService,
-            IrisSettingsService irisSettingsService) {
+            Optional<IrisSettingsService> irisSettingsService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.solutionEntryRepository = solutionEntryRepository;
@@ -102,6 +102,7 @@ public class CodeHintResource {
      * @param codeHintId The id of the code hint
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated code hint
      */
+    @Profile("iris")
     @PostMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/generate-description")
     @EnforceAtLeastEditor
     public ResponseEntity<CodeHint> generateDescriptionForCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId) {
@@ -109,7 +110,7 @@ public class CodeHintResource {
 
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-        irisSettingsService.checkIsIrisHestiaSessionEnabledElseThrow(exercise);
+        irisSettingsService.orElseThrow().isEnabledForElseThrow(IrisSubSettingsType.HESTIA, exercise);
 
         // Hints for exam exercises are not supported at the moment
         if (exercise.isExamExercise()) {

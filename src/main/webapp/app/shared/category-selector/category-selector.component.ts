@@ -19,9 +19,14 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
 export class CategorySelectorComponent implements OnChanges {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
 
-    // the selected categories, which can be manipulated by the user in the UI
+    /**
+     * the selected categories, which can be manipulated by the user in the UI
+     */
     @Input() categories: ExerciseCategory[];
-    // the existing categories used for auto-completion, might include duplicates
+
+    /**
+     * the existing categories used for auto-completion, might include duplicates
+     */
     @Input() existingCategories: ExerciseCategory[];
 
     @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();

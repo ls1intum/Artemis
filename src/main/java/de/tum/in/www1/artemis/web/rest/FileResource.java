@@ -1,15 +1,10 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
-import java.net.FileNameMap;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLConnection;
+import java.net.*;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,10 +33,7 @@ import de.tum.in.www1.artemis.domain.quiz.DragItem;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.*;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -561,5 +553,4 @@ public class FileResource {
             throw new EntityNotFoundException("The filename contains invalid characters. Only characters a-z, A-Z, 0-9, '_', '.' and '-' are allowed!");
         }
     }
-
 }

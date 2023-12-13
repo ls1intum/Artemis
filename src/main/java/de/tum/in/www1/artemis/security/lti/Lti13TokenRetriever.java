@@ -87,6 +87,48 @@ public class Lti13TokenRetriever {
         }
     }
 
+    /**
+     * Creates a signed JWT for LTI Deep Linking using a specific client registration ID and a set of custom claims.
+     * The JWT is signed using the RSA algorithm with SHA-256.
+     *
+     * @param clientRegistrationId The client registration ID associated with the JWK to be used for signing the JWT.
+     * @param customClaims         A map of custom claims to be included in the JWT. These claims are additional data
+     *                                 that the consuming service may require.
+     * @return A serialized signed JWT as a String.
+     * @throws IllegalArgumentException If no JWK could be retrieved for the provided client registration ID.
+     * @throws JOSEException            If there is an error creating the RSA key pair or signing the JWT.
+     */
+    public String createDeepLinkingJWT(String clientRegistrationId, Map<String, Object> customClaims) {
+        JWK jwk = oAuth2JWKSService.getJWK(clientRegistrationId);
+
+        if (jwk == null) {
+            throw new IllegalArgumentException("Failed to get JWK for client registration: " + clientRegistrationId);
+        }
+
+        try {
+            KeyPair keyPair = jwk.toRSAKey().toKeyPair();
+            RSASSASigner signer = new RSASSASigner(keyPair.getPrivate());
+
+            var claimSetBuilder = new JWTClaimsSet.Builder();
+            for (Map.Entry<String, Object> entry : customClaims.entrySet()) {
+                claimSetBuilder.claim(entry.getKey(), entry.getValue());
+            }
+
+            JWTClaimsSet claimsSet = claimSetBuilder.issueTime(Date.from(Instant.now())).expirationTime(Date.from(Instant.now().plusSeconds(JWT_LIFETIME))).build();
+
+            JWSHeader jwt = new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).keyID(jwk.getKeyID()).build();
+            SignedJWT signedJWT = new SignedJWT(jwt, claimsSet);
+            signedJWT.sign(signer);
+
+            log.debug("Created signed token: {}", signedJWT.serialize());
+            return signedJWT.serialize();
+        }
+        catch (JOSEException e) {
+            log.error("Could not create keypair for clientRegistrationId {}", clientRegistrationId);
+            return null;
+        }
+    }
+
     private SignedJWT createJWT(ClientRegistration clientRegistration) {
         JWK jwk = oAuth2JWKSService.getJWK(clientRegistration.getRegistrationId());
 

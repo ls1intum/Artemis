@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
@@ -72,7 +70,11 @@ public class EntityFileService {
             else {
                 target = fileService.generateFilePath(fileService.generateTargetFilenameBase(targetFolder), extension, targetFolder);
             }
-            FileUtils.moveFile(source.toFile(), target.toFile(), REPLACE_EXISTING);
+            // remove target file before copying, because moveFile() ignores CopyOptions
+            if (target.toFile().exists()) {
+                FileUtils.delete(target.toFile());
+            }
+            FileUtils.moveFile(source.toFile(), target.toFile());
             URI newPath = filePathService.publicPathForActualPathOrThrow(target, entityId);
             log.debug("Moved File from {} to {}", source, target);
             return newPath.toString();
@@ -102,7 +104,7 @@ public class EntityFileService {
         if (newEntityFilePath != null) {
             resultingPath = moveFileBeforeEntityPersistenceWithIdIfIsTemp(newEntityFilePath, targetFolder, keepFilename, entityId);
         }
-        if (oldEntityFilePath != null && !oldEntityFilePath.equals(newEntityFilePath)) {
+        if (oldEntityFilePath != null && !oldEntityFilePath.equals(resultingPath)) {
             Path oldFilePath = filePathService.actualPathForPublicPathOrThrow(URI.create(oldEntityFilePath));
             if (oldFilePath.toFile().exists()) {
                 fileService.schedulePathForDeletion(oldFilePath, 0);

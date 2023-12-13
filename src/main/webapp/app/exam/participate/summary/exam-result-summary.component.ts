@@ -13,7 +13,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/shared/util/utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { Submission } from 'app/entities/submission.model';
@@ -22,6 +22,8 @@ import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } fro
 import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular-ivy';
 import { AlertService } from 'app/core/util/alert.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { isExamResultPublished } from 'app/exam/participate/exam.utils';
 
 export type ResultSummaryExerciseInfo = {
     icon: IconProp;
@@ -34,6 +36,7 @@ export type ResultSummaryExerciseInfo = {
     submission?: Submission;
     participation?: Participation;
     displayExampleSolution: boolean;
+    releaseTestsWithExampleSolution: boolean;
 };
 
 type StateBeforeResetting = {
@@ -154,9 +157,9 @@ export class ExamResultSummaryComponent implements OnInit {
             throw new Error('studentExam.user.id should be present to fetch grade info');
         }
 
-        if (this.isExamResultPublished()) {
+        if (isExamResultPublished(this.isTestRun, this.studentExam.exam, this.serverDateService)) {
             this.examParticipationService
-                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id)
+                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id, this.isTestRun)
                 .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
                     studentExamWithGrade.studentExam = this.studentExam;
                     this.studentExamGradeInfoDTO = studentExamWithGrade;
@@ -208,11 +211,6 @@ export class ExamResultSummaryComponent implements OnInit {
         }
     }
 
-    private isExamResultPublished() {
-        const exam = this.studentExam.exam;
-        return exam?.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
-    }
-
     /**
      * called for exportPDF Button
      */
@@ -230,10 +228,6 @@ export class ExamResultSummaryComponent implements OnInit {
         this.resetExpandingExercisesAndGradingKeys(stateBeforeResetting);
     }
 
-    private scrollToTop() {
-        window.scrollTo(0, 0);
-    }
-
     scrollToOverviewOrTop() {
         const searchedId = 'exam-summary-result-overview';
         const targetElement = document.getElementById(searchedId);
@@ -245,7 +239,7 @@ export class ExamResultSummaryComponent implements OnInit {
                 inline: 'nearest',
             });
         } else {
-            this.scrollToTop();
+            scrollToTopOfPage();
         }
     }
 
@@ -358,6 +352,7 @@ export class ExamResultSummaryComponent implements OnInit {
                 submission: this.getSubmissionForExercise(exercise),
                 participation: this.getParticipationForExercise(exercise),
                 displayExampleSolution: false,
+                releaseTestsWithExampleSolution: exercise.type === ExerciseType.PROGRAMMING && !!(exercise as ProgrammingExercise).releaseTestsWithExampleSolution,
             };
         }
         return exerciseInfos;

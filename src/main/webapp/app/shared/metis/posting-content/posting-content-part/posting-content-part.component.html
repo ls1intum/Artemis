@@ -1,41 +1,53 @@
-<span
-    class="markdown-preview"
-    *ngIf="postingContentPart.contentBeforeReference"
-    [innerHTML]="postingContentPart.contentBeforeReference | htmlForPostingMarkdown: true : allowedHtmlTags : allowedHtmlAttributes"
-></span>
-<a class="reference" *ngIf="postingContentPart.linkToReference" [routerLink]="postingContentPart.linkToReference" [queryParams]="postingContentPart.queryParams">
-    <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)"></fa-icon>{{ postingContentPart.referenceStr }}
-</a>
-<a class="reference" *ngIf="postingContentPart.referenceType === ReferenceType.POST && !postingContentPart.linkToReference">
-    <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)"></fa-icon>{{ postingContentPart.referenceStr }}
-</a>
-<a class="reference" *ngIf="postingContentPart.referenceType === ReferenceType.USER" (click)="onClickUserReference(postingContentPart.queryParams?.referenceUserLogin)">
-    <fa-icon class="px-1" [icon]="faAt"></fa-icon>{{ postingContentPart.referenceStr }}
-</a>
-<a class="reference" *ngIf="postingContentPart.attachmentToReference" (click)="openAttachment(postingContentPart.attachmentToReference)">
-    <fa-icon class="px-1" [icon]="faFile"></fa-icon>{{ postingContentPart.referenceStr }}
-</a>
-<div style="max-width: 400px">
-    <a class="reference" *ngIf="postingContentPart.slideToReference" (click)="enlargeImage(postingContentPart.slideToReference)">
-        <img
-            class="img-fluid rounded-sm border mt-1 mb-1"
-            *ngIf="postingContentPart.slideToReference && !imageNotFound"
-            [src]="postingContentPart.slideToReference"
-            [alt]="postingContentPart.referenceStr"
-            [title]="postingContentPart.referenceStr"
-            (error)="toggleImageNotFound()"
-            height="auto"
-            width="100%"
-        />
+@if (postingContentPart.contentBeforeReference) {
+    <span class="markdown-preview" [innerHTML]="postingContentPart.contentBeforeReference | htmlForPostingMarkdown: true : allowedHtmlTags : allowedHtmlAttributes"></span>
+}
+@if (postingContentPart.linkToReference) {
+    <a class="reference" [routerLink]="postingContentPart.linkToReference" [queryParams]="postingContentPart.queryParams">
+        <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)"></fa-icon>{{ postingContentPart.referenceStr }}
     </a>
-    <div *ngIf="imageNotFound" class="card">
-        <h5 class="card-body">
-            <fa-icon class="px-1" [icon]="faBan"></fa-icon><span>{{ 'artemisApp.markdownEditor.preview.slideNotFound' | artemisTranslate }}</span>
-        </h5>
+}
+@if (postingContentPart.referenceType === ReferenceType.POST && !postingContentPart.linkToReference) {
+    <a class="reference"> <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)"></fa-icon>{{ postingContentPart.referenceStr }} </a>
+}
+@if (postingContentPart.referenceType === ReferenceType.USER) {
+    <a class="reference" (click)="onClickUserReference(postingContentPart.queryParams?.referenceUserLogin)">
+        <fa-icon class="px-1" [icon]="faAt"></fa-icon>{{ postingContentPart.referenceStr }}
+    </a>
+}
+@if (postingContentPart.referenceType === ReferenceType.CHANNEL) {
+    <a class="reference" (click)="onClickChannelReference(postingContentPart.queryParams?.channelId)">
+        <fa-icon class="px-1" [icon]="faHashtag"></fa-icon>{{ postingContentPart.referenceStr }}
+    </a>
+}
+@if (postingContentPart.attachmentToReference) {
+    <a class="reference" (click)="openAttachment(postingContentPart.attachmentToReference)">
+        <fa-icon class="px-1" [icon]="faFile"></fa-icon>{{ postingContentPart.referenceStr }}
+    </a>
+}
+@if (postingContentPart.slideToReference) {
+    <div style="max-width: 400px">
+        <a class="reference" (click)="enlargeImage(postingContentPart.slideToReference)">
+            @if (postingContentPart.slideToReference && !imageNotFound) {
+                <img
+                    class="img-fluid rounded-sm border mt-1 mb-1"
+                    [src]="postingContentPart.slideToReference"
+                    [alt]="postingContentPart.referenceStr"
+                    [title]="postingContentPart.referenceStr"
+                    (error)="toggleImageNotFound()"
+                    height="auto"
+                    width="100%"
+                />
+            }
+        </a>
+        @if (imageNotFound) {
+            <div class="card">
+                <h5 class="card-body">
+                    <fa-icon class="px-1" [icon]="faBan"></fa-icon><span>{{ 'artemisApp.markdownEditor.preview.slideNotFound' | artemisTranslate }}</span>
+                </h5>
+            </div>
+        }
     </div>
-</div>
-<span
-    class="markdown-preview"
-    *ngIf="postingContentPart.contentAfterReference"
-    [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown: false : allowedHtmlTags : allowedHtmlAttributes"
-></span>
+}
+@if (postingContentPart.contentAfterReference) {
+    <span class="markdown-preview" [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown: false : allowedHtmlTags : allowedHtmlAttributes"></span>
+}

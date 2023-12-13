@@ -1,24 +1,26 @@
-<div *ngIf="commitState === CommitState.CONFLICT; else standardActions">
-    <button
-        id="resolve_conflict_button"
-        type="button"
-        class="btn btn-danger navbar-btn me-3"
-        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-        [overwriteDisabled]="disableActions"
-        (click)="resetRepository()"
-        [ngbTooltip]="'artemisApp.editor.conflict.resetRepository' | artemisTranslate"
-    >
-        <span *ngIf="isResolvingConflict; else notResolvingConflict">
-            <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
-            <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Saving</span>
-        </span>
-        <ng-template #notResolvingConflict>
-            <fa-icon [icon]="faTimes"> </fa-icon>
-            <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Resolve conflict</span>
-        </ng-template>
-    </button>
-</div>
-<ng-template #standardActions>
+@if (commitState === CommitState.CONFLICT) {
+    <div>
+        <button
+            id="resolve_conflict_button"
+            type="button"
+            class="btn btn-danger navbar-btn me-3"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [overwriteDisabled]="disableActions"
+            (click)="resetRepository()"
+            [ngbTooltip]="'artemisApp.editor.conflict.resetRepository' | artemisTranslate"
+        >
+            @if (isResolvingConflict) {
+                <span>
+                    <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                    <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Saving</span>
+                </span>
+            } @else {
+                <fa-icon [icon]="faTimes"> </fa-icon>
+                <span jhiTranslate="artemisApp.editor.conflict.resolveConflict">Resolve conflict</span>
+            }
+        </button>
+    </div>
+} @else {
     <button
         id="refresh_button"
         type="button"
@@ -28,14 +30,15 @@
         (click)="onRefresh()"
         [ngbTooltip]="'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate"
     >
-        <span *ngIf="editorState === EditorState.REFRESHING; else notRefreshing">
-            <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
-            <span jhiTranslate="artemisApp.editor.refreshing">Refreshing</span>
-        </span>
-        <ng-template #notRefreshing>
+        @if (editorState === EditorState.REFRESHING) {
+            <span>
+                <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                <span jhiTranslate="artemisApp.editor.refreshing">Refreshing</span>
+            </span>
+        } @else {
             <fa-icon [icon]="faSync"></fa-icon>
             <span jhiTranslate="artemisApp.editor.refresh.performRefresh">Refresh</span>
-        </ng-template>
+        }
     </button>
     <button
         id="submit_button"
@@ -56,4 +59,4 @@
             <span jhiTranslate="artemisApp.editor.submit">Submit</span>
         </span>
     </button>
-</ng-template>
+}

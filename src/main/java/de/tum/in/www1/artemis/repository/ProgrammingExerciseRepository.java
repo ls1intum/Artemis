@@ -23,6 +23,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -113,6 +114,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     /**
      * Get a programmingExercise with template and solution participation, each with the latest result and feedbacks.
+     * NOTICE: this query is quite expensive because it loads all feedback and test cases, and it includes sub queries to retrieve the latest result
+     * IMPORTANT: you should generally avoid using this query except you really need all information!!
      *
      * @param exerciseId the id of the exercise that should be fetched.
      * @return the exercise with the given ID, if found.
@@ -133,7 +136,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
                 AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
             """)
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationLatestResultById(@Param("exerciseId") Long exerciseId);
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesById(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
@@ -426,6 +429,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     List<ProgrammingExercise> findAllProgrammingExercisesInCourseOrInExamsOfCourse(@Param("course") Course course);
 
+    @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig" })
+    Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigById(Long exerciseId);
+
     long countByShortNameAndCourse(String shortName, Course course);
 
     long countByTitleAndCourse(String shortName, Course course);
@@ -443,6 +449,49 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @NotNull
     default ProgrammingExercise findByIdElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
         return findById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
+    /**
+     * Find a programming exercise by its id, with grading criteria loaded, and throw an EntityNotFoundException if it cannot be found
+     *
+     * @param exerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    @Query("""
+            SELECT DISTINCT e FROM ProgrammingExercise e
+            LEFT JOIN FETCH e.gradingCriteria
+            WHERE e.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findByIdWithGradingCriteria(long exerciseId);
+
+    /**
+     * Finds all programming exercises with eager template participation and the given programming language.
+     *
+     * @param programmingLanguage the programming language of the exercises to find.
+     * @return a list of programming exercises with eager template participation.
+     */
+    @Query("""
+            SELECT DISTINCT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.templateParticipation tp
+            WHERE pe.programmingLanguage = :programmingLanguage
+            """)
+    List<ProgrammingExercise> findAllByProgrammingLanguageWithTemplateParticipation(@Param("programmingLanguage") ProgrammingLanguage programmingLanguage);
+
+    default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
+        return findByIdWithGradingCriteria(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+    }
+
+    /**
+     * Find a programming exercise by its id and fetch related plagiarism detection config.
+     * Throws an EntityNotFoundException if the exercise cannot be found.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithPlagiarismDetectionConfigElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
+        return findWithPlagiarismDetectionConfigById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
     /**
@@ -479,19 +528,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-    }
-
-    /**
-     * Find a programming exercise by its id, including template and solution participation and their latest results.
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     */
-    @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationLatestResultById(programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
@@ -583,15 +619,20 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Find a programming exercise by its id, with eagerly loaded template and solution participation, and latest result
+     * Find a programming exercise by its id, with eagerly loaded template and solution participation,
+     * including the latest result with feedback and test cases.
+     *
+     * NOTICE: this query is quite expensive because it loads all feedback and test cases,
+     * and it includes sub queries to retrieve the latest result
+     * IMPORTANT: you should generally avoid using this query except you really need all information!!
      *
      * @param programmingExerciseId of the programming exercise.
      * @return The programming exercise related to the given id
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationLatestResultById(programmingExerciseId);
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesById(programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 

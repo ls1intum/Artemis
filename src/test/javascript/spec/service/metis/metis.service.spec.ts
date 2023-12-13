@@ -43,6 +43,7 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
 import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -55,6 +56,7 @@ describe('Metis Service', () => {
     let reactionService: ReactionService;
     let postService: PostService;
     let answerPostService: AnswerPostService;
+    let conversationService: ConversationService;
     let post: Post;
     let answerPost: AnswerPost;
     let reaction: Reaction;
@@ -65,6 +67,7 @@ describe('Metis Service', () => {
             imports: [HttpClientTestingModule],
             providers: [
                 MockProvider(SessionStorageService),
+                MockProvider(ConversationService),
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: PostService, useClass: MockPostService },
@@ -80,6 +83,7 @@ describe('Metis Service', () => {
         reactionService = TestBed.inject(ReactionService);
         postService = TestBed.inject(PostService);
         answerPostService = TestBed.inject(AnswerPostService);
+        conversationService = TestBed.inject(ConversationService);
         metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
         metisServiceCreateWebsocketSubscriptionSpy = jest.spyOn(metisService, 'createWebsocketSubscription');
         metisServiceUserStub = jest.spyOn(metisService, 'getUser');
@@ -98,32 +102,49 @@ describe('Metis Service', () => {
     describe('Invoke post service methods', () => {
         it('should create a post', fakeAsync(() => {
             const postServiceSpy = jest.spyOn(postService, 'create');
+
             const createdPostSub = metisService.createPost(post).subscribe((createdPost) => {
                 expect(createdPost).toEqual(post);
             });
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([post]));
+
             expect(postServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
         }));
 
         it('should delete a post', fakeAsync(() => {
             const postServiceSpy = jest.spyOn(postService, 'delete');
+            const createdPostSub = metisService.createPost(post).subscribe();
+
             metisService.deletePost(post);
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([]));
+
             expect(postServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
         }));
 
         it('should update a post', fakeAsync(() => {
             const postServiceSpy = jest.spyOn(postService, 'update');
+            const createdPostSub = metisService.createPost(post).subscribe();
+            post.content = 'new content for update';
+
             const updatedPostSub = metisService.updatePost(post).subscribe((updatedPost) => {
                 expect(updatedPost).toEqual(post);
             });
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([post]));
+
             expect(postServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             updatedPostSub.unsubscribe();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
         }));
 
         it('should pin a post', fakeAsync(() => {
@@ -236,54 +257,94 @@ describe('Metis Service', () => {
     describe('Invoke answer post service methods', () => {
         it('should create an answer post', fakeAsync(() => {
             const answerPostServiceSpy = jest.spyOn(answerPostService, 'create');
+            const createdPostSub = metisService.createPost(post).subscribe();
+            answerPost = { ...answerPost, post };
+
             const createdAnswerPostSub = metisService.createAnswerPost(answerPost).subscribe((createdAnswerPost) => {
                 expect(createdAnswerPost).toEqual(answerPost);
             });
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [answerPost] }]));
+
             expect(answerPostServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdAnswerPostSub.unsubscribe();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
         }));
 
         it('should delete an answer post', fakeAsync(() => {
             const answerPostServiceSpy = jest.spyOn(answerPostService, 'delete');
+            const createdPostSub = metisService.createPost(post).subscribe();
+            answerPost = { ...answerPost, post };
+            const createdAnswerPostSub = metisService.createAnswerPost(answerPost).subscribe();
+
             metisService.deleteAnswerPost(answerPost);
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [] }]));
+
             expect(answerPostServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
+            createdAnswerPostSub.unsubscribe();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
         }));
 
         it('should update an answer post', fakeAsync(() => {
             const answerPostServiceSpy = jest.spyOn(answerPostService, 'update');
+            const createdPostSub = metisService.createPost(post).subscribe();
+            answerPost = { ...answerPost, post };
+            const createdAnswerPostSub = metisService.createAnswerPost(answerPost).subscribe();
+
             const updatedAnswerPostSub = metisService.updateAnswerPost(answerPost).subscribe((updatedAnswerPost) => {
                 expect(updatedAnswerPost).toEqual(answerPost);
             });
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, answers: [answerPost] }]));
+
             expect(answerPostServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             updatedAnswerPostSub.unsubscribe();
+            createdAnswerPostSub.unsubscribe();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
         }));
     });
 
     describe('Invoke reaction service methods', () => {
         it('should create a reaction', fakeAsync(() => {
             const reactionServiceSpy = jest.spyOn(reactionService, 'create');
+            const createdPostSub = metisService.createPost(post).subscribe();
+            reaction = { ...reaction, post };
+
             const createdReactionSub = metisService.createReaction(reaction).subscribe((createdReaction) => {
                 expect(createdReaction).toEqual(reaction);
             });
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, reactions: [reaction] }]));
+
             expect(reactionServiceSpy).toHaveBeenCalledOnce();
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             createdReactionSub.unsubscribe();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
         }));
 
         it('should delete a reaction', fakeAsync(() => {
             const reactionServiceSpy = jest.spyOn(reactionService, 'delete');
+            post = { ...post, reactions: [reaction] };
+            reaction.post = post;
+            const createdPostSub = metisService.createPost(post).subscribe();
+
             metisService.deleteReaction(reaction).subscribe(() => {
                 expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             });
+            const cachedPostsSub = metisService.posts.subscribe((posts) => expect(posts).toEqual([{ ...post, reactions: [] }]));
+
             tick();
             expect(reactionServiceSpy).toHaveBeenCalledOnce();
+            createdPostSub.unsubscribe();
+            cachedPostsSub.unsubscribe();
         }));
     });
 
@@ -557,7 +618,6 @@ describe('Metis Service', () => {
             'should not call postService.getPosts() for new or updated messages received over WebSocket',
             (action: MetisPostAction) => {
                 // Setup
-                const channel = 'someChannel';
                 const mockPostDTO = {
                     post: metisPostInChannel,
                     action,
@@ -565,17 +625,23 @@ describe('Metis Service', () => {
                 const mockReceiveObservable = new Subject();
                 websocketServiceReceiveStub.mockReturnValue(mockReceiveObservable.asObservable());
                 metisService.setPageType(PageType.OVERVIEW);
-                metisService.createWebsocketSubscription(channel);
 
                 // set currentPostContextFilter appropriately
                 metisService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id } as PostContextFilter);
 
                 // Ensure subscribe to websocket was called
-                expect(websocketService.subscribe).toHaveBeenCalled();
+                expect(websocketService.subscribe).toHaveBeenCalledOnce();
 
                 // Emulate receiving a message
                 const getPostsSpy = jest.spyOn(postService, 'getPosts');
+                const markAsReadSpy = jest.spyOn(conversationService, 'markAsRead');
                 mockReceiveObservable.next(mockPostDTO);
+
+                if (action === MetisPostAction.CREATE) {
+                    expect(markAsReadSpy).toHaveBeenCalledOnce();
+                } else {
+                    expect(markAsReadSpy).not.toHaveBeenCalled();
+                }
 
                 // Ensure getPosts() was not called
                 expect(getPostsSpy).not.toHaveBeenCalled();
@@ -608,6 +674,7 @@ describe('Metis Service', () => {
             // set currentPostContextFilter with search text
             metisService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id, searchText: 'Search text' } as PostContextFilter);
 
+            jest.spyOn(conversationService, 'markAsRead').mockReturnValue(of());
             // Emulate receiving a message matching the search text
             mockReceiveObservable.next(mockPostDTO);
             // Emulate receiving a message not matching the search text
@@ -621,31 +688,5 @@ describe('Metis Service', () => {
             });
             tick();
         }));
-
-        it.each([MetisPostAction.CREATE, MetisPostAction.UPDATE, MetisPostAction.DELETE])(
-            'should not call postService.getPosts() for new or updated messages received over WebSocket',
-            (action: MetisPostAction) => {
-                // Setup
-                const channel = 'someChannel';
-                const mockPostDTO = {
-                    post: metisPostInChannel,
-                    action,
-                };
-                const mockReceiveObservable = new Subject();
-                websocketServiceReceiveStub.mockReturnValue(mockReceiveObservable.asObservable());
-                const getPostsSpy = jest.spyOn(postService, 'getPosts');
-                metisService.setPageType(PageType.OVERVIEW);
-                metisService.createWebsocketSubscription(channel);
-
-                // Ensure subscribe to websocket was called
-                expect(websocketService.subscribe).toHaveBeenCalled();
-
-                // Emulate receiving a post
-                mockReceiveObservable.next(mockPostDTO);
-
-                // Ensure getPosts() was not called
-                expect(getPostsSpy).not.toHaveBeenCalled();
-            },
-        );
     });
 });

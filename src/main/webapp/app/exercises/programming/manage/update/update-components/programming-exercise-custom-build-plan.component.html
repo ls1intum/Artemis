@@ -1,0 +1,57 @@
+<div class="form-group">
+    <div class="form-check custom-checkbox">
+        <input class="form-check-input" type="checkbox" name="customizeBuildPlan" id="field_customizeBuildPlan" [(ngModel)]="programmingExercise.customizeBuildPlanWithAeolus" />
+        <label class="form-check-label custom-control-label" for="field_customizeBuildPlan" jhiTranslate="artemisApp.programmingExercise.customizeBuildPlanWithAeolus"
+            >Customize Build Plan with Aeolus
+        </label>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeBuildPlansWithAeolusTooltip"></jhi-help-icon>
+        <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
+    </div>
+    @if (programmingExercise.customizeBuildPlanWithAeolus) {
+        <div class="row">
+            <div class="col-2 col-md-3">
+                <div class="d-flex flex-column h-100 justify-content-between">
+                    <div class="list-group m-1">
+                        @for (action of this.programmingExercise.windFile?.actions; track action) {
+                            @if (isScriptAction(action)) {
+                                <div class="list-group-item mb-1" [ngClass]="{ active: active?.name === action.name }" (click)="changeActiveAction(action.name)">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <p class="mb-0">{{ action.name }}</p>
+                                        <div>
+                                            <button type="button" class="btn-close" (click)="deleteAction(action.name)" aria-label="Remove"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-primary" (click)="addAction('new action')">Add Action</button>
+                    </div>
+                </div>
+            </div>
+            @if (active) {
+                <div class="card col-10 col-md-9">
+                    <div class="card-header">
+                        <input required type="text" class="form-control" name="actionName" id="field_actionName" [(ngModel)]="active.name" />
+                        <div class="form-check">
+                            @if (active) {
+                                <label class="form-check-label" for="field_alwaysrun">
+                                    <input class="form-check-input" type="checkbox" name="runAlways" id="field_alwaysrun" [(ngModel)]="active.runAlways" />
+                                    <label class="form-check-label custom-control-label" for="field_alwaysrun" jhiTranslate="artemisApp.programmingExercise.runActionAlways">
+                                        Always run, even if other actions fail
+                                    </label>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-text">
+                        @if (needsEditor()) {
+                            <jhi-ace-editor #editor (textChanged)="codeChanged($event)" />
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

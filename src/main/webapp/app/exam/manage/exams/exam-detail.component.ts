@@ -10,7 +10,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import dayjs from 'dayjs/esm';
-import { faAward, faClipboard, faEye, faFlaskVial, faHeartBroken, faListAlt, faThList, faTimes, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faAward, faClipboard, faEye, faFlaskVial, faHeartBroken, faListAlt, faThList, faTrash, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeType } from 'app/entities/grading-scale.model';
@@ -32,7 +32,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
-    faTimes = faTimes;
+    faTrash = faTrash;
     faUndo = faUndo;
     faEye = faEye;
     faWrench = faWrench;

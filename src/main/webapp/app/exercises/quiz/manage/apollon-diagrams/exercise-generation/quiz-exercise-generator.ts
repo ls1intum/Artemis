@@ -1,16 +1,11 @@
 import { ApollonEditor, SVG, UMLElementType, UMLModel, UMLModelElement, UMLRelationshipType } from '@ls1intum/apollon';
-import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { convertRenderedSVGToPNG } from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { lastValueFrom } from 'rxjs';
 import { round } from 'app/shared/util/utils';
 
 // Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
@@ -22,18 +17,17 @@ export const MAX_SIZE_UNIT = 200;
  * @param {Course} course The selected `Course` in which the new `QuizExercise` should be created.
  * @param {string} title The title of the new `QuizExercise`.
  * @param {UMLModel} model The complete UML model the quiz exercise is based on.
- * @param {FileUploaderService} fileUploaderService To upload images like the background.
- * @param {QuizExerciseService} quizExerciseService To submit the new `QuizExercise`.
  */
-export async function generateDragAndDropQuizExercise(
-    course: Course,
-    title: string,
-    model: UMLModel,
-    fileUploaderService: FileUploaderService,
-    quizExerciseService: QuizExerciseService,
-): Promise<QuizExercise> {
-    const interactiveElements = [...model.interactive.elements, ...model.interactive.relationships];
-    const elements = [...model.elements, ...model.relationships];
+export async function generateDragAndDropQuizExercise(course: Course, title: string, model: UMLModel): Promise<DragAndDropQuestion> {
+    const interactiveElements = [
+        ...Object.entries(model.interactive.elements)
+            .filter(([, include]) => include)
+            .map(([id]) => id),
+        ...Object.entries(model.interactive.relationships)
+            .filter(([, include]) => include)
+            .map(([id]) => id),
+    ];
+    const elements = [...Object.values(model.elements), ...Object.values(model.relationships)];
 
     // Render the diagram's background image and store it
     const renderedDiagram = await ApollonEditor.exportModelAsSvg(model, {
@@ -63,32 +57,9 @@ export async function generateDragAndDropQuizExercise(
 
     // Generate a drag-and-drop question object
     const dragAndDropQuestion = createDragAndDropQuestion(title, 'diagram-background.png', [...dragItems.values()], [...dropLocations.values()], correctMappings);
+    dragAndDropQuestion.importedFiles = files;
 
-    // Generate a quiz exercise object
-    const quizExercise = createDragAndDropQuizExercise(course, title, dragAndDropQuestion);
-
-    // Save the quiz exercise
-    const creationResponse = await lastValueFrom(quizExerciseService.create(quizExercise, files));
-
-    return creationResponse.body ?? quizExercise;
-}
-
-/**
- * Create a new Drag and Drop `QuizExercise`.
- *
- * @param {Course} course The selected `Course` in which the new `QuizExercise` should be created.
- * @param {string} title The title of the new `QuizExercise`.
- * @param {DragAndDropQuestion} question The `DragAndDropQuestion` of the new `QuizExercise`.
- *
- * @return {QuizExercise} A new Drag and Drop `QuizExercise`.
- */
-function createDragAndDropQuizExercise(course: Course, title: string, question: DragAndDropQuestion): QuizExercise {
-    const quizExercise = new QuizExercise(course, undefined);
-    quizExercise.title = title;
-    quizExercise.duration = 600;
-    quizExercise.releaseDate = dayjs();
-    quizExercise.quizQuestions = [question];
-    return quizExercise;
+    return dragAndDropQuestion;
 }
 
 /**
@@ -270,7 +241,7 @@ function computeDropLocation(elementLocation: { x: number; y: number; width: num
 function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: Map<string, DropLocation>, model: UMLModel): DragAndDropMapping[] {
     const textualElementTypes: UMLElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
     const mappings = new Map<string, DragAndDropMapping[]>();
-    const textualElements = model.elements.filter((element) => textualElementTypes.includes(element.type));
+    const textualElements = Object.values(model.elements).filter((element) => textualElementTypes.includes(element.type));
 
     // Create all one-on-one mappings
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {

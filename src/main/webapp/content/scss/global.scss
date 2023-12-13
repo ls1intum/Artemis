@@ -128,6 +128,7 @@ a.btn {
 }
 
 .form-control,
+.form-control-sm,
 .form-select,
 .form-check-input,
 .form-control:not(.ace_editor):hover,
@@ -961,6 +962,11 @@ Course Info Bar
 .mat-form-field-outline {
     top: -0.1rem !important;
     color: $mat-form-field-outline;
+}
+
+.mat-form-field-appearance-outline {
+    --mdc-outlined-text-field-outline-width: 1px;
+    --mdc-outlined-text-field-container-shape: 4px;
 }
 
 /* Connection Warning Tooltip */
