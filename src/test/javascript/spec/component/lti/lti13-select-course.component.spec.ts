@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
 import { LtiCoursesComponent } from 'app/lti/lti13-select-course.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -8,6 +7,7 @@ import { LtiCourseCardComponent } from 'app/lti/lti-course-card.component';
 import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('LtiCoursesComponent', () => {
     let component: LtiCoursesComponent;
@@ -19,7 +19,7 @@ describe('LtiCoursesComponent', () => {
     const mockCourses: OnlineCourseDtoModel[] = [
         { id: 1, title: 'Course A', shortName: 'cA', registrationId: '1' },
         { id: 2, title: 'Course B', shortName: 'cB', registrationId: '1' },
-        { id: 3, title: 'Course C', shortName: 'cC', registrationId: '3' },
+        { id: 3, title: 'Course C', shortName: 'cC', registrationId: '1' },
     ];
 
     beforeEach(waitForAsync(() => {
@@ -27,14 +27,15 @@ describe('LtiCoursesComponent', () => {
             declarations: [LtiCoursesComponent, MockComponent(LtiCourseCardComponent)],
             providers: [
                 MockProvider(CourseManagementService, {
-                    findAllOnlineCoursesWithRegistrationId: jest.fn().mockReturnValue(of(new HttpResponse({ body: mockCourses }))),
+                    findAllOnlineCoursesWithRegistrationId: jest.fn().mockReturnValue(of(mockCourses)),
                 }),
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                MockProvider(AlertService),
             ],
         })
             .compileComponents()
             .then(() => {
-                jest.fn().mockReturnValue(of(new HttpResponse({ body: mockCourses })));
+                jest.fn().mockReturnValue(of(mockCourses));
                 courseManagementService = TestBed.inject(CourseManagementService);
                 sessionStorageService = TestBed.inject(SessionStorageService);
                 sessionStorageRetrieveSpy = jest.spyOn(sessionStorageService, 'retrieve');
@@ -60,7 +61,7 @@ describe('LtiCoursesComponent', () => {
 
         fixture.whenStable().then(() => {
             expect(courseManagementService.findAllOnlineCoursesWithRegistrationId).toHaveBeenCalled();
-            expect(component.courses).toHaveLength(2);
+            expect(component.courses).toHaveLength(3);
             expect(component.courses[0].title).toBe('Course A'); // Sorted by title
         });
     }));

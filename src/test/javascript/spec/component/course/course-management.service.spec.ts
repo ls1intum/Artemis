@@ -25,6 +25,7 @@ import { CourseForDashboardDTO, ParticipationResultDTO } from 'app/course/manage
 import { CourseScores } from 'app/course/course-scores/course-scores';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -161,6 +162,23 @@ describe('Course Management Service', () => {
         req.flush(returnedFromService);
         tick();
     }));
+
+    it('should fetch online courses for given registration ID', () => {
+        const mockClientId = 'client-123';
+        const mockResponse: OnlineCourseDtoModel[] = [
+            { id: 1, title: 'Course A', shortName: 'cA', registrationId: '1234' },
+            { id: 2, title: 'Course B', shortName: 'cB', registrationId: '1234' },
+            { id: 3, title: 'Course C', shortName: 'cC', registrationId: '3214' },
+        ];
+
+        courseManagementService.findAllOnlineCoursesWithRegistrationId(mockClientId).subscribe((courses) => {
+            expect(courses).toEqual(mockResponse);
+        });
+
+        const req = httpMock.expectOne(`${resourceUrl}/for-lti-dashboard?clientId=${mockClientId}`);
+        expect(req.request.method).toBe('GET');
+        req.flush(mockResponse);
+    });
 
     it('should find the course', fakeAsync(() => {
         courseManagementService

@@ -320,7 +320,7 @@ public class CourseResource {
 
         List<OnlineCourseDTO> onlineCourseDTOS = courses.stream()
                 .map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(), c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId()))
-                .collect(Collectors.toList());
+                .toList();
 
         return ResponseEntity.ok(onlineCourseDTOS);
     }
