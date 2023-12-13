@@ -1,68 +1,73 @@
-<form *ngIf="!isLoading; else loadingContainer" name="exportForm" role="form" (ngSubmit)="exportSubmissions(exercise.id!)" #exportForm="ngForm">
-    <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.title">Confirm export operation</h4>
-        <button type="button" class="btn-close" data-dismiss="modal" (click)="clear()"></button>
-    </div>
-    <div class="modal-body">
-        <p [jhiTranslate]="'artemisApp.instructorDashboard.exportSubmissions.question'" [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }">
-            Confirm export
-        </p>
-        <textarea
-            name="studentIds"
-            class="export-textarea"
-            [(ngModel)]="submissionExportOptions.participantIdentifierList"
-            required
-            [disabled]="submissionExportOptions.exportAllParticipants"
-        ></textarea>
-
-        <!--
-        Only show download all checkbox for instructors & admins.
-        -->
-        <ng-container *ngIf="exercise.isAtLeastInstructor">
-            <div class="checkbox">
-                <label class="control-label">
-                    <input class="form-check-input" type="checkbox" name="allStudents" [(ngModel)]="submissionExportOptions.exportAllParticipants" />
-                    <strong [jhiTranslate]="'artemisApp.instructorDashboard.exportSubmissions.downloadAllStudents'"> Or download the submissions of all students }} </strong>
-                </label>
-            </div>
-        </ng-container>
-        <ng-container>
-            <div class="checkbox">
-                <label class="control-label">
-                    <input class="form-check-input" type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.submissionExportOptions.filterLateSubmissions" />
-                    <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissions">Filter late submissions</strong>
-                </label>
-            </div>
-            <div class="form-group">
-                <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate.title"
-                    >Date for filter late submissions (defaults to exercise due date if not set)</strong
-                >
-                <jhi-help-icon text="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate.tooltip"></jhi-help-icon>
-                <jhi-date-time-picker
-                    [(ngModel)]="this.submissionExportOptions.filterLateSubmissionsDate"
-                    [disabled]="!this.submissionExportOptions.filterLateSubmissions"
-                    [shouldDisplayTimeZoneWarning]="false"
-                    name="filterLateSubmissionsDate"
-                ></jhi-date-time-picker>
-            </div>
-        </ng-container>
-    </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
-            <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
-        </button>
-        <button
-            type="submit"
-            [disabled]="(!submissionExportOptions.participantIdentifierList && !submissionExportOptions.exportAllParticipants) || exportInProgress"
-            class="btn btn-default"
-        >
-            <span *ngIf="this.exportInProgress" class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
-            <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
-        </button>
-    </div>
-</form>
-<ng-template #loadingContainer>
+@if (!isLoading) {
+    <form name="exportForm" role="form" (ngSubmit)="exportSubmissions(exercise.id!)" #exportForm="ngForm">
+        <div class="modal-header">
+            <h4 class="modal-title" jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.title">Confirm export operation</h4>
+            <button type="button" class="btn-close" data-dismiss="modal" (click)="clear()"></button>
+        </div>
+        <div class="modal-body">
+            <p
+                [jhiTranslate]="'artemisApp.instructorDashboard.exportSubmissions.question'"
+                [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }"
+            >
+                Confirm export
+            </p>
+            <textarea
+                name="studentIds"
+                class="export-textarea"
+                [(ngModel)]="submissionExportOptions.participantIdentifierList"
+                required
+                [disabled]="submissionExportOptions.exportAllParticipants"
+            ></textarea>
+            <!--
+      Only show download all checkbox for instructors & admins.
+      -->
+            @if (exercise.isAtLeastInstructor) {
+                <div class="checkbox">
+                    <label class="control-label">
+                        <input class="form-check-input" type="checkbox" name="allStudents" [(ngModel)]="submissionExportOptions.exportAllParticipants" />
+                        <strong [jhiTranslate]="'artemisApp.instructorDashboard.exportSubmissions.downloadAllStudents'"> Or download the submissions of all students </strong>
+                    </label>
+                </div>
+            }
+            <ng-container>
+                <div class="checkbox">
+                    <label class="control-label">
+                        <input class="form-check-input" type="checkbox" name="filterLateSubmissions" [(ngModel)]="this.submissionExportOptions.filterLateSubmissions" />
+                        <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissions">Filter late submissions</strong>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <strong jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate.title"
+                        >Date for filter late submissions (defaults to exercise due date if not set)</strong
+                    >
+                    <jhi-help-icon text="artemisApp.instructorDashboard.exportSubmissions.filterLateSubmissionsDate.tooltip"></jhi-help-icon>
+                    <jhi-date-time-picker
+                        [(ngModel)]="this.submissionExportOptions.filterLateSubmissionsDate"
+                        [disabled]="!this.submissionExportOptions.filterLateSubmissions"
+                        [shouldDisplayTimeZoneWarning]="false"
+                        name="filterLateSubmissionsDate"
+                    ></jhi-date-time-picker>
+                </div>
+            </ng-container>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
+                <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            </button>
+            <button
+                type="submit"
+                [disabled]="(!submissionExportOptions.participantIdentifierList && !submissionExportOptions.exportAllParticipants) || exportInProgress"
+                class="btn btn-default"
+            >
+                @if (this.exportInProgress) {
+                    <span class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
+                }
+                <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span jhiTranslate="entity.action.export">Export</span>
+            </button>
+        </div>
+    </form>
+} @else {
     <div class="d-flex justify-content-center mt-4 mb-4">
         <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
     </div>
-</ng-template>
+}

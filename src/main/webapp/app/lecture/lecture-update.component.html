@@ -1,144 +1,158 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <jhi-lecture-update-wizard
-            *ngIf="isShowingWizardMode"
-            [toggleModeFunction]="toggleModeFunction"
-            [saveLectureFunction]="saveLectureFunction"
-            [validateDatesFunction]="onDatesValuesChanged"
-            [lecture]="lecture"
-            [isSaving]="isSaving"
-        ></jhi-lecture-update-wizard>
-        <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm" *ngIf="!isShowingWizardMode">
-            <div class="d-flex">
-                <div class="flex-grow-1">
-                    <div class="d-flex align-items-center">
-                        <h2 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel">Create or edit a Lecture</h2>
-                        <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
-                    </div>
-                </div>
-                <div class="flex-grow-1 ms-3">
-                    <div class="guided-mode-button">
-                        <button type="button" id="guided.mode" class="btn btn-primary" (click)="toggleWizardMode()">
-                            <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToGuidedModeLabel">Switch to guided mode</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div>
-                <div class="form-group" [hidden]="!lecture.id">
-                    <label for="id" jhiTranslate="global.field.id">ID</label>
-                    <input type="text" class="form-control" id="id" name="id" [(ngModel)]="lecture.id" readonly />
-                </div>
-                <jhi-lecture-title-channel-name [lecture]="lecture"></jhi-lecture-title-channel-name>
-                <div class="form-group" id="field_description">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
-                    <jhi-markdown-editor
-                        class="markdown-editor"
-                        [domainCommands]="domainCommandsDescription"
-                        [(markdown)]="lecture.description"
-                        [editorMode]="EditorMode.LATEX"
-                    ></jhi-markdown-editor>
-                </div>
+        @if (isShowingWizardMode) {
+            <jhi-lecture-update-wizard
+                [toggleModeFunction]="toggleModeFunction"
+                [saveLectureFunction]="saveLectureFunction"
+                [validateDatesFunction]="onDatesValuesChanged"
+                [lecture]="lecture"
+                [isSaving]="isSaving"
+            ></jhi-lecture-update-wizard>
+        }
+        @if (!isShowingWizardMode) {
+            <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
                 <div class="d-flex">
-                    <div class="form-group flex-grow-1">
-                        <jhi-date-time-picker
-                            labelName="{{ 'artemisApp.lecture.visibleDate' | artemisTranslate }}"
-                            [(ngModel)]="lecture.visibleDate"
-                            (valueChange)="onDatesValuesChanged()"
-                            name="visibleDate"
-                            id="visible-date"
-                        ></jhi-date-time-picker>
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center">
+                            <h2 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel">Create or edit a Lecture</h2>
+                            <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+                        </div>
                     </div>
-                    <div class="form-group flex-grow-1 ms-3">
-                        <jhi-date-time-picker
-                            labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
-                            [(ngModel)]="lecture.startDate"
-                            (valueChange)="onDatesValuesChanged()"
-                            name="startDate"
-                            id="start-date"
-                        ></jhi-date-time-picker>
-                    </div>
-                    <div class="form-group flex-grow-1 ms-3">
-                        <jhi-date-time-picker
-                            labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
-                            [(ngModel)]="lecture.endDate"
-                            (valueChange)="onDatesValuesChanged()"
-                            name="endDate"
-                            id="end-date"
-                        ></jhi-date-time-picker>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="guided-mode-button">
+                            <button type="button" id="guided.mode" class="btn btn-primary" (click)="toggleWizardMode()">
+                                <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToGuidedModeLabel">Switch to guided mode</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="form-group" *ngIf="lecture.course">
-                    <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course">Course</label>
+                <div>
+                    <div class="form-group" [hidden]="!lecture.id">
+                        <label for="id" jhiTranslate="global.field.id">ID</label>
+                        <input type="text" class="form-control" id="id" name="id" [(ngModel)]="lecture.id" readonly />
+                    </div>
+                    <jhi-lecture-title-channel-name [lecture]="lecture"></jhi-lecture-title-channel-name>
+                    <div class="form-group" id="field_description">
+                        <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description">Description</label>
+                        <jhi-markdown-editor
+                            class="markdown-editor"
+                            [domainCommands]="domainCommandsDescription"
+                            [(markdown)]="lecture.description"
+                            [editorMode]="EditorMode.LATEX"
+                        ></jhi-markdown-editor>
+                    </div>
                     <div class="d-flex">
-                        <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="lecture.course.title" />
+                        <div class="form-group flex-grow-1">
+                            <jhi-date-time-picker
+                                labelName="{{ 'artemisApp.lecture.visibleDate' | artemisTranslate }}"
+                                [(ngModel)]="lecture.visibleDate"
+                                (valueChange)="onDatesValuesChanged()"
+                                name="visibleDate"
+                                id="visible-date"
+                            ></jhi-date-time-picker>
+                        </div>
+                        <div class="form-group flex-grow-1 ms-3">
+                            <jhi-date-time-picker
+                                labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
+                                [(ngModel)]="lecture.startDate"
+                                (valueChange)="onDatesValuesChanged()"
+                                name="startDate"
+                                id="start-date"
+                            ></jhi-date-time-picker>
+                        </div>
+                        <div class="form-group flex-grow-1 ms-3">
+                            <jhi-date-time-picker
+                                labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
+                                [(ngModel)]="lecture.endDate"
+                                (valueChange)="onDatesValuesChanged()"
+                                name="endDate"
+                                id="end-date"
+                            ></jhi-date-time-picker>
+                        </div>
                     </div>
+                    @if (lecture.course) {
+                        <div class="form-group">
+                            <label class="form-control-label" jhiTranslate="artemisApp.lecture.course" for="field_course">Course</label>
+                            <div class="d-flex">
+                                <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="lecture.course.title" />
+                            </div>
+                        </div>
+                    }
                 </div>
-            </div>
-            <div class="py-2">
-                <input class="form-check-input" type="checkbox" name="processUnit" (change)="onSelectProcessUnit()" [disabled]="editForm.form.invalid || isSaving" />
-                <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.processAutomatically' | artemisTranslate }}</span>
-                <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.lectureFileToolTip' | artemisTranslate"></fa-icon>
-            </div>
-
-            <div *ngIf="processUnitMode" class="alert alert-warning mt-3">
-                <ul class="informative-text">
-                    <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.firstLine' | artemisTranslate }}</li>
-                    <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.secondLine' | artemisTranslate }}</li>
-                    <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.note' | artemisTranslate }}</li>
-                </ul>
-            </div>
-
-            <div *ngIf="processUnitMode" class="form-group">
-                <label>{{ 'artemisApp.attachmentUnit.createAttachmentUnit.file' | artemisTranslate }}*</label>
-                <small id="fileHelp" class="form-text text-body-secondary">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
-                <fa-icon
-                    [icon]="faQuestionCircle"
-                    [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
-                ></fa-icon>
-                <div class="input-group background-file">
-                    <div class="custom-file overflow-ellipsis">
-                        <input
-                            id="fileInput"
-                            type="file"
-                            class="custom-file-input"
-                            [accept]="acceptedFileExtensionsFileBrowser"
-                            (change)="onFileChange($event)"
-                            aria-describedby="fileHelp"
-                            [placeholder]="'artemisApp.attachmentUnit.createAttachmentUnit.chooseFile' | artemisTranslate"
-                            (click)="fileInputTouched = true"
-                        />
+                <div class="py-2">
+                    <input class="form-check-input" type="checkbox" name="processUnit" (change)="onSelectProcessUnit()" [disabled]="editForm.form.invalid || isSaving" />
+                    <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.processAutomatically' | artemisTranslate }}</span>
+                    <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.lectureFileToolTip' | artemisTranslate"></fa-icon>
+                </div>
+                @if (processUnitMode) {
+                    <div class="alert alert-warning mt-3">
+                        <ul class="informative-text">
+                            <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.firstLine' | artemisTranslate }}</li>
+                            <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.secondLine' | artemisTranslate }}</li>
+                            <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.note' | artemisTranslate }}</li>
+                        </ul>
                     </div>
-                </div>
-                <div *ngIf="!fileName && fileInputTouched" class="alert alert-danger">
-                    {{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError' | artemisTranslate }}
-                </div>
-            </div>
-
-            <div class="d-flex">
-                <div class="flex-grow-1">
-                    <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-                        <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
-                    </button>
-                    <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnitMode" class="btn btn-primary">
-                        <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
-                    </button>
-                </div>
-                <div *ngIf="processUnitMode" class="flex-grow-1 ms-3">
-                    <div class="process-units-button">
-                        <button
-                            type="button"
-                            id="process-units-entity"
-                            [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing || !fileName"
-                            class="btn btn-success"
-                            (click)="proceedToUnitSplit()"
-                        >
-                            <fa-icon [icon]="faPuzzleProcess"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.processUnits">Process Units</span>
-                            <span *ngIf="isProcessing" class="spinner-border spinner-border-sm"></span>
+                }
+                @if (processUnitMode) {
+                    <div class="form-group">
+                        <label>{{ 'artemisApp.attachmentUnit.createAttachmentUnit.file' | artemisTranslate }}*</label>
+                        <small id="fileHelp" class="form-text text-body-secondary">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
+                        ></fa-icon>
+                        <div class="input-group background-file">
+                            <div class="custom-file overflow-ellipsis">
+                                <input
+                                    id="fileInput"
+                                    type="file"
+                                    class="custom-file-input"
+                                    [accept]="acceptedFileExtensionsFileBrowser"
+                                    (change)="onFileChange($event)"
+                                    aria-describedby="fileHelp"
+                                    [placeholder]="'artemisApp.attachmentUnit.createAttachmentUnit.chooseFile' | artemisTranslate"
+                                    (click)="fileInputTouched = true"
+                                />
+                            </div>
+                        </div>
+                        @if (!fileName && fileInputTouched) {
+                            <div class="alert alert-danger">
+                                {{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError' | artemisTranslate }}
+                            </div>
+                        }
+                    </div>
+                }
+                <div class="d-flex">
+                    <div class="flex-grow-1">
+                        <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
+                            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                        </button>
+                        <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnitMode" class="btn btn-primary">
+                            <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                         </button>
                     </div>
+                    @if (processUnitMode) {
+                        <div class="flex-grow-1 ms-3">
+                            <div class="process-units-button">
+                                <button
+                                    type="button"
+                                    id="process-units-entity"
+                                    [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing || !fileName"
+                                    class="btn btn-success"
+                                    (click)="proceedToUnitSplit()"
+                                >
+                                    <fa-icon [icon]="faPuzzleProcess"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.processUnits"
+                                        >Process Units</span
+                                    >
+                                    @if (isProcessing) {
+                                        <span class="spinner-border spinner-border-sm"></span>
+                                    }
+                                </button>
+                            </div>
+                        </div>
+                    }
                 </div>
-            </div>
-        </form>
+            </form>
+        }
     </div>
 </div>

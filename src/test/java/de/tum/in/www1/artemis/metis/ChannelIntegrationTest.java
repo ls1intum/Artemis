@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.metis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +19,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
@@ -30,6 +36,7 @@ import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupChannelManagem
 import de.tum.in.www1.artemis.tutorialgroups.TutorialGroupUtilService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelIdAndNameDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 class ChannelIntegrationTest extends AbstractConversationTest {
@@ -154,15 +161,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 
-    @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void update_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        update_messagingDeactivated(courseInformationSharingConfiguration);
-    }
-
-    void update_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+    void update_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
 
         // given
         var channelDTO = new ChannelDTO();
@@ -177,15 +179,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
     }
 
-    @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void delete_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        deleteTest_messagingDeactivated(courseInformationSharingConfiguration);
-    }
-
-    void deleteTest_messagingDeactivated(CourseInformationSharingConfiguration courseInformationSharingConfiguration) throws Exception {
-        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+    void delete_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
 
         expectDeleteForbidden(1L);
 
@@ -430,13 +427,11 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(channel.getId());
     }
 
-    @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void archiveAndUnarchiveChannel_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
-            throws Exception {
+    void archiveAndUnarchiveChannel_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         var channel = createChannel(true, TEST_PREFIX);
-        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
 
         // given
         expectArchivalChangeForbidden(channel, true, true);
@@ -469,14 +464,12 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(channel.getId());
     }
 
-    @ParameterizedTest
-    @EnumSource(value = CourseInformationSharingConfiguration.class, names = { "COMMUNICATION_ONLY", "DISABLED" })
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void grantRevokeChannelModeratorRole_messagingFeatureDeactivated_shouldReturnForbidden(CourseInformationSharingConfiguration courseInformationSharingConfiguration)
-            throws Exception {
+    void grantRevokeChannelModeratorRole_messagingFeatureDeactivated_shouldReturnForbidden() throws Exception {
         var channel = createChannel(true, TEST_PREFIX);
 
-        setCourseInformationSharingConfiguration(courseInformationSharingConfiguration);
+        setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
 
         // given
         expectGrantRevokeChannelModeratorRoleForbidden(channel, true);
@@ -790,6 +783,43 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         conversationRepository.deleteById(publicChannelWhereNotMember.getId());
         conversationRepository.deleteById(publicChannelWhereMember.getId());
         conversationRepository.deleteById(privateChannelWhereNotMember.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "student1", "tutor1", "instructor2" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getCoursePublicChannelsOverview_asNormalUser_canSeeAllPublicChannels(String userLogin) throws Exception {
+        // given
+        var publicChannelWhereMember = createChannel(true, TEST_PREFIX + "1");
+        addUsersToConversation(publicChannelWhereMember.getId(), userLogin);
+        var publicChannelWhereNotMember = createChannel(true, TEST_PREFIX + "2");
+        var privateChannelWhereMember = createChannel(false, TEST_PREFIX + "3");
+        addUsersToConversation(privateChannelWhereMember.getId(), userLogin);
+        var privateChannelWhereNotMember = createChannel(false, TEST_PREFIX + "4");
+        var courseWideChannelWhereMember = createCourseWideChannel(TEST_PREFIX + "5");
+        addUsersToConversation(courseWideChannelWhereMember.getId(), userLogin);
+        var courseWideChannelWhereNotMember = createCourseWideChannel(TEST_PREFIX + "6");
+        var visibleLecture = lectureUtilService.createLecture(exampleCourse, null);
+        var visibleLectureChannel = lectureUtilService.addLectureChannel(visibleLecture);
+        var invisibleLecture = lectureUtilService.createLecture(exampleCourse, ZonedDateTime.now().plusDays(1));
+        var invisibleLectureChannel = lectureUtilService.addLectureChannel(invisibleLecture);
+
+        // then
+        userUtilService.changeUser(testPrefix + userLogin);
+        var channels = request.getList("/api/courses/" + exampleCourseId + "/channels/public-overview", HttpStatus.OK, ChannelIdAndNameDTO.class);
+        assertThat(channels).hasSize(5);
+        assertThat(channels.stream().map(ChannelIdAndNameDTO::id).toList()).contains(publicChannelWhereMember.getId(), publicChannelWhereNotMember.getId(),
+                courseWideChannelWhereMember.getId(), courseWideChannelWhereNotMember.getId(), visibleLectureChannel.getId());
+
+        // cleanup
+        conversationRepository.deleteById(privateChannelWhereMember.getId());
+        conversationRepository.deleteById(publicChannelWhereNotMember.getId());
+        conversationRepository.deleteById(publicChannelWhereMember.getId());
+        conversationRepository.deleteById(privateChannelWhereNotMember.getId());
+        conversationRepository.deleteById(courseWideChannelWhereMember.getId());
+        conversationRepository.deleteById(courseWideChannelWhereNotMember.getId());
+        conversationRepository.deleteById(visibleLectureChannel.getId());
+        conversationRepository.deleteById(invisibleLectureChannel.getId());
     }
 
     @Test

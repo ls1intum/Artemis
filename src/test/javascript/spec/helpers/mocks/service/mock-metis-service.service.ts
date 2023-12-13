@@ -39,7 +39,7 @@ export class MockMetisService {
 
     createPost = (post: Post): Observable<Post> => of(post);
 
-    createAnswerPost = (answerPost: AnswerPost): Observable<AnswerPost> => of(answerPost);
+    createAnswerPost = (answerPost: AnswerPost): Observable<AnswerPost> => of({ ...answerPost });
 
     createReaction = (reaction: Reaction): Observable<Reaction> => of(reaction);
 
@@ -140,4 +140,6 @@ export class MockMetisService {
     getSimilarPosts(title: string): Observable<Post[]> {
         return of(metisCoursePosts.slice(0, 5));
     }
+
+    setCourse(course: Course | undefined): void {}
 }

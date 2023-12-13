@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -33,8 +32,6 @@ import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.CompetencyProgressService;
 import de.tum.in.www1.artemis.service.LectureUnitService;
-import de.tum.in.www1.artemis.service.feature.Feature;
-import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 import de.tum.in.www1.artemis.util.PageableSearchUtilService;
 import de.tum.in.www1.artemis.web.rest.LearningPathResource;
@@ -92,9 +89,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Autowired
     private LearningPathUtilService learningPathUtilService;
 
-    @Autowired
-    private FeatureToggleService featureToggleService;
-
     private Course course;
 
     private Competency[] competencies;
@@ -110,16 +104,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private static final String EDITOR_OF_COURSE = TEST_PREFIX + "editor1";
 
     private static final String INSTRUCTOR_OF_COURSE = TEST_PREFIX + "instructor1";
-
-    @BeforeEach
-    void enableLearningPathsFeatureToggle() {
-        featureToggleService.enableFeature(Feature.LearningPaths);
-    }
-
-    @AfterEach
-    void disableLearningPathsFeatureToggle() {
-        featureToggleService.disableFeature(Feature.LearningPaths);
-    }
 
     @BeforeEach
     void setupTestScenario() throws Exception {
@@ -209,14 +193,12 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = TUTOR_OF_COURSE, roles = "TA")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
-        request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.FORBIDDEN, Long.class);
     }
 
     @Test
     @WithMockUser(username = EDITOR_OF_COURSE, roles = "EDITOR")
     void testAll_asEditor() throws Exception {
         this.testAllPreAuthorize();
-        request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.FORBIDDEN, Long.class);
     }
 
     @Test

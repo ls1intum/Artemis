@@ -209,3 +209,11 @@ data-exports/
 !/src/main/resources/config/application-localci.yml
 /src/main/resources/id_*
 /src/main/resources/known_hosts
+/.nx
+/local-ci-scripts
+/checked-out-repos
+
+##############################
+# Supporting scripts config
+##############################
+/supporting_scripts/**/*.ini

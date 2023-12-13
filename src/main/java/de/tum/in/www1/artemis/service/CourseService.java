@@ -56,6 +56,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDeletionService;
 import de.tum.in.www1.artemis.service.export.CourseExamExportService;
+import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.learningpath.LearningPathService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
@@ -154,6 +155,8 @@ public class CourseService {
 
     private final LearningPathService learningPathService;
 
+    private final Optional<IrisSettingsService> irisSettingsService;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
@@ -164,7 +167,8 @@ public class CourseService {
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             TutorialGroupRepository tutorialGroupRepository, TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
-            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository, LearningPathService learningPathService) {
+            PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository, LearningPathService learningPathService,
+            Optional<IrisSettingsService> irisSettingsService) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -203,6 +207,7 @@ public class CourseService {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.conversationRepository = conversationRepository;
         this.learningPathService = learningPathService;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -253,10 +258,9 @@ public class CourseService {
      *
      * @param courseId the course to fetch
      * @param user     the user entity
-     * @param refresh  if the user requested an explicit refresh
      * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      */
-    public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
+    public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsForUser(Long courseId, User user) {
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
@@ -264,7 +268,7 @@ public class CourseService {
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
         course.setExams(examRepository.findByCourseIdsForUser(Set.of(course.getId()), user.getId(), user.getGroups(), ZonedDateTime.now()));
         course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
-        course.setCompetencies(competencyService.findAllForCourse(course, user, refresh));
+        course.setCompetencies(competencyRepository.findAllForCourseWithProgressForUser(course.getId(), user.getId()));
         course.setPrerequisites(competencyService.findAllPrerequisitesForCourse(course, user));
         course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
         course.setTutorialGroupsConfiguration(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
@@ -374,6 +378,7 @@ public class CourseService {
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
         deleteTutorialGroupsOfCourse(course);
+        irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
     }
 
