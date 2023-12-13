@@ -15,9 +15,9 @@ export class LtiConfigurationService {
     }
 
     /**
-     * updates the online course configuration of a course using a PUT request
-     * @param courseId - the id of the course to be updated
-     * @param onlineCourseConfiguration - the updates to the online course configuration
+     * Updates an LTI platform configuration.
+     * @param ltiPlatformConfiguration The configuration to update.
+     * @return Observable of the HTTP response.
      */
     updateLtiPlatformConfiguration(ltiPlatformConfiguration: LtiPlatformConfiguration): Observable<HttpResponse<any>> {
         return this.http.put<LtiPlatformConfiguration>(`api/admin/lti-platform`, ltiPlatformConfiguration, { observe: 'response' });
