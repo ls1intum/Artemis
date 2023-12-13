@@ -2,7 +2,7 @@ import { Exam } from 'app/entities/exam.model';
 
 import multipleChoiceTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { examAPIRequests, exerciseAPIRequest } from '../../artemis';
-import { AdditionalData, BASE_API, Exercise, ExerciseType, POST, PUT } from '../../constants';
+import { AdditionalData, BASE_API, ExerciseType, POST, PUT } from '../../constants';
 import { convertModelAfterMultiPart, generateUUID } from '../../utils';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Visibility } from 'app/entities/programming-exercise-test-case.model';
@@ -31,23 +31,20 @@ export class ExamExerciseGroupCreationPage {
         cy.wait('@updateExerciseGroup');
     }
 
-    addGroupWithExercise(exam: Exam, exerciseType: ExerciseType, additionalData: AdditionalData = {}): Promise<Exercise> {
-        return new Promise((resolve) => {
-            this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData, (response) => {
-                let exercise = { ...response.body, additionalData };
-                if (exerciseType == ExerciseType.QUIZ) {
-                    const quiz = convertModelAfterMultiPart(response) as QuizExercise;
-                    additionalData!.quizExerciseID = quiz.quizQuestions![0].id;
-                    exercise = { ...quiz, additionalData };
-                }
+    addGroupWithExercise(exam: Exam, exerciseType: ExerciseType, additionalData: AdditionalData = {}): void {
+        this.handleAddGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, additionalData, (response) => {
+            let exercise = { ...response.body, additionalData };
 
-                if (exerciseType === ExerciseType.PROGRAMMING) {
-                    const RETRY_NUMBER = 0;
-                    exerciseAPIRequest.changeProgrammingExerciseTestVisibility(exercise, Visibility.Always, RETRY_NUMBER);
-                }
+            if (exerciseType == ExerciseType.QUIZ) {
+                const quiz = convertModelAfterMultiPart(response) as QuizExercise;
+                additionalData!.quizExerciseID = quiz.quizQuestions![0].id;
+                exercise = { ...quiz, additionalData };
+            }
 
-                resolve(exercise);
-            });
+            if (exerciseType === ExerciseType.PROGRAMMING) {
+                const RETRY_NUMBER = 0;
+                exerciseAPIRequest.changeProgrammingExerciseTestVisibility(exercise, Visibility.Always, RETRY_NUMBER);
+            }
         });
     }
 

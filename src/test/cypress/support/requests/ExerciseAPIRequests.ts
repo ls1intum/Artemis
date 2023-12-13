@@ -159,7 +159,7 @@ export class ExerciseAPIRequests {
      */
     changeProgrammingExerciseTestVisibility(programmingExercise: ProgrammingExercise, newVisibility: Visibility, retryNumber: number) {
         if (retryNumber >= MAX_RETRIES) {
-            throw new Error('Could not find test cases (tests for solution might be finished yet)');
+            throw new Error('Could not find test cases (tests for solution might not be finished yet)');
         }
 
         cy.request({
@@ -173,6 +173,7 @@ export class ExerciseAPIRequests {
             }
 
             cy.wait(RETRY_DELAY);
+
             if (testCases.length > 0) {
                 this.updateProgrammingExerciseTestCaseVisibility(programmingExercise.id!, testCases, newVisibility);
             } else {
