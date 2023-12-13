@@ -187,20 +187,20 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         return this.irisSettings?.irisCodeEditorSettings?.enabled;
     }
 
-    getFormDataAndProblemStatement(): Record<string, unknown> {
+    getFormDataAndProblemStatement = (): Record<string, unknown> => {
         const getValue = function (fieldName: string) {
             const value = (<HTMLInputElement>document.getElementById(fieldName))?.value || null;
             console.log('Value of ' + fieldName + ': ' + value);
             return value;
         };
         return {
-            problemStatement: getValue('field_problemStatement'),
+            problemStatement: this.programmingExercise.problemStatement,
             metadata: {
                 title: getValue('field_title'),
-                short_name: getValue('field_shortName'),
+                shortName: getValue('field_shortName'),
             },
         };
-    }
+    };
 
     /**
      * Activate or deactivate the wizard mode for easier exercise creation.

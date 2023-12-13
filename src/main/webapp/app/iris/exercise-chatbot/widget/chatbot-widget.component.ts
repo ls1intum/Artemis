@@ -359,6 +359,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
      * Handles the send button click event and sends the user's message.
      */
     onSend(): void {
+        console.log(this.paramsOnSend());
         if (this.error?.fatal) {
             return;
         }
@@ -505,7 +506,11 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
         this.modalService.open(content).result.then((result: string) => {
             if (result === 'confirm') {
                 this.isLoading = false;
-                this.createNewSession();
+                if (this.sessionService instanceof IrisExerciseCreationSessionService) {
+                    this.createNewCourseSession();
+                } else {
+                    this.createNewSession();
+                }
             }
         });
     }
@@ -905,6 +910,10 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     createNewSession() {
         console.log('ExerciseId: ' + this.exerciseId + ' CourseId: ' + this.courseId);
         this.sessionService.createNewSession(this.exerciseId ?? this.courseId);
+    }
+
+    createNewCourseSession() {
+        this.sessionService.createNewSession(this.courseId);
     }
 
     isChatSession() {

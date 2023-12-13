@@ -62,8 +62,8 @@ export abstract class IrisSessionService {
     }
 
     /**
-     * Creates a new session for the given course or exercise ID.
-     * @param id The entity ID for which to create a new session.
+     * Creates a new session for the given ID.
+     * @param id The exercise or course ID for which to create a new session.
      */
     createNewSession(id: number): void {
         this.httpSessionService.createSession(id).subscribe(
