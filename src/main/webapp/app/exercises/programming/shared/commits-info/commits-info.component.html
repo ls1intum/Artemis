@@ -11,16 +11,17 @@
             </tr>
         </thead>
         <tbody>
-            <ng-container *ngFor="let commit of commits; let i = index">
+            @for (commit of commits; track commit; let i = $index) {
                 <tr>
                     <th scope="row">{{ i + 1 }}</th>
                     <td>
-                        <span *ngIf="localVC; else hashWithUrl">
-                            {{ commit.hash }}
-                        </span>
-                        <ng-template #hashWithUrl>
+                        @if (localVC) {
+                            <span>
+                                {{ commit.hash }}
+                            </span>
+                        } @else {
                             <a [href]="getCommitUrl(commit)"> {{ commit.hash }} </a>
-                        </ng-template>
+                        }
                     </td>
                     <td>
                         {{ commit.author }}
@@ -30,21 +31,20 @@
                     </td>
                     <td>
                         {{ commit.message }}
-                        <ng-container *ngIf="currentSubmissionHash === commit.hash">
+                        @if (currentSubmissionHash === commit.hash) {
                             <span class="badge bg-info">
                                 {{ 'artemisApp.programmingExercise.commitInfo.currentSubmission' | artemisTranslate }}
                             </span>
-                        </ng-container>
-                        <ng-container *ngIf="previousSubmissionHash === commit.hash">
+                        }
+                        @if (previousSubmissionHash === commit.hash) {
                             <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.previousSubmission' | artemisTranslate }} </span>
-                        </ng-container>
-
-                        <ng-container *ngIf="!previousSubmissionHash && i === commits?.length! - 1">
+                        }
+                        @if (!previousSubmissionHash && i === commits?.length! - 1) {
                             <span class="badge bg-info"> {{ 'artemisApp.programmingExercise.commitInfo.template' | artemisTranslate }} </span>
-                        </ng-container>
+                        }
                     </td>
                 </tr>
-            </ng-container>
+            }
         </tbody>
     </table>
 </div>

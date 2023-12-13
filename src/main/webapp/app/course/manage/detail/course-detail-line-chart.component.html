@@ -17,29 +17,30 @@
                             <fa-icon [icon]="faArrowRight"></fa-icon>
                         </button>
                     </div>
-                    <div *ngIf="course.startDate" class="d-flex gap-2">
-                        <button
-                            class="btn"
-                            [disabled]="!showLifetimeOverview"
-                            (click)="displayDefaultChartScope()"
-                            ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.recentWeekTooltip' | artemisTranslate }}"
-                        >
-                            {{ 'artemisApp.courseStatistics.scopeButton.recentWeekButton' | artemisTranslate }}
-                        </button>
-                        <button
-                            class="btn"
-                            [disabled]="showLifetimeOverview"
-                            (click)="displayLifetimeOverview()"
-                            ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.lifetimeOverviewTooltip' | artemisTranslate }}"
-                        >
-                            {{ 'artemisApp.courseStatistics.scopeButton.lifetimeOverviewButtonLabel' | artemisTranslate }}
-                        </button>
-                    </div>
+                    @if (course.startDate) {
+                        <div class="d-flex gap-2">
+                            <button
+                                class="btn"
+                                [disabled]="!showLifetimeOverview"
+                                (click)="displayDefaultChartScope()"
+                                ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.recentWeekTooltip' | artemisTranslate }}"
+                            >
+                                {{ 'artemisApp.courseStatistics.scopeButton.recentWeekButton' | artemisTranslate }}
+                            </button>
+                            <button
+                                class="btn"
+                                [disabled]="showLifetimeOverview"
+                                (click)="displayLifetimeOverview()"
+                                ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.lifetimeOverviewTooltip' | artemisTranslate }}"
+                            >
+                                {{ 'artemisApp.courseStatistics.scopeButton.lifetimeOverviewButtonLabel' | artemisTranslate }}
+                            </button>
+                        </div>
+                    }
                 </div>
                 <div #containerRef class="d-flex mt-1 justify-content-center align-items-center h-99">
                     @if (!loading) {
                         <ngx-charts-line-chart
-                            *ngIf="!loading"
                             [view]="[containerRef.offsetWidth, 320]"
                             [scheme]="chartColor"
                             [legend]="legend"
@@ -70,7 +71,7 @@
                             </ng-template>
                         </ngx-charts-line-chart>
                     } @else {
-                        <h1 *ngIf="loading" class="spinner">
+                        <h1 class="spinner">
                             <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
                         </h1>
                     }
