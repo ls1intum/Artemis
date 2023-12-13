@@ -219,28 +219,20 @@ public class ExamService {
      * Get one exam by id with exercise groups and exercises.
      * Also fetches the template and solution participation for programming exercises and questions for quiz exercises.
      *
-     * @param examId the id of the entity
+     * @param examId      the id of the entity
+     * @param withDetails determines whether additional parameters such as template and solution participation for programming exercises
+     *                        and questions for the quiz should be loaded
      * @return the exam with exercise groups
      */
     @NotNull
-    public Exam findByIdWithExerciseGroupsAndExercisesElseThrow(Long examId) {
-        log.debug("Request to get exam with exercise groups : {}", examId);
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            for (Exercise exercise : exerciseGroup.getExercises()) {
-                if (exercise instanceof ProgrammingExercise programmingExercise) {
-                    ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseRepository
-                            .findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(exercise.getId());
-                    programmingExercise.setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
-                    programmingExercise.setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
-                }
-                if (exercise instanceof QuizExercise quizExercise) {
-                    QuizExercise quizExerciseWithQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
-                    quizExercise.setQuizQuestions(quizExerciseWithQuestions.getQuizQuestions());
-                }
-            }
+    public Exam findByIdWithExerciseGroupsAndExercisesElseThrow(Long examId, boolean withDetails) {
+        log.debug("Request to get exam {} with exercise groups (with details: {})", examId, withDetails);
+        if (!withDetails) {
+            return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         }
-        return exam;
+        else {
+            return examRepository.findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(examId);
+        }
     }
 
     /**

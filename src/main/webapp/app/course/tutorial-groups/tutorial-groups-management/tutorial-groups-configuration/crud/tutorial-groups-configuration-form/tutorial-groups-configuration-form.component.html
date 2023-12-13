@@ -1,81 +1,93 @@
 <div class="row">
     <div class="col-12">
-        <form class="row" *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
-            <!-- Period -->
-            <div class="col-auto">
-                <label class="form-label" for="period">{{ 'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate }}</label>
-                <div class="input-group">
-                    <input
-                        name="period"
-                        id="period"
-                        required
-                        [class.is-invalid]="isPeriodInvalid"
-                        (focus)="markPeriodAsTouched()"
-                        [value]="periodControl?.value | artemisDateRange: 'long-date' : undefined : true"
-                        [owlDateTimeTrigger]="period"
-                        readonly
-                        class="form-control"
-                    />
-                    <input formControlName="period" [owlDateTime]="period" class="date-time-picker-anchor" [selectMode]="'range'" />
-                    <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="period">
-                        <fa-icon [icon]="faCalendarAlt"></fa-icon>
-                    </button>
-                    <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period></owl-date-time>
-                </div>
-                <div class="form-text">
-                    {{ 'artemisApp.forms.configurationForm.periodInput.explanation' | artemisTranslate }}
-                </div>
-                <div *ngIf="periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)" class="alert alert-danger">
-                    <div *ngIf="periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required">
-                        {{ 'artemisApp.forms.configurationForm.periodInput.requiredValidationError' | artemisTranslate }}
+        @if (form) {
+            <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
+                <!-- Period -->
+                <div class="col-auto">
+                    <label class="form-label" for="period">{{ 'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate }}</label>
+                    <div class="input-group">
+                        <input
+                            name="period"
+                            id="period"
+                            required
+                            [class.is-invalid]="isPeriodInvalid"
+                            (focus)="markPeriodAsTouched()"
+                            [value]="periodControl?.value | artemisDateRange: 'long-date' : undefined : true"
+                            [owlDateTimeTrigger]="period"
+                            readonly
+                            class="form-control"
+                        />
+                        <input formControlName="period" [owlDateTime]="period" class="date-time-picker-anchor" [selectMode]="'range'" />
+                        <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="period">
+                            <fa-icon [icon]="faCalendarAlt"></fa-icon>
+                        </button>
+                        <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period></owl-date-time>
                     </div>
-                    <div *ngIf="periodControl?.errors?.owlDateTimeParse">
-                        {{ 'artemisApp.forms.configurationForm.periodInput.parseError' | artemisTranslate }}
+                    <div class="form-text">
+                        {{ 'artemisApp.forms.configurationForm.periodInput.explanation' | artemisTranslate }}
                     </div>
-                    <div *ngIf="periodControl?.errors?.owlDateTimeRange">
-                        {{ 'artemisApp.forms.configurationForm.periodInput.invalidRangeError' | artemisTranslate }}
-                    </div>
-                </div>
-                <!-- Do not show options if the course has communication disabled -->
-                <div [hidden]="!isMessagingEnabled(course)">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" formControlName="useTutorialGroupChannels" id="useTutorialGroupChannels" />
-                        <label class="form-check-label" for="useTutorialGroupChannels">
-                            {{ 'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.label' | artemisTranslate }}
-                        </label>
-                        <small id="channelHelp" class="form-text text-body-secondary d-block">{{
-                            'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.explanation' | artemisTranslate
-                        }}</small>
-                        <div class="alert alert-danger" role="alert" *ngIf="showChannelDeletionWarning" id="channelDeletionWarning">
-                            {{ 'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.channelDeletionWarning' | artemisTranslate }}
+                    @if (periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)) {
+                        <div class="alert alert-danger">
+                            @if (periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required) {
+                                <div>
+                                    {{ 'artemisApp.forms.configurationForm.periodInput.requiredValidationError' | artemisTranslate }}
+                                </div>
+                            }
+                            @if (periodControl?.errors?.owlDateTimeParse) {
+                                <div>
+                                    {{ 'artemisApp.forms.configurationForm.periodInput.parseError' | artemisTranslate }}
+                                </div>
+                            }
+                            @if (periodControl?.errors?.owlDateTimeRange) {
+                                <div>
+                                    {{ 'artemisApp.forms.configurationForm.periodInput.invalidRangeError' | artemisTranslate }}
+                                </div>
+                            }
+                        </div>
+                    }
+                    <!-- Do not show options if the course has communication disabled -->
+                    <div [hidden]="!isMessagingEnabled(course)">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" formControlName="useTutorialGroupChannels" id="useTutorialGroupChannels" />
+                            <label class="form-check-label" for="useTutorialGroupChannels">
+                                {{ 'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.label' | artemisTranslate }}
+                            </label>
+                            <small id="channelHelp" class="form-text text-body-secondary d-block">{{
+                                'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.explanation' | artemisTranslate
+                            }}</small>
+                            @if (showChannelDeletionWarning) {
+                                <div class="alert alert-danger" role="alert" id="channelDeletionWarning">
+                                    {{ 'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.channelDeletionWarning' | artemisTranslate }}
+                                </div>
+                            }
+                        </div>
+                        <!--Public Channel / Private Channel -->
+                        <div class="form-group" [hidden]="!useTutorialGroupChannelsControl?.value">
+                            <label class="d-block">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.label' | artemisTranslate }}</label>
+                            <div class="btn-group" role="group">
+                                <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="public" autocomplete="off" checked [value]="true" />
+                                <label class="btn btn-outline-secondary" for="public">{{
+                                    'artemisApp.dialogs.createChannel.channelForm.isPublicInput.public' | artemisTranslate
+                                }}</label>
+                                <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="private" autocomplete="off" [value]="false" />
+                                <label class="btn btn-outline-secondary" for="private">{{
+                                    'artemisApp.dialogs.createChannel.channelForm.isPublicInput.private' | artemisTranslate
+                                }}</label>
+                            </div>
+                            <small id="isPublicHelp" class="form-text text-body-secondary d-block">{{
+                                'artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation' | artemisTranslate
+                            }}</small>
                         </div>
                     </div>
-                    <!--Public Channel / Private Channel -->
-                    <div class="form-group" [hidden]="!useTutorialGroupChannelsControl?.value">
-                        <label class="d-block">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.label' | artemisTranslate }}</label>
-                        <div class="btn-group" role="group">
-                            <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="public" autocomplete="off" checked [value]="true" />
-                            <label class="btn btn-outline-secondary" for="public">{{
-                                'artemisApp.dialogs.createChannel.channelForm.isPublicInput.public' | artemisTranslate
-                            }}</label>
-                            <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="private" autocomplete="off" [value]="false" />
-                            <label class="btn btn-outline-secondary" for="private">{{
-                                'artemisApp.dialogs.createChannel.channelForm.isPublicInput.private' | artemisTranslate
-                            }}</label>
-                        </div>
-                        <small id="isPublicHelp" class="form-text text-body-secondary d-block">{{
-                            'artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation' | artemisTranslate
-                        }}</small>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                            <span>{{ (isEditMode ? 'global.generic.edit' : 'global.generic.create') | artemisTranslate }}</span>
+                        </button>
                     </div>
                 </div>
-            </div>
-            <div class="row mt-2">
-                <div class="col-12">
-                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                        <span>{{ (isEditMode ? 'global.generic.edit' : 'global.generic.create') | artemisTranslate }}</span>
-                    </button>
-                </div>
-            </div>
-        </form>
+            </form>
+        }
     </div>
 </div>

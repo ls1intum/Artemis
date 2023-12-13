@@ -3,14 +3,21 @@
     <button type="button" class="btn-close" aria-label="Close button" aria-describedby="modal-title" (click)="modal.dismiss('Cross click')"></button>
 </div>
 <div class="modal-body">
-    <div *ngIf="textIsMarkdown" [innerHTML]="text"></div>
-    <ng-container *ngIf="!textIsMarkdown">
-        <p *ngIf="translateText" style="white-space: pre-line">{{ text | artemisTranslate }}</p>
-        <p *ngIf="!translateText" style="white-space: pre-line">{{ text }}</p>
-    </ng-container>
-    <ng-container *ngIf="contentRef" [ngTemplateOutlet]="contentRef"></ng-container>
+    @if (textIsMarkdown) {
+        <div [innerHTML]="text"></div>
+    }
+    @if (!textIsMarkdown) {
+        @if (translateText) {
+            <p style="white-space: pre-line">{{ text | artemisTranslate }}</p>
+        }
+        @if (!translateText) {
+            <p style="white-space: pre-line">{{ text }}</p>
+        }
+    }
+    @if (contentRef) {
+        <ng-container [ngTemplateOutlet]="contentRef"></ng-container>
+    }
 </div>
-
 <div class="modal-footer">
     <button type="button" class="btn btn-outline-secondary" (click)="modal.dismiss('cancel click')" jhiTranslate="global.form.cancel">Cancel</button>
     <button type="button" ngbAutofocus class="btn btn-danger" (click)="modal.close('Ok click')" jhiTranslate="global.form.confirm">Confirm</button>

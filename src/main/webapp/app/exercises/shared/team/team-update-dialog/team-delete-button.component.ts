@@ -10,18 +10,19 @@ import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-team-delete-button',
     template: `
-        <button
-            jhiDeleteButton
-            *ngIf="exercise.isAtLeastInstructor"
-            [buttonSize]="buttonSize"
-            [entityTitle]="team.shortName || ''"
-            deleteQuestion="artemisApp.team.delete.question"
-            deleteConfirmationText="artemisApp.team.delete.typeNameToConfirm"
-            (delete)="removeTeam()"
-            [dialogError]="dialogError$"
-        >
-            <fa-icon [icon]="faTrashAlt" class="me-1"></fa-icon>
-        </button>
+        @if (exercise.isAtLeastInstructor) {
+            <button
+                jhiDeleteButton
+                [buttonSize]="buttonSize"
+                [entityTitle]="team.shortName || ''"
+                deleteQuestion="artemisApp.team.delete.question"
+                deleteConfirmationText="artemisApp.team.delete.typeNameToConfirm"
+                (delete)="removeTeam()"
+                [dialogError]="dialogError$"
+            >
+                <fa-icon [icon]="faTrashAlt" class="me-1"></fa-icon>
+            </button>
+        }
     `,
 })
 export class TeamDeleteButtonComponent implements OnDestroy {
