@@ -32,9 +32,38 @@
 <h3>
     {{ 'artemisApp.exam.exercises' | artemisTranslate }}
 </h3>
+<div *ngIf="quizExam">
+    <div class="question card">
+        <jhi-result-summary-exercise-card-header
+            [index]="0"
+            [id]="0"
+            [title]="quizExam!.title"
+            [exerciseType]="ExerciseType.QUIZ"
+            [maxPoints]="quizExam!.maxPoints"
+            [submissionType]="MANUAL"
+            [exerciseInfo]="quizExamInfo"
+            [resultsPublished]="resultsArePublished"
+        />
+        <div class="card-body question-card-body" [ngbCollapse]="quizExamInfo.isCollapsed">
+            <div class="clearfix"></div>
+            <div>
+                <jhi-quiz-exam-summary [quizConfiguration]="quizExam!" [exam]="studentExam.exam!" [submission]="quizExam!.submission" [resultsPublished]="resultsArePublished" />
+            </div>
+        </div>
+    </div>
+</div>
 <div *ngFor="let exercise of studentExam?.exercises; let i = index" [id]="'exercise-' + exercise.id">
     <div class="question card">
-        <jhi-result-summary-exercise-card-header [index]="i" [exercise]="exercise" [exerciseInfo]="exerciseInfos[exercise.id!]" [resultsPublished]="resultsArePublished" />
+        <jhi-result-summary-exercise-card-header
+            [index]="i + (quizExam ? 1 : 0)"
+            [id]="exercise.id"
+            [title]="exercise.exerciseGroup?.title"
+            [exerciseType]="exercise?.type"
+            [maxPoints]="exercise.maxPoints"
+            [submissionType]="exercise.studentParticipations?.[0]?.submissions?.[0]?.type"
+            [exerciseInfo]="exerciseInfos[exercise.id!]"
+            [resultsPublished]="resultsArePublished"
+        />
 
         <div class="card-body question-card-body" [ngbCollapse]="exerciseInfos[exercise.id!].isCollapsed">
             <div class="clearfix">
@@ -124,7 +153,7 @@
 
                             <jhi-quiz-exam-summary
                                 *ngSwitchCase="QUIZ"
-                                [quizParticipation]="exercise"
+                                [quizConfiguration]="exercise"
                                 [exam]="studentExam.exam!"
                                 [submission]="exerciseInfos[exercise.id!]!.submission!"
                                 [resultsPublished]="resultsArePublished"

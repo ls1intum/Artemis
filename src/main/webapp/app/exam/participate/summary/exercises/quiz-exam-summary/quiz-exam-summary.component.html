@@ -1,8 +1,8 @@
-<div class="quiz-content container" *ngIf="quizParticipation.quizQuestions && quizParticipation.quizQuestions.length > 0">
+<div class="quiz-content container" *ngIf="quizConfiguration.quizQuestions && quizConfiguration.quizQuestions.length > 0">
     <div class="alert alert-info mb-2" *ngIf="showMissingResultsNotice">
         {{ 'artemisApp.exam.examSummary.missingResultNotice' | artemisTranslate }}
     </div>
-    <div *ngFor="let question of quizParticipation.quizQuestions!; let i = index">
+    <div *ngFor="let question of quizConfiguration.quizQuestions!; let i = index">
         <!-- TODO: Map vs Array consistency -->
         <jhi-multiple-choice-question
             id="question{{ i }}"
@@ -11,7 +11,7 @@
             [selectedAnswerOptions]="selectedAnswerOptions.get(question.id!)!"
             [clickDisabled]="true"
             [showResult]="resultsPublished && !showMissingResultsNotice"
-            [quizQuestions]="quizParticipation.quizQuestions"
+            [quizQuestions]="quizConfiguration.quizQuestions"
             [submittedResult]="result!"
             [forceSampleSolution]="false"
             [questionIndex]="i + 1"

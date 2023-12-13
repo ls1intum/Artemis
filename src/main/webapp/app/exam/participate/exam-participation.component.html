@@ -151,7 +151,7 @@
                 Show Summary
             </button>
         </div>
-        <jhi-exam-participation-summary *ngIf="showExamSummary" [studentExam]="studentExam" />
+        <jhi-exam-participation-summary *ngIf="showExamSummary" [studentExam]="studentExam" [quizExam]="quizExam" />
     </ng-container>
 </ng-container>
 <ng-container *ngIf="!loadingExam && !exam">

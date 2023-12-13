@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ResultSummaryExerciseInfo } from 'app/exam/participate/summary/exam-result-summary.component';
 import { SubmissionType } from 'app/entities/submission.model';
@@ -11,7 +11,11 @@ import { SubmissionType } from 'app/entities/submission.model';
 })
 export class ExamResultSummaryExerciseCardHeaderComponent {
     @Input() index: number;
-    @Input() exercise: Exercise;
+    @Input() id?: number;
+    @Input() title?: string;
+    @Input() exerciseType?: ExerciseType;
+    @Input() maxPoints?: number;
+    @Input() submissionType?: SubmissionType;
     @Input() exerciseInfo?: ResultSummaryExerciseInfo;
     @Input() resultsPublished: boolean;
 

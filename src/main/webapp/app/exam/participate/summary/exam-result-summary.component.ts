@@ -16,14 +16,14 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { roundScorePercentSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/shared/util/utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercises/shared/participation/participation.utils';
 import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
-import { Submission } from 'app/entities/submission.model';
+import { Submission, SubmissionType } from 'app/entities/submission.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular-ivy';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { createQuizExam, isExamResultPublished } from 'app/exam/participate/exam.utils';
+import { isExamResultPublished } from 'app/exam/participate/exam.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExam } from 'app/entities/quiz-exam.model';
 
@@ -74,7 +74,6 @@ export class ExamResultSummaryComponent implements OnInit {
      * Current student's exam.
      */
     private _studentExam: StudentExam;
-    quizExam?: QuizExam;
 
     plagiarismCaseInfos: { [exerciseId: number]: PlagiarismCaseInfo } = {};
     exampleSolutionPublished = false;
@@ -89,9 +88,11 @@ export class ExamResultSummaryComponent implements OnInit {
         if (this.studentExamGradeInfoDTO) {
             this.studentExamGradeInfoDTO.studentExam = studentExam;
         }
-        this.quizExam = createQuizExam(studentExam, this.translateService.instant('artemisApp.quizPool.title'));
         this.tryLoadPlagiarismCaseInfosForStudent();
     }
+
+    @Input()
+    quizExam?: QuizExam;
 
     /**
      * Grade info for current student's exam.
@@ -122,6 +123,7 @@ export class ExamResultSummaryComponent implements OnInit {
     isAfterStudentReviewStart = false;
 
     exerciseInfos: Record<number, ResultSummaryExerciseInfo>;
+    quizExamInfo: ResultSummaryExerciseInfo;
 
     /**
      * Passed to components with overlapping elements to ensure that the overlapping
@@ -174,6 +176,19 @@ export class ExamResultSummaryComponent implements OnInit {
 
         this.exampleSolutionPublished = !!this.studentExam.exam?.exampleSolutionPublicationDate && dayjs().isAfter(this.studentExam.exam.exampleSolutionPublicationDate);
 
+        this.quizExamInfo = {
+            icon: getIcon(ExerciseType.QUIZ),
+            isCollapsed: false,
+            achievedPoints: 0,
+            achievedPercentage: 0,
+            colorClass: 'text-secondary',
+            resultIconClass: faQuestionCircle,
+
+            submission: this.quizExam?.submission,
+            participation: undefined,
+            displayExampleSolution: false,
+            releaseTestsWithExampleSolution: false,
+        };
         this.exerciseInfos = this.getExerciseInfos();
 
         this.setExamWithOnlyIdAndStudentReviewPeriod();
@@ -445,4 +460,6 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     protected readonly getIcon = getIcon;
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly MANUAL = SubmissionType.MANUAL;
 }
