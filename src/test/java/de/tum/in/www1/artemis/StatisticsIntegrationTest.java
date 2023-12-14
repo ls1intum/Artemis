@@ -255,7 +255,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         participationUtilService.createParticipationSubmissionAndResult(firstTextExerciseId, student2, 10.0, 0.0, 100, true);
 
         Post post = new Post();
-        post.setConversation(exerciseUtilService.addChannelToExercise(exercise));
+        post.setConversation(exerciseUtilService.addChannelToExercise(textExercise));
         post.setContent("Test Student Question 1");
         post.setVisibleForStudents(true);
         post.setCreationDate(ZonedDateTime.now().minusHours(2));
