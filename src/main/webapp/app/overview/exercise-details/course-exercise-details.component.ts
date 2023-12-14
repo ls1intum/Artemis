@@ -46,6 +46,7 @@ import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -222,7 +223,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.profileService
                 .getProfileInfo()
                 .pipe(
-                    filter((profileInfo) => profileInfo?.activeProfiles?.includes('iris')),
+                    filter((profileInfo) => profileInfo?.activeProfiles?.includes(PROFILE_IRIS)),
                     switchMap(() => this.irisSettingsService.getCombinedProgrammingExerciseSettings(this.exercise!.id!)),
                 )
                 .subscribe((settings) => {

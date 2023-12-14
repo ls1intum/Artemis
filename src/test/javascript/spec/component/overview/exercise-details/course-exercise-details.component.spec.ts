@@ -68,6 +68,7 @@ import { ProblemStatementComponent } from 'app/overview/exercise-details/problem
 import { ExerciseInfoComponent } from 'app/exercises/shared/exercise-info/exercise-info.component';
 import { IrisSettingsService } from '../../../../../../main/webapp/app/iris/settings/shared/iris-settings.service';
 import { IrisSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-settings.model';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -386,7 +387,7 @@ describe('CourseExerciseDetailsComponent', () => {
             comp.ngOnInit();
             tick();
 
-            if (activeProfiles.includes('iris')) {
+            if (activeProfiles.includes(PROFILE_IRIS)) {
                 // Should have called getCombinedProgrammingExerciseSettings if 'iris' is active
                 expect(getCombinedProgrammingExerciseSettingsMock).toHaveBeenCalled();
                 expect(comp.irisSettings).toBe(fakeSettings);

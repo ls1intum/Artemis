@@ -143,8 +143,8 @@ public class IrisCodeEditorSessionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
         var session = irisCodeEditorSessionService.createSession(exercise, user);
-        var kickstarterMessage = irisCodeEditorSessionService.createRepositoryGenerationPlan(session);
-        irisCodeEditorSessionService.executePlan(session, kickstarterMessage.getContent().get(0).getId());
+        var generationPlanMessage = irisCodeEditorSessionService.createRepositoryGenerationPlan(session);
+        irisCodeEditorSessionService.executePlan(session, generationPlanMessage.getContent().get(0).getId());
 
         var uriString = "/api/iris/code-editor-sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { PROFILE_LTI } from 'app/app.constants';
+import { PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
@@ -83,7 +83,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
-            this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
             if (this.irisEnabled) {
                 this.irisSettingsService.getGlobalSettings().subscribe((settings) => {
                     this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;

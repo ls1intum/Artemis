@@ -30,7 +30,7 @@ import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.c
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
-import { PROFILE_LOCALCI } from 'app/app.constants';
+import { PROFILE_IRIS, PROFILE_LOCALCI } from 'app/app.constants';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-chatbot-button.component';
@@ -41,6 +41,7 @@ import { IrisCodeEditorSessionService } from 'app/iris/code-editor-session.servi
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
     styleUrls: ['../programming-exercise-form.scss'],
+    providers: [IrisCodeEditorSessionService],
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     @ViewChild(IrisExerciseCreationChatbotButtonComponent, { static: false }) chatbotButton: IrisExerciseCreationChatbotButtonComponent;
@@ -509,7 +510,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             if (profileInfo) {
                 this.inProductionEnvironment = profileInfo.inProduction;
             }
-            if (profileInfo?.activeProfiles?.includes('iris')) {
+            if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS)) {
                 this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
                     this.irisSettings = settings;
                 });
@@ -685,6 +686,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.isSaving = false;
 
         if (this.adaptRepositoriesWithIris) {
+            console.log('sending kickstart request');
             this.irisCodeEditorSessionService
                 .kickstartSession(exercise.id!)
                 .catch((error) => this.alertService.error(`Error while adapting the repositories with Iris: ${error.message}`));

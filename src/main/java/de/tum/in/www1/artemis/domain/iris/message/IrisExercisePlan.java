@@ -70,6 +70,6 @@ public class IrisExercisePlan extends IrisMessageContent {
 
     @Override
     public String toString() {
-        return "IrisExercisePlan{" + "message=" + (message == null ? "null" : message.getId()) + ", steps=" + steps + '}';
+        return "IrisExercisePlan{" + "message=" + (message == null ? "null" : message.getId()) + ", executing=" + executing + ", steps=" + steps + '}';
     }
 }

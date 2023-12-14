@@ -6,7 +6,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
-import { VERSION } from 'app/app.constants';
+import { PROFILE_IRIS, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -191,7 +191,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.gitBranchName = profileInfo.git.branch;
                 this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
                 this.gitUsername = profileInfo.git.commit.user.name;
-                this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
             }
         });
 

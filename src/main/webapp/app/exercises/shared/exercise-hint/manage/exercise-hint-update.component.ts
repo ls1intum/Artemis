@@ -21,6 +21,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 const DEFAULT_DISPLAY_THRESHOLD = 3;
 
@@ -95,7 +96,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
             this.profileService
                 .getProfileInfo()
                 .pipe(
-                    filter((profileInfo) => profileInfo?.activeProfiles?.includes('iris')),
+                    filter((profileInfo) => profileInfo?.activeProfiles?.includes(PROFILE_IRIS)),
                     switchMap(() => this.irisSettingsService.getCombinedProgrammingExerciseSettings(this.exercise.id!)),
                 )
                 .subscribe((settings) => {

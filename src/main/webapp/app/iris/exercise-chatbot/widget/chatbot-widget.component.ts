@@ -784,7 +784,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
         if (!plan || !step) {
             return;
         }
-        plan.executing = false;
+        this.pausePlan(messageId, plan);
         step.executionStage = ExecutionStage.FAILED;
         if (!errorTranslationKey) {
             this.stateStore.dispatch(new ConversationErrorOccurredAction(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE));

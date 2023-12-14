@@ -23,6 +23,7 @@ import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.
 import { IrisSettingsService } from '../../../../../../main/webapp/app/iris/settings/shared/iris-settings.service';
 import { IrisSettings } from '../../../../../../main/webapp/app/entities/iris/settings/iris-settings.model';
 import { ProfileInfo } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
@@ -165,7 +166,7 @@ describe('ExerciseHint Management Update Component', () => {
             comp.ngOnInit();
             tick();
 
-            if (activeProfiles.includes('iris')) {
+            if (activeProfiles.includes(PROFILE_IRIS)) {
                 // Should have called getCombinedProgrammingExerciseSettings if 'iris' is active
                 expect(getCombinedProgrammingExerciseSettingsSpy).toHaveBeenCalledOnce();
                 expect(comp.irisSettings).toBe(fakeSettings);

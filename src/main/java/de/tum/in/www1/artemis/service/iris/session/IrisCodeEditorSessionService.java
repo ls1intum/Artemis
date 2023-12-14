@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -278,47 +277,6 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         return exercisePlan;
     }
 
-    public IrisMessage createRepositoryGenerationPlan(IrisCodeEditorSession session) {
-        IrisMessage message = session.newMessage();
-        IrisExercisePlan generationPlan = new IrisExercisePlan();
-        List<IrisExercisePlanStep> planSteps = new ArrayList<>();
-        planSteps.add(new IrisExercisePlanStep(ExerciseComponent.SOLUTION_REPOSITORY, "I will write a solution repository corresponding to the problem statement."));
-        planSteps.add(new IrisExercisePlanStep(ExerciseComponent.TEMPLATE_REPOSITORY,
-                "I will write a template repository corresponding to the problem statement and solution repository."));
-        planSteps.add(new IrisExercisePlanStep(ExerciseComponent.TEST_REPOSITORY,
-                "I will write a test repository corresponding to the problem statement, solution repository, template repository."));
-        generationPlan.setSteps(planSteps);
-        message.addContent(generationPlan);
-        return irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-    }
-
-    /**
-     * Create a loop that executes the plan until it is finished.
-     * We must perform a lookup of the plan in the database to ensure that we have the latest version
-     * (the client might have modified it).
-     *
-     * @param session the session
-     * @param planId  the id of the plan
-     */
-    @Async
-    public void executePlan(IrisCodeEditorSession session, long planId) {
-        var content = irisMessageContentRepository.findById(planId);
-        if (content.isEmpty()) {
-            return; // Must have been deleted somehow
-        }
-        if (!(content.get() instanceof IrisExercisePlan exercisePlan)) {
-            return; // Should not happen
-        }
-        if (!exercisePlan.isExecuting()) {
-            return; // Client paused execution
-        }
-        Optional<IrisExercisePlanStep> nextStep = exercisePlan.getNextStep();
-        if (nextStep.isEmpty()) {
-            return; // Plan is done executing
-        }
-        requestChangesToExerciseComponent(session, nextStep.get()).thenAccept(v -> this.executePlan(session, planId));
-    }
-
     /**
      * Requests exercise changes from the Iris model for the given session and exercise plan. This method sends a
      * request to the Iris model for each component in the exercise plan, and handles the response to extract the
@@ -367,7 +325,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                     updatedProblemStatement = injectChangesIntoProblemStatement(exercise, changes);
                 }
                 else {
-                    var changes = extractFileChanges(response.content());
+                    List<FileChange> changes = extractFileChanges(response.content());
                     log.info("Extracted file changes for exercise " + component + ": " + changes);
                     successfulChanges = injectChangesIntoRepository(repositoryFor(exercise, component), changes);
                 }
@@ -650,9 +608,6 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
                 throw new IrisParseResponseException("Parsing failed");
             }
         }
-        if (changes.isEmpty()) {
-            throw new IrisParseResponseException("Was not able to parse any changes");
-        }
         return changes;
     }
 
@@ -721,6 +676,56 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         }
         log.info("Successfully applied " + successes + " changes to repository, " + failures + " changes failed");
         return successful;
+    }
+
+    public IrisMessage createRepositoryGenerationPlan(IrisCodeEditorSession session) {
+        IrisMessage message = session.newMessage();
+        IrisExercisePlan generationPlan = new IrisExercisePlan();
+        List<IrisExercisePlanStep> planSteps = new ArrayList<>();
+        String iWillRemove = "I will remove any remaining unnecessary files from the repository.";
+        planSteps.add(
+                new IrisExercisePlanStep(ExerciseComponent.SOLUTION_REPOSITORY, "I will update the solution repository to correspond with the problem statement. " + iWillRemove));
+        planSteps.add(new IrisExercisePlanStep(ExerciseComponent.TEMPLATE_REPOSITORY,
+                "I will update the template repository to correspond with the problem statement and solution repository. " + iWillRemove));
+        planSteps.add(new IrisExercisePlanStep(ExerciseComponent.TEST_REPOSITORY,
+                "I will update the test repository to correspond with the problem statement, solution repository, and template repository. " + iWillRemove));
+        generationPlan.setSteps(planSteps);
+        generationPlan.setExecuting(true); // This plan will immediately start executing
+        message.addContent(generationPlan);
+        return irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+    }
+
+    /**
+     * Create a loop that executes the plan until it is finished.
+     * We must perform a lookup of the plan in the database to ensure that we have the latest version
+     * (the client might have modified it).
+     *
+     * @param session the session
+     * @param planId  the id of the plan
+     */
+    public void executePlan(IrisCodeEditorSession session, long planId) {
+        log.debug("Auto-executing generation plan");
+        var content = irisMessageContentRepository.findById(planId);
+        if (content.isEmpty()) {
+            log.debug("Plan not found: " + planId);
+            return; // Must have been deleted somehow
+        }
+        if (!(content.get() instanceof IrisExercisePlan exercisePlan)) {
+            log.debug("Message content is not an exercise plan: " + content.get());
+            return; // Should not happen
+        }
+        log.debug("Found plan: " + exercisePlan);
+        if (!exercisePlan.isExecuting()) {
+            log.debug("Plan is not executing: " + exercisePlan);
+            return; // Client paused execution
+        }
+        Optional<IrisExercisePlanStep> nextStep = exercisePlan.getNextStep();
+        if (nextStep.isEmpty()) {
+            log.debug("Plan has no more steps: " + exercisePlan);
+            return; // Plan is done executing
+        }
+        log.debug("Executing step: " + nextStep.get());
+        requestChangesToExerciseComponent(session, nextStep.get()).thenAccept(v -> this.executePlan(session, planId));
     }
 
 }
