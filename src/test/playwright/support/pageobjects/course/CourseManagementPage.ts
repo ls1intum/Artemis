@@ -76,7 +76,9 @@ export class CourseManagementPage {
     private async confirmUserIntoGroup(credentials: UserCredentials) {
         await this.page.locator('#typeahead-basic').fill(credentials.username);
         await this.page.keyboard.press('Enter');
-        await this.page.locator('#ngb-typeahead-0', { hasText: new RegExp('\\(' + credentials.username + '\\)') }).click();
+        const userResults = this.page.locator('.ngb-highlight', { hasText: credentials.username });
+        console.log('Number of user results: ' + (await userResults.all()).length);
+        await userResults.first().click();
         await this.page.locator('#bread-crumb-2').click();
     }
 

@@ -14,7 +14,7 @@ export class Commands {
             .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt'));
         if (!jwtCookie) {
             await new Promise((resolve, reject) => {
-                const fullUrl = `${process.env.baseURL}/${BASE_API}public/authenticate`;
+                const fullUrl = new URL(`${process.env.baseURL}/${BASE_API}public/authenticate`);
                 console.log('Login URL:', fullUrl);
 
                 const reqData = JSON.stringify({
@@ -26,8 +26,8 @@ export class Commands {
                 console.log('Request Data:', reqData);
                 const req = https.request(
                     {
-                        hostname: process.env.baseURL,
-                        // port: new URL(process.env.baseURL).port || 8080,
+                        hostname: fullUrl.hostname,
+                        port: fullUrl.port.length != 0 ? fullUrl.port : null,
                         path: `/${BASE_API}public/authenticate`,
                         method: 'POST',
                         agent: new https.Agent({
@@ -65,7 +65,7 @@ export class Commands {
                                     {
                                         name,
                                         value,
-                                        url: 'http://' + process.env.baseURL + '/',
+                                        url: `${process.env.baseURL}/`,
                                     },
                                 ]);
                             }
