@@ -55,7 +55,6 @@ const {
 } = require('./tsconfig.json');
 
 module.exports = {
-    globalSetup: 'jest-preset-angular/global-setup',
     testEnvironmentOptions: {
         url: 'https://artemis.fake/test',
     },
@@ -101,10 +100,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 86.2,
-            branches: 73.4,
-            functions: 80.2,
-            lines: 86.4,
+            statements: 86.7,
+            branches: 73.6,
+            functions: 80.6,
+            lines: 86.7,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
@@ -148,5 +147,6 @@ module.exports = {
         '@src/(.*)': '<rootDir>/src/src/$1',
         '@state/(.*)': '<rootDir>/src/app/state/$1',
         '^lodash-es$': 'lodash',
+        "@sentry/angular-ivy": "<rootDir>/node_modules/@sentry/angular-ivy/bundles/sentry-angular-ivy.umd.js"
     },
 };

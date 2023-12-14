@@ -97,7 +97,8 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllGradeStepsForCourseNoGradingScaleExists() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStepsDTO.class);
+        var result = request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
+        assertThat(result).isNull();
     }
 
     @Test
@@ -300,7 +301,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     /**
      * Test get request for a single grade for no participation special grade
      *
-     * @throws Exception
+     * @throws Exception some error during the test
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -320,7 +321,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
     /**
      * Test get request for a single grade for plagiarism special grade
      *
-     * @throws Exception
+     * @throws Exception some error during the test
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
