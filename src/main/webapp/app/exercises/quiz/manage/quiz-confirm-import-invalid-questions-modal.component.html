@@ -7,10 +7,16 @@
             <fa-icon [icon]="faExclamationTriangle"></fa-icon>
             <div jhiTranslate="artemisApp.quizExercise.importWarningLong"></div>
             <p></p>
-            <div *ngFor="let reason of invalidFlaggedQuestions">
-                <p *ngIf="(reason.translateValues | json) != '{}'" jhiTranslate="{{ reason.translateKey }}" [translateValues]="{ index: reason.translateValues.index }"></p>
-                <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{ reason.translateKey }}"></p>
-            </div>
+            @for (reason of invalidFlaggedQuestions; track reason) {
+                <div>
+                    @if ((reason.translateValues | json) != '{}') {
+                        <p jhiTranslate="{{ reason.translateKey }}" [translateValues]="{ index: reason.translateValues.index }"></p>
+                    }
+                    @if ((reason.translateValues | json) == '{}') {
+                        <p jhiTranslate="{{ reason.translateKey }}"></p>
+                    }
+                </div>
+            }
         </span>
     </div>
     <div class="conflict-modal__footer">

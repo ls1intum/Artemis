@@ -1,6 +1,8 @@
 <div class="row">
     <div class="col">
-        <h3 *ngIf="learningPath">{{ learningPath.user?.name }} ({{ learningPath.user?.login }})</h3>
+        @if (learningPath) {
+            <h3>{{ learningPath.user?.name }} ({{ learningPath.user?.login }})</h3>
+        }
     </div>
     <div class="col-auto">
         <button id="refresh-button" class="btn btn-primary m-1" (click)="onRefresh.emit()">
