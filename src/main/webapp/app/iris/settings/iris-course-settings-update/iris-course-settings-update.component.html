@@ -1,4 +1,6 @@
 <div class="container">
     <h2 jhiTranslate="artemisApp.iris.settings.title.course">Course Iris Settings</h2>
-    <jhi-iris-settings-update *ngIf="courseId" [settingsType]="COURSE" [courseId]="courseId!"></jhi-iris-settings-update>
+    @if (courseId) {
+        <jhi-iris-settings-update [settingsType]="COURSE" [courseId]="courseId!"></jhi-iris-settings-update>
+    }
 </div>
