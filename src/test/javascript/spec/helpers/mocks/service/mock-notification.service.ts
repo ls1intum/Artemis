@@ -12,6 +12,13 @@ export class MockNotificationService {
 
     subscribeToTotalNotificationCountUpdates = (): Observable<number> => of();
 
+    getNotificationTextTranslation = (notification: Notification, maxContentLength: number) => {
+        if (notification.textIsPlaceholder) {
+            return notification.text;
+        }
+        return notification.text ?? 'No text found';
+    };
+
     subscribeToLoadingStateUpdates = (): Observable<number> => of();
 
     subscribeToSingleIncomingNotifications = (): Observable<Notification> => of();

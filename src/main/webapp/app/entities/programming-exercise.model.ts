@@ -14,6 +14,7 @@ export class BuildAction {
     name: string;
     runAlways: boolean;
     class: string;
+    workdir: string;
 }
 
 export class ScriptAction extends BuildAction {
