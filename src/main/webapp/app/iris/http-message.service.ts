@@ -49,35 +49,35 @@ export abstract class IrisHttpMessageService {
      * creates a new message in a session
      * @param sessionId of the session
      * @param message  to be created
+     * @param args optional arguments
      */
-    createMessage(sessionId: number, message: IrisUserMessage): Response<IrisMessage> {
+    createMessage(sessionId: number, message: IrisUserMessage, args?: Record<string, unknown>): Response<IrisMessage> {
         message.messageDifferentiator = this.randomInt();
-        return this.httpClient
-            .post<IrisServerMessage>(
-                `${this.apiPrefix}/sessions/${sessionId}/messages`,
-                Object.assign({}, message, {
-                    sentAt: convertDateFromClient(message.sentAt),
-                }),
-                { observe: 'response' },
-            )
-            .pipe(
-                tap((response) => {
-                    if (response.body && response.body.id) {
-                        message.id = response.body.id;
-                    }
-                }),
-            );
+        const payload = {
+            message: Object.assign({}, message, {
+                sentAt: convertDateFromClient(message.sentAt),
+            }),
+            args: args ?? {},
+        };
+        return this.httpClient.post<IrisServerMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages`, payload, { observe: 'response' }).pipe(
+            tap((response) => {
+                if (response.body && response.body.id) {
+                    message.id = response.body.id;
+                }
+            }),
+        );
     }
 
     /**
      * resends a message in a session
-     * @param {number} sessionId
-     * @param {IrisUserMessage} message
-     * @return {Response<IrisMessage>}
+     * @param {number} sessionId of the session
+     * @param {IrisUserMessage} message to be resent
+     * @param args optional arguments
+     * @return {Response<IrisMessage>} an Observable of the HTTP responses
      */
-    resendMessage(sessionId: number, message: IrisUserMessage): Response<IrisMessage> {
+    resendMessage(sessionId: number, message: IrisUserMessage, args?: Record<string, unknown>): Response<IrisMessage> {
         message.messageDifferentiator = message.messageDifferentiator ?? this.randomInt();
-        return this.httpClient.post<IrisServerMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, null, { observe: 'response' }).pipe(
+        return this.httpClient.post<IrisServerMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${message.id}/resend`, args ?? {}, { observe: 'response' }).pipe(
             tap((response) => {
                 if (response.body && response.body.id) {
                     message.id = response.body.id;

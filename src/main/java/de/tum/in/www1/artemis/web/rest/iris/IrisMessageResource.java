@@ -11,6 +11,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
@@ -20,6 +22,7 @@ import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
+import de.tum.in.www1.artemis.web.rest.dto.IrisMessageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
@@ -69,22 +72,22 @@ public class IrisMessageResource {
      * POST sessions/{sessionId}/messages: Send a new message from the user to the LLM
      *
      * @param sessionId of the session
-     * @param message   to send
+     * @param dto       the message to send plus extra arguments from the client
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status {@code 404 (Not Found)} if the session could not be found.
      */
     @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessage message) throws URISyntaxException {
+    public ResponseEntity<IrisMessage> createMessage(@PathVariable Long sessionId, @RequestBody IrisMessageDTO dto) throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
         irisSessionService.checkHasAccessToIrisSession(session, user);
         irisSessionService.checkRateLimit(session, user);
 
-        var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
-        savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
+        var savedMessage = irisMessageService.saveMessage(dto.message(), session, IrisMessageSender.USER);
+        savedMessage.setMessageDifferentiator(dto.message().getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage);
-        irisSessionService.requestMessageFromIris(session);
+        irisSessionService.requestMessageFromIris(session, dto.args());
 
         var uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(savedMessage);
@@ -95,12 +98,13 @@ public class IrisMessageResource {
      *
      * @param sessionId of the session
      * @param messageId of the message
+     * @param args      extra arguments from the client
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with status {@code 404 (Not Found)} if the session or message could
      *         not be found.
      */
     @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
-    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
+    public ResponseEntity<IrisMessage> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody JsonNode args) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
@@ -114,7 +118,7 @@ public class IrisMessageResource {
         if (message.getSender() != IrisMessageSender.USER) {
             throw new BadRequestException("Only user messages can be resent");
         }
-        irisSessionService.requestMessageFromIris(session);
+        irisSessionService.requestMessageFromIris(session, args);
 
         return ResponseEntity.ok(message);
     }

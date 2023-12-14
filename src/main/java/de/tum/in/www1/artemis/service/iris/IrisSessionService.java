@@ -5,6 +5,8 @@ import javax.ws.rs.BadRequestException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
@@ -89,9 +91,10 @@ public class IrisSessionService {
      * Currently, only the chat subsystem exists.
      *
      * @param session The session to get a message for
+     * @param args    Extra arguments from the client to consider in the request
      */
-    public void requestMessageFromIris(IrisSession session) {
-        getIrisSessionSubService(session).requestAndHandleResponse(session);
+    public void requestMessageFromIris(IrisSession session, JsonNode args) {
+        getIrisSessionSubService(session).requestAndHandleResponse(session, args);
     }
 
     public void checkRateLimit(IrisSession session, User user) {

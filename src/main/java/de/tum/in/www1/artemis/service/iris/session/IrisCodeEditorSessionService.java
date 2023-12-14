@@ -157,15 +157,20 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      * conversation history to the LLM, and handles the response.
      *
      * @param irisSession The code editor session to send the request for with all messages and message contents loaded
+     * @param args        JsonNode containing the most up-to-date problem statement on the client
      */
     @Override
-    public void requestAndHandleResponse(IrisSession irisSession) {
+    public void requestAndHandleResponse(IrisSession irisSession, JsonNode args) {
         var sessionFromDB = irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
         if (!(sessionFromDB instanceof IrisCodeEditorSession session)) {
             throw new BadRequestException("Iris session is not a code editor session");
         }
         var exercise = session.getExercise();
         var params = initializeParams(exercise);
+        if (args.hasNonNull("problemStatement")) {
+            // Add the problem statement from the client to the request
+            params.put("problemStatement", args.get("problemStatement").asText());
+        }
         params.put("chatHistory", session.getMessages()); // Additionally add the chat history to the request
 
         var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisCodeEditorSettings();
@@ -195,10 +200,10 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     /**
-     * Converts a JsonNode into an IrisMessage.
-     * To do this, it checks the JsonNode for a field "response". If it is present, it creates an IrisTextMessageContent
-     * with the value of the field as the message content. If the JsonNode also has a field "components", it creates an
-     * IrisExercisePlanMessageContent with the parsed value of the field as the message content.
+     * Converts a JsonNode into an IrisMessage. To do this, it checks the JsonNode for a field "response". If it is
+     * present, it creates an IrisTextMessageContent with the value of the field as the message content. If the JsonNode
+     * also has a field "components", it creates an IrisExercisePlanMessageContent with the parsed value of the field as
+     * the message content.
      *
      * @param content The JsonNode to convert
      * @return The converted IrisMessage
@@ -223,8 +228,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     /**
-     * Converts a JsonNode into an IrisExercisePlanMessageContent.
-     * In order for this to succeed, the JsonNode must have the following structure:
+     * Converts a JsonNode into an IrisExercisePlanMessageContent. In order for this to succeed, the JsonNode must have
+     * the following structure:
      *
      * <pre>
      *     {
@@ -353,8 +358,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     /**
      * Gets the solution repository for a given exercise. This method uses the
-     * SolutionProgrammingExerciseParticipationRepository to find the solution participation for the exercise.
-     * If the participation is not found, it will throw an exception.
+     * SolutionProgrammingExerciseParticipationRepository to find the solution participation for the exercise. If the
+     * participation is not found, it will throw an exception.
      *
      * @param exercise The exercise to get the solution repository for
      * @return The solution repository
@@ -365,8 +370,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     /**
      * Fetches the template repository for a given exercise. This method uses the
-     * TemplateProgrammingExerciseParticipationRepository to find the template participation for the exercise.
-     * If the participation is not found, it will throw an exception.
+     * TemplateProgrammingExerciseParticipationRepository to find the template participation for the exercise. If the
+     * participation is not found, it will throw an exception.
      *
      * @param exercise The exercise to get the template repository for
      * @return The template repository
@@ -396,8 +401,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     /**
-     * Fetches the repository for a given participation.
-     * If the repository is already cached, it will be retrieved from the cache.
+     * Fetches the repository for a given participation. If the repository is already cached, it will be retrieved from
+     * the cache.
      *
      * @param participation The participation to fetch the repository for
      * @return The repository
@@ -465,8 +470,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     /**
-     * Extracts the problem statement changes from the response of the LLM.
-     * The response must have one of the following structures:
+     * Extracts the problem statement changes from the response of the LLM. The response must have one of the following
+     * structures:
      *
      * <pre>
      *     {
@@ -481,7 +486,7 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      *         ]
      *     }
      * </pre>
-     *
+     * <p>
      * or
      *
      * <pre>
@@ -545,8 +550,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
     }
 
     /**
-     * Extracts the changes for a specific component from the response of the LLM.
-     * The response must have the following structure:
+     * Extracts the changes for a specific component from the response of the LLM. The response must have the following
+     * structure:
      *
      * <pre>
      *     {
@@ -560,9 +565,9 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
      *         ]
      *     }
      * </pre>
-     *
-     * If the type of change is unrecognized, it will be ignored.
-     * This conveniently also allows us to ignore the final "!done!" change that Iris sends.
+     * <p>
+     * If the type of change is unrecognized, it will be ignored. This conveniently also allows us to ignore the final
+     * "!done!" change that Iris sends.
      *
      * @param content The JsonNode to extract the changes from
      * @return The extracted changes
@@ -637,8 +642,8 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
 
     /**
      * Injects the changes into the repository. This method replaces the first occurrence of each original string with
-     * the corresponding updated string in the file with the same name as the file in the change.
-     * Returned is a set of paths to the files that were actually modified.
+     * the corresponding updated string in the file with the same name as the file in the change. Returned is a set of
+     * paths to the files that were actually modified.
      *
      * @param repository The repository to inject the changes into
      * @param changes    The changes to inject

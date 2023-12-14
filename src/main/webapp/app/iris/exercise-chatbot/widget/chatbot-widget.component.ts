@@ -15,7 +15,7 @@ import {
 import { NavigationStart, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonType } from 'app/shared/components/button.component';
-import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -104,6 +104,8 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
     faThumbsDown = faThumbsDown;
     faRedo = faRedo;
 
+    @Input() argumentsOnSend: () => Record<string, unknown> = () => ({});
+
     // ViewChilds
     @ViewChild('chatBody') chatBody!: ElementRef;
     @ViewChild('scrollArrow') scrollArrow!: ElementRef;
@@ -169,6 +171,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             }
         });
         this.fullSize = data.fullSize ?? false;
+        this.argumentsOnSend = data.argumentsOnSend;
     }
 
     ngOnInit() {
@@ -368,7 +371,7 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             }, 20000);
             this.stateStore
                 .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
-                .then(() => this.sessionService.sendMessage(this.sessionId, message))
+                .then(() => this.sessionService.sendMessage(this.sessionId, message, this.argumentsOnSend()))
                 .then(() => this.scrollToBottom('smooth'))
                 .catch((error) => this.handleIrisError(error));
             this.newMessageTextContent = '';
@@ -390,9 +393,9 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
             .dispatchAndThen(new StudentMessageSentAction(message, timeoutId))
             .then(() => {
                 if (message.id) {
-                    return this.sessionService.resendMessage(this.sessionId, message);
+                    return this.sessionService.resendMessage(this.sessionId, message, this.argumentsOnSend());
                 } else {
-                    return this.sessionService.sendMessage(this.sessionId, message);
+                    return this.sessionService.sendMessage(this.sessionId, message, this.argumentsOnSend());
                 }
             })
             .then(() => {

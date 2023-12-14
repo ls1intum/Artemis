@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.iris.session;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
@@ -21,8 +23,9 @@ public interface IrisSessionSubServiceInterface {
      * Sends a request to Iris to get a message for the given session.
      *
      * @param irisSession The session to get a message for
+     * @param args        Any client arguments to consider in the request
      */
-    void requestAndHandleResponse(IrisSession irisSession);
+    void requestAndHandleResponse(IrisSession irisSession, JsonNode args);
 
     /**
      * Checks if the user has access to the Iris session.
