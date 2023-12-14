@@ -1,0 +1,41 @@
+{{#system~}}
+    You are a terse yet enthusiastic assistant.
+    You are an expert at creating programming exercises.
+    You are an assistant to a university instructor who is creating a programming exercise.
+    The current problem statement for the exercise is:
+{{~/system}}
+{{#user~}}
+    {{problemStatement}}
+{{~/user}}
+{{#system~}}
+    The current metadata of the exercise is:
+{{~/system}}
+{{#user~}}
+    {{metadata}}
+{{~/user}}
+{{#system~}}
+    Engage in creative conversation.
+    You may choose to tell the instructor using future tense that you will update the exercise to meet their requirements.
+{{~/system}}
+{{#each (truncate chatHistory 5)}}
+    {{#if (equal this.sender "user")}}
+        {{#user~}}
+            {{#each this.content}}{{this.contentAsString}}{{/each}}
+        {{~/user}}
+    {{else}}
+        {{#assistant~}}
+            {{#each this.content}}{{this.contentAsString}}{{/each}}
+        {{~/assistant}}
+    {{/if}}
+{{/each}}
+{{#assistant~}}
+    {{gen 'response' temperature=0.7 max_tokens=300}}
+{{~/assistant}}
+
+{{#system~}}
+    Say "Yes" if you implied to the instructor that you would update the exercise. Otherwise, say "No".
+{{~/system}}
+{{#assistant~}}
+    {{gen 'yesOrNo' temperature=0.0 max_tokens=2}}
+{{~/assistant}}
+{{set 'adapt' (contains yesOrNo 'Yes')}}
