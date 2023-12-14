@@ -66,6 +66,8 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiari
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-chatbot-button.component';
+import { IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -79,6 +81,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let exerciseGroupService: ExerciseGroupService;
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
     let alertService: AlertService;
+    let irisExerciseCreationWebsocketService: IrisExerciseCreationWebsocketService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -124,8 +127,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 MockComponent(ModePickerComponent),
                 MockComponent(ExerciseUpdateNotificationComponent),
                 MockComponent(ExerciseUpdatePlagiarismComponent),
+                MockComponent(IrisExerciseCreationChatbotButtonComponent),
             ],
             providers: [
+                IrisExerciseCreationWebsocketService,
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -144,7 +149,12 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
                 programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
                 alertService = debugElement.injector.get(AlertService);
+                irisExerciseCreationWebsocketService = debugElement.injector.get(IrisExerciseCreationWebsocketService);
             });
+    });
+
+    afterEach(() => {
+        irisExerciseCreationWebsocketService.ngOnDestroy();
     });
 
     describe('save', () => {
