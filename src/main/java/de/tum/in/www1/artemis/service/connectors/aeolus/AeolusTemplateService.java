@@ -94,11 +94,6 @@ public class AeolusTemplateService {
         }
         Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", programmingLanguage.name().toLowerCase(), templateFileName));
         if (!fileResource.exists()) {
-            var existingFiles = Arrays.stream(resourceLoaderService.getResources(Path.of("templates", "aeolus"))).map(Resource::getFilename).toList();
-            var allNames = new StringBuilder();
-            for (var name : existingFiles) {
-                allNames.append(name).append(", ");
-            }
             throw new IOException("File " + Path.of("templates", "aeolus", programmingLanguage.name().toLowerCase(), templateFileName)
                     + " not found for settings: programming language: " + programmingLanguage.name() + ", project type: " + projectType.map(Enum::name).orElse("default")
                     + ", static analysis: " + staticAnalysis + ", sequential runs: " + sequentialRuns + ", test coverage: " + testCoverage + ". Existing files: " + allNames);
