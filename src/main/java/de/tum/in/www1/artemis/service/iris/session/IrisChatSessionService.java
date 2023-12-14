@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -153,9 +154,11 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         parameters.put("latestSubmission", "");
         parameters.put("buildFailed", "");
         parameters.put("buildLog", "");
-        var participation = programmingExerciseStudentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), chatSession.getUser().getLogin());
-        if (participation.isPresent()) {
-            var submission = participation.get().getSubmissions().stream().max(Submission::compareTo);
+        var participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(),
+                chatSession.getUser().getLogin());
+        if (!participations.isEmpty()) {
+            var participation = participations.get(participations.size() - 1);
+            var submission = participation.getSubmissions().stream().max(Submission::compareTo);
             Optional<ProgrammingSubmission> latestSubmission = Optional.empty();
             if (submission.isPresent()) {
                 latestSubmission = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.get().getId());
@@ -167,7 +170,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
             }
         }
         parameters.put("session", chatSession);
-        addDiffAndTemplatesForStudentAndExerciseIfPossible(chatSession.getUser(), exercise, parameters);
+        addDiffAndTemplatesForStudentAndExerciseIfPossible(chatSession.getUser(), exercise, participations, parameters);
 
         var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false);
         irisConnectorService.sendRequest(irisSettings.irisChatSettings().getTemplate(), irisSettings.irisChatSettings().getPreferredModel(), parameters)
@@ -188,12 +191,12 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                 });
     }
 
-    private void addDiffAndTemplatesForStudentAndExerciseIfPossible(User student, ProgrammingExercise exercise, Map<String, Object> parameters) {
+    private void addDiffAndTemplatesForStudentAndExerciseIfPossible(User student, ProgrammingExercise exercise, List<ProgrammingExerciseStudentParticipation> studentParticipations,
+            Map<String, Object> parameters) {
         parameters.put("gitDiff", "");
         parameters.put("studentRepository", Map.of());
         parameters.put("templateRepository", Map.of());
 
-        var studentParticipation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), student.getLogin());
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId());
 
         Repository templateRepo;
@@ -202,7 +205,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         if (templateParticipation.isEmpty()) {
             throw new InternalServerErrorException("Iris cannot function without template participation");
         }
-        if (studentParticipation.isEmpty()) {
+        if (studentParticipations.isEmpty()) {
             try {
                 templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
             }
@@ -215,7 +218,7 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
 
         try {
             templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
-            studentRepo = gitService.getOrCheckoutRepository(studentParticipation.get().getVcsRepositoryUrl(), true);
+            studentRepo = gitService.getOrCheckoutRepository(studentParticipations.get(studentParticipations.size() - 1).getVcsRepositoryUrl(), true);
         }
         catch (GitAPIException e) {
             throw new InternalServerErrorException("Could not fetch existing student or template participation");

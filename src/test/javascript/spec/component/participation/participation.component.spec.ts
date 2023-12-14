@@ -47,7 +47,7 @@ describe('ParticipationComponent', () => {
 
     const exercise: Exercise = { numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false, id: 1, secondCorrectionEnabled: true };
 
-    const route = { params: of({ exerciseId: 1 } as Params) } as ActivatedRoute;
+    const route = { params: of({ exerciseId: '1' } as Params) } as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -89,6 +89,16 @@ describe('ParticipationComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should initialize with exerciseId from route', () => {
+        // @ts-ignore
+        component.exercise = undefined;
+        const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
+        component.ngOnInit();
+
+        expect(exerciseFindStub).toHaveBeenCalledExactlyOnceWith(exercise.id);
+        expect(component.exercise).toEqual(exercise);
     });
 
     it('should initialize for non programming exercise', fakeAsync(() => {
