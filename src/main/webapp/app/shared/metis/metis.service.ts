@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable, ReplaySubject, Subscription, map, tap } fr
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { Course } from 'app/entities/course.model';
 import { Posting } from 'app/entities/metis/posting.model';
 import { Injectable, OnDestroy } from '@angular/core';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
@@ -148,9 +148,6 @@ export class MetisService implements OnDestroy {
         if (course && (this.courseId === undefined || this.courseId !== course.id)) {
             this.courseId = course.id!;
             this.course = course;
-            if (isCommunicationEnabled(course)) {
-                this.updateCoursePostTags();
-            }
         }
     }
 

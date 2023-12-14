@@ -308,14 +308,6 @@ describe('Metis Service', () => {
         expect(metisUserIsAuthorOfPostingReturn).toBeFalse();
     });
 
-    it('should set course information correctly and invoke an update of the post tags in this course', () => {
-        const updateCoursePostTagsSpy = jest.spyOn(metisService, 'updateCoursePostTags');
-        metisService.setCourse(course);
-        const getCourseReturn = metisService.getCourse();
-        expect(getCourseReturn).toEqual(course);
-        expect(updateCoursePostTagsSpy).toHaveBeenCalledOnce();
-    });
-
     it('should not fetch course post tags if communication is not enabled', () => {
         const updateCoursePostTagsSpy = jest.spyOn(metisService, 'updateCoursePostTags');
         course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.MESSAGING_ONLY;
