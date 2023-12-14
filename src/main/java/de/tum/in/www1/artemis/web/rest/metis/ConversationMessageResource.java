@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.ConversationMessagingService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -182,7 +181,7 @@ public class ConversationMessageResource {
      *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
      */
     @PutMapping("courses/{courseId}/messages/{postId}/display-priority")
-    @EnforceAtLeastTutor
+    @EnforceAtLeastStudent
     public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
         Post postWithUpdatedDisplayPriority = conversationMessagingService.changeDisplayPriority(courseId, postId, displayPriority);
         return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);

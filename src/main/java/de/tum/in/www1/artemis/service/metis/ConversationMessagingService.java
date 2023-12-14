@@ -380,7 +380,8 @@ public class ConversationMessagingService extends PostingService {
      */
     public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = preCheckUserAndCourseForMessaging(user, courseId);
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        preCheckUserAndCourseForCommunicationOrMessaging(user, course);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         Post message = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
