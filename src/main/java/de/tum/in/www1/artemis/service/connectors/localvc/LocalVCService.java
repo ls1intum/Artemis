@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
-import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 
 /**
  * Implementation of VersionControlService for the local VC server.
@@ -55,14 +54,10 @@ public class LocalVCService extends AbstractVersionControlService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCBasePath;
 
-    private final ProgrammingLanguageFeatureService programmingLanguageFeatureService;
-
     public LocalVCService(UrlService urlService, GitService gitService, ApplicationContext applicationContext,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            ProgrammingLanguageFeatureService programmingLanguageFeatureService) {
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
         super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository, templateProgrammingExerciseParticipationRepository);
-        this.programmingLanguageFeatureService = programmingLanguageFeatureService;
     }
 
     @Override
