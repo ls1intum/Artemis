@@ -18,22 +18,30 @@
                         </button>
                     </div>
                     @if (course.startDate) {
-                        <div class="d-flex gap-2">
+                        <div class="d-flex">
                             <button
                                 class="btn"
-                                [disabled]="!showLifetimeOverview"
-                                (click)="displayDefaultChartScope()"
-                                ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.recentWeekTooltip' | artemisTranslate }}"
+                                [disabled]="!showLifetimeOverview && displayedNumberOfWeeks === 4"
+                                (click)="displayPeriodOverview(4)"
+                                ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.periodTooltip' | artemisTranslate: { amount: 4 } }}"
                             >
-                                {{ 'artemisApp.courseStatistics.scopeButton.recentWeekButton' | artemisTranslate }}
+                                {{ 'artemisApp.courseStatistics.scopeButton.period' | artemisTranslate: { ammount: 4 } }}
+                            </button>
+                            <button
+                                class="btn"
+                                [disabled]="!showLifetimeOverview && displayedNumberOfWeeks === 8"
+                                (click)="displayPeriodOverview(8)"
+                                ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.periodTooltip' | artemisTranslate: { amount: 4 } }}"
+                            >
+                                {{ 'artemisApp.courseStatistics.scopeButton.period' | artemisTranslate: { ammount: 8 } }}
                             </button>
                             <button
                                 class="btn"
                                 [disabled]="showLifetimeOverview"
                                 (click)="displayLifetimeOverview()"
-                                ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.lifetimeOverviewTooltip' | artemisTranslate }}"
+                                ngbTooltip="{{ 'artemisApp.courseStatistics.scopeButton.overviewTooltip' | artemisTranslate }}"
                             >
-                                {{ 'artemisApp.courseStatistics.scopeButton.lifetimeOverviewButtonLabel' | artemisTranslate }}
+                                {{ 'artemisApp.courseStatistics.scopeButton.overview' | artemisTranslate }}
                             </button>
                         </div>
                     }
@@ -43,14 +51,10 @@
                         <ngx-charts-line-chart
                             [view]="[containerRef.offsetWidth, 320]"
                             [scheme]="chartColor"
-                            [legend]="legend"
-                            [showXAxisLabel]="showXAxisLabel"
-                            [showYAxisLabel]="showYAxisLabel"
-                            [xAxis]="xAxis"
-                            [yAxis]="yAxis"
+                            [showXAxisLabel]="true"
+                            [xAxis]="true"
+                            [yAxis]="true"
                             [xAxisLabel]="xAxisLabel"
-                            [yAxisLabel]="yAxisLabel"
-                            [timeline]="timeline"
                             [results]="data"
                             [yScaleMin]="0"
                             [yScaleMax]="100"

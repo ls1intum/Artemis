@@ -27,7 +27,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
 
     LEFT = false;
     RIGHT = true;
-    readonly displayedNumberOfWeeks = 5;
+    displayedNumberOfWeeks: number = 8;
     showsCurrentWeek = true;
 
     // Chart related
@@ -46,14 +46,8 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         group: ScaleType.Ordinal,
         domain: [GraphColors.DARK_BLUE],
     };
-    legend = false;
-    xAxis = true;
-    yAxis = true;
-    showYAxisLabel = false;
-    showXAxisLabel = true;
     xAxisLabel: string;
-    yAxisLabel = '';
-    timeline = false;
+
     data: any[];
     // Data changes will be stored in the copy first, to trigger change detection when ready
     dataCopy = [
@@ -66,7 +60,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     absoluteSeries = [{}];
     curve: any = shape.curveMonotoneX;
     average = { name: 'Mean', value: 0 };
-    showAverage = true;
     startDateDisplayed = false;
 
     // Icons
@@ -88,10 +81,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
         this.amountOfStudents = this.translateService.instant('artemisApp.courseStatistics.amountOfStudents');
         this.updateXAxisLabel();
         this.determineDisplayedPeriod(this.course, this.displayedNumberOfWeeks);
-        console.log('spanSize', this.currentSpanSize);
-        console.log('initial data', this.initialStats);
-        console.log('data', this.data);
-        console.log('current offset to endDate', this.currentOffsetToEndDate);
         /*
         if the course has a start date and already ended
         (i.e. the time difference between today and the course end date is at least one week), we show the lifetime overview by default.
@@ -100,9 +89,8 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
             this.showLifetimeOverview = true;
             this.displayLifetimeOverview();
         } else {
-            this.displayDefaultChartScope();
+            this.displayPeriodOverview(this.displayedNumberOfWeeks);
         }
-        // this.reloadChart();
     }
 
     /**
@@ -111,7 +99,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     private reloadChart() {
         this.loading = true;
         this.createLabels();
-        this.service.getStatisticsData(this.course.id!, this.currentPeriod).subscribe((res: number[]) => {
+        this.service.getStatisticsData(this.course.id!, this.currentPeriod, this.displayedNumberOfWeeks).subscribe((res: number[]) => {
             this.processDataAndCreateChart(res);
             this.data = [...this.dataCopy];
         });
@@ -126,7 +114,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
             const allValues = [];
             for (let i = 0; i < array.length; i++) {
                 allValues.push(roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course));
-                console.log(this.dataCopy);
                 this.dataCopy[0].series[i]['value'] = roundScorePercentSpecifiedByCourseSettings(array[i] / this.numberOfStudentsInCourse, this.course); // allValues[i];
                 this.absoluteSeries[i]['absoluteValue'] = array[i];
             }
@@ -137,7 +124,8 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
                 this.absoluteSeries[i]['absoluteValue'] = 0;
             }
         }
-        this.average.name = currentMean.toFixed(2) + '%';
+
+        this.average.name = this.translateService.instant('artemisApp.courseStatistics.average') + currentMean.toFixed(2) + '%';
         this.average.value = currentMean;
         this.loading = false;
     }
@@ -194,26 +182,21 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     }
 
     /**
-     * Switches the visibility state for the reference line in the chart
+     * Creates the chart for the default scope
      */
-    toggleAverageLine(): void {
-        this.showAverage = !this.showAverage;
-    }
-
-    /**
-     * Creates the chart for the default scope (<= 17 weeks)
-     */
-    displayDefaultChartScope(): void {
+    displayPeriodOverview(periodSize: number): void {
+        this.currentPeriod = 0;
+        this.displayedNumberOfWeeks = periodSize;
         this.showLifetimeOverview = false;
         this.loading = true;
-        // Only use the pre-loaded stats once
-        if (!this.initialStats) {
-            console.log('uhaaaaaa');
-            return;
-        }
         this.createLabels();
-        this.processDataAndCreateChart(this.initialStats.slice(Math.max(this.initialStats.length - this.displayedNumberOfWeeks, 0)));
-        this.data = this.dataCopy;
+
+        if (!this.initialStats) {
+            this.reloadChart();
+        } else {
+            this.processDataAndCreateChart(this.initialStats.slice(Math.max(this.initialStats.length - this.displayedNumberOfWeeks, 0)));
+            this.data = [...this.dataCopy];
+        }
     }
 
     /**
@@ -274,5 +257,6 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
      */
     private updateXAxisLabel() {
         this.xAxisLabel = this.translateService.instant('artemisApp.courseStatistics.calendarWeek');
+        this.average.name = this.translateService.instant('artemisApp.courseStatistics.average') + this.average.value.toFixed(2) + '%';
     }
 }
