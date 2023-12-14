@@ -141,13 +141,14 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
         }
 
         var settings = irisSettingsService.getCombinedIrisSettingsFor(session.getCourse(), false).irisCodeEditorSettings();
-        String template = loadTemplate("exercise-creation-chat.hbs");
+        String chatTemplate = loadTemplate("exercise-creation-chat.hbs");
         String preferredModel = settings.getPreferredModel();
         String problemStatement = clientParams.path("problemStatement").asText();
         ObjectNode metadata = (ObjectNode) clientParams.path("metadata");
-        var params = new IrisExerciseCreationRequestDTO(problemStatement, metadata, session.getMessages());
+        var chatParams = new IrisExerciseCreationRequestDTO(problemStatement, metadata, session.getMessages());
 
-        irisConnectorService.sendRequestV2(template, preferredModel, params).handleAsync((chatResponse, chatErr) -> {
+        log.debug("Sending Iris exercise creation chat request");
+        irisConnectorService.sendRequestV2(chatTemplate, preferredModel, chatParams).handleAsync((chatResponse, chatErr) -> {
             if (!checkPyrisResponse(chatResponse, chatErr, session)) {
                 return null;
             }
@@ -159,7 +160,9 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
                 return null;
             }
             var adaptTemplate = loadTemplate("exercise-creation-adapt.hbs");
-            var adaptParams = new IrisExerciseCreationRequestDTO(problemStatement, metadata, chatMessage.getSession().getMessages());
+            var newSession = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
+            var adaptParams = new IrisExerciseCreationRequestDTO(problemStatement, metadata, newSession.getMessages());
+            log.debug("Sending Iris exercise creation adaptation request");
             return irisConnectorService.sendRequestV2(adaptTemplate, preferredModel, adaptParams).handleAsync((adaptResponse, adaptErr) -> {
                 if (!checkPyrisResponse(adaptResponse, adaptErr, session)) {
                     return null;
@@ -171,12 +174,6 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
                 return null;
             });
         });
-    }
-
-    private IrisMessage receiveIrisMessage(JsonNode content, IrisSession session) {
-        String adaptResponseText = content.get("response").asText();
-        IrisMessage adaptMessage = new IrisMessage().withContent(new IrisTextMessageContent(adaptResponseText));
-        return irisMessageService.saveMessage(adaptMessage, session, IrisMessageSender.LLM);
     }
 
     private boolean checkPyrisResponse(IrisMessageResponseV2DTO response, Throwable throwable, IrisExerciseCreationSession session) {
@@ -197,6 +194,12 @@ public class IrisExerciseCreationSessionService implements IrisSessionSubService
             return false;
         }
         return true;
+    }
+
+    private IrisMessage receiveIrisMessage(JsonNode content, IrisSession session) {
+        String adaptResponseText = content.get("response").asText();
+        IrisMessage adaptMessage = new IrisMessage().withContent(new IrisTextMessageContent(adaptResponseText));
+        return irisMessageService.saveMessage(adaptMessage, session, IrisMessageSender.LLM);
     }
 
     private String getProblemStatement(JsonNode content) {

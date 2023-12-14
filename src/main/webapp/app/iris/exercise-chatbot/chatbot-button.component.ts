@@ -41,11 +41,13 @@ export abstract class IrisChatbotButtonComponent implements OnInit, OnDestroy {
         this.route.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
             this.exerciseId = parseInt(params['exerciseId'], 10);
-            // TODO: This will need to be updated as soon as there exists a session type with both an exerciseId and a courseId
+            // FIXME: This will need to be updated as soon as there exists a session type with both an exerciseId and a courseId
+            // In general this could be done better by using a service that provides the session to use
             if (this.exerciseId) {
                 this.sessionService.getCurrentSessionOrCreate(this.exerciseId);
             } else if (this.courseId) {
-                this.sessionService.getCurrentSessionOrCreate(this.courseId);
+                // We always create a new exercise creation session since the exercise creation page is reset on every reload
+                this.sessionService.createNewSession(this.courseId);
             }
         });
 
