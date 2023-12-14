@@ -221,9 +221,14 @@ public class SingleUserNotificationFactory {
         }
 
         Conversation conversation = answerPost.getPost().getConversation();
-        List<String> placeholders = new ArrayList<>(
-                List.of(conversation.getCourse().getTitle(), answerPost.getPost().getContent(), answerPost.getPost().getCreationDate().toString(),
-                        answerPost.getPost().getAuthor().getName(), answerPost.getContent(), answerPost.getCreationDate().toString(), answerPost.getAuthor().getName()));
+        List<String> placeholders = new ArrayList<>();
+        placeholders.add(conversation.getCourse().getTitle());
+        placeholders.add(answerPost.getPost().getContent());
+        placeholders.add(answerPost.getPost().getCreationDate().toString());
+        placeholders.add(answerPost.getPost().getAuthor().getName());
+        placeholders.add(answerPost.getContent());
+        placeholders.add(answerPost.getCreationDate().toString());
+        placeholders.add(answerPost.getAuthor().getName());
         String messageReplyTextType = MESSAGE_REPLY_IN_CONVERSATION_TEXT;
 
         if (conversation instanceof Channel) {
