@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
@@ -159,23 +160,27 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
         String gitDiff = studentRepository.map(repo -> getGitDiff(templateRepository, repo)).orElse("");
 
         var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false);
+        String template = irisSettings.irisChatSettings().getTemplate().getContent();
+        String preferredModel = irisSettings.irisChatSettings().getPreferredModel();
         var dto = new IrisChatRequestDTO(exercise, course, latestSubmission, buildFailed, buildLog, chatSession, gitDiff, templateRepositoryContents, studentRepositoryContents);
-        irisConnectorService.sendRequest(irisSettings.irisChatSettings().getTemplate(), irisSettings.irisChatSettings().getPreferredModel(), dto)
-                .handleAsync((irisMessage, throwable) -> {
-                    if (throwable != null) {
-                        log.error("Error while getting response from Iris model", throwable);
-                        irisChatWebsocketService.sendException(chatSession, throwable.getCause());
-                    }
-                    else if (irisMessage != null) {
-                        var irisMessageSaved = irisMessageService.saveMessage(irisMessage.message(), chatSession, IrisMessageSender.LLM);
-                        irisChatWebsocketService.sendMessage(irisMessageSaved);
-                    }
-                    else {
-                        log.error("No response from Iris model");
-                        irisChatWebsocketService.sendException(chatSession, new IrisNoResponseException());
-                    }
-                    return null;
-                });
+        irisConnectorService.sendRequestV2(template, preferredModel, dto).handleAsync((response, throwable) -> {
+            if (throwable != null) {
+                log.error("Error while getting response from Iris model", throwable);
+                irisChatWebsocketService.sendException(chatSession, throwable.getCause());
+            }
+            else if (response != null && response.content().hasNonNull("response")) {
+                String responseText = response.content().get("response").asText();
+                IrisMessage responseMessage = new IrisMessage();
+                responseMessage.addContent(new IrisTextMessageContent(responseText));
+                var irisMessageSaved = irisMessageService.saveMessage(responseMessage, chatSession, IrisMessageSender.LLM);
+                irisChatWebsocketService.sendMessage(irisMessageSaved);
+            }
+            else {
+                log.error("No response from Iris model");
+                irisChatWebsocketService.sendException(chatSession, new IrisNoResponseException());
+            }
+            return null;
+        });
     }
 
     private ProgrammingSubmission getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
