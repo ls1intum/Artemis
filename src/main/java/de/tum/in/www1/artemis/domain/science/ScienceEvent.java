@@ -31,6 +31,9 @@ public class ScienceEvent extends DomainObject {
     @Column(name = "event_type", nullable = false)
     private ScienceEventType type;
 
+    @Column(name = "resource_id")
+    private Long resourceId;
+
     public String getIdentity() {
         return identity;
     }
@@ -53,5 +56,13 @@ public class ScienceEvent extends DomainObject {
 
     public void setType(ScienceEventType type) {
         this.type = type;
+    }
+
+    public Long getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(Long resourceId) {
+        this.resourceId = resourceId;
     }
 }

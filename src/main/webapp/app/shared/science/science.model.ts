@@ -8,3 +8,8 @@ export enum ScienceEventType {
     LECTURE__VIEW_VIDEO_UNIT = 'LECTURE__VIEW_VIDEO_UNIT',
     LECTURE__VIEW_TEXT_UNIT = 'LECTURE__VIEW_TEXT_UNIT',
 }
+
+export class ScienceEventDTO {
+    type?: ScienceEventType;
+    resourceId?: number;
+}

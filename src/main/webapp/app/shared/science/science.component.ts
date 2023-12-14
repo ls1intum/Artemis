@@ -5,7 +5,19 @@ export abstract class AbstractScienceComponent {
     protected constructor(
         protected scienceService: ScienceService,
         private type: ScienceEventType,
-    ) {
-        scienceService.logEvent(type).subscribe();
+        private resourceId?: number,
+    ) {}
+
+    protected setResourceId(resourceId: number) {
+        this.resourceId = resourceId;
+    }
+
+    protected logEvent() {
+        if (this.scienceService.eventLoggingActive())
+            if (this.resourceId) {
+                this.scienceService.logEvent(this.type, this.resourceId).subscribe();
+            } else {
+                this.scienceService.logEvent(this.type).subscribe();
+            }
     }
 }

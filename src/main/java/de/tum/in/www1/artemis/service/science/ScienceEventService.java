@@ -7,8 +7,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.science.ScienceEvent;
-import de.tum.in.www1.artemis.domain.science.ScienceEventType;
 import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
+import de.tum.in.www1.artemis.web.rest.dto.science.ScienceEventDTO;
 
 /**
  * Service class for {@link ScienceEvent}.
@@ -25,35 +25,36 @@ public class ScienceEventService {
     /**
      * Logs the event for the current principle with the current timestamp.
      *
-     * @param type the type of the event that should be logged
+     * @param eventDTO the DTO of the event that should be logged
      */
-    public void logEvent(ScienceEventType type) {
+    public void logEvent(ScienceEventDTO eventDTO) {
         final Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        logEvent(type, auth.getName());
+        logEvent(eventDTO, auth.getName());
     }
 
     /**
      * Logs the event for the given principal with the current timestamp.
      *
-     * @param type      the type of the event that should be logged
+     * @param eventDTO  the DTO of the event that should be logged
      * @param principal the name of the principal for whom the event should be logged
      */
-    private void logEvent(ScienceEventType type, String principal) {
-        logEvent(type, principal, ZonedDateTime.now());
+    private void logEvent(ScienceEventDTO eventDTO, String principal) {
+        logEvent(eventDTO, principal, ZonedDateTime.now());
     }
 
     /**
      * Logs the event for the given principal with the given timestamp.
      *
-     * @param type      the type of the event that should be logged
+     * @param eventDTO  the DTO of the event that should be logged
      * @param principal the name of the principal for whom the event should be logged
      * @param timestamp the time when the event happened
      */
-    private void logEvent(ScienceEventType type, String principal, ZonedDateTime timestamp) {
+    private void logEvent(ScienceEventDTO eventDTO, String principal, ZonedDateTime timestamp) {
         ScienceEvent event = new ScienceEvent();
         event.setIdentity(principal);
         event.setTimestamp(timestamp);
-        event.setType(type);
+        event.setType(eventDTO.type());
+        event.setResourceId(eventDTO.resourceId());
         scienceEventRepository.save(event);
     }
 }

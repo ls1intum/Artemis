@@ -4,12 +4,12 @@ import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ArtemisTestModule } from '../../test.module';
 import { ScienceDirective } from 'app/shared/science/science.direcrive';
 import { ScienceService } from 'app/shared/science/science.service';
-import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceEventDTO, ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({ template: '' })
 class ScienceComponent extends AbstractScienceComponent {
     constructor(scienceService: ScienceService) {
-        super(scienceService, ScienceEventType.LECTURE__OPEN);
+        super(scienceService, { type: ScienceEventType.LECTURE__OPEN } as ScienceEventDTO);
     }
 }
 

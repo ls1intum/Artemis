@@ -5,9 +5,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.science.ScienceEventType;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.science.ScienceEventService;
+import de.tum.in.www1.artemis.web.rest.dto.science.ScienceEventDTO;
 
 /**
  * REST controller providing the science related endpoints.
@@ -27,14 +27,14 @@ public class ScienceResource {
     /**
      * PUT science : Logs an event of the given type in the event list
      *
-     * @param type the type of the event that should be logged
+     * @param event the type of the event that should be logged
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("science")
+    @PutMapping(value = "science")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> science(@RequestBody String type) {
-        log.debug("REST request to log science event of type {}", type);
-        scienceEventService.logEvent(ScienceEventType.valueOf(type));
+    public ResponseEntity<Void> science(@RequestBody ScienceEventDTO event) {
+        log.debug("REST request to log science event of type {}", event);
+        scienceEventService.logEvent(event);
         return ResponseEntity.ok().build();
     }
 }

@@ -44,4 +44,11 @@ export class ScienceSettingsService {
             this.refreshScienceSettings();
         });
     }
+
+    eventLoggingAllowed(): boolean {
+        const setting = this.currentScienceSettings.find((setting) => {
+            return setting.key === 'activity';
+        });
+        return setting?.active ?? true;
+    }
 }

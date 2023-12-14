@@ -61,6 +61,10 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
         this.activatedRoute.params.subscribe((params) => {
             this.lectureId = +params['lectureId'];
             if (this.lectureId) {
+                // science logging
+                this.setResourceId(this.lectureId);
+                this.logEvent();
+
                 this.loadData();
             }
         });

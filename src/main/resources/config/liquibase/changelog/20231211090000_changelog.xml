@@ -36,6 +36,7 @@
             <column name="event_type" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
+            <column name="resource_id" type="bigint" />
         </createTable>
     </changeSet>
 </databaseChangeLog>

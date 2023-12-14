@@ -11,6 +11,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.science.ScienceEventType;
 import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
+import de.tum.in.www1.artemis.web.rest.dto.science.ScienceEventDTO;
 
 public class ScienceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -19,19 +20,20 @@ public class ScienceIntegrationTest extends AbstractSpringIntegrationIndependent
     @Autowired
     private ScienceEventRepository scienceEventRepository;
 
-    private void sendPutRequest(ScienceEventType type) throws Exception {
-        request.put("/api/science", type, HttpStatus.OK);
+    private void sendPutRequest(ScienceEventDTO event) throws Exception {
+        request.put("/api/science", event, HttpStatus.OK);
     }
 
     @ParameterizedTest
     @EnumSource(ScienceEventType.class)
     @WithMockUser()
     void testLogEventOfType(ScienceEventType type) throws Exception {
-        sendPutRequest(type);
+        final var event = new ScienceEventDTO(type, null);
+        sendPutRequest(event);
         final var loggedEvents = scienceEventRepository.findAllByType(type);
         assertThat(loggedEvents).hasSize(1);
         final var loggedEvent = loggedEvents.stream().findFirst().get();
-        final var principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        assertThat(loggedEvent.getIdentity()).isEqualTo(principal.hashCode());
+        final var principal = SecurityContextHolder.getContext().getAuthentication().getName();
+        assertThat(loggedEvent.getIdentity()).isEqualTo(principal);
     }
 }
