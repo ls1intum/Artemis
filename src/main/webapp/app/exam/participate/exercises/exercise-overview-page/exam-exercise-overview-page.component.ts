@@ -6,6 +6,7 @@ import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-it
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { QuizExam } from 'app/entities/quiz-exam.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
@@ -23,6 +24,9 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
     quizExamIcon = faEdit;
+    quizExamIconStatus = 'synced';
+    quizIconTooltip: string;
+    quizIcon: IconProp;
 
     constructor(
         protected changeDetectorReference: ChangeDetectorRef,
@@ -38,6 +42,8 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
             item.icon = faEdit;
             this.examExerciseOverviewItems.push(item);
         });
+        this.quizIconTooltip = getIconTooltip(ExerciseType.QUIZ);
+        this.quizIcon = getIcon(ExerciseType.QUIZ);
     }
 
     ngOnChanges() {
@@ -98,15 +104,5 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
             item.icon = faEdit;
             return 'notSynced';
         }
-    }
-
-    /**
-     * Set quizExamIcon and return the icon status of the quiz exam
-     *
-     * @return synced
-     */
-    setQuizExamIconStatus() {
-        this.quizExamIcon = faEdit;
-        return 'synced';
     }
 }

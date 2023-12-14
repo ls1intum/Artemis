@@ -40,8 +40,8 @@
                 <tr>
                     <td style="max-width: 30px"></td>
                     <td style="max-width: 30px">
-                        <div [ngbTooltip]="getIconTooltip(ExerciseType.QUIZ) | artemisTranslate">
-                            <fa-icon [icon]="getIcon(ExerciseType.QUIZ)" placement="right auto"></fa-icon>
+                        <div [ngbTooltip]="quizIconTooltip | artemisTranslate">
+                            <fa-icon [icon]="quizIcon" placement="right auto"></fa-icon>
                         </div>
                     </td>
                     <td style="max-width: 100px; font-weight: bold">
@@ -53,11 +53,7 @@
                         {{ quizExam?.maxPoints }}
                     </td>
                     <td style="max-width: 50px; font-weight: bold">
-                        <div
-                            style="max-width: 10px"
-                            [ngClass]="setQuizExamIconStatus()"
-                            [ngbTooltip]="'artemisApp.examParticipation.' + getQuizExamButtonTooltip() | artemisTranslate"
-                        >
+                        <div style="max-width: 10px" [ngClass]="quizExamIconStatus" [ngbTooltip]="'artemisApp.examParticipation.' + getQuizExamButtonTooltip() | artemisTranslate">
                             <fa-icon [icon]="quizExamIcon"></fa-icon>
                         </div>
                     </td>
