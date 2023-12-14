@@ -82,10 +82,8 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
 
     @Query("""
             SELECT DISTINCT tag FROM Post post
-            LEFT JOIN post.tags tag LEFT JOIN post.lecture lecture LEFT JOIN post.exercise exercise
-            WHERE (lecture.course.id = :#{#courseId}
-            OR exercise.course.id = :#{#courseId}
-            OR post.course.id = :#{#courseId})
+            LEFT JOIN post.tags tag LEFT JOIN Channel channel ON channel.id = post.conversation.id
+            WHERE channel.course.id = :#{#courseId} and channel.isCourseWide = true
             """)
     List<String> findPostTagsForCourse(@Param("courseId") Long courseId);
 }
