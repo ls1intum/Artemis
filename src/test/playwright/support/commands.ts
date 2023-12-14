@@ -27,7 +27,7 @@ export class Commands {
                 const req = https.request(
                     {
                         hostname: fullUrl.hostname,
-                        port: fullUrl.port.length != 0 ? fullUrl.port : null,
+                        // port: fullUrl.port.length != 0 ? fullUrl.port : null,
                         path: `/${BASE_API}public/authenticate`,
                         method: 'POST',
                         agent: new https.Agent({
