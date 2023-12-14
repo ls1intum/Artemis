@@ -14,7 +14,7 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { ActivatedRoute } from '@angular/router';
 import { IrisStateStore } from 'app/iris/state-store.service';
 import { ActiveConversationMessageLoadedAction, NumNewMessagesResetAction, SessionReceivedAction } from 'app/iris/state-store.model';
-import { mockServerMessage } from './../../../helpers/sample/iris-sample-data';
+import { mockServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { IrisTutorChatbotButtonComponent } from 'app/iris/exercise-chatbot/tutor-chatbot-button.component';
 import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
 
