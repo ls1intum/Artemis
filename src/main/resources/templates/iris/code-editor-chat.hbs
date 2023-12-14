@@ -62,7 +62,7 @@
 {{#system~}}End of test repository.{{~/system}}
 
 {{#each (truncate chatHistory 5)}}
-    {{#if (equal this.sender "user")}}
+    {{#if (equal this.sender "USER")}}
         {{#if @last}}
             {{#system~}}A response is expected from you to the following:{{~/system}}
         {{/if}}
