@@ -75,22 +75,6 @@ export class MetisConversationService implements OnDestroy {
                 }
             }
         });
-
-        // this.activeConversation$.subscribe((activeConversation: ConversationDto) => {
-        //     if (this.activeConversationSubscription) {
-        //         this.activeConversationSubscription.unsubscribe();
-        //     }
-        //
-        //     if (!activeConversation) {
-        //         return;
-        //     }
-        //
-        //     this.activeConversationSubscription = this.notificationService.newOrUpdatedMessage.subscribe((postDTO: MetisPostDTO) => {
-        //         if (postDTO.action === MetisPostAction.CREATE && postDTO.post.conversation?.id !== activeConversation.id) {
-        //             this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
-        //         }
-        //     });
-        // });
     }
 
     ngOnDestroy(): void {

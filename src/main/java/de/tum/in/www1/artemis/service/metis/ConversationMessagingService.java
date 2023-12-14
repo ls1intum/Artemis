@@ -444,9 +444,10 @@ public class ConversationMessagingService extends PostingService {
      */
     public List<String> getAllCourseTags(Long courseId) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final Course course = courseRepository.findByIdElseThrow(courseId);
 
         // checks
-        preCheckUserAndCourseForCommunication(user, courseId);
+        preCheckUserAndCourseForCommunicationOrMessaging(user, course);
         return conversationMessageRepository.findPostTagsForCourse(courseId);
     }
 

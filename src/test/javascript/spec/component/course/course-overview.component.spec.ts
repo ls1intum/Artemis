@@ -48,6 +48,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
+import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -168,6 +169,7 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(MetisConversationService),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
                 { provide: NotificationService, useClass: MockNotificationService },
             ],
         })

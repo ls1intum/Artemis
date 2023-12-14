@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
@@ -99,16 +98,10 @@ public abstract class PostingService {
             else {
                 if (recipients == null) {
                     // send to all participants of the conversation
-                    recipients = conversationParticipantRepository.findConversationParticipantByConversationId(postConversation.getId()).stream()
-                            .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsHidden() != null && participant.getIsHidden(),
-                                    false))
-                            .collect(Collectors.toSet());
+                    recipients = getConversationParticipantsAsSummaries(postConversation);
                 }
-                recipients.forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", new PostDTO(
-                        postDTO.post(), postDTO.action(),
-                        recipient.isConversationHidden() && postDTO.notification() instanceof ConversationNotification && !mentionedUsers.contains(new User(recipient.userId()))
-                                ? null
-                                : postDTO.notification())));
+                recipients.forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations",
+                        new PostDTO(postDTO.post(), postDTO.action(), getNotificationForRecipient(recipient, postDTO.notification(), mentionedUsers))));
             }
         }
         else if (postDTO.post().getPlagiarismCase() != null) {
@@ -118,22 +111,15 @@ public abstract class PostingService {
     }
 
     /**
-     * Single casts a posting related event in a course to the provided recipients
+     * Gets the participants of a conversation and maps them to ConversationNotificationRecipientSummary records
      *
-     * @param postDTO    object including the affected post as well as the action
-     * @param courseId   the id of the course the posting belongs to
-     * @param recipients the recipients for this single casts with optional individual dtos
+     * @param postConversation the conversation
+     * @return Set of ConversationNotificationRecipientSummary
      */
-    protected void singleCastForPost(PostDTO postDTO, Long courseId, Map<User, PostDTO> recipients) {
-        // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
-        Conversation postConversation = postDTO.post().getConversation();
-        postConversation.hideDetails();
-
-        String courseConversationTopic = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
-
-        recipients.forEach((user, dto) -> {
-            websocketMessagingService.sendMessageToUser(user.getLogin(), courseConversationTopic + "/conversations/" + postConversation.getId(), dto != null ? dto : postDTO);
-        });
+    private Set<ConversationNotificationRecipientSummary> getConversationParticipantsAsSummaries(Conversation postConversation) {
+        return conversationParticipantRepository.findConversationParticipantByConversationId(postConversation.getId()).stream()
+                .map(participant -> new ConversationNotificationRecipientSummary(participant.getUser(), participant.getIsHidden() != null && participant.getIsHidden(), false))
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -154,32 +140,6 @@ public abstract class PostingService {
                         authorizationCheckService.isAtLeastTeachingAssistantInCourse(conversation.getCourse(), participant.getUser())));
     }
 
-    /**
-     * Checks if the requesting user is authorized in the course context,
-     * i.e. a user has to be the author of posting or at least teaching assistant
-     *
-     * @param posting posting that is requested
-     * @param user    requesting user
-     * @param course  course the posting belongs to
-     */
-    protected void mayUpdateOrDeletePostingElseThrow(Posting posting, User user, Course course) {
-        if (!user.getId().equals(posting.getAuthor().getId())) {
-            throw new AccessForbiddenException("You are not allowed to edit this post");
-        }
-    }
-
-    protected Course preCheckUserAndCourseForCommunication(User user, Long courseId) {
-        final Course course = courseRepository.findByIdElseThrow(courseId);
-        // user has to be at least student in the course
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-
-        // check if the course has posts enabled
-        if (!courseRepository.isCommunicationEnabled(courseId)) {
-            throw new BadRequestAlertException("Communication feature is not enabled for this course", getEntityName(), "400", true);
-        }
-        return course;
-    }
-
     protected Course preCheckUserAndCourseForMessaging(User user, Long courseId) {
         final Course course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
@@ -190,13 +150,12 @@ public abstract class PostingService {
         return course;
     }
 
-    protected Course preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
+    protected void preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
             throw new BadRequestAlertException("Communication and messaging is disabled for this course", getEntityName(), "400", true);
         }
-        return course;
     }
 
     /**
@@ -304,5 +263,21 @@ public abstract class PostingService {
         });
 
         return mentionedUsers;
+    }
+
+    /**
+     * Returns null of the recipient should not receive a notification
+     *
+     * @param recipient      the recipient
+     * @param notification   the potential notification for the recipient
+     * @param mentionedUsers set of mentioned users in the message
+     * @return null or the provided notification
+     */
+    private Notification getNotificationForRecipient(ConversationNotificationRecipientSummary recipient, Notification notification, Set<User> mentionedUsers) {
+        if (recipient.isConversationHidden() && notification instanceof ConversationNotification && !mentionedUsers.contains(new User(recipient.userId()))) {
+            return null;
+        }
+
+        return notification;
     }
 }

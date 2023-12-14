@@ -191,12 +191,10 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     void testCreateExistingPost_badRequest() throws Exception {
         Post existingPostToSave = existingPosts.get(0);
 
-        PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        postContextFilter.setCourseId(courseId);
-        var sizeBefore = postRepository.findPosts(postContextFilter, null, false, null).getSize();
+        var sizeBefore = postRepository.findAll().size();
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", existingPostToSave, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(postRepository.findPosts(postContextFilter, null, false, null)).hasSize(sizeBefore);
+        assertThat(postRepository.findAll()).hasSize(sizeBefore);
         verify(groupNotificationService, never()).notifyAllGroupsAboutNewPostForExercise(any(), any());
     }
 

@@ -82,7 +82,7 @@ public class ReactionService {
         Reaction savedReaction;
         if (posting instanceof Post) {
             Post post = postService.findPostOrMessagePostById(posting.getId());
-            mayInteractWithConversationIfConversationMessageElseThrow(user, post, course);
+            mayInteractWithConversationElseThrow(user, post, course);
             reaction.setPost(post);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
@@ -100,7 +100,7 @@ public class ReactionService {
         }
         else {
             AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
-            mayInteractWithConversationIfConversationMessageElseThrow(user, answerPost.getPost(), course);
+            mayInteractWithConversationElseThrow(user, answerPost.getPost(), course);
             reaction.setAnswerPost(answerPost);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
@@ -136,7 +136,7 @@ public class ReactionService {
         Post updatedPost;
         if (reaction.getPost() != null) {
             updatedPost = reaction.getPost();
-            mayInteractWithConversationIfConversationMessageElseThrow(user, updatedPost, course);
+            mayInteractWithConversationElseThrow(user, updatedPost, course);
 
             if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
                 // decrease voteCount of post needed for sorting
@@ -149,7 +149,7 @@ public class ReactionService {
         }
         else {
             AnswerPost updatedAnswerPost = reaction.getAnswerPost();
-            mayInteractWithConversationIfConversationMessageElseThrow(user, updatedAnswerPost.getPost(), course);
+            mayInteractWithConversationElseThrow(user, updatedAnswerPost.getPost(), course);
             updatedAnswerPost.removeReaction(reaction);
             updatedPost = updatedAnswerPost.getPost();
             // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
@@ -161,7 +161,7 @@ public class ReactionService {
         reactionRepository.deleteById(reactionId);
     }
 
-    private void mayInteractWithConversationIfConversationMessageElseThrow(User user, Post post, Course course) {
+    private void mayInteractWithConversationElseThrow(User user, Post post, Course course) {
         if (post.getConversation() != null) {
             conversationService.isMemberOrCreateForCourseWideElseThrow(post.getConversation().getId(), user, Optional.empty());
             postService.preCheckUserAndCourseForCommunicationOrMessaging(user, course);

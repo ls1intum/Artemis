@@ -105,7 +105,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void postInGroupChat_firstPost_noWebsocketDTOSent() throws Exception {
+    void postInGroupChat_firstPostReceivedByAllMembers() throws Exception {
         // given
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when

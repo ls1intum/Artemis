@@ -9,7 +9,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.Posting;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
@@ -115,7 +114,7 @@ public class AnswerPostService extends PostingService {
         }
         else {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
-            mayUpdateOrDeletePostingElseThrow(existingAnswerPost, user, course);
+            mayUpdateOrDeleteAnswerPostElseThrow(existingAnswerPost, user);
             existingAnswerPost.setContent(answerPost.getContent());
             existingAnswerPost.setUpdatedDate(ZonedDateTime.now());
         }
@@ -142,7 +141,7 @@ public class AnswerPostService extends PostingService {
         AnswerPost answerPost = this.findById(answerPostId);
         Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
 
-        mayUpdateOrDeletePostingElseThrow(answerPost, user, course);
+        mayUpdateOrDeleteAnswerPostElseThrow(answerPost, user);
 
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         post.removeAnswerPost(answerPost);
@@ -203,15 +202,13 @@ public class AnswerPostService extends PostingService {
     }
 
     /**
-     * Checks if the requesting user is authorized in the course context,
-     * i.e. a user has to be the author of posting or at least teaching assistant
+     * Checks if the requesting user is authorized, i.e. a user has to be the author of the answer post
      *
-     * @param posting posting that is requested
-     * @param user    requesting user
-     * @param course  course the posting belongs to
+     * @param answerPost answer that is requested
+     * @param user       requesting user
      */
-    protected void mayUpdateOrDeletePostingElseThrow(Posting posting, User user, Course course) {
-        if (!user.getId().equals(posting.getAuthor().getId())) {
+    protected void mayUpdateOrDeleteAnswerPostElseThrow(AnswerPost answerPost, User user) {
+        if (!user.getId().equals(answerPost.getAuthor().getId())) {
             throw new AccessForbiddenException("You are not allowed to edit this post");
         }
     }

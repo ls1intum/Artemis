@@ -387,7 +387,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 post.creationDate, count(post.id)
                 )
             from Post post left join Channel channel ON channel.id = post.conversation.id
-            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and (channel.course.id = :#{#courseId} and channel.isCourseWide = true)
+            where post.creationDate >= :#{#startDate} and post.creationDate <= :#{#endDate} and channel.course.id = :#{#courseId} and channel.isCourseWide = true
             group by post.creationDate
             order by post.creationDate asc
             """)

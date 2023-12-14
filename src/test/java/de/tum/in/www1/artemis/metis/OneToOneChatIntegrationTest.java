@@ -125,7 +125,6 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         var post = this.postInConversation(chat.getId(), "student1");
         // then
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), "student1", "student2");
-        // verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.NEW_MESSAGE, chat.getId(), "student2");
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
                 (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(post)));
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE, MetisCrudAction.NEW_MESSAGE);

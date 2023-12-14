@@ -80,10 +80,16 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
             """)
     Set<User> findUsersWhoRepliedInMessage(@Param("postId") Long postId);
 
+    /**
+     * Finds tags of course-wide messages
+     *
+     * @param courseId the course
+     * @return list of tags
+     */
     @Query("""
             SELECT DISTINCT tag FROM Post post
             LEFT JOIN post.tags tag LEFT JOIN Channel channel ON channel.id = post.conversation.id
-            WHERE channel.course.id = :#{#courseId} and channel.isCourseWide = true
+            WHERE channel.course.id = :courseId and channel.isCourseWide = true
             """)
     List<String> findPostTagsForCourse(@Param("courseId") Long courseId);
 }

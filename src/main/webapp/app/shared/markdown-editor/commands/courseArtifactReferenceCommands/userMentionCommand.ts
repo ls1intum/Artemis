@@ -8,7 +8,6 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 
 export class UserMentionCommand extends InteractiveSearchCommand {
     buttonIcon = faAt;
-    buttonTranslationString = 'artemisApp.markdownEditor.commands.userMention';
 
     constructor(
         private readonly courseManagementService: CourseManagementService,

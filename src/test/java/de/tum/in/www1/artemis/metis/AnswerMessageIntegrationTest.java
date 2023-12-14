@@ -405,23 +405,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseWideMessages_WithUnresolvedPostsWithCourseWideContent() throws Exception {
-        // filterToUnresolved set true; will fetch all unresolved posts of current course
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToUnresolved", "true");
-        params.add("courseWideChannelIds", "");
-        params.add("size", "50");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        List<Post> unresolvedPosts = existingCourseWideMessages.stream()
-                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))).toList();
-
-        assertThat(returnedPosts).isEqualTo(unresolvedPosts);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseWideMessages_WithOwnAndUnresolvedPostsWithCourseWideContent() throws Exception {
         // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
         var params = new LinkedMultiValueMap<String, String>();

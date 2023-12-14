@@ -219,9 +219,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
             ...post,
             ...currentContextSelectorOption,
         };
-        if (currentContextSelectorOption.courseWideContext) {
-            post.course = { id: this.course.id, title: this.course.title };
-        }
         if (currentContextSelectorOption.conversation) {
             post.conversation = currentContextSelectorOption.conversation;
         }
