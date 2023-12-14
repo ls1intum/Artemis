@@ -38,6 +38,8 @@ import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import { MetisPostAction } from 'app/shared/metis/metis.util';
 import { Post } from 'app/entities/metis/post.model';
 import { User } from 'app/core/user/user.model';
+import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 describe('Notification Service', () => {
     const resourceUrl = 'api/notifications';
@@ -445,6 +447,23 @@ describe('Notification Service', () => {
             const postDTO: MetisPostDTO = {
                 post: { author: { id: 1 }, content: 'Content' } as Post,
                 action: MetisPostAction.CREATE,
+                notification,
+            };
+
+            notificationService.handleNotification(postDTO);
+            expect(notificationService.notifications).toStrictEqual([notification]);
+        });
+
+        it('should add notification about reply if current user is involved', () => {
+            jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ id: 1, login: 'test', name: 'A B' } as User);
+            const notification = { author: { id: 2 }, target: 'target', notificationDate: dayjs() } as Notification;
+            const postDTO: MetisPostDTO = {
+                post: {
+                    author: { id: 2 },
+                    conversation: { type: ConversationType.CHANNEL, isCourseWide: true } as Channel,
+                    answers: [{ author: { id: 1 } }, { author: { id: 2 } }],
+                } as Post,
+                action: MetisPostAction.UPDATE,
                 notification,
             };
 

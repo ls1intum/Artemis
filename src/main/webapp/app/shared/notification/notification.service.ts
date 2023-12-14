@@ -518,6 +518,7 @@ export class NotificationService {
             return true;
         }
 
+        // True if the author is involved
         return postDTO.post.author?.id === userId || postDTO.post.answers?.map((answer) => answer.author?.id).includes(userId);
     }
 
