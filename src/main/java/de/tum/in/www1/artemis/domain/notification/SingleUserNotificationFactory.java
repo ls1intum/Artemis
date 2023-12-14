@@ -231,8 +231,8 @@ public class SingleUserNotificationFactory {
         placeholders.add(answerPost.getAuthor().getName());
         String messageReplyTextType = MESSAGE_REPLY_IN_CONVERSATION_TEXT;
 
-        if (conversation instanceof Channel) {
-            placeholders.add(answerPost.getPost().getConversation().getHumanReadableNameForReceiver(answerPost.getAuthor()));
+        if (conversation instanceof Channel channel) {
+            placeholders.add(channel.getName());
             messageReplyTextType = MESSAGE_REPLY_IN_CHANNEL_TEXT;
         }
 
