@@ -105,9 +105,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         plagiarismCaseId = existingPlagiarismPosts.get(0).getPlagiarismCase().getId();
 
         GroupNotificationService groupNotificationService = mock(GroupNotificationService.class);
-        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewPostForExercise(any(), any());
-        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewPostForLecture(any(), any());
-        doNothing().when(groupNotificationService).notifyAllGroupsAboutNewCoursePost(any(), any());
         doNothing().when(groupNotificationService).notifyAllGroupsAboutNewAnnouncement(any(), any());
 
         // We do not need the stub and it leads to flakyness
@@ -156,7 +153,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         if (!isUserMentionValid) {
             request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
-            verify(groupNotificationService, never()).notifyAllGroupsAboutNewCoursePost(any(), any());
             return;
         }
 
@@ -195,7 +191,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", existingPostToSave, Post.class, HttpStatus.BAD_REQUEST);
         assertThat(postRepository.findAll()).hasSize(sizeBefore);
-        verify(groupNotificationService, never()).notifyAllGroupsAboutNewPostForExercise(any(), any());
     }
 
     @Test
@@ -206,7 +201,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         Post postToSave = createPostWithoutContext();
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
-        verify(groupNotificationService, never()).notifyAllGroupsAboutNewCoursePost(any(), any());
     }
 
     @Test
@@ -323,6 +317,15 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
         assertThat(postRepository.findById(postToNotDelete.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeletePost_asInstructor() throws Exception {
+        Post postToNotDelete = existingPlagiarismPosts.get(0);
+
+        request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.OK);
+        assertThat(postRepository.findById(postToNotDelete.getId())).isNotPresent();
     }
 
     @Test

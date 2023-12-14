@@ -27,4 +27,6 @@ export class MockNotificationService {
     subscribeToLoadingStateUpdates = (): Observable<number> => of();
 
     subscribeToSingleIncomingNotifications = (): Observable<Notification> => of();
+
+    handleNotification(postDTO: MetisPostDTO) {}
 }

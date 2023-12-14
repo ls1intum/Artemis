@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { MockProvider } from 'ng-mocks';
@@ -22,6 +22,9 @@ import { MetisPostAction } from 'app/shared/metis/metis.util';
 import dayjs from 'dayjs/esm';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
+import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { Post } from 'app/entities/metis/post.model';
+import { MENTIONED_IN_MESSAGE_TITLE } from 'app/entities/notification.model';
 
 describe('MetisConversationService', () => {
     let metisConversationService: MetisConversationService;
@@ -32,6 +35,8 @@ describe('MetisConversationService', () => {
     let websocketService: JhiWebsocketService;
     let courseManagementService: CourseManagementService;
     let alertService: AlertService;
+    let notificationService: NotificationService;
+    let newOrUpdatedMessageSubject: Subject<MetisPostDTO>;
 
     const course = { id: 1 } as Course;
     let groupChat: GroupChatDto;
@@ -57,6 +62,10 @@ describe('MetisConversationService', () => {
         groupChat = generateExampleGroupChatDTO({ id: 1 });
         oneToOneChat = generateOneToOneChatDTO({ id: 2 });
         channel = generateExampleChannelDTO({ id: 3 });
+
+        notificationService = TestBed.inject(NotificationService);
+        newOrUpdatedMessageSubject = new Subject<MetisPostDTO>();
+        jest.spyOn(notificationService, 'newOrUpdatedMessage', 'get').mockReturnValue(newOrUpdatedMessageSubject);
 
         metisConversationService = TestBed.inject(MetisConversationService);
         groupChatService = TestBed.inject(GroupChatService);
@@ -379,5 +388,26 @@ describe('MetisConversationService', () => {
             expect(isCodeOfConductAccepted).toBeTrue();
         });
         expect(acceptStub).toHaveBeenCalledOnce();
+    });
+
+    it('should handle new message notification if user is mentioned', fakeAsync(() => {
+        const postDTO: MetisPostDTO = {
+            post: { author: { id: 456 }, content: 'Content', conversation: { id: 1 } } as Post,
+            action: MetisPostAction.CREATE,
+            notification: { title: MENTIONED_IN_MESSAGE_TITLE },
+        };
+
+        const handleNotificationSpy = jest.spyOn(notificationService, 'handleNotification');
+
+        newOrUpdatedMessageSubject.next(postDTO);
+        tick();
+
+        expect(handleNotificationSpy).toHaveBeenCalledWith(postDTO);
+    }));
+
+    it('should mark messages as read', () => {
+        metisConversationService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 1 } as ChannelDTO, { id: 2, unreadMessageCount: 1 } as ChannelDTO];
+        metisConversationService.markAsRead(2);
+        expect(metisConversationService['conversationsOfUser'][1].unreadMessagesCount).toBe(0);
     });
 });

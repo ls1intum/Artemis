@@ -8,8 +8,7 @@ import { Subject, combineLatest, map, takeUntil } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.directive';
 import { FormBuilder } from '@angular/forms';
@@ -42,7 +41,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     currentSortDirection = SortDirection.DESCENDING;
 
     channel: ChannelDTO;
-    isNotAChannelMember: boolean;
     noChannelAvailable: boolean;
     collapsed = false;
     currentPostId?: number;
@@ -61,7 +59,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         protected metisService: MetisService,
         private channelService: ChannelService,
         private activatedRoute: ActivatedRoute,
-        private courseManagementService: CourseManagementService,
         private router: Router,
         private formBuilder: FormBuilder,
         private metisConversationService: MetisConversationService,
@@ -144,12 +141,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
                     this.createEmptyPost();
                     this.resetFormGroup();
-                },
-                error: (error: HttpErrorResponse) => {
-                    if (error.status === 403 && error.error.message === 'error.noAccessButCouldJoin') {
-                        this.isNotAChannelMember = true;
-                        this.collapsed = true;
-                    }
                 },
             };
         };

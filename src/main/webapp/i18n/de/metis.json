@@ -48,7 +48,6 @@
                 "lecture": "Vortrag"
             },
             "channel": {
-                "notAMember": "Du bist kein Mitglied des Kanals.",
                 "noChannel": "Es ist kein Kanal verfügbar.",
                 "invalidReference": "Du bist kein Mitglied im referenzierten Kanal."
             },

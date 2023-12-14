@@ -39,7 +39,7 @@ import {
 } from '../../../helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { PostContextFilter } from 'app/shared/metis/metis.util';
+import { PostContextFilter, SortDirection } from 'app/shared/metis/metis.util';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -295,6 +295,25 @@ describe('DiscussionSectionComponent', () => {
         expect(component.channel).toBe(metisLectureChannelDto);
     }));
 
+    it('collapses sidebar if no channel exists', fakeAsync(() => {
+        component.course = { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_ONLY } as Course;
+        component.lecture = { id: 2 } as Lecture;
+        getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: undefined as any,
+                    status: 200,
+                }),
+            ),
+        );
+
+        component.setChannel(1);
+
+        expect(component.channel).toBeUndefined();
+        expect(component.noChannelAvailable).toBeTrue();
+        expect(component.collapsed).toBeTrue();
+    }));
+
     it('should react to srcoll up event', fakeAsync(() => {
         const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
 
@@ -313,4 +332,20 @@ describe('DiscussionSectionComponent', () => {
 
         expect(commandMetisToFetchPostsSpy).toHaveBeenCalledOnce();
     }));
+
+    it('should toggle send message', () => {
+        component.shouldSendMessage = true;
+        component.toggleSendMessage();
+        expect(component.shouldSendMessage).toBeFalse();
+        component.toggleSendMessage();
+        expect(component.shouldSendMessage).toBeTrue();
+    });
+
+    it('should change sort direction', () => {
+        component.currentSortDirection = SortDirection.ASCENDING;
+        component.onChangeSortDir();
+        expect(component.currentSortDirection).toBe(SortDirection.DESCENDING);
+        component.onChangeSortDir();
+        expect(component.currentSortDirection).toBe(SortDirection.ASCENDING);
+    });
 });

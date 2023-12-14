@@ -49,6 +49,23 @@ describe('ChannelService', () => {
         tick();
     }));
 
+    it('getPublicChannelsOfCourse', fakeAsync(() => {
+        const returnedFromService = { ...elemDefault, title: 'Test' };
+        const expected = { ...returnedFromService };
+
+        service
+            .getPublicChannelsOfCourse(1)
+            .pipe(
+                take(1),
+                map((resp) => resp.body),
+            )
+            .subscribe((body) => expect(body).toContainEqual(expected));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush([returnedFromService]);
+        tick();
+    }));
+
     it('delete', fakeAsync(() => {
         service
             .delete(1, 1)
@@ -69,6 +86,32 @@ describe('ChannelService', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
 
         const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        tick();
+    }));
+
+    it('getChannelOfLecture', fakeAsync(() => {
+        const returnedFromService = { ...elemDefault, id: 0 };
+        const expected = { ...returnedFromService };
+        service
+            .getChannelOfLecture(1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+        tick();
+    }));
+
+    it('getChannelOfExercise', fakeAsync(() => {
+        const returnedFromService = { ...elemDefault, id: 0 };
+        const expected = { ...returnedFromService };
+        service
+            .getChannelOfExercise(1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         tick();
     }));
