@@ -25,7 +25,6 @@ import { ArtemisModelingEditorModule } from 'app/exercises/modeling/shared/model
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingExerciseLifecycleModule,
         AssessmentInstructionsModule,
-        ArtemisProgrammingExerciseActionsModule,
         IrisModule,
         ArtemisModelingEditorModule,
     ],
