@@ -96,8 +96,9 @@ public class IrisMessageResource {
     /**
      * POST sessions/{sessionId}/messages/{messageId}/resend: Resend a message if there was previously an error when sending it to the LLM
      *
-     * @param sessionId of the session
-     * @param messageId of the message
+     * @param sessionId   of the session
+     * @param messageId   of the message
+     * @param extraParams any feature-specific options to send
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with status {@code 404 (Not Found)} if the session or message could
      *         not be found.
      */

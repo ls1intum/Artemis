@@ -52,6 +52,9 @@ public class IrisExercisePlan extends IrisMessageContent {
         return Optional.empty();
     }
 
+    /**
+     * Gets the index of next step
+     */
     private int getNextStepIndex() {
         for (int i = steps.size() - 1; i >= 0; i--) {
             var step = steps.get(i);

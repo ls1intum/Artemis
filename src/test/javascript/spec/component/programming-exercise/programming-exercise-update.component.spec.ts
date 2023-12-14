@@ -68,6 +68,7 @@ import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { IrisExerciseCreationChatbotButtonComponent } from 'app/iris/exercise-chatbot/exercise-creation-chatbot-button.component';
 import { IrisExerciseCreationWebsocketService } from 'app/iris/exercise-creation-websocket.service';
+import { IrisStateStore } from 'app/iris/state-store.service';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -130,6 +131,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 MockComponent(IrisExerciseCreationChatbotButtonComponent),
             ],
             providers: [
+                IrisStateStore,
                 IrisExerciseCreationWebsocketService,
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

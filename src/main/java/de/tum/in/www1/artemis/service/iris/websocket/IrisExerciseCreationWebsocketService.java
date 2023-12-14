@@ -34,7 +34,9 @@ public class IrisExerciseCreationWebsocketService extends IrisWebsocketService {
     /**
      * Sends a message over the websocket to a specific user
      *
-     * @param message that should be sent over the websocket
+     * @param message          that should be sent over the websocket
+     * @param problemStatement current problem statement of the exercise in the creation page
+     * @param metadata         current metadata(e.g. title, short name) in the creation page
      */
     public void sendMessage(IrisMessage message, String problemStatement, IrisExerciseMetadataDTO metadata) {
         var session = message.getSession();

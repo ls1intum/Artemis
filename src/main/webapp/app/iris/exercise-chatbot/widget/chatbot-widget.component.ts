@@ -359,7 +359,6 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
      * Handles the send button click event and sends the user's message.
      */
     onSend(): void {
-        console.log(this.paramsOnSend());
         if (this.error?.fatal) {
             return;
         }

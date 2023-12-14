@@ -36,7 +36,8 @@ public interface IrisExerciseCreationSessionRepository extends JpaRepository<Iri
     /**
      * Finds a list of {@link IrisExerciseCreationSession} or throws an exception if none are found.
      *
-     * @param userId The ID of the user.
+     * @param courseId The ID of the course.
+     * @param userId   The ID of the user.
      * @return A list of exercise creation sessions.
      * @throws EntityNotFoundException if no sessions are found.
      */
