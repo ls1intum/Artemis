@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -69,15 +68,13 @@ public class ConversationMessagingService extends PostingService {
 
     private final SingleUserNotificationRepository singleUserNotificationRepository;
 
-    private final SimpUserRegistry simpUserRegistry;
-
     private final PostSimilarityComparisonStrategy postContentCompareStrategy;
 
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
             ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService, ConversationRepository conversationRepository,
-            GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository, SimpUserRegistry simpUserRegistry,
+            GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository,
             PostSimilarityComparisonStrategy postContentCompareStrategy) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.conversationService = conversationService;
@@ -87,7 +84,6 @@ public class ConversationMessagingService extends PostingService {
         this.conversationRepository = conversationRepository;
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationRepository = singleUserNotificationRepository;
-        this.simpUserRegistry = simpUserRegistry;
         this.postContentCompareStrategy = postContentCompareStrategy;
     }
 
@@ -211,25 +207,8 @@ public class ConversationMessagingService extends PostingService {
         conversationNotificationService.notifyAboutNewMessage(createdMessage, notification, notificationRecipients);
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
 
-        Set<String> onlineUserLogins = getLoginsOfSubscribedUsers("/topic/metis/" + "courses/" + course.getId());
-        log.debug("      getLoginsOfSubscribedUsers DONE");
-
-        // Websocket notification 1: this notifies everyone including the author that there is a new message
-        // broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE, null, notification), course, recipientUsers);
-        // log.debug(" broadcastForPost DONE");
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
         log.debug("      incrementUnreadMessagesCountOfParticipants DONE");
-        // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
-        // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
-
-        // TODO: why do we need notification 2 and 3? we should definitely re-work this!
-        // Websocket notification 2
-        // conversationService.notifyAllConversationMembersAboutNewMessage(course, conversation, recipientUsers);
-        // log.debug(" conversationService.notifyAllConversationMembersAboutNewMessage DONE");
-
-        // creation of message posts should not trigger entity creation alert
-        // Websocket notification 3
-        // Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, recipientSummaries, mentionedUsers);
 
         if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
             saveAnnouncementNotification(createdMessage, channel, course, notificationRecipients);
@@ -518,16 +497,5 @@ public class ConversationMessagingService extends PostingService {
                     NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT, placeholders, postForNotification.getAuthor()));
             singleUserNotificationRepository.saveAll(announcementNotifications);
         }
-    }
-
-    /**
-     * Finds all users that are currently subscribed to one the provided topic
-     *
-     * @param topic destination/topic for which to get the subscribers
-     * @return an unmodifiable list of user logins subscribed to the provided topic
-     */
-    private Set<String> getLoginsOfSubscribedUsers(String topic) {
-        return simpUserRegistry.findSubscriptions(subscription -> subscription.getDestination().equals(topic)).stream()
-                .map(subscription -> subscription.getSession().getUser().getName()).collect(Collectors.toSet());
     }
 }

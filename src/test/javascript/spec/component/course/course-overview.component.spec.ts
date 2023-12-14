@@ -239,28 +239,25 @@ describe('CourseOverviewComponent', () => {
         });
     });
 
-    it.each([true, false])(
-        'should determine once if there are unread messages',
-        fakeAsync((hasNewMessages: boolean) => {
-            const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
-            metisConversationService._hasUnreadMessages$.next(hasNewMessages);
+    it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
+        const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
+        metisConversationService._hasUnreadMessages$.next(hasNewMessages);
 
-            component.ngOnInit();
+        await component.ngOnInit();
 
-            route.snapshot.firstChild!.routeConfig!.path = 'exercises';
+        route.snapshot.firstChild!.routeConfig!.path = 'exercises';
+        component.onSubRouteActivate({ controlConfiguration: undefined });
+
+        expect(component.hasUnreadMessages).toBe(hasNewMessages);
+
+        const tabs = ['messages', 'exercises', 'messages'];
+        tabs.forEach((tab) => {
+            route.snapshot.firstChild!.routeConfig!.path = tab;
             component.onSubRouteActivate({ controlConfiguration: undefined });
 
-            expect(component.hasUnreadMessages).toBe(hasNewMessages);
-
-            const tabs = ['messages', 'exercises', 'messages'];
-            tabs.forEach((tab) => {
-                route.snapshot.firstChild!.routeConfig!.path = tab;
-                component.onSubRouteActivate({ controlConfiguration: undefined });
-
-                expect(spy).toHaveBeenCalledOnce();
-            });
-        }),
-    );
+            expect(spy).toHaveBeenCalledOnce();
+        });
+    });
 
     it('should not try to load message related data when not activated for course', () => {
         const unreadMessagesSpy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
