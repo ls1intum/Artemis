@@ -123,7 +123,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         for (ArgumentMatcher<?> callDescriptor : matchers) {
             verifyMessageWasSentOverWebsocket(userLogin, topicSuffix, callDescriptor);
         }
-        verifyNumberOfCallsToWebsocket(userLogin, topicSuffix, matchers.length);
+        verifyNumberOfCallsToWebsocket(matchers.length);
     }
 
     /**
@@ -139,7 +139,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         for (ArgumentMatcher<?> callDescriptor : matchers) {
             verifyMessageWasSentOverWebsocket(userLogin, topicSuffix, callDescriptor);
         }
-        verifyNumberOfCallsToWebsocket(userLogin, topicSuffix, matchers.length);
+        verifyNumberOfCallsToWebsocket(matchers.length);
     }
 
     /**
@@ -161,14 +161,14 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     }
 
     /**
-     * Verify that exactly `numberOfCalls` messages were sent through the websocket for the given user and topic.
+     * Verify that exactly `numberOfCalls` messages were sent through the websocket for any user and any iris topic.
      */
-    private void verifyNumberOfCallsToWebsocket(String userLogin, String topicSuffix, int numberOfCalls) {
+    private void verifyNumberOfCallsToWebsocket(int numberOfCalls) {
         // @formatter:off
         verify(websocketMessagingService, times(numberOfCalls))
                 .sendMessageToUser(
-                        eq(userLogin),
-                        eq("/topic/iris/" + topicSuffix),
+                        any(),
+                        startsWith("/topic/iris/"),
                         any()
                 );
         // @formatter:on
