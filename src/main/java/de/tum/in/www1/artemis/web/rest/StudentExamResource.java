@@ -812,14 +812,12 @@ public class StudentExamResource {
     private void setQuizExamProperties(StudentExam studentExam) {
         Exam exam = studentExam.getExam();
         Optional<QuizPool> quizPoolOptional = quizPoolService.findByExamId(exam.getId());
-        if (quizPoolOptional.isPresent()) {
+        if (quizPoolOptional.isPresent() && quizPoolOptional.get().getMaxPoints() > 0) {
             QuizPool quizPool = quizPoolOptional.get();
-            if (quizPool.getMaxPoints() > 0) {
-                studentExamRepository.fetchAllQuizQuestions(studentExam);
-                if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
-                    for (QuizQuestion quizQuestion : studentExam.getQuizQuestions()) {
-                        quizQuestion.filterForStudentsDuringQuiz();
-                    }
+            studentExamRepository.fetchAllQuizQuestions(studentExam);
+            if (!(studentExam.areResultsPublishedYet() || studentExam.isTestRun())) {
+                for (QuizQuestion quizQuestion : studentExam.getQuizQuestions()) {
+                    quizQuestion.filterForStudentsDuringQuiz();
                 }
             }
             exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
