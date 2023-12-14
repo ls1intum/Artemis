@@ -1,4 +1,6 @@
-<div class="form-group" *ngIf="exercise.id && !isImport">
-    <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
-    <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" (change)="onInputChanged()" [(ngModel)]="notificationText" />
-</div>
+@if (exercise.id && !isImport) {
+    <div class="form-group">
+        <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
+        <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" (change)="onInputChanged()" [(ngModel)]="notificationText" />
+    </div>
+}
