@@ -44,6 +44,9 @@ public class IrisExercisePlan extends IrisMessageContent {
         }
     }
 
+    /**
+     * Gets next step of the exercise plan
+     */
     public Optional<IrisExercisePlanStep> getNextStep() {
         var nextStepIndex = getNextStepIndex();
         if (nextStepIndex < steps.size()) {
