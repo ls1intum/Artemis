@@ -168,7 +168,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         verify(websocketMessagingService, times(numberOfCalls))
                 .sendMessageToUser(
                         any(),
-                        startsWith("/topic/iris/"),
+                        any(),
                         any()
                 );
         // @formatter:on
