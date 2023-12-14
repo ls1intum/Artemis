@@ -2,14 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ArtemisTestModule } from '../../test.module';
-import { ScienceDirective } from 'app/shared/science/science.direcrive';
 import { ScienceService } from 'app/shared/science/science.service';
-import { ScienceEventDTO, ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({ template: '' })
 class ScienceComponent extends AbstractScienceComponent {
     constructor(scienceService: ScienceService) {
-        super(scienceService, { type: ScienceEventType.LECTURE__OPEN } as ScienceEventDTO);
+        super(scienceService, ScienceEventType.LECTURE__OPEN);
+        super.logEvent();
     }
 }
 
@@ -22,7 +22,7 @@ describe('AbstractScienceComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ScienceDirective, ScienceComponent],
+            declarations: [ScienceComponent],
         })
             .compileComponents()
             .then(() => {
@@ -38,7 +38,7 @@ describe('AbstractScienceComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should log event on init', () => {
+    it('should log event on call', () => {
         expect(comp).toBeDefined();
         expect(logEventStub).toHaveBeenCalledOnce();
     });

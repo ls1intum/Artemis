@@ -41,8 +41,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AbstractScienceComponent } from 'app/shared/science/science.component';
+import { ScienceService } from 'app/shared/science/science.service';
 
-describe('CourseLectureDetails', () => {
+describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
     let courseLecturesDetailsComponent: CourseLectureDetailsComponent;
     let lecture: Lecture;
@@ -103,6 +105,7 @@ describe('CourseLectureDetails', () => {
                 MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
                 MockComponent(SubmissionResultStatusComponent),
+                AbstractScienceComponent,
             ],
             providers: [
                 MockProvider(LectureService, {
@@ -125,6 +128,7 @@ describe('CourseLectureDetails', () => {
                     },
                 },
                 MockProvider(Router),
+                MockProvider(ScienceService),
             ],
             schemas: [],
         })

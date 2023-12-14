@@ -3,9 +3,11 @@ import { ArtemisTestModule } from '../test.module';
 import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { ScienceService } from 'app/shared/science/science.service';
-import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceEventDTO, ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
 
 describe('ScienceService', () => {
+    let scienceSettingService: ScienceSettingsService;
     let scienceService: ScienceService;
     let httpService: HttpClient;
     let putStub: jest.SpyInstance;
@@ -18,7 +20,8 @@ describe('ScienceService', () => {
             .compileComponents()
             .then(() => {
                 httpService = TestBed.inject(HttpClient);
-                scienceService = new ScienceService(httpService);
+                scienceSettingService = TestBed.inject(ScienceSettingsService);
+                scienceService = new ScienceService(httpService, scienceSettingService);
                 putStub = jest.spyOn(httpService, 'put');
             });
     });
@@ -28,7 +31,10 @@ describe('ScienceService', () => {
     });
 
     it('should send a request to the server to log event', () => {
-        scienceService.logEvent(ScienceEventType.LECTURE__OPEN);
-        expect(putStub).toHaveBeenCalledExactlyOnceWith('api/science', ScienceEventType.LECTURE__OPEN);
+        const type = ScienceEventType.LECTURE__OPEN;
+        scienceService.logEvent(type).subscribe();
+        const event = new ScienceEventDTO();
+        event.type = type;
+        expect(putStub).toHaveBeenCalledExactlyOnceWith('api/science', event, { observe: 'response' });
     });
 });
