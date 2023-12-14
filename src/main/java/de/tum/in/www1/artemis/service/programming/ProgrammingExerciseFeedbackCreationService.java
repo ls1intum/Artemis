@@ -45,8 +45,24 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private static final Predicate<String> IS_PYTHON_EXCEPTION_LINE = line -> line.startsWith(PYTHON_EXCEPTION_LINE_PREFIX);
 
-    private static final List<String> TIMEOUT_EXCEPTIONS = Arrays.asList("org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
-            "org.awaitility.core.ConditionTimeoutException", "Timed?OutException");
+    private static final String TIMEOUT_EXCEPTIONS_REGEX = String.join("|", "org.junit.runners.model.TestTimedOutException", "java.util.concurrent.TimeoutException",
+            "org.awaitility.core.ConditionTimeoutException", "TimedOutException");
+
+    private static final String EXCEPTION_PREFIX_MESSAGE_REGEX = "[a-zA-Z0-9._ ]{1,5000}";
+
+    private static final String EXCEPTION_MESSAGE_REGEX = "[a-zA-Z0-9._:\t ]{1,5000}";
+
+    /**
+     * Defines two pattern groups, (1) the exception name and (2) the exception text
+     */
+    private static final Pattern FIND_TIMEOUT_PATTERN = Pattern
+            .compile("^" + EXCEPTION_PREFIX_MESSAGE_REGEX + "(" + TIMEOUT_EXCEPTIONS_REGEX + "):?(" + EXCEPTION_MESSAGE_REGEX + ")");
+
+    /**
+     * Defines two pattern groups, (1) the exception name and (2) the exception text
+     */
+    private static final Pattern FIND_GENERAL_TIMEOUT_PATTERN = Pattern
+            .compile("^" + EXCEPTION_PREFIX_MESSAGE_REGEX + ":(" + EXCEPTION_MESSAGE_REGEX + "timed out after" + EXCEPTION_MESSAGE_REGEX + ")", Pattern.CASE_INSENSITIVE);
 
     /**
      * Regex for structural test case names in Java. The names of classes, attributes, methods and constructors have not
@@ -87,16 +103,12 @@ public class ProgrammingExerciseFeedbackCreationService {
         final String timeoutDetailText = "The test case execution timed out. This indicates issues in your code such as endless loops, issues with recursion or really slow performance. Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.";
         final String exceptionPrefix = "Exception message: ";
         // Overwrite timeout exception messages for Junit4, Junit5 and other
-        // Defining two pattern groups, (1) the exception name and (2) the exception text
-        Pattern findTimeoutPattern = Pattern.compile("^.*(" + String.join("|", TIMEOUT_EXCEPTIONS) + "):?(.*)");
-        Matcher matcher = findTimeoutPattern.matcher(message);
+        Matcher matcher = FIND_TIMEOUT_PATTERN.matcher(message);
         if (matcher.find()) {
             String exceptionText = matcher.group(2);
             return timeoutDetailText + "\n" + exceptionPrefix + exceptionText.trim();
         }
-        // Defining one pattern group, (1) the exception text
-        Pattern findGeneralTimeoutPattern = Pattern.compile("^[a-zA-Z0-9.]{1,5000}:(.{1,5000}timed out after.{1,5000})", Pattern.CASE_INSENSITIVE);
-        matcher = findGeneralTimeoutPattern.matcher(message);
+        matcher = FIND_GENERAL_TIMEOUT_PATTERN.matcher(message);
         if (matcher.find()) {
             // overwrite Ares: TimeoutException
             String generalTimeOutExceptionText = matcher.group(1);

@@ -203,6 +203,29 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractSpringInteg
     @Test
     void createTimeoutFeedback() {
         String msgWithStackTrace = """
+                    org.awaitility.core.ConditionTimeoutException: Assertion condition defined as a de.tum.in.www1.artemis.service.ExerciseLifecycleServiceTest null within 1 nanoseconds.
+                    at org.awaitility.core.ConditionAwaiter.await(ConditionAwaiter.java:167)
+                    at org.awaitility.core.AssertionCondition.await(AssertionCondition.java:119)
+                    at org.awaitility.core.AssertionCondition.await(AssertionCondition.java:31)
+                    at org.awaitility.core.ConditionFactory.until(ConditionFactory.java:985)
+                    at org.awaitility.core.ConditionFactory.untilAsserted(ConditionFactory.java:769)
+                Caused by: java.util.concurrent.TimeoutException
+                    at java.base/java.util.concurrent.FutureTask.get(FutureTask.java:204)
+                    at org.awaitility.core.Uninterruptibles.getUninterruptibly(Uninterruptibles.java:101)
+                    at org.awaitility.core.Uninterruptibles.getUninterruptibly(Uninterruptibles.java:81)
+                    at org.awaitility.core.ConditionAwaiter.await(ConditionAwaiter.java:103)
+                    ... 63 more
+                        """;
+        String actualFeedback = createFeedbackFromTestCase("test1", List.of(msgWithStackTrace), false);
+        assertThat(actualFeedback)
+                .isEqualTo("The test case execution timed out. This indicates issues in your code such as endless loops, issues with recursion or really slow performance. "
+                        + "Please carefully review your code to avoid such issues. In case you are absolutely sure that there are no issues like this, please contact your instructor to check the setup of the test.\n"
+                        + "Exception message: Assertion condition defined as a de.tum.in.www1.artemis.service.ExerciseLifecycleServiceTest null within 1 nanoseconds.");
+    }
+
+    @Test
+    void createTimeoutFeedbackForGeneralTimeout() {
+        String msgWithStackTrace = """
                 org.opentest4j.AssertionFailedError: execution timed out after 1 s
                 \tat de.tum.in.test.api.localization.Messages.localizedFailure(Messages.java:34)
                 \tat de.tum.in.test.api.internal.TimeoutUtils.generateTimeoutFailure(TimeoutUtils.java:79)
