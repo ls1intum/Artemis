@@ -1,94 +1,165 @@
-<jhi-detail-overview-navigation-bar *ngIf="headlines?.length && headlines.length > 1" [sectionHeadlines]="headlines"></jhi-detail-overview-navigation-bar>
-<ng-container *ngFor="let section of sections">
+@if (headlines?.length && headlines.length > 1) {
+    <jhi-detail-overview-navigation-bar [sectionHeadlines]="headlines"></jhi-detail-overview-navigation-bar>
+}
+@for (section of sections; track section) {
     <h3 [id]="headlinesRecord[section.headline]">{{ section.headline | artemisTranslate }}</h3>
     <dl>
-        <ng-container *ngFor="let detail of section.details">
-            <dt *ngIf="detail.title" id="detail-title-{{ detail.title }}">
-                <span>{{ detail.title | artemisTranslate: detail.titleTranslationProps }}</span>
-                <jhi-help-icon *ngIf="detail.titleHelpText" text="{{ detail.titleHelpText }}"></jhi-help-icon>
-            </dt>
-            <ng-container [ngSwitch]="detail.type">
-                <dd *ngSwitchCase="DetailType.Text" id="detail-value-{{ detail.title }}">
-                    {{ detail.data.text || '-' }}
-                </dd>
-                <dd *ngSwitchCase="DetailType.Date" id="detail-value-{{ detail.title }}">
-                    {{ detail.data.date ? (detail.data.date | artemisDate) : '-' }}
-                </dd>
-                <dd *ngSwitchCase="DetailType.Link" id="detail-value-{{ detail.title }}">
-                    <ng-container *ngIf="detail.data.text; else noText">
-                        <a
-                            *ngIf="!!detail.data.routerLink?.length || detail.data.href; else noLink"
-                            [routerLink]="detail.data.routerLink"
-                            [queryParams]="detail.data.queryParams"
-                            href="{{ detail.data.href }}"
-                        >
-                            {{ detail.data.text }}
-                        </a>
-                        <ng-template #noLink>
-                            <span>{{ detail.data.text }}</span>
-                        </ng-template>
-                    </ng-container>
-                    <ng-template #noText><span #noText>-</span></ng-template>
-                </dd>
-                <dd *ngSwitchCase="DetailType.Boolean" id="detail-value-{{ detail.title }}">
-                    <jhi-checklist-check [checkAttribute]="detail.data.boolean"></jhi-checklist-check>
-                </dd>
-                <dd *ngSwitchCase="DetailType.ProgrammingRepositoryButtons" id="detail-value-{{ detail.title }}">
-                    <div class="clone-buttons" *ngIf="detail.data.participation?.repositoryUrl">
-                        <jhi-clone-repo-button [smallButtons]="true" [repositoryUrl]="detail.data.participation.repositoryUrl"></jhi-clone-repo-button>
-                        <jhi-programming-exercise-instructor-repo-download
-                            class="ms-2"
-                            [exerciseId]="detail.data.exerciseId!"
-                            [repositoryType]="detail.data.type"
-                        ></jhi-programming-exercise-instructor-repo-download>
-                        <span></span>
-                    </div>
-                    <span *ngIf="!detail.data.participation?.repositoryUrl">-</span>
-                </dd>
-                <dd *ngSwitchCase="DetailType.ProgrammingAuxiliaryRepositoryButtons" id="detail-value-{{ detail.title }}">
-                    <ul>
-                        <li *ngFor="let auxiliaryRepository of detail.data.auxiliaryRepositories">
-                            <span>Repository: {{ auxiliaryRepository.name }}</span>
-                            <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="auxiliaryRepository.repositoryUrl!"></jhi-clone-repo-button>
-                            <jhi-programming-exercise-instructor-repo-download
-                                class="ms-2"
-                                [exerciseId]="detail.data.exerciseId!"
-                                [repositoryType]="'AUXILIARY'"
-                                [auxiliaryRepositoryId]="auxiliaryRepository.id!"
-                            ></jhi-programming-exercise-instructor-repo-download>
-                            <div class="auxiliaryRepositoryDescription">
-                                <span *ngIf="auxiliaryRepository.checkoutDirectory; else noCheckoutDirectorySet"
-                                    >Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }}
-                                </span>
-                                <ng-template #noCheckoutDirectorySet>
-                                    <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
-                                    <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
-                                </ng-template>
-                                <ng-template #noCheckoutDirectorySetTooltip>
-                                    <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySetTooltip"></span>
-                                </ng-template>
+        @for (detail of section.details; track detail) {
+            @if (detail.title) {
+                <dt id="detail-title-{{ detail.title }}">
+                    <span>{{ detail.title | artemisTranslate: detail.titleTranslationProps }}</span>
+                    @if (detail.titleHelpText) {
+                        <jhi-help-icon text="{{ detail.titleHelpText }}"></jhi-help-icon>
+                    }
+                </dt>
+            }
+            @switch (detail.type) {
+                @case (DetailType.Text) {
+                    <dd id="detail-value-{{ detail.title }}">
+                        {{ detail.data.text || '-' }}
+                    </dd>
+                }
+                @case (DetailType.Date) {
+                    <dd id="detail-value-{{ detail.title }}">
+                        {{ detail.data.date ? (detail.data.date | artemisDate) : '-' }}
+                    </dd>
+                }
+                @case (DetailType.Link) {
+                    <dd id="detail-value-{{ detail.title }}">
+                        @if (detail.data.text) {
+                            @if (!!detail.data.routerLink?.length || detail.data.href) {
+                                <a [routerLink]="detail.data.routerLink" [queryParams]="detail.data.queryParams" href="{{ detail.data.href }}">
+                                    {{ detail.data.text }}
+                                </a>
+                            } @else {
+                                <span>{{ detail.data.text }}</span>
+                            }
+                        } @else {
+                            <span #noText>-</span>
+                        }
+                        <ng-template #noText><span #noText>-</span></ng-template>
+                    </dd>
+                }
+                @case (DetailType.Boolean) {
+                    <dd id="detail-value-{{ detail.title }}">
+                        <jhi-checklist-check [checkAttribute]="detail.data.boolean"></jhi-checklist-check>
+                    </dd>
+                }
+                @case (DetailType.ProgrammingRepositoryButtons) {
+                    <dd id="detail-value-{{ detail.title }}">
+                        @if (detail.data.participation?.repositoryUrl) {
+                            <div class="clone-buttons">
+                                <jhi-clone-repo-button [smallButtons]="true" [repositoryUrl]="detail.data.participation.repositoryUrl"></jhi-clone-repo-button>
+                                <jhi-programming-exercise-instructor-repo-download
+                                    class="ms-2"
+                                    [exerciseId]="detail.data.exerciseId!"
+                                    [repositoryType]="detail.data.type"
+                                ></jhi-programming-exercise-instructor-repo-download>
+                                <span></span>
                             </div>
-                        </li>
-                    </ul>
-                </dd>
-
-                <dd *ngSwitchCase="DetailType.ProgrammingTestStatus" id="detail-value-{{ detail.title }}">
-                    <div *ngIf="detail.data.participation" class="d-flex align-items-center">
-                        <jhi-updating-result
-                            *ngIf="!detail.data.loading"
-                            [exercise]="detail.data.exercise"
-                            [participation]="detail.data.participation!"
-                            [showUngradedResults]="true"
-                            [personalParticipation]="false"
-                            [short]="false"
-                            (onParticipationChange)="detail.data.onParticipationChange()"
-                            class="me-2"
-                        ></jhi-updating-result>
-                        <jhi-programming-exercise-instructor-status
-                            *ngIf="detail.data.participation?.results?.length"
-                            class="repository-status-icon me-2"
-                            [participationType]="detail.data.type"
-                            [participation]="detail.data.participation!"
+                        }
+                        @if (!detail.data.participation?.repositoryUrl) {
+                            <span>-</span>
+                        }
+                    </dd>
+                }
+                @case (DetailType.ProgrammingAuxiliaryRepositoryButtons) {
+                    <dd id="detail-value-{{ detail.title }}">
+                        <ul>
+                            @for (auxiliaryRepository of detail.data.auxiliaryRepositories; track auxiliaryRepository) {
+                                <li>
+                                    <span>Repository: {{ auxiliaryRepository.name }}</span>
+                                    <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="auxiliaryRepository.repositoryUrl!"></jhi-clone-repo-button>
+                                    <jhi-programming-exercise-instructor-repo-download
+                                        class="ms-2"
+                                        [exerciseId]="detail.data.exerciseId!"
+                                        [repositoryType]="'AUXILIARY'"
+                                        [auxiliaryRepositoryId]="auxiliaryRepository.id!"
+                                    ></jhi-programming-exercise-instructor-repo-download>
+                                    <div class="auxiliaryRepositoryDescription">
+                                        @if (auxiliaryRepository.checkoutDirectory) {
+                                            <span>Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }} </span>
+                                        } @else {
+                                            <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
+                                            <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
+                                        }
+                                        <ng-template #noCheckoutDirectorySet>
+                                            <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
+                                            <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
+                                        </ng-template>
+                                        <ng-template #noCheckoutDirectorySetTooltip>
+                                            <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySetTooltip"></span>
+                                        </ng-template>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </dd>
+                }
+                @case (DetailType.ProgrammingTestStatus) {
+                    <dd id="detail-value-{{ detail.title }}">
+                        @if (detail.data.participation) {
+                            <div class="d-flex align-items-center">
+                                @if (!detail.data.loading) {
+                                    <jhi-updating-result
+                                        [exercise]="detail.data.exercise"
+                                        [participation]="detail.data.participation!"
+                                        [showUngradedResults]="true"
+                                        [personalParticipation]="false"
+                                        [short]="false"
+                                        (onParticipationChange)="detail.data.onParticipationChange()"
+                                        class="me-2"
+                                    ></jhi-updating-result>
+                                }
+                                @if (detail.data.participation?.results?.length) {
+                                    <jhi-programming-exercise-instructor-status
+                                        class="repository-status-icon me-2"
+                                        [participationType]="detail.data.type"
+                                        [participation]="detail.data.participation!"
+                                        [exercise]="detail.data.exercise"
+                                    ></jhi-programming-exercise-instructor-status>
+                                }
+                                @if (detail.data.participation?.results && detail.data.exercise.isAtLeastEditor) {
+                                    <jhi-programming-exercise-instructor-trigger-build-button
+                                        [exercise]="detail.data.exercise"
+                                        [participation]="detail.data.participation!"
+                                    ></jhi-programming-exercise-instructor-trigger-build-button>
+                                }
+                                @if (detail.data.exercise.isAtLeastEditor && detail.data.participation?.id) {
+                                    <a [routerLink]="detail.data.submissionRouterLink" [queryParams]="{ isTmpOrSolutionProgrParticipation: true }" class="ms-2">
+                                        <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions">Show Submissions</span>
+                                    </a>
+                                }
+                            </div>
+                        }
+                    </dd>
+                }
+                @case (DetailType.ProgrammingDiffReport) {
+                    <dd id="detail-value-{{ detail.title }}">
+                        <div class="fw-bold">
+                            <jhi-git-diff-line-stat
+                                [addedLineCount]="detail.data.addedLineCount"
+                                [removedLineCount]="detail.data.removedLineCount"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
+                            ></jhi-git-diff-line-stat>
+                            @if (detail.data.addedLineCount > 0 || detail.data.removedLineCount > 0) {
+                                <jhi-button
+                                    [featureToggle]="FeatureToggle.ProgrammingExercises"
+                                    [isLoading]="detail.data.isLoadingDiffReport"
+                                    [btnSize]="ButtonSize.SMALL"
+                                    [icon]="faEye"
+                                    [title]="'artemisApp.programmingExercise.diffReport.button'"
+                                    [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
+                                    (onClick)="showGitDiff(detail.data.gitDiffReport)"
+                                    class="ms-2"
+                                ></jhi-button>
+                            }
+                        </div>
+                    </dd>
+                }
+                @case (DetailType.ProgrammingProblemStatement) {
+                    <dd class="p-3 border" id="detail-value-{{ detail.title }}">
+                        <jhi-programming-exercise-instructions
                             [exercise]="detail.data.exercise"
                             [participation]="detail.data.exercise?.templateParticipation!"
                             [personalParticipation]="true"
@@ -96,125 +167,92 @@
                     </dd>
                 }
                 @case (DetailType.ProgrammingTimeline) {
-                    <dd>
+                    <dd id="detail-value-{{ detail.title }}">
                         <jhi-programming-exercise-lifecycle
                             [isExamMode]="detail.data.isExamMode"
                             [exercise]="detail.data.exercise"
-                            [participation]="detail.data.participation!"
-                        ></jhi-programming-exercise-instructor-trigger-build-button>
-                        <a
-                            *ngIf="detail.data.exercise.isAtLeastEditor && detail.data.participation?.id"
-                            [routerLink]="detail.data.submissionRouterLink"
-                            [queryParams]="{ isTmpOrSolutionProgrParticipation: true }"
-                            class="ms-2"
-                        >
-                            <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions">Show Submissions</span>
-                        </a>
-                    </div>
-                </dd>
-                <dd *ngSwitchCase="DetailType.ProgrammingDiffReport" id="detail-value-{{ detail.title }}">
-                    <div class="fw-bold">
-                        <jhi-git-diff-line-stat
-                            [addedLineCount]="detail.data.addedLineCount"
-                            [removedLineCount]="detail.data.removedLineCount"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
-                        ></jhi-git-diff-line-stat>
-                        <jhi-button
-                            *ngIf="detail.data.addedLineCount > 0 || detail.data.removedLineCount > 0"
-                            [featureToggle]="FeatureToggle.ProgrammingExercises"
-                            [isLoading]="detail.data.isLoadingDiffReport"
-                            [btnSize]="ButtonSize.SMALL"
-                            [icon]="faEye"
-                            [title]="'artemisApp.programmingExercise.diffReport.button'"
-                            [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
-                            (onClick)="showGitDiff(detail.data.gitDiffReport)"
-                            class="ms-2"
-                        ></jhi-button>
-                    </div>
-                </dd>
-                <dd class="p-3 border" *ngSwitchCase="DetailType.ProgrammingProblemStatement" id="detail-value-{{ detail.title }}">
-                    <jhi-programming-exercise-instructions
-                        [exercise]="detail.data.exercise"
-                        [participation]="detail.data.exercise?.templateParticipation!"
-                        [personalParticipation]="true"
-                    ></jhi-programming-exercise-instructions>
-                </dd>
-                <dd *ngSwitchCase="DetailType.ProgrammingTimeline" id="detail-value-{{ detail.title }}">
-                    <jhi-programming-exercise-lifecycle
-                        [isExamMode]="detail.data.isExamMode"
-                        [exercise]="detail.data.exercise"
-                        [readOnly]="true"
-                    ></jhi-programming-exercise-lifecycle>
-                </dd>
-                <dd *ngSwitchCase="DetailType.Markdown" id="detail-value-{{ detail.title }}">
-                    <div *ngIf="detail.data.innerHtml" class="p-3 border" [innerHTML]="detail.data.innerHtml"></div>
-                    <span *ngIf="!detail.data.innerHtml">-</span>
-                </dd>
-                <dd *ngSwitchCase="DetailType.GradingCriteria" class="col-md-6 mt-4" id="detail-value-{{ detail.title }}">
-                    <jhi-structured-grading-instructions-assessment-layout
-                        [readonly]="true"
-                        [criteria]="detail.data.gradingCriteria || []"
-                    ></jhi-structured-grading-instructions-assessment-layout>
-                </dd>
-                <dd *ngSwitchCase="DetailType.ProgrammingBuildStatistics" id="detail-value-{{ detail.title }}">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.numberOfBuilds"># Builds</th>
-                                <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.agentSetupDuration">Docker Setup</th>
-                                <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.testDuration">Test Execution</th>
-                                <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.scaDuration">Static Code Analysis</th>
-                                <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.totalJobDuration">Total Job Duration</th>
-                                <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.dependenciesDownloadedCount">Number of downloaded dependencies</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>{{ detail.data.buildLogStatistics.buildCount ?? 0 }}</td>
-                                <td>
-                                    {{ detail.data.buildLogStatistics.agentSetupDuration ? (detail.data.buildLogStatistics.agentSetupDuration | number: '1.2-2') + 's' : '-' }}
-                                </td>
-                                <td>
-                                    {{ detail.data.buildLogStatistics.testDuration ? (detail.data.buildLogStatistics.testDuration | number: '1.2-2') + 's' : '-' }}
-                                </td>
-                                <td>
-                                    {{ detail.data.buildLogStatistics.scaDuration ? (detail.data.buildLogStatistics.scaDuration | number: '1.2-2') + 's' : '-' }}
-                                </td>
-                                <td>
-                                    {{ detail.data.buildLogStatistics.totalJobDuration ? (detail.data.buildLogStatistics.totalJobDuration | number: '1.2-2') + 's' : '-' }}
-                                </td>
-                                <td>{{ detail.data.buildLogStatistics.dependenciesDownloadedCount ?? '-' }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </dd>
-                <dd *ngSwitchCase="DetailType.ProgrammingIrisEnabled" id="detail-value-{{ detail.title }}">
-                    <jhi-iris-enabled
-                        [exercise]="detail.data.exercise"
-                        [course]="detail.data.course"
-                        [irisSubSettingsType]="detail.data.subSettingsType"
-                        [disabled]="detail.data.disabled"
-                    ></jhi-iris-enabled>
-                </dd>
-                <dd *ngSwitchCase="DetailType.ModelingEditor" id="detail-value-{{ detail.title }}">
-                    <button
-                        *ngIf="!!detail.data.umlModel?.elements?.length && detail.data.isApollonProfileActive"
-                        (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)"
-                        class="btn btn-primary m-2"
-                        jhiTranslate="entity.action.export"
-                    >
-                        Export
-                    </button>
-                    <jhi-modeling-editor
-                        class="editor-outline-background"
-                        *ngIf="!isEmpty(detail.data.umlModel?.elements)"
-                        [readOnly]="true"
-                        [diagramType]="detail.data.diagramType!"
-                        [umlModel]="detail.data.umlModel!"
-                    />
-                    <span *ngIf="!isEmpty(detail.data.umlModel?.elements)">-</span>
-                </dd>
-            </ng-container>
-        </ng-container>
+                            [readOnly]="true"
+                        ></jhi-programming-exercise-lifecycle>
+                    </dd>
+                }
+                @case (DetailType.Markdown) {
+                    <dd id="detail-value-{{ detail.title }}">
+                        @if (detail.data.innerHtml) {
+                            <div class="p-3 border" [innerHTML]="detail.data.innerHtml"></div>
+                        }
+                        @if (!detail.data.innerHtml) {
+                            <span>-</span>
+                        }
+                    </dd>
+                }
+                @case (DetailType.GradingCriteria) {
+                    <dd class="col-md-6 mt-4" id="detail-value-{{ detail.title }}">
+                        <jhi-structured-grading-instructions-assessment-layout
+                            [readonly]="true"
+                            [criteria]="detail.data.gradingCriteria || []"
+                        ></jhi-structured-grading-instructions-assessment-layout>
+                    </dd>
+                }
+                @case (DetailType.ProgrammingBuildStatistics) {
+                    <dd id="detail-value-{{ detail.title }}">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.numberOfBuilds"># Builds</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.agentSetupDuration">Docker Setup</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.testDuration">Test Execution</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.scaDuration">Static Code Analysis</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.totalJobDuration">Total Job Duration</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.dependenciesDownloadedCount">Number of downloaded dependencies</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ detail.data.buildLogStatistics.buildCount ?? 0 }}</td>
+                                    <td>
+                                        {{ detail.data.buildLogStatistics.agentSetupDuration ? (detail.data.buildLogStatistics.agentSetupDuration | number: '1.2-2') + 's' : '-' }}
+                                    </td>
+                                    <td>
+                                        {{ detail.data.buildLogStatistics.testDuration ? (detail.data.buildLogStatistics.testDuration | number: '1.2-2') + 's' : '-' }}
+                                    </td>
+                                    <td>
+                                        {{ detail.data.buildLogStatistics.scaDuration ? (detail.data.buildLogStatistics.scaDuration | number: '1.2-2') + 's' : '-' }}
+                                    </td>
+                                    <td>
+                                        {{ detail.data.buildLogStatistics.totalJobDuration ? (detail.data.buildLogStatistics.totalJobDuration | number: '1.2-2') + 's' : '-' }}
+                                    </td>
+                                    <td>{{ detail.data.buildLogStatistics.dependenciesDownloadedCount ?? '-' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </dd>
+                }
+                @case (DetailType.ProgrammingIrisEnabled) {
+                    <dd id="detail-value-{{ detail.title }}">
+                        <jhi-iris-enabled
+                            [exercise]="detail.data.exercise"
+                            [course]="detail.data.course"
+                            [irisSubSettingsType]="detail.data.subSettingsType"
+                            [disabled]="detail.data.disabled"
+                        ></jhi-iris-enabled>
+                    </dd>
+                }
+                @case (DetailType.ModelingEditor) {
+                    <dd id="detail-value-{{ detail.title }}">
+                        @if (!!detail.data.umlModel?.elements?.length && detail.data.isApollonProfileActive) {
+                            <button (click)="downloadApollonDiagramAsPDf(detail.data.umlModel, detail.data.title)" class="btn btn-primary m-2" jhiTranslate="entity.action.export">
+                                Export
+                            </button>
+                        }
+                        @if (!isEmpty(detail.data.umlModel?.elements)) {
+                            <jhi-modeling-editor class="editor-outline-background" [readOnly]="true" [diagramType]="detail.data.diagramType!" [umlModel]="detail.data.umlModel!" />
+                        }
+                        @if (!isEmpty(detail.data.umlModel?.elements)) {
+                            <span>-</span>
+                        }
+                    </dd>
+                }
+            }
+        }
     </dl>
 }

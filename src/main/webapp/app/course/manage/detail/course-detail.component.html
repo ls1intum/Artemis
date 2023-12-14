@@ -49,13 +49,9 @@
                     [initialStats]="activeStudents"
                 ></jhi-course-detail-line-chart>
             </div>
-            <jhi-course-detail-line-chart
-                class="col-xxl-8"
-                [course]="course"
-                [numberOfStudentsInCourse]="course.numberOfStudents!"
-                [initialStats]="activeStudents"
-            ></jhi-course-detail-line-chart>
         </div>
-    </div>
-    <jhi-detail-overview-list *ngIf="course" [sections]="courseDetailSections" class="col-12"></jhi-detail-overview-list>
+    }
+    @if (course) {
+        <jhi-detail-overview-list [sections]="courseDetailSections" class="col-12"></jhi-detail-overview-list>
+    }
 </div>

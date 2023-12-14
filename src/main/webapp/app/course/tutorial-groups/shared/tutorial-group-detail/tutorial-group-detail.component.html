@@ -4,18 +4,19 @@
     @if (header) {
         <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
         <hr />
-    </ng-container>
-    <jhi-detail-overview-list *ngIf="tutorialDetailSections" [sections]="tutorialDetailSections"></jhi-detail-overview-list>
+    }
+    @if (tutorialDetailSections) {
+        <jhi-detail-overview-list [sections]="tutorialDetailSections"></jhi-detail-overview-list>
+    }
     <div class="mt-1">
         <strong>{{ 'artemisApp.entities.tutorialGroup.sessions' | artemisTranslate }}</strong>
     </div>
-    <ng-container *ngIf="sessions && sessions.length > 0; else sessionsNotFound">
+    @if (sessions && sessions.length > 0) {
         <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
             <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false" [isReadOnly]="true">
             </jhi-tutorial-group-sessions-table>
         </div>
-    </ng-container>
-    <ng-template #sessionsNotFound>
+    } @else {
         <span>{{ '-' }}</span>
-    </ng-template>
+    }
 </div>
