@@ -10,7 +10,6 @@ export class DetailOverviewNavigationBarComponent {
     sectionHeadlines: { id: string; translationKey: string }[];
 
     scrollToView(id: string) {
-        console.log(id);
         document.getElementById(id)?.scrollIntoView();
     }
 }
