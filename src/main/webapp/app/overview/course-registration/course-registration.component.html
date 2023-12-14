@@ -1,17 +1,28 @@
 <div>
     <h3>{{ 'artemisApp.studentDashboard.enroll.title' | artemisTranslate }}</h3>
+    <div class="col-12 mb-3">
+        <input type="text" class="form-control" [(ngModel)]="searchTermString" (input)="applySearch()" placeholder="Search for a course..." />
+    </div>
     @if (coursesToSelect) {
         <div class="col-12 col-sm-auto">
             <table class="table table-striped">
                 <thead>
-                    <tr>
-                        <th><span jhiTranslate="artemisApp.studentDashboard.course">Course</span></th>
-                        <th><span jhiTranslate="artemisApp.course.semester">Semester</span></th>
-                        <th><span jhiTranslate="artemisApp.course.description">Description</span></th>
+                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
+                        <th jhiSortBy="title">
+                            <span jhiTranslate="artemisApp.studentDashboard.course">Course</span>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th jhiSortBy="semester">
+                            <span jhiTranslate="artemisApp.course.semester">Semester</span>
+                            <fa-icon [icon]="faSort"></fa-icon>
+                        </th>
+                        <th>
+                            <span jhiTranslate="artemisApp.course.description">Description</span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
-                    @for (course of coursesToSelect; track course) {
+                    @for (course of filteredCoursesToSelect; track course) {
                         <tr>
                             <td>
                                 <span>{{ course.title }}</span>
