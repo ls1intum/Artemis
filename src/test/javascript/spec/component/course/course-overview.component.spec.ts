@@ -244,6 +244,7 @@ describe('CourseOverviewComponent', () => {
     it.each([true, false])('should determine once if there are unread messages', async (hasNewMessages: boolean) => {
         const spy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         metisConversationService._hasUnreadMessages$.next(hasNewMessages);
+        jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of());
 
         await component.ngOnInit();
 

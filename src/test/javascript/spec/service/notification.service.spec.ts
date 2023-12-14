@@ -53,6 +53,7 @@ describe('Notification Service', () => {
     let wsUnsubscribeStub: jest.SpyInstance;
     let wsReceiveNotificationStub: jest.SpyInstance;
     let wsNotificationSubject: Subject<Notification | undefined>;
+    let wsPostDTOSubject: Subject<MetisPostDTO | undefined>;
     let tutorialGroup: TutorialGroup;
     const conversation: OneToOneChat = new OneToOneChat();
     const groupChat: GroupChat = new GroupChat();
@@ -191,7 +192,10 @@ describe('Notification Service', () => {
         wsSubscribeStub = jest.spyOn(websocketService, 'subscribe');
         wsUnsubscribeStub = jest.spyOn(websocketService, 'unsubscribe');
         wsNotificationSubject = new Subject<Notification | undefined>();
-        wsReceiveNotificationStub = jest.spyOn(websocketService, 'receive').mockReturnValue(wsNotificationSubject);
+        wsPostDTOSubject = new Subject<MetisPostDTO | undefined>();
+        wsReceiveNotificationStub = jest
+            .spyOn(websocketService, 'receive')
+            .mockImplementation((topic) => (topic.includes('notifications/conversations') ? wsPostDTOSubject : wsNotificationSubject));
 
         wsQuizExerciseSubject = new Subject<QuizExercise | undefined>();
 
@@ -461,15 +465,41 @@ describe('Notification Service', () => {
             expect(notificationService.notifications).toBeEmpty();
         });
 
-        it('should change notification title if the current user is mentioned in a CREATE action', () => {
+        it('should add notification if it is from another author', () => {
             jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ id: 1, login: 'test', name: 'A B' } as User);
             const postDTO: MetisPostDTO = {
-                post: { author: { id: 2 }, content: '[user]A B(test)[/user]' } as Post,
+                post: { author: { id: 1 }, content: 'Content' } as Post,
+                action: MetisPostAction.CREATE,
+                notification: { author: { id: 1 }, target: 'target' } as Notification,
+            };
+
+            notificationService.handleNotification(postDTO);
+
+            expect(notificationService.notifications).toBeEmpty();
+        });
+
+        it('should change notification title if the current user is mentioned in message', () => {
+            jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ id: 1, login: 'test', name: 'A B' } as User);
+            const postDTO: MetisPostDTO = {
+                post: { author: { id: 2 }, content: '[user]A B(test)[/user]', answers: [{ id: 5, content: 'test' }] } as Post,
                 notification: { author: { id: 2 }, target: 'target', title: NEW_MESSAGE_TITLE } as Notification,
                 action: MetisPostAction.CREATE,
             };
 
-            notificationService.handleNotification(postDTO);
+            wsPostDTOSubject.next(postDTO);
+
+            expect(postDTO.notification?.title).toBe(MENTIONED_IN_MESSAGE_TITLE);
+        });
+
+        it('should change notification title if the current user is mentioned in reply', () => {
+            jest.spyOn(accountService, 'userIdentity', 'get').mockReturnValue({ id: 1, login: 'test', name: 'A B' } as User);
+            const postDTO: MetisPostDTO = {
+                post: { author: { id: 2 }, content: 'test', answers: [{ id: 5, content: '[user]A B(test)[/user]' }] } as Post,
+                notification: { author: { id: 2 }, target: 'target', title: NEW_MESSAGE_TITLE } as Notification,
+                action: MetisPostAction.UPDATE,
+            };
+
+            wsPostDTOSubject.next(postDTO);
 
             expect(postDTO.notification?.title).toBe(MENTIONED_IN_MESSAGE_TITLE);
         });
