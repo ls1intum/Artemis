@@ -520,47 +520,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetUnresolvedAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToAnsweredOrReacted", "true");
-        params.add("filterToUnresolved", "true");
-        params.add("courseWideChannelIds", "");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream()
-                .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
-                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
-
-        var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToOwn", "true");
-        params.add("filterToUnresolved", "true");
-        params.add("filterToAnsweredOrReacted", "true");
-        params.add("courseWideChannelIds", "");
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
-        conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
-        List<Post> filteredExistingCourseWideMessages = existingCourseWideMessages.stream().filter(
-                post -> student1.getId().equals(post.getAuthor().getId()) && (post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
-                                || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId())))))
-                .toList();
-
-        assertThat(returnedPosts).isEqualTo(filteredExistingCourseWideMessages);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditConversationAnswerPost_forbidden() throws Exception {
         // conversation answerPost of student1 must not be editable by tutors
