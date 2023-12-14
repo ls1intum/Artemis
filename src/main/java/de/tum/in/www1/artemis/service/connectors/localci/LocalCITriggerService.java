@@ -4,8 +4,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.LocalCIException;
@@ -20,12 +18,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService;
 
-    private final LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService;
-
-    public LocalCITriggerService(LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService,
-            LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService) {
+    public LocalCITriggerService(LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService) {
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
-        this.localCIProgrammingLanguageFeatureService = localCIProgrammingLanguageFeatureService;
     }
 
     /**
@@ -53,10 +47,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, boolean isPushToTestRepository) throws LocalCIException {
-
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
-        ProjectType projectType = programmingExercise.getProjectType();
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
         // Exam exercises have a higher priority than normal exercises
