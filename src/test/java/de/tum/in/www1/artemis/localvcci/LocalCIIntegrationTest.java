@@ -27,8 +27,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
@@ -71,18 +69,6 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         request.postWithoutLocation("/api/repository/" + studentParticipation.getId() + "/commit", null, HttpStatus.OK, null);
         localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), null, 1, false);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testSubmitViaOnlineEditor_wrongProjectType() throws Exception {
-        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        // Submit from the online editor with the wrong project type set on the programming exercise.
-        // This tests that an internal error is caught properly in the processNewPush() method and the "/commit" endpoint returns 500 in that case.
-        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
-        programmingExercise.setProjectType(ProjectType.MAVEN_BLACKBOX);
-        programmingExerciseRepository.save(programmingExercise);
-        request.postWithoutLocation("/api/repository/" + studentParticipation.getId() + "/commit", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
     }
 
     @Test

@@ -27,8 +27,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
@@ -208,14 +206,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
-        ProjectType projectType = programmingExercise.getProjectType();
-        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
         try {
-            List<ProjectType> supportedProjectTypes = programmingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
-
-            if (projectType != null && !supportedProjectTypes.contains(programmingExercise.getProjectType())) {
-                throw new LocalVCInternalException("The project type " + programmingExercise.getProjectType() + " is not supported by the configured CI System.");
-            }
             // Instead of defining a project like would be done for GitLab or Bitbucket, just create a directory that will contain all repositories.
             Path projectPath = Path.of(localVCBasePath, projectKey);
             Files.createDirectories(projectPath);

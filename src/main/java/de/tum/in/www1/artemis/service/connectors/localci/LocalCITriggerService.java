@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.util.List;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -60,12 +58,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
         ProjectType projectType = programmingExercise.getProjectType();
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
-
-        List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
-
-        if (projectType != null && !supportedProjectTypes.contains(programmingExercise.getProjectType())) {
-            throw new LocalCIException("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
-        }
 
         // Exam exercises have a higher priority than normal exercises
         int priority = programmingExercise.isExamExercise() ? 1 : 2;
