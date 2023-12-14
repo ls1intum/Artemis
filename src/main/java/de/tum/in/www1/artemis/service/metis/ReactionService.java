@@ -80,37 +80,11 @@ public class ReactionService {
 
         // we query the repository dependent on the type of posting and update this posting
         Reaction savedReaction;
-        if (posting instanceof Post) {
-            Post post = postService.findPostOrMessagePostById(posting.getId());
-            mayInteractWithConversationElseThrow(user, post, course);
-            reaction.setPost(post);
-            // save reaction
-            savedReaction = reactionRepository.save(reaction);
-
-            if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
-                // increase voteCount of post needed for sorting
-                post.setVoteCount(post.getVoteCount() + 1);
-            }
-
-            post.addReaction(reaction);
-            Post updatedPost = postRepository.save(post);
-            updatedPost.setConversation(post.getConversation());
-
-            postService.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
+        if (posting instanceof Post post) {
+            savedReaction = createReactionForPost(reaction, post, user, course);
         }
         else {
-            AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
-            mayInteractWithConversationElseThrow(user, answerPost.getPost(), course);
-            reaction.setAnswerPost(answerPost);
-            // save reaction
-            savedReaction = reactionRepository.save(reaction);
-            answerPost.addReaction(savedReaction);
-
-            // save answer post
-            AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
-            updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
-
-            answerPostService.preparePostAndBroadcast(answerPost, course, null);
+            savedReaction = createReactionForAnswer(reaction, (AnswerPost) posting, user, course);
 
         }
         return savedReaction;
@@ -166,5 +140,61 @@ public class ReactionService {
             conversationService.isMemberOrCreateForCourseWideElseThrow(post.getConversation().getId(), user, Optional.empty());
             postService.preCheckUserAndCourseForCommunicationOrMessaging(user, course);
         }
+    }
+
+    /**
+     * Adds the given reaction to the answer
+     *
+     * @param reaction reaction to add
+     * @param posting  answer to add the reaction to
+     * @param user     user who reacted
+     * @param course   course the post belongs to
+     * @return saved reaction
+     */
+    private Reaction createReactionForAnswer(Reaction reaction, AnswerPost posting, User user, Course course) {
+        Reaction savedReaction;
+        AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
+        mayInteractWithConversationElseThrow(user, answerPost.getPost(), course);
+        reaction.setAnswerPost(answerPost);
+        // save reaction
+        savedReaction = reactionRepository.save(reaction);
+        answerPost.addReaction(savedReaction);
+
+        // save answer post
+        AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
+        updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
+
+        answerPostService.preparePostAndBroadcast(answerPost, course, null);
+        return savedReaction;
+    }
+
+    /**
+     * Adds the given reaction to the post
+     *
+     * @param reaction reaction to add
+     * @param posting  post to add the reaction to
+     * @param user     user who reacted
+     * @param course   course the post belongs to
+     * @return saved reaction
+     */
+    private Reaction createReactionForPost(Reaction reaction, Post posting, User user, Course course) {
+        Reaction savedReaction;
+        Post post = postService.findPostOrMessagePostById(posting.getId());
+        mayInteractWithConversationElseThrow(user, post, course);
+        reaction.setPost(post);
+        // save reaction
+        savedReaction = reactionRepository.save(reaction);
+
+        if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
+            // increase voteCount of post needed for sorting
+            post.setVoteCount(post.getVoteCount() + 1);
+        }
+
+        post.addReaction(reaction);
+        Post updatedPost = postRepository.save(post);
+        updatedPost.setConversation(post.getConversation());
+
+        postService.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
+        return savedReaction;
     }
 }
