@@ -54,23 +54,23 @@ describe('CourseDetailLineChartComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.absoluteSeries).toHaveLength(initialStats.length);
-        for (let i = 0; i < 17; i++) {
-            expect(component.absoluteSeries[i]['absoluteValue']).toBe(initialStats[i]);
+        expect(component.absoluteSeries).toHaveLength(Math.min(component.initialStats.length, component.displayedNumberOfWeeks));
+        for (let i = 0; i < Math.min(component.initialStats.length, component.displayedNumberOfWeeks); i++) {
+            expect(component.absoluteSeries[i]['absoluteValue']).toBe(initialStats[initialStats.length - component.absoluteSeries.length + i]);
         }
 
         component.switchTimeSpan(true);
 
-        expect(component.data[0].series).toHaveLength(initialStats.length);
-        for (let i = 0; i < 17; i++) {
+        expect(component.data[0].series).toHaveLength(Math.min(component.initialStats.length, component.displayedNumberOfWeeks));
+        for (let i = 0; i < Math.min(component.initialStats.length, component.displayedNumberOfWeeks); i++) {
             expect(component.absoluteSeries[i]['absoluteValue']).toBe(graphData[i]);
         }
 
         component.numberOfStudentsInCourse = 0;
         component.switchTimeSpan(true);
 
-        expect(component.data[0].series).toHaveLength(initialStats.length);
-        for (let i = 0; i < 17; i++) {
+        expect(component.data[0].series).toHaveLength(Math.min(component.initialStats.length, component.displayedNumberOfWeeks));
+        for (let i = 0; i < Math.min(component.initialStats.length, component.displayedNumberOfWeeks); i++) {
             expect(component.absoluteSeries[i]['absoluteValue']).toBe(0);
         }
     });
@@ -102,7 +102,7 @@ describe('CourseDetailLineChartComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.data[0].series[16].name).toBe(endDate.isoWeek().toString());
+        expect(component.data[0].series[Math.min(component.initialStats.length, component.displayedNumberOfWeeks) - 1].name).toBe(endDate.isoWeek().toString());
     });
 
     it('should adapt if course phase is smaller than 4 weeks', () => {
@@ -124,13 +124,13 @@ describe('CourseDetailLineChartComponent', () => {
 
     it('should limit the next view if start date is reached', () => {
         const getStatisticsDataMock = jest.spyOn(service, 'getStatisticsData').mockReturnValue(of(initialStats.slice(16)));
-        const startDate = dayjs().subtract(17, 'weeks');
+        const startDate = dayjs().subtract(component.displayedNumberOfWeeks, 'weeks');
         component.course = { id: 42, startDate };
         component.initialStats = initialStats;
 
         component.ngOnChanges();
 
-        expect(component.data[0].series).toHaveLength(17);
+        expect(component.data[0].series).toHaveLength(Math.min(component.initialStats.length, component.displayedNumberOfWeeks));
 
         // we switch back in time
         component.switchTimeSpan(false);
@@ -139,7 +139,7 @@ describe('CourseDetailLineChartComponent', () => {
         expect(component.data[0].series[0].value).toBe(84);
         expect(component.data[0].series[0].name).toBe(startDate.isoWeek().toString());
         expect(getStatisticsDataMock).toHaveBeenCalledOnce();
-        expect(getStatisticsDataMock).toHaveBeenCalledWith(42, -1);
+        expect(getStatisticsDataMock).toHaveBeenCalledWith(42, -1, 8);
     });
 
     it('should create lifetime overview', () => {
@@ -155,14 +155,6 @@ describe('CourseDetailLineChartComponent', () => {
         for (let i = 0; i < 17; i++) {
             expect(component.absoluteSeries[i]['absoluteValue']).toBe(initialStats[i]);
         }
-    });
-
-    it('should toggle the average reference line', () => {
-        component.showAverage = false;
-
-        component.toggleAverageLine();
-
-        expect(component.showAverage).toBeTrue();
     });
 
     it('should create an empty chart if no students are registered yet', () => {
