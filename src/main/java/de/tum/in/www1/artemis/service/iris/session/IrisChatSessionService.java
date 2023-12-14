@@ -6,6 +6,7 @@ import java.util.*;
 
 import javax.ws.rs.BadRequestException;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.treewalk.FileTreeIterator;
@@ -20,7 +21,7 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
+import de.tum.in.www1.artemis.service.dto.iris.chat.IrisChatRequestDTO;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
@@ -138,39 +140,27 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
     @Override
     public void requestAndHandleResponse(IrisSession session) {
         var fullSession = irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        Map<String, Object> parameters = new HashMap<>();
         if (!(fullSession instanceof IrisChatSession chatSession)) {
             throw new BadRequestException("Trying to get Iris response for session " + session.getId() + " without exercise");
         }
         if (chatSession.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        var exercise = chatSession.getExercise();
-        parameters.put("exercise", exercise);
-        parameters.put("course", exercise.getCourseViaExerciseGroupOrCourseMember());
-        parameters.put("latestSubmission", "");
-        parameters.put("buildFailed", "");
-        parameters.put("buildLog", "");
-        var participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(),
-                chatSession.getUser().getLogin());
-        if (!participations.isEmpty()) {
-            var participation = participations.get(participations.size() - 1);
-            var submission = participation.getSubmissions().stream().max(Submission::compareTo);
-            Optional<ProgrammingSubmission> latestSubmission = Optional.empty();
-            if (submission.isPresent()) {
-                latestSubmission = programmingSubmissionRepository.findWithEagerBuildLogEntriesById(submission.get().getId());
-            }
-            if (latestSubmission.isPresent()) {
-                parameters.put("latestSubmission", latestSubmission.get());
-                parameters.put("buildFailed", latestSubmission.get().isBuildFailed());
-                parameters.put("buildLog", latestSubmission.get().getBuildLogEntries());
-            }
-        }
-        parameters.put("session", chatSession);
-        addDiffAndTemplatesForStudentAndExerciseIfPossible(chatSession.getUser(), exercise, participations, parameters);
+
+        ProgrammingExercise exercise = chatSession.getExercise();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        ProgrammingSubmission latestSubmission = getLatestSubmissionIfExists(exercise, chatSession.getUser());
+        boolean buildFailed = latestSubmission != null && latestSubmission.isBuildFailed();
+        List<BuildLogEntry> buildLog = latestSubmission != null ? latestSubmission.getBuildLogEntries() : List.of();
+        Repository templateRepository = templateRepository(exercise);
+        Optional<Repository> studentRepository = studentRepository(latestSubmission);
+        Map<String, String> templateRepositoryContents = repositoryService.getFilesWithContent(templateRepository);
+        Map<String, String> studentRepositoryContents = studentRepository.map(repositoryService::getFilesWithContent).orElse(Map.of());
+        String gitDiff = studentRepository.map(repo -> getGitDiff(templateRepository, repo)).orElse("");
 
         var irisSettings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false);
-        irisConnectorService.sendRequest(irisSettings.irisChatSettings().getTemplate(), irisSettings.irisChatSettings().getPreferredModel(), parameters)
+        var dto = new IrisChatRequestDTO(exercise, course, latestSubmission, buildFailed, buildLog, chatSession, gitDiff, templateRepositoryContents, studentRepositoryContents);
+        irisConnectorService.sendRequest(irisSettings.irisChatSettings().getTemplate(), irisSettings.irisChatSettings().getPreferredModel(), dto)
                 .handleAsync((irisMessage, throwable) -> {
                     if (throwable != null) {
                         log.error("Error while getting response from Iris model", throwable);
@@ -188,55 +178,54 @@ public class IrisChatSessionService implements IrisSessionSubServiceInterface {
                 });
     }
 
-    private void addDiffAndTemplatesForStudentAndExerciseIfPossible(User student, ProgrammingExercise exercise, List<ProgrammingExerciseStudentParticipation> studentParticipations,
-            Map<String, Object> parameters) {
-        parameters.put("gitDiff", "");
-        parameters.put("studentRepository", Map.of());
-        parameters.put("templateRepository", Map.of());
-
-        var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId());
-
-        Repository templateRepo;
-        Repository studentRepo;
-
-        if (templateParticipation.isEmpty()) {
-            throw new InternalServerErrorException("Iris cannot function without template participation");
+    private ProgrammingSubmission getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
+        var participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+        if (participations.isEmpty()) {
+            return null;
         }
-        if (studentParticipations.isEmpty()) {
+        return participations.get(participations.size() - 1).getSubmissions().stream().max(Submission::compareTo)
+                .flatMap(sub -> programmingSubmissionRepository.findWithEagerBuildLogEntriesById(sub.getId())).orElse(null);
+    }
+
+    private Repository templateRepository(ProgrammingExercise exercise) {
+        return templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).map(participation -> {
             try {
-                templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
+                return gitService.getOrCheckoutRepository(participation.getVcsRepositoryUrl(), true);
             }
             catch (GitAPIException e) {
-                throw new InternalServerErrorException("Iris cannot function without template participation");
+                return null;
             }
-            parameters.put("templateRepository", repositoryService.getFilesWithContent(templateRepo));
-            return;
-        }
+        }).orElseThrow(() -> new InternalServerErrorException("Iris cannot function without template participation"));
+    }
 
-        try {
-            templateRepo = gitService.getOrCheckoutRepository(templateParticipation.get().getVcsRepositoryUrl(), true);
-            studentRepo = gitService.getOrCheckoutRepository(studentParticipations.get(studentParticipations.size() - 1).getVcsRepositoryUrl(), true);
-        }
-        catch (GitAPIException e) {
-            throw new InternalServerErrorException("Could not fetch existing student or template participation");
-        }
-        parameters.put("templateRepository", repositoryService.getFilesWithContent(templateRepo));
-        parameters.put("studentRepository", repositoryService.getFilesWithContent(studentRepo));
+    private Optional<Repository> studentRepository(@Nullable ProgrammingSubmission latestSubmission) {
+        return Optional.ofNullable(latestSubmission).map(sub -> (ProgrammingExerciseParticipation) sub.getParticipation()).map(participation -> {
+            try {
+                return gitService.getOrCheckoutRepository(participation.getVcsRepositoryUrl(), true);
+            }
+            catch (GitAPIException e) {
+                log.error("Could not fetch existing student participation repository", e);
+                return null;
+            }
+        });
+    }
 
-        var oldTreeParser = new FileTreeIterator(templateRepo);
-        var newTreeParser = new FileTreeIterator(studentRepo);
+    private String getGitDiff(Repository from, Repository to) {
+        var oldTreeParser = new FileTreeIterator(from);
+        var newTreeParser = new FileTreeIterator(to);
 
-        gitService.resetToOriginHead(templateRepo);
-        gitService.pullIgnoreConflicts(templateRepo);
-        gitService.resetToOriginHead(studentRepo);
-        gitService.pullIgnoreConflicts(studentRepo);
+        gitService.resetToOriginHead(from);
+        gitService.pullIgnoreConflicts(from);
+        gitService.resetToOriginHead(to);
+        gitService.pullIgnoreConflicts(to);
 
-        try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(templateRepo)) {
+        try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(from)) {
             git.diff().setOldTree(oldTreeParser).setNewTree(newTreeParser).setOutputStream(diffOutputStream).call();
-            parameters.put("gitDiff", diffOutputStream.toString());
+            return diffOutputStream.toString();
         }
         catch (GitAPIException | IOException e) {
-            throw new InternalServerErrorException("Could not generate diff from existing template and student participation");
+            log.error("Could not generate diff from existing template and student participation", e);
+            return "";
         }
     }
 }

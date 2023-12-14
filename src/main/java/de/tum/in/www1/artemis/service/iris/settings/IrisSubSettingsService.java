@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 import de.tum.in.www1.artemis.domain.iris.settings.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedChatSubSettingsDTO;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedCodeEditorSubSettingsDTO;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedHestiaSubSettingsDTO;
+import de.tum.in.www1.artemis.service.dto.iris.settings.IrisCombinedChatSubSettingsDTO;
+import de.tum.in.www1.artemis.service.dto.iris.settings.IrisCombinedCodeEditorSubSettingsDTO;
+import de.tum.in.www1.artemis.service.dto.iris.settings.IrisCombinedHestiaSubSettingsDTO;
 
 /**
  * Service for handling {@link IrisSubSettings} objects.

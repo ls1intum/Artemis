@@ -34,6 +34,8 @@ import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisConnectorService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.in.www1.artemis.service.dto.iris.codeeditor.IrisCodeEditorChatDTO;
+import de.tum.in.www1.artemis.service.dto.iris.codeeditor.IrisCodeEditorGenerationDTO;
 import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.exception.IrisNoResponseException;
 import de.tum.in.www1.artemis.service.iris.exception.IrisParseResponseException;
@@ -152,14 +154,6 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
         irisCodeEditorWebsocketService.sendMessage(message);
     }
 
-    public record IrisCodeEditorChatDTO(String problemStatement, Map<String, String> solutionRepository, Map<String, String> templateRepository, Map<String, String> testRepository,
-            List<IrisMessage> chatHistory) {
-    }
-
-    public record IrisCodeEditorGenerationDTO(String problemStatement, Map<String, String> solutionRepository, Map<String, String> templateRepository,
-            Map<String, String> testRepository, String instructions) {
-    }
-
     /**
      * Sends a request containing the current state of the exercise repositories in the code editor and the entire
      * conversation history to the LLM, and handles the response.
@@ -173,8 +167,16 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             throw new BadRequestException("Iris session is not a code editor session");
         }
         var exercise = session.getExercise();
-        var dto = new IrisCodeEditorChatDTO(exercise.getProblemStatement(), filterFiles(read(solutionRepository(exercise))), filterFiles(read(templateRepository(exercise))),
-                filterFiles(read(testRepository(exercise))), session.getMessages());
+
+        // @formatter:off
+        var dto = new IrisCodeEditorChatDTO(
+                exercise.getProblemStatement(),
+                filterFiles(read(solutionRepository(exercise))),
+                filterFiles(read(templateRepository(exercise))),
+                filterFiles(read(testRepository(exercise))),
+                session.getMessages()
+        );
+        // @formatter:on
 
         var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisCodeEditorSettings();
         irisConnectorService.sendRequestV2(settings.getChatTemplate().getContent(), settings.getPreferredModel(), dto).handleAsync((response, err) -> {
@@ -299,8 +301,15 @@ public class IrisCodeEditorSessionService implements IrisSessionSubServiceInterf
             case TEST_REPOSITORY -> settings.getTestRepoGenerationTemplate().getContent();
         };
 
-        var dto = new IrisCodeEditorGenerationDTO(exercise.getProblemStatement(), filterFiles(read(solutionRepository(exercise))), filterFiles(read(templateRepository(exercise))),
-                filterFiles(read(testRepository(exercise))), exerciseStep.getInstructions());
+        // @formatter:off
+        var dto = new IrisCodeEditorGenerationDTO(
+                exercise.getProblemStatement(),
+                filterFiles(read(solutionRepository(exercise))),
+                filterFiles(read(templateRepository(exercise))),
+                filterFiles(read(testRepository(exercise))),
+                exerciseStep.getInstructions()
+        );
+        // @formatter:on
 
         irisConnectorService.sendRequestV2(template, settings.getPreferredModel(), dto).handleAsync((response, err) -> {
             if (err != null) {

@@ -5,7 +5,6 @@ import static java.util.concurrent.CompletableFuture.failedFuture;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -76,14 +75,14 @@ public class IrisConnectorService {
      *                           message)
      * @param preferredModel The LLM model to be used (e.g., GPT3.5-turbo). Note: The used model might not be the
      *                           preferred model (e.g., if an error occurs or the preferredModel is not reachable)
-     * @param parameters     A map of parameters to be included in the template through handlebars (if they are
+     * @param dto            A dto of arguments to be included in the template through handlebars (if they are
      *                           specified in the template)
      * @return The message response to the request which includes the {@link IrisMessage} and the used IrisModel
      */
     @Async
-    public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, String preferredModel, Map<String, Object> parameters) {
+    public CompletableFuture<IrisMessageResponseDTO> sendRequest(IrisTemplate template, String preferredModel, Object dto) {
         var endpoint = "/api/v1/messages";
-        var request = new IrisRequestDTO(template, preferredModel, parameters);
+        var request = new IrisRequestDTO(template, preferredModel, dto);
         return tryGetResponse(endpoint, request, preferredModel, IrisMessageResponseDTO.class);
     }
 

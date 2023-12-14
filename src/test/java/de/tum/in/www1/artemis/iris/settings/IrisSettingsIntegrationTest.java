@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.iris.settings.*;
 import de.tum.in.www1.artemis.iris.AbstractIrisIntegrationTest;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSubSettingsRepository;
-import de.tum.in.www1.artemis.service.dto.iris.IrisCombinedSettingsDTO;
+import de.tum.in.www1.artemis.service.dto.iris.settings.IrisCombinedSettingsDTO;
 
 class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 
