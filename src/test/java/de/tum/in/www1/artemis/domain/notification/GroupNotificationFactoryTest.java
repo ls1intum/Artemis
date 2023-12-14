@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 
 class GroupNotificationFactoryTest {
 
@@ -57,8 +58,6 @@ class GroupNotificationFactoryTest {
 
     private static Exercise examExercise;
 
-    private static ExerciseGroup exerciseGroup;
-
     private static final String PROBLEM_STATEMENT = "problem statement";
 
     private static Post post;
@@ -66,8 +65,6 @@ class GroupNotificationFactoryTest {
     private static final String POST_TITLE = "post title";
 
     private static final String POST_CONTENT = "post content";
-
-    private static AnswerPost answerPost;
 
     private static final String ANSWER_POST_CONTENT = "answer post content";
 
@@ -115,7 +112,7 @@ class GroupNotificationFactoryTest {
         exam.setId(EXAM_ID);
         exam.setCourse(course);
 
-        exerciseGroup = new ExerciseGroup();
+        ExerciseGroup exerciseGroup = new ExerciseGroup();
         exerciseGroup.setExam(exam);
 
         exercise = new TextExercise();
@@ -146,13 +143,12 @@ class GroupNotificationFactoryTest {
         user.setLastName("Smith");
 
         post = new Post();
-        post.setExercise(exercise);
-        post.setLecture(lecture);
+        post.setConversation(new Channel());
         post.setAuthor(user);
         post.setTitle(POST_TITLE);
         post.setContent(POST_CONTENT);
 
-        answerPost = new AnswerPost();
+        AnswerPost answerPost = new AnswerPost();
         answerPost.setPost(post);
         answerPost.setAuthor(user);
         answerPost.setContent(ANSWER_POST_CONTENT);
@@ -221,10 +217,6 @@ class GroupNotificationFactoryTest {
             }
             case POST: {
                 createdNotification = createAnnouncementNotification(post, user, groupNotificationType, course);
-                break;
-            }
-            case POST_REPLY: {
-                createdNotification = createNotification(post, answerPost, user, groupNotificationType, notificationType, course);
                 break;
             }
             case COURSE: {
@@ -374,53 +366,6 @@ class GroupNotificationFactoryTest {
         expectedPriority = MEDIUM;
         expectedTransientTarget = createCoursePostTarget(post, course);
         createAndCheckNotification(Base.POST);
-    }
-
-    // Based on ResponsePost
-
-    /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_EXERCISE_POST.
-     * I.e. notifications that originate from a new reply for an exercise post.
-     */
-    @Test
-    void createNotificationBasedOnAnswerPost_withNotificationType_NewReplyForExercisePost() {
-        notificationType = NEW_REPLY_FOR_EXERCISE_POST;
-        expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
-        expectedText = NEW_REPLY_FOR_EXERCISE_POST_GROUP_TEXT;
-        expectedPlaceholderValues = "[\"" + exercise.getTitle() + "\"]";
-        expectedPriority = MEDIUM;
-        expectedTransientTarget = createExercisePostTarget(post, course);
-        createAndCheckNotification(Base.POST_REPLY);
-    }
-
-    /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_LECTURE_POST.
-     * I.e. notifications that originate from a new reply for a lecture post.
-     */
-    @Test
-    void createNotificationBasedOnAnswerPost_withNotificationType_NewResponseForLecturePost() {
-        notificationType = NEW_REPLY_FOR_LECTURE_POST;
-        expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
-        expectedText = NEW_REPLY_FOR_LECTURE_POST_GROUP_TEXT;
-        expectedPlaceholderValues = "[" + lecture.getTitle() + "]";
-        expectedPriority = MEDIUM;
-        expectedTransientTarget = createLecturePostTarget(post, course);
-        createAndCheckNotification(Base.POST_REPLY);
-    }
-
-    /**
-     * Tests the functionality that deals with notifications that have the notification type of NEW_REPLY_FOR_COURSE_POST.
-     * I.e. notifications that originate from a new reply for a course wide post.
-     */
-    @Test
-    void createNotificationBasedOnAnswerPost_withNotificationType_NewResponseForCoursePost() {
-        notificationType = NEW_REPLY_FOR_COURSE_POST;
-        expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
-        expectedText = NEW_REPLY_FOR_COURSE_POST_GROUP_TEXT;
-        expectedPlaceholderValues = "[" + course.getTitle() + "]";
-        expectedPriority = MEDIUM;
-        expectedTransientTarget = createCoursePostTarget(post, course);
-        createAndCheckNotification(Base.POST_REPLY);
     }
 
     // Based on Course

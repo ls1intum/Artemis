@@ -83,20 +83,6 @@ public class PostResource {
     }
 
     /**
-     * GET /courses/{courseId}/posts/tags : Get all tags for posts in a certain course
-     *
-     * @param courseId id of the course the post belongs to
-     * @return the ResponseEntity with status 200 (OK) and with body all tags for posts in that course,
-     *         or 400 (Bad Request) if the checks on user or course validity fail
-     */
-    @GetMapping("courses/{courseId}/posts/tags")
-    @EnforceAtLeastStudent
-    public ResponseEntity<List<String>> getAllPostTagsForCourse(@PathVariable Long courseId) {
-        List<String> tags = postService.getAllCourseTags(courseId);
-        return new ResponseEntity<>(tags, null, HttpStatus.OK);
-    }
-
-    /**
      * GET /courses/{courseId}/posts : Get all posts for a course by its id
      *
      * @param postContextFilter request param for filtering posts
@@ -135,19 +121,5 @@ public class PostResource {
         postService.deletePostById(courseId, postId);
         log.info("deletePost took {}", TimeLogUtil.formatDurationFrom(start));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, postService.getEntityName(), postId.toString())).build();
-    }
-
-    /**
-     * POST /courses/{courseId}/posts/similarity-check : trigger a similarity check for post to be created
-     *
-     * @param courseId id of the course the post should be published in
-     * @param post     post to create
-     * @return ResponseEntity with status 200 (OK)
-     */
-    @PostMapping("courses/{courseId}/posts/similarity-check")
-    @EnforceAtLeastStudent
-    public ResponseEntity<List<Post>> computeSimilarityScoresWitCoursePosts(@PathVariable Long courseId, @RequestBody Post post) {
-        List<Post> similarPosts = postService.getSimilarPosts(courseId, post);
-        return ResponseEntity.ok().body(similarPosts);
     }
 }

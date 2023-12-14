@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotificationFactory;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationNotificationRepository;
-import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 
 /**
  * Service for sending notifications about new messages in conversations.
@@ -30,16 +29,13 @@ public class ConversationNotificationService {
 
     private final ConversationNotificationRepository conversationNotificationRepository;
 
-    private final WebsocketMessagingService websocketMessagingService;
-
     private final GeneralInstantNotificationService generalInstantNotificationService;
 
     private final SingleUserNotificationRepository singleUserNotificationRepository;
 
-    public ConversationNotificationService(ConversationNotificationRepository conversationNotificationRepository, WebsocketMessagingService websocketMessagingService,
+    public ConversationNotificationService(ConversationNotificationRepository conversationNotificationRepository,
             GeneralInstantNotificationService generalInstantNotificationService, SingleUserNotificationRepository singleUserNotificationRepository) {
         this.conversationNotificationRepository = conversationNotificationRepository;
-        this.websocketMessagingService = websocketMessagingService;
         this.generalInstantNotificationService = generalInstantNotificationService;
         this.singleUserNotificationRepository = singleUserNotificationRepository;
     }
@@ -96,21 +92,15 @@ public class ConversationNotificationService {
      * @param createdMessage the new message in a conversation
      * @param notification   the notification to send
      * @param recipients     the set of recipients for the notifcation
-     * @param course         the course of the new message
      */
-    public void notifyAboutNewMessage(Post createdMessage, ConversationNotification notification, Set<User> recipients, Course course) {
+    public void notifyAboutNewMessage(Post createdMessage, ConversationNotification notification, Set<User> recipients) {
         Post notificationSubject = new Post();
         notificationSubject.setId(createdMessage.getId());
         notificationSubject.setConversation(createdMessage.getConversation());
         notificationSubject.setContent(createdMessage.getContent());
         notificationSubject.setTitle(createdMessage.getTitle());
-        notificationSubject.setCourse(course);
         notificationSubject.setAuthor(createdMessage.getAuthor());
         generalInstantNotificationService.sendNotification(notification, recipients, notificationSubject);
-    }
-
-    private void sendNotificationViaWebSocket(ConversationNotification notification, Set<User> recipients) {
-        recipients.forEach(user -> websocketMessagingService.sendMessage(notification.getTopic(user.getId()), notification));
     }
 
     /**

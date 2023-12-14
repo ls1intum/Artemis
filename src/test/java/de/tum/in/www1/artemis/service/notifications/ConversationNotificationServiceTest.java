@@ -111,7 +111,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
         post = conversationMessageRepository.save(post);
 
         ConversationNotification notification = conversationNotificationService.createNotification(post, oneToOneChat, course, Set.of());
-        conversationNotificationService.notifyAboutNewMessage(post, notification, Set.of(user2), course);
+        conversationNotificationService.notifyAboutNewMessage(post, notification, Set.of(user2));
         verifyRepositoryCallWithCorrectNotification(NEW_MESSAGE_TITLE);
 
         Notification sentNotification = notificationRepository.findAll().stream().max(Comparator.comparing(DomainObject::getId)).orElseThrow();

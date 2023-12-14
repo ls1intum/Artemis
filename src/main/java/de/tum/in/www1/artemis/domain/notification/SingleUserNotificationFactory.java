@@ -6,7 +6,9 @@ import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFacto
 
 import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.DataExport;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -16,28 +18,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 public class SingleUserNotificationFactory {
-
-    /**
-     * Creates an instance of SingleUserNotification.
-     *
-     * @param post             which is answered
-     * @param answerPost       that is replied with
-     * @param notificationType type of the notification that should be created
-     * @param course           that the post belongs to
-     * @return an instance of SingleUserNotification
-     */
-    public static SingleUserNotification createNotification(Post post, AnswerPost answerPost, NotificationType notificationType, Course course) {
-        User recipient = post.getAuthor();
-        return NotificationFactory.createNotificationImplementation(post, answerPost, notificationType, course, (title, placeholderValues) -> {
-            String text = "";
-            switch (notificationType) {
-                case NEW_REPLY_FOR_EXERCISE_POST -> text = NEW_REPLY_FOR_EXERCISE_POST_SINGLE_TEXT;
-                case NEW_REPLY_FOR_LECTURE_POST -> text = NEW_REPLY_FOR_LECTURE_POST_SINGLE_TEXT;
-                case NEW_REPLY_FOR_COURSE_POST -> text = NEW_REPLY_FOR_COURSE_POST_SINGLE_TEXT;
-            }
-            return new SingleUserNotification(recipient, title, text, true, placeholderValues);
-        });
-    }
 
     /**
      * Creates an instance of SingleUserNotification.

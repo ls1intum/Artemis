@@ -734,9 +734,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // check if conversation is set correctly on creation
         assertThat(createdMessagePost.getConversation()).isNotNull();
         assertThat(createdMessagePost.getConversation().getId()).isNotNull();
-
-        // conversation posts should not have course initialized
-        assertThat(createdMessagePost.getCourse()).isNull();
     }
 
     protected static List<Arguments> userMentionProvider() {
@@ -761,5 +758,30 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private static List<CourseInformationSharingConfiguration> courseInformationSharingConfigurationProvider() {
         return List.of(CourseInformationSharingConfiguration.MESSAGING_ONLY, CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
                 CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSimilarityCheck() throws Exception {
+        Post postToCheck = new Post();
+        postToCheck.setTitle("Title Post");
+
+        List<Post> similarPosts = request.postListWithResponseBody("/api/courses/" + courseId + "/messages/similarity-check", postToCheck, Post.class, HttpStatus.OK);
+        assertThat(similarPosts).hasSize(5);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetPostTagsForCourse() throws Exception {
+        List<String> returnedTags = request.getList("/api/courses/" + courseId + "/messages/tags", HttpStatus.OK, String.class);
+        // 4 different tags were used for the posts
+        assertThat(returnedTags).hasSameSizeAs(conversationMessageRepository.findPostTagsForCourse(courseId));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetPostTagsForCourseWithNonExistentCourseId_notFound() throws Exception {
+        List<String> returnedTags = request.getList("/api/courses/" + 9999L + "/messages/tags", HttpStatus.NOT_FOUND, String.class);
+        assertThat(returnedTags).isNull();
     }
 }

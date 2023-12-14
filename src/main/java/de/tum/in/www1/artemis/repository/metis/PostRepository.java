@@ -74,15 +74,6 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     void deleteAllByConversationId(Long conversationId);
 
     @Query("""
-            SELECT DISTINCT tag FROM Post post
-            LEFT JOIN post.tags tag LEFT JOIN post.lecture lecture LEFT JOIN post.exercise exercise
-            WHERE (lecture.course.id = :#{#courseId}
-            OR exercise.course.id = :#{#courseId}
-            OR post.course.id = :#{#courseId})
-            """)
-    List<String> findPostTagsForCourse(@Param("courseId") Long courseId);
-
-    @Query("""
             SELECT DISTINCT post FROM Post post
             LEFT JOIN post.answers answer LEFT JOIN post.reactions reaction
             WHERE post.plagiarismCase.id = :#{#plagiarismCaseId}

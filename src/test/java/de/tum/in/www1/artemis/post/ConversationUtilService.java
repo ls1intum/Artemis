@@ -142,10 +142,6 @@ public class ConversationUtilService {
         // add post to plagiarismCase
         posts.add(createBasicPost(plagiarismCase, userPrefix));
 
-        // add posts to course with different course-wide contexts provided in input array
-        CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
-                CourseWideContext.ANNOUNCEMENT };
-        posts.addAll(createBasicPosts(course1, courseWideContexts, userPrefix));
         posts.addAll(createBasicPosts(createOneToOneChat(course1, userPrefix), userPrefix, "tutor"));
         posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
         posts.addAll(createBasicPosts(createCourseWideChannel(course1, userPrefix), userPrefix, "student"));
@@ -277,26 +273,6 @@ public class ConversationUtilService {
             }
         }
 
-        return posts;
-    }
-
-    /**
-     * Creates and saves a Post for each of the given CourseWideContexts.
-     *
-     * @param courseContext      The Course the Posts belong to
-     * @param courseWideContexts The CourseWideContexts the Posts belong to
-     * @param userPrefix         The prefix of the authors' logins (the logins are appended with "editor" + (index of CourseWideContext + 1))
-     * @return A List of the created Posts
-     */
-    private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts, String userPrefix) {
-        List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < courseWideContexts.length; i++) {
-            Post postToAdd = ConversationFactory.createBasicPost(i, userUtilService.getUserByLoginWithoutAuthorities(String.format("%s%s", userPrefix + "editor", (i + 1))));
-            postToAdd.setCourse(courseContext);
-            postToAdd.setCourseWideContext(courseWideContexts[i]);
-            postRepository.save(postToAdd);
-            posts.add(postToAdd);
-        }
         return posts;
     }
 

@@ -65,8 +65,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private List<Post> postsBelongingToExercise;
 
-    private Course course;
-
     private Long courseId;
 
     private Exercise exercise;
@@ -96,7 +94,11 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         // filter existing posts with plagiarism context
         existingPlagiarismPosts = existingPostsAndConversationPosts.stream().filter(coursePost -> coursePost.getPlagiarismCase() != null).toList();
 
-        course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
+        course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.DISABLED);
+        course = courseRepository.saveAndFlush(course);
+        assertThat(course.getCourseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.DISABLED);
 
         courseId = course.getId();
 
@@ -123,7 +125,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.DISABLED);
 
         Post postToSave = createPostWithoutContext();
-        postToSave.setExercise(exercise);
 
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
 
@@ -147,7 +148,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         doNothing().when(singleUserNotificationService).notifyUserAboutNewPlagiarismCase(any(), any());
 
         Post postToSave = createPostWithoutContext();
-        postToSave.setCourse(course);
         var plagiarismCase = new PlagiarismCase();
         plagiarismCase.setExercise(exercise);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
@@ -164,10 +164,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         conversationUtilService.assertSensitiveInformationHidden(createdPost);
         checkCreatedPost(postToSave, createdPost);
 
-        PostContextFilter postContextFilter = new PostContextFilter(courseId);
-        postContextFilter.setCourseId(courseId);
-        postContextFilter.setPlagiarismCaseId(createdPost.getPlagiarismCase().getId());
-
         List<Post> plagiarismPosts = postRepository.findPostsByPlagiarismCaseId(createdPost.getPlagiarismCase().getId());
         assertThat(plagiarismPosts).hasSize(1);
     }
@@ -178,8 +174,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         doNothing().when(singleUserNotificationService).notifyUserAboutNewPlagiarismCase(any(), any());
 
         Post postToSave = createPostWithoutContext();
-        postToSave.setCourse(course);
-
         var plagiarismCase = new PlagiarismCase();
         plagiarismCase.setExercise(exercise);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
@@ -212,35 +206,9 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         Course course = conversationUtilService.createCourseWithPostsDisabled();
         courseId = course.getId();
         Post postToSave = createPostWithoutContext();
-        postToSave.setCourse(course);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.BAD_REQUEST);
         verify(groupNotificationService, never()).notifyAllGroupsAboutNewCoursePost(any(), any());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateEmptyPostWithParsingError() throws Exception {
-        doNothing().when(singleUserNotificationService).notifyUserAboutNewPlagiarismCase(any(), any());
-
-        Post postToSave = createPostWithoutContext();
-        var plagiarismCase = new PlagiarismCase();
-        plagiarismCase.setExercise(exercise);
-        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
-        postToSave.setPlagiarismCase(plagiarismCase);
-        postToSave.setContent("");
-
-        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
-        conversationUtilService.assertSensitiveInformationHidden(createdPost);
-        Post expectedPost = new Post();
-        expectedPost.setId(createdPost.getId());
-        expectedPost.setAuthor(createdPost.getAuthor());
-        expectedPost.setCourse(course);
-        expectedPost.setExercise(createdPost.getExercise());
-        expectedPost.setTitle(createdPost.getTitle());
-        expectedPost.setCreationDate(createdPost.getCreationDate());
-        // if error occurs during parsing markdown to html, the content will be replaced by an empty string
-        expectedPost.setContent("");
     }
 
     @Test
@@ -250,23 +218,12 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testSimilarityCheck() throws Exception {
-        Post postToCheck = new Post();
-        postToCheck.setTitle("Title Post");
-
-        List<Post> similarPosts = request.postListWithResponseBody("/api/courses/" + courseId + "/posts/similarity-check", postToCheck, Post.class, HttpStatus.OK);
-        assertThat(similarPosts).hasSize(4);
-    }
-
     // UPDATE
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditPost_asTutor() throws Exception {
         Post postToUpdate = editExistingPost(existingPlagiarismPosts.get(0));
-
         Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToUpdate.getId(), postToUpdate, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
     }
@@ -293,7 +250,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditPost_asStudent_forbidden() throws Exception {
         // update post from another student (index 1)--> forbidden
-        Post postToNotUpdate = editExistingPost(existingPosts.get(1));
+        Post postToNotUpdate = editExistingPost(existingPosts.get(0));
 
         Post notUpdatedPost = request.putWithResponseBody("/api/courses/" + courseId + "/posts/" + postToNotUpdate.getId(), postToNotUpdate, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notUpdatedPost).isNull();
@@ -362,15 +319,15 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostTagsForCourse() throws Exception {
-        List<String> returnedTags = request.getList("/api/courses/" + courseId + "/posts/tags", HttpStatus.OK, String.class);
+        List<String> returnedTags = request.getList("/api/courses/" + courseId + "/messages/tags", HttpStatus.OK, String.class);
         // 4 different tags were used for the posts
-        assertThat(returnedTags).hasSameSizeAs(postRepository.findPostTagsForCourse(courseId));
+        assertThat(returnedTags).hasSameSizeAs(conversationMessageRepository.findPostTagsForCourse(courseId));
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostTagsForCourseWithNonExistentCourseId_notFound() throws Exception {
-        List<String> returnedTags = request.getList("/api/courses/" + 9999L + "/posts/tags", HttpStatus.NOT_FOUND, String.class);
+        List<String> returnedTags = request.getList("/api/courses/" + 9999L + "/messages/tags", HttpStatus.NOT_FOUND, String.class);
         assertThat(returnedTags).isNull();
     }
 
@@ -428,11 +385,8 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         assertThat(createdPost.getReactions()).isEmpty();
         assertThat(createdPost.getDisplayPriority()).isEqualTo(expectedPost.getDisplayPriority());
 
-        // check if context, i.e. either correct lecture, exercise or course-wide context are set correctly on creation
-        assertThat(createdPost.getCourse()).isEqualTo(expectedPost.getCourse());
-        assertThat(createdPost.getCourseWideContext()).isEqualTo(expectedPost.getCourseWideContext());
-        assertThat(createdPost.getExercise()).isEqualTo(expectedPost.getExercise());
-        assertThat(createdPost.getLecture()).isEqualTo(expectedPost.getLecture());
+        // check if plagiarismCase is set correctly on creation
+        assertThat(createdPost.getPlagiarismCase()).isEqualTo(expectedPost.getPlagiarismCase());
     }
 
     @NotNull

@@ -156,36 +156,8 @@ public class Post extends Posting {
         this.tags.add(tag);
     }
 
-    public Exercise getExercise() {
-        return exercise;
-    }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
-    }
-
-    public Lecture getLecture() {
-        return lecture;
-    }
-
-    public void setLecture(Lecture lecture) {
-        this.lecture = lecture;
-    }
-
-    public Course getCourse() {
-        return course;
-    }
-
     public void setCourse(Course course) {
         this.course = course;
-    }
-
-    public CourseWideContext getCourseWideContext() {
-        return courseWideContext;
-    }
-
-    public void setCourseWideContext(CourseWideContext courseWideContext) {
-        this.courseWideContext = courseWideContext;
     }
 
     public Conversation getConversation() {
@@ -247,16 +219,7 @@ public class Post extends Posting {
     @JsonIgnore
     @Override
     public Course getCoursePostingBelongsTo() {
-        if (this.course != null) {
-            return this.course;
-        }
-        else if (this.lecture != null) {
-            return this.lecture.getCourse();
-        }
-        else if (this.exercise != null) {
-            return this.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        }
-        else if (this.plagiarismCase != null) {
+        if (this.plagiarismCase != null) {
             return this.plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
         else if (this.conversation != null) {

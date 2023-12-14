@@ -95,7 +95,6 @@ class NotificationTargetFactoryTest {
 
         post = new Post();
         post.setId(POST_ID);
-        post.setCourse(course);
         post.setConversation(channel);
 
         lecture = new Lecture();

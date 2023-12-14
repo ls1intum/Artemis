@@ -184,9 +184,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         channel.setName("test");
 
         post = new Post();
-        post.setExercise(exercise);
-        post.setLecture(lecture);
-        post.setCourse(course);
         post.setConversation(channel);
         post.setAuthor(instructor);
         post.setTitle(POST_TITLE);

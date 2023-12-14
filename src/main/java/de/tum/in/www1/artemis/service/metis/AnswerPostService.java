@@ -136,7 +136,9 @@ public class AnswerPostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks
-        final Course course = preCheckUserAndCourseForCommunication(user, courseId);
+        final Course course = courseRepository.findByIdElseThrow(courseId);
+        // user has to be at least student in the course
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         AnswerPost answerPost = this.findById(answerPostId);
         Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
 

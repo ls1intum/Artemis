@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository.metis;
 import static de.tum.in.www1.artemis.repository.specs.MessageSpecs.*;
 import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
@@ -78,4 +79,13 @@ public interface ConversationMessageRepository extends JpaRepository<Post, Long>
             WHERE p.id = :postId AND answer.author = cp.user
             """)
     Set<User> findUsersWhoRepliedInMessage(@Param("postId") Long postId);
+
+    @Query("""
+            SELECT DISTINCT tag FROM Post post
+            LEFT JOIN post.tags tag LEFT JOIN post.lecture lecture LEFT JOIN post.exercise exercise
+            WHERE (lecture.course.id = :#{#courseId}
+            OR exercise.course.id = :#{#courseId}
+            OR post.course.id = :#{#courseId})
+            """)
+    List<String> findPostTagsForCourse(@Param("courseId") Long courseId);
 }

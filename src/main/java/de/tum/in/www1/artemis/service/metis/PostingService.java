@@ -72,7 +72,7 @@ public abstract class PostingService {
         // we need to remove the existing AnswerPost (based on unchanged id in updatedAnswerPost) and add the updatedAnswerPost afterwards
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE, null, notification), course.getId(), null, null);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE, notification), course.getId(), null, null);
     }
 
     /**
@@ -105,7 +105,7 @@ public abstract class PostingService {
                             .collect(Collectors.toSet());
                 }
                 recipients.forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations", new PostDTO(
-                        postDTO.post(), postDTO.action(), postDTO.conversation(),
+                        postDTO.post(), postDTO.action(),
                         recipient.isConversationHidden() && postDTO.notification() instanceof ConversationNotification && !mentionedUsers.contains(new User(recipient.userId()))
                                 ? null
                                 : postDTO.notification())));

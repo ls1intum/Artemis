@@ -166,20 +166,14 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         channel.setCreationDate(ZonedDateTime.now());
 
         post = new Post();
-        post.setExercise(exercise);
-        post.setLecture(lecture);
         post.setAuthor(userTwo);
         post.setConversation(channel);
-        post.setCourse(course);
         post.setTitle(POST_TITLE);
         post.setContent(POST_CONTENT);
 
         Post answerPostPost = new Post();
-        answerPostPost.setExercise(exercise);
-        answerPostPost.setLecture(lecture);
         answerPostPost.setConversation(channel);
         answerPostPost.setAuthor(userTwo);
-        answerPostPost.setCourse(course);
         answerPost = new AnswerPost();
         answerPost.setPost(answerPostPost);
         answerPost.setAuthor(userThree);
@@ -424,7 +418,6 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         post.setAuthor(user);
         post.setCreationDate(ZonedDateTime.now());
         post.setConversation(groupChat);
-        post.setCourse(course);
 
         AnswerPost answerPost = new AnswerPost();
         answerPost.setAuthor(userTwo);

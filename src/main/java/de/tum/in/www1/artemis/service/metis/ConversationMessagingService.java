@@ -20,9 +20,10 @@ import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import com.google.common.collect.Lists;
+
 import de.tum.in.www1.artemis.domain.ConversationNotificationRecipientSummary;
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
@@ -40,6 +41,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
+import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonStrategy;
 import de.tum.in.www1.artemis.service.notifications.ConversationNotificationService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
@@ -50,6 +52,8 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
 public class ConversationMessagingService extends PostingService {
+
+    private static final int TOP_K_SIMILARITY_RESULTS = 5;
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -69,11 +73,14 @@ public class ConversationMessagingService extends PostingService {
 
     private final SimpUserRegistry simpUserRegistry;
 
+    private final PostSimilarityComparisonStrategy postContentCompareStrategy;
+
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
             ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService, ConversationRepository conversationRepository,
-            GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository, SimpUserRegistry simpUserRegistry) {
+            GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository, SimpUserRegistry simpUserRegistry,
+            PostSimilarityComparisonStrategy postContentCompareStrategy) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -83,6 +90,7 @@ public class ConversationMessagingService extends PostingService {
         this.groupNotificationService = groupNotificationService;
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.simpUserRegistry = simpUserRegistry;
+        this.postContentCompareStrategy = postContentCompareStrategy;
     }
 
     /**
@@ -149,7 +157,7 @@ public class ConversationMessagingService extends PostingService {
         Set<ConversationNotificationRecipientSummary> recipientSummaries;
         ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, conversation, course,
                 createdConversationMessage.mentionedUsers());
-        PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE, null, notification);
+        PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE, notification);
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
             if (conversationService.isChannelVisibleToStudents(channel)) {
@@ -202,7 +210,7 @@ public class ConversationMessagingService extends PostingService {
         // Add all mentioned users, including the author (if mentioned). Since working with sets, there are no duplicate user entries
         notificationRecipients.addAll(mentionedUsers);
 
-        conversationNotificationService.notifyAboutNewMessage(createdMessage, notification, notificationRecipients, course);
+        conversationNotificationService.notifyAboutNewMessage(createdMessage, notification, notificationRecipients);
         log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
 
         Set<String> onlineUserLogins = getLoginsOfSubscribedUsers("/topic/metis/" + "courses/" + course.getId());
@@ -297,8 +305,6 @@ public class ConversationMessagingService extends PostingService {
         // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
 
-        // protect sample solution, grading instructions, etc.
-        conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
         setAuthorRoleOfPostings(conversationPosts.getContent());
 
         // invoke async due to db write access to avoid that the client has to wait
@@ -435,6 +441,38 @@ public class ConversationMessagingService extends PostingService {
         }
     }
 
+    /**
+     * Calculates k similar posts based on the underlying content comparison strategy
+     *
+     * @param courseId id of the course in which similar posts are searched for
+     * @param post     post that is to be created and check for similar posts beforehand
+     * @return list of similar posts
+     */
+    public List<Post> getSimilarPosts(Long courseId, Post post) {
+        PostContextFilter postContextFilter = new PostContextFilter(courseId);
+        List<Post> coursePosts = this.getCourseWideMessages(Pageable.unpaged(), postContextFilter, userRepository.getUser()).stream()
+                .sorted(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost))).toList();
+
+        // sort course posts by calculated similarity scores
+        setAuthorRoleOfPostings(coursePosts);
+        return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).toList();
+    }
+
+    /**
+     * Checks course and user validity,
+     * retrieves all tags for posts in a certain course
+     *
+     * @param courseId id of the course the tags belongs to
+     * @return tags of all posts that belong to the course
+     */
+    public List<String> getAllCourseTags(Long courseId) {
+        final User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        // checks
+        preCheckUserAndCourseForCommunication(user, courseId);
+        return conversationMessageRepository.findPostTagsForCourse(courseId);
+    }
+
     @Override
     public String getEntityName() {
         return METIS_POST_ENTITY_NAME;
@@ -453,7 +491,6 @@ public class ConversationMessagingService extends PostingService {
         Post postForNotification = new Post();
         postForNotification.setId(message.getId());
         postForNotification.setAuthor(message.getAuthor());
-        postForNotification.setCourse(course);
         postForNotification.setConversation(channel);
         postForNotification.setCreationDate(message.getCreationDate());
         postForNotification.setTitle(message.getTitle());

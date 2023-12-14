@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationPriority;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 
 public class GroupNotificationFactory {
@@ -205,31 +204,6 @@ public class GroupNotificationFactory {
         notification = new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
         notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
         return notification;
-    }
-
-    /**
-     * Creates an instance of GroupNotification based on the passed parameters.
-     *
-     * @param post                  for which a notification should be created
-     * @param answerPost            to the post for which the notification should be created
-     * @param author                of the notification
-     * @param groupNotificationType user group type the notification should target
-     * @param notificationType      type of the notification that should be created
-     * @param course                the post belongs to
-     * @return an instance of GroupNotification
-     */
-    public static GroupNotification createNotification(Post post, AnswerPost answerPost, User author, GroupNotificationType groupNotificationType,
-            NotificationType notificationType, Course course) {
-        return NotificationFactory.createNotificationImplementation(post, answerPost, notificationType, course, (title, placeholderValues) -> {
-            String text = "";
-            switch (notificationType) {
-                case NEW_REPLY_FOR_EXERCISE_POST -> text = NotificationConstants.NEW_REPLY_FOR_EXERCISE_POST_GROUP_TEXT;
-                case NEW_REPLY_FOR_LECTURE_POST -> text = NotificationConstants.NEW_REPLY_FOR_LECTURE_POST_GROUP_TEXT;
-                case NEW_REPLY_FOR_COURSE_POST -> text = NotificationConstants.NEW_REPLY_FOR_COURSE_POST_GROUP_TEXT;
-            }
-
-            return new GroupNotification(course, title, text, true, placeholderValues, author, groupNotificationType);
-        });
     }
 
     /**
