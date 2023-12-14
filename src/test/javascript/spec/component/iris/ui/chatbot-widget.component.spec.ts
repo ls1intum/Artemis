@@ -161,6 +161,7 @@ describe('IrisChatbotWidgetComponent', () => {
         // given
         stateStore.dispatch(new SessionReceivedAction(123, [mockClientMessage, mockServerMessage]));
         jest.spyOn(stateStore, 'dispatchAndThen');
+        component.paramsOnSend = jest.fn(() => ({}));
         component.newMessageTextContent = 'Hello';
         const createMessage = { sender: IrisSender.USER, content: [new IrisTextMessageContent('Hello')] } as IrisUserMessage;
         const sessionMock = jest.spyOn(mockCodeEditorSessionService, 'sendMessage');
@@ -235,6 +236,7 @@ describe('IrisChatbotWidgetComponent', () => {
 
     it('should clear newMessage on send', async () => {
         component.newMessageTextContent = 'Hello';
+        component.paramsOnSend = jest.fn(() => ({}));
 
         component.onSend();
 
@@ -242,6 +244,7 @@ describe('IrisChatbotWidgetComponent', () => {
     });
 
     it('should handle an error and dispatch ConversationErrorOccurredAction', waitForAsync(async () => {
+        component.paramsOnSend = jest.fn(() => ({}));
         const message = 'Hello';
         const error = 'Something went wrong. Please try again later!';
         const mockMessage = {

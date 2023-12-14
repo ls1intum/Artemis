@@ -24,9 +24,6 @@ public class IrisExercisePlan extends IrisMessageContent {
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<IrisExercisePlanStep> steps;
 
-    @Column(name = "executing")
-    private boolean executing;
-
     public List<IrisExercisePlanStep> getSteps() {
         return steps;
     }
@@ -45,14 +42,6 @@ public class IrisExercisePlan extends IrisMessageContent {
         if (this.steps != null) {
             this.steps.forEach(step -> step.setPlan(this));
         }
-    }
-
-    public boolean isExecuting() {
-        return executing;
-    }
-
-    public void setExecuting(boolean executing) {
-        this.executing = executing;
     }
 
     public Optional<IrisExercisePlanStep> getNextStep() {
