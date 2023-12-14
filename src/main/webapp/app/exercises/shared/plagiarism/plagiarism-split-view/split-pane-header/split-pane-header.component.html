@@ -1,18 +1,23 @@
 <div class="split-pane-header" ngbDropdown>
     <div class="split-pane-header-top" data-toggle="dropdown" [ngClass]="{ active: showFiles, clickable: hasFiles() }" (click)="toggleShowFiles()">
-        <div *ngIf="hasActiveFile()" class="split-pane-header-file-name">
-            <fa-icon class="file-arrow-down" [icon]="faChevronDown"></fa-icon>
-            <span class="split-pane-header-selected-file">{{ getActiveFile() }}</span>
-        </div>
-
+        @if (hasActiveFile()) {
+            <div class="split-pane-header-file-name">
+                <fa-icon class="file-arrow-down" [icon]="faChevronDown"></fa-icon>
+                <span class="split-pane-header-selected-file">{{ getActiveFile() }}</span>
+            </div>
+        }
         <div>{{ studentLogin || ('artemisApp.plagiarism.unknownStudent' | artemisTranslate) }}</div>
     </div>
-
-    <ul *ngIf="showFiles" class="split-pane-header-files">
-        <li *ngFor="let file of files; let idx = index" class="split-pane-header-file" ngbDropdownItem (click)="handleFileSelect(file, idx)">
-            <span [class.split-pane-header-file-with-match]="file.hasMatch">{{ file.file }}</span>
-        </li>
-
-        <li *ngIf="!hasFiles()">{{ 'artemisApp.plagiarism.noFilesFound' | artemisTranslate }}</li>
-    </ul>
+    @if (showFiles) {
+        <ul class="split-pane-header-files">
+            @for (file of files; track file; let idx = $index) {
+                <li class="split-pane-header-file" ngbDropdownItem (click)="handleFileSelect(file, idx)">
+                    <span [class.split-pane-header-file-with-match]="file.hasMatch">{{ file.file }}</span>
+                </li>
+            }
+            @if (!hasFiles()) {
+                <li>{{ 'artemisApp.plagiarism.noFilesFound' | artemisTranslate }}</li>
+            }
+        </ul>
+    }
 </div>
