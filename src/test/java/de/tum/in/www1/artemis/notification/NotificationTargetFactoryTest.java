@@ -92,6 +92,7 @@ class NotificationTargetFactoryTest {
 
         Channel channel = new Channel();
         channel.setId(CHANNEL_ID);
+        channel.setCourse(course);
 
         post = new Post();
         post.setId(POST_ID);

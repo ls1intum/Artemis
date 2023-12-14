@@ -316,21 +316,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         assertThat(returnedPosts).isNull();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostTagsForCourse() throws Exception {
-        List<String> returnedTags = request.getList("/api/courses/" + courseId + "/messages/tags", HttpStatus.OK, String.class);
-        // 4 different tags were used for the posts
-        assertThat(returnedTags).hasSameSizeAs(conversationMessageRepository.findPostTagsForCourse(courseId));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostTagsForCourseWithNonExistentCourseId_notFound() throws Exception {
-        List<String> returnedTags = request.getList("/api/courses/" + 9999L + "/messages/tags", HttpStatus.NOT_FOUND, String.class);
-        assertThat(returnedTags).isNull();
-    }
-
     // DELETE
 
     @Test

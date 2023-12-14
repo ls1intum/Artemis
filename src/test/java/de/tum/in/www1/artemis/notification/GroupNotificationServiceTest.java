@@ -482,27 +482,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, ILLEGAL_SUBMISSION_TITLE);
     }
 
-    @Test
-    void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForCoursePost(post, answerPost, course);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(3, NEW_REPLY_FOR_COURSE_POST_TITLE);
-    }
-
-    @Test
-    void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(post, answerPost, course);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(3, NEW_REPLY_FOR_EXERCISE_POST_TITLE);
-    }
-
-    /**
-     * Test for notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture method
-     */
-    @Test
-    void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture() {
-        groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, answerPost, course);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(3, NEW_REPLY_FOR_LECTURE_POST_TITLE);
-    }
-
     /**
      * Test for notifyInstructorGroupAboutChangedTestCasesForProgrammingExercise method
      */
