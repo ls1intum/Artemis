@@ -1192,7 +1192,8 @@ public class CourseResource {
      * GET /courses/:courseId/statistics : Get the active students for this particular course
      *
      * @param courseId    the id of the course
-     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
+     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one period in the past, -2 is two periods in the past
+     * @param periodSize  optional size of the period, default is 17
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/statistics")

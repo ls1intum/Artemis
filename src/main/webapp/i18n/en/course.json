@@ -241,7 +241,7 @@
                 "period": "{{ ammount }}W",
                 "periodTooltip": "Activity of the last {{ amount }} weeks.",
                 "overview": "Max",
-                "overviewTooltip": "Shows the activity since the course starte date till now."
+                "overviewTooltip": "Activity since the course start date till now."
             }
         }
     }
