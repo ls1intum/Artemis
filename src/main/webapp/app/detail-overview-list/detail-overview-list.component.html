@@ -131,7 +131,14 @@
                                 }
                                 @if (detail.data.exercise.isAtLeastEditor && detail.data.participation?.id) {
                                     <a [routerLink]="detail.data.submissionRouterLink" [queryParams]="{ isTmpOrSolutionProgrParticipation: true }" class="ms-2">
-                                        <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions">Show Submissions</span>
+                                        @switch (detail.data.type) {
+                                            @case (ParticipationType.TEMPLATE) {
+                                                <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions">Show Template Submissions</span>
+                                            }
+                                            @case (ParticipationType.SOLUTION) {
+                                                <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Solution Submissions</span>
+                                            }
+                                        }
                                     </a>
                                 }
                             </div>
