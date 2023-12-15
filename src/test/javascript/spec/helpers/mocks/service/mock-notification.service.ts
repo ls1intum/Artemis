@@ -29,4 +29,8 @@ export class MockNotificationService {
     subscribeToSingleIncomingNotifications = (): Observable<Notification> => of();
 
     handleNotification(postDTO: MetisPostDTO) {}
+
+    public muteNotificationsForConversation(conversationId: number) {}
+
+    public unmuteNotificationsForConversation(conversationId: number) {}
 }

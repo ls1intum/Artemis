@@ -1,4 +1,4 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpClientTestingModule, HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TestBed } from '@angular/core/testing';
@@ -57,6 +57,7 @@ describe('Notification Service', () => {
     let wsNotificationSubject: Subject<Notification | undefined>;
     let wsPostDTOSubject: Subject<MetisPostDTO | undefined>;
     let tutorialGroup: TutorialGroup;
+    let mutedConversationRequest: TestRequest;
     const conversation: OneToOneChat = new OneToOneChat();
     const groupChat: GroupChat = new GroupChat();
     conversation.id = 99;
@@ -207,6 +208,8 @@ describe('Notification Service', () => {
         TestBed.inject(CourseManagementService);
         notificationService = TestBed.inject(NotificationService);
         jest.advanceTimersByTime(20 * 1000); // simulate setInterval time passing
+
+        mutedConversationRequest = httpMock.expectOne({ method: 'GET', url: 'api/muted-conversations' });
     });
 
     afterEach(() => {
@@ -356,6 +359,56 @@ describe('Notification Service', () => {
             // pushes new quizExercise
             wsQuizExerciseSubject.next(quizExercise);
             // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
+        });
+
+        it('should handle new message notification if user is mentioned', () => {
+            const postDTO: MetisPostDTO = {
+                post: { author: { id: 456 }, content: 'Content', conversation: { id: 1 } } as Post,
+                action: MetisPostAction.CREATE,
+                notification: { title: MENTIONED_IN_MESSAGE_TITLE },
+            };
+
+            const handleNotificationSpy = jest.spyOn(notificationService, 'handleNotification');
+
+            wsPostDTOSubject.next(postDTO);
+
+            expect(handleNotificationSpy).toHaveBeenCalledWith(postDTO);
+        });
+
+        it('should not show notification for muted conversation', () => {
+            mutedConversationRequest.flush([1]);
+
+            const postDTO: MetisPostDTO = {
+                post: { author: { id: 456 }, content: 'Content', conversation: { id: 1 } } as Post,
+                action: MetisPostAction.CREATE,
+                notification: { title: 'title' },
+            };
+
+            const handleNotificationSpy = jest.spyOn(notificationService, 'handleNotification');
+
+            wsPostDTOSubject.next(postDTO);
+
+            expect(handleNotificationSpy).not.toHaveBeenCalled();
+        });
+
+        it('should mute conversation', () => {
+            notificationService.muteNotificationsForConversation(1);
+            expect(notificationService['mutedConversations']).toEqual([1]);
+
+            // Do not mute same conversation twice
+            notificationService.muteNotificationsForConversation(1);
+            expect(notificationService['mutedConversations']).toEqual([1]);
+        });
+
+        it('should unmute conversation', () => {
+            notificationService['mutedConversations'] = [1];
+
+            notificationService.unmuteNotificationsForConversation(1);
+            expect(notificationService['mutedConversations']).toEqual([]);
+
+            // No error if already unmuted conversation is removed
+            notificationService.unmuteNotificationsForConversation(1);
+            expect(notificationService['mutedConversations']).toEqual([]);
         });
 
         it('should handle textIsPlaceholder being true and return translated text', () => {
