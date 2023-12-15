@@ -29,7 +29,7 @@ import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/m
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
-import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-custom-build-plan.component';
+import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-custom-aeolus-build-plan.component';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 
 @NgModule({
@@ -61,7 +61,7 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
         ProgrammingExerciseUpdateWizardBottomBarComponent,
         ProgrammingExerciseInformationComponent,
         ProgrammingExerciseDifficultyComponent,
-        ProgrammingExerciseCustomBuildPlanComponent,
+        ProgrammingExerciseCustomAeolusBuildPlanComponent,
         ProgrammingExerciseLanguageComponent,
         ProgrammingExerciseGradingComponent,
         ProgrammingExerciseProblemComponent,

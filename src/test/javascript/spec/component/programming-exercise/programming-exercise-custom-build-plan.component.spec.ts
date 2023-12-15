@@ -3,7 +3,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { BuildAction, PlatformAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-custom-build-plan.component';
+import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-custom-aeolus-build-plan.component';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ElementRef, NgZone } from '@angular/core';
 import { ThemeService } from 'app/core/theme/theme.service';
@@ -16,7 +16,7 @@ import { Observable } from 'rxjs';
 
 describe('ProgrammingExercise Custom Build Plan', () => {
     let mockThemeService: ThemeService;
-    let comp: ProgrammingExerciseCustomBuildPlanComponent;
+    let comp: ProgrammingExerciseCustomAeolusBuildPlanComponent;
     const course = { id: 123 } as Course;
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
@@ -51,7 +51,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseCustomBuildPlanComponent, MockComponent(FaIconComponent), MockComponent(HelpIconComponent), MockComponent(AceEditorComponent)],
+            declarations: [ProgrammingExerciseCustomAeolusBuildPlanComponent, MockComponent(FaIconComponent), MockComponent(HelpIconComponent), MockComponent(AceEditorComponent)],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         })
             .compileComponents()
@@ -60,7 +60,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
                 mockThemeService = TestBed.inject(ThemeService);
             });
 
-        const fixture = TestBed.createComponent(ProgrammingExerciseCustomBuildPlanComponent);
+        const fixture = TestBed.createComponent(ProgrammingExerciseCustomAeolusBuildPlanComponent);
         comp = fixture.componentInstance;
 
         comp.programmingExercise = programmingExercise;
