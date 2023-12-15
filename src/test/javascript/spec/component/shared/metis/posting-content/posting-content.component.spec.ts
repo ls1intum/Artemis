@@ -10,15 +10,7 @@ import { Observable, of } from 'rxjs';
 import { Post } from 'app/entities/metis/post.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    metisCourse,
-    metisCoursePosts,
-    metisCoursePostsWithCourseWideContext,
-    metisExercise,
-    metisExercisePosts,
-    metisLecture,
-    metisLecturePosts,
-} from '../../../../helpers/sample/metis-sample-data';
+import { metisCourse, metisCoursePosts, metisExercisePosts, metisGeneralCourseWidePosts, metisLecturePosts } from '../../../../helpers/sample/metis-sample-data';
 import { Params } from '@angular/router';
 
 describe('PostingContentComponent', () => {
@@ -194,8 +186,8 @@ describe('PostingContentComponent', () => {
             expect(component.postingContentParts).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
-                    linkToReference: ['/courses', metisCourse.id, 'exercises', metisExercise.id],
-                    queryParams: { postId: idOfExercisePostToReference },
+                    linkToReference: ['/courses', metisCourse.id, 'discussion'],
+                    queryParams: { searchText: `#${idOfExercisePostToReference}` },
                     referenceStr: `#${idOfExercisePostToReference}`,
                     referenceType: ReferenceType.POST,
                     contentAfterReference: ' in the same exercise context.',
@@ -218,8 +210,8 @@ describe('PostingContentComponent', () => {
             expect(component.postingContentParts).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
-                    linkToReference: ['/courses', metisCourse.id, 'lectures', metisLecture.id],
-                    queryParams: { postId: idOfLecturePostToReference },
+                    linkToReference: ['/courses', metisCourse.id, 'discussion'],
+                    queryParams: { searchText: `#${idOfLecturePostToReference}` },
                     referenceStr: `#${idOfLecturePostToReference}`,
                     referenceType: ReferenceType.POST,
                     contentAfterReference: ' in the same lecture context.',
@@ -229,10 +221,10 @@ describe('PostingContentComponent', () => {
 
         it('should include content before and reference as well as a linked reference within the course discussion overview', fakeAsync(() => {
             // currently loaded posts will be set to a list of posts having a course-wide context  -> simulating being at course discussion overview
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisCoursePostsWithCourseWideContext) as Observable<Post[]>);
+            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
             component.ngOnInit();
             tick();
-            expect(component.currentlyLoadedPosts).toEqual(metisCoursePostsWithCourseWideContext);
+            expect(component.currentlyLoadedPosts).toEqual(metisGeneralCourseWidePosts);
             // in the posting content, use the reference to an id that is included in the lists of currently loaded posts and can therefore be referenced directly,
             // i.e. being shown in the detail view of the course overview
             const idOfPostWithCourseWideContextToReference = component.currentlyLoadedPosts[0].id!;
@@ -253,7 +245,7 @@ describe('PostingContentComponent', () => {
 
         it('should compute parts when referencing a post from a lecture context while being at the course discussion overview.', fakeAsync(() => {
             // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at course discussion overview
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisCoursePostsWithCourseWideContext) as Observable<Post[]>);
+            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
             component.ngOnInit();
             tick();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
@@ -276,7 +268,7 @@ describe('PostingContentComponent', () => {
 
         it('should compute parts when referencing a post from an exercise context while being at the course discussion overview', fakeAsync(() => {
             // currently loaded posts will be set to a list of posts having a course-wide context -> simulating being at course discussion overview
-            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisCoursePostsWithCourseWideContext) as Observable<Post[]>);
+            jest.spyOn(metisService, 'posts', 'get').mockReturnValue(of(metisGeneralCourseWidePosts) as Observable<Post[]>);
             component.ngOnInit();
             tick();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
@@ -304,7 +296,7 @@ describe('PostingContentComponent', () => {
             tick();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
             // and rather being queried for in the course overview
-            const idOfPostWithCourseWideContextToReference = metisCoursePostsWithCourseWideContext[0].id!;
+            const idOfPostWithCourseWideContextToReference = metisGeneralCourseWidePosts[0].id!;
             component.content = `I want to reference #${idOfPostWithCourseWideContextToReference} with course-wide context while currently being at a lecture page.`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);

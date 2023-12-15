@@ -13,7 +13,6 @@ import { Reaction } from 'app/entities/metis/reaction.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import {
     ContextInformation,
-    CourseWideContext,
     DisplayPriority,
     MetisPostAction,
     MetisWebsocketChannelPrefix,
@@ -22,8 +21,6 @@ import {
     RouteComponents,
     SortDirection,
 } from 'app/shared/metis/metis.util';
-import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Params } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,7 +29,7 @@ import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import dayjs from 'dayjs/esm';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
-import { Channel, ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 
@@ -439,46 +436,25 @@ export class MetisService implements OnDestroy {
     }
     /**
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
-     * @param {CourseWideContext | undefined} courseWideContext optional course-wide context as default context
-     * @param {Exercise | undefined} exercise optional exercise as default context
-     * @param {Lecture | undefined} lecture optional lecture as default context
-     * @param plagiarismCase
-     * @param conversation
+     * @param conversation optional conversation as default context
+     * @param plagiarismCase optional plagiarism case as default context
      * @return {Post} created default object
      */
-    createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture, plagiarismCase?: PlagiarismCase, conversation?: Conversation): Post {
+    createEmptyPostForContext(conversation?: Conversation, plagiarismCase?: PlagiarismCase): Post {
         const emptyPost: Post = new Post();
-        if (courseWideContext) {
-            emptyPost.courseWideContext = courseWideContext;
-            emptyPost.course = this.course;
-        } else if (exercise) {
-            const exercisePost = ExerciseService.convertExerciseFromClient(exercise);
-            emptyPost.exercise = { id: exercisePost.id, title: exercisePost.title, type: exercisePost.type } as Exercise;
-        } else if (lecture) {
-            emptyPost.lecture = { id: lecture.id, title: lecture.title } as Lecture;
+        if (conversation) {
+            emptyPost.conversation = conversation;
         } else if (plagiarismCase) {
             emptyPost.plagiarismCase = { id: plagiarismCase.id } as PlagiarismCase;
-        } else if (conversation) {
-            emptyPost.conversation = conversation;
-        } else {
-            // set default
-            emptyPost.courseWideContext = CourseWideContext.TECH_SUPPORT as CourseWideContext;
         }
         return emptyPost;
     }
 
     /**
      * determines the router link components required for navigating to the detail view of the given post
-     * @param {Post} post to be navigated to
      * @return {RouteComponents} array of router link components
      */
-    getLinkForPost(post?: Post): RouteComponents {
-        if (post?.lecture) {
-            return MetisService.getLinkForLecturePost(this.courseId, post.lecture.id!);
-        }
-        if (post?.exercise) {
-            return MetisService.getLinkForExercisePost(this.courseId, post.exercise.id!);
-        }
+    getLinkForPost(): RouteComponents {
         return MetisService.getLinkForCoursePost(this.courseId);
     }
 
@@ -539,11 +515,10 @@ export class MetisService implements OnDestroy {
      * @return {Params} required parameter key-value pair
      */
     getQueryParamsForPost(post: Post): Params {
-        if (post.courseWideContext || post.conversation) {
+        if (post.conversation) {
             return MetisService.getQueryParamsForCoursePost(post.id!);
-        } else {
-            return MetisService.getQueryParamsForLectureOrExercisePost(post.id!);
         }
+        return {};
     }
 
     /**
@@ -554,18 +529,9 @@ export class MetisService implements OnDestroy {
     getContextInformation(post: Post): ContextInformation {
         let routerLinkComponents = undefined;
         let queryParams = undefined;
-        let displayName;
-        if (post.exercise) {
-            displayName = post.exercise.title!;
-            routerLinkComponents = ['/courses', this.courseId, 'exercises', post.exercise.id!];
-        } else if (post.lecture) {
-            displayName = post.lecture.title!;
-            routerLinkComponents = ['/courses', this.courseId, 'lectures', post.lecture.id!];
-        } else if (post.courseWideContext) {
-            // course-wide topics are not linked, only displayName is set
-            displayName = this.translateService.instant('artemisApp.metis.overview.' + post.courseWideContext);
-        } else if (post.conversation) {
-            displayName = post.conversation?.type === 'channel' ? (post.conversation as Channel).name : '';
+        let displayName = '';
+        if (post.conversation) {
+            displayName = getAsChannelDto(post.conversation)?.name ?? '';
             routerLinkComponents = ['/courses', this.courseId, 'messages'];
             queryParams = { conversationId: post.conversation.id! };
         }

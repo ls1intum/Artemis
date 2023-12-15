@@ -11,7 +11,7 @@
 <div class="row align-items-center">
     <div class="col">
         <div class="mb-1">
-            @if (posting.resolved && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT) {
+            @if (posting.resolved) {
                 <fa-icon [icon]="faCheckSquare" iconSize="xs" class="col-auto pe-0 resolved" [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate">
                 </fa-icon>
             }
@@ -52,7 +52,7 @@
                     @if (!isCourseMessagesPage && isCommunicationPage) {
                         <a
                             class="reference-hash"
-                            [routerLink]="metisService.getLinkForPost(posting)"
+                            [routerLink]="metisService.getLinkForPost()"
                             [queryParams]="metisService.getQueryParamsForPost(posting)"
                             (click)="onNavigateToPostById($event)"
                             routerLinkActive="active"
@@ -70,7 +70,6 @@
                 [isEdited]="!!posting.updatedDate"
                 [posting]="posting"
                 [isReply]="false"
-                [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
                 (userReferenceClicked)="onUserReferenceClicked($event)"
                 (channelReferenceClicked)="onChannelReferenceClicked($event)"
             ></jhi-posting-content>

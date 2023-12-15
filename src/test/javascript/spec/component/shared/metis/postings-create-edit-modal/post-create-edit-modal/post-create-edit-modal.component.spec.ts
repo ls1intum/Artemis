@@ -14,8 +14,9 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../../../../test.module';
 import { PostComponent } from 'app/shared/metis/post/post.component';
-import { metisCourse, metisCoursePosts, metisExercise, metisLecture, metisPostLectureUser1, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisCourse, metisExercise, metisLecture, metisPostLectureUser1, metisPostTechSupport, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
+import { Channel } from 'app/entities/metis/conversation/channel.model';
 
 describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;
@@ -73,26 +74,18 @@ describe('PostCreateEditModalComponent', () => {
         expect(component.exercises).toHaveLength(metisCourse.exercises!.length);
         expect(component.similarPosts).toHaveLength(0);
         // currently the default selection when opening the model in the overview for creating a new post is the course-wide context TECH_SUPPORT
-        expect(component.currentContextSelectorOption).toEqual({
-            courseWideContext: CourseWideContext.TECH_SUPPORT,
-            exercise: undefined,
-            lecture: undefined,
-        });
+        expect(component.currentContextSelectorOption).toEqual({});
         expect(component.tags).toEqual([]);
     });
 
     it('should reset context selection on changes', () => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting = { ...metisPostToCreateUser1, courseWideContext: CourseWideContext.TECH_SUPPORT };
+        component.posting = { ...metisPostTechSupport };
         component.ngOnInit();
-        component.currentContextSelectorOption.courseWideContext = CourseWideContext.ORGANIZATION;
+        component.currentContextSelectorOption.conversation = { id: 1 } as Channel;
         component.ngOnChanges();
         // change to Organization as course-wide topic should be reset to Tech Support
-        expect(component.currentContextSelectorOption).toEqual({
-            courseWideContext: CourseWideContext.TECH_SUPPORT,
-            exercise: undefined,
-            lecture: undefined,
-        });
+        expect(component.currentContextSelectorOption).toEqual({ conversation: metisPostTechSupport.conversation });
         expect(component.tags).toEqual([]);
     });
 
@@ -111,7 +104,7 @@ describe('PostCreateEditModalComponent', () => {
         });
         // debounce time of title input field
         tick(800);
-        expect(component.similarPosts).toEqual(metisCoursePosts.slice(0, 5));
+        expect(component.similarPosts).toEqual([]);
         // trigger the method that is called on clicking the save button
         component.confirm();
         expect(metisServiceCreateStub).toHaveBeenCalledWith({

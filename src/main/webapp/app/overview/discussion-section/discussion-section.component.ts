@@ -168,9 +168,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         if (this.channel) {
             const conversation = this.channel as Channel;
             this.shouldSendMessage = false;
-            this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, undefined, conversation);
+            this.createdPost = this.metisService.createEmptyPostForContext(conversation);
         } else {
-            this.createdPost = this.metisService.createEmptyPostForContext(undefined, this.exercise, this.lecture);
+            this.createdPost = this.metisService.createEmptyPostForContext();
         }
     }
 

@@ -13,7 +13,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { CourseWideContext, DisplayPriority, MetisPostAction, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
+import { DisplayPriority, MetisPostAction, PageType, PostContextFilter } from 'app/shared/metis/metis.util';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -26,13 +26,10 @@ import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import { Subject, of } from 'rxjs';
 import {
     metisCourse,
-    metisCoursePostsWithCourseWideContext,
     metisExam,
     metisExercise,
-    metisExercisePosts,
     metisLecture,
     metisLectureChannelDto,
-    metisLecturePosts,
     metisPostExerciseUser1,
     metisPostInChannel,
     metisReactionUser2,
@@ -326,47 +323,10 @@ describe('Metis Service', () => {
         expect(getCourseReturn).toEqual(newCourse);
     });
 
-    it('should create empty post for a course-wide context', () => {
-        const emptyPost = metisService.createEmptyPostForContext(CourseWideContext.ORGANIZATION, undefined, undefined);
-        expect(emptyPost.courseWideContext).toEqual(CourseWideContext.ORGANIZATION);
-        expect(emptyPost.exercise).toBeUndefined();
-        expect(emptyPost.lecture).toBeUndefined();
-    });
-
-    it('should create empty post for a exercise context', () => {
-        const emptyPost = metisService.createEmptyPostForContext(undefined, metisExercise, undefined);
-        expect(emptyPost.courseWideContext).toBeUndefined();
-        expect(emptyPost.exercise).toEqual({
-            id: metisExercise.id,
-            title: metisExercise.title,
-            type: metisExercise.type,
-        });
-        expect(emptyPost.lecture).toBeUndefined();
-    });
-
-    it('should create empty post for a lecture context', () => {
-        const emptyPost = metisService.createEmptyPostForContext(undefined, undefined, metisLecture);
-        expect(emptyPost.courseWideContext).toBeUndefined();
-        expect(emptyPost.exercise).toBeUndefined();
-        expect(emptyPost.lecture).toEqual({ ...metisLecture, attachments: undefined });
-    });
-
     it('should determine the link components for a reference to a post with course-wide context', () => {
         metisService.setCourse(course);
-        const referenceLinkComponents = metisService.getLinkForPost(metisCoursePostsWithCourseWideContext[0]);
+        const referenceLinkComponents = metisService.getLinkForPost();
         expect(referenceLinkComponents).toEqual(['/courses', metisCourse.id, 'discussion']);
-    });
-
-    it('should determine the link components for a reference to a post with exercise context', () => {
-        metisService.setCourse(course);
-        const referenceLinkComponents = metisService.getLinkForPost(metisExercisePosts[0]);
-        expect(referenceLinkComponents).toEqual(['/courses', metisCourse.id, 'exercises', metisExercise.id]);
-    });
-
-    it('should determine the link components for a reference to a post with lecture context', () => {
-        metisService.setCourse(course);
-        const referenceLinkComponents = metisService.getLinkForPost(metisLecturePosts[0]);
-        expect(referenceLinkComponents).toEqual(['/courses', metisCourse.id, 'lectures', metisLecture.id]);
     });
 
     it('should determine the router link required for referencing an exercise page within posting', () => {
@@ -410,49 +370,25 @@ describe('Metis Service', () => {
         expect(generalRouterLink).toBeUndefined();
     });
 
-    it('should determine the query param for a reference to a post with course-wide context', () => {
+    it('should determine the query param for a reference to a post in a conversation', () => {
         metisService.setCourse(course);
-        const referenceLinkComponents = metisService.getQueryParamsForPost(metisCoursePostsWithCourseWideContext[0]);
+        const referenceLinkComponents = metisService.getQueryParamsForPost(metisPostInChannel);
         expect(referenceLinkComponents).toEqual({
-            searchText: `#${metisCoursePostsWithCourseWideContext[0].id}`,
+            searchText: `#${metisPostInChannel.id}`,
         });
     });
 
-    it('should determine the query param for a reference to a post with exercise context', () => {
+    it('should determine the query param for a reference to conversation message', () => {
         metisService.setCourse(course);
-        const referenceLinkComponents = metisService.getQueryParamsForPost(metisExercisePosts[0]);
-        expect(referenceLinkComponents).toEqual({
-            postId: metisExercisePosts[0].id,
-        });
+        const referenceLinkComponents = metisService.getQueryParamsForPost({ id: 1 } as Post);
+        expect(referenceLinkComponents).toBeEmpty();
     });
 
-    it('should determine the query param for a reference to a post with lecture context', () => {
+    it('should determine context information for a conversation message', () => {
         metisService.setCourse(course);
-        const referenceLinkComponents = metisService.getQueryParamsForPost(metisLecturePosts[0]);
-        expect(referenceLinkComponents).toEqual({
-            postId: metisLecturePosts[0].id,
-        });
-    });
-
-    it('should determine context information for a post with course-wide context', () => {
-        metisService.setCourse(course);
-        const contextInformation = metisService.getContextInformation(metisCoursePostsWithCourseWideContext[0]);
-        expect(contextInformation.routerLinkComponents).toBeUndefined();
-        expect(contextInformation.displayName).toBeDefined();
-    });
-
-    it('should determine context information for a post with exercise context', () => {
-        metisService.setCourse(course);
-        const contextInformation = metisService.getContextInformation(metisExercisePosts[0]);
-        expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'exercises', metisExercisePosts[0].exercise!.id]);
-        expect(contextInformation.displayName).toEqual(metisExercisePosts[0].exercise!.title);
-    });
-
-    it('should determine context information for a post with lecture context', () => {
-        metisService.setCourse(course);
-        const contextInformation = metisService.getContextInformation(metisLecturePosts[0]);
-        expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'lectures', metisLecturePosts[0].lecture!.id]);
-        expect(contextInformation.displayName).toEqual(metisLecturePosts[0].lecture!.title);
+        const contextInformation = metisService.getContextInformation(metisPostInChannel);
+        expect(contextInformation.routerLinkComponents).toEqual(['/courses', metisCourse.id, 'messages']);
+        expect(contextInformation.displayName).not.toBeEmpty();
     });
 
     describe('Handle websocket related functionality', () => {
