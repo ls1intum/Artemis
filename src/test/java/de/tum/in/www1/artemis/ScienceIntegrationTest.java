@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.science.ScienceEventType;
 import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
 import de.tum.in.www1.artemis.web.rest.dto.science.ScienceEventDTO;
 
-public class ScienceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ScienceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "scienceintegration";
 
