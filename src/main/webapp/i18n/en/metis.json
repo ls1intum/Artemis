@@ -49,7 +49,7 @@
             },
             "channel": {
                 "noChannel": "There is no channel available.",
-                "invalidReference": "You are not a member of the referenced channel."
+                "notAMember": "You are not a member of this conversation."
             },
             "communication": {
                 "label": "Communication",

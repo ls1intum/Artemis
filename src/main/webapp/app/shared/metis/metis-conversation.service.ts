@@ -134,7 +134,7 @@ export class MetisConversationService implements OnDestroy {
         if (!cachedConversation) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
-                message: 'artemisApp.metis.channel.invalidReference',
+                message: 'artemisApp.metis.channel.notAMember',
             });
         }
         this.activeConversation = cachedConversation;

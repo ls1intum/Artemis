@@ -49,7 +49,7 @@
             },
             "channel": {
                 "noChannel": "Es ist kein Kanal verfügbar.",
-                "invalidReference": "Du bist kein Mitglied im referenzierten Kanal."
+                "notAMember": "Du bist kein Mitglied in dieser Unterhaltung."
             },
             "communication": {
                 "label": "Kommunikation",
