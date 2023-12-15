@@ -28,7 +28,11 @@
                     <dd>
                         @if (detail.data.text) {
                             @if (!!detail.data.routerLink?.length || detail.data.href) {
-                                <a [routerLink]="detail.data.routerLink" [href]="detail.data.href">
+                                <a [routerLink]="detail.data.routerLink">
+                                    {{ detail.data.text }}
+                                </a>
+                            } @else if (detail.data.href) {
+                                <a href="{{ detail.data.href }}">
                                     {{ detail.data.text }}
                                 </a>
                             } @else {

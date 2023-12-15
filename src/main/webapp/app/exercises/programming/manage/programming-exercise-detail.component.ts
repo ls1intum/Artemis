@@ -184,8 +184,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
                     if (profileInfo) {
                         if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation && this.programmingExercise.templateParticipation.buildPlanId) {
-                            console.log(this.programmingExercise.projectKey);
-                            console.log(profileInfo.buildPlanURLTemplate);
                             this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
                                 profileInfo.buildPlanURLTemplate,
                                 this.programmingExercise.projectKey,
@@ -206,16 +204,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         if (this.irisEnabled) {
                             this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
                                 this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
-                                this.getExerciseDetails();
+                                this.exerciseDetailSections = this.getExerciseDetails();
                             });
                         }
                     }
-                    this.getExerciseDetails();
+                    this.exerciseDetailSections = this.getExerciseDetails();
                 });
 
                 this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!).subscribe((submissionPolicy) => {
                     this.programmingExercise.submissionPolicy = submissionPolicy;
-                    this.getExerciseDetails();
+                    this.exerciseDetailSections = this.getExerciseDetails();
                 });
 
                 await this.loadGitDiffReport();
@@ -503,7 +501,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     this.irisChatEnabled &&
                     exercise.course &&
                     !this.isExamExercise && { type: DetailType.ProgrammingIrisEnabled, title: 'artemisApp.iris.settings.subSettings.enabled.chat', data: { exercise } },
-                {
+                exercise.buildLogStatistics && {
                     type: DetailType.ProgrammingBuildStatistics,
                     title: 'artemisApp.programmingExercise.buildLogStatistics.title',
                     titleHelpText: 'artemisApp.programmingExercise.buildLogStatistics.tooltip',
