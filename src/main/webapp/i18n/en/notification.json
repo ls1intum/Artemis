@@ -167,8 +167,8 @@
             },
             "text": {
                 "newMessageChannel": "New message in channel \"{{ placeholderValues.3 }}\" in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
-                "newMessageGroupChat": "New message in group chat by \"{{ placeholderValues.3 }}\" in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
-                "newMessageDirect": "New direct message by \"{{ placeholderValues.3 }}\" in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}"
+                "newMessageGroupChat": "New message in group chat in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
+                "newMessageDirect": "New direct message in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}"
             }
         }
     }

@@ -167,8 +167,8 @@
             },
             "text": {
                 "newMessageChannel": "Neue Nachricht im Kanal \"{{ placeholderValues.3 }}\" im Kurs \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
-                "newMessageGroupChat": "Neue Nachricht im Gruppenchat von \"{{ placeholderValues.3 }}\" im Kurs \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
-                "newMessageDirect": "Neue Direktnachricht von \"{{ placeholderValues.3 }}\" im Kurs \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}"
+                "newMessageGroupChat": "Neue Nachricht im Gruppenchat im Kurs \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
+                "newMessageDirect": "Neue Direktnachricht im Kurs \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}"
             }
         }
     }
