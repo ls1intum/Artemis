@@ -105,8 +105,6 @@ describe('PostComponent', () => {
     });
 
     it('should contain a title with referencable id', () => {
-        metisServiceGetLinkSpy = jest.spyOn(metisService, 'getLinkForPost');
-        metisServiceGetQueryParamsSpy = jest.spyOn(metisService, 'getQueryParamsForPost');
         component.isCommunicationPage = true;
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
@@ -116,8 +114,19 @@ describe('PostComponent', () => {
         const idHash = getElement(debugElement, '.reference-hash');
         expect(idHash).toBeDefined();
         expect(idHash.innerHTML).toBe(`#${metisPostExerciseUser1.id}`);
+    });
+
+    it('should set router link and query params', () => {
+        metisServiceGetLinkSpy = jest.spyOn(metisService, 'getLinkForPost');
+        metisServiceGetQueryParamsSpy = jest.spyOn(metisService, 'getQueryParamsForPost');
+
+        component.posting = metisPostExerciseUser1;
+        component.ngOnChanges();
+
         expect(metisServiceGetLinkSpy).toHaveBeenCalled();
         expect(metisServiceGetQueryParamsSpy).toHaveBeenCalledWith(metisPostExerciseUser1);
+        expect(component.routerLink).toEqual(['/courses', metisPostExerciseUser1.conversation?.course?.id, 'discussion']);
+        expect(component.queryParams).toEqual({ searchText: '#' + metisPostExerciseUser1.id });
     });
 
     it('should initialize post without context information when shown in page section', () => {
