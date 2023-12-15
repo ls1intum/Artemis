@@ -181,34 +181,41 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.setLatestCoveredLineRatio();
                 this.loadingTemplateParticipationResults = false;
                 this.loadingSolutionParticipationResults = false;
-                const profileInfo = await firstValueFrom(this.profileService.getProfileInfo());
-                if (profileInfo) {
-                    if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation && this.programmingExercise.templateParticipation.buildPlanId) {
-                        this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
-                            profileInfo.buildPlanURLTemplate,
-                            this.programmingExercise.projectKey,
-                            this.programmingExercise.templateParticipation.buildPlanId,
-                        );
+                this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
+                    if (profileInfo) {
+                        if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation && this.programmingExercise.templateParticipation.buildPlanId) {
+                            console.log(this.programmingExercise.projectKey);
+                            console.log(profileInfo.buildPlanURLTemplate);
+                            this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
+                                profileInfo.buildPlanURLTemplate,
+                                this.programmingExercise.projectKey,
+                                this.programmingExercise.templateParticipation.buildPlanId,
+                            );
+                        }
+                        if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation && this.programmingExercise.solutionParticipation.buildPlanId) {
+                            this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
+                                profileInfo.buildPlanURLTemplate,
+                                this.programmingExercise.projectKey,
+                                this.programmingExercise.solutionParticipation.buildPlanId,
+                            );
+                        }
+                        this.supportsAuxiliaryRepositories =
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
+                        this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+                        this.irisEnabled = profileInfo.activeProfiles.includes('iris');
+                        if (this.irisEnabled) {
+                            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                                this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
+                                this.getExerciseDetails();
+                            });
+                        }
                     }
-                    if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation && this.programmingExercise.solutionParticipation.buildPlanId) {
-                        this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
-                            profileInfo.buildPlanURLTemplate,
-                            this.programmingExercise.projectKey,
-                            this.programmingExercise.solutionParticipation.buildPlanId,
-                        );
-                    }
-                    this.supportsAuxiliaryRepositories =
-                        this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage).auxiliaryRepositoriesSupported ?? false;
-                    this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                    this.irisEnabled = profileInfo.activeProfiles.includes('iris');
-                    if (this.irisEnabled) {
-                        const settings = await firstValueFrom(this.irisSettingsService.getCombinedCourseSettings(this.courseId));
-                        this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
-                    }
-                }
+                    this.getExerciseDetails();
+                });
 
                 this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId!).subscribe((submissionPolicy) => {
                     this.programmingExercise.submissionPolicy = submissionPolicy;
+                    this.getExerciseDetails();
                 });
 
                 await this.loadGitDiffReport();
@@ -359,12 +366,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 {
                     type: DetailType.Link,
                     title: 'artemisApp.programmingExercise.templateBuildPlanId',
-                    data: { href: exercise.templateParticipation?.buildPlanUrl, text: exercise.templateParticipation?.buildPlanId },
+                    data: { href: !this.localVCEnabled && exercise.templateParticipation?.buildPlanUrl, text: exercise.templateParticipation?.buildPlanId },
                 },
                 {
                     type: DetailType.Link,
                     title: 'artemisApp.programmingExercise.solutionBuildPlanId',
-                    data: { href: exercise.solutionParticipation?.buildPlanUrl, text: exercise.solutionParticipation?.buildPlanId },
+                    data: { href: !this.localVCEnabled && exercise.solutionParticipation?.buildPlanUrl, text: exercise.solutionParticipation?.buildPlanId },
                 },
                 {
                     type: DetailType.ProgrammingTestStatus,
