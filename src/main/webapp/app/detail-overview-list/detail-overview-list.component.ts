@@ -8,6 +8,7 @@ import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/gi
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { ParticipationType } from 'app/entities/participation/participation.model';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -50,6 +51,7 @@ export class DetailOverviewListComponent implements OnInit {
     protected readonly DetailType = DetailType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
+    protected readonly ParticipationType = ParticipationType;
 
     @Input()
     sections: DetailOverviewSection[];
@@ -95,6 +97,4 @@ export class DetailOverviewListComponent implements OnInit {
             });
         }
     }
-
-    protected readonly undefined = undefined;
 }
