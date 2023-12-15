@@ -20,7 +20,6 @@ import dayjs from 'dayjs/esm';
 import { NavigationEnd, Params, Router } from '@angular/router';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
 import { NotificationService } from 'app/shared/notification/notification.service';
-import { MENTIONED_IN_MESSAGE_TITLE } from 'app/entities/notification.model';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -71,13 +70,6 @@ export class MetisConversationService implements OnDestroy {
         this.activeConversationSubscription = this.notificationService.newOrUpdatedMessage.subscribe((postDTO: MetisPostDTO) => {
             if (postDTO.action === MetisPostAction.CREATE && postDTO.post.author?.id !== this.userId) {
                 this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
-                // Show notification if conversation is not hidden or if the user is mentioned
-                if (
-                    this.conversationsOfUser.find((conv) => conv.id === postDTO.post.conversation?.id && !conv.isHidden) ||
-                    postDTO.notification?.title === MENTIONED_IN_MESSAGE_TITLE
-                ) {
-                    this.notificationService.handleNotification(postDTO);
-                }
             }
         });
     }

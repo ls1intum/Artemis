@@ -131,7 +131,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                     this.resetFormGroup();
                     this.setFilterAndSort();
 
-                    if (!this.channel) {
+                    if (!this.channel?.id) {
                         this.noChannelAvailable = true;
                         this.collapsed = true;
                         return;
@@ -214,7 +214,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     }
 
     handleScrollOnNewMessage = () => {
-        if ((this.posts.length > 0 && this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
+        if ((this.posts.length > 0 && this.content?.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
             this.scrollToBottomOfMessages();
         }
     };

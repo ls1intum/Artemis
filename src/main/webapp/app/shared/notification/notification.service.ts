@@ -38,7 +38,7 @@ import {
     QUIZ_EXERCISE_STARTED_TEXT,
     QUIZ_EXERCISE_STARTED_TITLE,
 } from 'app/entities/notification.model';
-import { Course } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -75,6 +75,8 @@ export class NotificationService {
     private subscribedCourseWideChannelTopic?: string;
     private courseWideChannelSubscription?: Subscription;
     private _singlePostSubject$: Subject<MetisPostDTO>;
+    private mutedConversations: number[] = [];
+    private loadedMutedConversations = false;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -124,6 +126,10 @@ export class NotificationService {
                     if (courses && this.initialized) {
                         this.subscribeToGroupNotificationUpdates(courses);
                         this.subscribeToQuizUpdates(courses);
+                        if (!this.loadedMutedConversations) {
+                            this.loadedMutedConversations = true;
+                            this.getMutedConversations(courses);
+                        }
                     }
                 });
                 this.notificationSettingsService.refreshNotificationSettings();
@@ -490,9 +496,14 @@ export class NotificationService {
         user && postDTO.notification && this.changeTitleIfMentioned(user, postDTO, postDTO.notification);
 
         this._singlePostSubject$.next(postDTO);
-        if (postDTO.action !== MetisPostAction.CREATE || !getAsChannelDto(postDTO.post.conversation)?.isCourseWide) {
-            this.handleNotification(postDTO);
+        if (
+            postDTO.action === MetisPostAction.CREATE &&
+            this.mutedConversations.find((id) => id === postDTO.post.conversation?.id) &&
+            postDTO.notification?.title !== MENTIONED_IN_MESSAGE_TITLE
+        ) {
+            return;
         }
+        this.handleNotification(postDTO);
     };
 
     public handleNotification(postDTO: MetisPostDTO) {
@@ -506,6 +517,26 @@ export class NotificationService {
                 }
             }
         }
+    }
+
+    /**
+     * Adds the conversation id to the list of muted conversations if not already contained
+     *
+     * @param conversationId conversation id
+     */
+    public muteNotificationsForConversation(conversationId: number) {
+        if (this.mutedConversations.indexOf(conversationId) === -1) {
+            this.mutedConversations.push(conversationId);
+        }
+    }
+
+    /**
+     * Removes the conversation id from the list of muted conversations if contained
+     *
+     * @param conversationId conversation id
+     */
+    public unmuteNotificationsForConversation(conversationId: number) {
+        this.mutedConversations.splice(this.mutedConversations.indexOf(conversationId), 1);
     }
 
     private shouldNotify(postDTO: MetisPostDTO, userId: number | undefined) {
@@ -594,5 +625,15 @@ export class NotificationService {
         this.subscribedCourseWideChannelTopic = undefined;
         this.courseWideChannelSubscription?.unsubscribe();
         this.courseWideChannelSubscription = undefined;
+    }
+
+    private getMutedConversations(courses: Course[]) {
+        if (courses.find((course) => course.courseInformationSharingConfiguration !== CourseInformationSharingConfiguration.DISABLED)) {
+            this.http.get<number[]>('api/muted-conversations', { observe: 'response' }).subscribe({
+                next: (res: HttpResponse<number[]>) => {
+                    this.mutedConversations.push(...res.body!);
+                },
+            });
+        }
     }
 }
