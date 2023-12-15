@@ -3,7 +3,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ContextInformation, PageType } from '../metis.util';
+import { ContextInformation, PageType, RouteComponents } from '../metis.util';
 import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { PostFooterComponent } from 'app/shared/metis/posting-footer/post-footer/post-footer.component';
@@ -30,18 +30,20 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @ViewChild('postFooter') postFooterComponent: PostFooterComponent;
 
     displayInlineInput = false;
+    routerLink: RouteComponents;
+    queryParams = {};
+    showAnnouncementIcon = false;
 
     pageType: PageType;
     contextInformation: ContextInformation;
     readonly PageType = PageType;
-    protected readonly getAsChannelDto = getAsChannelDto;
 
     // Icons
     faBullhorn = faBullhorn;
     faCheckSquare = faCheckSquare;
 
     constructor(
-        public metisService: MetisService,
+        private metisService: MetisService,
         protected changeDetector: ChangeDetectorRef,
         private oneToOneChatService: OneToOneChatService,
         private metisConversationService: MetisConversationService,
@@ -64,6 +66,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      */
     ngOnChanges() {
         this.contextInformation = this.metisService.getContextInformation(this.posting);
+        this.routerLink = this.metisService.getLinkForPost();
+        this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
+        this.showAnnouncementIcon = (getAsChannelDto(this.posting.conversation)?.isAnnouncementChannel && !this.isCourseMessagesPage) ?? false;
     }
 
     /**

@@ -15,7 +15,7 @@
                 <fa-icon [icon]="faCheckSquare" iconSize="xs" class="col-auto pe-0 resolved" [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate">
                 </fa-icon>
             }
-            @if (getAsChannelDto(posting.conversation)?.isAnnouncementChannel && !isCourseMessagesPage) {
+            @if (showAnnouncementIcon) {
                 <fa-icon
                     [icon]="faBullhorn"
                     iconSize="xs"
@@ -50,12 +50,7 @@
                     }
                     <!-- show id only on communication page -->
                     @if (!isCourseMessagesPage && isCommunicationPage) {
-                        <a
-                            class="reference-hash"
-                            [routerLink]="metisService.getLinkForPost()"
-                            [queryParams]="metisService.getQueryParamsForPost(posting)"
-                            (click)="onNavigateToPostById($event)"
-                            routerLinkActive="active"
+                        <a class="reference-hash" [routerLink]="routerLink" [queryParams]="queryParams" (click)="onNavigateToPostById($event)" routerLinkActive="active"
                             >#{{ posting.id }}</a
                         >
                     }
