@@ -96,7 +96,7 @@ public class AeolusTemplateService {
         if (!fileResource.exists()) {
             throw new IOException("File " + Path.of("templates", "aeolus", programmingLanguage.name().toLowerCase(), templateFileName)
                     + " not found for settings: programming language: " + programmingLanguage.name() + ", project type: " + projectType.map(Enum::name).orElse("default")
-                    + ", static analysis: " + staticAnalysis + ", sequential runs: " + sequentialRuns + ", test coverage: " + testCoverage + ". Existing files: " + allNames);
+                    + ", static analysis: " + staticAnalysis + ", sequential runs: " + sequentialRuns + ", test coverage: " + testCoverage);
         }
         byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
         String yaml = new String(fileContent, StandardCharsets.UTF_8);
