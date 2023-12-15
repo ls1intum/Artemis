@@ -8,6 +8,7 @@ import { CourseManagementPage } from './pageobjects/course/CourseManagementPage'
 import { CourseCreationPage } from './pageobjects/course/CourseCreationPage';
 import fs from 'fs';
 import request from 'request';
+import { UserManagementAPIRequests } from './requests/UserManagementAPIRequests';
 
 type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
@@ -22,6 +23,7 @@ type ArtemisPageObjects = {
 
 export class ArtemisRequests {
     courseManagementAPIRequests: CourseManagementAPIRequests;
+    userManagementAPIRequests: UserManagementAPIRequests;
 }
 
 export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRequests>({
@@ -42,6 +44,10 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     },
     courseManagementAPIRequests: async ({ page }, use) => {
         await use(new CourseManagementAPIRequests(page));
+    },
+    // eslint-disable-next-line no-empty-pattern
+    userManagementAPIRequests: async ({}, use) => {
+        await use(new UserManagementAPIRequests());
     },
     courseManagement: async ({ page }, use) => {
         await use(new CourseManagementPage(page));

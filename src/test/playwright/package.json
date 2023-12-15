@@ -14,6 +14,7 @@
     },
     "scripts": {
         "playwright:test": "npx playwright test",
-        "playwright:open": "npx playwright test --ui"
+        "playwright:open": "npx playwright test --ui",
+        "playwright:setup": "npx playwright test init/ImportUsers.spec.ts"
     }
 }
