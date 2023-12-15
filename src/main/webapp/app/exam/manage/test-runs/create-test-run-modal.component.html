@@ -3,18 +3,16 @@
         <h4 class="modal-title" id="createTestRunModal" jhiTranslate="artemisApp.examManagement.testRun.setup">Create Test Run</h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="cancel()"></button>
     </div>
-
     <div class="modal-body">
         <div class="mb-3">
             <h5><span jhiTranslate="artemisApp.studentExams.workingTime">Working time</span></h5>
             <p jhiTranslate="artemisApp.examManagement.testRun.setWorkingTime">Set the working time:</p>
             <form class="d-flex gap-1 align-items-center" [formGroup]="workingTimeForm">
-                <input formControlName="minutes" id="minutes" type="number" style="width: 70px; height: 35px" class="form-control" min="0" step="1" required />
+                <input formControlName="minutes" id="workingTimeMinutes" type="number" style="width: 70px; height: 35px" class="form-control" min="0" step="1" required />
                 :
-                <input formControlName="seconds" id="seconds" type="number" style="width: 70px; height: 35px" class="form-control" min="0" max="59" step="1" required />
+                <input formControlName="seconds" id="workingTimeSeconds" type="number" style="width: 70px; height: 35px" class="form-control" min="0" max="59" step="1" required />
             </form>
         </div>
-
         <div class="mb-3">
             <h5 jhiTranslate="artemisApp.exam.exercises">Exercises</h5>
             <p jhiTranslate="artemisApp.examManagement.testRun.setupHint">Select an exercise for every exercise group by clicking on it.</p>
@@ -26,40 +24,42 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let exerciseGroup of exam.exerciseGroups">
-                        <td>
-                            <b> {{ exerciseGroup.title }} </b>
-                        </td>
-                        <td>
-                            <table class="table table-hover table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th jhiTranslate="artemisApp.exercise.title">Title</th>
-                                        <th jhiTranslate="artemisApp.exercise.difficulty">Difficulty Level</th>
-                                        <th jhiTranslate="artemisApp.exercise.type">Type</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr
-                                        *ngFor="let exercise of exerciseGroup.exercises"
-                                        (click)="onSelectExercise(exercise, exerciseGroup)"
-                                        [class.active]="exerciseGroup.id && exercise.id === testRunConfiguration[exerciseGroup.id]?.id"
-                                        [id]="'exercise-' + exercise.id"
-                                    >
-                                        <td>{{ exercise.id }}</td>
-                                        <td>{{ exercise.title }}</td>
-                                        <td>{{ exercise.difficulty }}</td>
-                                        <td>{{ exercise.type }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </td>
-                    </tr>
+                    @for (exerciseGroup of exam.exerciseGroups; track exerciseGroup) {
+                        <tr>
+                            <td>
+                                <b> {{ exerciseGroup.title }} </b>
+                            </td>
+                            <td>
+                                <table class="table table-hover table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th jhiTranslate="artemisApp.exercise.title">Title</th>
+                                            <th jhiTranslate="artemisApp.exercise.difficulty">Difficulty Level</th>
+                                            <th jhiTranslate="artemisApp.exercise.type">Type</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (exercise of exerciseGroup.exercises; track exercise) {
+                                            <tr
+                                                (click)="onSelectExercise(exercise, exerciseGroup)"
+                                                [class.active]="exerciseGroup.id && exercise.id === testRunConfiguration[exerciseGroup.id]?.id"
+                                                [id]="'exercise-' + exercise.id"
+                                            >
+                                                <td>{{ exercise.id }}</td>
+                                                <td>{{ exercise.title }}</td>
+                                                <td>{{ exercise.difficulty }}</td>
+                                                <td>{{ exercise.type }}</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
-
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" (click)="cancel()" jhiTranslate="global.form.cancel">Cancel</button>
             <button

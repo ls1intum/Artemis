@@ -1,7 +1,6 @@
 <section class="mb-5">
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle">Grading</h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepMessage">Set grading.</p>
-
     <div class="form-group">
         <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScore' + (programmingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate }}</label>
         <div>
@@ -26,9 +25,11 @@
                     [(ngModel)]="programmingExercise.maxPoints"
                     #maxScore="ngModel"
                 />
-                <div *ngIf="maxScore?.invalid && (maxScore?.dirty || maxScore?.touched) && maxScore?.errors" class="alert alert-danger">
-                    {{ 'artemisApp.exercise.pointsError' | artemisTranslate }}
-                </div>
+                @if (maxScore?.invalid && (maxScore?.dirty || maxScore?.touched) && maxScore?.errors) {
+                    <div class="alert alert-danger">
+                        {{ 'artemisApp.exercise.pointsError' | artemisTranslate }}
+                    </div>
+                }
             </div>
         </div>
         <div class="col">
@@ -45,62 +46,63 @@
                     [(ngModel)]="programmingExercise.bonusPoints"
                     #bonusPoints="ngModel"
                 />
-                <div
-                    *ngIf="bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors"
-                    class="alert alert-danger"
-                    [hidden]="programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                >
-                    {{ 'artemisApp.exercise.bonusPointsError' | artemisTranslate }}
+                @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
+                    <div class="alert alert-danger" [hidden]="programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
+                        {{ 'artemisApp.exercise.bonusPointsError' | artemisTranslate }}
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    @if (programmingExercise.staticCodeAnalysisEnabled) {
+        <div class="mt-2 mb-4">
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title" for="field_maxPenalty"
+                >Max Static Code Analysis Penalty</label
+            >
+            <fa-icon
+                [icon]="faQuestionCircle"
+                class="text-secondary"
+                placement="auto"
+                ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | artemisTranslate }}"
+            ></fa-icon>
+            <div class="input-group">
+                <div class="input-group-prepend">
+                    <span class="input-group-text">%</span>
                 </div>
+                <input
+                    type="number"
+                    [pattern]="programmingExerciseCreationConfig.maxPenaltyPattern"
+                    class="form-control"
+                    name="maxPenalty"
+                    id="field_maxPenalty"
+                    [(ngModel)]="programmingExercise.maxStaticCodeAnalysisPenalty"
+                    #maxPenalty="ngModel"
+                />
             </div>
+            @for (e of maxPenalty.errors! | keyvalue; track e) {
+                @if (maxPenalty.invalid && (maxPenalty.dirty || maxPenalty.touched)) {
+                    <div class="alert alert-danger">
+                        <div [jhiTranslate]="'artemisApp.exercise.form.maxPenalty' + '.' + e.key"></div>
+                    </div>
+                }
+            }
         </div>
-    </div>
-
-    <div class="mt-2 mb-4" *ngIf="programmingExercise.staticCodeAnalysisEnabled">
-        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title" for="field_maxPenalty">Max Static Code Analysis Penalty</label>
-        <fa-icon
-            [icon]="faQuestionCircle"
-            class="text-secondary"
-            placement="auto"
-            ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | artemisTranslate }}"
-        ></fa-icon>
-        <div class="input-group">
-            <div class="input-group-prepend">
-                <span class="input-group-text">%</span>
-            </div>
-            <input
-                type="number"
-                [pattern]="programmingExerciseCreationConfig.maxPenaltyPattern"
-                class="form-control"
-                name="maxPenalty"
-                id="field_maxPenalty"
-                [(ngModel)]="programmingExercise.maxStaticCodeAnalysisPenalty"
-                #maxPenalty="ngModel"
-            />
-        </div>
-        <ng-container *ngFor="let e of maxPenalty.errors! | keyvalue">
-            <div *ngIf="maxPenalty.invalid && (maxPenalty.dirty || maxPenalty.touched)" class="alert alert-danger">
-                <div [jhiTranslate]="'artemisApp.exercise.form.maxPenalty' + '.' + e.key"></div>
-            </div>
-        </ng-container>
-    </div>
-
+    }
     <div class="form-group">
         <jhi-submission-policy-update
             #submissionPolicyForm
             [editable]="!programmingExerciseCreationConfig.isEdit"
             [programmingExercise]="programmingExercise"
         ></jhi-submission-policy-update>
-        <ng-container *ngIf="programmingExerciseCreationConfig.isEdit">
+        @if (programmingExerciseCreationConfig.isEdit) {
             <ngb-alert [dismissible]="false" [type]="'info'">
                 <span>{{ 'artemisApp.programmingExercise.submissionPolicy.editInGradingInformation' | artemisTranslate }}</span>
                 <a [href]="editPolicyUrl">
                     <span>{{ 'artemisApp.programmingExercise.submissionPolicy.goToGradingToEditInformation' | artemisTranslate }}</span>
                 </a>
             </ngb-alert>
-        </ng-container>
+        }
     </div>
-
     <div class="form-group">
         <div>
             <label jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"> Timeline for the whole programming exercise </label>
@@ -113,13 +115,14 @@
             [readOnly]="false"
         ></jhi-programming-exercise-lifecycle>
     </div>
-
-    <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group">
-        <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
-        <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise"></jhi-grading-instructions-details>
-    </div>
-
+    @if (programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise"></jhi-grading-instructions-details>
+        </div>
+    }
     <jhi-presentation-score-checkbox [exercise]="programmingExercise"></jhi-presentation-score-checkbox>
-
-    <h6 *ngIf="programmingExerciseCreationConfig.showSummary">{{ getGradingSummary() }}</h6>
+    @if (programmingExerciseCreationConfig.showSummary) {
+        <h6>{{ getGradingSummary() }}</h6>
+    }
 </section>

@@ -66,8 +66,6 @@ artemis:
                     default: "~~invalid~~"
                 ocaml:
                     default: "~~invalid~~"
-    athena:
-        secret: abcdef12345
 
 spring:
     application:
@@ -277,3 +275,6 @@ jhipster:
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
                 token-validity-in-seconds-for-remember-me: 2592000
+
+aeolus:
+    url: http://mock-aeolus-url:8090

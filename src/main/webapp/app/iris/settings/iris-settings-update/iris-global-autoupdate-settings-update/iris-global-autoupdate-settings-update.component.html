@@ -1,0 +1,16 @@
+@if (irisSettings) {
+    <div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="autoUpdateChat" [(ngModel)]="irisSettings!.enableAutoUpdateChat" />
+            <label class="form-check-label" for="autoUpdateChat" jhiTranslate="artemisApp.iris.settings.autoUpdate.chatLabel"> Auto-update Chat Settings </label>
+        </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="autoUpdateHestia" [(ngModel)]="irisSettings!.enableAutoUpdateHestia" />
+            <label class="form-check-label" for="autoUpdateHestia" jhiTranslate="artemisApp.iris.settings.autoUpdate.hestiaLabel"> Auto-update Hestia Settings </label>
+        </div>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="autoUpdateCodeEditor" [(ngModel)]="irisSettings!.enableAutoUpdateCodeEditor" />
+            <label class="form-check-label" for="autoUpdateCodeEditor" jhiTranslate="artemisApp.iris.settings.autoUpdate.codeEditorLabel"> Auto-update Code Editor Settings </label>
+        </div>
+    </div>
+}

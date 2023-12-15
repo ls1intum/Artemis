@@ -1,12 +1,24 @@
 package de.tum.in.www1.artemis.exercise.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.course.CourseFactory;
@@ -23,7 +35,9 @@ import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.*;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.user.UserUtilService;
+import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.TestConstants;
 
 /**
@@ -35,6 +49,9 @@ public class ProgrammingExerciseUtilService {
     private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
 
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
 
     @Autowired
     private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepo;
@@ -104,6 +121,25 @@ public class ProgrammingExerciseUtilService {
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private GitService gitService;
+
+    /**
+     * Create an example programming exercise
+     *
+     * @return the created programming exercise
+     */
+    public ProgrammingExercise createSampleProgrammingExercise() {
+        var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setTitle("Title");
+        programmingExercise.setShortName("Shortname");
+        programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        programmingExercise.setMaxPoints(10.0);
+        programmingExercise.setBonusPoints(0.0);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        return programmingExercise;
+    }
 
     /**
      * Adds template participation to the provided programming exercise.
@@ -773,5 +809,28 @@ public class ProgrammingExerciseUtilService {
      */
     public ProgrammingExercise loadProgrammingExerciseWithEagerReferences(ProgrammingExercise lazyExercise) {
         return programmingExerciseTestRepository.findOneWithEagerEverything(lazyExercise.getId());
+    }
+
+    /**
+     * Creates an example repository and makes the given GitService return it when asked to check it out.
+     *
+     * @throws Exception if creating the repository fails
+     */
+    public void createGitRepository() throws Exception {
+        // Create repository
+        var testRepo = new LocalRepository(defaultBranch);
+        testRepo.configureRepos("testLocalRepo", "testOriginRepo");
+        // Add test file to the repository folder
+        Path filePath = Path.of(testRepo.localRepoFile + "/Test.java");
+        var file = Files.createFile(filePath).toFile();
+        FileUtils.write(file, "Test", Charset.defaultCharset());
+        // Create mock repo that has the file
+        var mockRepository = mock(Repository.class);
+        doReturn(true).when(mockRepository).isValidFile(any());
+        doReturn(testRepo.localRepoFile.toPath()).when(mockRepository).getLocalPath();
+        // Mock Git service operations
+        doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), any(), any(), anyBoolean(), anyString());
+        doNothing().when(gitService).resetToOriginHead(any());
+        doReturn(Paths.get("repo.zip")).when(gitService).zipRepositoryWithParticipation(any(), anyString(), anyBoolean());
     }
 }

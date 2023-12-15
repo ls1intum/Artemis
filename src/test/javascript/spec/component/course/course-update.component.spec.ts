@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
 import { LoadImageService } from 'app/shared/image-cropper/services/load-image.service';
@@ -38,6 +38,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { cloneDeep } from 'lodash-es';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -59,6 +60,7 @@ describe('Course Management Update Component', () => {
     const validTimeZone = 'Europe/Berlin';
     let loadImageSpy: jest.SpyInstance;
     let eventManager: EventManager;
+    let modalService: NgbModal;
 
     beforeEach(() => {
         course = new Course();
@@ -103,6 +105,7 @@ describe('Course Management Update Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(TranslateService),
                 MockProvider(LoadImageService),
             ],
@@ -133,6 +136,7 @@ describe('Course Management Update Component', () => {
                 loadImageSpy = jest.spyOn(loadImageService, 'loadImageFile');
                 accountService = TestBed.inject(AccountService);
                 eventManager = TestBed.inject(EventManager);
+                modalService = TestBed.inject(NgbModal);
             });
     });
 
@@ -356,6 +360,21 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.controls['registrationEnabled'].value).toBeTrue();
             expect(comp.course.enrollmentEnabled).toBeTrue();
         });
+
+        it('should call unenrollmentEnabled', () => {
+            const enabelunrollSpy = jest.spyOn(comp, 'changeUnenrollmentEnabled').mockReturnValue();
+            comp.course = new Course();
+            comp.course.enrollmentEnabled = true;
+            comp.course.unenrollmentEnabled = true;
+            comp.courseForm = new FormGroup({
+                registrationEnabled: new FormControl(false),
+                onlineCourse: new FormControl(true),
+                enrollmentStartDate: new FormControl(),
+                enrollmentEndDate: new FormControl(),
+            });
+            comp.changeRegistrationEnabled();
+            expect(enabelunrollSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('updateCourseInformationSharingMessagingCodeOfConduct', () => {
@@ -408,6 +427,20 @@ describe('Course Management Update Component', () => {
             comp.changeRequestMoreFeedbackEnabled();
             expect(comp.courseForm.controls['maxRequestMoreFeedbackTimeDays'].value).toBe(0);
             expect(comp.requestMoreFeedbackEnabled).toBeFalse();
+        });
+    });
+
+    describe('changeUnenrollmentEnabled', () => {
+        it('should toggle unenrollment enabled', () => {
+            comp.course = new Course();
+            comp.course.endDate = dayjs();
+            comp.courseForm = new FormGroup({
+                unenrollmentEnabled: new FormControl(false),
+                unenrollmentEndDate: new FormControl(undefined),
+            });
+            comp.changeUnenrollmentEnabled();
+            expect(comp.courseForm.controls['unenrollmentEnabled'].value).toBeTruthy();
+            expect(comp.course.unenrollmentEndDate).toBe(comp.course.endDate);
         });
     });
 
@@ -687,6 +720,12 @@ describe('Course Management Update Component', () => {
             expect(addButton).toBeNull();
             expect(removeButton).toBeNull();
         });
+    });
+
+    it('should open organizations modal', () => {
+        jest.spyOn(modalService, 'open').mockReturnValue({ closed: of(new Organization()), componentInstance: {} } as NgbModalRef);
+        comp.openOrganizationsModal();
+        expect(comp.courseOrganizations).toHaveLength(1);
     });
 });
 

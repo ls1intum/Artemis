@@ -19,7 +19,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
-import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
@@ -79,6 +79,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     // Icons
     faTable = faTable;
     faTimes = faTimes;
+    faTrash = faTrash;
     faCircleNotch = faCircleNotch;
     faEraser = faEraser;
     faFilePowerpoint = faFilePowerpoint;
@@ -103,7 +104,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * Initialize component by calling loadAll and registerChangeInParticipation
      */
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe((params) => this.loadExercise(params['exerciseId']));
+        this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
         this.registerChangeInParticipations();
         this.isAdmin = this.accountService.isAdmin();
     }
