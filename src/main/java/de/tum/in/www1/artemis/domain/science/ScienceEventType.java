@@ -6,5 +6,5 @@ package de.tum.in.www1.artemis.domain.science;
  * Important: Please follow the naming convention <category>__<detailed event name>
  */
 public enum ScienceEventType {
-    LECTURE__OPEN, LECTURE__VIEW_VIDEO_UNIT, LECTURE__VIEW_TEXT_UNIT
+    LECTURE__OPEN
 }

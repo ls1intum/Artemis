@@ -5,8 +5,6 @@
  */
 export enum ScienceEventType {
     LECTURE__OPEN = 'LECTURE__OPEN',
-    LECTURE__VIEW_VIDEO_UNIT = 'LECTURE__VIEW_VIDEO_UNIT',
-    LECTURE__VIEW_TEXT_UNIT = 'LECTURE__VIEW_TEXT_UNIT',
 }
 
 export class ScienceEventDTO {
