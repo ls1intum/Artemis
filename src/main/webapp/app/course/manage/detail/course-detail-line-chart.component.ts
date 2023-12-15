@@ -73,13 +73,13 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     ) {
         super();
         this.translateService.onLangChange.subscribe(() => {
-            this.updateXAxisLabel();
+            this.loadTranslations();
         });
     }
 
     ngOnChanges() {
         this.amountOfStudents = this.translateService.instant('artemisApp.courseStatistics.amountOfStudents');
-        this.updateXAxisLabel();
+        this.loadTranslations();
         this.determineDisplayedPeriod(this.course, this.displayedNumberOfWeeks);
         /*
         if the course has a start date and already ended
@@ -255,7 +255,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     /**
      * Auxiliary method handles the translation sensitivity of the x axis label
      */
-    private updateXAxisLabel() {
+    private loadTranslations() {
         this.xAxisLabel = this.translateService.instant('artemisApp.courseStatistics.calendarWeek');
         this.average.name = this.translateService.instant('artemisApp.courseStatistics.average') + this.average.value.toFixed(2) + '%';
     }
