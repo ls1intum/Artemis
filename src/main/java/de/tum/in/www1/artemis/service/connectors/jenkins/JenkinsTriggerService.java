@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanService;
 
@@ -27,11 +26,5 @@ public class JenkinsTriggerService implements ContinuousIntegrationTriggerServic
         final var projectKey = participation.getProgrammingExercise().getProjectKey();
         final var planKey = participation.getBuildPlanId();
         jenkinsBuildPlanService.triggerBuild(projectKey, planKey);
-    }
-
-    @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) throws ContinuousIntegrationException {
-        log.warn("Triggering builds with a commit hash is not supported for Jenkins. Triggering build without commit hash.");
-        triggerBuild(participation);
     }
 }
