@@ -492,6 +492,10 @@ export class NotificationService {
             postDTO.post.answers.forEach((answer) => (answer.post = { ...postDTO.post, answers: [] }));
         }
 
+        if (postDTO.post.conversation?.lastMessageDate) {
+            postDTO.post.conversation.lastMessageDate = convertDateFromServer(postDTO.post.conversation?.lastMessageDate);
+        }
+
         const user = this.accountService.userIdentity;
         user && postDTO.notification && this.changeTitleIfMentioned(user, postDTO, postDTO.notification);
 
