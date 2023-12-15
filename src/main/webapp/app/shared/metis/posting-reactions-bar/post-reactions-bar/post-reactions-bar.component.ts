@@ -63,7 +63,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
      */
     private setCanPin(currentConversation: ConversationDto | undefined) {
         if (!currentConversation) {
-            this.canPin = false;
+            this.canPin = this.metisService.metisUserIsAtLeastInstructorInCourse();
             return;
         }
 
