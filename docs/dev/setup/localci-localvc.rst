@@ -157,12 +157,12 @@ Podman as Docker alternative
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 `Podman <https://podman.io/>`_ offers a container runtime that is API-compatible with Docker.
-Rather than having a system-wide socket that runs with administrative permissions, Podman allows to create containers with only user permissions.
+Rather than having a system-wide socket that runs with administrative permissions, Podman allows creating containers with only user permissions.
 In single-user setups this might not be as relevant, but offers additional security in a production environment where the Artemis CI has to execute untrusted student code.
 
-.. admonition:: Podman is supported on a best effort basis.
+.. admonition:: Podman is supported on a best-effort basis.
 
-    We are relying on the API compatibility to provide support but are not actively testing against Podman on a test system or in the continuous integration.
+    We are relying on the API compatibility to provide support but are not actively testing against Podman on a test system or in continuous integration.
     If you notice any issues, feel free to open an issue or pull request so that we can try to fix them.
 
 .. note::
@@ -211,7 +211,7 @@ Windows or Mac setup
 """"""""""""""""""""
 
 Podman offers a `desktop application <https://podman-desktop.io/>`_ application similar to Docker desktop and `CLI tools <https://podman.io>`_ for Windows, macOS, and Linux.
-As with Docker, to run containers on Windows or macOS the runtime has to start a small virtual Linux machine that then actually runs the containers.
+As with Docker, to run containers on Windows or macOS, the runtime has to start a small virtual Linux machine that then actually runs the containers.
 You can probably connect to this VM similarly as described in the regular setup steps above
 (`additional Podman documentation <https://podman-desktop.io/docs/migrating-from-docker/using-the-docker_host-environment-variable>`_).
 
