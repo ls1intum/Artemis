@@ -299,12 +299,9 @@ class PostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetPostsForCourse_WithInvalidRequestParams_badRequest() throws Exception {
-        // request param courseWideContext will fetch all course posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("lectureIds", "123");
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.BAD_REQUEST, Post.class, params);
-        // get amount of posts with that certain course-wide context
         assertThat(returnedPosts).isNull();
     }
 

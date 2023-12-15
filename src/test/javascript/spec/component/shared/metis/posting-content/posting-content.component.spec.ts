@@ -227,16 +227,16 @@ describe('PostingContentComponent', () => {
             expect(component.currentlyLoadedPosts).toEqual(metisGeneralCourseWidePosts);
             // in the posting content, use the reference to an id that is included in the lists of currently loaded posts and can therefore be referenced directly,
             // i.e. being shown in the detail view of the course overview
-            const idOfPostWithCourseWideContextToReference = component.currentlyLoadedPosts[0].id!;
-            component.content = `I want to reference #${idOfPostWithCourseWideContextToReference} with course-wide context while currently being at course discussion overview.`;
+            const idOfGeneralCourseWidePost = component.currentlyLoadedPosts[0].id!;
+            component.content = `I want to reference #${idOfGeneralCourseWidePost} with course-wide context while currently being at course discussion overview.`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
             expect(component.postingContentParts).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', metisCourse.id, 'discussion'],
-                    queryParams: { searchText: `#${idOfPostWithCourseWideContextToReference}` },
-                    referenceStr: `#${idOfPostWithCourseWideContextToReference}`,
+                    queryParams: { searchText: `#${idOfGeneralCourseWidePost}` },
+                    referenceStr: `#${idOfGeneralCourseWidePost}`,
                     referenceType: ReferenceType.POST,
                     contentAfterReference: ' with course-wide context while currently being at course discussion overview.',
                 } as PostingContentPart,
@@ -296,16 +296,16 @@ describe('PostingContentComponent', () => {
             tick();
             // in the posting content, use the reference to an id that is _not_ included in the lists of currently loaded posts and can therefore _not_ be referenced directly,
             // and rather being queried for in the course overview
-            const idOfPostWithCourseWideContextToReference = metisGeneralCourseWidePosts[0].id!;
-            component.content = `I want to reference #${idOfPostWithCourseWideContextToReference} with course-wide context while currently being at a lecture page.`;
+            const idOfCourseWidePostToReference = metisGeneralCourseWidePosts[0].id!;
+            component.content = `I want to reference #${idOfCourseWidePostToReference} with course-wide context while currently being at a lecture page.`;
             const matches = component.getPatternMatches();
             component.computePostingContentParts(matches);
             expect(component.postingContentParts).toEqual([
                 {
                     contentBeforeReference: 'I want to reference ',
                     linkToReference: ['/courses', metisCourse.id, 'discussion'],
-                    queryParams: { searchText: `#${idOfPostWithCourseWideContextToReference}` },
-                    referenceStr: `#${idOfPostWithCourseWideContextToReference}`,
+                    queryParams: { searchText: `#${idOfCourseWidePostToReference}` },
+                    referenceStr: `#${idOfCourseWidePostToReference}`,
                     referenceType: ReferenceType.POST,
                     contentAfterReference: ' with course-wide context while currently being at a lecture page.',
                 } as PostingContentPart,

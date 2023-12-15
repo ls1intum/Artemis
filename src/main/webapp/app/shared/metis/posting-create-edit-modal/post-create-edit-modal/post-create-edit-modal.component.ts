@@ -159,9 +159,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         post.tags = this.tags;
         post.content = this.formGroup.get('content')?.value;
         const currentContextSelectorOption: ContextSelectorOption = {
-            exercise: undefined,
-            lecture: undefined,
-            courseWideContext: undefined,
             ...this.formGroup.get('context')?.value,
         };
         post = {

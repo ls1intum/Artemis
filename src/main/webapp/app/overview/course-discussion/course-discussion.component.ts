@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { CourseWideContext, PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { PageType, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { Subject, Subscription, combineLatest, takeUntil } from 'rxjs';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -42,7 +42,6 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
     forceReload = true;
 
     readonly documentationType: DocumentationType = 'Communications';
-    readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly pageType = PageType.OVERVIEW;
 
@@ -188,16 +187,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      * Angular needs to be able to identify the currently selected option
      */
     compareContextFilterOptionFn(option1: any, option2: any) {
-        if (option1.exerciseId && option2.exerciseId) {
-            return option1.exerciseId === option2.exerciseId;
-        } else if (option1.lectureId && option2.lectureId) {
-            return option1.lectureId === option2.lectureId;
-        } else if (option1.courseWideContext && option2.courseWideContext) {
-            return option1.courseWideContext === option2.courseWideContext;
-        } else if (option1.courseId && option2.courseId) {
-            return option1.courseId === option2.courseId;
-        }
-        return false;
+        return option1.conversationId === option2.conversationId;
     }
 
     /**

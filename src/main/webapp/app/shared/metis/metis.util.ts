@@ -6,13 +6,6 @@ export enum PostingEditType {
     UPDATE,
 }
 
-export enum CourseWideContext {
-    TECH_SUPPORT = 'TECH_SUPPORT',
-    ORGANIZATION = 'ORGANIZATION',
-    RANDOM = 'RANDOM',
-    ANNOUNCEMENT = 'ANNOUNCEMENT',
-}
-
 export enum DisplayPriority {
     PINNED = 'PINNED',
     ARCHIVED = 'ARCHIVED',

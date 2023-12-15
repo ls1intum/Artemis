@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { CourseWideContext, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
+import { PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -131,9 +131,6 @@ describe('CourseDiscussionComponent', () => {
         expect(component.posts).toEqual([metisPostInChannel]);
         expect(component.currentPostContextFilter).toEqual({
             courseId: metisCourse.id,
-            courseWideContexts: undefined,
-            exerciseIds: undefined,
-            lectureIds: undefined,
             courseWideChannelIds: [],
             searchText: undefined,
             filterToUnresolved: false,
@@ -193,9 +190,6 @@ describe('CourseDiscussionComponent', () => {
         component.onSelectContext();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
             courseId: metisCourse.id,
-            courseWideContexts: undefined,
-            exerciseIds: undefined,
-            lectureIds: undefined,
             courseWideChannelIds: [],
             searchText: component.searchText,
             filterToUnresolved: false,
@@ -314,9 +308,6 @@ describe('CourseDiscussionComponent', () => {
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
         expect(metisServiceGetFilteredPostsSpy.mock.calls[2][0]).toEqual({
             ...component.currentPostContextFilter,
-            courseWideContexts: undefined,
-            lectureIds: undefined,
-            exerciseIds: undefined,
         });
     }));
 
@@ -374,9 +365,6 @@ describe('CourseDiscussionComponent', () => {
     function expectGetFilteredPostsToBeCalled() {
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
             courseId: metisCourse.id,
-            courseWideContexts: undefined,
-            exerciseIds: undefined,
-            lectureIds: undefined,
             courseWideChannelIds: [],
             page: component.page - 1,
             pageSize: component.itemsPerPage,
@@ -389,21 +377,9 @@ describe('CourseDiscussionComponent', () => {
 
     describe('sorting of posts', () => {
         it('should distinguish context filter options for properly show them in form', () => {
-            let result = component.compareContextFilterOptionFn({ courseId: metisCourse.id }, { courseId: metisCourse.id });
+            let result = component.compareContextFilterOptionFn({ conversationId: 1 }, { conversationId: 1 });
             expect(result).toBeTrue();
-            result = component.compareContextFilterOptionFn({ courseId: metisCourse.id }, { courseId: 99 });
-            expect(result).toBeFalse();
-            result = component.compareContextFilterOptionFn({ lectureId: metisLecture.id }, { lectureId: metisLecture.id });
-            expect(result).toBeTrue();
-            result = component.compareContextFilterOptionFn({ lectureId: metisLecture.id }, { lectureId: 99 });
-            expect(result).toBeFalse();
-            result = component.compareContextFilterOptionFn({ exerciseId: metisExercise.id }, { exerciseId: metisExercise.id });
-            expect(result).toBeTrue();
-            result = component.compareContextFilterOptionFn({ exerciseId: metisExercise.id }, { exerciseId: 99 });
-            expect(result).toBeFalse();
-            result = component.compareContextFilterOptionFn({ courseWideContext: CourseWideContext.ORGANIZATION }, { courseWideContext: CourseWideContext.ORGANIZATION });
-            expect(result).toBeTrue();
-            result = component.compareContextFilterOptionFn({ courseWideContext: CourseWideContext.ORGANIZATION }, { courseWideContext: CourseWideContext.TECH_SUPPORT });
+            result = component.compareContextFilterOptionFn({ conversationId: 1 }, { conversationId: 2 });
             expect(result).toBeFalse();
         });
     });

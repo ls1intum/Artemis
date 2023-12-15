@@ -9,12 +9,12 @@ import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdow
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
-import { CourseWideContext, PageType } from 'app/shared/metis/metis.util';
+import { PageType } from 'app/shared/metis/metis.util';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../../../../test.module';
 import { PostComponent } from 'app/shared/metis/post/post.component';
-import { metisCourse, metisExercise, metisLecture, metisPostLectureUser1, metisPostTechSupport, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { metisCourse, metisExercise, metisPostLectureUser1, metisPostTechSupport, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
 
@@ -100,7 +100,7 @@ describe('PostCreateEditModalComponent', () => {
         component.formGroup.setValue({
             title: newTitle,
             content: newContent,
-            context: { courseWideContext: undefined, exercise: undefined, metisLecture },
+            context: {},
         });
         // debounce time of title input field
         tick(800);
@@ -111,9 +111,6 @@ describe('PostCreateEditModalComponent', () => {
             ...component.posting,
             content: newContent,
             title: newTitle,
-            courseWideContext: undefined,
-            exercise: undefined,
-            metisLecture,
         });
         tick();
         expect(component.isLoading).toBeFalse();
@@ -133,7 +130,7 @@ describe('PostCreateEditModalComponent', () => {
         component.formGroup.setValue({
             title: newTitle,
             content: newContent,
-            context: { courseWideContext: CourseWideContext.ANNOUNCEMENT, exercise: undefined, undefined },
+            context: { conversationId: metisPostToCreateUser1.conversation?.id, exercise: undefined, undefined },
         });
         // trigger the method that is called on clicking the save button
         component.confirm();
@@ -141,9 +138,6 @@ describe('PostCreateEditModalComponent', () => {
             ...component.posting,
             content: newContent,
             title: newTitle,
-            courseWideContext: CourseWideContext.ANNOUNCEMENT,
-            exercise: undefined,
-            lecture: undefined,
         });
         // debounce time of title input field
         tick(800);
