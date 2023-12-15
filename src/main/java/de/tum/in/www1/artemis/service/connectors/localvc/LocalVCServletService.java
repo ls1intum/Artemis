@@ -313,24 +313,9 @@ public class LocalVCServletService {
         String repositoryTypeOrUserName = localVCRepositoryUrl.getRepositoryTypeOrUserName();
         String projectKey = localVCRepositoryUrl.getProjectKey();
 
-        ProgrammingExercise exercise;
+        ProgrammingExercise exercise = getProgrammingExercise(projectKey);
 
-        try {
-            exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
-        }
-        catch (EntityNotFoundException e) {
-            throw new VersionControlException("Could not find programming exercise for project key " + projectKey, e);
-        }
-
-        ProgrammingExerciseParticipation participation;
-
-        try {
-            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUrl.isPracticeRepository(),
-                    true);
-        }
-        catch (EntityNotFoundException e) {
-            throw new VersionControlException("Could not find participation for repository " + repositoryTypeOrUserName + " of exercise " + exercise, e);
-        }
+        ProgrammingExerciseParticipation participation = getProgrammingExerciseParticipation(localVCRepositoryUrl, repositoryTypeOrUserName, exercise);
 
         try {
             if (commitHash == null) {
@@ -356,6 +341,30 @@ public class LocalVCServletService {
 
         log.info("New push processed to repository {} for commit {} in {}. A build job was queued.", localVCRepositoryUrl.getURI(), commitHash,
                 TimeLogUtil.formatDurationFrom(timeNanoStart));
+    }
+
+    private ProgrammingExerciseParticipation getProgrammingExerciseParticipation(LocalVCRepositoryUrl localVCRepositoryUrl, String repositoryTypeOrUserName,
+            ProgrammingExercise exercise) {
+        ProgrammingExerciseParticipation participation;
+        try {
+            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUrl.isPracticeRepository(),
+                    true);
+        }
+        catch (EntityNotFoundException e) {
+            throw new VersionControlException("Could not find participation for repository " + repositoryTypeOrUserName + " of exercise " + exercise, e);
+        }
+        return participation;
+    }
+
+    private ProgrammingExercise getProgrammingExercise(String projectKey) {
+        ProgrammingExercise exercise;
+        try {
+            exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
+        }
+        catch (EntityNotFoundException e) {
+            throw new VersionControlException("Could not find programming exercise for project key " + projectKey, e);
+        }
+        return exercise;
     }
 
     private LocalVCRepositoryUrl getLocalVCRepositoryUrl(Path repositoryFolderPath) {
@@ -385,13 +394,7 @@ public class LocalVCServletService {
      */
     private void processNewPushToTestRepository(ProgrammingExercise exercise, String commitHash, SolutionProgrammingExerciseParticipation solutionParticipation) {
         // Create a new submission for the solution repository.
-        ProgrammingSubmission submission;
-        try {
-            submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
-        }
-        catch (EntityNotFoundException | IllegalStateException e) {
-            throw new VersionControlException("Could not create submission for solution participation", e);
-        }
+        ProgrammingSubmission submission = getProgrammingSubmission(exercise, commitHash);
 
         programmingMessagingService.notifyUserAboutSubmission(submission, exercise.getId());
 
@@ -414,6 +417,17 @@ public class LocalVCServletService {
             // The instructor will see in the UI that no build of the template repository was conducted and will receive an error message when triggering the build manually.
             log.error("Something went wrong while triggering the template build for exercise " + exercise.getId() + " after the solution build was finished.", e);
         }
+    }
+
+    private ProgrammingSubmission getProgrammingSubmission(ProgrammingExercise exercise, String commitHash) {
+        ProgrammingSubmission submission;
+        try {
+            submission = programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), commitHash);
+        }
+        catch (EntityNotFoundException | IllegalStateException e) {
+            throw new VersionControlException("Could not create submission for solution participation", e);
+        }
+        return submission;
     }
 
     /**
