@@ -62,7 +62,7 @@ describe('PostCreateEditModalComponent', () => {
 
     it('should init modal with correct context, title and content for post without id', () => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
-        component.posting = { ...metisPostToCreateUser1, courseWideContext: CourseWideContext.TECH_SUPPORT };
+        component.posting = { ...metisPostToCreateUser1 };
         component.ngOnInit();
         component.ngOnChanges();
         expect(component.pageType).toEqual(PageType.OVERVIEW);
