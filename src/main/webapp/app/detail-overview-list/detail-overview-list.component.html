@@ -27,11 +27,11 @@
                 @case (DetailType.Link) {
                     <dd>
                         @if (detail.data.text) {
-                            @if (!!detail.data.routerLink?.length || detail.data.href) {
+                            @if (!!detail.data.routerLink?.length) {
                                 <a [routerLink]="detail.data.routerLink">
                                     {{ detail.data.text }}
                                 </a>
-                            } @else if (detail.data.href) {
+                            } @else if (!!detail.data.href) {
                                 <a href="{{ detail.data.href }}">
                                     {{ detail.data.text }}
                                 </a>
