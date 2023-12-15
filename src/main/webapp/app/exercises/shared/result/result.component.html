@@ -1,84 +1,95 @@
 <!--
-  -- When using the result component make sure that the reference to the participation input is changed if the result changes
-  -- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
+-- When using the result component make sure that the reference to the participation input is changed if the result changes
+-- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
 -->
-<ng-container [ngSwitch]="templateStatus" id="result">
-    <ng-container *ngSwitchCase="ResultTemplateStatus.IS_BUILDING">
-        <span class="text-primary">
-            <fa-icon [icon]="faCircleNotch" size="lg" [spin]="true" class="me-2"></fa-icon>
-            <span jhiTranslate="artemisApp.editor.building">Building...</span>
-        </span>
-    </ng-container>
-    <ng-container *ngSwitchCase="ResultTemplateStatus.HAS_RESULT">
-        <ng-container *ngIf="result">
-            <fa-icon *ngIf="showIcon" class="result-score-icon" [ngClass]="textColorClass" [icon]="resultIconClass" size="lg"></fa-icon>
-            <span
-                [ngClass]="textColorClass"
-                class="guided-tour result"
-                [class.clickable-result]="exercise?.type !== ExerciseType.QUIZ"
-                id="result-score"
-                (click)="showDetails(result!)"
-            >
-                <span [ngbTooltip]="resultTooltip | artemisTranslate">
-                    {{ resultString }}
+<ng-container id="result">
+    @switch (templateStatus) {
+        @case (ResultTemplateStatus.IS_BUILDING) {
+            <span class="text-primary">
+                <fa-icon [icon]="faCircleNotch" size="lg" [spin]="true" class="me-2"></fa-icon>
+                <span jhiTranslate="artemisApp.editor.building">Building...</span>
+            </span>
+        }
+        @case (ResultTemplateStatus.HAS_RESULT) {
+            @if (result) {
+                @if (showIcon) {
+                    <fa-icon class="result-score-icon" [ngClass]="textColorClass" [icon]="resultIconClass" size="lg"></fa-icon>
+                }
+                <span
+                    [ngClass]="textColorClass"
+                    class="guided-tour result"
+                    [class.clickable-result]="exercise?.type !== ExerciseType.QUIZ"
+                    id="result-score"
+                    (click)="showDetails(result!)"
+                >
+                    <span [ngbTooltip]="resultTooltip | artemisTranslate">
+                        {{ resultString }}
+                    </span>
+                    @if (short && result?.codeIssueCount) {
+                        <span ngbTooltip="{{ 'artemisApp.result.codeIssuesTooltip' | artemisTranslate }}">
+                            <fa-icon id="code-issue-warnings-icon" class="result-orange" [icon]="faExclamationTriangle"></fa-icon>
+                        </span>
+                    }
+                    <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }}) </span>
                 </span>
-                <span *ngIf="short && result?.codeIssueCount" ngbTooltip="{{ 'artemisApp.result.codeIssuesTooltip' | artemisTranslate }}">
-                    <fa-icon id="code-issue-warnings-icon" class="result-orange" [icon]="faExclamationTriangle"></fa-icon>
-                </span>
-                <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }}) </span>
+                @if (hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING) {
+                    <span>
+                        <a (click)="downloadBuildResult(participation.id)">
+                            &nbsp; <fa-icon [icon]="faFile"></fa-icon>
+                            <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
+                        </a>
+                    </span>
+                }
+                @if (showBadge) {
+                    <span class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
+                        {{ badge.text | artemisTranslate | uppercase }}
+                    </span>
+                }
+            }
+        }
+        @case (ResultTemplateStatus.LATE) {
+            <span [ngClass]="textColorClass">
+                <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
+                <span class="score"> {{ resultString }}, </span>
+                <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateFeedback' | artemisTranslate }}</span>
             </span>
-            <span *ngIf="hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING">
-                <a (click)="downloadBuildResult(participation.id)">
-                    &nbsp; <fa-icon [icon]="faFile"></fa-icon>
-                    <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
-                </a>
+        }
+        @case (ResultTemplateStatus.SUBMITTED) {
+            <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.exerciseSubmitted' | artemisTranslate }}</span>
+        }
+        @case (ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING) {
+            <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.exerciseSubmittedWaitingForGrading' | artemisTranslate }}</span>
+        }
+        @case (ResultTemplateStatus.LATE_NO_FEEDBACK) {
+            <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateSubmission' | artemisTranslate }}</span>
+        }
+        @case (ResultTemplateStatus.MISSING) {
+            <span class="text-danger">
+                <fa-icon [icon]="faExclamationCircle" size="lg"></fa-icon>&nbsp;
+                @switch (missingResultInfo) {
+                    @case (MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE) {
+                        <span [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOnlineIde' | artemisTranslate">{{
+                            'artemisApp.result.missing.programmingFailedSubmission.message' | artemisTranslate
+                        }}</span>
+                    }
+                    @case (MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE) {
+                        <span [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOfflineIde' | artemisTranslate">{{
+                            'artemisApp.result.missing.programmingFailedSubmission.message' | artemisTranslate
+                        }}</span>
+                    }
+                }
+                @if (result && exercise?.type !== ExerciseType.QUIZ) {
+                    <span class="result clickable-result" (click)="showDetails(result)">
+                        {{ 'artemisApp.result.missing.viewPrevious' | artemisTranslate }}
+                    </span>
+                }
             </span>
-
-            <span *ngIf="showBadge" class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
-                {{ badge.text | artemisTranslate | uppercase }}
+        }
+        @default {
+            <span class="text-body-secondary">
+                <fa-icon [icon]="farCircle" size="lg"></fa-icon>&nbsp;
+                <span> {{ (showUngradedResults ? 'artemisApp.result.noResult' : 'artemisApp.result.noGradedResult') | artemisTranslate }}</span>
             </span>
-        </ng-container>
-    </ng-container>
-    <ng-container *ngSwitchCase="ResultTemplateStatus.LATE">
-        <span [ngClass]="textColorClass">
-            <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
-            <span class="score"> {{ resultString }}, </span>
-            <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateFeedback' | artemisTranslate }}</span>
-        </span>
-    </ng-container>
-    <ng-container *ngSwitchCase="ResultTemplateStatus.SUBMITTED">
-        <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.exerciseSubmitted' | artemisTranslate }}</span>
-    </ng-container>
-    <ng-container *ngSwitchCase="ResultTemplateStatus.SUBMITTED_WAITING_FOR_GRADING">
-        <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.exerciseSubmittedWaitingForGrading' | artemisTranslate }}</span>
-    </ng-container>
-    <ng-container *ngSwitchCase="ResultTemplateStatus.LATE_NO_FEEDBACK">
-        <span class="text-body-secondary">{{ 'artemisApp.courseOverview.exerciseList.exerciseLateSubmission' | artemisTranslate }}</span>
-    </ng-container>
-    <ng-container *ngSwitchCase="ResultTemplateStatus.MISSING">
-        <span class="text-danger">
-            <fa-icon [icon]="faExclamationCircle" size="lg"></fa-icon>&nbsp;
-            <ng-container [ngSwitch]="missingResultInfo">
-                <ng-container *ngSwitchCase="MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_ONLINE_IDE">
-                    <span [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOnlineIde' | artemisTranslate">{{
-                        'artemisApp.result.missing.programmingFailedSubmission.message' | artemisTranslate
-                    }}</span>
-                </ng-container>
-                <ng-container *ngSwitchCase="MissingResultInfo.FAILED_PROGRAMMING_SUBMISSION_OFFLINE_IDE">
-                    <span [ngbTooltip]="'artemisApp.result.missing.programmingFailedSubmission.tooltipOfflineIde' | artemisTranslate">{{
-                        'artemisApp.result.missing.programmingFailedSubmission.message' | artemisTranslate
-                    }}</span>
-                </ng-container>
-            </ng-container>
-            <span *ngIf="result && exercise?.type !== ExerciseType.QUIZ" class="result clickable-result" (click)="showDetails(result)">
-                {{ 'artemisApp.result.missing.viewPrevious' | artemisTranslate }}
-            </span>
-        </span>
-    </ng-container>
-    <ng-container *ngSwitchDefault>
-        <span class="text-body-secondary">
-            <fa-icon [icon]="farCircle" size="lg"></fa-icon>&nbsp;
-            <span> {{ (showUngradedResults ? 'artemisApp.result.noResult' : 'artemisApp.result.noGradedResult') | artemisTranslate }}</span>
-        </span>
-    </ng-container>
+        }
+    }
 </ng-container>

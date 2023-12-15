@@ -1,35 +1,53 @@
 <form name="deleteForm" (ngSubmit)="confirmDelete()" #deleteForm="ngForm">
     <div class="modal-header">
-        <h4 class="modal-title" [ngSwitch]="actionType">
-            <span *ngSwitchCase="actionTypes.Delete" jhiTranslate="entity.delete.title">Confirm delete operation</span>
-            <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.reset.title">Confirm reset operation</span>
-            <span *ngSwitchCase="actionTypes.Cleanup" jhiTranslate="entity.cleanup.title">Confirm cleanup operation</span>
-            <span *ngSwitchCase="actionTypes.Remove" jhiTranslate="entity.remove.title">Confirm remove operation</span>
-            <span *ngSwitchCase="actionTypes.Unlink" jhiTranslate="entity.unlink.title">Confirm unlink operation</span>
-            <span *ngSwitchCase="actionTypes.NoButtonTextDelete" jhiTranslate="entity.noButtonTextDelete.title">Confirm delete operation</span>
-            <span *ngSwitchCase="actionTypes.EndNow" jhiTranslate="entity.endNow.title">Confirm end now operation</span>
+        <h4 class="modal-title">
+            @switch (actionType) {
+                @case (actionTypes.Delete) {
+                    <span jhiTranslate="entity.delete.title">Confirm delete operation</span>
+                }
+                @case (actionTypes.Reset) {
+                    <span jhiTranslate="entity.reset.title">Confirm reset operation</span>
+                }
+                @case (actionTypes.Cleanup) {
+                    <span jhiTranslate="entity.cleanup.title">Confirm cleanup operation</span>
+                }
+                @case (actionTypes.Remove) {
+                    <span jhiTranslate="entity.remove.title">Confirm remove operation</span>
+                }
+                @case (actionTypes.Unlink) {
+                    <span jhiTranslate="entity.unlink.title">Confirm unlink operation</span>
+                }
+                @case (actionTypes.NoButtonTextDelete) {
+                    <span jhiTranslate="entity.noButtonTextDelete.title">Confirm delete operation</span>
+                }
+                @case (actionTypes.EndNow) {
+                    <span jhiTranslate="entity.endNow.title">Confirm end now operation</span>
+                }
+            }
         </h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
         <p [jhiTranslate]="deleteQuestion" [translateValues]="translateValues">Are you sure you want to delete?</p>
-        <div *ngIf="additionalChecks">
-            <div *ngFor="let checkKey of objectKeys(additionalChecks); let i = index">
-                <div class="checkbox" *ngIf="additionalChecks[checkKey]">
-                    <div class="control-label text-danger form-check">
-                        <input id="additional-check-{{ i }}" type="checkbox" name="checkbox" class="form-check-input" [(ngModel)]="additionalChecksValues[checkKey]" />
-                        <label for="additional-check-{{ i }}" class="form-check-label">{{ additionalChecks[checkKey] | artemisTranslate }}</label>
+        @if (additionalChecks) {
+            <div>
+                @for (checkKey of objectKeys(additionalChecks); track checkKey; let i = $index) {
+                    <div>
+                        @if (additionalChecks[checkKey]) {
+                            <div class="checkbox">
+                                <div class="control-label text-danger form-check">
+                                    <input id="additional-check-{{ i }}" type="checkbox" name="checkbox" class="form-check-input" [(ngModel)]="additionalChecksValues[checkKey]" />
+                                    <label for="additional-check-{{ i }}" class="form-check-label">{{ additionalChecks[checkKey] | artemisTranslate }}</label>
+                                </div>
+                            </div>
+                        }
                     </div>
-                </div>
+                }
             </div>
-        </div>
-        <jhi-confirm-entity-name
-            *ngIf="deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)"
-            [confirmationText]="deleteConfirmationText"
-            [entityName]="entityTitle"
-            [(ngModel)]="confirmEntityName"
-            name="confirmEntityName"
-        />
+        }
+        @if (deleteConfirmationText && (!requireConfirmationOnlyForAdditionalChecks || isAnyAdditionalCheckSelected)) {
+            <jhi-confirm-entity-name [confirmationText]="deleteConfirmationText" [entityName]="entityTitle" [(ngModel)]="confirmEntityName" name="confirmEntityName" />
+        }
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()" [disabled]="submitDisabled">
@@ -41,17 +59,40 @@
             [ngClass]="['btn', buttonType]"
             [style.cursor]="deleteForm.invalid || submitDisabled ? 'not-allowed' : 'pointer'"
             [disabled]="deleteForm.invalid || submitDisabled"
-            [ngSwitch]="actionType"
         >
-            <span *ngIf="submitDisabled"><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
-            <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>&nbsp;
-            <span *ngSwitchCase="actionTypes.Delete" jhiTranslate="entity.action.delete">Delete</span>
-            <span *ngSwitchCase="actionTypes.Reset" jhiTranslate="entity.action.reset">Reset</span>
-            <span *ngSwitchCase="actionTypes.Cleanup" jhiTranslate="entity.action.cleanup">Cleanup</span>
-            <span *ngSwitchCase="actionTypes.Remove" jhiTranslate="entity.action.remove">Remove</span>
-            <span *ngSwitchCase="actionTypes.Unlink" jhiTranslate="entity.action.unlink">Unlink</span>
-            <span *ngSwitchCase="actionTypes.NoButtonTextDelete" jhiTranslate="entity.action.delete">Delete</span>
-            <span *ngSwitchCase="actionTypes.EndNow" jhiTranslate="entity.action.endNow">End Now</span>
+            @if (submitDisabled) {
+                <span><fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>&nbsp;</span>
+            }
+            @switch (actionType) {
+                @case (actionTypes.Delete) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash"></fa-icon>
+                    <span jhiTranslate="entity.action.delete">Delete</span>
+                }
+                @case (actionTypes.Reset) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faUndo"></fa-icon>
+                    <span jhiTranslate="entity.action.reset">Reset</span>
+                }
+                @case (actionTypes.Cleanup) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>
+                    <span jhiTranslate="entity.action.cleanup">Cleanup</span>
+                }
+                @case (actionTypes.Remove) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash"></fa-icon>
+                    <span jhiTranslate="entity.action.remove">Remove</span>
+                }
+                @case (actionTypes.Unlink) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>
+                    <span jhiTranslate="entity.action.unlink">Unlink</span>
+                }
+                @case (actionTypes.NoButtonTextDelete) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTrash"></fa-icon>
+                    <span jhiTranslate="entity.action.delete">Delete</span>
+                }
+                @case (actionTypes.EndNow) {
+                    <fa-icon [icon]="useFaCheckIcon ? faCheck : faTimes"></fa-icon>
+                    <span jhiTranslate="entity.action.endNow">End Now</span>
+                }
+            }
         </button>
     </div>
 </form>

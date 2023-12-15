@@ -1,21 +1,19 @@
 <!-- If the exercise is not loaded or not programming, show regular component-->
-<jhi-exercise-assessment-dashboard *ngIf="!exercise || exercise.type !== ExerciseType.PROGRAMMING || !orionState; else withOrionButtons"></jhi-exercise-assessment-dashboard>
-
-<!-- If the exercise is programming, but not opened in Orion, show Orion open button-->
-<ng-template #withOrionButtons>
-    <jhi-exercise-assessment-dashboard *ngIf="orionState.opened !== exerciseId || orionState.view !== ExerciseView.TUTOR; else withTable">
-        <ng-template #overrideAssessmentTable>
-            <jhi-ide-button
-                [buttonLoading]="orionState.cloning"
-                buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.startYourParticipation' | artemisTranslate }}"
-                (clickHandler)="openAssessmentInOrion()"
-            >
-            </jhi-ide-button>
-        </ng-template>
-    </jhi-exercise-assessment-dashboard>
-
-    <!-- If the exercise is opened, show download submission buttons -->
-    <ng-template #withTable>
+@if (!exercise || exercise.type !== ExerciseType.PROGRAMMING || !orionState) {
+    <jhi-exercise-assessment-dashboard></jhi-exercise-assessment-dashboard>
+} @else {
+    @if (orionState.opened !== exerciseId || orionState.view !== ExerciseView.TUTOR) {
+        <jhi-exercise-assessment-dashboard>
+            <ng-template #overrideAssessmentTable>
+                <jhi-ide-button
+                    [buttonLoading]="orionState.cloning"
+                    buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.startYourParticipation' | artemisTranslate }}"
+                    (clickHandler)="openAssessmentInOrion()"
+                >
+                </jhi-ide-button>
+            </ng-template>
+        </jhi-exercise-assessment-dashboard>
+    } @else {
         <jhi-exercise-assessment-dashboard>
             <ng-template #overrideOpenAssessmentButton let-submission="submission" let-queryParams="queryParams" let-buttonLabel="buttonLabel" let-disabled="disabled">
                 <jhi-ide-button
@@ -28,5 +26,7 @@
                 </jhi-ide-button>
             </ng-template>
         </jhi-exercise-assessment-dashboard>
-    </ng-template>
-</ng-template>
+    }
+    <!-- If the exercise is opened, show download submission buttons -->
+}
+<!-- If the exercise is programming, but not opened in Orion, show Orion open button-->

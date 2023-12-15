@@ -367,10 +367,6 @@ public class NotificationTargetFactory {
      * @return viable URL to the notification related page
      */
     public static String extractNotificationUrl(Post post, String baseUrl) {
-        if (!post.getCourse().getCourseInformationSharingConfiguration().isMessagingEnabled() || post.getConversation() == null) {
-            // e.g. http://localhost:8080/courses/1/discussion?searchText=%2382
-            return baseUrl + "/courses/" + post.getCourse().getId() + "/discussion?searchText=%23" + post.getId();
-        }
         // e.g. http://localhost:8080/courses/1/messages?conversationId=123
         return baseUrl + "/courses/" + post.getCourse().getId() + "/messages?conversationId=" + post.getConversation().getId();
     }
