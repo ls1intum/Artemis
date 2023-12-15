@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync } from '@angular/core/testing';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { MockProvider } from 'ng-mocks';
@@ -23,6 +23,7 @@ import dayjs from 'dayjs/esm';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
 import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { Post } from 'app/entities/metis/post.model';
 
 describe('MetisConversationService', () => {
     let metisConversationService: MetisConversationService;
@@ -387,6 +388,18 @@ describe('MetisConversationService', () => {
         });
         expect(acceptStub).toHaveBeenCalledOnce();
     });
+
+    it('should handle new message', fakeAsync(() => {
+        const postDTO: MetisPostDTO = {
+            post: { author: { id: 456 }, content: 'Content', conversation: { id: 1 } } as Post,
+            action: MetisPostAction.CREATE,
+            notification: { title: 'title' },
+        };
+        metisConversationService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 0 } as ChannelDTO];
+
+        newOrUpdatedMessageSubject.next(postDTO);
+        expect(metisConversationService['conversationsOfUser'][0].unreadMessagesCount).toBe(1);
+    }));
 
     it('should mark messages as read', () => {
         metisConversationService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 1 } as ChannelDTO, { id: 2, unreadMessageCount: 1 } as ChannelDTO];
