@@ -6,7 +6,7 @@ import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-ed
 import { AeolusPreview, AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 
 @Component({
-    selector: 'jhi-programming-exercise-custom-build-plan',
+    selector: 'jhi-programming-exercise-custom-aeolus-build-plan',
     templateUrl: './programming-exercise-custom-aeolus-build-plan.component.html',
     styleUrls: ['../../programming-exercise-form.scss'],
 })
