@@ -139,7 +139,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             return;
         }
 
-        if (!this.conversationServiceInstantiated && this.messagesRouteLoaded) {
+        if (!this.conversationServiceInstantiated && (this.messagesRouteLoaded || this.communicationRouteLoaded)) {
             this.metisConversationService
                 .setUpConversationService(this.course!)
                 .pipe(takeUntil(this.ngUnsubscribe))
