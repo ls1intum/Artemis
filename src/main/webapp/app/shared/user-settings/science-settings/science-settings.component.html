@@ -12,43 +12,51 @@
             </span>
         </div>
     </div>
-    <button type="button" class="btn btn-primary" *ngIf="settingsChanged" id="apply-changes-button" (click)="this.saveSettings()">
-        <fa-icon class="ng" [icon]="faSave"></fa-icon>
-        {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
-    </button>
+    @if (settingsChanged) {
+        <button type="button" class="btn btn-primary" id="apply-changes-button" (click)="this.saveSettings()">
+            <fa-icon class="ng" [icon]="faSave"></fa-icon>
+            {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
+        </button>
+    }
 </div>
-<div class="list-group d-block" *ngIf="userSettings">
-    <div *ngFor="let settingGroup of userSettings.groups">
-        <div *jhiHasAnyAuthority="settingGroup.restrictionLevels" class="list-group-item">
-            <h3>
-                <!--GroupName-->
-                <!-- please look at the README.md file to understand how the translation works -->
-                {{ 'artemisApp.userSettings.settingGroupNames.' + settingGroup.key | artemisTranslate }}
-            </h3>
-            <div *ngFor="let setting of settingGroup.settings">
-                <dt>
-                    <!--SettingName-->
-                    {{ 'artemisApp.userSettings.settingNames.' + setting.key | artemisTranslate }}
-                </dt>
-                <span>
-                    <!--SettingDescription-->
-                    {{ 'artemisApp.userSettings.settingDescriptions.' + setting.descriptionKey | artemisTranslate }}
-                </span>
-                <!--Setting Specific Properties-->
-                <div class="d-flex">
-                    <div class="form-check pe-3">
-                        <input
-                            type="checkbox"
-                            class="form-check-input"
-                            [checked]="setting.active"
-                            id="{{ setting.settingId }}"
-                            value="{{ setting.active }}"
-                            (click)="toggleSetting($event)"
-                        />
-                        <label class="form-check-label" for="{{ setting.settingId }}">active</label>
-                    </div>
+@if (userSettings) {
+    <div class="list-group d-block">
+        @for (settingGroup of userSettings.groups; track settingGroup) {
+            <div>
+                <div *jhiHasAnyAuthority="settingGroup.restrictionLevels" class="list-group-item">
+                    <h3>
+                        <!--GroupName-->
+                        <!-- please look at the README.md file to understand how the translation works -->
+                        {{ 'artemisApp.userSettings.settingGroupNames.' + settingGroup.key | artemisTranslate }}
+                    </h3>
+                    @for (setting of settingGroup.settings; track setting) {
+                        <div>
+                            <dt>
+                                <!--SettingName-->
+                                {{ 'artemisApp.userSettings.settingNames.' + setting.key | artemisTranslate }}
+                            </dt>
+                            <span>
+                                <!--SettingDescription-->
+                                {{ 'artemisApp.userSettings.settingDescriptions.' + setting.descriptionKey | artemisTranslate }}
+                            </span>
+                            <!--Setting Specific Properties-->
+                            <div class="d-flex">
+                                <div class="form-check pe-3">
+                                    <input
+                                        type="checkbox"
+                                        class="form-check-input"
+                                        [checked]="setting.active"
+                                        id="{{ setting.settingId }}"
+                                        value="{{ setting.active }}"
+                                        (click)="toggleSetting($event)"
+                                    />
+                                    <label class="form-check-label" for="{{ setting.settingId }}">active</label>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
-        </div>
+        }
     </div>
-</div>
+}
