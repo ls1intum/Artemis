@@ -241,254 +241,274 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     getExerciseDetails() {
         const exercise = this.programmingExercise;
+        return [
+            this.getExerciseDetailsGeneralSection(exercise),
+            this.getExerciseDetailsModeSection(exercise),
+            this.getExerciseDetailsLanguageSection(exercise),
+            this.getExerciseDetailsProblemSection(exercise),
+            this.getExerciseDetailsGradingSection(exercise),
+        ] as DetailOverviewSection[];
+    }
+
+    getExerciseDetailsGeneralSection(exercise: ProgrammingExercise) {
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
+            details: [
+                exercise.course && {
+                    type: DetailType.Link,
+                    title: 'artemisApp.exercise.course',
+                    data: { text: exercise.course?.title, routerLink: ['/course-management', exercise.course?.id] },
+                },
+                exercise.exerciseGroup && {
+                    type: DetailType.Link,
+                    title: 'artemisApp.exercise.course',
+                    data: { text: exercise.exerciseGroup?.exam?.course?.id, routerLink: ['/course-management', exercise.exerciseGroup?.exam?.course?.id] },
+                },
+                exercise.exerciseGroup && {
+                    type: DetailType.Link,
+                    title: 'artemisApp.exercise.exam',
+                    data: {
+                        text: exercise.exerciseGroup?.exam?.title,
+                        routerLink: ['/course-management', exercise.exerciseGroup?.exam?.course?.id, 'exams', exercise.exerciseGroup?.exam?.id],
+                    },
+                },
+                { type: DetailType.Text, title: 'artemisApp.exercise.title', data: { text: exercise.title } },
+                { type: DetailType.Text, title: 'artemisApp.exercise.shortName', data: { text: exercise.shortName } },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.categories',
+                    data: { text: exercise.categories?.map((category) => category.category?.toUpperCase()).join(', ') },
+                },
+            ].filter(Boolean),
+        };
+    }
+
+    getExerciseDetailsModeSection(exercise: ProgrammingExercise) {
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
+            details: [
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.difficulty',
+                    data: { text: exercise.difficulty },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.mode',
+                    data: { text: exercise.mode },
+                },
+                exercise.teamAssignmentConfig && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.exercise.teamAssignmentConfig.teamSize',
+                    data: { text: `Min. ${exercise.teamAssignmentConfig.minTeamSize}, Max. ${exercise.teamAssignmentConfig.maxTeamSize}` },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.allowOfflineIde.title',
+                    data: { boolean: exercise.allowOfflineIde },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.allowOnlineEditor.title',
+                    data: { boolean: exercise.allowOnlineEditor },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.publishBuildPlanUrl',
+                    data: { boolean: exercise.publishBuildPlanUrl },
+                },
+                {},
+            ].filter(Boolean),
+        };
+    }
+
+    getExerciseDetailsLanguageSection(exercise: ProgrammingExercise) {
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
+            details: [
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.programmingLanguage',
+                    data: { text: exercise.programmingLanguage?.toUpperCase() },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.sequentialTestRuns.title',
+                    data: { boolean: exercise.sequentialTestRuns },
+                },
+                {
+                    type: DetailType.ProgrammingRepositoryButtons,
+                    title: 'artemisApp.programmingExercise.templateRepositoryUrl',
+                    data: { participation: exercise.templateParticipation, exerciseId: exercise.id, type: ProgrammingExerciseParticipationType.TEMPLATE },
+                },
+                {
+                    type: DetailType.ProgrammingRepositoryButtons,
+                    title: 'artemisApp.programmingExercise.solutionRepositoryUrl',
+                    data: { participation: exercise.solutionParticipation, exerciseId: exercise.id, type: ProgrammingExerciseParticipationType.SOLUTION },
+                },
+                {
+                    type: DetailType.ProgrammingRepositoryButtons,
+                    title: 'artemisApp.programmingExercise.testRepositoryUrl',
+                    data: { participation: { repositoryUrl: exercise.testRepositoryUrl }, exerciseId: exercise.id },
+                },
+                this.supportsAuxiliaryRepositories &&
+                    !!exercise.auxiliaryRepositories?.length && {
+                        type: DetailType.ProgrammingAuxiliaryRepositoryButtons,
+                        title: 'artemisApp.programmingExercise.auxiliaryRepositories',
+                        data: { auxiliaryRepositories: exercise.auxiliaryRepositories, exerciseId: exercise.id },
+                    },
+                {
+                    type: DetailType.Link,
+                    title: 'artemisApp.programmingExercise.templateBuildPlanId',
+                    data: { href: exercise.templateParticipation?.buildPlanUrl, text: exercise.templateParticipation?.buildPlanId },
+                },
+                {
+                    type: DetailType.Link,
+                    title: 'artemisApp.programmingExercise.solutionBuildPlanId',
+                    data: { href: exercise.solutionParticipation?.buildPlanUrl, text: exercise.solutionParticipation?.buildPlanId },
+                },
+                {
+                    type: DetailType.ProgrammingTestStatus,
+                    title: 'artemisApp.programmingExercise.templateResult',
+                    data: {
+                        exercise,
+                        participation: exercise.templateParticipation,
+                        loading: this.loadingTemplateParticipationResults,
+                        submissionRouterLink: exercise.templateParticipation && this.getParticipationSubmissionLink(exercise.templateParticipation.id!),
+                        onParticipationChange: this.onParticipationChange,
+                        type: ProgrammingExerciseParticipationType.TEMPLATE,
+                    },
+                },
+                {
+                    type: DetailType.ProgrammingTestStatus,
+                    title: 'artemisApp.programmingExercise.solutionResult',
+                    data: {
+                        exercise,
+                        participation: exercise.solutionParticipation,
+                        loading: this.loadingSolutionParticipationResults,
+                        submissionRouterLink: exercise.solutionParticipation && this.getParticipationSubmissionLink(exercise.solutionParticipation.id!),
+                        type: ProgrammingExerciseParticipationType.SOLUTION,
+                    },
+                },
+                {
+                    type: DetailType.ProgrammingDiffReport,
+                    title: 'artemisApp.programmingExercise.diffReport.lineStatLabel',
+                    data: {
+                        addedLineCount: this.addedLineCount,
+                        removedLineCount: this.removedLineCount,
+                        isLoadingDiffReport: this.isLoadingDiffReport,
+                        gitDiffReport: exercise.gitDiffReport,
+                    },
+                },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.recordTestwiseCoverage',
+                    data: { boolean: exercise.testwiseCoverageEnabled },
+                },
+                exercise.isAtLeastTutor &&
+                    exercise?.testwiseCoverageEnabled && {
+                        type: DetailType.Text,
+                        title: 'artemisApp.programmingExercise.coveredLineRatio',
+                        data: { text: exercise?.coveredLinesRatio ? (exercise.coveredLinesRatio * 100).toFixed(1) + ' %' : undefined },
+                    },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.packageName',
+                    data: { text: exercise.packageName },
+                },
+            ].filter(Boolean),
+        };
+    }
+
+    getExerciseDetailsProblemSection(exercise: ProgrammingExercise) {
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
+            details: [
+                {
+                    type: DetailType.ProgrammingProblemStatement,
+                    data: { exercise },
+                },
+            ].filter(Boolean),
+        };
+    }
+
+    getExerciseDetailsGradingSection(exercise: ProgrammingExercise) {
         const includedInScoreIsBoolean = exercise.includedInOverallScore != IncludedInOverallScore.INCLUDED_AS_BONUS;
         const includedInScore = {
             type: includedInScoreIsBoolean ? DetailType.Boolean : DetailType.Text,
             title: 'artemisApp.exercise.includedInOverallScore',
             data: { text: 'BONUS', boolean: exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY },
         };
-        return [
-            {
-                headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
-                details: [
-                    exercise.course && {
-                        type: DetailType.Link,
-                        title: 'artemisApp.exercise.course',
-                        data: { text: exercise.course?.title, routerLink: ['/course-management', exercise.course?.id] },
+        return {
+            headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
+            details: [
+                { type: DetailType.Text, title: 'artemisApp.exercise.points', data: { text: exercise.maxPoints } },
+                exercise.bonusPoints && { type: DetailType.Text, title: 'artemisApp.exercise.bonusPoints', data: { text: exercise.bonusPoints } },
+                includedInScore,
+                { type: DetailType.Boolean, title: 'artemisApp.exercise.presentationScoreEnabled.title', data: { boolean: exercise.presentationScoreEnabled } },
+                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.enableStaticCodeAnalysis.title', data: { boolean: exercise.staticCodeAnalysisEnabled } },
+                exercise.staticCodeAnalysisEnabled && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title',
+                    data: { text: exercise.maxStaticCodeAnalysisPenalty },
+                },
+                {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.title',
+                    data: {
+                        text: this.translateService.instant(
+                            'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' +
+                                (!exercise.submissionPolicy ? 'none' : exercise.submissionPolicy.type!) +
+                                '.title',
+                        ),
                     },
-                    exercise.exerciseGroup && {
-                        type: DetailType.Link,
-                        title: 'artemisApp.exercise.course',
-                        data: { text: exercise.exerciseGroup?.exam?.course?.id, routerLink: ['/course-management', exercise.exerciseGroup?.exam?.course?.id] },
-                    },
-                    exercise.exerciseGroup && {
-                        type: DetailType.Link,
-                        title: 'artemisApp.exercise.exam',
-                        data: {
-                            text: exercise.exerciseGroup?.exam?.title,
-                            routerLink: ['/course-management', exercise.exerciseGroup?.exam?.course?.id, 'exams', exercise.exerciseGroup?.exam?.id],
-                        },
-                    },
-                    { type: DetailType.Text, title: 'artemisApp.exercise.title', data: { text: exercise.title } },
-                    { type: DetailType.Text, title: 'artemisApp.exercise.shortName', data: { text: exercise.shortName } },
-                    {
+                },
+                exercise.submissionPolicy && {
+                    type: DetailType.Text,
+                    title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
+                    data: { text: exercise.submissionPolicy.submissionLimit },
+                },
+                exercise.submissionPolicy &&
+                    exercise.submissionPolicy.exceedingPenalty && {
                         type: DetailType.Text,
-                        title: 'artemisApp.exercise.categories',
-                        data: { text: exercise.categories?.map((category) => category.category?.toUpperCase()).join(', ') },
+                        title: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.detailLabel',
+                        data: { text: exercise.submissionPolicy.exceedingPenalty },
                     },
-                ].filter(Boolean),
-            },
-            {
-                headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle',
-                details: [
-                    {
-                        type: DetailType.Text,
-                        title: 'artemisApp.exercise.difficulty',
-                        data: { text: exercise.difficulty },
-                    },
-                    {
-                        type: DetailType.Text,
-                        title: 'artemisApp.exercise.mode',
-                        data: { text: exercise.mode },
-                    },
-                    exercise.teamAssignmentConfig && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.exercise.teamAssignmentConfig.teamSize',
-                        data: { text: `Min. ${exercise.teamAssignmentConfig.minTeamSize}, Max. ${exercise.teamAssignmentConfig.maxTeamSize}` },
-                    },
-                    {
-                        type: DetailType.Boolean,
-                        title: 'artemisApp.programmingExercise.allowOfflineIde.title',
-                        data: { boolean: exercise.allowOfflineIde },
-                    },
-                    {
-                        type: DetailType.Boolean,
-                        title: 'artemisApp.programmingExercise.allowOnlineEditor.title',
-                        data: { boolean: exercise.allowOnlineEditor },
-                    },
-                    {
-                        type: DetailType.Boolean,
-                        title: 'artemisApp.programmingExercise.publishBuildPlanUrl',
-                        data: { boolean: exercise.publishBuildPlanUrl },
-                    },
-                    {},
-                ].filter(Boolean),
-            },
-            {
-                headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
-                details: [
-                    {
-                        type: DetailType.Text,
-                        title: 'artemisApp.programmingExercise.programmingLanguage',
-                        data: { text: exercise.programmingLanguage?.toUpperCase() },
-                    },
-                    {
-                        type: DetailType.Boolean,
-                        title: 'artemisApp.programmingExercise.sequentialTestRuns.title',
-                        data: { boolean: exercise.sequentialTestRuns },
-                    },
-                    {
-                        type: DetailType.ProgrammingRepositoryButtons,
-                        title: 'artemisApp.programmingExercise.templateRepositoryUrl',
-                        data: { participation: exercise.templateParticipation, exerciseId: exercise.id, type: ProgrammingExerciseParticipationType.TEMPLATE },
-                    },
-                    {
-                        type: DetailType.ProgrammingRepositoryButtons,
-                        title: 'artemisApp.programmingExercise.solutionRepositoryUrl',
-                        data: { participation: exercise.solutionParticipation, exerciseId: exercise.id, type: ProgrammingExerciseParticipationType.SOLUTION },
-                    },
-                    {
-                        type: DetailType.ProgrammingRepositoryButtons,
-                        title: 'artemisApp.programmingExercise.testRepositoryUrl',
-                        data: { participation: { repositoryUrl: exercise.testRepositoryUrl }, exerciseId: exercise.id },
-                    },
-                    this.supportsAuxiliaryRepositories &&
-                        !!exercise.auxiliaryRepositories?.length && {
-                            type: DetailType.ProgrammingAuxiliaryRepositoryButtons,
-                            title: 'artemisApp.programmingExercise.auxiliaryRepositories',
-                            data: { auxiliaryRepositories: exercise.auxiliaryRepositories, exerciseId: exercise.id },
-                        },
-                    {
-                        type: DetailType.Link,
-                        title: 'artemisApp.programmingExercise.templateBuildPlanId',
-                        data: { href: exercise.templateParticipation?.buildPlanUrl, text: exercise.templateParticipation?.buildPlanId },
-                    },
-                    {
-                        type: DetailType.Link,
-                        title: 'artemisApp.programmingExercise.solutionBuildPlanId',
-                        data: { href: exercise.solutionParticipation?.buildPlanUrl, text: exercise.solutionParticipation?.buildPlanId },
-                    },
-                    {
-                        type: DetailType.ProgrammingTestStatus,
-                        title: 'artemisApp.programmingExercise.templateResult',
-                        data: {
-                            exercise,
-                            participation: exercise.templateParticipation,
-                            loading: this.loadingTemplateParticipationResults,
-                            submissionRouterLink: exercise.templateParticipation && this.getParticipationSubmissionLink(exercise.templateParticipation.id!),
-                            onParticipationChange: this.onParticipationChange,
-                            type: ProgrammingExerciseParticipationType.TEMPLATE,
-                        },
-                    },
-                    {
-                        type: DetailType.ProgrammingTestStatus,
-                        title: 'artemisApp.programmingExercise.solutionResult',
-                        data: {
-                            exercise,
-                            participation: exercise.solutionParticipation,
-                            loading: this.loadingSolutionParticipationResults,
-                            submissionRouterLink: exercise.solutionParticipation && this.getParticipationSubmissionLink(exercise.solutionParticipation.id!),
-                            type: ProgrammingExerciseParticipationType.SOLUTION,
-                        },
-                    },
-                    {
-                        type: DetailType.ProgrammingDiffReport,
-                        title: 'artemisApp.programmingExercise.diffReport.lineStatLabel',
-                        data: {
-                            addedLineCount: this.addedLineCount,
-                            removedLineCount: this.removedLineCount,
-                            isLoadingDiffReport: this.isLoadingDiffReport,
-                            gitDiffReport: exercise.gitDiffReport,
-                        },
-                    },
-                    {
-                        type: DetailType.Boolean,
-                        title: 'artemisApp.programmingExercise.recordTestwiseCoverage',
-                        data: { boolean: exercise.testwiseCoverageEnabled },
-                    },
-                    exercise.isAtLeastTutor &&
-                        exercise?.testwiseCoverageEnabled && {
-                            type: DetailType.Text,
-                            title: 'artemisApp.programmingExercise.coveredLineRatio',
-                            data: { text: exercise?.coveredLinesRatio ? (exercise.coveredLinesRatio * 100).toFixed(1) + ' %' : undefined },
-                        },
-                    {
-                        type: DetailType.Text,
-                        title: 'artemisApp.programmingExercise.packageName',
-                        data: { text: exercise.packageName },
-                    },
-                ].filter(Boolean),
-            },
-            {
-                headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
-                details: [
-                    {
-                        type: DetailType.ProgrammingProblemStatement,
-                        data: { exercise },
-                    },
-                ].filter(Boolean),
-            },
-            {
-                headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
-                details: [
-                    { type: DetailType.Text, title: 'artemisApp.exercise.points', data: { text: exercise.maxPoints } },
-                    exercise.bonusPoints && { type: DetailType.Text, title: 'artemisApp.exercise.bonusPoints', data: { text: exercise.bonusPoints } },
-                    includedInScore,
-                    { type: DetailType.Boolean, title: 'artemisApp.exercise.presentationScoreEnabled.title', data: { boolean: exercise.presentationScoreEnabled } },
-                    { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.enableStaticCodeAnalysis.title', data: { boolean: exercise.staticCodeAnalysisEnabled } },
-                    exercise.staticCodeAnalysisEnabled && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title',
-                        data: { text: exercise.maxStaticCodeAnalysisPenalty },
-                    },
-                    {
-                        type: DetailType.Text,
-                        title: 'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.title',
-                        data: {
-                            text: this.translateService.instant(
-                                'artemisApp.programmingExercise.submissionPolicy.submissionPolicyType.' +
-                                    (!exercise.submissionPolicy ? 'none' : exercise.submissionPolicy.type!) +
-                                    '.title',
-                            ),
-                        },
-                    },
-                    exercise.submissionPolicy && {
-                        type: DetailType.Text,
-                        title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
-                        data: { text: exercise.submissionPolicy.submissionLimit },
-                    },
-                    exercise.submissionPolicy &&
-                        exercise.submissionPolicy.exceedingPenalty && {
-                            type: DetailType.Text,
-                            title: 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.detailLabel',
-                            data: { text: exercise.submissionPolicy.exceedingPenalty },
-                        },
-                    { type: DetailType.ProgrammingTimeline, title: 'artemisApp.programmingExercise.timeline.timelineLabel', data: { exercise, isExamMode: this.isExamExercise } },
-                    {
-                        type: DetailType.Boolean,
-                        title: 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
-                        data: { boolean: exercise.allowComplaintsForAutomaticAssessments },
-                    },
-                    { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.timeline.manualFeedbackRequests', data: { boolean: exercise.allowManualFeedbackRequests } },
-                    { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.showTestNamesToStudents', data: { boolean: exercise.showTestNamesToStudents } },
-                    {
-                        type: DetailType.Boolean,
-                        title: 'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution',
-                        data: { boolean: exercise.releaseTestsWithExampleSolution },
-                    },
-                    { type: DetailType.Markdown, title: 'artemisApp.exercise.assessmentInstructions', data: { innerHtml: this.formattedGradingInstructions } },
-                    exercise.gradingCriteria && {
-                        type: DetailType.GradingCriteria,
-                        title: 'artemisApp.exercise.structuredAssessmentInstructions',
-                        data: { gradingCriteria: exercise.gradingCriteria },
-                    },
-                    this.irisEnabled &&
-                        this.irisChatEnabled &&
-                        exercise.course &&
-                        !this.isExamExercise && {
+                { type: DetailType.ProgrammingTimeline, title: 'artemisApp.programmingExercise.timeline.timelineLabel', data: { exercise, isExamMode: this.isExamExercise } },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment',
+                    data: { boolean: exercise.allowComplaintsForAutomaticAssessments },
+                },
+                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.timeline.manualFeedbackRequests', data: { boolean: exercise.allowManualFeedbackRequests } },
+                { type: DetailType.Boolean, title: 'artemisApp.programmingExercise.showTestNamesToStudents', data: { boolean: exercise.showTestNamesToStudents } },
+                {
+                    type: DetailType.Boolean,
+                    title: 'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution',
+                    data: { boolean: exercise.releaseTestsWithExampleSolution },
+                },
+                { type: DetailType.Markdown, title: 'artemisApp.exercise.assessmentInstructions', data: { innerHtml: this.formattedGradingInstructions } },
+                exercise.gradingCriteria && {
+                    type: DetailType.GradingCriteria,
+                    title: 'artemisApp.exercise.structuredAssessmentInstructions',
+                    data: { gradingCriteria: exercise.gradingCriteria },
+                },
+                this.irisEnabled &&
+                    this.irisChatEnabled &&
+                    exercise.course &&
+                    !this.isExamExercise && {
                             type: DetailType.ProgrammingIrisEnabled,
                             title: 'artemisApp.iris.settings.subSettings.enabled.chat',
                             data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.CHAT },
-                        },
-                    {
-                        type: DetailType.ProgrammingBuildStatistics,
-                        title: 'artemisApp.programmingExercise.buildLogStatistics.title',
-                        titleHelpText: 'artemisApp.programmingExercise.buildLogStatistics.tooltip',
-                        data: { buildLogStatistics: exercise.buildLogStatistics },
                     },
-                ].filter(Boolean),
-            },
-        ] as DetailOverviewSection[];
+                {
+                    type: DetailType.ProgrammingBuildStatistics,
+                    title: 'artemisApp.programmingExercise.buildLogStatistics.title',
+                    titleHelpText: 'artemisApp.programmingExercise.buildLogStatistics.tooltip',
+                    data: { buildLogStatistics: exercise.buildLogStatistics },
+                },
+            ].filter(Boolean),
+        };
     }
 
     private checkBuildPlanEditable() {

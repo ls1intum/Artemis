@@ -55,7 +55,6 @@ export class QuizExerciseLifecycleButtonsComponent {
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
-                this.loadOne.emit(this.quizExercise.id!);
             },
         });
     }
@@ -70,7 +69,6 @@ export class QuizExerciseLifecycleButtonsComponent {
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
-                this.loadOne.emit(this.quizExercise.id!);
             },
         });
     }
@@ -100,7 +98,6 @@ export class QuizExerciseLifecycleButtonsComponent {
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
-                this.loadOne.emit(this.quizExercise.id!);
             },
         });
     }
@@ -115,7 +112,6 @@ export class QuizExerciseLifecycleButtonsComponent {
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
-                this.loadOne.emit(this.quizExercise.id!);
             },
         });
     }
@@ -130,12 +126,12 @@ export class QuizExerciseLifecycleButtonsComponent {
             },
             error: (res: HttpErrorResponse) => {
                 this.onError(res);
-                this.loadOne.emit(this.quizExercise.id!);
             },
         });
     }
 
     private onError(error: HttpErrorResponse) {
         this.alertService.error(error.headers.get('X-artemisApp-error')!);
+        this.loadOne.emit(this.quizExercise.id!);
     }
 }
