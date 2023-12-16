@@ -19,6 +19,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; quizExamChange: boolean; exercise?: Exercise; forceSave: boolean }>();
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
+    faEdit = faEdit;
 
     readonly ExerciseType = ExerciseType;
 
