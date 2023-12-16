@@ -4,11 +4,6 @@ import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
-import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
-import { onError } from 'app/shared/util/global.utils';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -18,7 +13,6 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     @Input() exam: Exam;
     @Input() getExamRoutesByIdentifier: any;
 
-    quizPool: QuizPool = new QuizPool();
     examChecklist: ExamChecklist;
     isLoading = false;
     pointsExercisesEqual = false;
@@ -46,8 +40,6 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     constructor(
         private examChecklistService: ExamChecklistService,
         private websocketService: JhiWebsocketService,
-        private alertService: AlertService,
-        private quizPoolService: QuizPoolService,
     ) {}
 
     ngOnInit() {
@@ -60,19 +52,6 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         const abandonedTopic = this.examChecklistService.getAbandonedTopic(this.exam);
         this.websocketService.subscribe(abandonedTopic);
         this.websocketService.receive(abandonedTopic).subscribe(() => (this.numberOfAbandoned += 1));
-        if (this.exam && this.exam.course) {
-            this.quizPoolService.find(this.exam.course.id!, this.exam.id!).subscribe({
-                next: (response: HttpResponse<QuizPool>) => {
-                    this.quizPool = response.body!;
-                },
-                error: (error: HttpErrorResponse) => {
-                    // do nothing on 404 error (the exam just has no quiz pool, continue)
-                    if (error.status !== 404) {
-                        onError(this.alertService, error);
-                    }
-                },
-            });
-        }
     }
 
     ngOnChanges() {
