@@ -866,9 +866,9 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     toggleScrollLock(lockParent: boolean): void {
         if (lockParent) {
-            document.body.classList.add('cdk-global-scrollblock');
+            document.body.classList.add('cdk-global-scroll');
         } else {
-            document.body.classList.remove('cdk-global-scrollblock');
+            document.body.classList.remove('cdk-global-scroll');
         }
     }
 
@@ -891,11 +891,11 @@ export class IrisChatbotWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     getConvertedErrorMap() {
         if (this.error?.paramsMap) {
-            if (typeof this.error.paramsMap === 'object') {
-                return this.error.paramsMap;
-            } else {
+            // Check if paramsMap is iterable.
+            if (typeof this.error?.paramsMap[Symbol.iterator] === 'function') {
                 return Object.fromEntries(this.error.paramsMap);
             }
+            return this.error.paramsMap;
         }
         return null;
     }

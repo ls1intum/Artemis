@@ -96,7 +96,7 @@
                             <hr />
                             <!-- Exercise Group table -->
                             <jhi-exam-checklist-exercisegroup-table
-                                [quizPoolMaxPoints]="quizPool.maxPoints"
+                                [quizExamMaxPoints]="exam.quizExamMaxPoints ?? 0"
                                 [exerciseGroups]="exam.exerciseGroups || []"
                             ></jhi-exam-checklist-exercisegroup-table>
                         </td>
