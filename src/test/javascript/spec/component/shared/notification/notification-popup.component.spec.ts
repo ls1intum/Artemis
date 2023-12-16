@@ -166,14 +166,14 @@ describe('Notification Popup Component', () => {
             replay.next(examExerciseUpdateNotification);
         };
 
-        it('should prepend received notification', fakeAsync(() => {
+        it('should append received notification', fakeAsync(() => {
             jest.spyOn(router, 'isActive').mockReturnValue(false);
             replaceSubscribeToNotificationUpdatesUsingQuizNotification();
             const otherNotification = generateQuizNotification(2);
             notificationPopupComponent.notifications = [otherNotification];
             notificationPopupComponent.ngOnInit();
             expect(notificationPopupComponent.notifications).toHaveLength(2);
-            expect(notificationPopupComponent.notifications[0]).toEqual(quizNotification);
+            expect(notificationPopupComponent.notifications[1]).toEqual(quizNotification);
             tick(30000);
             expect(notificationPopupComponent.notifications).toHaveLength(1);
             expect(notificationPopupComponent.notifications[0]).toEqual(otherNotification);
@@ -202,13 +202,18 @@ describe('Notification Popup Component', () => {
             expect(notificationPopupComponent.notifications).not.toBeEmpty();
         });
 
-        it('should add received message notification', () => {
+        it('should add and remove received message notification', fakeAsync(() => {
             jest.spyOn(router, 'isActive').mockReturnValue(true);
             const replay = new ReplaySubject<Notification>();
             jest.spyOn(notificationService, 'subscribeToSingleIncomingNotifications').mockReturnValue(replay);
             replay.next(newMessageNotification);
             notificationPopupComponent.ngOnInit();
             expect(notificationPopupComponent.notifications).not.toBeEmpty();
-        });
+            notificationPopupComponentFixture.detectChanges();
+            tick();
+            expect(notificationPopupComponent['scrollContainer'].nativeElement.scrollTop).toBe(notificationPopupComponent['scrollContainer'].nativeElement.scrollHeight);
+            tick(10000);
+            expect(notificationPopupComponent.notifications).toBeEmpty();
+        }));
     });
 });

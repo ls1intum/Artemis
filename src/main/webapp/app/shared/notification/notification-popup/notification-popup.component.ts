@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, IsActiveMatchOptions, Params, Router, UrlTree } from '@angular/router';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import {
@@ -54,6 +54,9 @@ export class NotificationPopupComponent implements OnInit {
 
     LiveExamExerciseUpdateNotificationTitleHtmlConst = LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
     QuizNotificationTitleHtmlConst = 'Quiz started';
+
+    @ViewChild('scrollContainer')
+    private scrollContainer: ElementRef;
 
     private studentExamExerciseIds: number[];
 
@@ -176,7 +179,7 @@ export class NotificationPopupComponent implements OnInit {
             if (notification.title && conversationMessageNotificationTitles.includes(notification.title)) {
                 if (this.notificationSettingsService.isNotificationAllowedBySettings(notification)) {
                     this.addMessageNotification(notification);
-                    this.setRemovalTimeout(notification);
+                    this.setRemovalTimeout(notification, 10);
                 }
             }
         }
@@ -190,9 +193,22 @@ export class NotificationPopupComponent implements OnInit {
         if (notification.target) {
             const target = JSON.parse(notification.target);
             if (!this.isUnderMessagesTabOfSpecificCourse(target.course)) {
-                this.notifications.unshift(notification);
+                this.displayNotification(notification);
             }
         }
+    }
+
+    /**
+     * Appends the new notification to the existing list of notification. It also scrolls to the bottom of the notification list in the viewport.
+     * @param notification the new notification
+     */
+    private displayNotification(notification: Notification) {
+        this.notifications.push(notification);
+        setTimeout(() => {
+            if (this.scrollContainer?.nativeElement) {
+                this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
+            }
+        });
     }
 
     /**
@@ -222,7 +238,7 @@ export class NotificationPopupComponent implements OnInit {
                 !this.router.isActive(this.notificationTargetRoute(notificationWithLiveQuizTarget) + '/live', matchOptions)
             ) {
                 notification.target = notificationWithLiveQuizTarget.target;
-                this.notifications.unshift(notification);
+                this.displayNotification(notification);
             }
         }
     }
@@ -243,7 +259,7 @@ export class NotificationPopupComponent implements OnInit {
         // only show pop-up if explicit notification text was set and only inside exam mode
         const matchOptions = { paths: 'exact', queryParams: 'exact', fragment: 'ignored', matrixParams: 'ignored' } as IsActiveMatchOptions; // corresponds to exact = true
         if (notification.text != undefined && this.router.isActive(this.notificationTargetRoute(notification), matchOptions)) {
-            this.notifications.unshift(notification);
+            this.displayNotification(notification);
         }
     }
 
@@ -274,9 +290,15 @@ export class NotificationPopupComponent implements OnInit {
         }
     }
 
-    private setRemovalTimeout(notification: Notification): void {
+    /**
+     * Sets the removal timeout for a displayed notification
+     *
+     * @param notification  the notification to remove
+     * @param timeoutInSec  time span after which the notification should be removed, 30 sec by default
+     */
+    private setRemovalTimeout(notification: Notification, timeoutInSec = 30): void {
         setTimeout(() => {
             this.notifications = this.notifications.filter(({ id }) => id !== notification.id);
-        }, 30000);
+        }, timeoutInSec * 1000);
     }
 }
