@@ -578,7 +578,6 @@ export class MetisService implements OnDestroy {
             this.currentPostContextFilter.courseWideChannelIds?.length && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId);
         const postIsNotCourseWide = !getAsChannelDto(postDTO.post.conversation)?.isCourseWide;
 
-        console.log(postDTO);
         if (postIsNotFromCurrentConversation || postIsNotFromSelectedCourseWideChannels || postIsNotCourseWide) {
             return;
         }
