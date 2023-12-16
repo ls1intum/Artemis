@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
@@ -34,9 +35,13 @@ public class ModelingPlagiarismDetectionService {
 
     private final PlagiarismCacheService plagiarismCacheService;
 
-    public ModelingPlagiarismDetectionService(PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService) {
+    private final AuthorizationCheckService authCheckService;
+
+    public ModelingPlagiarismDetectionService(PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService,
+            AuthorizationCheckService authCheckService) {
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -201,8 +206,10 @@ public class ModelingPlagiarismDetectionService {
      * @return List containing the latest modeling submission for every participation
      */
     public List<ModelingSubmission> modelingSubmissionsForComparison(ModelingExercise exerciseWithParticipationsAndSubmissions) {
-        return exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().map(Participation::findLatestSubmission).filter(Optional::isPresent)
-                .map(Optional::get).filter(submission -> submission instanceof ModelingSubmission).map(submission -> (ModelingSubmission) submission).toList();
+        return exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().filter(participation -> participation.getStudent().isPresent())
+                .filter(participation -> !authCheckService.isAtLeastTeachingAssistantForExercise(exerciseWithParticipationsAndSubmissions, participation.getStudent().get()))
+                .map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof ModelingSubmission)
+                .map(submission -> (ModelingSubmission) submission).toList();
     }
 
 }
