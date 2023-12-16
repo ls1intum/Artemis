@@ -190,9 +190,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     getFormDataAndProblemStatement = (): Record<string, unknown> => {
         const getValue = function (fieldName: string) {
-            const value = (<HTMLInputElement>document.getElementById(fieldName))?.value || null;
-            console.log('Value of ' + fieldName + ': ' + value);
-            return value;
+            return (<HTMLInputElement>document.getElementById(fieldName))?.value || null;
         };
         return {
             problemStatement: this.programmingExercise.problemStatement,
