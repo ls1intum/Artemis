@@ -92,10 +92,6 @@ export class CourseCommunicationPage {
         this.getSinglePost(postID).find('.pin').click();
     }
 
-    archivePost(postID: number) {
-        this.getSinglePost(postID).find('.archive').click();
-    }
-
     deletePost(postID: number) {
         this.getSinglePost(postID).find('.deleteIcon').click().click();
     }

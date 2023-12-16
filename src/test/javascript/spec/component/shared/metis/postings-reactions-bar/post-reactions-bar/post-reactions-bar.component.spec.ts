@@ -130,7 +130,7 @@ describe('PostReactionsBarComponent', () => {
             },
         });
         // set correct tooltips for tutor and post that is not pinned and not archived
-        expect(component.pinTooltip).toBe('artemisApp.metis.pinPostTutorTooltip');
+        expect(component.pinTooltip).toBe('artemisApp.metis.pinPostTooltip');
     });
 
     it.each`
@@ -175,7 +175,7 @@ describe('PostReactionsBarComponent', () => {
         expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(component.posting.id!, DisplayPriority.PINNED);
         component.ngOnChanges();
         // set correct tooltips for tutor and post that is pinned and not archived
-        expect(component.pinTooltip).toBe('artemisApp.metis.removePinPostTutorTooltip');
+        expect(component.pinTooltip).toBe('artemisApp.metis.removePinPostTooltip');
     });
 
     it('should show non-clickable pin emoji with correct tooltip for student when post is pinned', () => {

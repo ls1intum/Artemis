@@ -50,10 +50,10 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
      */
     ngOnInit() {
         super.ngOnInit();
-        this.resetTooltipsAndPriority();
 
         const currentConversation = this.metisService.getCurrentConversation();
         this.setCanPin(currentConversation);
+        this.resetTooltipsAndPriority();
     }
 
     /**
@@ -115,10 +115,10 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
      */
     getPinTooltip(): string {
         if (this.canPin && this.displayPriority === DisplayPriority.PINNED) {
-            return 'artemisApp.metis.removePinPostTutorTooltip';
+            return 'artemisApp.metis.removePinPostTooltip';
         }
         if (this.canPin && this.displayPriority !== DisplayPriority.PINNED) {
-            return 'artemisApp.metis.pinPostTutorTooltip';
+            return 'artemisApp.metis.pinPostTooltip';
         }
         return 'artemisApp.metis.pinnedPostTooltip';
     }
