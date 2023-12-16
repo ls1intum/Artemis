@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisExerciseCreationSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.iris.IrisHealthIndicator;
 import de.tum.in.www1.artemis.service.connectors.iris.dto.IrisStatusDTO;
@@ -134,7 +133,7 @@ public class IrisExerciseCreationSessionResource {
      * @return a status {@code 200 (Ok)} and with body true if Iris is active, false otherwise
      */
     @GetMapping("/exercise-creations-sessions/{sessionId}/active")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastEditor
     public ResponseEntity<Boolean> isIrisActive(@PathVariable Long sessionId) {
         var session = irisExerciseCreationSessionRepository.findByIdElseThrow(sessionId);
         var user = userRepository.getUser();
