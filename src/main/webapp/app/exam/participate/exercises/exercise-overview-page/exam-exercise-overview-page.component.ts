@@ -23,8 +23,6 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     readonly ExerciseType = ExerciseType;
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
-    quizExamIcon = faEdit;
-    quizExamIconStatus = 'synced';
     quizIconTooltip: string;
     quizIcon: IconProp;
 
@@ -65,15 +63,6 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         return this.examParticipationService.getExerciseButtonTooltip(exercise);
-    }
-
-    /**
-     * Get tooltip for quiz exam button
-     *
-     * @return synced
-     */
-    getQuizExamButtonTooltip(): ButtonTooltipType {
-        return 'synced';
     }
 
     /**
