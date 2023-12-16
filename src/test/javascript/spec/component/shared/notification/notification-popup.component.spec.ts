@@ -212,7 +212,7 @@ describe('Notification Popup Component', () => {
             notificationPopupComponentFixture.detectChanges();
             tick();
             expect(notificationPopupComponent['scrollContainer'].nativeElement.scrollTop).toBe(notificationPopupComponent['scrollContainer'].nativeElement.scrollHeight);
-            tick(10000);
+            tick(15000);
             expect(notificationPopupComponent.notifications).toBeEmpty();
         }));
     });

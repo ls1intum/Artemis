@@ -179,7 +179,7 @@ export class NotificationPopupComponent implements OnInit {
             if (notification.title && conversationMessageNotificationTitles.includes(notification.title)) {
                 if (this.notificationSettingsService.isNotificationAllowedBySettings(notification)) {
                     this.addMessageNotification(notification);
-                    this.setRemovalTimeout(notification, 10);
+                    this.setRemovalTimeout(notification, 15);
                 }
             }
         }
