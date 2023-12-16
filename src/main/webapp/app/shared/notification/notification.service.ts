@@ -488,9 +488,13 @@ export class NotificationService {
 
     private handleNewPostDTO = (postDTO: MetisPostDTO): void => {
         if (postDTO.post?.answers) {
-            postDTO.post.answers = [...postDTO.post.answers];
-            postDTO.post.answers.forEach((answer) => (answer.post = { ...postDTO.post, answers: [] }));
+            postDTO.post.answers.forEach((answer) => {
+                answer.post = { ...postDTO.post, answers: [], reactions: [] };
+                answer.creationDate = dayjs(answer.creationDate);
+            });
         }
+
+        postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
 
         if (postDTO.post.conversation?.lastMessageDate) {
             postDTO.post.conversation.lastMessageDate = convertDateFromServer(postDTO.post.conversation?.lastMessageDate);
