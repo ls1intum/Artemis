@@ -294,11 +294,13 @@ export const metisLectureChannel = {
 
 export const metisChannel = {
     id: 16,
+    type: ConversationType.CHANNEL,
     name: 'example-channel',
     description: 'Example course-wide channel',
     isAnnouncementChannel: false,
     isArchived: false,
     isPublic: true,
+    isCourseWide: true,
 } as Channel;
 
 export const metisPostInChannel = {

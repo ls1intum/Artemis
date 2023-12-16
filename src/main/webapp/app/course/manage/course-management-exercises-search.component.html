@@ -35,9 +35,11 @@
                     {{ 'artemisApp.course.exercise.search.labelExerciseType' | artemisTranslate }}
                 </label>
                 <select id="exercise-search-type-input" class="form-select" [(ngModel)]="exerciseTypeSearch" (ngModelChange)="sendUpdate()">
-                    <option *ngFor="let optionValue of typeOptions" [value]="optionValue">
-                        {{ 'artemisApp.course.exercise.search.type.' + optionValue | artemisTranslate }}
-                    </option>
+                    @for (optionValue of typeOptions; track optionValue) {
+                        <option [value]="optionValue">
+                            {{ 'artemisApp.course.exercise.search.type.' + optionValue | artemisTranslate }}
+                        </option>
+                    }
                 </select>
             </div>
         </div>

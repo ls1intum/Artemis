@@ -1,15 +1,25 @@
-<div class="mx-2">
-    <a *ngIf="titleLink" [routerLink]="titleLink">
+<div class="mx-2 d-flex flex-column justify-content-between h-100">
+    @if (titleLink) {
+        <a [routerLink]="titleLink">
+            <h4 class="text-center">{{ 'exercise-statistics.' + doughnutChartTitle | artemisTranslate }}</h4>
+        </a>
+    }
+    @if (!titleLink) {
         <h4 class="text-center">{{ 'exercise-statistics.' + doughnutChartTitle | artemisTranslate }}</h4>
-    </a>
-    <h4 *ngIf="!titleLink" class="text-center">{{ 'exercise-statistics.' + doughnutChartTitle | artemisTranslate }}</h4>
+    }
     <div class="doughnut-chart-container" [ngClass]="titleLink ? 'clickable' : ''" (click)="openCorrespondingPage()">
         <div class="doughnut-chart-text">
-            <h2 *ngIf="receivedStats" class="text-center">{{ currentPercentage }}%</h2>
-            <h4 *ngIf="receivedStats" class="text-center">{{ currentAbsolute }} / {{ currentMax }}</h4>
-            <h1 *ngIf="!receivedStats" class="text-center" style="z-index: 1">
-                <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
-            </h1>
+            @if (receivedStats) {
+                <h2 class="text-center">{{ currentPercentage }}%</h2>
+            }
+            @if (receivedStats) {
+                <h4 class="text-center">{{ currentAbsolute }} / {{ currentMax }}</h4>
+            }
+            @if (!receivedStats) {
+                <h1 class="text-center" style="z-index: 1">
+                    <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                </h1>
+            }
         </div>
         <ngx-charts-pie-chart [view]="[200, 200]" [results]="ngxDoughnutData" [scheme]="ngxColor" [doughnut]="true" [tooltipText]="bindFormatting"> </ngx-charts-pie-chart>
     </div>

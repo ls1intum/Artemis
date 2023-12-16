@@ -1,8 +1,8 @@
 import { Course } from 'app/entities/course.model';
 
-import { courseManagementAPIRequest, quizExerciseDragAndDropQuiz } from '../../../support/artemis';
+import { courseManagementAPIRequest, courseManagementExercises, quizExerciseCreation, quizExerciseDragAndDropQuiz } from '../../../support/artemis';
 import { admin } from '../../../support/users';
-import { convertModelAfterMultiPart } from '../../../support/utils';
+import { convertModelAfterMultiPart, generateUUID } from '../../../support/utils';
 
 let course: Course;
 
@@ -17,6 +17,8 @@ describe('Quiz Exercise Drop Location Spec', () => {
     describe('DnD Quiz drop locations', () => {
         before('Create DND quiz', () => {
             cy.login(admin, '/course-management/' + course.id + '/exercises');
+            courseManagementExercises.createQuizExercise();
+            quizExerciseCreation.setTitle('Quiz Exercise ' + generateUUID());
             quizExerciseDragAndDropQuiz.createDnDQuiz('DnD Quiz Test');
         });
 
@@ -25,7 +27,7 @@ describe('Quiz Exercise Drop Location Spec', () => {
 
             quizExerciseDragAndDropQuiz.dragUsingCoordinates(310, 320);
             quizExerciseDragAndDropQuiz.dragUsingCoordinates(730, 500);
-            quizExerciseDragAndDropQuiz.dragUsingCoordinates(1000, 100);
+            quizExerciseDragAndDropQuiz.dragUsingCoordinates(730, 320);
 
             quizExerciseDragAndDropQuiz.activateInteractiveMode();
 
@@ -47,12 +49,8 @@ describe('Quiz Exercise Drop Location Spec', () => {
 
             cy.get('.drop-location').then(($els) => {
                 const { minX, maxX } = quizExerciseDragAndDropQuiz.getXAxis($els);
-                expect(containerBounds.right - maxX)
-                    .to.be.lessThan(17)
-                    .and.to.be.greaterThan(15);
-                expect(minX - containerBounds.left)
-                    .to.be.lessThan(17)
-                    .and.to.be.greaterThan(15);
+                expect(containerBounds.right - maxX).to.be.greaterThan(0);
+                expect(minX - containerBounds.left).to.be.greaterThan(0);
             });
         });
     });

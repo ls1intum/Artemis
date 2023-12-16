@@ -17,8 +17,6 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
@@ -32,19 +30,12 @@ public class AnswerPostService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final GroupNotificationService groupNotificationService;
-
-    private final SingleUserNotificationService singleUserNotificationService;
-
     protected AnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            GroupNotificationService groupNotificationService, SingleUserNotificationService singleUserNotificationService, WebsocketMessagingService websocketMessagingService,
-            ConversationParticipantRepository conversationParticipantRepository) {
+            WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository);
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
-        this.groupNotificationService = groupNotificationService;
-        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -85,7 +76,6 @@ public class AnswerPostService extends PostingService {
         postRepository.save(post);
 
         preparePostAndBroadcast(savedAnswerPost, course);
-        sendNotification(post, answerPost, course);
 
         return savedAnswerPost;
     }
@@ -183,34 +173,6 @@ public class AnswerPostService extends PostingService {
         answerPostRepository.deleteById(answerPostId);
 
         broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course, null);
-    }
-
-    /**
-     * Sends notification to affected groups
-     *
-     * @param post       which is answered
-     * @param answerPost which is created
-     */
-    void sendNotification(Post post, AnswerPost answerPost, Course course) {
-        // notify via course
-        if (post.getCourseWideContext() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForCoursePost(post, answerPost, course);
-            singleUserNotificationService.notifyUserAboutNewReplyForCoursePost(post, answerPost, course);
-            return;
-        }
-        // notify via exercise
-        if (post.getExercise() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(post, answerPost, course);
-            singleUserNotificationService.notifyUserAboutNewReplyForExercise(post, answerPost, course);
-            // protect Sample Solution, Grading Instructions, etc.
-            post.getExercise().filterSensitiveInformation();
-            return;
-        }
-        // notify via lecture
-        if (post.getLecture() != null) {
-            groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, answerPost, course);
-            singleUserNotificationService.notifyUserAboutNewReplyForLecture(post, answerPost, course);
-        }
     }
 
     /**

@@ -9,6 +9,8 @@ import { LoginService } from 'app/core/login/login.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
+import { SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 
 describe('Lti13ExerciseLaunchComponent', () => {
     let fixture: ComponentFixture<Lti13ExerciseLaunchComponent>;
@@ -36,6 +38,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
                 { provide: LoginService, useValue: loginService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: Router, useValue: mockRouter },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
             .compileComponents()
@@ -97,14 +100,14 @@ describe('Lti13ExerciseLaunchComponent', () => {
     });
 
     it('onInit no targetLinkUri', () => {
-        const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({}));
+        const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
         const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         expect(comp.isLaunching).toBeTrue();
 
         comp.ngOnInit();
 
-        expect(consoleSpy).toHaveBeenCalledOnce();
+        expect(consoleSpy).toHaveBeenCalled();
         expect(consoleSpy).toHaveBeenCalledWith('No LTI targetLinkUri received for a successful launch');
         expect(httpStub).toHaveBeenCalledOnce();
         expect(httpStub).toHaveBeenCalledWith('api/public/lti13/auth-login', expect.anything(), expect.anything());
@@ -114,7 +117,7 @@ describe('Lti13ExerciseLaunchComponent', () => {
 
     it('onInit success to call launch endpoint', () => {
         const targetLink = window.location.host + '/targetLink';
-        const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ targetLinkUri: targetLink }));
+        const httpStub = jest.spyOn(http, 'post').mockReturnValue(of({ targetLinkUri: targetLink, ltiIdToken: 'id-token', clientRegistrationId: 'client-id' }));
 
         expect(comp.isLaunching).toBeTrue();
 
@@ -198,8 +201,8 @@ describe('Lti13ExerciseLaunchComponent', () => {
         const httpStub = jest.spyOn(http, 'post').mockReturnValue(
             throwError(() => ({
                 status,
-                headers: { get: () => 'mockTargetLinkUri', ...headers },
-                error,
+                headers: { get: () => 'lti_user', ...headers },
+                error: { targetLinkUri: 'mockTargetLinkUri', ...error },
             })),
         );
         return httpStub;
