@@ -6,6 +6,7 @@ import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-it
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { QuizExam } from 'app/entities/quiz-exam.model';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
@@ -18,11 +19,13 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; quizExamChange: boolean; exercise?: Exercise; forceSave: boolean }>();
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
+    faEdit = faEdit;
 
     readonly ExerciseType = ExerciseType;
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
-    quizExamIcon = faEdit;
+    quizIconTooltip: string;
+    quizIcon: IconProp;
 
     constructor(
         protected changeDetectorReference: ChangeDetectorRef,
@@ -38,6 +41,8 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
             item.icon = faEdit;
             this.examExerciseOverviewItems.push(item);
         });
+        this.quizIconTooltip = getIconTooltip(ExerciseType.QUIZ);
+        this.quizIcon = getIcon(ExerciseType.QUIZ);
     }
 
     ngOnChanges() {
@@ -59,15 +64,6 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
 
     getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         return this.examParticipationService.getExerciseButtonTooltip(exercise);
-    }
-
-    /**
-     * Get tooltip for quiz exam button
-     *
-     * @return synced
-     */
-    getQuizExamButtonTooltip(): ButtonTooltipType {
-        return this.examParticipationService.getButtonTooltip(this.quizExam?.submission, ExerciseType.QUIZ);
     }
 
     /**
@@ -96,31 +92,6 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
         } else {
             // make status yellow
             item.icon = faEdit;
-            return 'notSynced';
-        }
-    }
-
-    /**
-     * Set quizExamIcon and return the icon status of the quiz exam
-     *
-     * @return synced
-     */
-    setQuizExamIconStatus(): 'synced' | 'notSynced' {
-        // start with a yellow status (edit icon)
-        this.quizExamIcon = faEdit;
-        if (!this.quizExam?.submission) {
-            // in case no participation/submission yet exists -> display synced
-            return 'synced';
-        }
-        if (this.quizExam?.submission.submitted) {
-            this.quizExamIcon = faCheck;
-        }
-        if (this.quizExam?.submission.isSynced) {
-            // make status blue
-            return 'synced';
-        } else {
-            // make status yellow
-            this.quizExamIcon = faEdit;
             return 'notSynced';
         }
     }
