@@ -74,6 +74,13 @@
                                 <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title">Iris</span>
                             </a>
                         }
+
+                        @if (programmingExercise.isAtLeastInstructor) {
+                            <a [routerLink]="baseResource + 'build-queue'" class="btn btn-warning btn-sm me-1" style="margin-bottom: 10px">
+                                <fa-icon [icon]="faGears"></fa-icon>
+                                <span jhiTranslate="artemisApp.programmingExercise.buildQueue">Build Queue</span>
+                            </a>
+                        }
                     </div>
                     <div>
                         @if (programmingExercise.isAtLeastTutor) {

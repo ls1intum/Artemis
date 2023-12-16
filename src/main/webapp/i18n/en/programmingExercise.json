@@ -587,7 +587,8 @@
                 "previousSubmission": "Previous Submission",
                 "currentSubmission": "Current Submission",
                 "template": "Template"
-            }
+            },
+            "buildQueue": "Build Queue"
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."

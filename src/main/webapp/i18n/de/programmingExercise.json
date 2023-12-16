@@ -587,7 +587,8 @@
                 "previousSubmission": "Vorherige Abgabe",
                 "currentSubmission": "Aktuelle Abgabe",
                 "template": "Vorlage"
-            }
+            },
+            "buildQueue": "Build Warteschlange"
         },
         "error": {
             "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben."
