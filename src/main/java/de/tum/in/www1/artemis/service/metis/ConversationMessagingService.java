@@ -132,6 +132,7 @@ public class ConversationMessagingService extends PostingService {
         createdMessage.getConversation().hideDetails();
         log.debug("      conversationMessageRepository.save DONE");
 
+        createdMessage.setAuthor(author);
         setAuthorRoleForPosting(createdMessage, course);
 
         return new CreatedConversationMessage(createdMessage, savedConversation, mentionedUsers);
