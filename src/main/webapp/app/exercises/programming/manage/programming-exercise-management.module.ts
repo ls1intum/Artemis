@@ -29,6 +29,9 @@ import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ArtemisCodeEditorModule } from 'app/exercises/programming/shared/code-editor/code-editor.module';
 import { IrisModule } from 'app/iris/iris.module';
+import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 
 @NgModule({
     imports: [
@@ -56,6 +59,8 @@ import { IrisModule } from 'app/iris/iris.module';
         AceEditorModule,
         ArtemisCodeEditorModule,
         IrisModule,
+        ArtemisDataTableModule,
+        NgxDatatableModule,
     ],
     declarations: [
         ProgrammingExerciseDetailComponent,
@@ -64,6 +69,7 @@ import { IrisModule } from 'app/iris/iris.module';
         ProgrammingExerciseInstructorExerciseDownloadComponent,
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
         BuildPlanEditorComponent,
+        BuildQueueComponent,
     ],
     exports: [ProgrammingExerciseExampleSolutionRepoDownloadComponent],
 })
