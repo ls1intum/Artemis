@@ -31,7 +31,7 @@
                     <th [colSpan]="2">
                         <span>
                             {{
-                                this.gradingScale.gradeType == GradeType.GRADE
+                                this.gradingScale.gradeType === GradeType.GRADE
                                     ? ('artemisApp.gradingSystem.gradeName' | artemisTranslate)
                                     : ('artemisApp.gradingSystem.bonusPoints' | artemisTranslate)
                             }}
@@ -74,45 +74,63 @@
                     </td>
                     <td></td>
                 </tr>
-                <tr *ngFor="let gradeStep of gradingScale.gradeSteps; let i = index; let last = last" class="grading-scale-table-row">
-                    <td *ngIf="last; else intervalInputs">
-                        <jhi-help-icon text="artemisApp.gradingSystem.stickyGradeStep"></jhi-help-icon>
-                    </td>
-                    <ng-template #intervalInputs>
-                        <td *ngIf="gradeEditMode === GradeEditMode.PERCENTAGE">
-                            <input [ngModel]="getPercentageInterval(gradeStep)" type="number" step="0.5" min="0.5" (ngModelChange)="setPercentageInterval(i, $event)" required />
+                @for (gradeStep of gradingScale.gradeSteps; track gradeStep; let i = $index; let last = $last) {
+                    <tr class="grading-scale-table-row">
+                        @if (last) {
+                            <td>
+                                <jhi-help-icon text="artemisApp.gradingSystem.stickyGradeStep"></jhi-help-icon>
+                            </td>
+                        } @else {
+                            @if (gradeEditMode === GradeEditMode.PERCENTAGE) {
+                                <td>
+                                    <input
+                                        [ngModel]="getPercentageInterval(gradeStep)"
+                                        type="number"
+                                        step="0.5"
+                                        min="0.5"
+                                        (ngModelChange)="setPercentageInterval(i, $event)"
+                                        required
+                                    />
+                                </td>
+                            }
+                            @if (gradeEditMode === GradeEditMode.POINTS) {
+                                <td>
+                                    <input
+                                        [ngModel]="getPointsInterval(gradeStep)"
+                                        type="number"
+                                        step="0.5"
+                                        min="0.5"
+                                        (ngModelChange)="setPointsInterval(i, $event)"
+                                        [required]="maxPoints !== undefined && maxPoints > 0"
+                                        [disabled]="maxPoints === undefined || maxPoints <= 0"
+                                    />
+                                </td>
+                            }
+                        }
+                        <td>
+                            <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE : last | safeHtml"></span>
                         </td>
-                        <td *ngIf="gradeEditMode === GradeEditMode.POINTS">
-                            <input
-                                [ngModel]="getPointsInterval(gradeStep)"
-                                type="number"
-                                step="0.5"
-                                min="0"
-                                (ngModelChange)="setPointsInterval(i, $event)"
-                                [required]="maxPoints != undefined && maxPoints > 0"
-                                [disabled]="maxPoints == undefined || maxPoints <= 0"
-                            />
+                        <td>
+                            <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS : last | safeHtml"></span>
                         </td>
-                    </ng-template>
-                    <td>
-                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE : last | safeHtml"></span>
-                    </td>
-                    <td>
-                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS : last | safeHtml"></span>
-                    </td>
-                    <td *ngIf="gradingScale.gradeType !== GradeType.BONUS">
-                        <input [(ngModel)]="gradeStep.gradeName" type="text" required />
-                    </td>
-                    <td *ngIf="gradingScale.gradeType === GradeType.BONUS">
-                        <input [(ngModel)]="gradeStep.gradeName" type="number" step="0.25" min="0" placeholder="0" required />
-                    </td>
-                    <td>
-                        <button (click)="deleteGradeStep(i)" type="button" class="btn btn-danger" style="float: right">
-                            <fa-icon [icon]="faTimes"></fa-icon>
-                            <span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span>
-                        </button>
-                    </td>
-                </tr>
+                        @if (gradingScale.gradeType !== GradeType.BONUS) {
+                            <td>
+                                <input [(ngModel)]="gradeStep.gradeName" type="text" required />
+                            </td>
+                        }
+                        @if (gradingScale.gradeType === GradeType.BONUS) {
+                            <td>
+                                <input [(ngModel)]="gradeStep.gradeName" type="number" step="0.25" min="0" placeholder="0" required />
+                            </td>
+                        }
+                        <td>
+                            <button (click)="deleteGradeStep(i)" type="button" class="btn btn-danger" style="float: right">
+                                <fa-icon [icon]="faTimes"></fa-icon>
+                                <span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span>
+                            </button>
+                        </td>
+                    </tr>
+                }
             </tbody>
         </table>
     </div>
@@ -126,28 +144,33 @@
         <button (click)="save()" [disabled]="isLoading || !validGradeSteps() || !validPresentationsConfig()" class="btn btn-primary mr-1 mb-1" type="button">
             <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.gradingSystem.save">Save</span>
         </button>
-        <button
-            *ngIf="existingGradingScale"
-            class="mb-1"
-            jhiDeleteButton
-            [entityTitle]="''"
-            [buttonSize]="ButtonSize.MEDIUM"
-            deleteQuestion="artemisApp.gradingSystem.deleteQuestion"
-            (delete)="delete()"
-            [dialogError]="dialogError$"
-            [disabled]="isLoading"
-        >
-            <fa-icon [icon]="faTimes"><span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span></fa-icon>
-        </button>
-        <div *ngIf="shouldShowGradingStepsAboveMaxPointsWarning()" class="alert alert-info mt-3">
-            <fa-icon [icon]="faInfo"></fa-icon>
-            <span jhiTranslate="artemisApp.gradingSystem.gradingStepsAboveMaxPointsWarning"></span>
-        </div>
-        <div *ngIf="invalidGradeStepsMessage" class="alert alert-warning mt-3">
-            <fa-icon [icon]="faExclamationTriangle"></fa-icon>
-            <span>
-                {{ invalidGradeStepsMessage }}
-            </span>
-        </div>
+        @if (existingGradingScale) {
+            <button
+                class="mb-1"
+                jhiDeleteButton
+                [entityTitle]="''"
+                [buttonSize]="ButtonSize.MEDIUM"
+                deleteQuestion="artemisApp.gradingSystem.deleteQuestion"
+                (delete)="delete()"
+                [dialogError]="dialogError$"
+                [disabled]="isLoading"
+            >
+                <fa-icon [icon]="faTimes"><span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span></fa-icon>
+            </button>
+        }
+        @if (shouldShowGradingStepsAboveMaxPointsWarning()) {
+            <div class="alert alert-info mt-3">
+                <fa-icon [icon]="faInfo"></fa-icon>
+                <span jhiTranslate="artemisApp.gradingSystem.gradingStepsAboveMaxPointsWarning"></span>
+            </div>
+        }
+        @if (invalidGradeStepsMessage) {
+            <div class="alert alert-warning mt-3">
+                <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+                <span>
+                    {{ invalidGradeStepsMessage }}
+                </span>
+            </div>
+        }
     </div>
 </div>
