@@ -53,8 +53,8 @@ services:
             apt-get install -y build-essential libnss3-tools &&
             echo $HOME &&
             export HOME=/root &&
-            cd /app/artemis/src/test/playwright && ls &&
             CERTS_DIR=/app/artemis/src/test/playwright/certs &&
+            cd $CERTS_DIR && ls &&
             echo $HOME &&
             echo $CERTS_DIR &&
             mkdir -p $HOME/.pki/nssdb &&
