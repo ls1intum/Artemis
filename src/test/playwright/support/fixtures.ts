@@ -6,6 +6,7 @@ import { CourseManagementAPIRequests } from './requests/CourseManagementAPIReque
 import { CourseManagementPage } from './pageobjects/course/CourseManagementPage';
 import { CourseCreationPage } from './pageobjects/course/CourseCreationPage';
 import { UserManagementAPIRequests } from './requests/UserManagementAPIRequests';
+import { Commands } from './commands';
 
 type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
@@ -31,22 +32,22 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     loginPage: async ({ page }, use) => {
         await use(new LoginPage(page));
     },
-    login: async ({ page, loginPage, navigationBar }, use) => {
+    login: async ({ page }, use) => {
         await use(async (credentials: UserCredentials, url?: string) => {
-            await page.goto('/');
-            const isLogin = await page.locator('#username').isVisible();
-
-            if (!isLogin) {
-                await navigationBar.logout();
-            }
-
-            await loginPage.login(credentials);
-            await page.waitForURL('**/courses**');
-
-            if (url) {
-                await page.goto(url);
-            }
-            // await Commands.login(page, credentials, url);
+            // await page.goto('/');
+            // const isLogin = await page.locator('#username').isVisible();
+            //
+            // if (!isLogin) {
+            //     await navigationBar.logout();
+            // }
+            //
+            // await loginPage.login(credentials);
+            // await page.waitForURL('**/courses**');
+            //
+            // if (url) {
+            //     await page.goto(url);
+            // }
+            await Commands.login(page, credentials, url);
         });
     },
     navigationBar: async ({ page }, use) => {
