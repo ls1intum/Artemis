@@ -74,7 +74,7 @@ After the plagiarism check was executed, the results can be inspected in differe
 
  |run-results|
 
-2. Selected submission. When the user selects the submission from the submission list on the left side of the plagiarism run result view, new actions can be selected to initiate the plagiarism check workflow. We will provide further details to the workflow in the next section.
+2. Selected submission. When the user selects the submission from the submission list on the left side of the plagiarism run result view, new actions can be selected to initiate the plagiarism check workflow. We will provide further details on the workflow in the next section.
 
  |run-results-selected-submissions|
 
@@ -192,7 +192,7 @@ It is a special form of plagiarism case, which is marked as a warning and presen
 If a submission does not include significant similarity, the CPC removes any associated existing significant similarity plagiarism case.
 Subsequently, the student analyzes the feedback received and, if the submission period is still open, can submit a new solution.
 If the submission period has ended, the student can either dispute the plagiarism case or choose to take no action.
-Eventually, the instructor makes a decision about accusing student of plagiarism and about any further steps.
+Eventually, the instructor makes a decision about accusing the student of plagiarism and about any further steps.
 
 The following activity diagram depicts the CPC flow described above.
 
@@ -207,7 +207,7 @@ Configuration of the CPC
 Instructors can configure various aspects of the CPC for each exercise. The following list describes all configuration options:
 
 * **Instructors can enable the CPC.** - Instructor can turn the CPC on and off for a particular exercise. Default: `OFF`.
-* **Instructors can enable the post due date checks.** - Instructor can configure the CPC to test the exercise one more time the night after the exercise due date. This allows to test submission posted shortly before the due date. Default: `OFF`.
+* **Instructors can enable the post-due date checks.** - Instructor can configure the CPC to test the exercise one more time the night after the exercise due date. This allows to test submissions posted shortly before the due date. Default: `OFF`.
 * **Instructors can set the response period for the significant similarity plagiarism case.** - Instructor can specify for how long after the exercise due date a student will be able to submit a complaint. Default: `7 days`. Min: `7 days`.
 * **Instructors can set the similarity threshold.** - Instructor can specify the similarity threshold for the plagiarism check performed by the CPC. Optimal value for this parameter depends on an individual exercise. Similarity above the threshold does not implicate plagiarism. Default: `90%`.
 * **Instructors can set the minimum score.** - Instructor can specify the minimum submission score for the plagiarism check performed by the CPC. Default: `0`.
