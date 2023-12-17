@@ -8,63 +8,55 @@
                 <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
             </span>
         </div>
-        <div *ngIf="sectionButtons" (click)="$event.stopPropagation()">
-            <ng-template [ngTemplateOutlet]="sectionButtons" [ngTemplateOutletContext]="{}"></ng-template>
-        </div>
+        @if (sectionButtons) {
+            <div (click)="$event.stopPropagation()">
+                <ng-template [ngTemplateOutlet]="sectionButtons" [ngTemplateOutletContext]="{}"></ng-template>
+            </div>
+        }
     </div>
     <div [(ngbCollapse)]="isCollapsed">
-        <ul class="conversation-list" *ngIf="isConversationListVisible">
-            <li
-                *ngFor="let conversation of visibleConversations; trackBy: conversationsTrackByFn"
-                [conversation]="conversation"
-                [activeConversation]="activeConversation"
-                [course]="course"
-                jhi-conversation-sidebar-entry
-                (click)="conversationSelected.emit(conversation)"
-                (settingsDidChange)="settingsDidChange.emit()"
-                (conversationIsFavoriteDidChange)="conversationIsFavoriteDidChange.emit()"
-                (conversationIsHiddenDidChange)="conversationIsHiddenDidChange.emit()"
-                (conversationIsMutedDidChange)="conversationIsMutedDidChange.emit()"
-            ></li>
-            <li
-                *ngFor="let conversation of mutedConversations; trackBy: conversationsTrackByFn"
-                [conversation]="conversation"
-                [activeConversation]="activeConversation"
-                [course]="course"
-                jhi-conversation-sidebar-entry
-                (click)="conversationSelected.emit(conversation)"
-                (settingsDidChange)="settingsDidChange.emit()"
-                (conversationIsFavoriteDidChange)="conversationIsFavoriteDidChange.emit()"
-                (conversationIsHiddenDidChange)="conversationIsHiddenDidChange.emit()"
-                (conversationIsMutedDidChange)="conversationIsMutedDidChange.emit()"
-            ></li>
-            <ng-container *ngIf="isHiddenConversationListVisible">
-                <li (click)="isHiddenConversationListPresented = !isHiddenConversationListPresented" class="hidden-conversation-divider text-center">
-                    {{ hiddenConversations.length }}
-                    {{
-                        isHiddenConversationListPresented
-                            ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.shown' | artemisTranslate)
-                            : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hidden' | artemisTranslate)
-                    }}
-                    <span [hidden]="!anyHiddenConversationUnread">
-                        <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
-                    </span>
-                </li>
-                <ng-container *ngIf="isHiddenConversationListPresented">
+        @if (visibleConversations.length > 0 || hiddenConversations.length > 0) {
+            <ul class="conversation-list">
+                @for (conversation of visibleConversations; track conversationsTrackByFn($index, conversation)) {
                     <li
-                        *ngFor="let conversation of hiddenConversations; trackBy: conversationsTrackByFn"
                         [conversation]="conversation"
                         [activeConversation]="activeConversation"
                         [course]="course"
                         jhi-conversation-sidebar-entry
                         (click)="conversationSelected.emit(conversation)"
-                        (settingsDidChange)="settingsDidChange.emit()"
-                        (conversationIsFavoriteDidChange)="conversationIsFavoriteDidChange.emit()"
-                        (conversationIsHiddenDidChange)="conversationIsHiddenDidChange.emit()"
-                        (conversationIsMutedDidChange)="conversationIsMutedDidChange.emit()"
+                        (settingsChanged)="settingsChanged.emit()"
+                        (conversationFavoriteStatusChange)="conversationFavoriteStatusChange.emit()"
+                        (conversationHiddenStatusChange)="conversationHiddenStatusChange.emit()"
                     ></li>
-                </ng-container>
-            </ng-container>
-        </ul>
+                }
+                @if (hiddenConversations && hiddenConversations.length > 0) {
+                    <li (click)="showHiddenConversations = !showHiddenConversations" class="hidden-conversation-divider text-center">
+                        {{ hiddenConversations.length }}
+                        {{
+                            showHiddenConversations
+                                ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.shown' | artemisTranslate)
+                                : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hidden' | artemisTranslate)
+                        }}
+                        <span [hidden]="!anyHiddenConversationUnread">
+                            <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
+                        </span>
+                    </li>
+                    @if (showHiddenConversations) {
+                        @for (conversation of hiddenConversations; track conversationsTrackByFn($index, conversation)) {
+                            <li
+                                [conversation]="conversation"
+                                [activeConversation]="activeConversation"
+                                [course]="course"
+                                jhi-conversation-sidebar-entry
+                                (click)="conversationSelected.emit(conversation)"
+                                (settingsChanged)="settingsChanged.emit()"
+                                (conversationFavoriteStatusChange)="conversationFavoriteStatusChange.emit()"
+                                (conversationHiddenStatusChange)="conversationHiddenStatusChange.emit()"
+                            ></li>
+                        }
+                    }
+                }
+            </ul>
+        }
     </div>
 </div>

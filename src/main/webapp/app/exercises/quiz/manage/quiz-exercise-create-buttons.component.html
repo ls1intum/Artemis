@@ -14,13 +14,11 @@
         <span class="hidden-sm-down" jhiTranslate="artemisApp.quizExercise.home.importLabel">Import Quiz</span>
         <fa-icon [icon]="faCheckDouble"></fa-icon>
     </button>
-    <button
-        *ngIf="quizExercisesCount"
-        class="btn btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
-        [routerLink]="['/course-management', course.id, 'quiz-exercises', 'export']"
-    >
-        <fa-icon [icon]="faFileExport"></fa-icon>
-        <span jhiTranslate="artemisApp.quizExercise.home.exportLabel">Export Quiz Exercises</span>
-        <fa-icon [icon]="faCheckDouble"></fa-icon>
-    </button>
+    @if (quizExercisesCount) {
+        <button class="btn btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1" [routerLink]="['/course-management', course.id, 'quiz-exercises', 'export']">
+            <fa-icon [icon]="faFileExport"></fa-icon>
+            <span jhiTranslate="artemisApp.quizExercise.home.exportLabel">Export Quiz Exercises</span>
+            <fa-icon [icon]="faCheckDouble"></fa-icon>
+        </button>
+    }
 </div>
