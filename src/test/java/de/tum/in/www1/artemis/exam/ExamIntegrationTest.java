@@ -153,6 +153,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private Exam exam2;
 
+    private Exam exam3;
+
     private static final int NUMBER_OF_STUDENTS = 4;
 
     private static final int NUMBER_OF_TUTORS = 1;
@@ -198,6 +200,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         exam2 = examUtilService.addExamWithExerciseGroup(course1, true);
         examUtilService.addExamChannel(exam2, "exam2 channel");
+
+        exam3 = examUtilService.addExamWithQuizPool(course1);
 
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }
@@ -753,6 +757,17 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(returnedExam.getExerciseGroups()).anyMatch(groups -> groups.getExercises().stream().anyMatch(Exercise::getTestRunParticipationsExist));
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExam_asInstructor_WithQuizPool() throws Exception {
+        Exam returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam3.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
+        assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
+        returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam3.getId() + "?withStudents=true", HttpStatus.OK, Exam.class);
+        assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
+        returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam3.getId(), HttpStatus.OK, Exam.class);
+        assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
     }
 
     @Test
