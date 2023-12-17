@@ -149,7 +149,7 @@ public class LocalCISharedBuildJobQueueService {
      * Wait 3 minutes after startup and then every 1 minute update the build agent information of the local hazelcast member.
      * This is necessary because the build agent information is not updated automatically when a node joins the cluster.
      */
-    @Scheduled(initialDelay = 180000, fixedRate = 60000) // 3 minutes initial delay, 1 minute fixed rate
+    @Scheduled(initialDelay = 60000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
     public void updateBuildAgentInformation() {
         // Remove build agent information of offline nodes
         removeOfflineNodes();
