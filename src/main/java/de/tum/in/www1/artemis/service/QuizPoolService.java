@@ -157,16 +157,17 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
 
     @Override
     public List<QuizQuestion> generateQuizQuestionsForExam(long examId) {
-        try {
-            QuizPool quizPool = findByExamId(examId);
+        Optional<QuizPool> quizPoolOptional = findByExamId(examId);
+        if (quizPoolOptional.isPresent()) {
+            QuizPool quizPool = quizPoolOptional.get();
             List<QuizGroup> quizGroups = quizPool.getQuizGroups();
             List<QuizQuestion> quizQuestions = quizPool.getQuizQuestions();
 
             Map<Long, List<QuizQuestion>> quizGroupQuestionsMap = getQuizQuestionsGroup(quizGroups, quizQuestions);
             return generateQuizQuestions(quizGroupQuestionsMap, quizGroups, quizQuestions);
         }
-        catch (EntityNotFoundException ignored) {
-            return new ArrayList<>();
+        else {
+            return null;
         }
     }
 
