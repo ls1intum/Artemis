@@ -8,19 +8,19 @@ services:
         # Change with playwright docker url
         image: mcr.microsoft.com/playwright:v1.40.0-jammy
         pull_policy: if_not_present
-#        environment:
-#            CYPRESS_baseUrl: "https://artemis-nginx"
-#            CYPRESS_video: "${bamboo_cypress_video_enabled}"
-#            CYPRESS_adminUsername: "${bamboo_artemis_admin_username}"
-#            CYPRESS_adminPassword: "${bamboo_artemis_admin_password}"
-#            CYPRESS_username: "${bamboo_cypress_username_template}"
-#            CYPRESS_password: "${bamboo_cypress_password_template}"
-#            CYPRESS_allowGroupCustomization: "true"
-#            CYPRESS_studentGroupName: "artemis-e2etest-students"
-#            CYPRESS_tutorGroupName: "artemis-e2etest-tutors"
-#            CYPRESS_editorGroupName: "artemis-e2etest-editors"
-#            CYPRESS_instructorGroupName: "artemis-e2etest-instructors"
-#            CYPRESS_createUsers: "${bamboo_cypress_create_users}"
+        environment:
+            CYPRESS_baseUrl: "https://artemis-nginx"
+            CYPRESS_video: "${bamboo_cypress_video_enabled}"
+            CYPRESS_adminUsername: "${bamboo_artemis_admin_username}"
+            CYPRESS_adminPassword: "${bamboo_artemis_admin_password}"
+            CYPRESS_username: "${bamboo_cypress_username_template}"
+            CYPRESS_password: "${bamboo_cypress_password_template}"
+            CYPRESS_allowGroupCustomization: "true"
+            CYPRESS_studentGroupName: "artemis-e2etest-students"
+            CYPRESS_tutorGroupName: "artemis-e2etest-tutors"
+            CYPRESS_editorGroupName: "artemis-e2etest-editors"
+            CYPRESS_instructorGroupName: "artemis-e2etest-instructors"
+            CYPRESS_createUsers: "${bamboo_cypress_create_users}"
 #            # use alternative cypress version to avoid blocking sorry cypress (see https://currents.dev/readme/integration-with-cypress/alternative-cypress-binaries)
 #            CYPRESS_DOWNLOAD_MIRROR: "https://cy-cdn.currents.dev"
 #            SORRY_CYPRESS_KEY: "${bamboo_sorry_cypress_record_secret}"
