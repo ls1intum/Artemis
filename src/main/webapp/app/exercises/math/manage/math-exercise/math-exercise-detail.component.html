@@ -1,50 +1,55 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <div *ngIf="mathExercise">
-            <div class="d-flex align-items-center">
-                <h2><span jhiTranslate="artemisApp.mathExercise.detail.title">Math Exercise</span> {{ mathExercise.id }}</h2>
-                <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
-            </div>
-            <hr />
-            <div class="text-start">
-                <jhi-non-programming-exercise-detail-common-actions
-                    *ngIf="course"
-                    [isExamExercise]="isExamExercise"
-                    [course]="course"
-                    [exercise]="mathExercise"
-                ></jhi-non-programming-exercise-detail-common-actions>
-                <!-- Check Plagiarism -->
-                <!--                <a *ngIf="mathExercise.isAtLeastEditor" class="btn btn-outline-primary btn-sm me-1" id="check-plagiarism-download" routerLink="plagiarism">-->
-                <!--                    <span jhiTranslate="artemisApp.mathExercise.checkPlagiarism">Check Plagiarism</span>-->
-                <!--                </a>-->
-            </div>
-            <div *ngIf="!mathExercise.releaseDate || dayjs(mathExercise.releaseDate).isBefore(dayjs())" class="mt-3">
-                <jhi-exercise-detail-statistics
-                    [exercise]="mathExercise"
-                    [doughnutStats]="doughnutStats"
-                    [exerciseType]="ExerciseType.MATH"
-                    class="d-flex justify-content-around"
-                ></jhi-exercise-detail-statistics>
-                <hr />
-                <div>
-                    <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
+        @if (mathExercise) {
+            <div>
+                <div class="d-flex align-items-center">
+                    <h2><span jhiTranslate="artemisApp.mathExercise.detail.title">Math Exercise</span> {{ mathExercise.id }}</h2>
+                    <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
                 </div>
                 <hr />
+                <div class="text-start">
+                    @if (course) {
+                        <jhi-non-programming-exercise-detail-common-actions
+                            [isExamExercise]="isExamExercise"
+                            [course]="course"
+                            [exercise]="mathExercise"
+                        ></jhi-non-programming-exercise-detail-common-actions>
+                    }
+                    <!-- Check Plagiarism -->
+                    <!--                <a *ngIf="mathExercise.isAtLeastEditor" class="btn btn-outline-primary btn-sm me-1" id="check-plagiarism-download" routerLink="plagiarism">-->
+                    <!--                    <span jhiTranslate="artemisApp.mathExercise.checkPlagiarism">Check Plagiarism</span>-->
+                    <!--                </a>-->
+                </div>
+                @if (!mathExercise.releaseDate || dayjs(mathExercise.releaseDate).isBefore(dayjs())) {
+                    <div class="mt-3">
+                        <jhi-exercise-detail-statistics
+                            [exercise]="mathExercise"
+                            [doughnutStats]="doughnutStats"
+                            [exerciseType]="ExerciseType.MATH"
+                            class="d-flex justify-content-around"
+                        ></jhi-exercise-detail-statistics>
+                        <hr />
+                        <div>
+                            <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
+                        </div>
+                        <hr />
+                    </div>
+                }
+                <dl class="row-md jh-entity-details markdown-preview">
+                    <jhi-exercise-details [exercise]="mathExercise"></jhi-exercise-details>
+                    <dt><span jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled">Enable feedback suggestions from Athena</span></dt>
+                    <dd>
+                        <span>{{ (mathExercise.feedbackSuggestionsEnabled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                    </dd>
+                    <!--                <dt><span jhiTranslate="artemisApp.exercise.exampleSolution">Example Solution</span></dt>-->
+                    <!--                <dd class="editor-outline-background" [innerHTML]="formattedExampleSolution"></dd>-->
+                    <!--                <dt><span jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDate">Example Solution Publication Date</span></dt>-->
+                    <!--                <dd>-->
+                    <!--                    <span *ngIf="mathExercise.exampleSolutionPublicationDate">{{ mathExercise.exampleSolutionPublicationDate | artemisDate }}</span>-->
+                    <!--                    <span *ngIf="!mathExercise.exampleSolutionPublicationDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>-->
+                    <!--                </dd>-->
+                </dl>
             </div>
-            <dl class="row-md jh-entity-details markdown-preview">
-                <jhi-exercise-details [exercise]="mathExercise"></jhi-exercise-details>
-                <dt><span jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled">Enable feedback suggestions from Athena</span></dt>
-                <dd>
-                    <span>{{ (mathExercise.feedbackSuggestionsEnabled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
-                </dd>
-                <!--                <dt><span jhiTranslate="artemisApp.exercise.exampleSolution">Example Solution</span></dt>-->
-                <!--                <dd class="editor-outline-background" [innerHTML]="formattedExampleSolution"></dd>-->
-                <!--                <dt><span jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDate">Example Solution Publication Date</span></dt>-->
-                <!--                <dd>-->
-                <!--                    <span *ngIf="mathExercise.exampleSolutionPublicationDate">{{ mathExercise.exampleSolutionPublicationDate | artemisDate }}</span>-->
-                <!--                    <span *ngIf="!mathExercise.exampleSolutionPublicationDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>-->
-                <!--                </dd>-->
-            </dl>
-        </div>
+        }
     </div>
 </div>
