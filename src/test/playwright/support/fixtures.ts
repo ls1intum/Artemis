@@ -56,8 +56,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
         await use(new CourseManagementAPIRequests(page));
     },
     // eslint-disable-next-line no-empty-pattern
-    userManagementAPIRequests: async ({}, use) => {
-        await use(new UserManagementAPIRequests());
+    userManagementAPIRequests: async ({ page }, use) => {
+        await use(new UserManagementAPIRequests(page));
     },
     courseManagement: async ({ page }, use) => {
         await use(new CourseManagementPage(page));

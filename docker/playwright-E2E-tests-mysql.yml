@@ -52,6 +52,7 @@ services:
             cd /app/artemis/src/test/playwright &&
             chmod 777 /root &&
             npm ci &&
+            npm run playwright:setup &&
             npm run playwright:test
             "
 

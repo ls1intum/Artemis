@@ -10,6 +10,7 @@ test.describe('Setup users', () => {
             for (const userKey in USER_ID) {
                 const user = users.getUserWithId(USER_ID[userKey]);
                 await userManagementAPIRequests.getUser(user.username).then((statusCode: number) => {
+                    console.log('Status code: ' + statusCode);
                     if (statusCode >= 200 && statusCode < 300) {
                         userManagementAPIRequests.createUser(user.username, user.password, USER_ROLE[userKey]);
                     }
