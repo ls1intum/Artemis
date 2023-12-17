@@ -1,7 +1,8 @@
 import { UserCredentials } from './users';
 import { BASE_API } from '../../cypress/support/constants';
 import { Page, expect } from '@playwright/test';
-import * as http from 'http';
+import * as https from 'https';
+import fs from 'fs';
 
 export class Commands {
     static login = async (page: Page, credentials: UserCredentials, url?: string): Promise<void> => {
@@ -23,17 +24,17 @@ export class Commands {
                 });
 
                 console.log('Request Data:', reqData);
-                const req = http.request(
+                const req = https.request(
                     {
                         hostname: fullUrl.hostname,
                         port: fullUrl.port.length != 0 ? fullUrl.port : null,
                         path: `/${BASE_API}public/authenticate`,
                         method: 'POST',
-                        // agent: new https.Agent({
-                        //     ca: fs.readFileSync('./certs/rootCA.pem'),
-                        //     cert: fs.readFileSync('./certs/artemis-nginx+4.pem'),
-                        //     key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
-                        // }),
+                        agent: new https.Agent({
+                            ca: fs.readFileSync('./certs/rootCA.pem'),
+                            cert: fs.readFileSync('./certs/artemis-nginx+4.pem'),
+                            key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
+                        }),
                         headers: {
                             'Content-Type': 'application/json',
                             'User-Agent': 'Playwright',
