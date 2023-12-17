@@ -2,7 +2,6 @@ import { test as base } from '@playwright/test';
 import { LoginPage } from './pageobjects/LoginPage';
 import { UserCredentials } from './users';
 import { NavigationBar } from './pageobjects/NavigationBar';
-import { Commands } from './commands';
 import { CourseManagementAPIRequests } from './requests/CourseManagementAPIRequests';
 import { CourseManagementPage } from './pageobjects/course/CourseManagementPage';
 import { CourseCreationPage } from './pageobjects/course/CourseCreationPage';
@@ -32,9 +31,22 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     loginPage: async ({ page }, use) => {
         await use(new LoginPage(page));
     },
-    login: async ({ page }, use) => {
+    login: async ({ page, loginPage, navigationBar }, use) => {
         await use(async (credentials: UserCredentials, url?: string) => {
-            await Commands.login(page, credentials, url);
+            await page.goto('/');
+            const isLogin = await page.locator('#username').isVisible();
+
+            if (!isLogin) {
+                await navigationBar.logout();
+            }
+
+            await loginPage.login(credentials);
+            await page.waitForURL('**/courses**');
+
+            if (url) {
+                await page.goto(url);
+            }
+            // await Commands.login(page, credentials, url);
         });
     },
     navigationBar: async ({ page }, use) => {
