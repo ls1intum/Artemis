@@ -36,12 +36,6 @@ export class PlaywrightUserManagement {
     public getAdmin(): UserCredentials {
         const adminUsername = process.env.adminUsername ?? 'admin';
         const adminPassword = process.env.adminPassword ?? 'admin';
-        console.log('Admin credentials:');
-        console.log(adminUsername);
-        console.log(adminPassword);
-        console.log('env admin credentials:');
-        console.log(process.env.adminUsername);
-        console.log(process.env.adminPassword);
         return { username: adminUsername, password: adminPassword };
     }
 
