@@ -48,7 +48,7 @@ services:
 #        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:setup && (npm run cypress:record:mysql & sleep 60 && npm run cypress:record:mysql & wait)"
 # Old run method using plain cypress kept here as backup
         command: >
-            sh -c "
+            sh -c '
             apt-get update &&
             apt-get install -y build-essential libnss3-tools &&
             export HOME=/root &&
@@ -69,7 +69,7 @@ services:
             npm ci &&
             npm run playwright:setup &&
             npm run playwright:test
-            "
+            '
 
 networks:
     artemis:
