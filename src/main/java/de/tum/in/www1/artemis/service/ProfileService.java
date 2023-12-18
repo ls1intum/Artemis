@@ -22,11 +22,15 @@ public class ProfileService {
     }
 
     public boolean isLocalVcsCi() {
-        return isProfileActive(Constants.PROFILE_LOCALVC) || isProfileActive(Constants.PROFILE_LOCALCI);
+        return isProfileActive(Constants.PROFILE_LOCALVC) || isLocalCi();
     }
 
     public boolean isBamboo() {
         return isProfileActive("bamboo");
+    }
+
+    public boolean isLocalCi() {
+        return isProfileActive(Constants.PROFILE_LOCALCI);
     }
 
     private boolean isProfileActive(String profile) {

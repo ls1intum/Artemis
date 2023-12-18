@@ -12,12 +12,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { programmingExerciseCreationConfigMock } from './update-components/programming-exercise-creation-config-mock';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
-import { PROFILE_LOCALCI } from 'app/app.constants';
+import { Observable } from 'rxjs';
+import { PROFILE_AEOLUS } from 'app/app.constants';
 
-describe('ProgrammingExercise Custom Build Plan', () => {
+describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     let mockThemeService: ThemeService;
-    let comp: ProgrammingExerciseCustomBuildPlanComponent;
+    let comp: ProgrammingExerciseCustomAeolusBuildPlanComponent;
     const course = { id: 123 } as Course;
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
@@ -61,7 +61,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
                 mockThemeService = TestBed.inject(ThemeService);
             });
 
-        const fixture = TestBed.createComponent(ProgrammingExerciseCustomBuildPlanComponent);
+        const fixture = TestBed.createComponent(ProgrammingExerciseCustomAeolusBuildPlanComponent);
         comp = fixture.componentInstance;
 
         comp.programmingExercise = programmingExercise;
@@ -72,11 +72,36 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     });
 
     it('should set correct code', () => {
-        programmingExercise.buildScript = 'nottest';
-        comp.code = 'nottest';
-        comp.codeChanged('test');
-        expect(comp.code).toEqual(programmingExercise.buildScript);
-        expect(comp.code).toBe('test');
+        comp.changeActiveAction('gradle');
+        expect(comp.code).toEqual(gradleBuildAction.script);
+        expect(comp.active).toEqual(gradleBuildAction);
+    });
+
+    it('should change the code on active action change', () => {
+        comp.changeActiveAction('gradle');
+        expect(comp.code).toEqual(gradleBuildAction.script);
+        expect(comp.active).toEqual(gradleBuildAction);
+        comp.changeActiveAction('clean');
+        expect(comp.code).toEqual(cleanBuildAction.script);
+        expect(comp.active).toEqual(cleanBuildAction);
+    });
+
+    it('should delete action', () => {
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.next(JSON.stringify({ result: 'this is some code' }))));
+        comp.deleteAction('gradle');
+        const size = programmingExercise.windFile?.actions.length;
+        expect(size).toBeDefined();
+        expect(programmingExercise.windFile?.actions.length).toBe(size!);
+        comp.deleteAction('clean');
+        expect(programmingExercise.windFile?.actions.length).toBe(size! - 1);
+    });
+
+    it('should add action', () => {
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.next(JSON.stringify({ result: 'this is some code' }))));
+        const size = programmingExercise.windFile?.actions.length;
+        expect(size).toBeDefined();
+        comp.addAction('gradle clean');
+        expect(programmingExercise.windFile?.actions.length).toBe(size! + 1);
     });
 
     it('should accept editor', () => {
@@ -85,8 +110,66 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
     });
 
+    it('should change code of active action', () => {
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.next(JSON.stringify({ result: 'this is some code' }))));
+        comp.changeActiveAction('gradle');
+        expect(comp.code).toBe(gradleBuildAction.script);
+        comp.codeChanged('test');
+        expect(gradleBuildAction.script).toBe('test');
+    });
+
+    it('should change code if deleting active action and unset active action', () => {
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.next(JSON.stringify({ result: 'this is some code' }))));
+        comp.changeActiveAction('gradle');
+        expect(comp.code).toBe(gradleBuildAction.script);
+        comp.deleteAction('gradle');
+        expect(comp.code).toBe('');
+        expect(comp.active).toBeUndefined();
+    });
+
+    it('should return true', () => {
+        expect(comp.isScriptAction(gradleBuildAction)).toBeTrue();
+    });
+
+    it('should return false', () => {
+        expect(comp.isScriptAction(new BuildAction())).toBeFalse();
+    });
+
+    it('should do nothing without a Windfile', () => {
+        comp.programmingExercise.windFile = undefined;
+        comp.code = 'this should not change';
+        comp.changeActiveAction('');
+        expect(comp.code).toBe('this should not change');
+    });
+
+    it('should do nothing on delete invalid action', () => {
+        comp.changeActiveAction('');
+        expect(comp.code).toBe('');
+        expect(comp.active).toBeUndefined();
+    });
+
     it('should not fail if setting up undefined editor', () => {
         comp.setupEditor();
+    });
+
+    it('should change code', () => {
+        comp.changeActiveAction('gradle');
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.next(JSON.stringify({ result: 'this is some code' }))));
+        comp.codeChanged('this is some code');
+        const action: BuildAction | undefined = comp.active;
+        expect(action).toBeDefined();
+        expect(action).toBeInstanceOf(ScriptAction);
+        if (action instanceof ScriptAction) {
+            expect(action.script).toBe('this is some code');
+        }
+    });
+
+    it('should set editor text', () => {
+        const elementRef: ElementRef = new ElementRef(document.createElement('div'));
+        const zone: NgZone = new NgZone({});
+        comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        comp.changeActiveAction('gradle');
+        expect(comp.editor.text).toBe(gradleBuildAction.script);
     });
 
     it('should return false to reload template', () => {
@@ -131,7 +214,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.staticCodeAnalysisEnabled = undefined;
         comp.testwiseCoverageEnabled = undefined;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        comp.programmingExerciseCreationConfig.customBuildPlansSupported = PROFILE_LOCALCI;
+        comp.programmingExerciseCreationConfig.customBuildPlansSupported = PROFILE_AEOLUS;
         comp.loadAeolusTemplate();
         expect(comp.programmingLanguage).toBe(programmingExercise.programmingLanguage);
         expect(comp.projectType).toBe(programmingExercise.projectType);
@@ -142,7 +225,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
     it('should not call loadAeolusTemplate', () => {
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        comp.programmingExerciseCreationConfig.customBuildPlansSupported = '';
+        comp.programmingExerciseCreationConfig.customBuildPlansSupported = PROFILE_AEOLUS;
         const loadAeolusTemplateSpy = jest.spyOn(comp, 'loadAeolusTemplate');
         comp.ngOnChanges({});
         expect(loadAeolusTemplateSpy).not.toHaveBeenCalled();
@@ -167,7 +250,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
     it('should update windfile', () => {
         comp.programmingExercise.windFile = undefined;
-        programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_LOCALCI;
+        programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_AEOLUS;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(windFile);
         comp.loadAeolusTemplate();
@@ -176,32 +259,12 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
     it('should call this.resetCustomBuildPlan', () => {
         comp.programmingExercise.windFile = undefined;
-        programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_LOCALCI;
+        programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_AEOLUS;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         const resetSpy = jest.spyOn(comp, 'resetCustomBuildPlan');
         jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(undefined);
         comp.loadAeolusTemplate();
         expect(comp.programmingExercise.windFile).toBeUndefined();
         expect(resetSpy).toHaveBeenCalled();
-    });
-
-    it('should not do anything in loadAeolusTemplate', () => {
-        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        comp.programmingExerciseCreationConfig.customBuildPlansSupported = PROFILE_LOCALCI;
-        comp.programmingExercise.id = 1;
-        comp.programmingExercise.windFile = windFile;
-        const loadAeolusTemplateSpy = jest.spyOn(comp, 'loadAeolusTemplate');
-        comp.ngOnChanges({
-            programmingExercise: {
-                currentValue: programmingExercise,
-                previousValue: undefined,
-                firstChange: false,
-                isFirstChange: function (): boolean {
-                    throw new Error('Function not implemented.');
-                },
-            },
-        });
-        expect(loadAeolusTemplateSpy).toHaveBeenCalled();
-        expect(comp.programmingExercise.windFile).toEqual(windFile);
     });
 });

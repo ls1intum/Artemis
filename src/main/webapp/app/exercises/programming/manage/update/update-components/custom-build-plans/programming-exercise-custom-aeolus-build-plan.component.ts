@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
-import { BuildAction, PlatformAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
+import { BuildAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, ScriptAction } from 'app/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
@@ -76,7 +76,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
      * @private
      */
     loadAeolusTemplate() {
-        if (this.programmingExercise.id) {
+        if (this.programmingExercise?.id) {
             return; // do not load template for existing exercises
         }
         this.resetCustomBuildPlan();
@@ -89,44 +89,14 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         this.sequentialTestRuns = this.programmingExercise.sequentialTestRuns;
         this.testwiseCoverageEnabled = this.programmingExercise.testwiseCoverageEnabled;
         if (this.programmingExerciseCreationConfig.customBuildPlansSupported) {
-            this.aeolusService
-                .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-                .subscribe({
-                    next: (file) => {
-                        if (file && !this.programmingExerciseCreationConfig.buildPlanLoaded) {
-                            this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-                            const templateFile: WindFile = JSON.parse(file);
-                            const windFile: WindFile = Object.assign(new WindFile(), templateFile);
-                            const actions: BuildAction[] = [];
-                            templateFile.actions.forEach((anyAction: any) => {
-                                let action: BuildAction | undefined = undefined;
-                                if (anyAction.script) {
-                                    action = Object.assign(new ScriptAction(), anyAction);
-                                } else {
-                                    action = Object.assign(new PlatformAction(), anyAction);
-                                }
-                                if (!action) {
-                                    return;
-                                }
-                                action.parameters = new Map<string, string | boolean | number>();
-                                if (anyAction.parameters) {
-                                    for (const key of Object.keys(anyAction.parameters)) {
-                                        action.parameters.set(key, anyAction.parameters[key]);
-                                    }
-                                }
-                                actions.push(action);
-                            });
-                            // somehow, the returned content has a scriptActions field, which is not defined in the WindFile class
-                            delete windFile['scriptActions'];
-                            windFile.actions = actions;
-                            this.programmingExercise.windFile = windFile;
-                        }
-                    },
-                    error: () => {
-                        this.resetCustomBuildPlan();
-                        this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-                    },
-                });
+            this.programmingExercise.windFile = this.aeolusService.getAeolusTemplateFile(
+                this.programmingLanguage,
+                this.projectType,
+                this.staticCodeAnalysisEnabled,
+                this.sequentialTestRuns,
+                this.testwiseCoverageEnabled,
+            );
+            this.programmingExerciseCreationConfig.buildPlanLoaded = true;
         }
     }
 

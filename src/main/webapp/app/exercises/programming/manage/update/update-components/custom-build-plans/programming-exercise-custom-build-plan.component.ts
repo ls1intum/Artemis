@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
-import { BuildAction, PlatformAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
@@ -82,59 +82,30 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this.sequentialTestRuns = this.programmingExercise.sequentialTestRuns;
         this.testwiseCoverageEnabled = this.programmingExercise.testwiseCoverageEnabled;
         if (this.programmingExerciseCreationConfig.customBuildPlansSupported) {
-            this.aeolusService
-                .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-                .subscribe({
-                    next: (file) => {
-                        if (file && !this.programmingExerciseCreationConfig.buildPlanLoaded) {
-                            this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-                            const templateFile: WindFile = JSON.parse(file);
-                            const windFile: WindFile = Object.assign(new WindFile(), templateFile);
-                            const actions: BuildAction[] = [];
-                            templateFile.actions.forEach((anyAction: any) => {
-                                let action: BuildAction | undefined = undefined;
-                                if (anyAction.script) {
-                                    action = Object.assign(new ScriptAction(), anyAction);
-                                } else {
-                                    action = Object.assign(new PlatformAction(), anyAction);
-                                }
-                                if (!action) {
-                                    return;
-                                }
-                                action.parameters = new Map<string, string | boolean | number>();
-                                if (anyAction.parameters) {
-                                    for (const key of Object.keys(anyAction.parameters)) {
-                                        action.parameters.set(key, anyAction.parameters[key]);
-                                    }
-                                }
-                                actions.push(action);
-                            });
-                            // somehow, the returned content has a scriptActions field, which is not defined in the WindFile class
-                            delete windFile['scriptActions'];
-                            windFile.actions = actions;
-                            this.programmingExercise.windFile = windFile;
-                        }
-                    },
-                    error: () => {
-                        this.resetCustomBuildPlan();
-                        this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-                    },
-                });
-            this.aeolusService
-                .getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-                .subscribe({
-                    next: (file) => {
-                        if (file) {
-                            this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-                            this.programmingExercise.buildScript = file;
-                            this.code = file;
-                        }
-                    },
-                    error: () => {
-                        this.resetCustomBuildPlan();
-                        this.programmingExerciseCreationConfig.buildPlanLoaded = true;
-                    },
-                });
+            if (!this.programmingExercise.id) {
+                this.programmingExercise.windFile = this.aeolusService.getAeolusTemplateFile(
+                    this.programmingLanguage,
+                    this.projectType,
+                    this.staticCodeAnalysisEnabled,
+                    this.sequentialTestRuns,
+                    this.testwiseCoverageEnabled,
+                );
+                this.programmingExerciseCreationConfig.buildPlanLoaded = true;
+                if (!this.programmingExercise.windFile) {
+                    this.resetCustomBuildPlan();
+                }
+            } else {
+                this.programmingExercise.buildScript = this.aeolusService.getAeolusTemplateScript(
+                    this.programmingLanguage,
+                    this.projectType,
+                    this.staticCodeAnalysisEnabled,
+                    this.sequentialTestRuns,
+                    this.testwiseCoverageEnabled,
+                );
+                if (!this.programmingExercise.buildScript) {
+                    this.resetCustomBuildPlan();
+                }
+            }
         }
     }
 

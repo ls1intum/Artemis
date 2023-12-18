@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { ProgrammingLanguage, ProjectType, WindFile } from 'app/entities/programming-exercise.model';
+import { BuildAction, PlatformAction, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
 
 export interface AeolusPreview {
     result: string;
@@ -22,19 +22,56 @@ export class AeolusService {
      * @param staticAnalysis (if available) whether static code analysis should be enabled
      * @param sequentialRuns (if available) whether sequential test runs should be enabled
      * @param coverage (if available) whether test coverage should be enabled
-     * @returns json test file
+     * @returns WindFile or undefined if no template is available
      */
-    getAeolusTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): Observable<string> {
+    getAeolusTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): WindFile | undefined {
         const path: string = [language, projectType].filter(Boolean).join('/');
         const params = {
             staticAnalysis: !!staticAnalysis,
             sequentialRuns: !!sequentialRuns,
             testCoverage: !!coverage,
         };
-        return this.http.get<string>(`${this.resourceUrl}/templates/` + path, {
-            responseType: 'text' as 'json',
-            params,
-        });
+        let response: WindFile | undefined = undefined;
+        this.http
+            .get<string>(`${this.resourceUrl}/templates/` + path, {
+                responseType: 'text' as 'json',
+                params,
+            })
+            .subscribe({
+                next: (file) => {
+                    if (file) {
+                        const templateFile: WindFile = JSON.parse(file);
+                        const windFile: WindFile = Object.assign(new WindFile(), templateFile);
+                        const actions: BuildAction[] = [];
+                        templateFile.actions.forEach((anyAction: any) => {
+                            let action: BuildAction | undefined = undefined;
+                            if (anyAction.script) {
+                                action = Object.assign(new ScriptAction(), anyAction);
+                            } else {
+                                action = Object.assign(new PlatformAction(), anyAction);
+                            }
+                            if (!action) {
+                                return;
+                            }
+                            action.parameters = new Map<string, string | boolean | number>();
+                            if (anyAction.parameters) {
+                                for (const key of Object.keys(anyAction.parameters)) {
+                                    action.parameters.set(key, anyAction.parameters[key]);
+                                }
+                            }
+                            actions.push(action);
+                        });
+                        // somehow, the returned content has a scriptActions field, which is not defined in the WindFile class
+                        delete windFile['scriptActions'];
+                        windFile.actions = actions;
+                        response = windFile;
+                    }
+                },
+                error: () => {
+                    response = undefined;
+                },
+            });
+        return response;
     }
 
     /**
@@ -46,17 +83,28 @@ export class AeolusService {
      * @param coverage (if available) whether test coverage should be enabled
      * @returns json test file
      */
-    getAeolusTemplateScript(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): Observable<string> {
+    getAeolusTemplateScript(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): string | undefined {
         const path: string = [language, projectType].filter(Boolean).join('/');
         const params = {
             staticAnalysis: !!staticAnalysis,
             sequentialRuns: !!sequentialRuns,
             testCoverage: !!coverage,
         };
-        return this.http.get<string>(`${this.resourceUrl}/templateScripts/` + path, {
-            responseType: 'text' as 'json',
-            params,
-        });
+        let response: string | undefined = undefined;
+        this.http
+            .get<string>(`${this.resourceUrl}/templateScripts/` + path, {
+                responseType: 'text' as 'json',
+                params,
+            })
+            .subscribe({
+                next: (file) => {
+                    response = file;
+                },
+                error: () => {
+                    response = undefined;
+                },
+            });
+        return response;
     }
 
     generatePreview(windfile: WindFile): Observable<string> {
