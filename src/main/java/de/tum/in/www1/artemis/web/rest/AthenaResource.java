@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.service.connectors.athena.AthenaRepositoryExportSe
 import de.tum.in.www1.artemis.service.dto.athena.ProgrammingFeedbackDTO;
 import de.tum.in.www1.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /**
@@ -138,9 +139,17 @@ public class AthenaResource {
     public ResponseEntity<List<String>> getAvailableModulesForProgrammingExercises(@PathVariable long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         log.debug("REST request to get available Athena modules for programming exercises in Course {}", course.getTitle());
-        // todo error handling
-        var modules = athenaModuleService.getAthenaProgrammingModulesForCourse(course);
-        return ResponseEntity.ok(modules);
+
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        try {
+            var modules = athenaModuleService.getAthenaProgrammingModulesForCourse(course);
+            return ResponseEntity.ok(modules);
+        }
+        catch (NetworkingException e) {
+            throw new InternalServerErrorException("Could not fetch available Athena modules for programming exercises");
+        }
+
     }
 
     @GetMapping("athena/text-exercises/{courseId}/available-modules")
@@ -148,9 +157,17 @@ public class AthenaResource {
     public ResponseEntity<List<String>> getAvailableModulesForTextExercises(@PathVariable long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         log.debug("REST request to get available Athena modules for text exercises in Course {}", course.getTitle());
+
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
         // todo error handling
-        var modules = athenaModuleService.getAthenaTextModulesForCourse(course);
-        return ResponseEntity.ok(modules);
+        try {
+            var modules = athenaModuleService.getAthenaTextModulesForCourse(course);
+            return ResponseEntity.ok(modules);
+        }
+        catch (NetworkingException e) {
+            throw new InternalServerErrorException("Could not fetch available Athena modules for programming exercises");
+        }
+
     }
 
     @GetMapping("public/athena/restricted-modules")

@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.exception.NetworkingException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -54,24 +55,22 @@ public class AthenaModuleService {
     private record AthenaModuleDTO(String name, String type) {
     }
 
-    private List<AthenaModuleDTO> getAthenaModules() {
+    private List<AthenaModuleDTO> getAthenaModules() throws NetworkingException {
         try {
             var response = shortTimeoutRestTemplate.getForEntity(athenaUrl + "/modules", JsonNode.class);
-            // if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
-            // throw new IrisConnectorException("Could not fetch modules");
-            // }
-            // todo error handling
+            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
+                throw new NetworkingException("Could not fetch Athena modules");
+            }
             AthenaModuleDTO[] modules = objectMapper.treeToValue(response.getBody(), AthenaModuleDTO[].class);
             return List.of(modules);
         }
-        catch (HttpStatusCodeException | JsonProcessingException e) {
+        catch (RestClientException | JsonProcessingException e) {
             log.error("Failed to fetch modules from Athena", e);
-            // todo error handling
+            throw new NetworkingException("Failed to fetch modules from Athena", e);
         }
-        return List.of();
     }
 
-    public List<String> getAthenaProgrammingModulesForCourse(Course course) {
+    public List<String> getAthenaProgrammingModulesForCourse(Course course) throws NetworkingException {
         List<String> availableProgrammingModules = getAthenaModules().stream().filter(module -> "programming".equals(module.type)).map(module -> module.name).toList();
         if (!course.getRestrictedAthenaModulesAccess()) {
             // filter out restricted modules
@@ -80,7 +79,7 @@ public class AthenaModuleService {
         return availableProgrammingModules;
     }
 
-    public List<String> getAthenaTextModulesForCourse(Course course) {
+    public List<String> getAthenaTextModulesForCourse(Course course) throws NetworkingException {
         List<String> availableProgrammingModules = getAthenaModules().stream().filter(module -> "text".equals(module.type)).map(module -> module.name).toList();
         if (!course.getRestrictedAthenaModulesAccess()) {
             // filter out restricted modules
@@ -96,7 +95,6 @@ public class AthenaModuleService {
      * @return The URL prefix to access the Athena module. Example: "http://athena.example.com/modules/text/module_text_cofee"
      */
     public String getAthenaModuleUrl(Exercise exercise) {
-        // TODO Athena: Use the specified module in the exercise instead of the config specified one
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 return athenaUrl + "/modules/text/" + exercise.getFeedbackSuggestionModule();

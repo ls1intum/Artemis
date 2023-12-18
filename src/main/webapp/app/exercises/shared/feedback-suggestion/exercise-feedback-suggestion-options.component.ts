@@ -11,7 +11,9 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit {
     @Input() exercise: Exercise;
-    @Input() readOnly?: boolean;
+    @Input() readOnly: boolean = false;
+
+    protected readonly AssessmentType = AssessmentType;
 
     readonly assessmentType: AssessmentType;
 
@@ -33,7 +35,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit {
         this.isAthenaEnabled$ = this.athenaService.isEnabled();
     }
 
-    checkboxDisabled() {
+    inputControlsDisabled() {
         if (this.exercise.type == ExerciseType.PROGRAMMING) {
             return this.exercise.assessmentType == AssessmentType.AUTOMATIC || this.readOnly;
         }
@@ -54,10 +56,4 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit {
             this.exercise.feedbackSuggestionModule = undefined;
         }
     }
-
-    buttonClick() {
-        console.log(this.exercise.feedbackSuggestionModule);
-    }
-
-    protected readonly AssessmentType = AssessmentType;
 }

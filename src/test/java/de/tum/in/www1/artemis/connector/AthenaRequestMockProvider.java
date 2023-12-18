@@ -20,6 +20,7 @@ import org.springframework.test.web.client.ResponseActions;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Component
@@ -48,7 +49,11 @@ public class AthenaRequestMockProvider {
 
     public static final String ATHENA_MODULE_TEXT_TEST = "module_text_test";
 
+    public static final String ATHENA_RESTRICTED_MODULE_TEXT_TEST = "module_text_test_restricted";
+
     public static final String ATHENA_MODULE_PROGRAMMING_TEST = "module_programming_test";
+
+    public static final String ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST = "module_programming_test_restricted";
 
     public AthenaRequestMockProvider(@Qualifier("athenaRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutAthenaRestTemplate") RestTemplate shortTimeoutRestTemplate,
             @Qualifier("veryShortTimeoutAthenaRestTemplate") RestTemplate veryShortTimeoutRestTemplate) {
@@ -197,6 +202,43 @@ public class AthenaRequestMockProvider {
                 mapper.createArrayNode().add(suggestion));
 
         responseActions.andRespond(withSuccess(node.toString(), MediaType.APPLICATION_JSON));
+    }
+
+    public void mockGetAvailableModulesSuccessEmptyModulesList() {
+        // Response: []
+        final ArrayNode array = mapper.createArrayNode();
+
+        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules")).andExpect(method(HttpMethod.GET));
+        responseActions.andRespond(withSuccess().body(array.toString()).contentType(MediaType.APPLICATION_JSON));
+    }
+
+    public void mockGetAvailableModulesSuccess() {
+        // Response:
+        // [{"name":"module_example","url":"http://module-example-service:5001","type":"programming","supports_evaluation":true},{"name":"module_programming_llm","url":"http://module-programming-llm-service:5002","type":"programming","supports_evaluation":false},{"name":"module_text_llm","url":"http://module-text-llm-service:5003","type":"text","supports_evaluation":true},{"name":"module_text_cofee","url":"http://module-text-cofee-service:5004","type":"text","supports_evaluation":false},{"name":"module_programming_themisml","url":"http://module-programming-themisml-service:5005","type":"programming","supports_evaluation":false}]
+        final ArrayNode array = mapper.createArrayNode();
+
+        array.add(createModule(ATHENA_MODULE_TEXT_TEST, "http://module-text-test-service:5001", "text", true));
+        array.add(createModule(ATHENA_MODULE_PROGRAMMING_TEST, "http://module-programming-test-service:5002", "programming", false));
+        array.add(createModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST, "http://module-restricted-text-service:5004", "text", false));
+        array.add(createModule(ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST, "http://module-restricted-programming-test-service:5003", "programming", true));
+
+        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules")).andExpect(method(HttpMethod.GET));
+        responseActions.andRespond(withSuccess().body(array.toString()).contentType(MediaType.APPLICATION_JSON));
+    }
+
+    public void mockGetAvailableModulesFailure() {
+        final ResponseActions responseActions = mockServerShortTimeout.expect(ExpectedCount.once(), requestTo(athenaUrl + "/modules")).andExpect(method(HttpMethod.GET));
+        responseActions.andRespond(withException(new SocketTimeoutException()));
+    }
+
+    private ObjectNode createModule(String name, String url, String type, boolean supportsEvaluation) {
+        // creates {"name":"module_example","url":"http://module-example-service:5001","type":"programming","supports_evaluation":true}
+        ObjectNode moduleNode = mapper.createObjectNode();
+        moduleNode.put("name", name);
+        moduleNode.put("url", url);
+        moduleNode.put("type", type);
+        moduleNode.put("supports_evaluation", supportsEvaluation);
+        return moduleNode;
     }
 
     /**
