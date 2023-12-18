@@ -188,9 +188,10 @@ The following line in the ``junit-platform.properties`` file enables parallel te
 
     junit.jupiter.execution.parallel.enabled = true
 
-To execute a test class and its inheriting classes in parallel, annotate it with ``@Execution(ExecutionMode.CONCURRENT)``. Since we need to isolate resources such as
-databases and application contexts, we use the ``@ResourceLock`` annotation to group tests that must run sequentially. For our use case, the ``@ResourceLock`` annotation takes
-the name of the test group as a parameter. A unique set of spring profiles, a separate application context, and a separate database characterize each test group.
+To execute a test class and its inheriting classes in parallel, we annotate it with ``@Execution(ExecutionMode.CONCURRENT)``.
+Since we need to isolate resources such as
+databases and application contexts, we use the ``@ResourceLock`` annotation. This annotation allows us to group tests into parallel running groups while preserving the sequential execution of tests within each group. For our use case, the ``@ResourceLock`` annotation takes
+the name of the test group (matching the abstract base-class name) as a parameter. A unique set of spring profiles, a separate application context, and a separate database characterizes each test group.
 
 .. code-block:: java
 
@@ -204,13 +205,11 @@ the name of the test group as a parameter. A unique set of spring profiles, a se
     @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
     public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest { ... }
 
-Note that parallel test execution is only safe if the tests are independent and will lead to flaky tests otherwise. Executing tests that share
-resources (e.g., the hazelcast cache in quiz-related tests) requires the  ``@Isolated`` annotation. This annotation will prevent other tests from running parallel to the annotated
-test.
+Note that parallel test execution is only safe if the tests are independent and will lead to flaky tests otherwise. Specific resources, such as the Hazelcast cache, are shared among tests belonging to different groups.
+To prevent these tests from running in parallel, we could use the ``@ResourceLock`` annotation. This approach benefits the performance by allowing other tests
+that do not share the locked resource to run in parallel.
 
-Alternatively, the ``@ResourceLock`` annotation groups tests that need to run sequentially. This approach benefits the performance by allowing other tests
-that do not share the locked resource to run in parallel. However, the ``@Isolated`` annotation is preferred because it is more explicit and easier to understand and benefits
-extensibility and maintainability in places where it is uncertain what other tests might need the resource now or in the future.
+However, the ``@Isolated`` annotation, which prevents other tests from running parallel to the annotated test, is preferred. The annotation is more explicit and easier to understand. It benefits extensibility and maintainability when it is uncertain what other tests might need the resource now or in the future.
 
 .. code-block:: java
 
