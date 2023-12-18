@@ -2,7 +2,7 @@
     <h2>{{ tutorialGroup.title }}</h2>
     <hr />
     @if (header) {
-        <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
+        <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }" />
         <hr />
     }
     <h3>{{ 'artemisApp.pages.tutorialGroupDetail.title' | artemisTranslate }}:</h3>
@@ -56,19 +56,15 @@
         <!-- Utilization -->
         <dt>
             <span>{{ 'artemisApp.entities.tutorialGroup.utilization' | artemisTranslate }}</span>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.utilizationHelpDetail' | artemisTranslate }}"></fa-icon>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.utilizationHelpDetail' | artemisTranslate }}" />
         </dt>
         <dd>
-            <jhi-tutorial-group-utilization-indicator [tutorialGroup]="tutorialGroup"></jhi-tutorial-group-utilization-indicator>
+            <jhi-tutorial-group-utilization-indicator [tutorialGroup]="tutorialGroup" />
         </dd>
         <!-- Average Attendance -->
         <dt>
             <span>{{ 'artemisApp.entities.tutorialGroup.averageAttendanceDetail' | artemisTranslate }}</span>
-            <fa-icon
-                [icon]="faQuestionCircle"
-                class="text-secondary"
-                ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.averageAttendanceHelpDetail' | artemisTranslate }}"
-            ></fa-icon>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.averageAttendanceHelpDetail' | artemisTranslate }}" />
         </dt>
         <dd>
             @if (tutorialGroup.averageAttendance !== undefined) {
@@ -175,8 +171,7 @@
         <dd>
             @if (sessions && sessions.length > 0) {
                 <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
-                    <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false" [isReadOnly]="true">
-                    </jhi-tutorial-group-sessions-table>
+                    <jhi-tutorial-group-sessions-table [timeZone]="timeZone" [sessions]="sessions" [tutorialGroup]="tutorialGroup" [showIdColumn]="false" [isReadOnly]="true" />
                 </div>
             } @else {
                 <span>{{ 'artemisApp.pages.tutorialGroupDetail.sessionsNotFound' | artemisTranslate }}</span>

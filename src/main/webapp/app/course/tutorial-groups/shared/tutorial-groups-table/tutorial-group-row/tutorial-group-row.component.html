@@ -10,7 +10,7 @@
         </a>
     </td>
     <td>
-        <jhi-tutorial-group-utilization-indicator [tutorialGroup]="tutorialGroup"></jhi-tutorial-group-utilization-indicator>
+        <jhi-tutorial-group-utilization-indicator [tutorialGroup]="tutorialGroup" />
     </td>
     <td>{{ (tutorialGroup.capacity ?? '') + ' / ' + (tutorialGroup.numberOfRegisteredUsers ?? '') }}</td>
     <td>{{ tutorialGroup.isUserTutor ? ('global.generic.you' | artemisTranslate) : tutorialGroup.teachingAssistantName }}</td>
@@ -62,6 +62,6 @@
         </td>
     }
     <td>
-        <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
+        <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }" />
     </td>
 </ng-container>

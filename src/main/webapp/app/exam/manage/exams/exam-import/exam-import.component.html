@@ -23,19 +23,19 @@
                     <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()" class="flex-row">
                         <th jhiSortBy="{{ column.ID }}" class="col-1">
                             <span>#</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="{{ column.TITLE }}" class="col-4">
                             <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="{{ column.COURSE_TITLE }}" class="col-4">
                             <span jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="{{ column.EXAM_MODE }}" class="col-4">
                             <span jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th class="col-1"></th>
                     </tr>
@@ -47,10 +47,10 @@
                                 <span [class.ngb-highlight]="'' + exam.id === searchTerm"> {{ exam.id }}</span>
                             </td>
                             <td class="text-break col-4">
-                                <ngb-highlight [result]="exam.title" [term]="searchTerm"></ngb-highlight>
+                                <ngb-highlight [result]="exam.title" [term]="searchTerm" />
                             </td>
                             <td class="text-break col-4">
-                                <ngb-highlight [result]="exam.course!.title" [term]="searchTerm"></ngb-highlight>
+                                <ngb-highlight [result]="exam.course!.title" [term]="searchTerm" />
                             </td>
                             <td class="text-break col-2">
                                 @if (!exam.testExam) {
@@ -62,10 +62,10 @@
                             </td>
                             <td class="col-1">
                                 @if (!subsequentExerciseGroupSelection) {
-                                    <jhi-button (onClick)="forwardSelectedExam(exam)" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
+                                    <jhi-button (onClick)="forwardSelectedExam(exam)" [title]="'artemisApp.exercise.import.table.doImport'" />
                                 }
                                 @if (subsequentExerciseGroupSelection) {
-                                    <jhi-button (onClick)="openExerciseSelection(exam)" [title]="'artemisApp.examManagement.exerciseGroup.selectExerciseGroup'"></jhi-button>
+                                    <jhi-button (onClick)="openExerciseSelection(exam)" [title]="'artemisApp.examManagement.exerciseGroup.selectExerciseGroup'" />
                                 }
                             </td>
                         </tr>
@@ -73,8 +73,7 @@
                 </tbody>
             </table>
             <div class="d-flex justify-content-between p-2">
-                <ngb-pagination [maxSize]="10" [rotate]="true" [collectionSize]="total" [(page)]="state.page" [pageSize]="state.pageSize" (pageChange)="onPageChange($event)">
-                </ngb-pagination>
+                <ngb-pagination [maxSize]="10" [rotate]="true" [collectionSize]="total" [(page)]="state.page" [pageSize]="state.pageSize" (pageChange)="onPageChange($event)" />
             </div>
         </div>
     }
@@ -93,7 +92,7 @@
                     </p>
                 }
             </div>
-            <jhi-exam-exercise-import [exam]="exam!" [importInSameCourse]="isImportInSameCourse"></jhi-exam-exercise-import>
+            <jhi-exam-exercise-import [exam]="exam!" [importInSameCourse]="isImportInSameCourse" />
         </div>
         <div class="modal-footer">
             <jhi-button
@@ -101,7 +100,7 @@
                 [title]="'artemisApp.exercise.import.table.doImport'"
                 [disabled]="isImportingExercises"
                 [isLoading]="isImportingExercises"
-            ></jhi-button>
+            />
         </div>
     }
 </form>

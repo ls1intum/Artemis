@@ -6,7 +6,7 @@
         [routerLink]="['/course-management', course.id, 'programming-exercises', 'new']"
         queryParamsHandling="merge"
     >
-        <fa-icon [icon]="faPlus"></fa-icon>
+        <fa-icon [icon]="faPlus" />
         <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.createLabel">Create Programming Exercise</span>
     </button>
     <button
@@ -15,7 +15,7 @@
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         (click)="openImportModal()"
     >
-        <fa-icon [icon]="faFileImport"></fa-icon>
+        <fa-icon [icon]="faFileImport" />
         <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel">Import new Programming Exercise</span>
     </button>
 </div>

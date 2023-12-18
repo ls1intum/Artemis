@@ -9,7 +9,7 @@
       >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
       }] @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
       <jhi-included-in-score-badge
-      [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+      [includedInOverallScore]="exercise.includedInOverallScore" />
     }</span>
         <div left-body class="text-editor-grid mt-4 ps-2 pb-2 w-100">
             <div class="grid-area-main">
@@ -38,12 +38,12 @@
         </div>
         <!--endregion-->
         <!--region Right Panel-->
-        <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
+        <fa-icon right-header [icon]="farListAlt" />&nbsp;
         <span right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
         <!-- problem statement update & difference highlighter -->
         <ng-container right-body>
             @if (exercise) {
-                <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)"> </jhi-exam-exercise-update-highlighter>
+                <jhi-exam-exercise-update-highlighter [exercise]="exercise" (problemStatementUpdateEvent)="updateProblemStatement($event)" />
             }
             @if (exercise.problemStatement) {
                 <p class="markdown-preview mb-3">

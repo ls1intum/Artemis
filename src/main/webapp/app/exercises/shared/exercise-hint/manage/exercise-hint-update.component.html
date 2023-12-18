@@ -16,7 +16,7 @@
                 <div class="form-group">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.description" for="field_description">Description</label>
-                        <jhi-help-icon text="artemisApp.exerciseHint.descriptionTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.exerciseHint.descriptionTooltip" />
                     </div>
                     <input type="text" required minlength="3" class="form-control" name="description" id="field_description" [(ngModel)]="exerciseHint.description" />
                 </div>
@@ -24,7 +24,7 @@
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.task" for="field_task">Task</label>
                         @if (exerciseHint.type === 'code') {
-                            <jhi-help-icon text="artemisApp.exerciseHint.taskTooltip"></jhi-help-icon>
+                            <jhi-help-icon text="artemisApp.exerciseHint.taskTooltip" />
                         }
                     </div>
                     <select class="form-select" required name="task" [(ngModel)]="this.exerciseHint.programmingExerciseTask" id="field_task">
@@ -36,7 +36,7 @@
                 <div class="form-group">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.displayThreshold" for="field_description">Display Threshold</label>
-                        <jhi-help-icon text="artemisApp.exerciseHint.displayThresholdTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.exerciseHint.displayThresholdTooltip" />
                     </div>
                     <input
                         type="number"
@@ -70,11 +70,11 @@
                         [resizableMaxHeight]="MarkdownEditorHeight.LARGE"
                         [domainCommands]="domainCommands"
                         [editorMode]="editorMode"
-                    ></jhi-markdown-editor>
+                    />
                 </div>
                 @if (exerciseHint.type === HintType.CODE) {
                     <div class="form-group hint-form__editor-wrapper">
-                        <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint" [enableEditing]="true"></jhi-code-hint-container>
+                        <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint" [enableEditing]="true" />
                     </div>
                 }
                 @if (exerciseHint.type === HintType.CODE) {
@@ -106,10 +106,10 @@
             </div>
             <div>
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-                    <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
                 <button type="submit" id="save-entity" [disabled]="hintForm.invalid || isSaving || !exercise.id" class="btn btn-primary">
-                    <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                    <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                 </button>
             </div>
         </form>

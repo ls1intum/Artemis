@@ -46,7 +46,7 @@
             }
             <div class="my-2">
                 <button type="button" id="create-session-button" class="btn btn-primary" (click)="openCreateSessionDialog($event)">
-                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <fa-icon [icon]="faPlus" />
                     <span>{{ 'artemisApp.pages.tutorialGroupSessionManagement.createSessionButton' | artemisTranslate }}</span>
                 </button>
             </div>
@@ -66,7 +66,7 @@
                             (cancelOrActivatePressed)="loadAll()"
                             (tutorialGroupSessionDeleted)="loadAll()"
                             (tutorialGroupEdited)="loadAll()"
-                        ></jhi-tutorial-group-session-row-buttons>
+                        />
                     </ng-template>
                 </jhi-tutorial-group-sessions-table>
             </div>

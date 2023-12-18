@@ -16,11 +16,11 @@
                         [courseId]="courseId"
                         [node]="node"
                         (click)="nodeClicked.emit(node)"
-                    ></jhi-learning-path-graph-node>
+                    />
                 </div>
                 @if (!last) {
                     <div class="path-edge">
-                        <fa-icon [icon]="faChevronDown"></fa-icon>
+                        <fa-icon [icon]="faChevronDown" />
                     </div>
                 }
             </div>

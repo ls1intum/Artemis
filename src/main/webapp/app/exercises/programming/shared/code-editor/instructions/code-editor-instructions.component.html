@@ -7,7 +7,7 @@
         <h3 class="card-title">
             @if (!collapsed) {
                 <span>
-                    <fa-icon [icon]="farListAlt"></fa-icon>
+                    <fa-icon [icon]="farListAlt" />
                     @if (!isAssessmentMode) {
                         <span class="ms-2" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
                     }
@@ -18,24 +18,24 @@
             }
             @if (collapsed) {
                 <span class="collapsed-instructions-card">
-                    <fa-icon class="top-icon" [icon]="faChevronLeft"></fa-icon>
-                    <fa-icon [icon]="farListAlt" class="fa-rotate-90" id="panel-symbol"></fa-icon>
+                    <fa-icon class="top-icon" [icon]="faChevronLeft" />
+                    <fa-icon [icon]="farListAlt" class="fa-rotate-90" id="panel-symbol" />
                     @if (!isAssessmentMode) {
                         <span class="header" jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
                     }
                     @if (isAssessmentMode) {
                         <span class="header" jhiTranslate="artemisApp.exercise.instructions">Instructions</span>
                     }
-                    <fa-icon class="bottom-icon" [icon]="faChevronLeft"></fa-icon>
+                    <fa-icon class="bottom-icon" [icon]="faChevronLeft" />
                 </span>
             }
         </h3>
         @if (!collapsed) {
-            <fa-icon class="ms-auto clickable" [icon]="faChevronRight"></fa-icon>
+            <fa-icon class="ms-auto clickable" [icon]="faChevronRight" />
         }
     </div>
     <div style="display: contents" [hidden]="collapsed">
-        <ng-content></ng-content>
+        <ng-content />
     </div>
     <!-- Required for resizing; don't remove empty span -->
     <div class="rg-left"><span></span></div>

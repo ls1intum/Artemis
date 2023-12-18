@@ -1,10 +1,10 @@
 <div (drop)="updateFeedbackOnDrop($event)" (dragover)="$event.preventDefault()" class="unreferenced-feedback-detail card mb-3" [class.is-suggestion]="isSuggestion">
     <div class="card-header">
         @if (isSuggestion || Feedback.isFeedbackSuggestion(feedback)) {
-            <jhi-feedback-suggestion-badge [feedback]="feedback" [useDefaultText]="useDefaultFeedbackSuggestionBadgeText"></jhi-feedback-suggestion-badge>
+            <jhi-feedback-suggestion-badge [feedback]="feedback" [useDefaultText]="useDefaultFeedbackSuggestionBadgeText" />
         }
         @if (feedback.gradingInstruction) {
-            <jhi-grading-instruction-link-icon [feedback]="feedback"></jhi-grading-instruction-link-icon>
+            <jhi-grading-instruction-link-icon [feedback]="feedback" />
         }
         @if (!readOnly) {
             <button
@@ -18,18 +18,18 @@
                 [renderButtonText]="false"
                 class="btn float-end"
             >
-                <fa-icon [icon]="faTrashAlt"></fa-icon>
+                <fa-icon [icon]="faTrashAlt" />
             </button>
         }
         <!-- Accept/Discard for feedback suggestions -->
         @if (isSuggestion) {
             <div class="row float-end suggestion-action-buttons">
                 <button class="btn btn-success m-1 btn-sm" (click)="onAcceptSuggestion.emit(feedback)">
-                    <fa-icon [icon]="faCheck"></fa-icon>
+                    <fa-icon [icon]="faCheck" />
                     <span jhiTranslate="artemisApp.assessment.detail.accept">Accept</span>
                 </button>
                 <button class="btn btn-danger m-1 btn-sm" (click)="onDiscardSuggestion.emit(feedback)">
-                    <fa-icon [icon]="faTrash"></fa-icon>
+                    <fa-icon [icon]="faTrash" />
                     <span jhiTranslate="artemisApp.assessment.detail.discard">Discard</span>
                 </button>
             </div>
@@ -55,7 +55,7 @@
                 <label class="pe-0" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
                 @if (feedback.gradingInstruction) {
                     <div>
-                        <fa-icon [icon]="faQuestionCircle" class="text-secondary ps-1" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate"></fa-icon>
+                        <fa-icon [icon]="faQuestionCircle" class="text-secondary ps-1" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" />
                     </div>
                 }
             </div>
@@ -94,12 +94,12 @@
                 <!-- :warning: emoji was rendered as a black-white glyph, hence the solution with the fa-icon -->
                 @if (feedback.correctionStatus !== 'CORRECT') {
                     <fa-layers>
-                        <fa-icon class="text-warning" [icon]="faExclamationTriangle"></fa-icon>
-                        <fa-icon class="text-dark exclamation-icon" [icon]="faExclamation" size="2x" transform="shrink-10"></fa-icon>
+                        <fa-icon class="text-warning" [icon]="faExclamationTriangle" />
+                        <fa-icon class="text-dark exclamation-icon" [icon]="faExclamation" size="2x" transform="shrink-10" />
                     </fa-layers>
                 }
             </div>
         }
-        <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences"></jhi-assessment-correction-round-badge>
+        <jhi-assessment-correction-round-badge [feedback]="feedback" [highlightDifferences]="highlightDifferences" />
     </div>
 </div>

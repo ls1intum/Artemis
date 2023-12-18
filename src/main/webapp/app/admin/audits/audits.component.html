@@ -27,9 +27,9 @@
                     @switch (canLoad()) {
                         @case (true) {
                             <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="transition()">
-                                <th scope="col" jhiSortBy="auditEventDate"><span jhiTranslate="audits.table.header.date">Date</span> <fa-icon [icon]="faSort"></fa-icon></th>
-                                <th scope="col" jhiSortBy="principal"><span jhiTranslate="audits.table.header.principal">User</span> <fa-icon [icon]="faSort"></fa-icon></th>
-                                <th scope="col" jhiSortBy="auditEventType"><span jhiTranslate="audits.table.header.status">State</span> <fa-icon [icon]="faSort"></fa-icon></th>
+                                <th scope="col" jhiSortBy="auditEventDate"><span jhiTranslate="audits.table.header.date">Date</span> <fa-icon [icon]="faSort" /></th>
+                                <th scope="col" jhiSortBy="principal"><span jhiTranslate="audits.table.header.principal">User</span> <fa-icon [icon]="faSort" /></th>
+                                <th scope="col" jhiSortBy="auditEventType"><span jhiTranslate="audits.table.header.status">State</span> <fa-icon [icon]="faSort" /></th>
                                 <th scope="col"><span jhiTranslate="audits.table.header.data">Extra data</span></th>
                             </tr>
                         }
@@ -68,7 +68,7 @@
     @if (audits && audits.length > 0) {
         <div>
             <div class="row justify-content-center">
-                <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
+                <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
             </div>
             <div class="row justify-content-center">
                 <ngb-pagination
@@ -80,7 +80,7 @@
                     [boundaryLinks]="true"
                     (pageChange)="transition()"
                     [disabled]="!canLoad()"
-                ></ngb-pagination>
+                />
             </div>
         </div>
     }

@@ -6,12 +6,14 @@
             [routerLink]="['/course-management', course.id, this.exerciseType + '-exercises', 'new']"
             queryParamsHandling="merge"
         >
-            <fa-icon [icon]="faPlus"></fa-icon>
+            <fa-icon [icon]="faPlus" />
             <span [jhiTranslate]="'artemisApp.' + translationLabel + 'Exercise.home.createLabel'">Create new Exercise</span>
+            <fa-icon [icon]="getExerciseTypeIcon(exerciseType)" />
         </button>
         <button [id]="'import-' + exerciseType + '-exercise'" class="btn btn-secondary jh-create-entity text-truncate mb-1 me-1" (click)="openImportModal()">
-            <fa-icon [icon]="faFileImport"></fa-icon>
+            <fa-icon [icon]="faFileImport" />
             <span [jhiTranslate]="'artemisApp.' + translationLabel + 'Exercise.home.importLabel'">Import Exercise</span>
+            <fa-icon [icon]="getExerciseTypeIcon(exerciseType)" />
         </button>
     </div>
 }

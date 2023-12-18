@@ -21,7 +21,7 @@
     </div>
     @for (graph of graphTypes; track graph; let i = $index) {
         <div id="graph-{{ i }}" class="graph">
-            <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView"> </jhi-statistics-graph>
+            <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" />
         </div>
     }
 </div>

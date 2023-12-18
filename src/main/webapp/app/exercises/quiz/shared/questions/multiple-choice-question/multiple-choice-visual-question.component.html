@@ -9,7 +9,7 @@
         placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}"
     ></textarea>
     <div class="form-group-narrow visual-question-hint">
-        <fa-icon [icon]="faQuestionCircle" class="text-secondary me-1" ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}"></fa-icon>
+        <fa-icon [icon]="faQuestionCircle" class="text-secondary me-1" ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}" />
         <input
             class="form-control"
             [(ngModel)]="question.hint"
@@ -22,7 +22,7 @@
             [icon]="faExclamationCircle"
             class="text-secondary me-1"
             ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationTooltip' | artemisTranslate }}"
-        ></fa-icon>
+        />
         <input
             class="form-control"
             [(ngModel)]="question.explanation"
@@ -39,7 +39,7 @@
                     [ngClass]="answerOption.isCorrect ? 'visual-answer-correct-container' : 'visual-answer-wrong-container'"
                     (click)="toggleIsCorrect(answerOption)"
                 >
-                    <fa-icon [icon]="answerOption.isCorrect ? faCheck : faXmark"></fa-icon>
+                    <fa-icon [icon]="answerOption.isCorrect ? faCheck : faXmark" />
                 </div>
                 <input
                     class="form-control"
@@ -48,15 +48,11 @@
                     placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}"
                 />
                 <div class="visual-answer-delete-container" (click)="deleteAnswer(i)">
-                    <fa-icon [icon]="faTrash"></fa-icon>
+                    <fa-icon [icon]="faTrash" />
                 </div>
             </div>
             <div class="form-group-narrow visual-question-hint">
-                <fa-icon
-                    [icon]="faQuestionCircle"
-                    class="text-secondary me-1"
-                    ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}"
-                ></fa-icon>
+                <fa-icon [icon]="faQuestionCircle" class="text-secondary me-1" ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}" />
                 <input
                     class="form-control"
                     [(ngModel)]="answerOption.hint"
@@ -69,7 +65,7 @@
                     [icon]="faExclamationCircle"
                     class="text-secondary me-1"
                     ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationTooltip' | artemisTranslate }}"
-                ></fa-icon>
+                />
                 <input
                     class="form-control"
                     [(ngModel)]="answerOption.explanation"
@@ -80,7 +76,7 @@
         </div>
     }
     <button id="quiz-add-mc-question" class="btn btn-block btn-success mt-2" (click)="addNewAnswer()">
-        <fa-icon [icon]="faPlus"></fa-icon>
+        <fa-icon [icon]="faPlus" />
         <span jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.newAnswerTitle"></span>
     </button>
 </div>

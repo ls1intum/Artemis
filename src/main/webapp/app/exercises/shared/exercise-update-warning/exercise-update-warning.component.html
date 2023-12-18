@@ -34,7 +34,7 @@
         <div class="warning"><span jhiTranslate="artemisApp.exercise.update.warning.confirmText"></span></div>
         <div class="form-group">
             <button type="button" class="btn btn-secondary" id="cancel-button" data-dismiss="modal" (click)="clear()">
-                <fa-icon [icon]="faBan"></fa-icon>
+                <fa-icon [icon]="faBan" />
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
             @if (creditChanged || usageCountChanged || instructionDeleted) {
@@ -46,19 +46,19 @@
                         [disabled]="instructionDeleted && deleteFeedback"
                         class="btn btn-warning"
                     >
-                        <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+                        <fa-icon [icon]="faExclamationTriangle" />
                         <span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation">Do not re-evaluate</span>
                     </button>
                 }
                 @if (creditChanged || usageCountChanged || instructionDeleted) {
                     <button type="submit" id="reevaluate-button" (click)="reEvaluateExercise()" class="btn btn-success">
-                        <fa-icon [icon]="faCheck"></fa-icon>
+                        <fa-icon [icon]="faCheck" />
                         <span jhiTranslate="artemisApp.exercise.update.warning.reevaluateExercise">Re-evaluate</span>
                     </button>
                 }
             } @else {
                 <button type="submit" id="save-button" (click)="saveExerciseWithoutReevaluation()" class="btn btn-primary">
-                    <fa-icon [icon]="faCheck"></fa-icon>
+                    <fa-icon [icon]="faCheck" />
                     <span jhiTranslate="entity.action.save">Save</span>
                 </button>
             }

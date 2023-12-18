@@ -2,7 +2,7 @@
     <div class="row">
         <div class="col-sm d-flex align-items-center">
             <h4 class="fw-medium" id="course-page-heading" jhiTranslate="artemisApp.course.home.title">Courses</h4>
-            <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+            <jhi-documentation-button [type]="documentationType" />
         </div>
         <div class="col-12 col-sm-auto d-flex align-items-center gap-2">
             <div class="form-check">
@@ -17,7 +17,7 @@
                 id="create-course"
                 [routerLink]="['/course-management/new']"
             >
-                <fa-icon [icon]="faPlus"></fa-icon>
+                <fa-icon [icon]="faPlus" />
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.course.home.createLabel"> Create new Course </span>
             </a>
         </div>
@@ -29,7 +29,7 @@
             @for (semester of courseSemesters; track semester) {
                 <div class="course-table-container mb-3">
                     <div class="control-label my-3" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
-                        <fa-icon size="2x" class="pe-3" [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp"></fa-icon>
+                        <fa-icon size="2x" class="pe-3" [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp" />
                         @if (semester !== '' && semester !== 'test') {
                             <span style="font-size: 24px"> {{ 'artemisApp.course.semester' | artemisTranslate }}: {{ semester }} </span>
                         }
@@ -52,7 +52,7 @@
                                     [courseWithExercises]="coursesWithExercises[course.id!]"
                                     [courseWithUsers]="coursesWithUsers[course.id!]"
                                     [isGuidedTour]="course === courseForGuidedTour"
-                                ></jhi-course-management-card>
+                                />
                             }
                         </div>
                     }

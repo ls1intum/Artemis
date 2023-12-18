@@ -77,53 +77,53 @@
                 <tr jhiSort [(predicate)]="complaintsSortingPredicate" [(ascending)]="complaintsReverseOrder" (sortChange)="sortRows()">
                     <th jhiSortBy="id">
                         <a class="th-link">#</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="result.participation.exercise.title">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.exercise' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="result.submission.id">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.submissionId' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="result.assessor.name">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.assessorName' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     @if (course?.isAtLeastInstructor) {
                         <th jhiSortBy="student.login">
                             <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentLogin' | artemisTranslate }}</a>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                     }
                     @if (course?.isAtLeastInstructor) {
                         <th jhiSortBy="student.name">
                             <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.studentName' | artemisTranslate }}</a>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                     }
                     @if (course?.isAtLeastInstructor) {
                         <th jhiSortBy="complaintResponse.reviewer.name">
                             <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.reviewerName' | artemisTranslate }}</a>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                     }
                     <th jhiSortBy="submittedTime">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.dateAndTime' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="responseTime">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.responseTime' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="accepted">
                         <a class="th-link">{{ 'artemisApp.complaint.listOfComplaints.status' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th jhiSortBy="lockStatus">
                         <a class="th-link">{{ 'artemisApp.locks.lockStatus' | artemisTranslate }}</a>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th>{{ 'artemisApp.complaint.listOfComplaints.actions' | artemisTranslate }}</th>
                 </tr>
@@ -168,11 +168,7 @@
                                 }
                                 {{ complaintService.getResponseTimeInSeconds(complaint) | artemisDurationFromSeconds: true }}
                                 @if (complaintService.shouldHighlightComplaint(complaint)) {
-                                    <fa-icon
-                                        [icon]="faExclamationTriangle"
-                                        class="text-warning"
-                                        ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}"
-                                    ></fa-icon>
+                                    <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.complaint.oneWeekUnanswered' | artemisTranslate }}" />
                                 }
                             </span>
                         </td>
@@ -195,7 +191,7 @@
                         </td>
                         <td class="text-center">
                             <button class="btn btn-primary btn-sm" (click)="openAssessmentEditor(complaint)" id="show-complaint">
-                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
+                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
                                 @if (complaintType === ComplaintType.COMPLAINT) {
                                     <span>{{ 'artemisApp.exerciseAssessmentDashboard.showComplaint' | artemisTranslate }}</span>
                                 }

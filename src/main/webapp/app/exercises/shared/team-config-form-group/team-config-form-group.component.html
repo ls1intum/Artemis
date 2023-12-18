@@ -3,22 +3,17 @@
         <div class="col-auto">
             <div>
                 <label jhiTranslate="artemisApp.exercise.participation">Participation</label>
-                <jhi-help-icon text="artemisApp.exercise.modeTooltip"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.exercise.modeTooltip" />
             </div>
             <div>
-                <jhi-mode-picker
-                    [options]="modePickerOptions"
-                    [value]="exercise.mode"
-                    (valueChange)="onExerciseModeChange($event!)"
-                    [disabled]="changeExerciseModeDisabled"
-                ></jhi-mode-picker>
+                <jhi-mode-picker [options]="modePickerOptions" [value]="exercise.mode" (valueChange)="onExerciseModeChange($event!)" [disabled]="changeExerciseModeDisabled" />
             </div>
         </div>
         @if (exercise.mode === TEAM) {
             <div class="col-auto">
                 <div>
                     <label class="label-narrow" jhiTranslate="artemisApp.exercise.teamAssignmentConfig.teamSize">Team size</label>
-                    <jhi-help-icon text="artemisApp.exercise.teamAssignmentConfig.teamSizeTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.exercise.teamAssignmentConfig.teamSizeTooltip" />
                 </div>
                 <div>
                     <div class="input-group">

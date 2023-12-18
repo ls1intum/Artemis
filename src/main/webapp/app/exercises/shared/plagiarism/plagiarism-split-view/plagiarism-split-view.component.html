@@ -2,20 +2,20 @@
     <div class="plagiarism-split-pane" jhiPane>
         @if (plagiarismComparison) {
             @if (isModelingExercise) {
-                <jhi-modeling-submission-viewer [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()"></jhi-modeling-submission-viewer>
+                <jhi-modeling-submission-viewer [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionA()" />
             }
             @if (isProgrammingOrTextExercise) {
-                <jhi-text-submission-viewer [exercise]="exercise" [matches]="matchesA" [plagiarismSubmission]="getTextSubmissionA()"></jhi-text-submission-viewer>
+                <jhi-text-submission-viewer [exercise]="exercise" [matches]="matchesA" [plagiarismSubmission]="getTextSubmissionA()" />
             }
         }
     </div>
     <div class="plagiarism-split-pane" jhiPane>
         @if (plagiarismComparison) {
             @if (isModelingExercise) {
-                <jhi-modeling-submission-viewer [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionB()"></jhi-modeling-submission-viewer>
+                <jhi-modeling-submission-viewer [exercise]="exercise" [plagiarismSubmission]="getModelingSubmissionB()" />
             }
             @if (isProgrammingOrTextExercise) {
-                <jhi-text-submission-viewer [exercise]="exercise" [matches]="matchesB" [plagiarismSubmission]="getTextSubmissionB()"></jhi-text-submission-viewer>
+                <jhi-text-submission-viewer [exercise]="exercise" [matches]="matchesB" [plagiarismSubmission]="getTextSubmissionB()" />
             }
         }
     </div>

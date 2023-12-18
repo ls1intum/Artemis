@@ -16,7 +16,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
             [icon]="faPlus"
             [title]="'artemisApp.importUsers.buttonLabel'"
             (onClick)="openUsersImportDialog($event)"
-        ></jhi-button>
+        />
     `,
 })
 export class UsersImportButtonComponent {

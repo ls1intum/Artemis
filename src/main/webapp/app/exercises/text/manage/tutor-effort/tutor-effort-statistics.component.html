@@ -2,7 +2,7 @@
     <div class="d-flex flex-row justify-content-between align items center">
         <h4 jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title"></h4>
         <button class="btn btn-primary btn-sm mb-2" (click)="loadTutorEfforts()">
-            <fa-icon [icon]="faSync" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.showStatistic.recalculateStatistics' | artemisTranslate }}
+            <fa-icon [icon]="faSync" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.showStatistic.recalculateStatistics' | artemisTranslate }}
         </button>
     </div>
     @if (tutorEfforts && tutorEfforts.length > 0) {
@@ -33,7 +33,7 @@
                 <div #containerRef class="col-10">
                     <div class="d-flex flex-row justify-content-center align-items-center">
                         <h3 jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title">Tutor Effort Statistics</h3>
-                        <jhi-help-icon [text]="'artemisApp.textExercise.tutorEffortStatistics.titleDescription'" [placement]="'right auto'"></jhi-help-icon>
+                        <jhi-help-icon [text]="'artemisApp.textExercise.tutorEffortStatistics.titleDescription'" [placement]="'right auto'" />
                     </div>
                     <ngx-charts-bar-vertical
                         [roundEdges]="false"

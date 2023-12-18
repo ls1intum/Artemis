@@ -23,10 +23,10 @@
                                 <span>{{ course.description }}</span>
                             </td>
                             <td class="text-end">
-                                <jhi-course-prerequisites-button [course]="course"></jhi-course-prerequisites-button>
+                                <jhi-course-prerequisites-button [course]="course" />
                             </td>
                             <td class="text-end">
-                                <jhi-course-registration-button [course]="course" (onRegistration)="removeCourseFromList(course.id!)"></jhi-course-registration-button>
+                                <jhi-course-registration-button [course]="course" (onRegistration)="removeCourseFromList(course.id!)" />
                             </td>
                         </tr>
                     }

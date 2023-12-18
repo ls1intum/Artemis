@@ -64,7 +64,7 @@
                         @if (currentTourStep.hintTranslateKey) {
                             <div class="step-hint">
                                 <div class="step-hint__icon">
-                                    <fa-icon [icon]="faInfoCircle"></fa-icon>
+                                    <fa-icon [icon]="faInfoCircle" />
                                 </div>
                                 <div class="step-hint__label">
                                     <div [innerHTML]="currentTourStep.hintTranslateKey | artemisTranslate"></div>
@@ -74,7 +74,7 @@
                         @if (currentTourStep.alreadyExecutedTranslateKey) {
                             <div class="step-hint interaction alert alert-success">
                                 <div class="step-hint__icon">
-                                    <fa-icon [icon]="faCheck"></fa-icon>
+                                    <fa-icon [icon]="faCheck" />
                                 </div>
                                 <div class="step-hint__label">
                                     <div [innerHTML]="currentTourStep.alreadyExecutedTranslateKey | artemisTranslate"></div>
@@ -85,24 +85,24 @@
                             <div class="step-hint interaction alert" [class.alert-success]="userInteractionFinished">
                                 @if (this.userInteractionFinished) {
                                     <div class="step-hint__icon">
-                                        <fa-icon [icon]="faCheck"></fa-icon>
+                                        <fa-icon [icon]="faCheck" />
                                     </div>
                                 } @else {
                                     <div class="step-hint__icon">
                                         @if (currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK) {
-                                            <fa-icon [icon]="faHandPointUp"></fa-icon>
+                                            <fa-icon [icon]="faHandPointUp" />
                                         }
                                         @if (currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR) {
-                                            <fa-icon [icon]="faICursor"></fa-icon>
+                                            <fa-icon [icon]="faICursor" />
                                         }
                                         @if (currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR) {
-                                            <fa-icon [spin]="true" [icon]="faCircleNotch"></fa-icon>
+                                            <fa-icon [spin]="true" [icon]="faCircleNotch" />
                                         }
                                         @if (currentTourStep.userInteractionEvent === UserInteractionEvent.MODELING && !currentTourStep.modelingTask) {
-                                            <fa-icon [icon]="faArrowsAlt"></fa-icon>
+                                            <fa-icon [icon]="faArrowsAlt" />
                                         }
                                         @if (currentTourStep.userInteractionEvent === UserInteractionEvent.ASSESS_SUBMISSION) {
-                                            <fa-icon [icon]="faEdit"></fa-icon>
+                                            <fa-icon [icon]="faEdit" />
                                         }
                                     </div>
                                 }
@@ -129,12 +129,12 @@
                             <div class="step-hint interaction alert" [class.alert-success]="userInteractionFinished">
                                 @if (!userInteractionFinished) {
                                     <div class="step-hint__icon">
-                                        <fa-icon [icon]="faClipboardList"></fa-icon>
+                                        <fa-icon [icon]="faClipboardList" />
                                     </div>
                                 }
                                 @if (userInteractionFinished) {
                                     <div class="step-hint__icon">
-                                        <fa-icon [icon]="faCheck"></fa-icon>
+                                        <fa-icon [icon]="faCheck" />
                                     </div>
                                 }
                                 <div class="step-hint__label">
@@ -150,7 +150,7 @@
                         @if (currentTourStep.videoUrl) {
                             <div class="step-hint interaction alert">
                                 <div class="step-hint__icon">
-                                    <fa-icon [icon]="faVideo"></fa-icon>
+                                    <fa-icon [icon]="faVideo" />
                                 </div>
                                 <div class="step-hint__label">
                                     <span jhiTranslate="tour.videoHint.text"></span>
@@ -166,7 +166,7 @@
                     <div class="tour-block__buttons">
                         @if (!guidedTourService.isCurrentTour(cancelTour) && !guidedTourService.isCurrentTour(completedTour) && !guidedTourService.isOnResizeMessage) {
                             <button class="back-button" [disabled]="guidedTourService.isOnFirstStep" (click)="guidedTourService.backStep()">
-                                <fa-icon [icon]="faChevronLeft"></fa-icon>
+                                <fa-icon [icon]="faChevronLeft" />
                                 <span jhiTranslate="tour.navigation.back"></span>
                             </button>
                         }
@@ -177,10 +177,10 @@
                                 (click)="guidedTourService.restartTour()"
                             >
                                 @if (!guidedTourService.restartIsLoading) {
-                                    <fa-icon [icon]="faPlayCircle"></fa-icon>
+                                    <fa-icon [icon]="faPlayCircle" />
                                 }
                                 @if (guidedTourService.restartIsLoading) {
-                                    <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" [spin]="true" size="sm"></fa-icon>
+                                    <fa-icon class="jhi-btn__loading" [icon]="faCircleNotch" [spin]="true" size="sm" />
                                 }
                                 <span jhiTranslate="global.menu.restartTutorial"></span>
                             </button>
@@ -207,7 +207,7 @@
                         @if (!guidedTourService.isOnLastStep && !guidedTourService.isOnResizeMessage) {
                             <button class="next-button" [disabled]="currentTourStep.userInteractionEvent && !userInteractionFinished" (click)="guidedTourService.nextStep()">
                                 <span jhiTranslate="tour.navigation.next"></span>
-                                <fa-icon [icon]="faChevronRight"></fa-icon>
+                                <fa-icon [icon]="faChevronRight" />
                             </button>
                         }
                         @if (

@@ -39,7 +39,7 @@
                     </label>
                 </div>
                 @if (isCSVParsing) {
-                    <fa-icon class="position-relative ms-1" [icon]="faSpinner" [spin]="true"></fa-icon>
+                    <fa-icon class="position-relative ms-1" [icon]="faSpinner" [spin]="true" />
                 }
             </div>
             <div class="mt-2">
@@ -246,18 +246,18 @@
         <div class="flex-grow-1 d-flex justify-content-end">
             @if (!isImportDone) {
                 <button type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
-                    <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span>{{ 'entity.action.cancel' | artemisTranslate }}</span>
+                    <fa-icon [icon]="faBan" />&nbsp;<span>{{ 'entity.action.cancel' | artemisTranslate }}</span>
                 </button>
             }
             @if (!isImportDone) {
                 <button type="submit" id="import" name="importButton" class="btn btn-primary" [disabled]="isSubmitDisabled" (click)="import()">
-                    <fa-icon [icon]="faUpload" class="me-2"></fa-icon>
+                    <fa-icon [icon]="faUpload" class="me-2" />
                     <span>{{ 'entity.action.to-import' | artemisTranslate }}</span>
-                    <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch"></fa-icon>
+                    <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch" />
                 </button>
             } @else {
                 <button class="btn btn-success" id="finish-button" (click)="onFinish()">
-                    <fa-icon [icon]="faCheck" class="me-2"></fa-icon>
+                    <fa-icon [icon]="faCheck" class="me-2" />
                     <span>{{ 'entity.action.finish' | artemisTranslate }}</span>
                 </button>
             }

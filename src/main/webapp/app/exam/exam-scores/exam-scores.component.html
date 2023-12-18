@@ -10,7 +10,7 @@
         <div>
             @if (!exerciseGroups) {
                 <div class="alert alert-warning">
-                    <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+                    <fa-icon [icon]="faExclamationTriangle" />
                     <span>{{ 'artemisApp.examScores.noExerciseGroupAvailable' | artemisTranslate }}</span>
                 </div>
             }
@@ -29,13 +29,7 @@
                         {{ examScoreDTO.title }}
                     </h2>
                 }
-                <jhi-csv-export-button
-                    class="ms-auto"
-                    title="entity.action.export"
-                    [icon]="faDownload"
-                    [buttonSize]="ButtonSize.SMALL"
-                    (onExport)="exportExamResults($event)"
-                ></jhi-csv-export-button>
+                <jhi-csv-export-button class="ms-auto" title="entity.action.export" [icon]="faDownload" [buttonSize]="ButtonSize.SMALL" (onExport)="exportExamResults($event)" />
             </div>
             <div class="d-flex mb-1">
                 @if (examScoreDTO.maxPoints) {
@@ -412,8 +406,7 @@
                         [isCourseScore]="false"
                         [dataLabelFormatting]="dataLabelFormatting"
                         class="col-lg-11"
-                    >
-                    </jhi-participant-scores-distribution>
+                    />
                 </div>
                 <!-- Histogram with bonus -->
                 @if (hasBonus) {
@@ -430,8 +423,7 @@
                             [isCourseScore]="false"
                             [dataLabelFormatting]="dataLabelFormatting"
                             class="col-lg-11"
-                        >
-                        </jhi-participant-scores-distribution>
+                        />
                     </div>
                 }
             </div>
@@ -445,7 +437,7 @@
                         <div class="col mb-3">
                             @for (exerciseGroup of aggregatedExerciseGroupResults; track exerciseGroup) {
                                 <div>
-                                    <jhi-exam-scores-average-scores-graph [averageScores]="exerciseGroup" [course]="course"></jhi-exam-scores-average-scores-graph>
+                                    <jhi-exam-scores-average-scores-graph [averageScores]="exerciseGroup" [course]="course" />
                                 </div>
                             }
                         </div>
@@ -461,11 +453,11 @@
                                     </th>
                                     <th>
                                         {{ 'artemisApp.examScores.participantsColumn' | artemisTranslate }}
-                                        <jhi-help-icon text="artemisApp.examScores.participantsExerciseGroupTooltip"></jhi-help-icon>
+                                        <jhi-help-icon text="artemisApp.examScores.participantsExerciseGroupTooltip" />
                                     </th>
                                     <th>
                                         {{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}
-                                        <jhi-help-icon text="artemisApp.examScores.averageExerciseGroupTooltip"></jhi-help-icon>
+                                        <jhi-help-icon text="artemisApp.examScores.averageExerciseGroupTooltip" />
                                     </th>
                                     @if (gradingScaleExists) {
                                         <th>
@@ -481,11 +473,11 @@
                                     </th>
                                     <th>
                                         {{ 'artemisApp.examScores.participantsColumn' | artemisTranslate }}
-                                        <jhi-help-icon text="artemisApp.examScores.participantsExerciseTooltip"></jhi-help-icon>
+                                        <jhi-help-icon text="artemisApp.examScores.participantsExerciseTooltip" />
                                     </th>
                                     <th>
                                         {{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}
-                                        <jhi-help-icon text="artemisApp.examScores.averageExerciseTooltip"></jhi-help-icon>
+                                        <jhi-help-icon text="artemisApp.examScores.averageExerciseTooltip" />
                                     </th>
                                 </tr>
                             </thead>
@@ -563,47 +555,47 @@
                             <th>#</th>
                             <th jhiSortBy="name">
                                 <span jhiTranslate="artemisApp.examScores.nameColumn">Name</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="login">
                                 <span jhiTranslate="artemisApp.examScores.loginColumn">Login</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="email">
                                 <span jhiTranslate="artemisApp.examScores.eMailColumn">E-Mail</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="registrationNumber">
                                 <span jhiTranslate="artemisApp.examScores.registrationNumberColumn">Matriculation Number</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             @for (exerciseGroup of examScoreDTO.exerciseGroups; track exerciseGroup) {
                                 <th [jhiSortBy]="'exerciseGroupIdToExerciseResult.' + exerciseGroup.id + '.achievedPoints'">
                                     <span>{{ exerciseGroup.title }}</span>
-                                    <fa-icon [icon]="faSort"></fa-icon>
+                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                             <th jhiSortBy="overallPointsAchieved">
                                 <span jhiTranslate="artemisApp.examScores.overallPointsColumn">Overall Points</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             <th jhiSortBy="overallScoreAchieved">
                                 <span jhiTranslate="artemisApp.examScores.overallScoreColumn">Overall Score (%)</span>
-                                <fa-icon [icon]="faSort"></fa-icon>
+                                <fa-icon [icon]="faSort" />
                             </th>
                             @if (gradingScaleExists) {
                                 <th jhiSortBy="overallScoreAchieved">
                                     <span>{{
                                         isBonus ? ('artemisApp.examScores.overallBonusColumn' | artemisTranslate) : ('artemisApp.examScores.overallGradeColumn' | artemisTranslate)
                                     }}</span>
-                                    <fa-icon [icon]="faSort"></fa-icon>
+                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                             @if (hasBonus) {
                                 @if (presentationScoreThreshold !== undefined) {
                                     <th jhiSortBy="gradeWithBonus.achievedPresentationScore">
                                         <span>{{ 'artemisApp.examScores.presentationScoreThresholdColumn' | artemisTranslate: { threshold: presentationScoreThreshold } }}</span>
-                                        <fa-icon [icon]="faSort"></fa-icon>
+                                        <fa-icon [icon]="faSort" />
                                     </th>
                                 }
                                 <th jhiSortBy="gradeWithBonus.bonusGrade">
@@ -612,11 +604,11 @@
                                             ? ('artemisApp.examScores.bonusPointsColumn' | artemisTranslate)
                                             : ('artemisApp.examScores.bonusGradeColumn' | artemisTranslate)
                                     }}</span>
-                                    <fa-icon [icon]="faSort"></fa-icon>
+                                    <fa-icon [icon]="faSort" />
                                 </th>
                                 <th jhiSortBy="gradeWithBonus.finalGrade">
                                     <span>{{ 'artemisApp.examScores.finalGradeColumn' | artemisTranslate }}</span>
-                                    <fa-icon [icon]="faSort"></fa-icon>
+                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                             @if (gradingScaleExists && !isBonus) {
@@ -625,13 +617,13 @@
                             @if (hasPlagiarismVerdicts) {
                                 <th jhiSortBy="mostSeverePlagiarismVerdict">
                                     <span>{{ 'artemisApp.examScores.mostSeverePlagiarismVerdictColumn' | artemisTranslate }}</span>
-                                    <fa-icon [icon]="faSort"></fa-icon>
+                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                             @if (hasPlagiarismVerdictsInBonusSource) {
                                 <th jhiSortBy="gradeWithBonus.mostSeverePlagiarismVerdict">
                                     <span>{{ 'artemisApp.examScores.mostSeverePlagiarismVerdictInBonusColumn' | artemisTranslate }}</span>
-                                    <fa-icon [icon]="faSort"></fa-icon>
+                                    <fa-icon [icon]="faSort" />
                                 </th>
                             }
                         </tr>
@@ -680,12 +672,12 @@
                                 }
                                 @if (gradingScaleExists && !isBonus && studentResult.overallGrade && studentResult.hasPassed) {
                                     <td style="text-align: center">
-                                        <fa-icon [icon]="faCheckCircle" style="color: #28a745; font-size: 1.5em"></fa-icon>
+                                        <fa-icon [icon]="faCheckCircle" style="color: #28a745; font-size: 1.5em" />
                                     </td>
                                 }
                                 @if (gradingScaleExists && !isBonus && studentResult.overallGrade && !studentResult.hasPassed) {
                                     <td style="text-align: center">
-                                        <fa-icon [icon]="faTimes" style="color: #ca2024; font-size: 1.5em"></fa-icon>
+                                        <fa-icon [icon]="faTimes" style="color: #ca2024; font-size: 1.5em" />
                                     </td>
                                 }
                                 @if (hasPlagiarismVerdicts) {

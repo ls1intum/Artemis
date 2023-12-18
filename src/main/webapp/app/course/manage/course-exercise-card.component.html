@@ -1,22 +1,22 @@
 <div class="exercise-card card">
     <div class="question-options card-header exercise-card-header">
         <h5 class="mb-0">
-            <fa-icon [icon]="exerciseIcon" class="exercise-icon"></fa-icon>
+            <fa-icon [icon]="exerciseIcon" class="exercise-icon" />
             <span> {{ exerciseCount }} </span>
             <span [jhiTranslate]="headingJhiTranslate"></span>
         </h5>
         @if (course?.isAtLeastEditor) {
             <div class="ms-auto">
-                <ng-content select="[exerciseCreateButtons]"></ng-content>
+                <ng-content select="[exerciseCreateButtons]" />
             </div>
         }
         <button class="btn question-collapse" (click)="isCollapsed = !isCollapsed" [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">
-            <fa-icon size="2x" [icon]="isCollapsed ? faAngleRight : faAngleDown" class="collapse-icon"></fa-icon>
+            <fa-icon size="2x" [icon]="isCollapsed ? faAngleRight : faAngleDown" />
         </button>
     </div>
     <div [ngbCollapse]="isCollapsed || exerciseCount === 0">
         <div class="exercise-card-body">
-            <ng-content select="[exercises]"></ng-content>
+            <ng-content select="[exercises]" />
         </div>
     </div>
 </div>

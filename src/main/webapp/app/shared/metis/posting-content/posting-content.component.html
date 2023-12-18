@@ -3,7 +3,7 @@
     @if (previewMode) {
         <div [ngClass]="isAnnouncement ? 'announcement-post p-2' : ''">
             <span class="clickable p-0">
-                <fa-icon [icon]="showContent ? faAngleUp : faAngleDown" [size]="'xs'" [ngStyle]="{ color: '#6a737d' }" (click)="showContent = !showContent"> </fa-icon>
+                <fa-icon [icon]="showContent ? faAngleUp : faAngleDown" [size]="'xs'" [ngStyle]="{ color: '#6a737d' }" (click)="showContent = !showContent" />
             </span>
             <span class="toggle-content">
                 {{ showContent ? ('artemisApp.metis.post.collapseContent' | artemisTranslate) : ('artemisApp.metis.post.showContent' | artemisTranslate) }}
@@ -15,8 +15,7 @@
                             [postingContentPart]="postingContentPart"
                             (userReferenceClicked)="userReferenceClicked.emit($event)"
                             (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-                        >
-                        </jhi-posting-content-part>
+                        />
                     }
                     @if (isEdited) {
                         <span class="edited-text">{{ 'artemisApp.metis.edited' | artemisTranslate }}</span>
@@ -33,13 +32,12 @@
                     [postingContentPart]="postingContentPart"
                     (userReferenceClicked)="userReferenceClicked.emit($event)"
                     (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-                >
-                </jhi-posting-content-part>
+                />
             }
             @if (isEdited) {
                 <span class="edited-text">{{ 'artemisApp.metis.edited' | artemisTranslate }}</span>
             }
-            <jhi-link-preview-container [data]="content" [author]="author" [posting]="posting" [isEdited]="isEdited" [isReply]="isReply"></jhi-link-preview-container>
+            <jhi-link-preview-container [data]="content" [author]="author" [posting]="posting" [isEdited]="isEdited" [isReply]="isReply" />
         </div>
     }
 }

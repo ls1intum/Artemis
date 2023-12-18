@@ -11,7 +11,7 @@
             role="button"
             (click)="switchTimeSpan(LEFT)"
             [class.hidden]="!(currentSize > maxSpanSize && currentPeriod > 0)"
-        ></fa-icon>
+        />
         <div #containerRef class="col-lg-8 ps-0 chart-container">
             <ngx-charts-bar-vertical
                 [roundEdges]="false"
@@ -43,7 +43,7 @@
             role="button"
             (click)="switchTimeSpan(RIGHT)"
             [class.hidden]="!(currentSize > maxSpanSize + currentPeriod)"
-        ></fa-icon>
+        />
         <ng-template #placeholder>
             <div class="switch-forward-placeholder"></div>
         </ng-template>
@@ -57,7 +57,7 @@
                         ngbDropdownToggle
                         id="filter-dropdown-button"
                     >
-                        <fa-icon [icon]="faFilter"></fa-icon>
+                        <fa-icon [icon]="faFilter" />
                         <span>{{
                             'artemisApp.courseOverview.exerciseList.filter'
                                 | artemisTranslate: { num: exerciseTypeFilter.numberOfActiveFilters + chartCategoryFilter.numberOfActiveFilters }

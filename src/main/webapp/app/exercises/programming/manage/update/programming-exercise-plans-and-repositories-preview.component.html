@@ -11,19 +11,19 @@
                         <code class="text-white badge bg-primary label-preview">
                             {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-exercise
                         </code>
-                        <jhi-help-icon text="artemisApp.programmingExercise.preview.templateRepoTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.preview.templateRepoTooltip" />
                     </li>
                     <li>
                         <code class="text-white badge bg-primary label-preview">
                             {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-solution
                         </code>
-                        <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionRepoTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionRepoTooltip" />
                     </li>
                     <li>
                         <code class="text-white badge bg-primary label-preview">
                             {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-tests
                         </code>
-                        <jhi-help-icon text="artemisApp.programmingExercise.preview.testRepoTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.preview.testRepoTooltip" />
                     </li>
                     @if (programmingExercise.auxiliaryRepositories?.length) {
                         <div>
@@ -33,9 +33,7 @@
                                         <code class="text-white badge bg-success label-preview">
                                             {{ getCourseShortName()?.toLowerCase() }}{{ programmingExercise.shortName.toLowerCase() }}-{{ auxiliaryRepository.name?.toLowerCase() }}
                                         </code>
-                                        <jhi-help-icon-without-translation
-                                            text="{{ auxiliaryRepository.description || 'Auxiliary Repository' }}"
-                                        ></jhi-help-icon-without-translation>
+                                        <jhi-help-icon-without-translation text="{{ auxiliaryRepository.description || 'Auxiliary Repository' }}" />
                                     </li>
                                 </div>
                             }
@@ -52,13 +50,13 @@
             <ul>
                 <li>
                     <code class="text-white badge bg-primary label-preview">{{ getCourseShortName()?.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-BASE</code>
-                    <jhi-help-icon text="artemisApp.programmingExercise.preview.templateBuildPlanTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.programmingExercise.preview.templateBuildPlanTooltip" />
                 </li>
                 <li>
                     <code class="text-white badge bg-primary label-preview"
                         >{{ getCourseShortName()?.toUpperCase() }}{{ programmingExercise.shortName.toUpperCase() }}-SOLUTION</code
                     >
-                    <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionBuildPlanTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionBuildPlanTooltip" />
                 </li>
             </ul>
         </div>

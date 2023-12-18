@@ -5,10 +5,10 @@
         <div class="client">
             <div class="chat-header">
                 <h3 class="header-start">
-                    <jhi-iris-logo [size]="IrisLogoSize.SMALL"></jhi-iris-logo>
+                    <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                     Iris
                     <a [routerLink]="'/about-iris'" target="_blank">
-                        <fa-icon [icon]="faCircleInfo" class="info-button"></fa-icon>
+                        <fa-icon [icon]="faCircleInfo" class="info-button" />
                     </a>
                 </h3>
                 <div>
@@ -20,21 +20,21 @@
                         }
                         @if (isClearChatButtonEnabled()) {
                             <button id="clear-chat-button" (click)="onClearSession(clearConfirmModal)" class="header-icon">
-                                <fa-icon [icon]="faTrash"></fa-icon>
+                                <fa-icon [icon]="faTrash" />
                             </button>
                         }
                         @if (!fullSize) {
                             <button (click)="maximizeScreen()" class="header-icon">
-                                <fa-icon [icon]="faExpand"></fa-icon>
+                                <fa-icon [icon]="faExpand" />
                             </button>
                         }
                         @if (fullSize) {
                             <button (click)="minimizeScreen()" class="header-icon">
-                                <fa-icon [icon]="faCompress"></fa-icon>
+                                <fa-icon [icon]="faCompress" />
                             </button>
                         }
                         <button (click)="closeChat()" class="header-icon">
-                            <fa-icon [icon]="faXmark"></fa-icon>
+                            <fa-icon [icon]="faXmark" />
                         </button>
                     </div>
                 </div>
@@ -80,7 +80,7 @@
                                                 (click)="resendMessage(message)"
                                                 [disabled]="resendAnimationActive"
                                             >
-                                                <fa-icon [icon]="faRedo" size="sm" [ngClass]="resendAnimationActive ? 'fa-pulse' : ''"></fa-icon>
+                                                <fa-icon [icon]="faRedo" size="sm" [ngClass]="resendAnimationActive ? 'fa-pulse' : ''" />
                                             </button>
                                         }
                                     </div>
@@ -107,14 +107,14 @@
                                                     style="margin-right: 15px"
                                                     [icon]="faThumbsUp"
                                                     size="sm"
-                                                ></fa-icon>
+                                                />
                                             </button>
                                             <button style="all: unset" (click)="rateMessage(message.id, i, false)" [disabled]="!message.helpful">
                                                 <fa-icon
                                                     [class]="message.helpful === false ? 'thumbs-down-clicked' : 'clickable rate-button-not-clicked'"
                                                     [icon]="faThumbsDown"
                                                     size="sm"
-                                                ></fa-icon>
+                                                />
                                             </button>
                                         </div>
                                     }
@@ -183,7 +183,7 @@
                     <div class="blinking-dots">
                         @for (_ of [].constructor(dots); track _) {
                             <div class="d-inline">
-                                <fa-icon [icon]="faCircle" size="xs"></fa-icon>
+                                <fa-icon [icon]="faCircle" size="xs" />
                             </div>
                         }
                     </div>
@@ -199,7 +199,7 @@
                 </div>
             }
             <div class="scroll-to-bottom" [hidden]="isScrolledToBottom" (click)="scrollToBottom('smooth')" #scrollArrow>
-                <fa-icon [icon]="faArrowDown"></fa-icon>
+                <fa-icon [icon]="faArrowDown" />
             </div>
             @if (shouldShowEmptyMessageError && error && isEmptyMessageError()) {
                 <div class="client-chat-error" [@fadeAnimation]="fadeState" (@fadeAnimation.done)="onFadeAnimationPhaseEnd($event)">
@@ -226,8 +226,14 @@
                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
                 #messageTextarea
             ></textarea>
-            <jhi-button id="sendButton" (onClick)="onSend()" [btnType]="ButtonType.SUCCESS" [icon]="faPaperPlane" style="margin-bottom: auto" [disabled]="deactivateSubmitButton()">
-            </jhi-button>
+            <jhi-button
+                id="sendButton"
+                (onClick)="onSend()"
+                [btnType]="ButtonType.SUCCESS"
+                [icon]="faPaperPlane"
+                style="margin-bottom: auto"
+                [disabled]="deactivateSubmitButton()"
+            />
         </div>
     </div>
 </div>

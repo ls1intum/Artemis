@@ -9,7 +9,7 @@
         @if (isImport) {
             <h4 id="jhi-file-upload-exercise-heading-import" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel">Import a File Upload Exercise</h4>
         }
-        <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+        <jhi-documentation-button [type]="documentationType" />
     </div>
     <div>
         <div class="form-group" [hidden]="!fileUploadExercise.id || isImport">
@@ -22,21 +22,21 @@
             [minTitleLength]="3"
             [isExamMode]="isExamMode"
             [isImport]="isImport"
-        ></jhi-exercise-title-channel-name>
+        />
         @if (!isExamMode) {
             <div class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
-                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
                 <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
             </div>
         }
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
             <div>
-                <jhi-difficulty-picker [exercise]="fileUploadExercise"></jhi-difficulty-picker>
+                <jhi-difficulty-picker [exercise]="fileUploadExercise" />
             </div>
         </div>
-        <jhi-team-config-form-group class="form-element" [exercise]="fileUploadExercise" [isImport]="isImport"></jhi-team-config-form-group>
+        <jhi-team-config-form-group class="form-element" [exercise]="fileUploadExercise" [isImport]="isImport" />
         @if (!isExamMode) {
             <div class="d-flex">
                 <div class="form-group flex-grow-1">
@@ -48,7 +48,7 @@
                         (valueChange)="validateDate()"
                         [error]="false"
                         name="releaseDate"
-                    ></jhi-date-time-picker>
+                    />
                 </div>
                 <div class="form-group flex-grow-1 ms-3">
                     <jhi-date-time-picker
@@ -59,7 +59,7 @@
                         labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
                         [(ngModel)]="fileUploadExercise.startDate"
-                    ></jhi-date-time-picker>
+                    />
                     @if (fileUploadExercise.startDateError) {
                         <span class="invalid-feedback">{{ 'artemisApp.exercise.startDateError' | artemisTranslate }}</span>
                     }
@@ -77,7 +77,7 @@
                         labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
                         [(ngModel)]="fileUploadExercise.dueDate"
-                    ></jhi-date-time-picker>
+                    />
                     @if (fileUploadExercise.dueDateError) {
                         <span class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
                     }
@@ -91,7 +91,7 @@
                         labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
                         (valueChange)="validateDate()"
                         [(ngModel)]="fileUploadExercise.assessmentDueDate"
-                    ></jhi-date-time-picker>
+                    />
                     @if (fileUploadExercise.assessmentDueDateError) {
                         <span class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
                     }
@@ -107,7 +107,7 @@
                     [(includedInOverallScore)]="fileUploadExercise.includedInOverallScore"
                     (includedInOverallScoreChange)="validateDate()"
                     [allowNotIncluded]="!isExamMode"
-                ></jhi-included-in-overall-score-picker>
+                />
             </div>
         </div>
         <div class="row">
@@ -156,10 +156,10 @@
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.fileUploadExercise.filePattern" for="field_filePattern">File Pattern </label>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | artemisTranslate }}"></fa-icon>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.fileUploadExercise.filePatternInfo' | artemisTranslate }}" />
             <input required minlength="2" type="text" class="form-control" name="filePattern" id="field_filePattern" [(ngModel)]="fileUploadExercise.filePattern" />
         </div>
-        <jhi-presentation-score-checkbox [exercise]="fileUploadExercise"></jhi-presentation-score-checkbox>
+        <jhi-presentation-score-checkbox [exercise]="fileUploadExercise" />
         <div class="form-group" id="field_problemStatement">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
             <jhi-markdown-editor
@@ -167,7 +167,7 @@
                 [domainCommands]="domainCommandsProblemStatement"
                 [(markdown)]="fileUploadExercise.problemStatement"
                 [editorMode]="EditorMode.LATEX"
-            ></jhi-markdown-editor>
+            />
         </div>
         <!-- TODO we want to have a file upload here and store a PDF, not a text. We could allow to add text in the sample_solution_explanation field -->
         <div class="form-group" id="field_exampleSolution">
@@ -177,7 +177,7 @@
                 [domainCommands]="domainCommandsSampleSolution"
                 [(markdown)]="fileUploadExercise.exampleSolution"
                 [editorMode]="EditorMode.LATEX"
-            ></jhi-markdown-editor>
+            />
         </div>
         @if (!isExamMode) {
             <div class="form-group">
@@ -188,7 +188,7 @@
                     [(ngModel)]="fileUploadExercise.exampleSolutionPublicationDate"
                     [error]="fileUploadExercise.exampleSolutionPublicationDateError!"
                     (valueChange)="validateDate()"
-                ></jhi-date-time-picker>
+                />
                 @if (fileUploadExercise.exampleSolutionPublicationDateError) {
                     <span class="invalid-feedback">{{ 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate }}</span>
                 }
@@ -202,18 +202,18 @@
                     [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
                     [(ngModel)]="fileUploadExercise.competencies"
                     name="competencies"
-                ></jhi-competency-selection>
+                />
             </div>
         }
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
-            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="fileUploadExercise"></jhi-grading-instructions-details>
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="fileUploadExercise" />
         </div>
-        <jhi-exercise-update-notification [exercise]="fileUploadExercise" [isImport]="isImport" [(notificationText)]="notificationText"> </jhi-exercise-update-notification>
+        <jhi-exercise-update-notification [exercise]="fileUploadExercise" [isImport]="isImport" [(notificationText)]="notificationText" />
     </div>
     <div>
         <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button
             type="submit"
@@ -228,7 +228,7 @@
             "
             class="btn btn-primary"
         >
-            <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
     </div>
 </form>

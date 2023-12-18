@@ -30,7 +30,7 @@
         </tr>
     </thead>
     <tbody>
-        @if (quizPoolMaxPoints > 0) {
+        @if (quizExamMaxPoints > 0) {
             <tr>
                 <td></td>
                 <td></td>
@@ -38,12 +38,12 @@
                 <td>
                     <div class="d-flex">
                         <div style="padding-right: 10px" [ngbTooltip]="getIconTooltip(ExerciseType.QUIZ) | artemisTranslate">
-                            <fa-icon [icon]="getIcon(ExerciseType.QUIZ)" placement="right auto"></fa-icon>
+                            <fa-icon [icon]="getIcon(ExerciseType.QUIZ)" placement="right auto" />
                         </div>
                         <span>Quiz Exam</span>
                     </div>
                 </td>
-                <td>{{ quizPoolMaxPoints }}</td>
+                <td>{{ quizExamMaxPoints }}</td>
                 <td>{{ totalParticipants }}</td>
             </tr>
         }
@@ -64,7 +64,7 @@
                                     [icon]="faExclamationTriangle"
                                     style="color: rgba(255, 193, 7, 0.6)"
                                     class="warning"
-                                ></fa-icon>
+                                />
                             }
                             @if (column.noExercises) {
                                 <fa-icon
@@ -72,7 +72,7 @@
                                     [icon]="faExclamationTriangle"
                                     style="color: rgba(255, 193, 7, 0.6)"
                                     class="warning"
-                                ></fa-icon>
+                                />
                             }
                         </div>
                     }
@@ -89,7 +89,7 @@
                     @if (column.exerciseTitle) {
                         <div class="d-flex">
                             <div style="padding-right: 10px; max-width: min-content" [ngbTooltip]="getIconTooltip(column!.exerciseType) | artemisTranslate">
-                                <fa-icon [icon]="getIcon(column!.exerciseType)" placement="right auto"></fa-icon>
+                                <fa-icon [icon]="getIcon(column!.exerciseType)" placement="right auto" />
                             </div>
                             <span>{{ column.exerciseTitle }}</span>
                         </div>

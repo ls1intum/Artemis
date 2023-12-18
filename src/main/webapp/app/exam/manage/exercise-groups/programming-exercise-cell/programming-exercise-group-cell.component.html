@@ -15,7 +15,7 @@
                             <a href="{{ programmingExercise.templateParticipation?.repositoryUrl || '' }}" target="_blank">Template</a>
                         </span>
                     } @else {
-                        <a [routerLink]="" (click)="downloadRepository('TEMPLATE')"> <fa-icon [icon]="faDownload"></fa-icon> Template </a>
+                        <a [routerLink]="" (click)="downloadRepository('TEMPLATE')"> <fa-icon [icon]="faDownload" /> Template </a>
                     }
                 }
                 @if (programmingExercise.templateParticipation?.results?.length) {
@@ -23,7 +23,7 @@
                         [participationType]="participationType.TEMPLATE"
                         [participation]="programmingExercise.templateParticipation!"
                         [exercise]="programmingExercise"
-                    ></jhi-programming-exercise-instructor-status>
+                    />
                 }
             </div>
             <div>
@@ -33,7 +33,7 @@
                             <a href="{{ programmingExercise.solutionParticipation?.repositoryUrl || '' }}" target="_blank">Solution</a>
                         </span>
                     } @else {
-                        <a [routerLink]="" (click)="downloadRepository('SOLUTION')"> <fa-icon [icon]="faDownload"></fa-icon> Solution </a>
+                        <a [routerLink]="" (click)="downloadRepository('SOLUTION')"> <fa-icon [icon]="faDownload" /> Solution </a>
                     }
                 }
                 @if (programmingExercise.solutionParticipation?.results?.length) {
@@ -41,7 +41,7 @@
                         [participationType]="participationType.SOLUTION"
                         [participation]="programmingExercise.solutionParticipation!"
                         [exercise]="programmingExercise"
-                    ></jhi-programming-exercise-instructor-status>
+                    />
                 }
             </div>
             <div>
@@ -51,7 +51,7 @@
                             <a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a>
                         </span>
                     } @else {
-                        <a [routerLink]="" (click)="downloadRepository('TESTS')"> <fa-icon [icon]="faDownload"></fa-icon> Test </a>
+                        <a [routerLink]="" (click)="downloadRepository('TESTS')"> <fa-icon [icon]="faDownload" /> Test </a>
                     }
                 }
             </div>

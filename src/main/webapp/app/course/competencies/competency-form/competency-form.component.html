@@ -60,7 +60,7 @@
                         labelName="{{ 'artemisApp.competency.createCompetency.softDueDate' | artemisTranslate }}"
                         labelTooltip="{{ 'artemisApp.competency.createCompetency.softDueDateHint' | artemisTranslate }}"
                         formControlName="softDueDate"
-                    ></jhi-date-time-picker>
+                    />
                 </div>
                 @if (!isInConnectMode) {
                     <div class="form-group">
@@ -96,7 +96,7 @@
                 <div class="form-group">
                     <input type="checkbox" class="form-check-input" id="optional" formControlName="optional" />
                     <label class="form-control-label" jhiTranslate="artemisApp.competency.optional" for="optional"></label>
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.competency.optionalDescription' | artemisTranslate }}"></fa-icon>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.competency.optionalDescription' | artemisTranslate }}" />
                 </div>
                 <div>
                     <label>{{ 'artemisApp.competency.createCompetency.connectWithLectureUnits' | artemisTranslate }}</label>
@@ -174,7 +174,7 @@
                     </button>
                     @if (hasCancelButton) {
                         <button type="button" (click)="cancelForm()" class="btn btn-default">
-                            <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                            <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                         </button>
                     }
                 </div>

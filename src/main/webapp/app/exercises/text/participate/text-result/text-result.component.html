@@ -4,7 +4,7 @@
         @if (block.icon) {
             <span [ngClass]="block.iconCssClass" [title]="creditsTranslationForTextResultBlock(block)">
                 @for (i of repeatForEachCredit(block); track i) {
-                    <fa-icon [icon]="block.icon"></fa-icon>
+                    <fa-icon [icon]="block.icon" />
                 }
             </span>
         }
@@ -12,7 +12,7 @@
             <div class="feedback-text mt-1" [ngClass]="block.feedbackCssClass">
                 <span class="feedback-points">
                     @if (block.circleIcon) {
-                        <fa-icon [icon]="block.circleIcon"></fa-icon>
+                        <fa-icon [icon]="block.circleIcon" />
                     }
                     &nbsp;{{ creditsTranslationForTextResultBlock(block) }}:
                 </span>
@@ -23,12 +23,12 @@
             <div class="feedback-text mt-1 alert alert-secondary">
                 <span class="feedback-points">
                     @if (block.circleIcon) {
-                        <fa-icon [icon]="block.circleIcon"></fa-icon>
+                        <fa-icon [icon]="block.circleIcon" />
                     }
                     &nbsp;{{ creditsTranslationForTextResultBlock(block) }}:
                 </span>
                 <span [innerHTML]="buildFeedbackTextForReview(block.feedback)"></span>
-                <fa-icon class="float-end" [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"></fa-icon>
+                <fa-icon class="float-end" [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate" />
             </div>
         }
     }

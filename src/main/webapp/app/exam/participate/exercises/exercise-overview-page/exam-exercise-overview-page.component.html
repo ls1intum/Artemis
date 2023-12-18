@@ -43,7 +43,7 @@
                     </td>
                     <td style="max-width: 30px">
                         <div [ngbTooltip]="getIconTooltip(item.exercise.type) | artemisTranslate">
-                            <fa-icon [icon]="getIcon(item.exercise.type)" placement="right auto"></fa-icon>
+                            <fa-icon [icon]="getIcon(item.exercise.type)" placement="right auto" />
                         </div>
                     </td>
                     <td style="max-width: 100px; font-weight: bold">
@@ -60,7 +60,7 @@
                             [ngClass]="setExerciseIconStatus(item)"
                             [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(item.exercise) | artemisTranslate"
                         >
-                            <fa-icon [icon]="item.icon!"></fa-icon>
+                            <fa-icon [icon]="item.icon!" />
                         </div>
                     </td>
                 </tr>

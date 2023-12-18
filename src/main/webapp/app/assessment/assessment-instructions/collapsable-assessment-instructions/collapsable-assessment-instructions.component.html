@@ -1,13 +1,13 @@
 @if (!collapsed) {
     <div class="expanded-instructions instructions-container">
-        <div class="draggable-left"><fa-icon [icon]="faGripLinesVertical"></fa-icon></div>
+        <div class="draggable-left"><fa-icon [icon]="faGripLinesVertical" /></div>
         <div class="card">
             <div class="card-header text-white bg-primary" (click)="collapsed = !collapsed">
                 <h3 class="card-title">
-                    <fa-icon [icon]="farListAlt"></fa-icon>&nbsp;
+                    <fa-icon [icon]="farListAlt" />&nbsp;
                     <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"> &nbsp; Instructions &nbsp; </span>
                 </h3>
-                <fa-icon [icon]="faChevronRight"></fa-icon>
+                <fa-icon [icon]="faChevronRight" />
             </div>
             <div class="wrapper-scroll-y scrollbar vh-100">
                 <jhi-assessment-instructions
@@ -16,14 +16,14 @@
                     [exercise]="exercise"
                     [isAssessmentTraining]="isAssessmentTraining"
                     [showAssessmentInstructions]="showAssessmentInstructions"
-                ></jhi-assessment-instructions>
+                />
             </div>
         </div>
     </div>
 } @else {
     <div class="collapsed-instructions instructions-container text-white bg-primary" (click)="collapsed = !collapsed">
-        <fa-icon [icon]="faChevronLeft"></fa-icon>
+        <fa-icon [icon]="faChevronLeft" />
         <span jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"> &nbsp; Instructions &nbsp; </span>
-        <fa-icon [icon]="faChevronLeft"></fa-icon>
+        <fa-icon [icon]="faChevronLeft" />
     </div>
 }

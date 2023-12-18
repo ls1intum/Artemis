@@ -1,15 +1,9 @@
 @if (!!testRunId) {
-    <jhi-test-run-ribbon id="testRunRibbon"></jhi-test-run-ribbon>
+    <jhi-test-run-ribbon id="testRunRibbon" />
 }
 @if (exam) {
     @if (isVisible() && !isGracePeriodOver() && !this.studentExam?.submitted && !examStartConfirmed) {
-        <jhi-exam-participation-cover
-            [startView]="true"
-            [exam]="exam"
-            [studentExam]="studentExam"
-            [testRunStartTime]="testStartTime"
-            (onExamStarted)="examStarted($event)"
-        ></jhi-exam-participation-cover>
+        <jhi-exam-participation-cover [startView]="true" [exam]="exam" [studentExam]="studentExam" [testRunStartTime]="testStartTime" (onExamStarted)="examStarted($event)" />
     }
     @if (studentExam) {
         <!-- exam participation -->
@@ -26,10 +20,10 @@
                 (onPageChanged)="onPageChange($event)"
                 (examAboutToEnd)="examEnded()"
                 (onExamHandInEarly)="toggleHandInEarly()"
-            ></jhi-exam-navigation-bar>
+            />
             <!-- exercises -->
             <div [hidden]="activePageIndex !== -1">
-                <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)"></jhi-exam-exercise-overview-page>
+                <jhi-exam-exercise-overview-page [studentExam]="studentExam" (onPageChanged)="onPageChange($event)" />
             </div>
             @for (exercise of studentExam.exercises; track exercise; let i = $index) {
                 @if (exercise && exercise.studentParticipations && exercise.studentParticipations[0]) {
@@ -37,32 +31,19 @@
                         <div [hidden]="i !== activePageIndex" [id]="'exercise-' + exercise.id">
                             @switch (exercise.type) {
                                 @case (QUIZ) {
-                                    <jhi-quiz-submission-exam
-                                        [quizConfiguration]="exercise"
-                                        [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
-                                    ></jhi-quiz-submission-exam>
+                                    <jhi-quiz-submission-exam [quizConfiguration]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
                                 }
                                 @case (FILEUPLOAD) {
-                                    <jhi-file-upload-submission-exam
-                                        [exercise]="exercise"
-                                        [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
-                                    ></jhi-file-upload-submission-exam>
+                                    <jhi-file-upload-submission-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
                                 }
                                 @case (TEXT) {
-                                    <jhi-text-editor-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]"></jhi-text-editor-exam>
+                                    <jhi-text-editor-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
                                 }
                                 @case (MODELING) {
-                                    <jhi-modeling-submission-exam
-                                        [exercise]="exercise"
-                                        [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
-                                    ></jhi-modeling-submission-exam>
+                                    <jhi-modeling-submission-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
                                 }
                                 @case (PROGRAMMING) {
-                                    <jhi-programming-submission-exam
-                                        [exercise]="exercise"
-                                        [studentParticipation]="exercise.studentParticipations[0]"
-                                        [courseId]="courseId"
-                                    ></jhi-programming-submission-exam>
+                                    <jhi-programming-submission-exam [exercise]="exercise" [studentParticipation]="exercise.studentParticipations[0]" [courseId]="courseId" />
                                 }
                             }
                         </div>
@@ -96,7 +77,7 @@
                             } @else {
                                 <p jhiTranslate="artemisApp.examParticipation.connected" class="mb-0"></p>
                             }
-                            <jhi-connection-status class="connection-status-exam-participation"></jhi-connection-status>
+                            <jhi-connection-status class="connection-status-exam-participation" />
                         </div>
                     </div>
                 </div>
@@ -117,7 +98,7 @@
                             @if (!isProgrammingExerciseWithCodeEditor() && isProgrammingExerciseWithOfflineIDE()) {
                                 <p jhiTranslate="artemisApp.examParticipation.disconnectedNoCodeEditor" class="mb-0"></p>
                             }
-                            <jhi-connection-status class="connection-status-exam-participation"></jhi-connection-status>
+                            <jhi-connection-status class="connection-status-exam-participation" />
                         </div>
                     </div>
                 </div>
@@ -133,11 +114,11 @@
                 [submitInProgress]="submitInProgress"
                 (onExamEnded)="onExamEndConfirmed()"
                 (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
-            ></jhi-exam-participation-cover>
+            />
         }
         @if (this.studentExam?.submitted && !showExamSummary && !loadingExam) {
             <div class="submissionSuccessfulHint">
-                <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
+                <fa-icon [icon]="faCheckCircle" class="check" />
                 <h2 jhiTranslate="artemisApp.examParticipation.submissionSuccessful.title"></h2>
                 <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.noActionRequired"></p>
                 <p jhiTranslate="artemisApp.examParticipation.submissionSuccessful.followExamProtocol"></p>
@@ -164,7 +145,7 @@
         <div class="alert alert-warning">
             <h6 jhiTranslate="artemisApp.examParticipation.atLeastTutorStudentExam"></h6>
             <a [routerLink]="['/course-management', courseId, 'exams', examId]" class="btn btn-primary">
-                <fa-icon [icon]="faGraduationCap" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
+                <fa-icon [icon]="faGraduationCap" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.examParticipation.goToExamManagement' | artemisTranslate }}
             </a>
         </div>
     } @else {

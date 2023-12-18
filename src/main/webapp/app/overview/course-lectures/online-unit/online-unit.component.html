@@ -3,7 +3,7 @@
         <div class="card-header unit-card-header row align-content-center justify-content-between" (click)="handleCollapse($event)">
             <div class="col-auto row align-content-center flex-shrink-1">
                 <h5 class="m-0 fw-medium">
-                    <fa-icon class="me-2 col-auto" [icon]="faLink" [ngbTooltip]="'artemisApp.onlineUnit.tooltip' | artemisTranslate"></fa-icon>
+                    <fa-icon class="me-2 col-auto" [icon]="faLink" [ngbTooltip]="'artemisApp.onlineUnit.tooltip' | artemisTranslate" />
                     {{ onlineUnit?.name }}
                     @if (!onlineUnit?.visibleToStudents) {
                         <span
@@ -17,7 +17,7 @@
             </div>
             <div class="col-auto d-flex align-items-center gap-3 pe-2">
                 <button class="btn btn-sm btn-primary" (click)="openLink($event)" [ngbTooltip]="domainName">
-                    <fa-icon [icon]="faUpRightFromSquare"></fa-icon>
+                    <fa-icon [icon]="faUpRightFromSquare" />
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.onlineUnit.doOpen">Open link</span>
                 </button>
                 @if (!isPresentationMode && onlineUnit.visibleToStudents) {
@@ -29,7 +29,7 @@
                                 [icon]="faSquareCheck"
                                 [ngbTooltip]="'artemisApp.lectureUnit.completedTooltip' | artemisTranslate"
                                 (click)="handleClick($event, false)"
-                            ></fa-icon>
+                            />
                         } @else {
                             <fa-icon
                                 class="text-body-secondary"
@@ -37,7 +37,7 @@
                                 [icon]="faSquare"
                                 [ngbTooltip]="'artemisApp.lectureUnit.uncompletedTooltip' | artemisTranslate"
                                 (click)="handleClick($event, true)"
-                            ></fa-icon>
+                            />
                         }
                     </div>
                 }

@@ -11,7 +11,7 @@
                             [currentPercentage]="courseDTO?.currentPercentageAssessments"
                             [currentAbsolute]="courseDTO?.currentAbsoluteAssessments"
                             [currentMax]="courseDTO?.currentMaxAssessments"
-                        ></jhi-course-detail-doughnut-chart>
+                        />
                         @if (course.complaintsEnabled) {
                             <jhi-course-detail-doughnut-chart
                                 class="doughnut-container col-sm-6 my-3"
@@ -20,7 +20,7 @@
                                 [currentPercentage]="courseDTO?.currentPercentageComplaints"
                                 [currentAbsolute]="courseDTO?.currentAbsoluteComplaints"
                                 [currentMax]="courseDTO?.currentMaxComplaints"
-                            ></jhi-course-detail-doughnut-chart>
+                            />
                         }
                         @if (course.requestMoreFeedbackEnabled) {
                             <jhi-course-detail-doughnut-chart
@@ -30,7 +30,7 @@
                                 [currentPercentage]="courseDTO?.currentPercentageMoreFeedbacks"
                                 [currentAbsolute]="courseDTO?.currentAbsoluteMoreFeedbacks"
                                 [currentMax]="courseDTO?.currentMaxMoreFeedbacks"
-                            ></jhi-course-detail-doughnut-chart>
+                            />
                         }
                         <jhi-course-detail-doughnut-chart
                             class="doughnut-container col-sm-6 my-3"
@@ -39,15 +39,10 @@
                             [currentPercentage]="courseDTO?.currentPercentageAverageScore"
                             [currentAbsolute]="courseDTO?.currentAbsoluteAverageScore"
                             [currentMax]="courseDTO?.currentMaxAverageScore"
-                        ></jhi-course-detail-doughnut-chart>
+                        />
                     </div>
                 </div>
-                <jhi-course-detail-line-chart
-                    class="col-xxl-8"
-                    [course]="course"
-                    [numberOfStudentsInCourse]="course.numberOfStudents!"
-                    [initialStats]="activeStudents"
-                ></jhi-course-detail-line-chart>
+                <jhi-course-detail-line-chart class="col-xxl-8" [course]="course" [numberOfStudentsInCourse]="course.numberOfStudents!" [initialStats]="activeStudents" />
             </div>
             <hr />
             <div>
@@ -272,7 +267,7 @@
                     <div>
                         <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.chat">Iris Chat</span></dt>
                         <dd>
-                            <jhi-iris-enabled [course]="course" [irisSubSettingsType]="CHAT" [disabled]="!isAdmin"></jhi-iris-enabled>
+                            <jhi-iris-enabled [course]="course" [irisSubSettingsType]="CHAT" [disabled]="!isAdmin" />
                         </dd>
                     </div>
                 }
@@ -281,7 +276,7 @@
                     <div>
                         <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.hesita">Iris Hestia</span></dt>
                         <dd>
-                            <jhi-iris-enabled [course]="course" [irisSubSettingsType]="HESTIA" [disabled]="!isAdmin"></jhi-iris-enabled>
+                            <jhi-iris-enabled [course]="course" [irisSubSettingsType]="HESTIA" [disabled]="!isAdmin" />
                         </dd>
                     </div>
                 }
@@ -290,7 +285,7 @@
                     <div>
                         <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.codeEditor">Iris CodeEditor</span></dt>
                         <dd>
-                            <jhi-iris-enabled [course]="course" [irisSubSettingsType]="CODE_EDITOR" [disabled]="!isAdmin"></jhi-iris-enabled>
+                            <jhi-iris-enabled [course]="course" [irisSubSettingsType]="CODE_EDITOR" [disabled]="!isAdmin" />
                         </dd>
                     </div>
                 }

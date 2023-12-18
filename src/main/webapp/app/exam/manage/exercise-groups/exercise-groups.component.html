@@ -5,11 +5,11 @@
     @if (course?.isAtLeastEditor) {
         <div class="ms-auto d-flex flex-wrap">
             <a class="btn btn-primary me-1" id="import-group" (click)="openExerciseGroupImportModal()">
-                <fa-icon [icon]="faPlus"></fa-icon>
+                <fa-icon [icon]="faPlus" />
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"> Import Exercise Group</span>
             </a>
             <a class="btn btn-primary jh-create-entity create-course" id="create-new-group" routerLink="new">
-                <fa-icon [icon]="faPlus"></fa-icon>
+                <fa-icon [icon]="faPlus" />
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.examManagement.exerciseGroup.create"> Create new Exercise Group </span>
             </a>
         </div>
@@ -23,17 +23,17 @@
         <div class="d-flex p-3 header flex-wrap">
             <div class="me-3 d-flex justify-content-center" style="align-items: center">
                 <a (click)="moveUp(i)" [class.disabled]="i === 0" class="border-0 p-0 me-1 bg-transparent">
-                    <fa-icon [icon]="faAngleUp" style="font-size: 1.3rem"></fa-icon>
+                    <fa-icon [icon]="faAngleUp" style="font-size: 1.3rem" />
                 </a>
                 <a (click)="moveDown(i)" [class.disabled]="i >= exerciseGroups!.length - 1" class="border-0 p-0 bg-transparent">
-                    <fa-icon [icon]="faAngleDown" style="font-size: 1.3rem"></fa-icon>
+                    <fa-icon [icon]="faAngleDown" style="font-size: 1.3rem" />
                 </a>
             </div>
             <div class="d-flex flex-column justify-content-center">
                 <h5 class="group-title font-weight-bold mb-0">{{ exerciseGroup.title }}</h5>
             </div>
             <div class="d-flex flex-column justify-content-center ms-1">
-                <jhi-help-icon text="artemisApp.examManagement.exerciseGroup.titleInfo"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.examManagement.exerciseGroup.titleInfo" />
             </div>
             <div class="d-flex flex-column justify-content-center ms-3">
                 <span class="d-block rounded px-2 py-1 opt-badge" style="font-size: 0.85rem">
@@ -50,70 +50,70 @@
                         @if (course?.isAtLeastEditor) {
                             <div class="btn-group-vertical me-1 mb-1" style="justify-content: end">
                                 <a [routerLink]="[exerciseGroup.id, 'file-upload-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
-                                    <fa-icon [icon]="faPlus"></fa-icon>
+                                    <fa-icon [icon]="faPlus" />
                                     <span class="d-none d-xl-inline">{{ 'artemisApp.fileUploadExercise.home.createLabel' | artemisTranslate }}</span>
-                                    <fa-icon [icon]="faFileUpload"></fa-icon>
+                                    <fa-icon [icon]="faFileUpload" />
                                 </a>
                                 <a (click)="openImportModal(exerciseGroup, exerciseType.FILE_UPLOAD)" class="btn btn-info btn-sm me-1 mb-1">
-                                    <fa-icon [icon]="faFileImport"></fa-icon>
+                                    <fa-icon [icon]="faFileImport" />
                                     <span class="d-none d-xl-inline">{{ 'artemisApp.fileUploadExercise.home.importLabel' | artemisTranslate }}</span>
-                                    <fa-icon [icon]="faFileUpload"></fa-icon>
+                                    <fa-icon [icon]="faFileUpload" />
                                 </a>
                             </div>
                         }
                         @if (course?.isAtLeastEditor) {
                             <div class="btn-group-vertical me-1 mb-1" style="justify-content: end">
                                 <a [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="add-quiz-exercise btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
-                                    <fa-icon [icon]="faPlus"></fa-icon>
+                                    <fa-icon [icon]="faPlus" />
                                     <span class="d-none d-xl-inline">{{ 'artemisApp.quizExercise.home.createLabel' | artemisTranslate }}</span>
-                                    <fa-icon [icon]="faCheckDouble"></fa-icon>
+                                    <fa-icon [icon]="faCheckDouble" />
                                 </a>
                                 <a (click)="openImportModal(exerciseGroup, exerciseType.QUIZ)" class="btn btn-info btn-sm me-1 mb-1">
-                                    <fa-icon [icon]="faFileImport"></fa-icon>
+                                    <fa-icon [icon]="faFileImport" />
                                     <span class="d-none d-xl-inline">{{ 'artemisApp.quizExercise.home.importLabel' | artemisTranslate }}</span>
-                                    <fa-icon [icon]="faCheckDouble"></fa-icon>
+                                    <fa-icon [icon]="faCheckDouble" />
                                 </a>
                             </div>
                         }
                         @if (course?.isAtLeastEditor) {
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="add-text-exercise btn btn-info btn-sm me-1 mb-1">
-                                    <fa-icon [icon]="faPlus"></fa-icon>
+                                    <fa-icon [icon]="faPlus" />
                                     <span class="d-none d-xl-inline">{{ 'artemisApp.textExercise.home.createLabel' | artemisTranslate }}</span>
-                                    <fa-icon [icon]="faFont"></fa-icon>
+                                    <fa-icon [icon]="faFont" />
                                 </a>
                                 <a (click)="openImportModal(exerciseGroup, exerciseType.TEXT)" class="btn btn-info btn-sm me-1 mb-1">
-                                    <fa-icon [icon]="faFileImport"></fa-icon>
+                                    <fa-icon [icon]="faFileImport" />
                                     <span class="d-none d-xl-inline">{{ 'artemisApp.textExercise.home.importLabel' | artemisTranslate }}</span>
-                                    <fa-icon [icon]="faFont"></fa-icon>
+                                    <fa-icon [icon]="faFont" />
                                 </a>
                             </div>
                         }
                         @if (course?.isAtLeastEditor) {
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a [routerLink]="[exerciseGroup.id, 'modeling-exercises', 'new']" class="add-modeling-exercise btn btn-info btn-sm me-1 mb-1">
-                                    <fa-icon [icon]="faPlus"></fa-icon>
+                                    <fa-icon [icon]="faPlus" />
                                     <span class="d-none d-xl-inline">{{ 'artemisApp.modelingExercise.home.createLabel' | artemisTranslate }}</span>
-                                    <fa-icon [icon]="faProjectDiagram"></fa-icon>
+                                    <fa-icon [icon]="faProjectDiagram" />
                                 </a>
                                 <a (click)="openImportModal(exerciseGroup, exerciseType.MODELING)" class="btn btn-info btn-sm me-1 mb-1">
-                                    <fa-icon [icon]="faFileImport"></fa-icon>
+                                    <fa-icon [icon]="faFileImport" />
                                     <span class="d-none d-xl-inline">{{ 'artemisApp.modelingExercise.home.importLabel' | artemisTranslate }}</span>
-                                    <fa-icon [icon]="faProjectDiagram"></fa-icon>
+                                    <fa-icon [icon]="faProjectDiagram" />
                                 </a>
                             </div>
                         }
                         @if (course?.isAtLeastEditor) {
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a [routerLink]="[exerciseGroup.id, 'programming-exercises', 'new']" class="add-programming-exercise btn btn-info btn-sm me-1 mb-1">
-                                    <fa-icon [icon]="faPlus"></fa-icon>
+                                    <fa-icon [icon]="faPlus" />
                                     <span class="d-none d-xl-inline">{{ 'artemisApp.programmingExercise.home.createLabel' | artemisTranslate }}</span>
-                                    <fa-icon [icon]="faKeyboard"></fa-icon>
+                                    <fa-icon [icon]="faKeyboard" />
                                 </a>
                                 <a (click)="openImportModal(exerciseGroup, exerciseType.PROGRAMMING)" class="btn btn-info btn-sm me-1 mb-1">
-                                    <fa-icon [icon]="faFileImport"></fa-icon>
+                                    <fa-icon [icon]="faFileImport" />
                                     <span class="d-none d-xl-inline">{{ 'artemisApp.programmingExercise.home.importLabel' | artemisTranslate }}</span>
-                                    <fa-icon [icon]="faKeyboard"></fa-icon>
+                                    <fa-icon [icon]="faKeyboard" />
                                 </a>
                             </div>
                         }
@@ -121,7 +121,7 @@
                             @if (course?.isAtLeastEditor) {
                                 <div class="d-flex flex-column me-1 mb-1">
                                     <a [routerLink]="[exerciseGroup.id, 'edit']" class="edit-group btn btn-warning btn-sm me-1 mb-1">
-                                        <fa-icon [icon]="faWrench"></fa-icon>
+                                        <fa-icon [icon]="faWrench" />
                                         <span class="d-none d-xl-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
                                     </a>
                                     @if (
@@ -142,7 +142,7 @@
                                             [dialogError]="dialogError"
                                             class="delete-group mb-0"
                                         >
-                                            <fa-icon [icon]="faTrash"></fa-icon>
+                                            <fa-icon [icon]="faTrash" />
                                         </button>
                                     } @else {
                                         @if (exerciseGroup.id && course?.isAtLeastInstructor) {
@@ -155,7 +155,7 @@
                                                 [dialogError]="dialogError"
                                                 class="delete-group mb-0"
                                             >
-                                                <fa-icon [icon]="faTrash"></fa-icon>
+                                                <fa-icon [icon]="faTrash" />
                                             </button>
                                         }
                                     }
@@ -257,7 +257,7 @@
                                         }
                                     </td>
                                     <td class="align-middle" style="font-size: 1.35rem">
-                                        <fa-icon [icon]="exerciseIcon(exercise)"></fa-icon>
+                                        <fa-icon [icon]="exerciseIcon(exercise)" />
                                     </td>
                                     <td class="align-middle">
                                         @if (course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ) {
@@ -289,38 +289,38 @@
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.PROGRAMMING)) {
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayShortName]="true"></jhi-programming-exercise-group-cell>
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayShortName]="true" />
                                             }
                                         </td>
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayRepositoryUrl]="true"></jhi-programming-exercise-group-cell>
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayRepositoryUrl]="true" />
                                             }
                                         </td>
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayTemplateUrls]="true"></jhi-programming-exercise-group-cell>
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayTemplateUrls]="true" />
                                             }
                                         </td>
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayEditorModus]="true"></jhi-programming-exercise-group-cell>
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayEditorModus]="true" />
                                             }
                                         </td>
                                     }
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.QUIZ)) {
                                         <td class="align-middle">
-                                            <jhi-quiz-exercise-group-cell [exercise]="exercise"></jhi-quiz-exercise-group-cell>
+                                            <jhi-quiz-exercise-group-cell [exercise]="exercise" />
                                         </td>
                                     }
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.MODELING)) {
                                         <td class="align-middle">
-                                            <jhi-modeling-exercise-group-cell [exercise]="exercise"></jhi-modeling-exercise-group-cell>
+                                            <jhi-modeling-exercise-group-cell [exercise]="exercise" />
                                         </td>
                                     }
                                     @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.FILE_UPLOAD)) {
                                         <td class="align-middle">
-                                            <jhi-file-upload-exercise-group-cell [exercise]="exercise"></jhi-file-upload-exercise-group-cell>
+                                            <jhi-file-upload-exercise-group-cell [exercise]="exercise" />
                                         </td>
                                     }
                                     @if (
@@ -347,7 +347,7 @@
                                                 [exerciseGroupId]="exerciseGroup.id"
                                                 [latestIndividualEndDate]="latestIndividualEndDate"
                                                 (onDeleteExercise)="removeExercise(exercise.id, exerciseGroup.id)"
-                                            ></jhi-exam-exercise-row-buttons>
+                                            />
                                         }
                                     </td>
                                 </tr>

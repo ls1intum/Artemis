@@ -7,13 +7,7 @@ import { faMinus } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-remove-auxiliary-repository-button',
     template: `
-        <jhi-button
-            [btnType]="ButtonType.ERROR"
-            [btnSize]="ButtonSize.SMALL"
-            [icon]="faMinus"
-            [title]="'entity.action.remove'"
-            (onClick)="removeAuxiliaryRepository()"
-        ></jhi-button>
+        <jhi-button [btnType]="ButtonType.ERROR" [btnSize]="ButtonSize.SMALL" [icon]="faMinus" [title]="'entity.action.remove'" (onClick)="removeAuxiliaryRepository()" />
     `,
 })
 export class RemoveAuxiliaryRepositoryButtonComponent {

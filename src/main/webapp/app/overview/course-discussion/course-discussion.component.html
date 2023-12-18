@@ -10,9 +10,9 @@
                 (keyup.enter)="onSelectContext()"
                 placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
             />
-            <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()"></jhi-button>
-            <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
-            <jhi-documentation-button [type]="documentationType" class="information-button"></jhi-documentation-button>
+            <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()" />
+            <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()" />
+            <jhi-documentation-button [type]="documentationType" class="information-button" />
         </div>
         <form [formGroup]="formGroup">
             <!-- filter and sort controls -->
@@ -96,8 +96,7 @@
                                         ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
                                         : ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
                                 "
-                            >
-                            </fa-icon>
+                            />
                         </div>
                     </div>
                 </div>
@@ -105,7 +104,7 @@
                 <div class="col-12 col-md-auto order-lg-2">
                     <div class="row selection-prefix justify-content-center">
                         <div class="col-auto p-0">
-                            <fa-icon [icon]="faFilter"></fa-icon>
+                            <fa-icon [icon]="faFilter" />
                         </div>
                         <div class="col-auto p-0 ps-2">
                             <input
@@ -164,8 +163,7 @@
                     (onEndOfOriginalItemsReached)="fetchNextPage()"
                 >
                     @for (post of virtualScrollContainer.domTreeItems; track postsTrackByFn($index, post)) {
-                        <jhi-posting-thread [id]="'item-' + post.id" class="item" [post]="post" [showAnswers]="posts.length === 1" [isCommunicationPage]="true">
-                        </jhi-posting-thread>
+                        <jhi-posting-thread [id]="'item-' + post.id" class="item" [post]="post" [showAnswers]="posts.length === 1" [isCommunicationPage]="true" />
                     }
                     <!-- spinner while loading posts -->
                     <div class="text-center">

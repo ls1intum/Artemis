@@ -4,16 +4,12 @@
             <div>
                 <div class="d-flex align-items-center">
                     <h2><span jhiTranslate="artemisApp.textExercise.detail.title">Text Exercise</span> {{ textExercise.id }}</h2>
-                    <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+                    <jhi-documentation-button [type]="documentationType" />
                 </div>
                 <hr />
                 <div class="text-start">
                     @if (course) {
-                        <jhi-non-programming-exercise-detail-common-actions
-                            [isExamExercise]="isExamExercise"
-                            [course]="course"
-                            [exercise]="textExercise"
-                        ></jhi-non-programming-exercise-detail-common-actions>
+                        <jhi-non-programming-exercise-detail-common-actions [isExamExercise]="isExamExercise" [course]="course" [exercise]="textExercise" />
                     }
                     <!-- Check Plagiarism -->
                     @if (textExercise.isAtLeastEditor) {
@@ -29,7 +25,7 @@
                             [doughnutStats]="doughnutStats"
                             [exerciseType]="ExerciseType.TEXT"
                             class="d-flex justify-content-around"
-                        ></jhi-exercise-detail-statistics>
+                        />
                         <hr />
                         <div>
                             <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
@@ -38,7 +34,7 @@
                     </div>
                 }
                 <dl class="row-md jh-entity-details markdown-preview">
-                    <jhi-exercise-details [exercise]="textExercise"></jhi-exercise-details>
+                    <jhi-exercise-details [exercise]="textExercise" />
                     <dt><span jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled">Enable feedback suggestions from Athena</span></dt>
                     <dd>
                         <span>{{ (textExercise.feedbackSuggestionsEnabled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>

@@ -16,19 +16,19 @@
                 <tr (sortChange)="sortRows()" [(ascending)]="listSorting" [(predicate)]="sortedColumn" class="flex-row" jhiSort>
                     <th class="col-1" jhiSortBy="{{ column.ID }}">
                         <span>#</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th class="col-4" jhiSortBy="{{ column.TITLE }}">
                         <span jhiTranslate="artemisApp.competency.prerequisite.import.table.title">Title</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th class="col-4" jhiSortBy="{{ column.COURSE_TITLE }}">
                         <span jhiTranslate="artemisApp.competency.prerequisite.import.table.course">Course</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th class="col-2" jhiSortBy="{{ column.SEMESTER }}">
                         <span jhiTranslate="artemisApp.competency.prerequisite.import.table.semester">Semester</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon [icon]="faSort" />
                     </th>
                     <th class="col-1"></th>
                 </tr>
@@ -40,10 +40,10 @@
                             <span>{{ competency.id }}</span>
                         </td>
                         <td class="text-break col-4">
-                            <ngb-highlight [result]="competency.title" [term]="searchTerm"></ngb-highlight>
+                            <ngb-highlight [result]="competency.title" [term]="searchTerm" />
                         </td>
                         <td class="text-break col-4">
-                            <ngb-highlight [result]="competency.course?.title" [term]="searchTerm"></ngb-highlight>
+                            <ngb-highlight [result]="competency.course?.title" [term]="searchTerm" />
                         </td>
                         <td class="col-2">
                             <span>{{ competency.course?.semester || '' }}</span>
@@ -53,15 +53,14 @@
                                 (onClick)="selectImport(competency)"
                                 [disabled]="disabledIds.includes(competency.id!)"
                                 [title]="'artemisApp.competency.prerequisite.import.table.doSelect'"
-                            ></jhi-button>
+                            />
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
         <div class="d-flex justify-content-between p-2">
-            <ngb-pagination (pageChange)="onPageChange($event)" [(page)]="state.page" [collectionSize]="total" [maxSize]="10" [pageSize]="state.pageSize" [rotate]="true">
-            </ngb-pagination>
+            <ngb-pagination (pageChange)="onPageChange($event)" [(page)]="state.page" [collectionSize]="total" [maxSize]="10" [pageSize]="state.pageSize" [rotate]="true" />
         </div>
     </div>
 </form>

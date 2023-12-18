@@ -31,7 +31,7 @@
                 [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile || !!programmingExercise.id"
                 name="projectType"
                 id="field_projectType"
-            ></jhi-mode-picker>
+            />
             @if (
                 !programmingExerciseCreationConfig.isImportFromExistingExercise &&
                 !programmingExerciseCreationConfig.isImportFromFile &&
@@ -50,7 +50,7 @@
                         checked
                     />
                     <span jhiTranslate="artemisApp.programmingExercise.withDependencies">With Dependencies</span>
-                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.withDependenciesTooltip"></jhi-help-icon>
+                    <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.withDependenciesTooltip" />
                 </div>
             }
         </div>
@@ -128,7 +128,7 @@
                 >
                     Enable Static Code Analysis</label
                 >
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.enableStaticCodeAnalysis.description"></jhi-help-icon>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.enableStaticCodeAnalysis.description" />
             </div>
         </div>
     }
@@ -149,7 +149,7 @@
                 <label class="form-check-label custom-control-label" for="field_sequentialTestRuns" jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">
                     >Sequential Test Runs</label
                 >
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.sequentialTestRuns.description"></jhi-help-icon>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.sequentialTestRuns.description" />
             </div>
         </div>
     }
@@ -168,13 +168,10 @@
             <label class="form-check-label custom-control-label" for="field_testwiseCoverageEnabled" jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage"
                 >Record Testwise Coverage
             </label>
-            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recordTestwiseCoverageTooltip"></jhi-help-icon>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.recordTestwiseCoverageTooltip" />
         </div>
     }
     @if (!programmingExercise.id && programmingExerciseCreationConfig.customBuildPlansSupported) {
-        <jhi-programming-exercise-custom-build-plan
-            [programmingExercise]="programmingExercise"
-            [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig"
-        ></jhi-programming-exercise-custom-build-plan>
+        <jhi-programming-exercise-custom-build-plan [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig" />
     }
 </section>

@@ -52,7 +52,7 @@
                             [forceSampleSolution]="mode === 'solution'"
                             [questionIndex]="i + 1"
                             [score]="questionScores[question.id!]"
-                        ></jhi-multiple-choice-question>
+                        />
                     }
                     <!-- TODO: Map vs Array consistency -->
                     @if (question.type === DRAG_AND_DROP) {
@@ -67,7 +67,7 @@
                             [forceSampleSolution]="mode === 'solution'"
                             [questionIndex]="i + 1"
                             [score]="questionScores[question.id!]"
-                        ></jhi-drag-and-drop-question>
+                        />
                     }
                     <!-- TODO: Map vs Array consistency -->
                     @if (question.type === SHORT_ANSWER) {
@@ -82,7 +82,7 @@
                             [forceSampleSolution]="mode === 'solution'"
                             [questionIndex]="i + 1"
                             [score]="questionScores[question.id!]"
-                        ></jhi-short-answer-question>
+                        />
                     }
                 </div>
             }
@@ -273,7 +273,7 @@
                             [title]="'artemisApp.exercise.refresh'"
                             [disabled]="refreshingQuiz"
                             [icon]="faSync"
-                        ></jhi-button>
+                        />
                     }
                     <div class="submit-button">
                         @if (!showingResult) {
@@ -284,7 +284,7 @@
                                 [btnType]="ButtonType.SUCCESS"
                                 [title]="submission.submitted ? 'artemisApp.quizExercise.submitted' : 'entity.action.submit'"
                                 [disabled]="submission.submitted || isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
-                            ></jhi-button>
+                            />
                         }
                     </div>
                 </div>
@@ -323,11 +323,11 @@
             @if (!quizBatch && quizExercise.quizMode === QuizMode.BATCHED && (quizExercise.remainingNumberOfAttempts ?? 1) > 0) {
                 <div jhiTranslate="artemisApp.quizExercise.quizInstructions.enterPassword"></div>
                 <input id="join-patch-password" [(ngModel)]="password" />
-                <jhi-button id="join-batch" [title]="'artemisApp.quizExercise.join'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()"></jhi-button>
+                <jhi-button id="join-batch" [title]="'artemisApp.quizExercise.join'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()" />
             }
             @if (!quizBatch && quizExercise.quizMode === QuizMode.INDIVIDUAL && (quizExercise.remainingNumberOfAttempts ?? 1) > 0) {
                 <div jhiTranslate="artemisApp.quizExercise.quizInstructions.startNow"></div>
-                <jhi-button id="start-batch" [title]="'artemisApp.quizExercise.startBatch'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()"></jhi-button>
+                <jhi-button id="start-batch" [title]="'artemisApp.quizExercise.startBatch'" [btnType]="ButtonType.SUCCESS" (onClick)="joinBatch()" />
             }
             @if (!quizBatch && quizExercise.quizMode !== QuizMode.SYNCHRONIZED && quizExercise.remainingNumberOfAttempts === 0) {
                 @if ((quizExercise.allowedNumberOfAttempts ?? 0) > 1) {
@@ -340,6 +340,6 @@
         </div>
     }
     <div class="quiz-refresh-overlay" [class.active]="refreshingQuiz">
-        <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true"></fa-icon>
+        <fa-icon size="lg" [icon]="faCircleNotch" [spin]="true" />
     </div>
 </div>

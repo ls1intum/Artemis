@@ -3,7 +3,7 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-help-icon-without-translation',
-    template: ` <fa-icon [icon]="faQuestionCircle" class="text-secondary" [placement]="placement" ngbTooltip="{{ text }}"></fa-icon> `,
+    template: ` <fa-icon [icon]="faQuestionCircle" class="text-secondary" [placement]="placement" ngbTooltip="{{ text }}" /> `,
 })
 export class HelpIconComponentWithoutTranslationComponent {
     @Input() placement: string;

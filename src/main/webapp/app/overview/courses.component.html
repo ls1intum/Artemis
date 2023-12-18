@@ -6,7 +6,7 @@
         <div class="col-12 mb-5">
             <div class="row justify-content-between align-items-center exam-container ps-3 pe-3" (click)="openExam()">
                 <div class="mb-4 mt-4 d-flex" style="width: unset">
-                    <fa-icon [icon]="faPenAlt" size="2x"></fa-icon>
+                    <fa-icon [icon]="faPenAlt" size="2x" />
                     <h4 class="ms-2 fw-medium">{{ nextRelevantExam.title }}</h4>
                 </div>
                 <div class="text-end mb-4 mt-4" style="width: unset">
@@ -38,7 +38,7 @@
 }
 @if (nextRelevantExercise && nextRelevantCourse) {
     <div class="row mb-3">
-        <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="nextRelevantCourse"></jhi-course-exercise-row>
+        <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="nextRelevantCourse" />
     </div>
 }
 <div class="row mb-3 justify-content-between">
@@ -51,6 +51,6 @@
 </div>
 <div class="row">
     @for (course of courses; track course) {
-        <jhi-overview-course-card class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-3" [course]="course" [hasGuidedTour]="course === courseForGuidedTour"> </jhi-overview-course-card>
+        <jhi-overview-course-card class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-3" [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
     }
 </div>

@@ -4,12 +4,8 @@ import { Component } from '@angular/core';
     selector: 'jhi-orion-course-management-exercises',
     template: `
         <jhi-course-management-exercises>
-            <ng-template #overrideGenerateAndImportButton>
-                <!-- No replacement, just not visible in Orion -->
-            </ng-template>
-            <ng-template #overrideNonProgrammingExerciseCard>
-                <!-- Nothing, only programming exercises are shown -->
-            </ng-template>
+            <ng-template #overrideGenerateAndImportButton />
+            <ng-template #overrideNonProgrammingExerciseCard />
             <ng-template
                 #overrideProgrammingExerciseCard
                 let-course="course"
@@ -24,8 +20,7 @@ import { Component } from '@angular/core';
                     (exerciseCount)="programmingExerciseCountCallback($event)"
                     [exerciseFilter]="exerciseFilter"
                     (filteredExerciseCount)="filteredProgrammingExercisesCountCallback($event)"
-                >
-                </jhi-orion-programming-exercise>
+                />
             </ng-template>
         </jhi-course-management-exercises>
     `,

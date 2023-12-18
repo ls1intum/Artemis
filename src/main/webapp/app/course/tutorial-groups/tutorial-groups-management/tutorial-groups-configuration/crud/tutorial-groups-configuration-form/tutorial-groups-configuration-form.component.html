@@ -19,9 +19,9 @@
                         />
                         <input formControlName="period" [owlDateTime]="period" class="date-time-picker-anchor" [selectMode]="'range'" />
                         <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="period">
-                            <fa-icon [icon]="faCalendarAlt"></fa-icon>
+                            <fa-icon [icon]="faCalendarAlt" />
                         </button>
-                        <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period></owl-date-time>
+                        <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period />
                     </div>
                     <div class="form-text">
                         {{ 'artemisApp.forms.configurationForm.periodInput.explanation' | artemisTranslate }}

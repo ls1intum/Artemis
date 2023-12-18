@@ -9,7 +9,7 @@
         <div class="custom-container">
             @for (feature of features; track feature) {
                 <div id="featureOverview{{ feature.id }}" class="box" (click)="navigateToFeature(feature.id)">
-                    <fa-icon class="fa" [icon]="feature.icon" aria-hidden="true"></fa-icon>
+                    <fa-icon class="fa" [icon]="feature.icon" aria-hidden="true" />
                     <h3 class="title">{{ feature.title | artemisTranslate }}</h3>
                     <div class="feature-short-description">
                         {{ feature.shortDescription | artemisTranslate }}
