@@ -134,7 +134,7 @@ describe('AthenaService', () => {
         const mockProfileInfo = { activeProfiles: ['something'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
 
-        athenaService.getAvailableModules(1).subscribe((modules: string[]) => {
+        athenaService.getAvailableModules(1, textExercise).subscribe((modules: string[]) => {
             response = modules;
         });
 
