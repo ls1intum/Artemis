@@ -127,4 +127,51 @@ describe('AthenaService', () => {
 
         expect(response).toEqual([]);
     }));
+
+    it('should return no modules when athena is disabled on the server', fakeAsync(() => {
+        let response: string[] | null = null;
+
+        const mockProfileInfo = { activeProfiles: ['something'] } as ProfileInfo;
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
+
+        athenaService.getAvailableModules(1).subscribe((modules: string[]) => {
+            response = modules;
+        });
+
+        tick();
+
+        expect(response).toEqual([]);
+    }));
+
+    it('should get available modules when athena is enabled', fakeAsync(() => {
+        const textModules = ['module_text_1', 'module_text_2'];
+        const programmingModules = ['module_programming_1', 'module_programming_2'];
+        let textResponse: string[] | null = null;
+        let programmingResponse: string[] | null = null;
+
+        const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
+
+        athenaService.getAvailableModules(1, textExercise).subscribe((modules: string[]) => {
+            textResponse = modules;
+        });
+        const requestWrapperText = httpTestingController.expectOne({ url: 'api/athena/text-exercises/1/available-modules' });
+        requestWrapperText.flush(textModules);
+
+        tick();
+
+        athenaService.getAvailableModules(1, programmingExercise).subscribe((modules: string[]) => {
+            programmingResponse = modules;
+        });
+        const requestWrapperProgramming = httpTestingController.expectOne({ url: 'api/athena/programming-exercises/1/available-modules' });
+        requestWrapperProgramming.flush(programmingModules);
+
+        tick();
+
+        expect(requestWrapperText.request.method).toBe('GET');
+        expect(textResponse!).toEqual(textModules);
+
+        expect(requestWrapperProgramming.request.method).toBe('GET');
+        expect(programmingResponse!).toEqual(programmingModules);
+    }));
 });
