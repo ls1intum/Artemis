@@ -199,6 +199,22 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Optional<Exam> findWithStudentExamsExercisesById(long id);
 
     @Query("""
+                SELECT e
+                FROM Exam e
+                    LEFT JOIN FETCH e.exerciseGroups exg
+                    LEFT JOIN FETCH exg.exercises ex
+                    LEFT JOIN FETCH ex.quizQuestions
+                    LEFT JOIN FETCH ex.templateParticipation tp
+                    LEFT JOIN FETCH ex.solutionParticipation sp
+                    LEFT JOIN FETCH tp.results tpr
+                    LEFT JOIN FETCH sp.results spr
+                WHERE e.id = :examId
+                    AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
+                    AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
+            """)
+    Optional<Exam> findWithExerciseGroupsAndExercisesAndDetailsById(@Param("examId") long examId);
+
+    @Query("""
             SELECT DISTINCT e
             FROM Exam e
                 LEFT JOIN FETCH e.exerciseGroups eg
@@ -403,6 +419,11 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     default Exam findWithExerciseGroupsAndExercisesByIdOrElseThrow(long examId) throws EntityNotFoundException {
         return findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+    }
+
+    @NotNull
+    default Exam findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(long examId) {
+        return findWithExerciseGroupsAndExercisesAndDetailsById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
     }
 
     /**

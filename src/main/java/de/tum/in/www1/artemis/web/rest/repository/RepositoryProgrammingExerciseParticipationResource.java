@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.RepositoryAccessService;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCIConnectorService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -61,9 +61,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             ParticipationAuthorizationCheckService participationAuthCheckService, GitService gitService, Optional<VersionControlService> versionControlService,
             RepositoryService repositoryService, ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, BuildLogEntryService buildLogService, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalCIConnectorService> localCIConnectorService) {
+            SubmissionPolicyRepository submissionPolicyRepository, RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, versionControlService, programmingExerciseRepository, repositoryAccessService,
-                localCIConnectorService);
+                localVCServletService);
         this.participationAuthCheckService = participationAuthCheckService;
         this.participationService = participationService;
         this.buildLogService = buildLogService;

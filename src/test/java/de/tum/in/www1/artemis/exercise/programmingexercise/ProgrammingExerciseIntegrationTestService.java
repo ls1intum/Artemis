@@ -1761,7 +1761,7 @@ class ProgrammingExerciseIntegrationTestService {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
-        prepareTwoRepositoriesForPlagiarismChecks(programmingExercise);
+        prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = ROOT + CHECK_PLAGIARISM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
@@ -1772,7 +1772,7 @@ class ProgrammingExerciseIntegrationTestService {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         var programmingExercise = programmingExerciseRepository
                 .findWithTemplateAndSolutionParticipationById(exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class).getId()).orElseThrow();
-        prepareTwoRepositoriesForPlagiarismChecks(programmingExercise);
+        prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(programmingExercise);
 
         final var path = ROOT + CHECK_PLAGIARISM_JPLAG_REPORT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var jplagZipArchive = request.getFile(path, HttpStatus.OK, plagiarismUtilService.getDefaultPlagiarismOptions());
@@ -1808,13 +1808,16 @@ class ProgrammingExerciseIntegrationTestService {
         assertThat(stats.maximalSimilarity()).isEqualTo(expectedSimilarity, Offset.offset(0.0001));
     }
 
-    private void prepareTwoRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
+    private void prepareTwoStudentAndOneInstructorRepositoriesForPlagiarismChecks(ProgrammingExercise programmingExercise) throws IOException, GitAPIException {
         var participationStudent1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
         var participationStudent2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student2");
+        var participationInstructor1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "instructor1");
         var submissionStudent1 = programmingExerciseUtilService.createProgrammingSubmission(participationStudent1, false);
         var submissionStudent2 = programmingExerciseUtilService.createProgrammingSubmission(participationStudent2, false);
+        var submissionInstructor1 = programmingExerciseUtilService.createProgrammingSubmission(participationInstructor1, false);
         participationUtilService.addResultToSubmission(submissionStudent1, AssessmentType.AUTOMATIC, null);
         participationUtilService.addResultToSubmission(submissionStudent2, AssessmentType.AUTOMATIC, null);
+        participationUtilService.addResultToSubmission(submissionInstructor1, AssessmentType.AUTOMATIC, null);
 
         var jPlagReposDir = Path.of(repoDownloadClonePath, "jplag-repos");
         var projectKey = programmingExercise.getProjectKey();

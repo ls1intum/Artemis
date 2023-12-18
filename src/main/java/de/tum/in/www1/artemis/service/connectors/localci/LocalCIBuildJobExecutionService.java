@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.w3c.dom.Document;
 
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
@@ -33,6 +34,7 @@ import de.tum.in.www1.artemis.config.localvcci.LocalCIConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.exception.localvc.LocalVCInternalException;
@@ -45,11 +47,16 @@ import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.LocalCIBuildResult;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserPolicy;
+import de.tum.in.www1.artemis.service.connectors.localci.scaparser.strategy.ParserStrategy;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
+import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -201,6 +208,7 @@ public class LocalCIBuildJobExecutionService {
         catch (LocalVCInternalException e) {
             throw new LocalCIException("Error while creating LocalVCRepositoryUrl", e);
         }
+
         Path assignmentRepositoryPath = assignmentRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
         Path testsRepositoryPath = testsRepositoryUrl.getRepoClonePath(repoClonePath).toAbsolutePath();
         Path solutionRepositoryPath = null;
@@ -230,6 +238,7 @@ public class LocalCIBuildJobExecutionService {
         catch (LocalVCInternalException e) {
             throw new LocalCIException("Error while getting branch of participation", e);
         }
+
         /*
          * If the commit hash is null, this means that the latest commit of the default branch should be built.
          * If this build job is triggered by a push to the test repository, the commit hash reflects changes to the test repository.
@@ -382,6 +391,11 @@ public class LocalCIBuildJobExecutionService {
                 testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/build/test-results/test");
             }
         }
+        if (programmingExercise.isStaticCodeAnalysisEnabled()) {
+            testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/target/spotbugsXml.xml");
+            testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/target/checkstyle-result.xml");
+            testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/target/pmd.xml");
+        }
         return testResultPaths;
     }
 
@@ -411,6 +425,7 @@ public class LocalCIBuildJobExecutionService {
 
         List<LocalCIBuildResult.LocalCITestJobDTO> failedTests = new ArrayList<>();
         List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests = new ArrayList<>();
+        List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
 
         TarArchiveEntry tarEntry;
         for (TarArchiveInputStream testResultsTarInputStream : testResultsTarInputStreams) {
@@ -425,13 +440,22 @@ public class LocalCIBuildJobExecutionService {
 
                 // Read the contents of the tar entry as a string.
                 String xmlString = readTarEntryContent(testResultsTarInputStream);
+                // Get the file name of the tar entry.
+                String fileName = getFileName(tarEntry);
 
-                processTestResultFile(xmlString.replace("\n\t", ""), failedTests, successfulTests);
+                // Check if the file is a static code analysis report file
+                if (StaticCodeAnalysisTool.getToolByFilePattern(fileName).isPresent()) {
+                    processStaticCodeAnalysisReportFile(fileName, xmlString, staticCodeAnalysisReports);
+                }
+                else {
+                    // ugly workaround because in swift result files \n\t breaks the parsing
+                    processTestResultFile(xmlString.replace("\n\t", ""), failedTests, successfulTests);
+                }
             }
         }
 
         return constructBuildResult(failedTests, successfulTests, assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, !failedTests.isEmpty(),
-                buildCompletedDate);
+                buildCompletedDate, staticCodeAnalysisReports);
     }
 
     private boolean isValidTestResultFile(TarArchiveEntry tarArchiveEntry) {
@@ -441,6 +465,45 @@ public class LocalCIBuildJobExecutionService {
 
         // Java test result files are named "TEST-*.xml", Python test result files are named "*results.xml".
         return !tarArchiveEntry.isDirectory() && ((result.endsWith(".xml") && !result.equals("pom.xml")));
+    }
+
+    /**
+     * Get the file name of the tar entry.
+     *
+     * @param tarEntry the tar entry
+     * @return the file name of the tar entry
+     */
+    private String getFileName(TarArchiveEntry tarEntry) {
+        String filePath = tarEntry.getName();
+        // Find the index of the last '/'
+        int lastIndex = filePath.lastIndexOf('/');
+        // If '/' is found, extract the substring after it; otherwise, keep the original string
+        if (lastIndex != -1) {
+            return filePath.substring(lastIndex + 1);
+        }
+        else {
+            return filePath;
+        }
+    }
+
+    /**
+     * Processes a static code analysis report file and adds the report to the corresponding list.
+     *
+     * @param fileName                  the file name of the static code analysis report file
+     * @param xmlString                 the content of the static code analysis report file
+     * @param staticCodeAnalysisReports the list of static code analysis reports
+     */
+    private void processStaticCodeAnalysisReportFile(String fileName, String xmlString, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
+        Document document = XmlFileUtils.readFromString(xmlString);
+        document.setDocumentURI(fileName);
+        try {
+            ParserPolicy parserPolicy = new ParserPolicy();
+            ParserStrategy parserStrategy = parserPolicy.configure(document);
+            staticCodeAnalysisReports.add(parserStrategy.parse(document));
+        }
+        catch (UnsupportedToolException e) {
+            throw new IllegalStateException("Failed to parse static code analysis report for " + fileName, e);
+        }
     }
 
     private String readTarEntryContent(TarArchiveInputStream tarArchiveInputStream) throws IOException {
@@ -511,7 +574,7 @@ public class LocalCIBuildJobExecutionService {
             List<String> errors = error != null ? List.of(error) : List.of();
             failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, errors));
         }
-        else {
+        else if (!"skipped".equals(xmlStreamReader.getLocalName())) {
             // Add the successful test to the list of successful tests.
             successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, List.of()));
         }
@@ -529,26 +592,29 @@ public class LocalCIBuildJobExecutionService {
      */
     private LocalCIBuildResult constructFailedBuildResult(String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash,
             ZonedDateTime buildRunDate) {
-        return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate);
+        return constructBuildResult(List.of(), List.of(), assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, false, buildRunDate, List.of());
     }
 
     /**
      * Constructs a {@link LocalCIBuildResult} from the given parameters.
      *
-     * @param failedTests              The list of failed tests.
-     * @param successfulTests          The list of successful tests.
-     * @param assignmentRepoBranchName The name of the branch of the assignment repository that was checked out for the build.
-     * @param assignmentRepoCommitHash The commit hash of the assignment repository that was checked out for the build.
-     * @param testsRepoCommitHash      The commit hash of the tests repository that was checked out for the build.
-     * @param isBuildSuccessful        Whether the build was successful or not.
-     * @param buildRunDate             The date when the build was completed.
+     * @param failedTests               The list of failed tests.
+     * @param successfulTests           The list of successful tests.
+     * @param assignmentRepoBranchName  The name of the branch of the assignment repository that was checked out for the build.
+     * @param assignmentRepoCommitHash  The commit hash of the assignment repository that was checked out for the build.
+     * @param testsRepoCommitHash       The commit hash of the tests repository that was checked out for the build.
+     * @param isBuildSuccessful         Whether the build was successful or not.
+     * @param buildRunDate              The date when the build was completed.
+     * @param staticCodeAnalysisReports The static code analysis reports
      * @return a {@link LocalCIBuildResult}
      */
     private LocalCIBuildResult constructBuildResult(List<LocalCIBuildResult.LocalCITestJobDTO> failedTests, List<LocalCIBuildResult.LocalCITestJobDTO> successfulTests,
-            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate) {
+            String assignmentRepoBranchName, String assignmentRepoCommitHash, String testsRepoCommitHash, boolean isBuildSuccessful, ZonedDateTime buildRunDate,
+            List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
         LocalCIBuildResult.LocalCIJobDTO job = new LocalCIBuildResult.LocalCIJobDTO(failedTests, successfulTests);
 
-        return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job));
+        return new LocalCIBuildResult(assignmentRepoBranchName, assignmentRepoCommitHash, testsRepoCommitHash, isBuildSuccessful, buildRunDate, List.of(job),
+                staticCodeAnalysisReports);
     }
 
     private Path cloneAndCheckoutRepository(ProgrammingExerciseParticipation participation, String commitHash) {

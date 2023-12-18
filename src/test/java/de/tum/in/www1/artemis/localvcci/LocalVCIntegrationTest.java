@@ -50,7 +50,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     private LocalRepository solutionRepository;
 
     @BeforeEach
-    void initRepositories() throws GitAPIException, IOException, URISyntaxException, InvalidNameException {
+    void initRepositories() throws GitAPIException, IOException, URISyntaxException {
         // Create assignment repository
         assignmentRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, assignmentRepositorySlug);
 

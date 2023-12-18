@@ -65,6 +65,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizPool;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
@@ -87,6 +88,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BonusService;
 import de.tum.in.www1.artemis.service.CourseScoreCalculationService;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
+import de.tum.in.www1.artemis.service.QuizPoolService;
 import de.tum.in.www1.artemis.service.TutorLeaderboardService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.export.CourseExamExportService;
@@ -173,6 +175,8 @@ public class ExamService {
 
     private final CourseRepository courseRepository;
 
+    private final QuizPoolService quizPoolService;
+
     private final ObjectMapper defaultObjectMapper;
 
     private static final boolean IS_TEST_RUN = false;
@@ -186,7 +190,8 @@ public class ExamService {
             SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService,
             GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService,
             BonusService bonusService, ExerciseDeletionService exerciseDeletionService, SubmittedAnswerRepository submittedAnswerRepository,
-            AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository) {
+            AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository,
+            QuizPoolService quizPoolService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -212,6 +217,7 @@ public class ExamService {
         this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.courseRepository = courseRepository;
+        this.quizPoolService = quizPoolService;
         this.defaultObjectMapper = new ObjectMapper();
     }
 
@@ -219,28 +225,20 @@ public class ExamService {
      * Get one exam by id with exercise groups and exercises.
      * Also fetches the template and solution participation for programming exercises and questions for quiz exercises.
      *
-     * @param examId the id of the entity
+     * @param examId      the id of the entity
+     * @param withDetails determines whether additional parameters such as template and solution participation for programming exercises
+     *                        and questions for the quiz should be loaded
      * @return the exam with exercise groups
      */
     @NotNull
-    public Exam findByIdWithExerciseGroupsAndExercisesElseThrow(Long examId) {
-        log.debug("Request to get exam with exercise groups : {}", examId);
-        Exam exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
-            for (Exercise exercise : exerciseGroup.getExercises()) {
-                if (exercise instanceof ProgrammingExercise programmingExercise) {
-                    ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseRepository
-                            .findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(exercise.getId());
-                    programmingExercise.setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
-                    programmingExercise.setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
-                }
-                if (exercise instanceof QuizExercise quizExercise) {
-                    QuizExercise quizExerciseWithQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
-                    quizExercise.setQuizQuestions(quizExerciseWithQuestions.getQuizQuestions());
-                }
-            }
+    public Exam findByIdWithExerciseGroupsAndExercisesElseThrow(Long examId, boolean withDetails) {
+        log.debug("Request to get exam {} with exercise groups (with details: {})", examId, withDetails);
+        if (!withDetails) {
+            return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         }
-        return exam;
+        else {
+            return examRepository.findWithExerciseGroupsAndExercisesAndDetailsByIdOrElseThrow(examId);
+        }
     }
 
     /**
@@ -1210,6 +1208,19 @@ public class ExamService {
         });
         // set transient number of registered users
         examRepository.setNumberOfExamUsersForExams(Collections.singletonList(exam));
+    }
+
+    /**
+     * Set properties for quiz exercises in exam
+     *
+     * @param exam The exam for which to set the properties
+     */
+    public void setQuizExamProperties(Exam exam) {
+        Optional<QuizPool> optionalQuizPool = quizPoolService.findByExamId(exam.getId());
+        if (optionalQuizPool.isPresent()) {
+            QuizPool quizPool = optionalQuizPool.get();
+            exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
+        }
     }
 
     /**

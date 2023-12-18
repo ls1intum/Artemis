@@ -27,6 +27,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
@@ -39,6 +41,8 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntry
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
 import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
@@ -133,6 +137,8 @@ public class ProgrammingExerciseService {
 
     private final Optional<IrisSettingsService> irisSettingsService;
 
+    private final Optional<AeolusTemplateService> aeolusTemplateService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -144,7 +150,7 @@ public class ProgrammingExerciseService {
             ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ExerciseSpecificationService exerciseSpecificationService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SubmissionPolicyService submissionPolicyService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService,
-            ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService) {
+            ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -172,6 +178,7 @@ public class ProgrammingExerciseService {
         this.channelService = channelService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.irisSettingsService = irisSettingsService;
+        this.aeolusTemplateService = aeolusTemplateService;
     }
 
     /**
@@ -220,6 +227,17 @@ public class ProgrammingExerciseService {
 
         // make sure that plagiarism detection config does not use existing id
         Optional.ofNullable(programmingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
+
+        // for LocalCI and Aeolus, we store the build plan definition in the database as a windfile
+        if (aeolusTemplateService.isPresent()) {
+            Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
+            if (windfile != null) {
+                programmingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));
+            }
+            else {
+                log.warn("No windfile for the settings of exercise {}", programmingExercise.getId());
+            }
+        }
 
         // Save programming exercise to prevent transient exception
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);

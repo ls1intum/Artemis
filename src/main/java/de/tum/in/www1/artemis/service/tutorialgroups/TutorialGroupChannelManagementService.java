@@ -5,7 +5,6 @@ import static jakarta.persistence.Persistence.getPersistenceUtil;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -247,24 +246,24 @@ public class TutorialGroupChannelManagementService {
      * @throws IllegalStateException if a unique channel name could not be determined
      */
     private String determineUniqueTutorialGroupChannelName(TutorialGroup tutorialGroup) {
-        Function<TutorialGroup, String> determineInitialTutorialGroupChannelName = (TutorialGroup tg) -> {
-            var cleanedTitle = tg.getTitle().replaceAll("\\s", "-").toLowerCase();
-            return "tutorgroup-" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 18));
-        };
+        Course course = tutorialGroup.getCourse();
+        String cleanedGroupTitle = tutorialGroup.getTitle().replaceAll("\\s", "-").toLowerCase();
+        String channelName = "tutorgroup-" + cleanedGroupTitle.substring(0, Math.min(cleanedGroupTitle.length(), 18));
 
-        var channelName = determineInitialTutorialGroupChannelName.apply(tutorialGroup);
-        if (channelRepository.findChannelByCourseIdAndName(tutorialGroup.getCourse().getId(), channelName).isEmpty()) {
+        if (!channelRepository.existsChannelByNameAndCourseId(channelName, course.getId())) {
+            // No channel with this name exists in the course yet, so it can be used.
             return channelName;
         }
 
         // try to make it unique by adding a random number to the end of the channel name
         // if already max length remove the last 3 characters to get some space to try to make it unique
-        if (channelName.length() == 30) {
+        if (channelName.length() >= 30) {
             channelName = channelName.substring(0, 27);
         }
-        while (!channelRepository.findChannelByCourseIdAndName(tutorialGroup.getCourse().getId(), channelName).isEmpty() && channelName.length() <= 30) {
+        do {
             channelName += ThreadLocalRandom.current().nextInt(0, 10);
         }
+        while (channelRepository.existsChannelByNameAndCourseId(channelName, course.getId()) && channelName.length() <= 30);
 
         if (channelName.length() > 30) {
             // very unlikely to happen
