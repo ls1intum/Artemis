@@ -1,26 +1,30 @@
 <div class="d-flex align-content-between flex-wrap mb-2">
-    <div *ngIf="!loadingResults" class="f-flex flex-column">
-        <div>
-            <span class="me-1" jhiTranslate="artemisApp.participation.templateParticipation">Template</span>
-            <jhi-updating-result
-                *ngIf="programmingExercise.templateParticipation"
-                [exercise]="programmingExercise"
-                [participation]="programmingExercise.templateParticipation!"
-                [showUngradedResults]="true"
-                [personalParticipation]="false"
-            ></jhi-updating-result>
+    @if (!loadingResults) {
+        <div class="f-flex flex-column">
+            <div>
+                <span class="me-1" jhiTranslate="artemisApp.participation.templateParticipation">Template</span>
+                @if (programmingExercise.templateParticipation) {
+                    <jhi-updating-result
+                        [exercise]="programmingExercise"
+                        [participation]="programmingExercise.templateParticipation!"
+                        [showUngradedResults]="true"
+                        [personalParticipation]="false"
+                    ></jhi-updating-result>
+                }
+            </div>
+            <div>
+                <span class="me-1" jhiTranslate="artemisApp.participation.solutionParticipation">Solution</span>
+                @if (programmingExercise.solutionParticipation) {
+                    <jhi-updating-result
+                        [exercise]="programmingExercise"
+                        [participation]="programmingExercise.solutionParticipation!"
+                        [showUngradedResults]="true"
+                        [personalParticipation]="false"
+                    ></jhi-updating-result>
+                }
+            </div>
         </div>
-        <div>
-            <span class="me-1" jhiTranslate="artemisApp.participation.solutionParticipation">Solution</span>
-            <jhi-updating-result
-                *ngIf="programmingExercise.solutionParticipation"
-                [exercise]="programmingExercise"
-                [participation]="programmingExercise.solutionParticipation!"
-                [showUngradedResults]="true"
-                [personalParticipation]="false"
-            ></jhi-updating-result>
-        </div>
-    </div>
+    }
     <button
         id="submit_button"
         type="button"

@@ -4,7 +4,9 @@
         <div class="container">
             <div class="row d-flex">
                 <div class="col-2 header-col image-col">
-                    <jhi-secured-image *ngIf="course.courseIcon" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
+                    @if (course.courseIcon) {
+                        <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon"></jhi-secured-image>
+                    }
                 </div>
                 <div class="col-7 header-col title-col px-3">
                     <h5 class="card-title text-center">
@@ -13,73 +15,88 @@
                 </div>
                 <div class="col-2 header-col course-info-col">
                     <div class="course-info-amounts">
-                        <span *ngIf="exerciseCount === 0">Exercises: {{ exerciseCount }}</span>
-                        <a *ngIf="exerciseCount > 0" [routerLink]="['/courses', course.id!, 'exercises']">Exercises: {{ exerciseCount }}</a>
-
-                        <span *ngIf="lectureCount === 0">Lectures: {{ lectureCount }}</span>
-                        <a *ngIf="lectureCount > 0" [routerLink]="['/courses', course.id!, 'lectures']">Lectures: {{ lectureCount }}</a>
-
-                        <span *ngIf="examCount === 0">Exams: {{ examCount }}</span>
-                        <a *ngIf="examCount > 0" [routerLink]="['/courses', course.id!, 'exams']">Exams: {{ examCount }}</a>
+                        @if (exerciseCount === 0) {
+                            <span>Exercises: {{ exerciseCount }}</span>
+                        }
+                        @if (exerciseCount > 0) {
+                            <a [routerLink]="['/courses', course.id!, 'exercises']">Exercises: {{ exerciseCount }}</a>
+                        }
+                        @if (lectureCount === 0) {
+                            <span>Lectures: {{ lectureCount }}</span>
+                        }
+                        @if (lectureCount > 0) {
+                            <a [routerLink]="['/courses', course.id!, 'lectures']">Lectures: {{ lectureCount }}</a>
+                        }
+                        @if (examCount === 0) {
+                            <span>Exams: {{ examCount }}</span>
+                        }
+                        @if (examCount > 0) {
+                            <a [routerLink]="['/courses', course.id!, 'exams']">Exams: {{ examCount }}</a>
+                        }
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
     <div class="card-body">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
-        <div class="chart-container" *ngIf="exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0); else noStatistic">
-            <div class="chart-text">
-                <h3 class="text-center">{{ totalRelativeScore }}%</h3>
-                <h6 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h6>
+        @if (exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0)) {
+            <div class="chart-container">
+                <div class="chart-text">
+                    <h3 class="text-center">{{ totalRelativeScore }}%</h3>
+                    <h6 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h6>
+                </div>
+                <ngx-charts-pie-chart
+                    id="score-chart"
+                    class="chart-level"
+                    [view]="[200, 200]"
+                    [results]="ngxDoughnutData"
+                    [scheme]="ngxColor"
+                    [doughnut]="true"
+                    [animations]="false"
+                    (select)="onSelect()"
+                    (click)="onSelect()"
+                >
+                    <ng-template #tooltipTemplate let-model="model">
+                        <span jhiTranslate="artemisApp.courseOverview.statistics.{{ model.name }}"></span>
+                        <span>: {{ model.value }}</span>
+                    </ng-template>
+                </ngx-charts-pie-chart>
             </div>
-            <ngx-charts-pie-chart
-                id="score-chart"
-                class="chart-level"
-                [view]="[200, 200]"
-                [results]="ngxDoughnutData"
-                [scheme]="ngxColor"
-                [doughnut]="true"
-                [animations]="false"
-                (select)="onSelect()"
-                (click)="onSelect()"
-            >
-                <ng-template #tooltipTemplate let-model="model">
-                    <span jhiTranslate="artemisApp.courseOverview.statistics.{{ model.name }}"></span>
-                    <span>: {{ model.value }}</span>
-                </ng-template>
-            </ngx-charts-pie-chart>
-        </div>
-        <ng-template #noStatistic>
+        } @else {
             <h6 class="no-statistics" jhiTranslate="artemisApp.studentDashboard.noStatistics">No statistics available</h6>
-        </ng-template>
+        }
     </div>
-
-    <div class="card-footer text-body-secondary" *ngIf="nextRelevantExercise">
-        <a class="stretched-link" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]"></a>
-        <div class="container">
-            <div class="row">
-                <div class="col-3 next-exercise-col">
-                    <h6 jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel">Next exercises:</h6>
-                </div>
-                <div class="col-6 next-exercise-col">
-                    <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" placement="right auto" [ngbTooltip]="nextExerciseTooltip | artemisTranslate"></fa-icon>
-                    <span class="next-exercise-title">{{ nextRelevantExercise.title }}</span>
-                </div>
-                <div class="col-3 next-exercise-col text-nowrap">
-                    <div *ngIf="nextExerciseDueDate">
-                        <h6>{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}:</h6>
-                        <h6>{{ nextExerciseDueDate | artemisTimeAgo }}</h6>
+    @if (nextRelevantExercise) {
+        <div class="card-footer text-body-secondary">
+            <a class="stretched-link" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]"></a>
+            <div class="container">
+                <div class="row">
+                    <div class="col-3 next-exercise-col">
+                        <h6 jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel">Next exercises:</h6>
+                    </div>
+                    <div class="col-6 next-exercise-col">
+                        <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" placement="right auto" [ngbTooltip]="nextExerciseTooltip | artemisTranslate"></fa-icon>
+                        <span class="next-exercise-title">{{ nextRelevantExercise.title }}</span>
+                    </div>
+                    <div class="col-3 next-exercise-col text-nowrap">
+                        @if (nextExerciseDueDate) {
+                            <div>
+                                <h6>{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}:</h6>
+                                <h6>{{ nextExerciseDueDate | artemisTimeAgo }}</h6>
+                            </div>
+                        }
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="card-footer text-body-secondary" *ngIf="!nextRelevantExercise">
-        <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
-        <div class="col no-exercise">
-            <h6 jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel">No Exercise planned</h6>
+    }
+    @if (!nextRelevantExercise) {
+        <div class="card-footer text-body-secondary">
+            <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
+            <div class="col no-exercise">
+                <h6 jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel">No Exercise planned</h6>
+            </div>
         </div>
-    </div>
+    }
 </div>
