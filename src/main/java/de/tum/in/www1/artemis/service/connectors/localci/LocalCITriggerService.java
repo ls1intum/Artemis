@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -55,6 +56,15 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         ProjectType projectType = programmingExercise.getProjectType();
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
 
+        String repositoryTypeOrUserName = participation.getVcsRepositoryUrl().repositoryNameWithoutProjectKey();
+
+        if (Objects.equals(repositoryTypeOrUserName, "exercise")) {
+            repositoryTypeOrUserName = "BASE";
+        }
+        else if (Objects.equals(repositoryTypeOrUserName, "solution")) {
+            repositoryTypeOrUserName = repositoryTypeOrUserName.toUpperCase();
+        }
+
         List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
 
         if (projectType != null && !supportedProjectTypes.contains(programmingExercise.getProjectType())) {
@@ -64,7 +74,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         // Exam exercises have a higher priority than normal exercises
         int priority = programmingExercise.isExamExercise() ? 1 : 2;
 
-        localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), commitHash, System.currentTimeMillis(), priority, courseId,
-                isPushToTestRepository);
+        localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), repositoryTypeOrUserName, commitHash, System.currentTimeMillis(),
+                priority, courseId, isPushToTestRepository);
     }
 }

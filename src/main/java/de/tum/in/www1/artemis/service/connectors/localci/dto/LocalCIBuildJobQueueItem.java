@@ -14,6 +14,8 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private long participationId;
 
+    private String repositoryTypeOrUserName;
+
     private String commitHash;
 
     private long expirationTime;
@@ -31,10 +33,12 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private boolean isPushToTestRepository;
 
-    public LocalCIBuildJobQueueItem(String name, long participationId, String commitHash, long submissionDate, int priority, long courseId, boolean isPushToTestRepository) {
+    public LocalCIBuildJobQueueItem(String name, long participationId, String repositoryTypeOrUserName, String commitHash, long submissionDate, int priority, long courseId,
+            boolean isPushToTestRepository) {
         this.id = String.valueOf(participationId) + submissionDate;
         this.name = name;
         this.participationId = participationId;
+        this.repositoryTypeOrUserName = repositoryTypeOrUserName;
         this.commitHash = commitHash;
         this.submissionDate = submissionDate;
         this.priority = priority;
@@ -64,6 +68,14 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     public void setParticipationId(long participationId) {
         this.participationId = participationId;
+    }
+
+    public String getRepositoryTypeOrUserName() {
+        return repositoryTypeOrUserName;
+    }
+
+    public void setRepositoryTypeOrUserName(String repositoryTypeOrUserName) {
+        this.repositoryTypeOrUserName = repositoryTypeOrUserName;
     }
 
     public String getCommitHash() {
@@ -139,7 +151,9 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     @Override
     public String toString() {
-        return "LocalCIBuildJobQueueItem{" + "name='" + name + '\'' + ", participationId=" + participationId + ", commitHash='" + commitHash + '\'' + ", submissionDate="
-                + submissionDate + ", retryCount=" + retryCount + ", priority=" + priority + ", buildStartDate=" + buildStartDate + '}';
+        return "LocalCIBuildJobQueueItem{" + "id='" + id + '\'' + ", name='" + name + '\'' + ", participationId=" + participationId + ", repositoryTypeOrUserName='"
+                + repositoryTypeOrUserName + '\'' + ", commitHash='" + commitHash + '\'' + ", expirationTime=" + expirationTime + ", submissionDate=" + submissionDate
+                + ", retryCount=" + retryCount + ", buildStartDate=" + buildStartDate + ", priority=" + priority + ", courseId=" + courseId + ", isPushToTestRepository="
+                + isPushToTestRepository + '}';
     }
 }
