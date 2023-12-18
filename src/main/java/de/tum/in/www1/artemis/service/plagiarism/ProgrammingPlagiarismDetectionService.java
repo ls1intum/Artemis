@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -73,12 +74,14 @@ public class ProgrammingPlagiarismDetectionService {
 
     private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
 
-    public ProgrammingPlagiarismDetectionService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
+    private final AuthorizationCheckService authCheckService;
+
+    public ProgrammingPlagiarismDetectionService(FileService fileService, ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService,
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseExportService programmingExerciseExportService,
             PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService, UrlService urlService,
-            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService) {
-        this.programmingExerciseRepository = programmingExerciseRepository;
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, AuthorizationCheckService authCheckService) {
         this.fileService = fileService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseExportService = programmingExerciseExportService;
@@ -86,6 +89,7 @@ public class ProgrammingPlagiarismDetectionService {
         this.plagiarismCacheService = plagiarismCacheService;
         this.urlService = urlService;
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -319,8 +323,10 @@ public class ProgrammingPlagiarismDetectionService {
         var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId());
 
         return studentParticipations.parallelStream().filter(participation -> !participation.isPracticeMode())
-                .filter(participation -> participation instanceof ProgrammingExerciseParticipation).map(participation -> (ProgrammingExerciseParticipation) participation)
-                .filter(participation -> participation.getVcsRepositoryUrl() != null).filter(participation -> {
+                .filter(participation -> participation instanceof ProgrammingExerciseParticipation).filter(participation -> participation.getStudent().isPresent())
+                .filter(participation -> !authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, participation.getStudent().get()))
+                .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUrl() != null)
+                .filter(participation -> {
                     Submission submission = participation.findLatestSubmission().orElse(null);
                     // filter empty submissions
                     if (submission == null) {
