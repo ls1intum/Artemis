@@ -26,7 +26,6 @@ import {
     faCheckDouble,
     faDownload,
     faFileSignature,
-    faGears,
     faLightbulb,
     faListAlt,
     faPencilAlt,
@@ -76,7 +75,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faLightbulb = faLightbulb;
     faPencilAlt = faPencilAlt;
     faFileSignature = faFileSignature;
-    faGears = faGears;
 
     protected get exercises() {
         return this.programmingExercises;

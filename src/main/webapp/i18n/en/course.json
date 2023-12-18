@@ -111,6 +111,7 @@
             "unenrollmentEndDate": "Latest date to unenroll",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
+            "buildQueue": "Build Queue",
             "quizExercises": "Quiz Exercises",
             "modelingExercises": "Modeling Exercises",
             "textExercises": "Text Exercises",

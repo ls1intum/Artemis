@@ -14,7 +14,6 @@ import { PlagiarismInspectorComponent } from 'app/exercises/shared/plagiarism/pl
 import { ExerciseStatisticsComponent } from 'app/exercises/shared/statistics/exercise-statistics.component';
 import { CodeHintGenerationOverviewComponent } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.component';
 import { BuildPlanEditorComponent } from 'app/exercises/programming/manage/build-plan-editor.component';
-import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -153,18 +152,6 @@ export const routes: Routes = [
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.buildPlanEditor',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':courseId/programming-exercises/:exerciseId/build-queue',
-        component: BuildQueueComponent,
-        resolve: {
-            programmingExercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.programmingExercise.buildQueue',
         },
         canActivate: [UserRouteAccessService],
     },

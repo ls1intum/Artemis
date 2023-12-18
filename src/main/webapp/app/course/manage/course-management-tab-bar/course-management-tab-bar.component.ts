@@ -15,6 +15,7 @@ import {
     faEye,
     faFilePdf,
     faFlag,
+    faGears,
     faGraduationCap,
     faListAlt,
     faNetworkWired,
@@ -66,6 +67,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy {
     faGraduationCap = faGraduationCap;
     faPersonChalkboard = faPersonChalkboard;
     faRobot = faRobot;
+    faGears = faGears;
 
     isCommunicationEnabled = false;
     isMessagingOrCommunicationEnabled = false;
