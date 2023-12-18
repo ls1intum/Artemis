@@ -47,6 +47,9 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
             // if (url) {
             //     await page.goto(url);
             // }
+            console.log('Logging in with...');
+            console.log('Username: ' + credentials.username);
+            console.log('Password: ' + credentials.password);
             await Commands.login(page, credentials, url);
         });
     },
