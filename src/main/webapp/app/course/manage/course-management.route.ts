@@ -239,7 +239,7 @@ export const courseManagementState: Routes = [
                         component: BuildQueueComponent,
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                            pageTitle: 'artemisApp.course.buildQueue',
+                            pageTitle: 'artemisApp.buildQueue.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },

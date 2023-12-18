@@ -13,6 +13,7 @@ import { StatisticsComponent } from 'app/admin/statistics/statistics.component';
 import { DocsComponent } from 'app/admin/docs/docs.component';
 import { organizationMgmtRoute } from 'app/admin/organization-management/organization-management.route';
 import { MetricsComponent } from 'app/admin/metrics/metrics.component';
+import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
 
 export const adminState: Routes = [
     {
@@ -77,6 +78,13 @@ export const adminState: Routes = [
                 component: StatisticsComponent,
                 data: {
                     pageTitle: 'statistics.title',
+                },
+            },
+            {
+                path: 'build-queue',
+                component: BuildQueueComponent,
+                data: {
+                    pageTitle: 'buildQueue.title',
                 },
             },
             {

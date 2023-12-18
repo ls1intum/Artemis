@@ -18,5 +18,21 @@ export class BuildQueueComponent {
     isTransitioning = false;
     rowClass: string | undefined = undefined;
 
+    name?: string;
+    participationId?: number;
+    repositoryType?: string;
+    commitHash?: string;
+    submissionDate?: number;
+    buildStartDate?: number;
+    courseId?: number;
+    priority?: number;
+
     isAdmin = false;
+
+    /**
+     * Computes the row class that is being added to all rows of the datatable
+     */
+    dataTableRowClass = () => {
+        return this.rowClass;
+    };
 }

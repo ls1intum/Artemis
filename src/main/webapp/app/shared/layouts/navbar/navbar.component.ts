@@ -34,6 +34,7 @@ import {
     faCog,
     faEye,
     faFlag,
+    faGears,
     faHeart,
     faList,
     faLock,
@@ -110,6 +111,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faBookOpen = faBookOpen;
     faUserPlus = faUserPlus;
     faSignOutAlt = faSignOutAlt;
+    faGears = faGears;
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
@@ -336,6 +338,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
         exam_timeline: 'artemisApp.examTimeline.breadcrumb',
         iris_settings: 'artemisApp.iris.settings.title.breadcrumb',
+        build_queue: 'artemisApp.buildQueue.title',
     };
 
     studentPathBreadcrumbTranslations = {

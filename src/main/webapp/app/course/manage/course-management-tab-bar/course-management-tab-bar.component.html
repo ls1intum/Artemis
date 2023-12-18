@@ -82,7 +82,7 @@
             @if (course.isAtLeastInstructor) {
                 <a class="tab-link" [routerLink]="['/course-management', course.id, 'build-queue']" routerLinkActive="active">
                     <fa-icon [icon]="faGears"></fa-icon>
-                    <span class="tab-link-text" jhiTranslate="artemisApp.course.buildQueue">Build Queue</span>
+                    <span class="tab-link-text" jhiTranslate="artemisApp.buildQueue.title">Build Queue</span>
                 </a>
             }
             @if (shouldShowControlButtons()) {

@@ -1,7 +1,7 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 
 export class BuildJob implements BaseEntity {
-    public id?: string;
+    public id?: number;
     public name?: string;
     public participationId?: number;
     public repositoryTypeOrUserName?: string;
