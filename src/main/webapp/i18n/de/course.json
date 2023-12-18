@@ -110,6 +110,7 @@
             },
             "unenrollmentEndDate": "Spätestes Datum zur Austragung",
             "exercises": "Aufgaben",
+            "buildQueue": "Build Warteschlange",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",
             "modelingExercises": "Modellierungsaufgaben",

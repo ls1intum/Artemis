@@ -34,7 +34,6 @@ import {
     faExclamationTriangle,
     faEye,
     faFileSignature,
-    faGears,
     faLightbulb,
     faListAlt,
     faPencilAlt,
@@ -123,7 +122,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faEye = faEye;
     faUserCheck = faUserCheck;
     faRobot = faRobot;
-    faGears = faGears;
 
     constructor(
         private activatedRoute: ActivatedRoute,

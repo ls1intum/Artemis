@@ -65,6 +65,9 @@ import { CourseManagementTabBarComponent } from 'app/course/manage/course-manage
 import { ArtemisExerciseCreateButtonsModule } from 'app/exercises/shared/manage/exercise-create-buttons.module';
 import { ArtemisLearningPathManagementModule } from 'app/course/learning-paths/learning-path-management/learning-path-management.module';
 import { IrisModule } from 'app/iris/iris.module';
+import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 
 @NgModule({
     imports: [
@@ -117,6 +120,8 @@ import { IrisModule } from 'app/iris/iris.module';
         ArtemisExerciseCreateButtonsModule,
         ArtemisLearningPathManagementModule,
         IrisModule,
+        ArtemisDataTableModule,
+        NgxDatatableModule,
     ],
     declarations: [
         CourseManagementComponent,
@@ -136,6 +141,7 @@ import { IrisModule } from 'app/iris/iris.module';
         CourseLtiConfigurationComponent,
         EditCourseLtiConfigurationComponent,
         CourseManagementTabBarComponent,
+        BuildQueueComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}
