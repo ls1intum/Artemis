@@ -52,18 +52,19 @@ services:
             apt-get update &&
             apt-get install -y build-essential libnss3-tools &&
             export HOME=/root &&
-            CERTS_DIR=/app/artemis/src/test/playwright/certs &&
+            cd /app/artemis/src/test/playwright && ls && cd &&
+            export CERTS_DIR=/app/artemis/src/test/playwright/certs &&
             echo $HOME &&
             echo "CERTS_DIR: $CERTS_DIR" &&
             cd $CERTS_DIR && ls && cd &&
             echo "Listed files in certs_dir" &&
             mkdir -p $HOME/.pki/nssdb &&
             certutil -d $HOME/.pki/nssdb -N --empty-password &&
-            cp ${CERTS_DIR}/rootCA.pem /usr/local/share/ca-certificates/ &&
+            cp /app/artemis/src/test/playwright/certs/rootCA.pem /usr/local/share/ca-certificates/ &&
             update-ca-certificates --fresh &&
-            certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "rootCA" -i ${CERTS_DIR}/rootCA.pem &&
-            openssl pkcs12 -export -in ${CERTS_DIR}/artemis-nginx+4.pem -inkey ${CERTS_DIR}/artemis-nginx+4-key.pem -out ${CERTS_DIR}/client.p12 -name "client-cert" -password pass:artemis_admin &&
-            pk12util -d sql:$HOME/.pki/nssdb -i ${CERTS_DIR}/client.p12 -W artemis_admin &&
+            certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "rootCA" -i /app/artemis/src/test/playwright/rootCA.pem &&
+            openssl pkcs12 -export -in /app/artemis/src/test/playwright/certs/artemis-nginx+4.pem -inkey /app/artemis/src/test/playwright/certs/artemis-nginx+4-key.pem -out /app/artemis/src/test/playwright/certs/client.p12 -name "client-cert" -password pass:artemis_admin &&
+            pk12util -d sql:$HOME/.pki/nssdb -i /app/artemis/src/test/playwright/client.p12 -W artemis_admin &&
             cd /app/artemis/src/test/playwright &&
             chmod 777 /root &&
             npm ci &&
