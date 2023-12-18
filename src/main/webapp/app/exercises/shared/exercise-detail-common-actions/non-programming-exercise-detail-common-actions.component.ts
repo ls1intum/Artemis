@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faChartBar, faListAlt, faTable, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { MathExerciseService } from 'app/exercises/math/manage/math-exercise/math-exercise.service';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
@@ -48,6 +49,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
         private textExerciseService: TextExerciseService,
         private fileUploadExerciseService: FileUploadExerciseService,
         private modelingExerciseService: ModelingExerciseService,
+        private mathExerciseService: MathExerciseService,
         private eventManager: EventManager,
         private router: Router,
     ) {}
@@ -102,6 +104,19 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                         this.eventManager.broadcast({
                             name: 'modelingExerciseListModification',
                             content: 'Deleted an modelingExercise',
+                        });
+                        this.dialogErrorSource.next('');
+                        this.navigateToOverview();
+                    },
+                    error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                });
+                break;
+            case ExerciseType.MATH:
+                this.mathExerciseService.delete(this.exercise.id!).subscribe({
+                    next: () => {
+                        this.eventManager.broadcast({
+                            name: 'mathExerciseListModification',
+                            content: 'Deleted an mathExercise',
                         });
                         this.dialogErrorSource.next('');
                         this.navigateToOverview();

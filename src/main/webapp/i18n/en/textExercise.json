@@ -2,10 +2,10 @@
     "artemisApp": {
         "textExercise": {
             "home": {
-                "title": "Text Exercises",
-                "createLabel": "Create Text Exercise",
-                "editLabel": "Edit Text Exercise",
-                "importLabel": "Import Text Exercise"
+                "title": "Text",
+                "createLabel": "Create",
+                "editLabel": "Edit",
+                "importLabel": "Import"
             },
             "submitButton": {
                 "create": "Create",

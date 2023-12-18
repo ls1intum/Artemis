@@ -1,7 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { faFileImport, faKeyboard, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -20,7 +20,6 @@ export class ProgrammingExerciseCreateButtonsComponent {
 
     faPlus = faPlus;
     faFileImport = faFileImport;
-    faKeyboard = faKeyboard;
 
     constructor(
         private router: Router,

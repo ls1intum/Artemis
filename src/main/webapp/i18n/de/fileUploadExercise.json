@@ -2,10 +2,10 @@
     "artemisApp": {
         "fileUploadExercise": {
             "home": {
-                "title": "Datei-Upload-Aufgaben",
-                "createLabel": "Datei-Upload-Aufgabe erstellen",
-                "editLabel": "Datei-Upload-Aufgabe bearbeiten",
-                "importLabel": "Datei-Upload-Aufgabe importieren"
+                "title": "Datei-Upload",
+                "createLabel": "Erstellen",
+                "editLabel": "Bearbeiten",
+                "importLabel": "Importieren"
             },
             "created": "Datei-Upload-Aufgabe erstellt mit ID {{ param }}",
             "updated": "Datei-Upload-Aufgabe aktualisiert mit ID {{ param }}",

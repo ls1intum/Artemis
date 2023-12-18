@@ -1,0 +1,33 @@
+{
+    "artemisApp": {
+        "mathExercise": {
+            "home": {
+                "title": "Matheaufgaben",
+                "createLabel": "Erstellen",
+                "editLabel": "Bearbeiten",
+                "importLabel": "Importieren"
+            },
+            "submitButton": {
+                "create": "Erstellen",
+                "import": "Importieren",
+                "save": "Speichern"
+            },
+            "created": "Matheaufgabe mit ID {{ param }} erstellt",
+            "updated": "Matheaufgabe mit ID {{ param }} aktualisiert",
+            "deleted": "Matheaufgabe mit ID {{ param }} gelöscht",
+            "detail": {
+                "title": "Matheaufgabe"
+            },
+            "sampleSolution": "Beispiellösung",
+            "exampleSubmissions": "Beispielabgabe",
+            "assessedSubmission": "Deine bewertete Abgabe",
+            "assessedSubmissionInstructor": "Die bewertete Abgabe",
+            "submission": "Abgabe",
+            "assessmentPending": "Bewertung ausstehend",
+            "createExampleSubmissions": "Beispielabgabe erstellen",
+            "checkPlagiarism": "Auf Plagiate prüfen",
+            "saveSuccessful": "Dein Antwort wurde erfolgreich gespeichert!",
+            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal."
+        }
+    }
+}

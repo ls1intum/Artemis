@@ -2,11 +2,11 @@
     "artemisApp": {
         "quizExercise": {
             "home": {
-                "title": "Quiz Exercises",
-                "createLabel": "Create Quiz",
-                "editLabel": "Edit Quiz",
-                "importLabel": "Import Quiz",
-                "exportLabel": "Export Quiz Exercises",
+                "title": "Quiz",
+                "createLabel": "Create",
+                "editLabel": "Edit",
+                "importLabel": "Import",
+                "exportLabel": "Export",
                 "createModelDragAndDrop": "Create Drag and Drop Model Quiz"
             },
             "created": "Created new Quiz Exercise with identifier {{ param }}",

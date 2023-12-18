@@ -15,7 +15,7 @@
                     <fa-icon [icon]="faHandshakeAngle"></fa-icon>&nbsp;{{ 'artemisApp.lecture.wizardMode.backToWizard' | artemisTranslate }}
                 </button>
             }
-            <button id="toggleSearchButton" class="btn btn-primary" type="button" (click)="toggleSearch()">
+            <button id="toggleSearchButton" class="btn btn-secondary" type="button" (click)="toggleSearch()">
                 {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch | artemisTranslate }}
             </button>
         </div>
@@ -33,6 +33,7 @@
         [exerciseCount]="programmingExercisesCount"
         [hidden]="shouldHideExerciseCard('programming')"
         [course]="course"
+        [exerciseType]="ExerciseType.PROGRAMMING"
     >
         <jhi-programming-exercise-create-buttons exerciseCreateButtons *jhiExtensionPoint="overrideGenerateAndImportButton" [course]="course" />
         <jhi-programming-exercise
@@ -60,6 +61,7 @@
         [exerciseCount]="quizExercisesCount"
         [hidden]="shouldHideExerciseCard('quiz')"
         [course]="course"
+        [exerciseType]="ExerciseType.QUIZ"
     >
         <jhi-quiz-exercise-create-buttons exerciseCreateButtons [course]="course" [quizExercisesCount]="quizExercisesCount" />
         <jhi-quiz-exercise
@@ -77,6 +79,7 @@
         [exerciseCount]="modelingExercisesCount"
         [hidden]="shouldHideExerciseCard('modeling')"
         [course]="course"
+        [exerciseType]="ExerciseType.MODELING"
     >
         <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.MODELING" />
         <jhi-modeling-exercise
@@ -94,6 +97,7 @@
         [exerciseCount]="textExercisesCount"
         [hidden]="shouldHideExerciseCard('text')"
         [course]="course"
+        [exerciseType]="ExerciseType.TEXT"
     >
         <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.TEXT" />
         <jhi-text-exercise
@@ -105,13 +109,13 @@
             (filteredExerciseCount)="filteredTextExercisesCount = $event"
         />
     </jhi-course-exercise-card>
-
     <jhi-course-exercise-card
         *jhiExtensionPoint="overrideNonProgrammingExerciseCard"
-        [headingJhiTranslate]="'artemisApp.course.mathExercise'"
+        [headingJhiTranslate]="'artemisApp.course.mathExercises'"
         [exerciseCount]="mathExercisesCount"
         [hidden]="shouldHideExerciseCard('math')"
         [course]="course"
+        [exerciseType]="ExerciseType.MATH"
     >
         <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.MATH" />
         <jhi-math-exercise
@@ -129,6 +133,7 @@
         [exerciseCount]="fileUploadExercisesCount"
         [hidden]="shouldHideExerciseCard('file-upload')"
         [course]="course"
+        [exerciseType]="ExerciseType.FILE_UPLOAD"
     >
         <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.FILE_UPLOAD" />
         <jhi-file-upload-exercise

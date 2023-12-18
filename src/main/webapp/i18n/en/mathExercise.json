@@ -1,0 +1,35 @@
+{
+    "artemisApp": {
+        "mathExercise": {
+            "home": {
+                "title": "Math",
+                "createLabel": "Create",
+                "editLabel": "Edit",
+                "importLabel": "Import"
+            },
+            "submitButton": {
+                "create": "Create",
+                "import": "Import",
+                "save": "Save"
+            },
+            "wordCount": "Number of words: {{ count }}",
+            "characterCount": "Number of characters: {{ count }}",
+            "created": "Created new Math Exercise with identifier {{ param }}",
+            "updated": "Updated Math Exercise with identifier {{ param }}",
+            "deleted": "Deleted Math Exercise with identifier {{ param }}",
+            "detail": {
+                "title": "Math Exercise"
+            },
+            "sampleSolution": "Example Solution",
+            "exampleSubmissions": "Example submissions",
+            "assessedSubmission": "Your assessed submission",
+            "assessedSubmissionInstructor": "The assessed submission",
+            "submission": "Submission",
+            "assessmentPending": "Assessment pending",
+            "createExampleSubmissions": "Create example submission",
+            "checkPlagiarism": "Check Plagiarism",
+            "saveSuccessful": "Your answer was saved successfully!",
+            "error": "An error occurred. Please try again later."
+        }
+    }
+}

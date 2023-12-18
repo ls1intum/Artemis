@@ -2,10 +2,10 @@
     "artemisApp": {
         "programmingExercise": {
             "home": {
-                "title": "Programming Exercises",
-                "createLabel": "Create Programming Exercise",
-                "editLabel": "Edit Programming Exercise",
-                "importLabel": "Import Programming Exercise",
+                "title": "Programming",
+                "createLabel": "Create",
+                "editLabel": "Edit",
+                "importLabel": "Import",
                 "linkLabel": "Link new Programming Exercise",
                 "switchToGuidedModeLabel": "Switch to guided mode",
                 "switchToTraditionalModeLabel": "Switch to normal mode",

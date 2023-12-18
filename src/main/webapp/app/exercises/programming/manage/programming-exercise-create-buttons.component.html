@@ -8,16 +8,14 @@
     >
         <fa-icon [icon]="faPlus"></fa-icon>
         <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.createLabel">Create Programming Exercise</span>
-        <fa-icon [icon]="faKeyboard"></fa-icon>
     </button>
     <button
         id="import-programming-exercise"
-        class="btn btn-primary jh-create-entity import-programming-exercise text-truncate mb-1 me-1"
+        class="btn btn-secondary jh-create-entity import-programming-exercise text-truncate mb-1 me-1"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
         (click)="openImportModal()"
     >
         <fa-icon [icon]="faFileImport"></fa-icon>
         <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.importLabel">Import new Programming Exercise</span>
-        <fa-icon [icon]="faKeyboard"></fa-icon>
     </button>
 </div>

@@ -2,10 +2,10 @@
     "artemisApp": {
         "modelingExercise": {
             "home": {
-                "title": "Modellierungsaufgaben",
-                "createLabel": "Modellierungsaufgabe erstellen",
-                "editLabel": "Modellierungsaufgabe bearbeiten",
-                "importLabel": "Modellierungsaufgabe importieren"
+                "title": "Modellierung",
+                "createLabel": "Erstellen",
+                "editLabel": "Bearbeiten",
+                "importLabel": "Importieren"
             },
             "created": "Modellierungsaufgabe erstellt mit ID {{ param }}",
             "updated": "Modellierungsaufgabe aktualisiert mit ID {{ param }}",

@@ -172,6 +172,15 @@ export abstract class Exercise implements BaseEntity {
     }
 }
 
+const exerciseTypeIconMap: Record<ExerciseType, IconProp> = {
+    [ExerciseType.PROGRAMMING]: faKeyboard,
+    [ExerciseType.MODELING]: faProjectDiagram,
+    [ExerciseType.QUIZ]: faCheckDouble,
+    [ExerciseType.TEXT]: faFont,
+    [ExerciseType.FILE_UPLOAD]: faFileUpload,
+    [ExerciseType.MATH]: faSquareRootVariable,
+};
+
 /**
  * Get an icon for the type of the given exercise.
  * @param exerciseType {ExerciseType}
@@ -181,16 +190,7 @@ export function getIcon(exerciseType?: ExerciseType): IconProp {
         return faQuestion as IconProp;
     }
 
-    const icons = {
-        [ExerciseType.PROGRAMMING]: faKeyboard,
-        [ExerciseType.MODELING]: faProjectDiagram,
-        [ExerciseType.QUIZ]: faCheckDouble,
-        [ExerciseType.TEXT]: faFont,
-        [ExerciseType.FILE_UPLOAD]: faFileUpload,
-        [ExerciseType.MATH]: faSquareRootVariable,
-    };
-
-    return icons[exerciseType] as IconProp;
+    return exerciseTypeIconMap[exerciseType];
 }
 
 export function getIconTooltip(exerciseType?: ExerciseType): string {

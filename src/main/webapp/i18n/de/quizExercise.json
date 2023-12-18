@@ -3,11 +3,11 @@
         "quizExercise": {
             "home": {
                 "title": "Quiz",
-                "createLabel": "Quiz erstellen",
-                "editLabel": "Quiz bearbeiten",
-                "importLabel": "Quiz importieren",
+                "createLabel": "Erstellen",
+                "editLabel": "Bearbeiten",
+                "importLabel": "Importieren",
                 "createModelDragAndDrop": "Drag-And-Drop Model Quiz erstellen",
-                "exportLabel": "Quizübungen exportieren"
+                "exportLabel": "Exportieren"
             },
             "created": "Quiz erstellt mit ID {{ param }}",
             "updated": "Quiz aktualisiert mit ID {{ param }}",

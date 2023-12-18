@@ -2,10 +2,10 @@
     "artemisApp": {
         "modelingExercise": {
             "home": {
-                "title": "Modeling Exercises",
-                "createLabel": "Create Modeling Exercise",
-                "editLabel": "Edit Modeling Exercise",
-                "importLabel": "Import Modeling Exercise"
+                "title": "Modeling",
+                "createLabel": "Create",
+                "editLabel": "Edit",
+                "importLabel": "Import"
             },
             "created": "Created new Modeling Exercise with identifier {{ param }}",
             "updated": "Updated Modeling Exercise with identifier {{ param }}",
