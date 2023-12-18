@@ -4,51 +4,61 @@
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        <div *ngIf="failureOccurred" class="row justify-content-center">
-            <span class="mb-1" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorOccurred">The following exercises could not be updated:</span>
-            <div class="table-responsive m-2 p-1">
-                <table class="table table-striped">
-                    <tbody>
-                        <tr *ngFor="let failedExercise of failedExercises">
-                            <td>{{ failedExercise }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <button type="button" class="btn ms-2 btn-primary" (click)="closeModal()" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorReadButton">Ok</button>
-        </div>
-        <div *ngIf="!failureOccurred" class="row justify-content-center">
-            <div class="col-lg-8 col-sm-12">
-                <span style="font-weight: bold" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.currentlyEdited">You are editing the following exercises:</span>
+        @if (failureOccurred) {
+            <div class="row justify-content-center">
+                <span class="mb-1" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorOccurred">The following exercises could not be updated:</span>
                 <div class="table-responsive m-2 p-1">
                     <table class="table table-striped">
                         <tbody>
-                            <tr *ngFor="let programmingExercise of selectedProgrammingExercises">
-                                <td>{{ programmingExercise.title }}</td>
-                            </tr>
+                            @for (failedExercise of failedExercises; track failedExercise) {
+                                <tr>
+                                    <td>{{ failedExercise }}</td>
+                                </tr>
+                            }
                         </tbody>
                     </table>
                 </div>
-                <div class="form-group-narrow">
-                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
-                    <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
-                </div>
-                <form name="editForm" role="form" novalidate (ngSubmit)="saveAll()">
-                    <div class="form-group-narrow mt-2">
-                        <div>
-                            <label class="label-narrow label-timeline" jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline">
-                                Timeline for the whole programming exercise
-                            </label>
-                            <jhi-help-icon text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
-                        </div>
-                        <jhi-programming-exercise-lifecycle id="timeline" [exercise]="newProgrammingExercise" [isExamMode]="false"></jhi-programming-exercise-lifecycle>
-                        <jhi-button class="text-center" id="save-entity" [icon]="faSave" [title]="'entity.action.save'" [isLoading]="isSaving">
-                            <fa-icon [icon]="faSave"></fa-icon>
-                            <span jhiTranslate="entity.action.save">Save</span>
-                        </jhi-button>
-                    </div>
-                </form>
+                <button type="button" class="btn ms-2 btn-primary" (click)="closeModal()" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorReadButton">
+                    Ok
+                </button>
             </div>
-        </div>
+        }
+        @if (!failureOccurred) {
+            <div class="row justify-content-center">
+                <div class="col-lg-8 col-sm-12">
+                    <span style="font-weight: bold" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.currentlyEdited">You are editing the following exercises:</span>
+                    <div class="table-responsive m-2 p-1">
+                        <table class="table table-striped">
+                            <tbody>
+                                @for (programmingExercise of selectedProgrammingExercises; track programmingExercise) {
+                                    <tr>
+                                        <td>{{ programmingExercise.title }}</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="form-group-narrow">
+                        <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
+                        <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
+                    </div>
+                    <form name="editForm" role="form" novalidate (ngSubmit)="saveAll()">
+                        <div class="form-group-narrow mt-2">
+                            <div>
+                                <label class="label-narrow label-timeline" jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline">
+                                    Timeline for the whole programming exercise
+                                </label>
+                                <jhi-help-icon text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
+                            </div>
+                            <jhi-programming-exercise-lifecycle id="timeline" [exercise]="newProgrammingExercise" [isExamMode]="false"></jhi-programming-exercise-lifecycle>
+                            <jhi-button class="text-center" id="save-entity" [icon]="faSave" [title]="'entity.action.save'" [isLoading]="isSaving">
+                                <fa-icon [icon]="faSave"></fa-icon>
+                                <span jhiTranslate="entity.action.save">Save</span>
+                            </jhi-button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
     </div>
 </div>

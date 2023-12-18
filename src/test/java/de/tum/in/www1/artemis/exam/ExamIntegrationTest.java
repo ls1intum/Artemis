@@ -147,6 +147,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private Exam exam2;
 
+    private Exam exam3;
+
     private static final int NUMBER_OF_STUDENTS = 4;
 
     private static final int NUMBER_OF_TUTORS = 1;
@@ -192,6 +194,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         exam2 = examUtilService.addExamWithExerciseGroup(course1, true);
         examUtilService.addExamChannel(exam2, "exam2 channel");
+
+        exam3 = examUtilService.addExamWithQuizPool(course1);
 
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }
@@ -647,6 +651,17 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetExam_asInstructor_WithQuizPool() throws Exception {
+        Exam returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam3.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
+        assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
+        returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam3.getId() + "?withStudents=true", HttpStatus.OK, Exam.class);
+        assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
+        returnedExam = request.get("/api/courses/" + course1.getId() + "/exams/" + exam3.getId(), HttpStatus.OK, Exam.class);
+        assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamsForCourse_asInstructor() throws Exception {
         var exams = request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.OK, Exam.class);
         verify(examAccessService).checkCourseAccessForTeachingAssistantElseThrow(course1.getId());
@@ -781,8 +796,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamWithOptions() throws Exception {
-        Course course = examUtilService.createCourseWithExamAndExerciseGroupAndExercises(student1, now().minusHours(3), now().minusHours(2), now().minusHours(1));
-        var exam = examRepository.findWithExerciseGroupsAndExercisesById(course.getExams().iterator().next().getId()).orElseThrow();
+        Course course = courseUtilService.addEmptyCourse();
+        Exam exam = examUtilService.addExamWithUser(course, student1, false, now().minusHours(3), now().minusHours(2), now().minusHours(1));
+        exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true, true);
+
         // Get the exam with all registered users
         // 1. without options
         var exam1 = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class);
@@ -801,8 +818,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var exam3 = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
         assertThat(exam3.getExamUsers()).hasSize(1);
         assertThat(exam3.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
-        assertThat(exam3.getExerciseGroups().get(0).getExercises()).hasSize(exam.getExerciseGroups().get(0).getExercises().size());
-        assertThat(exam3.getExerciseGroups().get(1).getExercises()).hasSize(exam.getExerciseGroups().get(1).getExercises().size());
+        for (int i = 0; i < exam3.getExerciseGroups().size(); i++) {
+            assertThat(exam3.getExerciseGroups().get(i).getExercises()).isEqualTo(exam.getExerciseGroups().get(i).getExercises());
+        }
         assertThat(exam3.getNumberOfExamUsers()).isNotNull().isEqualTo(1);
 
         // 4. without students, with exercise groups
@@ -811,12 +829,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var exam4 = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK, Exam.class, params);
         assertThat(exam4.getExamUsers()).isEmpty();
         assertThat(exam4.getExerciseGroups()).hasSize(exam.getExerciseGroups().size());
-        assertThat(exam4.getExerciseGroups().get(0).getExercises()).hasSize(exam.getExerciseGroups().get(0).getExercises().size());
-        assertThat(exam4.getExerciseGroups().get(1).getExercises()).hasSize(exam.getExerciseGroups().get(1).getExercises().size());
-        exam4.getExerciseGroups().get(1).getExercises().forEach(exercise -> {
-            assertThat(exercise.getNumberOfParticipations()).isNotNull();
-            assertThat(exercise.getNumberOfParticipations()).isZero();
-        });
+
+        for (int i = 0; i < exam3.getExerciseGroups().size(); i++) {
+            var exercises = exam3.getExerciseGroups().get(i).getExercises();
+            assertThat(exercises).isEqualTo(exam.getExerciseGroups().get(i).getExercises());
+        }
+
+        var quiz = exam4.getExerciseGroups().get(1).getExercises();
+        assertThat(quiz).isNotEmpty().allMatch(exercise -> exercise instanceof QuizExercise quizExercise && !quizExercise.getQuizQuestions().isEmpty());
+
+        ProgrammingExercise programming = (ProgrammingExercise) exam4.getExerciseGroups().get(6).getExercises().iterator().next();
+        assertThat(programming.getTemplateParticipation()).isNotNull();
+        assertThat(programming.getSolutionParticipation()).isNotNull();
     }
 
     @Test

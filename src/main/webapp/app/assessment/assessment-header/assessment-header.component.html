@@ -1,35 +1,37 @@
 <h3 class="top-container flex-wrap flex-lg-nowrap">
     <!--back button only used in assessment dashboard-->
     <div class="row-container me-2">
-        <span *ngIf="!isTestRun" jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
-        <span *ngIf="isTestRun" jhiTranslate="artemisApp.assessment.testRunAssessment">Test Run Assessment</span>
-        <span *ngIf="isIllegalSubmission" class="badge bg-danger ms-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission">
-            Warning: You are viewing an illegal submission.
-        </span>
+        @if (!isTestRun) {
+            <span jhiTranslate="artemisApp.assessment.assessment">Assessment</span>
+        }
+        @if (isTestRun) {
+            <span jhiTranslate="artemisApp.assessment.testRunAssessment">Test Run Assessment</span>
+        }
+        @if (isIllegalSubmission) {
+            <span class="badge bg-danger ms-3" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission">
+                Warning: You are viewing an illegal submission.
+            </span>
+        }
     </div>
-    <ngb-alert
-        *ngIf="hasAssessmentDueDatePassed && !result?.completionDate"
-        [style.fontSize]="'65%'"
-        [type]="'warning'"
-        (close)="hasAssessmentDueDatePassed = false"
-        jhiTranslate="artemisApp.assessment.assessmentDueDateIsOver"
-    >
-        Assessment Due Date is over, the assessment will be published immediately after submitting
-    </ngb-alert>
-    <div class="row-container flex-wrap flex-lg-nowrap" *ngIf="!isLoading">
-        <span
-            id="assessmentLocked"
-            *ngIf="!isAssessor && !hasComplaint"
-            class="text-danger m-2"
-            style="font-size: 65%"
-            jhiTranslate="artemisApp.assessment.assessmentLocked"
-            [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
-        >
-            Assessment locked by: otherUser
-        </span>
-        <span
-            id="moreFeedbackRequest"
-            *ngIf="
+    @if (hasAssessmentDueDatePassed && !result?.completionDate) {
+        <ngb-alert [style.fontSize]="'65%'" [type]="'warning'" (close)="hasAssessmentDueDatePassed = false" jhiTranslate="artemisApp.assessment.assessmentDueDateIsOver">
+            Assessment Due Date is over, the assessment will be published immediately after submitting
+        </ngb-alert>
+    }
+    @if (!isLoading) {
+        <div class="row-container flex-wrap flex-lg-nowrap">
+            @if (!isAssessor && !hasComplaint) {
+                <span
+                    id="assessmentLocked"
+                    class="text-danger m-2"
+                    style="font-size: 65%"
+                    jhiTranslate="artemisApp.assessment.assessmentLocked"
+                    [translateValues]="{ otherUser: result?.assessor?.name + ' (' + result?.assessor?.login + ')' }"
+                >
+                    Assessment locked by: otherUser
+                </span>
+            }
+            @if (
                 isAssessor &&
                 exercise &&
                 !exercise.isAtLeastInstructor &&
@@ -37,16 +39,12 @@
                 complaintType != ComplaintType.COMPLAINT &&
                 !complaintHandled &&
                 exercise.assessmentType !== AssessmentType.AUTOMATIC
-            "
-            class="m-2"
-            style="font-size: 65%"
-            jhiTranslate="artemisApp.assessment.moreFeedbackRequest"
-        >
-            You have to respond to the feedback request.
-        </span>
-        <span
-            id="automaticAssessmentFeedbackRequest"
-            *ngIf="
+            ) {
+                <span id="moreFeedbackRequest" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.moreFeedbackRequest">
+                    You have to respond to the feedback request.
+                </span>
+            }
+            @if (
                 isAssessor &&
                 exercise &&
                 !exercise.isAtLeastInstructor &&
@@ -55,25 +53,15 @@
                 exercise.assessmentType === AssessmentType.AUTOMATIC &&
                 !complaintHandled &&
                 !exercise.teamMode
-            "
-            class="m-2"
-            style="font-size: 65%"
-            jhiTranslate="artemisApp.assessment.automaticAssessmentFeedbackRequest"
-        >
-            You may respond to the feedback request.
-        </span>
-        <span
-            id="teamComplaint"
-            *ngIf="isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintType == ComplaintType.COMPLAINT && !complaintHandled && exercise.teamMode"
-            class="m-2"
-            style="font-size: 65%"
-            jhiTranslate="artemisApp.assessment.teamComplaint"
-        >
-            You have to respond to the complaint.
-        </span>
-        <span
-            id="automaticAssessmentComplaint"
-            *ngIf="
+            ) {
+                <span id="automaticAssessmentFeedbackRequest" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.automaticAssessmentFeedbackRequest">
+                    You may respond to the feedback request.
+                </span>
+            }
+            @if (isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintType == ComplaintType.COMPLAINT && !complaintHandled && exercise.teamMode) {
+                <span id="teamComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.teamComplaint"> You have to respond to the complaint. </span>
+            }
+            @if (
                 isAssessor &&
                 exercise &&
                 !exercise.isAtLeastInstructor &&
@@ -82,16 +70,12 @@
                 exercise.assessmentType === AssessmentType.AUTOMATIC &&
                 !complaintHandled &&
                 !exercise.teamMode
-            "
-            class="m-2"
-            style="font-size: 65%"
-            jhiTranslate="artemisApp.assessment.automaticAssessmentComplaint"
-        >
-            You may respond to the complaint.
-        </span>
-        <span
-            id="assessmentReadOnlyUnhandledComplaint"
-            *ngIf="
+            ) {
+                <span id="automaticAssessmentComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.automaticAssessmentComplaint">
+                    You may respond to the complaint.
+                </span>
+            }
+            @if (
                 isAssessor &&
                 exercise &&
                 !exercise.isAtLeastInstructor &&
@@ -100,121 +84,125 @@
                 complaintType == ComplaintType.COMPLAINT &&
                 !complaintHandled &&
                 !exercise.teamMode
-            "
-            class="m-2"
-            style="font-size: 65%"
-            jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint"
-        >
-            There is a complaint for this assessment. Another tutor must respond.
-        </span>
-        <span
-            id="assessmentReadOnlyHandled"
-            *ngIf="isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintHandled && !exercise.teamMode"
-            class="m-2"
-            style="font-size: 65%"
-            jhiTranslate="artemisApp.assessment.assessmentReadOnlyHandledComplaint"
-        >
-            The complaint about your assessment has been resolved.
-        </span>
-        <span
-            id="assessmentLockedCurrentUser"
-            *ngIf="isAssessor && (!hasComplaint || exercise?.isAtLeastInstructor)"
-            class="text-danger m-2"
-            style="font-size: 65%"
-            jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser"
-        >
-            You have the lock for this assessment
-        </span>
-        <!-- Highlight the difference between first and second correction -->
-        <button
-            *ngIf="!isProgrammingExercise && result && correctionRound > 0"
-            class="btn ms-2 btn-primary"
-            (click)="toggleHighlightDifferences()"
-            [disabled]="saveBusy || submitBusy || cancelBusy"
-        >
-            <span
-                *ngIf="!highlightDifferences"
-                ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOn' | artemisTranslate }}"
-                jhiTranslate="artemisApp.assessment.diffView.differenceActivate"
-                >Activate Diff-View</span
-            >
-            <span
-                *ngIf="highlightDifferences"
-                ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOff' | artemisTranslate }}"
-                jhiTranslate="artemisApp.assessment.diffView.differenceDeactivate"
-                >Deactivate Diff-View</span
-            >
-        </button>
-        <br />
-        <div class="d-flex flex-wrap flex-lg-nowrap">
-            <ng-container *ngIf="!result?.completionDate">
-                <button
-                    class="btn m-1 btn-primary"
-                    (click)="save.emit()"
-                    [disabled]="saveDisabled"
-                    [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + S'"
-                >
-                    <fa-icon *ngIf="saveBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
-                    <fa-icon [icon]="faSave"></fa-icon>
-                    <span jhiTranslate="entity.action.save">Save</span>
+            ) {
+                <span id="assessmentReadOnlyUnhandledComplaint" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentReadOnlyUnhandledComplaint">
+                    There is a complaint for this assessment. Another tutor must respond.
+                </span>
+            }
+            @if (isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintHandled && !exercise.teamMode) {
+                <span id="assessmentReadOnlyHandled" class="m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentReadOnlyHandledComplaint">
+                    The complaint about your assessment has been resolved.
+                </span>
+            }
+            @if (isAssessor && (!hasComplaint || exercise?.isAtLeastInstructor)) {
+                <span id="assessmentLockedCurrentUser" class="text-danger m-2" style="font-size: 65%" jhiTranslate="artemisApp.assessment.assessmentLockedCurrentUser">
+                    You have the lock for this assessment
+                </span>
+            }
+            <!-- Highlight the difference between first and second correction -->
+            @if (!isProgrammingExercise && result && correctionRound > 0) {
+                <button class="btn ms-2 btn-primary" (click)="toggleHighlightDifferences()" [disabled]="saveBusy || submitBusy || cancelBusy">
+                    @if (!highlightDifferences) {
+                        <span
+                            ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOn' | artemisTranslate }}"
+                            jhiTranslate="artemisApp.assessment.diffView.differenceActivate"
+                            >Activate Diff-View</span
+                        >
+                    }
+                    @if (highlightDifferences) {
+                        <span
+                            ngbTooltip="{{ 'artemisApp.assessment.diffView.highlightAssessmentDiffTooltipOff' | artemisTranslate }}"
+                            jhiTranslate="artemisApp.assessment.diffView.differenceDeactivate"
+                            >Deactivate Diff-View</span
+                        >
+                    }
                 </button>
-                <button
-                    id="submit"
-                    class="btn m-1 btn-success"
-                    (click)="submit.emit(); sendSubmitAssessmentEventToAnalytics()"
-                    [disabled]="submitDisabled"
-                    [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
-                >
-                    <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
-                    <span jhiTranslate="entity.action.submit">Submit</span>
-                </button>
-                <button
-                    *ngIf="!isTestRun"
-                    class="btn m-1 btn-danger"
-                    (click)="cancel.emit()"
-                    [disabled]="!(exercise?.isAtLeastInstructor || isAssessor) || saveBusy || submitBusy || cancelBusy"
-                >
-                    <fa-icon *ngIf="cancelBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
-                    <span jhiTranslate="entity.action.cancel">Cancel</span>
-                </button>
-            </ng-container>
-            <button
-                class="btn m-1 btn-danger"
-                *ngIf="overrideVisible"
-                (click)="submit.emit()"
-                [disabled]="overrideDisabled"
-                [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
-            >
-                <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
-                <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
-            </button>
-            <button
-                class="btn m-1 btn-primary"
-                id="useAsExampleSubmission"
-                *ngIf="result?.completionDate && exercise?.isAtLeastInstructor && (exercise!.type === ExerciseType.MODELING || exercise!.type === ExerciseType.TEXT)"
-                (click)="onUseAsExampleSolutionClicked()"
-            >
-                <fa-icon *ngIf="submitBusy" [icon]="faSpinner" [spin]="true"></fa-icon>
-                <span jhiTranslate="artemisApp.assessment.button.useAsExampleSubmission">Use as Example Submission</span>
-            </button>
-            <ng-template #nextSubmissionShortcut>
-                {{ 'artemisApp.assessment.button.control' | artemisTranslate }} + Shift + <fa-icon [icon]="faSquareCaretRight"></fa-icon>
-            </ng-template>
-            <button
-                class="btn m-1 btn-success"
-                id="assessNextButton"
-                *ngIf="assessNextVisible"
-                [disabled]="assessNextDisabled"
-                (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
-                [ngbTooltip]="nextSubmissionShortcut"
-            >
-                <fa-icon *ngIf="nextSubmissionBusy" [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
-                <span jhiTranslate="artemisApp.assessment.button.nextSubmission">Next Submission</span>
-            </button>
-            <a [routerLink]="exerciseDashboardLink" class="btn m-1 btn-info">
-                <span jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
-            </a>
+            }
+            <br />
+            <div class="d-flex flex-wrap flex-lg-nowrap">
+                @if (!result?.completionDate) {
+                    <button
+                        class="btn m-1 btn-primary"
+                        (click)="save.emit()"
+                        [disabled]="saveDisabled"
+                        [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + S'"
+                    >
+                        @if (saveBusy) {
+                            <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                        }
+                        <fa-icon [icon]="faSave"></fa-icon>
+                        <span jhiTranslate="entity.action.save">Save</span>
+                    </button>
+                    <button
+                        id="submit"
+                        class="btn m-1 btn-success"
+                        (click)="submit.emit(); sendSubmitAssessmentEventToAnalytics()"
+                        [disabled]="submitDisabled"
+                        [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
+                    >
+                        @if (submitBusy) {
+                            <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                        }
+                        <span jhiTranslate="entity.action.submit">Submit</span>
+                    </button>
+                    @if (!isTestRun) {
+                        <button
+                            class="btn m-1 btn-danger"
+                            (click)="cancel.emit()"
+                            [disabled]="!(exercise?.isAtLeastInstructor || isAssessor) || saveBusy || submitBusy || cancelBusy"
+                        >
+                            @if (cancelBusy) {
+                                <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                            }
+                            <span jhiTranslate="entity.action.cancel">Cancel</span>
+                        </button>
+                    }
+                }
+                @if (overrideVisible) {
+                    <button
+                        class="btn m-1 btn-danger"
+                        (click)="submit.emit()"
+                        [disabled]="overrideDisabled"
+                        [ngbTooltip]="('artemisApp.assessment.button.control' | artemisTranslate) + ' + Enter'"
+                    >
+                        @if (submitBusy) {
+                            <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                        }
+                        <span jhiTranslate="artemisApp.assessment.button.overrideAssessment">Override Assessment</span>
+                    </button>
+                }
+                @if (result?.completionDate && exercise?.isAtLeastInstructor && (exercise!.type === ExerciseType.MODELING || exercise!.type === ExerciseType.TEXT)) {
+                    <button class="btn m-1 btn-primary" id="useAsExampleSubmission" (click)="onUseAsExampleSolutionClicked()">
+                        @if (submitBusy) {
+                            <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>
+                        }
+                        <span jhiTranslate="artemisApp.assessment.button.useAsExampleSubmission">Use as Example Submission</span>
+                    </button>
+                }
+                <ng-template #nextSubmissionShortcut>
+                    {{ 'artemisApp.assessment.button.control' | artemisTranslate }} + Shift + <fa-icon [icon]="faSquareCaretRight"></fa-icon>
+                </ng-template>
+                @if (assessNextVisible) {
+                    <button
+                        class="btn m-1 btn-success"
+                        id="assessNextButton"
+                        [disabled]="assessNextDisabled"
+                        (click)="nextSubmission.emit(); sendAssessNextEventToAnalytics()"
+                        [ngbTooltip]="nextSubmissionShortcut"
+                    >
+                        @if (nextSubmissionBusy) {
+                            <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                        }
+                        <span jhiTranslate="artemisApp.assessment.button.nextSubmission">Next Submission</span>
+                    </button>
+                }
+                <a [routerLink]="exerciseDashboardLink" class="btn m-1 btn-info">
+                    <span jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                </a>
+            </div>
         </div>
-    </div>
+    }
 </h3>
-<jhi-assessment-warning *ngIf="exercise" [exercise]="exercise"></jhi-assessment-warning>
+@if (exercise) {
+    <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
+}

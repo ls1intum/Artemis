@@ -77,10 +77,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             });
     }
 
-    isIrisEnabled() {
-        return this.irisSettings?.irisCodeEditorSettings?.enabled;
-    }
-
     toRepository(component: ExerciseComponent) {
         switch (component) {
             case ExerciseComponent.TEMPLATE_REPOSITORY:

@@ -8,113 +8,151 @@
                         <span class="hidden-xs hidden-sm" jhiTranslate="artemisApp.showStatistic.chooseStatistic"></span>
                         <span class="caret"></span>
                     </button>
-                    <div ngbDropdownMenu *ngIf="quizExercise">
-                        <button
-                            *ngIf="!quizExercise.exerciseGroup"
-                            class="dropdown-item"
-                            routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/quiz-point-statistic"
-                            jhiTranslate="artemisApp.showStatistic.quizPointStatisticTitle"
-                        ></button>
-                        <button
-                            *ngIf="quizExercise.exerciseGroup"
-                            class="dropdown-item"
-                            routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{ quizExercise.exerciseGroup.exam!.id }}/exercise-groups/{{
-                                quizExercise.exerciseGroup.id
-                            }}/quiz-exercises/{{ quizExercise.id }}/quiz-point-statistic"
-                            jhiTranslate="artemisApp.showStatistic.quizPointStatisticTitle"
-                        ></button>
-                        <button
-                            *ngIf="!quizExercise.exerciseGroup"
-                            class="dropdown-item"
-                            routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/quiz-statistic"
-                            jhiTranslate="artemisApp.showStatistic.quizStatisticTitle"
-                        ></button>
-                        <button
-                            *ngIf="quizExercise.exerciseGroup"
-                            class="dropdown-item"
-                            routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{ quizExercise.exerciseGroup.exam!.id }}/exercise-groups/{{
-                                quizExercise.exerciseGroup.id
-                            }}/quiz-exercises/{{ quizExercise.id }}/quiz-statistic"
-                            jhiTranslate="artemisApp.showStatistic.quizStatisticTitle"
-                        ></button>
-                        <div *ngIf="quizExercise.quizQuestions">
-                            <div *ngFor="let question of quizExercise.quizQuestions; let i = index">
+                    @if (quizExercise) {
+                        <div ngbDropdownMenu>
+                            @if (!quizExercise.exerciseGroup) {
                                 <button
-                                    *ngIf="question.type === MULTIPLE_CHOICE && !quizExercise.exerciseGroup"
                                     class="dropdown-item"
-                                    routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/mc-question-statistic/{{ question.id }}"
-                                >
-                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
-                                </button>
+                                    routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/quiz-point-statistic"
+                                    jhiTranslate="artemisApp.showStatistic.quizPointStatisticTitle"
+                                ></button>
+                            }
+                            @if (quizExercise.exerciseGroup) {
                                 <button
-                                    *ngIf="question.type === MULTIPLE_CHOICE && quizExercise.exerciseGroup"
                                     class="dropdown-item"
                                     routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{
                                         quizExercise.exerciseGroup.exam!.id
-                                    }}/exercise-groups/{{ quizExercise.exerciseGroup.id }}/quiz-exercises/{{ quizExercise.id }}/mc-question-statistic/{{ question.id }}"
-                                >
-                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
-                                </button>
+                                    }}/exercise-groups/{{ quizExercise.exerciseGroup.id }}/quiz-exercises/{{ quizExercise.id }}/quiz-point-statistic"
+                                    jhiTranslate="artemisApp.showStatistic.quizPointStatisticTitle"
+                                ></button>
+                            }
+                            @if (!quizExercise.exerciseGroup) {
                                 <button
-                                    *ngIf="question.type === DRAG_AND_DROP && !quizExercise.exerciseGroup"
                                     class="dropdown-item"
-                                    routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/dnd-question-statistic/{{ question.id }}"
-                                >
-                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
-                                </button>
+                                    routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/quiz-statistic"
+                                    jhiTranslate="artemisApp.showStatistic.quizStatisticTitle"
+                                ></button>
+                            }
+                            @if (quizExercise.exerciseGroup) {
                                 <button
-                                    *ngIf="question.type === DRAG_AND_DROP && quizExercise.exerciseGroup"
-                                    class="dropdown-item"
-                                    routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{
-                                        quizExercise.exerciseGroup.exam!.id
-                                    }}/exercise-groups/{{ quizExercise.exerciseGroup.id }}/quiz-exercises/{{ quizExercise.id }}/dnd-question-statistic/{{ question.id }}"
-                                >
-                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
-                                </button>
-                                <button
-                                    *ngIf="question.type === SHORT_ANSWER && !quizExercise.exerciseGroup"
-                                    class="dropdown-item"
-                                    routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/sa-question-statistic/{{ question.id }}"
-                                >
-                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
-                                </button>
-                                <button
-                                    *ngIf="question.type === SHORT_ANSWER && quizExercise.exerciseGroup"
                                     class="dropdown-item"
                                     routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{
                                         quizExercise.exerciseGroup.exam!.id
-                                    }}/exercise-groups/{{ quizExercise.exerciseGroup.id }}/quiz-exercises/{{ quizExercise.id }}/sa-question-statistic/{{ question.id }}"
-                                >
-                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
-                                </button>
-                            </div>
+                                    }}/exercise-groups/{{ quizExercise.exerciseGroup.id }}/quiz-exercises/{{ quizExercise.id }}/quiz-statistic"
+                                    jhiTranslate="artemisApp.showStatistic.quizStatisticTitle"
+                                ></button>
+                            }
+                            @if (quizExercise.quizQuestions) {
+                                <div>
+                                    @for (question of quizExercise.quizQuestions; track question; let i = $index) {
+                                        <div>
+                                            @if (question.type === MULTIPLE_CHOICE && !quizExercise.exerciseGroup) {
+                                                <button
+                                                    class="dropdown-item"
+                                                    routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/mc-question-statistic/{{
+                                                        question.id
+                                                    }}"
+                                                >
+                                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
+                                                </button>
+                                            }
+                                            @if (question.type === MULTIPLE_CHOICE && quizExercise.exerciseGroup) {
+                                                <button
+                                                    class="dropdown-item"
+                                                    routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{
+                                                        quizExercise.exerciseGroup.exam!.id
+                                                    }}/exercise-groups/{{ quizExercise.exerciseGroup.id }}/quiz-exercises/{{ quizExercise.id }}/mc-question-statistic/{{
+                                                        question.id
+                                                    }}"
+                                                >
+                                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
+                                                </button>
+                                            }
+                                            @if (question.type === DRAG_AND_DROP && !quizExercise.exerciseGroup) {
+                                                <button
+                                                    class="dropdown-item"
+                                                    routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/dnd-question-statistic/{{
+                                                        question.id
+                                                    }}"
+                                                >
+                                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
+                                                </button>
+                                            }
+                                            @if (question.type === DRAG_AND_DROP && quizExercise.exerciseGroup) {
+                                                <button
+                                                    class="dropdown-item"
+                                                    routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{
+                                                        quizExercise.exerciseGroup.exam!.id
+                                                    }}/exercise-groups/{{ quizExercise.exerciseGroup.id }}/quiz-exercises/{{ quizExercise.id }}/dnd-question-statistic/{{
+                                                        question.id
+                                                    }}"
+                                                >
+                                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
+                                                </button>
+                                            }
+                                            @if (question.type === SHORT_ANSWER && !quizExercise.exerciseGroup) {
+                                                <button
+                                                    class="dropdown-item"
+                                                    routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/sa-question-statistic/{{
+                                                        question.id
+                                                    }}"
+                                                >
+                                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
+                                                </button>
+                                            }
+                                            @if (question.type === SHORT_ANSWER && quizExercise.exerciseGroup) {
+                                                <button
+                                                    class="dropdown-item"
+                                                    routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{
+                                                        quizExercise.exerciseGroup.exam!.id
+                                                    }}/exercise-groups/{{ quizExercise.exerciseGroup.id }}/quiz-exercises/{{ quizExercise.id }}/sa-question-statistic/{{
+                                                        question.id
+                                                    }}"
+                                                >
+                                                    {{ i + 1 }}. {{ question.title || '' | truncate }}
+                                                </button>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
                         </div>
-                    </div>
+                    }
                 </div>
             </div>
-            <div *ngIf="isQuizPointStatistic" id="remaining-time" class="form-group col-sm">
-                <div *ngIf="waitingForQuizStart">
-                    <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
+            @if (isQuizPointStatistic) {
+                <div id="remaining-time" class="form-group col-sm">
+                    @if (waitingForQuizStart) {
+                        <div>
+                            <span jhiTranslate="artemisApp.quizExercise.waitingForStart"></span>
+                        </div>
+                    }
+                    @if (!waitingForQuizStart) {
+                        <div>
+                            <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
+                            <span
+                                id="remaining-time-value"
+                                [ngClass]="{
+                                    'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration! / 4,
+                                    'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration! / 2
+                                }"
+                            >
+                                {{ remainingTimeText }}
+                            </span>
+                        </div>
+                    }
+                    @if (waitingForQuizStart || remainingTimeSeconds >= 0) {
+                        <jhi-connection-status> </jhi-connection-status>
+                    }
                 </div>
-                <div *ngIf="!waitingForQuizStart">
-                    <span jhiTranslate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
-                    <span
-                        id="remaining-time-value"
-                        [ngClass]="{
-                            'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration! / 4,
-                            'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration! / 2
-                        }"
-                    >
-                        {{ remainingTimeText }}
-                    </span>
-                </div>
-                <jhi-connection-status *ngIf="waitingForQuizStart || remainingTimeSeconds >= 0"> </jhi-connection-status>
-            </div>
+            }
             <div class="form-group col-sm">
-                <div *ngIf="quizExercise" class="btn-group flex-btn-group-container">
-                    <button (click)="previousStatistic()" jhiTranslate="artemisApp.showStatistic.previousStatistic" class="btn btn-default"></button>
-                    <button (click)="nextStatistic()" jhiTranslate="artemisApp.showStatistic.nextStatistic" class="btn btn-default"></button>
-                </div>
+                @if (quizExercise) {
+                    <div class="btn-group flex-btn-group-container">
+                        <button (click)="previousStatistic()" jhiTranslate="artemisApp.showStatistic.previousStatistic" class="btn btn-default"></button>
+                        <button (click)="nextStatistic()" jhiTranslate="artemisApp.showStatistic.nextStatistic" class="btn btn-default"></button>
+                    </div>
+                }
             </div>
         </div>
     </div>
