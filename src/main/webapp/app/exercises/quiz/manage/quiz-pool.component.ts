@@ -34,7 +34,7 @@ export class QuizPoolComponent implements OnInit {
 
     faExclamationCircle = faExclamationCircle;
 
-    quizPool: QuizPool = new QuizPool();
+    quizPool: QuizPool;
     savedQuizPool: string;
     isSaving: boolean;
     isValid: boolean;
@@ -135,13 +135,8 @@ export class QuizPoolComponent implements OnInit {
     private initializeQuizPool() {
         this.quizPoolService.find(this.courseId, this.examId).subscribe({
             next: (response: HttpResponse<QuizPool>) => {
-                this.quizPool = response.body!;
-                this.savedQuizPool = JSON.stringify(this.quizPool);
-                this.isValid = true;
-                this.computeReasons();
-            },
-            error: (error: HttpErrorResponse) => {
-                if (error.status === 404) {
+                const quizPool = response.body;
+                if (!quizPool) {
                     this.quizPool = new QuizPool();
                     this.quizPool.quizGroups = [];
                     this.quizPool.quizQuestions = [];
@@ -149,8 +144,14 @@ export class QuizPoolComponent implements OnInit {
                     this.isValid = true;
                     this.changeDetectorRef.detectChanges();
                 } else {
-                    onError(this.alertService, error);
+                    this.quizPool = quizPool;
+                    this.savedQuizPool = JSON.stringify(this.quizPool);
+                    this.isValid = true;
+                    this.computeReasons();
                 }
+            },
+            error: (error: HttpErrorResponse) => {
+                onError(this.alertService, error);
             },
         });
     }

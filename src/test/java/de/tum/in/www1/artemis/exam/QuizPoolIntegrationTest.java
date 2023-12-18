@@ -188,9 +188,10 @@ class QuizPoolIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetQuizPoolNotFoundExam() throws Exception {
-        int notFoundExamId = 0;
-        request.get("/api/courses/" + course.getId() + "/exams/" + notFoundExamId + "/quiz-pools", HttpStatus.NOT_FOUND, QuizPool.class);
+    void testGetQuizPoolNotFound() throws Exception {
+        Exam examWithoutQuizPool = examUtilService.addExam(course);
+        QuizPool responseQuizPool = request.get("/api/courses/" + course.getId() + "/exams/" + examWithoutQuizPool.getId() + "/quiz-pools", HttpStatus.OK, QuizPool.class);
+        assertThat(responseQuizPool).isNull();
     }
 
     private QuizPool createQuizPool() throws Exception {
