@@ -73,4 +73,35 @@ describe('CourseRegistrationComponent', () => {
 
         expect(component.coursesToSelect).toEqual([course1, course2]);
     });
+
+    it('should filter registrable courses based on search term', () => {
+        findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course1, course2] })));
+
+        component.loadRegistrableCourses();
+        component.searchTermString = 'Course A';
+        component.applySearch();
+
+        expect(component.filteredCoursesToSelect).toHaveLength(1);
+        expect(component.filteredCoursesToSelect[0]).toEqual(course1);
+    });
+
+    it('should sort registrable courses by title in ascending order', () => {
+        findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course2, course1] })));
+
+        component.predicate = 'title';
+        component.ascending = true;
+        component.loadRegistrableCourses();
+
+        expect(component.coursesToSelect).toEqual([course1, course2]);
+    });
+
+    it('should sort registrable courses by title in descending order', () => {
+        findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course1, course2] })));
+
+        component.predicate = 'title';
+        component.ascending = false;
+        component.loadRegistrableCourses();
+
+        expect(component.coursesToSelect).toEqual([course2, course1]);
+    });
 });

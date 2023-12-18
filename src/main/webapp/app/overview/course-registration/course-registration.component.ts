@@ -5,30 +5,30 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { faCheckCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { ASC, DESC, SORT } from 'app/shared/constants/pagination.constants';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UserFilter } from 'app/admin/user-management/user-management.component';
-import { Subject, combineLatest } from 'rxjs';
+import { combineLatest } from 'rxjs';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-course-registration-selector',
     templateUrl: './course-registration.component.html',
 })
 export class CourseRegistrationComponent implements OnInit {
-    search = new Subject<void>();
     coursesToSelect: Course[] = [];
     loading = false;
-    faCheckCircle = faCheckCircle;
-    faSort = faSort;
     predicate!: string;
     ascending!: boolean;
     searchTermString = '';
-    filters: UserFilter = new UserFilter();
     filteredCoursesToSelect: Course[] = [];
+    // Icons
+    faCheckCircle = faCheckCircle;
+    faSort = faSort;
 
     constructor(
         private accountService: AccountService,
         private courseService: CourseManagementService,
         private activatedRoute: ActivatedRoute,
         private router: Router,
+        private sortService: SortService,
     ) {}
 
     ngOnInit(): void {
@@ -43,33 +43,11 @@ export class CourseRegistrationComponent implements OnInit {
     loadRegistrableCourses() {
         this.loading = true;
         this.courseService.findAllForRegistration().subscribe((res) => {
+            const courses = res.body!;
             if (this.predicate === 'defaultSort' || !this.predicate) {
-                this.coursesToSelect = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
+                this.coursesToSelect = this.sortService.sortByProperty(courses, 'title', true);
             } else {
-                this.coursesToSelect = res.body!.sort((a, b) => {
-                    let valueA: string;
-                    let valueB: string;
-                    switch (this.predicate) {
-                        case 'title':
-                            valueA = a.title ?? '';
-                            valueB = b.title ?? '';
-                            break;
-                        case 'semester':
-                            valueA = a.semester ?? '';
-                            valueB = b.semester ?? '';
-                            break;
-                        default:
-                            valueA = '';
-                            valueB = '';
-                    }
-                    if (valueA < valueB) {
-                        return this.ascending ? -1 : 1;
-                    } else if (valueA > valueB) {
-                        return this.ascending ? 1 : -1;
-                    } else {
-                        return 0;
-                    }
-                });
+                this.coursesToSelect = this.sortService.sortByProperty(courses, this.predicate, this.ascending);
             }
             this.filteredCoursesToSelect = [...this.coursesToSelect];
             this.loading = false;
