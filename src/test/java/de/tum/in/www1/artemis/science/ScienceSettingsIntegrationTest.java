@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.science.ScienceSetting;
 import de.tum.in.www1.artemis.repository.science.ScienceSettingRepository;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-public class ScienceSettingsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class ScienceSettingsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "sciencesettingsintegration";
 
