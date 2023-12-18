@@ -1,6 +1,7 @@
 import { UserRole } from '../users';
 import { BASE_API } from '../constants';
 import { Page } from '@playwright/test';
+import { APIResponse } from 'playwright';
 
 /**
  * A class which encapsulates all API requests related to user management.
@@ -75,7 +76,7 @@ export class UserManagementAPIRequests {
         // req.end();
     }
 
-    async getUser(username: string): Promise<number | undefined> {
+    async getUser(username: string): Promise<APIResponse> {
         // const options = {
         //     hostname: this.fullUrl.hostname,
         //     port: this.fullUrl.port.length != 0 ? this.fullUrl.port : null,
@@ -87,8 +88,7 @@ export class UserManagementAPIRequests {
         //     //     key: fs.readFileSync('./certs/artemis-nginx+4-key.pem'),
         //     // }),
         // };
-        const response = await this.page.request.get(`${BASE_API}users/${username}`);
-        return response.status();
+        return await this.page.request.get(`${BASE_API}users/${username}`);
         // return new Promise((resolve) => {
         //     console.log(options);
         //     const req = http.request(options, (res) => {
