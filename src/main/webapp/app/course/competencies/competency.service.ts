@@ -73,6 +73,10 @@ export class CompetencyService {
         return this.httpClient.post<Competency>(`${this.resourceURL}/courses/${courseId}/competencies/import`, competencyCopy, { observe: 'response' });
     }
 
+    getCompetenciesFromCourseDescription(courseDescription: string, courseId: number) {
+        return this.httpClient.post<Competency[]>(`${this.resourceURL}/courses/${courseId}/competencies/recommendations`, courseDescription, { observe: 'response' });
+    }
+
     addPrerequisite(competencyId: number, courseId: number): Observable<EntityResponseType> {
         return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/prerequisites/${competencyId}`, null, { observe: 'response' });
     }

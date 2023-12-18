@@ -15,6 +15,9 @@ import { CompetencyRingsComponent } from 'app/course/competencies/competency-rin
 import { CompetencyImportComponent } from 'app/course/competencies/competency-management/competency-import.component';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
+import { ParseCoureDescriptionComponent } from 'app/course/competencies/parse-description/parse-course-description.component';
+import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/parse-description/competency-recommendation-detail.component';
+import { CourseDescriptionComponent } from 'app/course/competencies/parse-description/course-description.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, FormsModule, ReactiveFormsModule, NgxGraphModule, ArtemisSharedComponentModule, RouterModule, FormDateTimePickerModule, NgbAccordionModule],
@@ -23,6 +26,9 @@ import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
         CompetencyRingsComponent,
         CreateCompetencyComponent,
         EditCompetencyComponent,
+        ParseCoureDescriptionComponent,
+        CompetencyRecommendationDetailComponent,
+        CourseDescriptionComponent,
         CompetencyManagementComponent,
         CompetencyCardComponent,
         CompetenciesPopoverComponent,

@@ -1,0 +1,6 @@
+<h3>{{ 'artemisApp.competency.parseDescription.title' | artemisTranslate }}</h3>
+<jhi-course-description (formSubmitted)="getCompetencyRecommendations($event)" />
+<h3>{{ 'artemisApp.competency.parseDescription.title' | artemisTranslate }}</h3>
+@for (recommendation of recommendations; track recommendation.id) {
+    <jhi-competency-recommendation [recommendation]="recommendation" />
+}

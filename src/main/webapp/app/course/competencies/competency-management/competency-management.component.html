@@ -13,6 +13,10 @@
                 <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
             </div>
             <div class="ms-auto text-truncate justify-content-end">
+                <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'parse-description']">
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <span>{{ 'artemisApp.competency.manageCompetencies.parseDescription' | artemisTranslate }}</span>
+                </a>
                 <button class="btn btn-primary" id="competencyImportButton" (click)="openImportModal()">
                     <fa-icon [icon]="faPlus"></fa-icon>
                     <span>{{ 'artemisApp.competency.manageCompetencies.import' | artemisTranslate }}</span>

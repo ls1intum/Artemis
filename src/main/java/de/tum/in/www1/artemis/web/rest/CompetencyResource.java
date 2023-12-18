@@ -15,9 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.competency.Competency;
-import de.tum.in.www1.artemis.domain.competency.CompetencyProgress;
-import de.tum.in.www1.artemis.domain.competency.CompetencyRelation;
+import de.tum.in.www1.artemis.domain.competency.*;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
@@ -514,6 +512,21 @@ public class CompetencyResource {
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
     }
+
+    @PostMapping("/courses/{courseId}/competencies/recommendations")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<List<Competency>> getCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {
+        // TODO: call competencyGenerationService and remove dummy code.
+        List<Competency> competencies = new ArrayList<>();
+        Competency result = new Competency();
+        result.setTitle("Competency Recommendation");
+        result.setDescription("Lorem Ipsum Dolor Sit Amet");
+        result.setTaxonomy(CompetencyTaxonomy.ANALYZE);
+        competencies.add(result);
+        return ResponseEntity.ok().body(competencies);
+    }
+
+    // TODO: add multiple competencies to this course :)
 
     /**
      * Link the competency to a set of lecture units (and exercises if it includes exercise units)

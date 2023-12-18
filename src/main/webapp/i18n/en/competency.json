@@ -43,7 +43,8 @@
             "manageCompetencies": {
                 "title": "Competency Management",
                 "import": "Import competency",
-                "create": "Create competency"
+                "create": "Create competency",
+                "parseDescription": "Generate Competency Recommendations"
             },
             "importCompetency": {
                 "title": "Import a Competency",
@@ -55,6 +56,12 @@
                     "semester": "Semester",
                     "doSelect": "Select"
                 }
+            },
+            "parseDescription": {
+                "title": "Competency Recommendations",
+                "courseDescription": "Course Description",
+                "courseDescriptionPlaceholder": "Please enter a course description with at least 100 characters",
+                "generate": "Generate"
             },
             "createCompetency": {
                 "title": "Create a new competency",

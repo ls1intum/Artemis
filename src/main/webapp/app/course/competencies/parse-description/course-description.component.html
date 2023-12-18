@@ -1,0 +1,15 @@
+<form [formGroup]="form" (ngSubmit)="submitForm()">
+    <div>
+        <span>{{ 'artemisApp.competency.parseDescription.courseDescription' | artemisTranslate }}</span>
+        <button id="submitButton" class="btn btn-primary me-2" type="submit">
+            <span>{{ 'artemisApp.competency.parseDescription.generate' | artemisTranslate }}</span>
+        </button>
+    </div>
+    <textarea
+        class="form-control"
+        id="course-description"
+        rows="10"
+        formControlName="courseDescription"
+        [placeholder]="'artemisApp.competency.createCompetency.courseDescriptionPlaceholder' | artemisTranslate"
+    ></textarea>
+</form>

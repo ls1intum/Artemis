@@ -9,6 +9,7 @@ import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rat
 import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
 import { CreateCompetencyComponent } from 'app/course/competencies/create-competency/create-competency.component';
 import { EditCompetencyComponent } from 'app/course/competencies/edit-competency/edit-competency.component';
+import { ParseCoureDescriptionComponent } from 'app/course/competencies/parse-description/parse-course-description.component';
 import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { isOrion } from 'app/shared/orion/orion';
@@ -219,6 +220,15 @@ export const courseManagementState: Routes = [
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                                     pageTitle: 'artemisApp.competency.editCompetency.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                path: 'parse-description',
+                                component: ParseCoureDescriptionComponent,
+                                data: {
+                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    pageTitle: 'artemisApp.competency.parseDescription.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },

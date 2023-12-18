@@ -44,7 +44,8 @@
             "manageCompetencies": {
                 "title": "Kompetenzmanagement",
                 "import": "Kompetenz importieren",
-                "create": "Kompetenz erstellen"
+                "create": "Kompetenz erstellen",
+                "parseDescription": "Kompetenzvorschläge generieren"
             },
             "importCompetency": {
                 "title": "Kompetenz importieren",
@@ -56,6 +57,12 @@
                     "semester": "Semester",
                     "doSelect": "Auswählen"
                 }
+            },
+            "parseDescription": {
+                "title": "Kompetenzvorschläge",
+                "courseDescription": "Kursbeschreibung",
+                "courseDescriptionPlaceholder": "Bitte gib eine Kursbeschreibung mit mindestens 100 Zeichen ein",
+                "generate": "Generieren"
             },
             "createCompetency": {
                 "title": "Erstelle eine neue Kompetenz",
