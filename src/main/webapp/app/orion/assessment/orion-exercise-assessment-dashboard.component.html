@@ -23,11 +23,12 @@
                     [buttonLoading]="orionState.cloning"
                     [disabled]="!!disabled"
                     buttonLabel="{{ 'artemisApp.orionExerciseAssessmentDashboard.' + buttonLabel | artemisTranslate }}"
-                    [buttonType]="OrionButtonType.Download"
                     (clickHandler)="downloadSubmissionInOrion(submission, queryParams['correction-round'], queryParams['testRun'])"
                 >
                 </jhi-ide-button>
             </ng-template>
         </jhi-exercise-assessment-dashboard>
     }
+    <!-- If the exercise is opened, show download submission buttons -->
 }
+<!-- If the exercise is programming, but not opened in Orion, show Orion open button-->

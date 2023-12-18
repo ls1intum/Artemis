@@ -39,10 +39,14 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAeolusTemplateFile() throws Exception {
         Map<String, Integer> templatesWithExpectedScriptActions = new HashMap<>();
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE", 1);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?sequentialRuns=true", 1);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE", 2);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?sequentialRuns=true", 3);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true", 3);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_GRADLE?staticAnalysis=true&testCoverage=true", 3);
         templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN", 1);
-        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?sequentialRuns=true", 1);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?sequentialRuns=true", 2);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true", 2);
+        templatesWithExpectedScriptActions.put("JAVA/PLAIN_MAVEN?staticAnalysis=true&testCoverage=true", 3);
         templatesWithExpectedScriptActions.put("ASSEMBLER", 4);
         templatesWithExpectedScriptActions.put("C/FACT", 3);
         templatesWithExpectedScriptActions.put("C/GCC", 4);
