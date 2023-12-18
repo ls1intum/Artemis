@@ -49,6 +49,7 @@ services:
 # Old run method using plain cypress kept here as backup
         command: >
             sh -c '
+            chmod 777 /root &&
             apt-get update &&
             apt-get install -y build-essential libnss3-tools &&
             apt-get install -y tree &&
@@ -70,7 +71,6 @@ services:
             openssl pkcs12 -export -in /app/artemis/src/test/playwright/certs/artemis-nginx+4.pem -inkey /app/artemis/src/test/playwright/certs/artemis-nginx+4-key.pem -out /app/artemis/src/test/playwright/certs/client.p12 -name "client-cert" -password pass:artemis_admin &&
             pk12util -d sql:$HOME/.pki/nssdb -i /app/artemis/src/test/playwright/client.p12 -W artemis_admin &&
             cd /app/artemis/src/test/playwright &&
-            chmod 777 /root &&
             npm ci &&
             npm run playwright:setup &&
             npm run playwright:test
