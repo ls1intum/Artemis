@@ -22,7 +22,7 @@ export class UserManagementAPIRequests {
 
     fullUrl = new URL(`${process.env.baseURL}/${BASE_API}public/authenticate`);
 
-    async createUser(username: string, password: string, role: UserRole) {
+    async createUser(username: string, password: string, role: UserRole): Promise<APIResponse> {
         // const data = JSON.stringify({
         //     login: username,
         //     password,
@@ -48,7 +48,7 @@ export class UserManagementAPIRequests {
         // };
 
         // console.log(options);
-        const response = await this.page.request.post(`${BASE_API}admin/users`, {
+        return await this.page.request.post(`${BASE_API}admin/users`, {
             data: {
                 login: username,
                 password,
@@ -58,7 +58,6 @@ export class UserManagementAPIRequests {
                 authorities: [role],
             },
         });
-        console.log('Create user response: ' + (await response.text()));
         // const req = http.request(options, (res) => {
         //     console.log(`statusCode: ${res.statusCode}`);
         //
