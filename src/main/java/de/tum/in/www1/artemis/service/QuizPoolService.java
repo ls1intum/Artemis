@@ -102,7 +102,7 @@ public class QuizPoolService extends QuizService<QuizPool> implements ExamQuizQu
     }
 
     private void handleDndQuizFile(QuizPool quizPool, Long examId, List<MultipartFile> files) throws IOException {
-        Optional<QuizPool> quizPoolOptional = findWithQuizQuestionsByExamId(examId);
+        Optional<QuizPool> quizPoolOptional = findWithQuizGroupsAndQuestionsByExamId(examId);
         if (quizPoolOptional.isPresent()) {
             QuizPool existingQuizPool = quizPoolOptional.get();
             handleDndQuizFileUpdates(quizPool, existingQuizPool, files);
