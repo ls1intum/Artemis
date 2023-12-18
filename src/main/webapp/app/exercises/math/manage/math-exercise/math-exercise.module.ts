@@ -28,6 +28,7 @@ import { MathExerciseComponent } from './math-exercise.component';
 import { MathExerciseUpdateComponent } from './math-exercise-update.component';
 import { MathExerciseDetailComponent } from './math-exercise-detail.component';
 import { MathExerciseRowButtonsComponent } from './math-exercise-row-buttons.component';
+import { MathExerciseComposeComponent } from './math-exercise-compose.component';
 
 const ENTITY_STATES = [...mathExerciseRoute];
 
@@ -56,7 +57,7 @@ const ENTITY_STATES = [...mathExerciseRoute];
         ExerciseUpdateNotificationModule,
         ExerciseUpdatePlagiarismModule,
     ],
-    declarations: [MathExerciseComponent, MathExerciseDetailComponent, MathExerciseUpdateComponent, MathExerciseRowButtonsComponent],
+    declarations: [MathExerciseComponent, MathExerciseDetailComponent, MathExerciseComposeComponent, MathExerciseUpdateComponent, MathExerciseRowButtonsComponent],
     exports: [MathExerciseComponent],
 })
 export class ArtemisMathExerciseModule {}

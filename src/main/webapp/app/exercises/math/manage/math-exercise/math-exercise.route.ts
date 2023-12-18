@@ -15,6 +15,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { MathExerciseService } from './math-exercise.service';
 import { MathExerciseDetailComponent } from './math-exercise-detail.component';
 import { MathExerciseUpdateComponent } from './math-exercise-update.component';
+import { MathExerciseComposeComponent } from './math-exercise-compose.component';
 
 @Injectable({ providedIn: 'root' })
 export class MathExerciseResolver implements Resolve<MathExercise> {
@@ -55,6 +56,18 @@ export const mathExerciseRoute: Routes = [
     {
         path: ':courseId/math-exercises/new',
         component: MathExerciseUpdateComponent,
+        resolve: {
+            mathExercise: MathExerciseResolver,
+        },
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.mathExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/math-exercises/:exerciseId/compose',
+        component: MathExerciseComposeComponent,
         resolve: {
             mathExercise: MathExerciseResolver,
         },
