@@ -215,7 +215,6 @@ public class LocalCISharedBuildJobQueueService {
         LocalCIBuildJobQueueItem buildJob = queue.poll();
         if (buildJob != null) {
             buildJob.setBuildStartDate(System.currentTimeMillis());
-            buildJob.setExpirationTime(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(180));
             processingJobs.put(buildJob.getId(), buildJob);
             localProcessingJobs.incrementAndGet();
         }

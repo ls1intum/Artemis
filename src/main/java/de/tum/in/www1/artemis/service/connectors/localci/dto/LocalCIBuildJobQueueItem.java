@@ -18,8 +18,6 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private String commitHash;
 
-    private long expirationTime;
-
     private long submissionDate;
 
     private int retryCount;
@@ -86,14 +84,6 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         this.commitHash = commitHash;
     }
 
-    public long getExpirationTime() {
-        return expirationTime;
-    }
-
-    public void setExpirationTime(long expirationTime) {
-        this.expirationTime = expirationTime;
-    }
-
     public long getSubmissionDate() {
         return submissionDate;
     }
@@ -152,8 +142,7 @@ public class LocalCIBuildJobQueueItem implements Serializable {
     @Override
     public String toString() {
         return "LocalCIBuildJobQueueItem{" + "id='" + id + '\'' + ", name='" + name + '\'' + ", participationId=" + participationId + ", repositoryTypeOrUserName='"
-                + repositoryTypeOrUserName + '\'' + ", commitHash='" + commitHash + '\'' + ", expirationTime=" + expirationTime + ", submissionDate=" + submissionDate
-                + ", retryCount=" + retryCount + ", buildStartDate=" + buildStartDate + ", priority=" + priority + ", courseId=" + courseId + ", isPushToTestRepository="
-                + isPushToTestRepository + '}';
+                + repositoryTypeOrUserName + '\'' + ", commitHash='" + commitHash + '\'' + ", submissionDate=" + submissionDate + ", retryCount=" + retryCount + ", buildStartDate="
+                + buildStartDate + ", priority=" + priority + ", courseId=" + courseId + ", isPushToTestRepository=" + isPushToTestRepository + '}';
     }
 }
