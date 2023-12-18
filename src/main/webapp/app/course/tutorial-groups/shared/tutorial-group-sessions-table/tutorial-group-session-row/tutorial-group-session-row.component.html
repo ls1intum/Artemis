@@ -1,24 +1,29 @@
 <ng-container>
-    <td [class.table-danger]="isCancelled" *ngIf="showIdColumn">{{ session.id }}</td>
+    @if (showIdColumn) {
+        <td [class.table-danger]="isCancelled">{{ session.id }}</td>
+    }
     <td [class.table-danger]="isCancelled">
         <span>
             {{ session.start | artemisDate: 'short-date' : false : timeZone! : true }}
             {{ session.start | artemisDate: 'time' : false : timeZone! }} -
             {{ session.end | artemisDate: 'time' : false : timeZone! }}
         </span>
-        <button
-            *ngIf="isCancelled"
-            type="button"
-            class="btn btn-outline-danger ms-2"
-            placement="top"
-            [disabled]="!cancellationReason"
-            [ngbPopover]="cancellationReason ? cancellationReason : ''"
-            [animation]="false"
-            [popoverTitle]="'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate"
-        >
-            <fa-icon *ngIf="overlapsWithFreePeriod" [icon]="faUmbrellaBeach"></fa-icon>
-            {{ 'artemisApp.pages.tutorialGroupSessionManagement.cancelled' | artemisTranslate }}
-        </button>
+        @if (isCancelled) {
+            <button
+                type="button"
+                class="btn btn-outline-danger ms-2"
+                placement="top"
+                [disabled]="!cancellationReason"
+                [ngbPopover]="cancellationReason ? cancellationReason : ''"
+                [animation]="false"
+                [popoverTitle]="'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate"
+            >
+                @if (overlapsWithFreePeriod) {
+                    <fa-icon [icon]="faUmbrellaBeach"></fa-icon>
+                }
+                {{ 'artemisApp.pages.tutorialGroupSessionManagement.cancelled' | artemisTranslate }}
+            </button>
+        }
     </td>
     <td [class.table-danger]="isCancelled">
         <button type="button" class="btn btn-outline-info" placement="top" [ngbPopover]="session.location" [animation]="false" [autoClose]="'outside'">
@@ -28,42 +33,51 @@
         </button>
     </td>
     <td [class.table-danger]="isCancelled" class="attendance-column">
-        <div class="input-group" *ngIf="!isReadOnly; else readOnlyAttendance">
-            <input
-                type="number"
-                class="form-control attendance-input"
-                [ngModel]="session.attendanceCount"
-                (ngModelChange)="onAttendanceInput($event)"
-                name="attendance"
-                #attendance="ngModel"
-                min="0"
-                max="3000"
-                [readOnly]="isUpdatingAttendance"
-                aria-labelledby="attendanceHeader"
-            />
-            <button
-                [style.visibility]="attendanceDiffersFromPersistedValue && attendance.valid ? 'visible' : 'hidden'"
-                class="btn btn-outline-secondary"
-                type="button"
-                (click)="saveAttendanceCount()"
-                [disabled]="isUpdatingAttendance"
-            >
-                <span class="spinner-border spinner-border-sm" *ngIf="isUpdatingAttendance"> </span>
-                {{ (isUpdatingAttendance ? 'entity.action.saving' : 'entity.action.save') | artemisTranslate }}
-            </button>
-        </div>
-        <ng-template #readOnlyAttendance>
+        @if (!isReadOnly) {
+            <div class="input-group">
+                <input
+                    type="number"
+                    class="form-control attendance-input"
+                    [ngModel]="session.attendanceCount"
+                    (ngModelChange)="onAttendanceInput($event)"
+                    name="attendance"
+                    #attendance="ngModel"
+                    min="0"
+                    max="3000"
+                    [readOnly]="isUpdatingAttendance"
+                    aria-labelledby="attendanceHeader"
+                />
+                <button
+                    [style.visibility]="attendanceDiffersFromPersistedValue && attendance.valid ? 'visible' : 'hidden'"
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    (click)="saveAttendanceCount()"
+                    [disabled]="isUpdatingAttendance"
+                >
+                    @if (isUpdatingAttendance) {
+                        <span class="spinner-border spinner-border-sm"> </span>
+                    }
+                    {{ (isUpdatingAttendance ? 'entity.action.saving' : 'entity.action.save') | artemisTranslate }}
+                </button>
+            </div>
+        } @else {
             {{ session.attendanceCount ?? '' }}
-        </ng-template>
+        }
     </td>
-    <td *ngIf="tutorialGroup.tutorialGroupSchedule" [class.table-danger]="isCancelled">
-        <div class="alert alert-info" role="alert" *ngIf="!hasSchedule">
-            {{ 'artemisApp.pages.tutorialGroupSessionManagement.differsFromSchedule' | artemisTranslate }}
-        </div>
-    </td>
-    <td [class.table-danger]="isCancelled" *ngIf="extraColumn">
-        <div class="extra-buttons">
-            <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }"></ng-template>
-        </div>
-    </td>
+    @if (tutorialGroup.tutorialGroupSchedule) {
+        <td [class.table-danger]="isCancelled">
+            @if (!hasSchedule) {
+                <div class="alert alert-info" role="alert">
+                    {{ 'artemisApp.pages.tutorialGroupSessionManagement.differsFromSchedule' | artemisTranslate }}
+                </div>
+            }
+        </td>
+    }
+    @if (extraColumn) {
+        <td [class.table-danger]="isCancelled">
+            <div class="extra-buttons">
+                <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: session }"></ng-template>
+            </div>
+        </td>
+    }
 </ng-container>

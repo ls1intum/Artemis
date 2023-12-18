@@ -4,6 +4,7 @@ import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement } from '@angular/core';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import dayjs from 'dayjs/esm';
 import { Subject, Subscription, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -50,6 +51,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     let repositoryFileService: RepositoryFileService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let modalService: NgbModal;
+    let themeService: ThemeService;
 
     let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
     let getFileStub: jest.SpyInstance;
@@ -90,6 +92,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 repositoryFileService = debugElement.injector.get(RepositoryFileService);
                 modalService = debugElement.injector.get(NgbModal);
+                themeService = debugElement.injector.get(ThemeService);
 
                 subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 openModalStub = jest.spyOn(modalService, 'open');
@@ -584,6 +587,12 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.exercise = { problemStatement: updatedProblemStatement } as ProgrammingExercise;
         comp.renderUpdatedProblemStatement();
         expect(comp.problemStatement).toBe(updatedProblemStatement);
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
+    });
+
+    it('should update the markdown on a theme change', () => {
+        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
+        themeService.applyThemeExplicitly(Theme.DARK);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
     });
 

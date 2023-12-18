@@ -1,15 +1,18 @@
-<jhi-confirm-button
-    *ngIf="course.enrollmentConfirmationMessage!"
-    (onConfirm)="registerForCourse(course.id!)"
-    title="artemisApp.studentDashboard.enroll.enrollInCourse"
-    confirmationText="{{ course.enrollmentConfirmationMessage! }}"
-    confirmationTitle="artemisApp.studentDashboard.enroll.courseEnrollmentConfirmationTitle"
-    [confirmationTitleTranslationParams]="{ courseName: course.title! }"
-    [disabled]="loading"
-    [translateText]="false"
-    [textIsMarkdown]="true"
->
-</jhi-confirm-button>
-<button *ngIf="!course.enrollmentConfirmationMessage!" class="btn btn-primary" (click)="registerForCourse(course.id!)" [disabled]="loading">
-    {{ 'artemisApp.studentDashboard.enroll.enrollInCourse' | artemisTranslate }}
-</button>
+@if (course.enrollmentConfirmationMessage!) {
+    <jhi-confirm-button
+        (onConfirm)="registerForCourse(course.id!)"
+        title="artemisApp.studentDashboard.enroll.enrollInCourse"
+        confirmationText="{{ course.enrollmentConfirmationMessage! }}"
+        confirmationTitle="artemisApp.studentDashboard.enroll.courseEnrollmentConfirmationTitle"
+        [confirmationTitleTranslationParams]="{ courseName: course.title! }"
+        [disabled]="loading"
+        [translateText]="false"
+        [textIsMarkdown]="true"
+    >
+    </jhi-confirm-button>
+}
+@if (!course.enrollmentConfirmationMessage!) {
+    <button class="btn btn-primary" (click)="registerForCourse(course.id!)" [disabled]="loading">
+        {{ 'artemisApp.studentDashboard.enroll.enrollInCourse' | artemisTranslate }}
+    </button>
+}

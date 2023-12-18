@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.export.TextSubmissionExportService;
 import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -41,11 +42,14 @@ public class TextPlagiarismDetectionService {
 
     private final PlagiarismCacheService plagiarismCacheService;
 
+    private final AuthorizationCheckService authCheckService;
+
     public TextPlagiarismDetectionService(TextSubmissionExportService textSubmissionExportService, PlagiarismWebsocketService plagiarismWebsocketService,
-            PlagiarismCacheService plagiarismCacheService) {
+            PlagiarismCacheService plagiarismCacheService, AuthorizationCheckService authCheckService) {
         this.textSubmissionExportService = textSubmissionExportService;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -57,9 +61,10 @@ public class TextPlagiarismDetectionService {
      * @return List containing the latest text submission for every participation
      */
     public List<TextSubmission> textSubmissionsForComparison(TextExercise exerciseWithParticipationsAndSubmissions, int minimumScore, int minimumSize) {
-        var textSubmissions = exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().map(Participation::findLatestSubmission)
-                .filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof TextSubmission).map(submission -> (TextSubmission) submission)
-                .filter(submission -> minimumSize == 0 || submission.getText() != null && submission.countWords() >= minimumSize)
+        var textSubmissions = exerciseWithParticipationsAndSubmissions.getStudentParticipations().parallelStream().filter(participation -> participation.getStudent().isPresent())
+                .filter(participation -> !authCheckService.isAtLeastTeachingAssistantForExercise(exerciseWithParticipationsAndSubmissions, participation.getStudent().get()))
+                .map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).filter(submission -> submission instanceof TextSubmission)
+                .map(submission -> (TextSubmission) submission).filter(submission -> minimumSize == 0 || submission.getText() != null && submission.countWords() >= minimumSize)
                 .filter(submission -> minimumScore == 0
                         || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore)
                 .toList();

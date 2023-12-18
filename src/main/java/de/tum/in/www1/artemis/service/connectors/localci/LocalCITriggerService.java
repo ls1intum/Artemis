@@ -1,13 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import java.util.List;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
@@ -21,12 +17,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService;
 
-    private final LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService;
-
-    public LocalCITriggerService(LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService,
-            LocalCIProgrammingLanguageFeatureService localCIProgrammingLanguageFeatureService) {
+    public LocalCITriggerService(LocalCISharedBuildJobQueueService localCISharedBuildJobQueueService) {
         this.localCISharedBuildJobQueueService = localCISharedBuildJobQueueService;
-        this.localCIProgrammingLanguageFeatureService = localCIProgrammingLanguageFeatureService;
     }
 
     /**
@@ -36,8 +28,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
-    public void triggerBuild(ProgrammingExerciseParticipation participation) {
-        triggerBuild(participation, null);
+    public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
+        triggerBuild(participation, null, false);
     }
 
     /**
@@ -47,22 +39,16 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * @param commitHash    the commit hash of the commit that triggers the build. If it is null, the latest commit of the default branch will be built.
      * @throws LocalCIException if the build job could not be added to the queue.
      */
-    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash) {
-
+    @Override
+    public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHash, boolean isPushToTestRepository) throws LocalCIException {
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
-        ProjectType projectType = programmingExercise.getProjectType();
         long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
-
-        List<ProjectType> supportedProjectTypes = localCIProgrammingLanguageFeatureService.getProgrammingLanguageFeatures(programmingLanguage).projectTypes();
-
-        if (projectType != null && !supportedProjectTypes.contains(programmingExercise.getProjectType())) {
-            throw new LocalCIException("The project type " + programmingExercise.getProjectType() + " is not supported by the local CI.");
-        }
 
         // Exam exercises have a higher priority than normal exercises
         int priority = programmingExercise.isExamExercise() ? 1 : 2;
 
-        localCISharedBuildJobQueueService.addBuildJobInformation(participation.getBuildPlanId(), participation.getId(), commitHash, System.currentTimeMillis(), priority, courseId);
+        localCISharedBuildJobQueueService.addBuildJob(participation.getBuildPlanId(), participation.getId(), commitHash, System.currentTimeMillis(), priority, courseId,
+                isPushToTestRepository);
     }
+
 }

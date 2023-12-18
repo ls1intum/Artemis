@@ -6,19 +6,21 @@
         [isCourseMessagesPage]="isCourseMessagesPage"
         [isCommunicationPage]="isCommunicationPage"
         [lastReadDate]="lastReadDate"
+        [hasChannelModerationRights]="hasChannelModerationRights"
     >
     </jhi-answer-post-header>
-    <jhi-posting-content
-        *ngIf="!createAnswerPostModal.isInputOpen"
-        [content]="posting.content"
-        [isEdited]="!!posting.updatedDate"
-        [author]="posting.author"
-        [posting]="posting"
-        [isReply]="true"
-        (userReferenceClicked)="userReferenceClicked.emit($event)"
-        (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-    >
-    </jhi-posting-content>
+    @if (!createAnswerPostModal.isInputOpen) {
+        <jhi-posting-content
+            [content]="posting.content"
+            [isEdited]="!!posting.updatedDate"
+            [author]="posting.author"
+            [posting]="posting"
+            [isReply]="true"
+            (userReferenceClicked)="userReferenceClicked.emit($event)"
+            (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+        >
+        </jhi-posting-content>
+    }
     <ng-container #createEditAnswerPostContainer></ng-container>
     <jhi-answer-post-footer
         [isReadOnlyMode]="isReadOnlyMode"
