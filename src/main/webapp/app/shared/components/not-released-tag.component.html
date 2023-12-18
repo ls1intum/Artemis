@@ -1,9 +1,10 @@
-<span
-    class="not-released-tag badge bg-warning"
-    [class.ms-1]="!noMargin"
-    *ngIf="exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs())"
-    container="body"
-    ngbTooltip="{{ 'artemisApp.courseOverview.exerciseList.notReleasedTooltip' | artemisTranslate }}{{ exercise.releaseDate | artemisDate }}"
->
-    {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
-</span>
+@if (exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs())) {
+    <span
+        class="not-released-tag badge bg-warning"
+        [class.ms-1]="!noMargin"
+        container="body"
+        ngbTooltip="{{ 'artemisApp.courseOverview.exerciseList.notReleasedTooltip' | artemisTranslate }}{{ exercise.releaseDate | artemisDate }}"
+    >
+        {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
+    </span>
+}

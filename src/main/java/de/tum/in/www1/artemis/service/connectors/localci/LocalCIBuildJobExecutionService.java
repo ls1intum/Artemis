@@ -574,7 +574,7 @@ public class LocalCIBuildJobExecutionService {
             List<String> errors = error != null ? List.of(error) : List.of();
             failedTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, errors));
         }
-        else {
+        else if (!"skipped".equals(xmlStreamReader.getLocalName())) {
             // Add the successful test to the list of successful tests.
             successfulTests.add(new LocalCIBuildResult.LocalCITestJobDTO(name, List.of()));
         }
