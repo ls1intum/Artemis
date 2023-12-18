@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @Entity
 @Table(name = "iris_message_content")
 @Inheritance(strategy = InheritanceType.JOINED)
-@DiscriminatorColumn(name = "discriminator")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 // @formatter:off

@@ -4,7 +4,6 @@ import java.util.Objects;
 
 import javax.annotation.Nullable;
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
@@ -15,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @Entity
 @Table(name = "iris_text_message_content")
-@DiscriminatorValue(value = "TEXT")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisTextMessageContent extends IrisMessageContent {
 

@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
  */
 @Entity
 @Table(name = "iris_exercise_plan_message_content")
-@DiscriminatorValue(value = "EXERCISE_PLAN")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id", scope = IrisExercisePlan.class)
 public class IrisExercisePlan extends IrisMessageContent {
