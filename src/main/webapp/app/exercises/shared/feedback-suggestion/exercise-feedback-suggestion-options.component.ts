@@ -17,7 +17,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit {
 
     readonly assessmentType: AssessmentType;
 
-    isAthenaEnabled$: Observable<boolean> | undefined;
+    isAthenaEnabled$: Observable<boolean>;
     modulesAvailable: boolean;
     availableAthenaModules: string[];
 
