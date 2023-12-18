@@ -10,20 +10,10 @@
     @if (programmingExercise.customizeBuildPlanWithAeolus) {
         <div class="row m-1">
             @if (programmingExercise.windFile && programmingExercise.windFile.metadata && programmingExercise.windFile.metadata.docker) {
-                <div (change)="generatePreview()" class="mb-2">
-                    <label>
-                        <span jhiTranslate="artemisApp.programmingExercise.dockerImage">Docker Image</span>
-                    </label>
-                    <input
-                        required
-                        type="text"
-                        class="form-control"
-                        name="dockerImage"
-                        id="field_dockerImage"
-                        [(ngModel)]="programmingExercise.windFile.metadata.docker.image"
-                        (change)="generatePreview()"
-                    />
-                </div>
+                <jhi-programming-exercise-docker-image
+                    [dockerImage]="programmingExercise.windFile.metadata.docker.image"
+                    (dockerImageChange)="programmingExercise.windFile.metadata.docker.image = $event; generatePreview()"
+                />
             }
             <div class="col-3 col-md-3">
                 <div class="d-flex flex-column h-100 justify-content-between">

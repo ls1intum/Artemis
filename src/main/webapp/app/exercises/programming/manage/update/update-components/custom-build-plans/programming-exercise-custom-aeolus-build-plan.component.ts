@@ -8,7 +8,7 @@ import { AeolusPreview, AeolusService } from 'app/exercises/programming/shared/s
 @Component({
     selector: 'jhi-programming-exercise-custom-aeolus-build-plan',
     templateUrl: './programming-exercise-custom-aeolus-build-plan.component.html',
-    styleUrls: ['../../programming-exercise-form.scss'],
+    styleUrls: ['../../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChanges {
     @Input() programmingExercise: ProgrammingExercise;
@@ -76,6 +76,9 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
      * @private
      */
     loadAeolusTemplate() {
+        if (this.programmingExercise.id) {
+            return; // do not load template for existing exercises
+        }
         this.resetCustomBuildPlan();
         if (!this.programmingExercise.programmingLanguage) {
             return;

@@ -114,6 +114,7 @@
             "buildPlanEditor": "Build Plan Editor",
             "buildPlanFetchError": "Could not find a build plan for this exercise. This is expected for older exercises. Edit the build plan in the CI system or reset the build plan in Artemis to create a new one that is editable here.",
             "publishBuildPlanUrl": "Publish Build Plan",
+            "customizeBuildPlan": "Customize Build Plan",
             "customizeBuildPlanWithAeolus": "Customize Build Plan with Aeolus",
             "runActionAlways": "Always run, even if other actions fail",
             "workdir": "Working Directory",

@@ -1,0 +1,26 @@
+<div class="form-group">
+    <div class="form-check custom-checkbox">
+        <input class="form-check-input" type="checkbox" name="customizeBuildPlan" id="field_customizeBuildPlan" [(ngModel)]="programmingExercise.customizeBuildPlanWithAeolus" />
+        <label class="form-check-label custom-control-label" for="field_customizeBuildPlan" jhiTranslate="artemisApp.programmingExercise.customizeBuildPlan"
+            >Customize Build Plan
+        </label>
+        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeBuildPlansWithAeolusTooltip"></jhi-help-icon>
+        <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
+    </div>
+    @if (programmingExercise.customizeBuildPlanWithAeolus) {
+        <div class="row m-1">
+            @if (programmingExercise.windFile && programmingExercise.windFile.metadata && programmingExercise.windFile.metadata.docker) {
+                <jhi-programming-exercise-docker-image
+                    [dockerImage]="programmingExercise.windFile.metadata.docker.image"
+                    (dockerImageChange)="programmingExercise.windFile.metadata.docker.image = $event"
+                />
+            }
+            <div class="card col-12 col-md-12">
+                <div class="card-text">
+                    <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2">Script</label>
+                    <jhi-ace-editor #editor (textChanged)="codeChanged($event)" />
+                </div>
+            </div>
+        </div>
+    }
+</div>

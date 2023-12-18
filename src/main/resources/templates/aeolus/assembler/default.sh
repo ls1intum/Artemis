@@ -4,10 +4,10 @@ export AEOLUS_INITIAL_DIRECTORY=$(pwd)
 # step provide_environment_information
 # generated from step provide_environment_information
 # original type was script
-provide_environment_information () {
+provideenvironmentinformation () {
   echo '⚙️ executing provide_environment_information'
   #!/bin/bash
-  echo "--------------------Python versions--------------------"
+  echo "--------------------Python versions--------------------"a
   python3 --version
   pip3 --version
   echo "--------------------Contents of tests repository--------------------"
@@ -27,7 +27,7 @@ provide_environment_information () {
 # step prepare_makefile
 # generated from step prepare_makefile
 # original type was script
-prepare_makefile () {
+preparemakefile () {
   echo '⚙️ executing prepare_makefile'
   #!/usr/bin/env bash
   rm -f assignment/{GNUmakefile, Makefile, makefile}
@@ -38,7 +38,7 @@ prepare_makefile () {
 # step run_and_compile
 # generated from step run_and_compile
 # original type was script
-run_and_compile () {
+runandcompile () {
   echo '⚙️ executing run_and_compile'
   cd tests
   python3 compileTest.py ../assignment/
@@ -56,11 +56,13 @@ junit () {
 # move results
 aeolus_move_results () {
   echo '⚙️ moving results'
-  mkdir -p /aeolus-results
+  mkdir -p /var/tmp/aeolus-results
   shopt -s extglob
   cd $AEOLUS_INITIAL_DIRECTORY
   local _sources="assignment/result.xml"
-  mv $_sources /aeolus-results/assignment/result.xml
+  local _directory=$(dirname $_sources)
+  mkdir -p /var/tmp/aeolus-results/$_directory
+  mv $_sources /var/tmp/aeolus-results/assignment/result.xml
 }
 
 # always steps
@@ -78,12 +80,17 @@ final_aeolus_post_action () {
 # main function
 main () {
   local _current_lifecycle="${1}"
+    if [[ "${_current_lifecycle}" == "aeolus_sourcing" ]]; then
+    # just source to use the methods in the subshell, no execution
+    return 0
+  fi
+  local _scriptname=$0
   trap final_aeolus_post_action EXIT
-  provide_environment_information $_current_lifecycle
+  bash -c "source ${_scriptname} aeolus_sourcing;provideenvironmentinformation $_current_lifecycle"
   cd $AEOLUS_INITIAL_DIRECTORY
-  prepare_makefile $_current_lifecycle
+  bash -c "source ${_scriptname} aeolus_sourcing;preparemakefile $_current_lifecycle"
   cd $AEOLUS_INITIAL_DIRECTORY
-  run_and_compile $_current_lifecycle
+  bash -c "source ${_scriptname} aeolus_sourcing;runandcompile $_current_lifecycle"
   cd $AEOLUS_INITIAL_DIRECTORY
 }
 

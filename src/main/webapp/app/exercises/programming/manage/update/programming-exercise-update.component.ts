@@ -123,7 +123,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     public testwiseCoverageAnalysisSupported = false;
     public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
-    public customBuildPlansSupported = false;
+    public customBuildPlansSupported: string = '';
 
     // Additional options for import
     public recreateBuildPlans = false;
@@ -470,7 +470,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         });
 
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.customBuildPlansSupported = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI) || profileInfo?.activeProfiles.includes(PROFILE_AEOLUS);
+            if (profileInfo?.activeProfiles.includes(PROFILE_LOCALCI)) {
+                this.customBuildPlansSupported = PROFILE_LOCALCI;
+            }
+            if (profileInfo?.activeProfiles.includes(PROFILE_AEOLUS)) {
+                this.customBuildPlansSupported = PROFILE_AEOLUS;
+            }
         });
         this.defineSupportedProgrammingLanguages();
     }

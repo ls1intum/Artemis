@@ -415,7 +415,7 @@ public class LocalCIBuildJobExecutionService {
             throw new IllegalArgumentException("No windfile found for programming exercise " + programmingExercise.getId());
         }
         for (AeolusResult testResultPath : windfile.getResults()) {
-            testResultPaths.add(LocalCIContainerService.WORKING_DIRECTORY + "/testing-dir/" + testResultPath.getPath());
+            testResultPaths.add(LocalCIContainerService.AEOLUS_RESULT_DIRECTORY + "/" + testResultPath.getPath());
         }
         return testResultPaths;
     }

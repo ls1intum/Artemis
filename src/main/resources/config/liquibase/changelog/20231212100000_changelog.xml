@@ -6,23 +6,8 @@
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
     objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
     <changeSet id="20231212100000" author="reschandreas">
-        <createTable tableName="build_script">
-            <column autoIncrement="true" name="id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_build_script"/>
-            </column>
-            <column name="api" type="VARCHAR(10)"/>
+        <addColumn tableName="programming_exercise_details">
             <column name="build_script" type="longtext"/>
-            <column name="programming_exercise_details_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-
-        <addForeignKeyConstraint constraintName="fk_build_script_programming_exercise"
-                                 baseTableName="build_script"
-                                 baseColumnNames="programming_exercise_details_id"
-                                 referencedTableName="programming_exercise_details"
-                                 referencedColumnNames="id"
-                                 onDelete="CASCADE"/>
+        </addColumn>
     </changeSet>
-
 </databaseChangeLog>

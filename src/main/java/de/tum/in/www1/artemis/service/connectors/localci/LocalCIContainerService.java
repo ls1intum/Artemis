@@ -60,6 +60,8 @@ public class LocalCIContainerService {
 
     public static final String WORKING_DIRECTORY = "/var/tmp";
 
+    public static final String AEOLUS_RESULT_DIRECTORY = "/var/tmp/aeolus-results";
+
     @Value("${artemis.continuous-integration.build.images.java.default}")
     String dockerImage;
 
@@ -93,8 +95,8 @@ public class LocalCIContainerService {
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
                 // by the creation of a file "stop_container.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f " + WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
-                // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
+                // .withCmd("sh", "-c", "while [ ! -f " + WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
+                .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
     }
@@ -121,7 +123,7 @@ public class LocalCIContainerService {
         // container's
         // main process. The execution command can run concurrently with the main process. This setup with the ExecCreateCmdResponse gives us the ability to wait in code until the
         // command has finished before trying to extract the results.
-        return executeDockerCommand(containerId, true, true, "sh", WORKING_DIRECTORY + "/script.sh");
+        return executeDockerCommand(containerId, true, true, "bash", WORKING_DIRECTORY + "/script.sh");
     }
 
     /**
@@ -366,14 +368,7 @@ public class LocalCIContainerService {
 
         Windfile windfile = programmingExercise.getWindfile();
 
-        String customScript = buildScriptProvider.getScriptFor(programmingExercise);
-
-        if (windfile == null) {
-            windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
-        }
-        if (windfile != null) {
-            actions = windfile.getScriptActions();
-        }
+        String customScript = programmingExercise.getBuildScript();
 
         Path scriptsPath = Path.of(localCIBuildScriptBasePath);
 
@@ -392,30 +387,20 @@ public class LocalCIContainerService {
         StringBuilder buildScript = new StringBuilder();
         buildScript.append("#!/bin/bash\n");
         buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
-
-        actions.forEach(action -> {
-            String workdir = action.getWorkdir();
-            if (workdir != null) {
-                buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
-            }
-            buildScript.append(action.getScript()).append("\n");
-            if (workdir != null) {
-                buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
-            }
-        });
-
-        // Fall back to hardcoded scripts for old exercises without windfile
-        // *****************
-        // TODO: Delete once windfile templates can be used as fallbacks
-        if (actions.isEmpty()) {
-            // Windfile actions are not defined, use default build script
-            switch (programmingExercise.getProgrammingLanguage()) {
-                case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns, hasStaticCodeAnalysis);
-                case PYTHON -> scriptForPython(buildScript);
-                default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
-            }
-        }
-        // *****************
+        buildScript.append(customScript);
+        //
+        // // Fall back to hardcoded scripts for old exercises without windfile
+        // // *****************
+        // // TODO: Delete once windfile templates can be used as fallbacks
+        // if (actions.isEmpty()) {
+        // // Windfile actions are not defined, use default build script
+        // switch (programmingExercise.getProgrammingLanguage()) {
+        // case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns, hasStaticCodeAnalysis);
+        // case PYTHON -> scriptForPython(buildScript);
+        // default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
+        // }
+        // }
+        // // *****************
 
         try {
             FileUtils.writeStringToFile(buildScriptPath.toFile(), buildScript.toString(), StandardCharsets.UTF_8);

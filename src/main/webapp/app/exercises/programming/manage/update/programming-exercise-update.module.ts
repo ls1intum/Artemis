@@ -29,8 +29,10 @@ import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/m
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.module';
 import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
-import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-custom-aeolus-build-plan.component';
+import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
+import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
+import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-docker-image/programming-exercise-docker-image.component';
 
 @NgModule({
     imports: [
@@ -62,6 +64,8 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
         ProgrammingExerciseInformationComponent,
         ProgrammingExerciseDifficultyComponent,
         ProgrammingExerciseCustomAeolusBuildPlanComponent,
+        ProgrammingExerciseCustomBuildPlanComponent,
+        ProgrammingExerciseDockerImageComponent,
         ProgrammingExerciseLanguageComponent,
         ProgrammingExerciseGradingComponent,
         ProgrammingExerciseProblemComponent,

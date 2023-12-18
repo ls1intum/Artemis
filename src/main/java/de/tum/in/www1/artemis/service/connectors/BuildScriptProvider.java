@@ -9,25 +9,23 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
-import de.tum.in.www1.artemis.domain.BuildScript;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.repository.BuildScriptRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 
 @Service
+@Profile("aeolus | localci")
 public class BuildScriptProvider {
-
-    protected final BuildScriptRepository buildScriptRepository;
 
     private final Logger LOGGER = LoggerFactory.getLogger(BuildScriptProvider.class);
 
-    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -35,21 +33,25 @@ public class BuildScriptProvider {
 
     private final Map<String, String> scriptCache = new ConcurrentHashMap<>();
 
-    public BuildScriptProvider(BuildScriptRepository buildScriptRepository, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
-            ResourceLoaderService resourceLoaderService) {
-        this.buildScriptRepository = buildScriptRepository;
-        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+    public BuildScriptProvider(ProgrammingExerciseRepository programmingExerciseRepository, ResourceLoaderService resourceLoaderService) {
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.resourceLoaderService = resourceLoaderService;
-    }
-
-    protected String getScriptFromDatabase(ProgrammingExercise programmingExercise) {
-        var buildScript = buildScriptRepository.findByProgrammingExercisesId(programmingExercise.getId());
-        return buildScript.map(BuildScript::getBuildScript).orElse(null);
     }
 
     public String getTemplateScriptFor(ProgrammingExercise programmingExercise) throws IOException {
         return getScriptFor(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()),
                 programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.hasSequentialTestRuns(), programmingExercise.isTestwiseCoverageEnabled());
+    }
+
+    /**
+     * Stores the given script in the database for the given programming exercise
+     *
+     * @param programmingExercise the programming exercise for which the script should be stored
+     * @param script              the script to store
+     */
+    public void storeBuildScriptInDatabase(ProgrammingExercise programmingExercise, String script) {
+        programmingExercise.setBuildScript(script);
+        programmingExerciseRepository.save(programmingExercise);
     }
 
     /**
@@ -61,13 +63,15 @@ public class BuildScriptProvider {
      * @return the requested template as a bash script
      */
     public String getScriptFor(ProgrammingExercise programmingExercise) {
-        var buildScript = getScriptFromDatabase(programmingExercise);
+        var buildScript = programmingExercise.getBuildScript();
         if (buildScript != null) {
             return buildScript;
         }
         try {
-            return this.getScriptFor(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()),
+            buildScript = this.getScriptFor(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()),
                     programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.hasSequentialTestRuns(), programmingExercise.isTestwiseCoverageEnabled());
+            this.storeBuildScriptInDatabase(programmingExercise, buildScript);
+            return buildScript;
         }
         catch (IOException e) {
             LOGGER.error("Could not load template for programming exercise " + programmingExercise.getId(), e);

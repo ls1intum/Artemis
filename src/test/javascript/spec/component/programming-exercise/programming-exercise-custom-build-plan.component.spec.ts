@@ -3,7 +3,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { BuildAction, PlatformAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
-import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-custom-aeolus-build-plan.component';
+import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ElementRef, NgZone } from '@angular/core';
 import { ThemeService } from 'app/core/theme/theme.service';

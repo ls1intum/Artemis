@@ -112,6 +112,7 @@ export class ProgrammingExercise extends Exercise {
 
     public projectType?: ProjectType;
     public windFile?: WindFile;
+    public buildScript?: string;
     public buildPlanConfiguration?: string;
 
     public testwiseCoverageEnabled?: boolean;
