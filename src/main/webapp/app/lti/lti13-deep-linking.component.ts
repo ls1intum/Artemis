@@ -18,7 +18,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 export class Lti13DeepLinkingComponent implements OnInit {
     courseId: number;
     exercises: Exercise[];
-    selectedExercise?: Exercise;
+    selectedExercises?: Set<number> = new Set();
     course: Course;
 
     predicate = 'type';
@@ -98,12 +98,21 @@ export class Lti13DeepLinkingComponent implements OnInit {
     }
 
     /**
-     * Toggles the selected exercise.
+     * Toggles an exercise's selection based on its ID.
      *
-     * @param exercise The exercise to toggle.
+     * Adds the ID to selectedExercises if not present, removes it otherwise.
+     * Does nothing if the ID is undefined.
+     *
+     * @param exerciseId The exercise ID to toggle.
      */
-    toggleExercise(exercise: Exercise) {
-        this.selectedExercise = exercise;
+    selectExercise(exerciseId: number | undefined) {
+        if (exerciseId !== undefined) {
+            if (this.selectedExercises?.has(exerciseId)) {
+                this.selectedExercises?.delete(exerciseId);
+            } else {
+                this.selectedExercises?.add(exerciseId);
+            }
+        }
     }
 
     /**
@@ -112,8 +121,8 @@ export class Lti13DeepLinkingComponent implements OnInit {
      * @param exercise The exercise to check.
      * @returns True if the exercise is selected, false otherwise.
      */
-    isExerciseSelected(exercise: Exercise) {
-        return this.selectedExercise === exercise;
+    isExerciseSelected(exerciseId: number | undefined) {
+        return exerciseId !== undefined && this.selectedExercises?.has(exerciseId);
     }
 
     /**
@@ -121,11 +130,12 @@ export class Lti13DeepLinkingComponent implements OnInit {
      * If an exercise is selected, it sends a POST request to initiate deep linking.
      */
     sendDeepLinkRequest() {
-        if (this.selectedExercise) {
+        if (this.selectedExercises) {
             const ltiIdToken = this.sessionStorageService.retrieve('ltiIdToken') ?? '';
             const clientRegistrationId = this.sessionStorageService.retrieve('clientRegistrationId') ?? '';
+            const exerciseIds = Array.from(this.selectedExercises).join(',');
 
-            const httpParams = new HttpParams().set('exerciseId', this.selectedExercise.id!).set('ltiIdToken', ltiIdToken!).set('clientRegistrationId', clientRegistrationId!);
+            const httpParams = new HttpParams().set('exerciseIds', exerciseIds).set('ltiIdToken', ltiIdToken!).set('clientRegistrationId', clientRegistrationId!);
 
             this.http.post(`api/lti13/deep-linking/${this.courseId}`, null, { observe: 'response', params: httpParams }).subscribe({
                 next: (response) => {

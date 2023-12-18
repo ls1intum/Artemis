@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -64,14 +65,14 @@ public class LtiResource {
      * builds a deep linking response, and returns the target link URI in a JSON object.
      *
      * @param courseId             The identifier of the course for which the deep linking is being performed.
-     * @param exerciseId           The identifier of the exercise to be included in the deep linking response.
+     * @param exerciseIds          The identifier of the exercises to be included in the deep linking response.
      * @param ltiIdToken           The token holding the deep linking information.
      * @param clientRegistrationId The identifier online of the course configuration.
      * @return A ResponseEntity containing a JSON object with the 'targetLinkUri' property set to the deep linking response target link.
      */
     @PostMapping("/lti13/deep-linking/{courseId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseId") String exerciseId,
+    public ResponseEntity<String> lti13DeepLinking(@PathVariable Long courseId, @RequestParam(name = "exerciseIds") Set<Long> exerciseIds,
             @RequestParam(name = "ltiIdToken") String ltiIdToken, @RequestParam(name = "clientRegistrationId") String clientRegistrationId) throws ParseException {
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
@@ -83,7 +84,7 @@ public class LtiResource {
 
         OidcIdToken idToken = new OidcIdToken(ltiIdToken, null, null, SignedJWT.parse(ltiIdToken).getJWTClaimsSet().getClaims());
 
-        String targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, Long.valueOf(exerciseId));
+        String targetLink = ltiDeepLinkingService.performDeepLinking(idToken, clientRegistrationId, courseId, exerciseIds);
 
         JsonObject json = new JsonObject();
         json.addProperty("targetLinkUri", targetLink);
