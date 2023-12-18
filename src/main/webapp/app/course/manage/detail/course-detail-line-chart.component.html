@@ -3,7 +3,7 @@
         <a [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
             <h5>{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h5>
         </a>
-        <jhi-help-icon class="chart-explanation-tooltip" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation"></jhi-help-icon>
+        <jhi-help-icon class="chart-explanation-tooltip" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation" />
     </div>
     @if (startDateAlreadyPassed) {
         <ng-container>
@@ -11,10 +11,10 @@
                 <div class="d-flex justify-content-between me-3">
                     <div class="d-flex gap-1">
                         <button class="btn" [disabled]="startDateDisplayed" (click)="switchTimeSpan(LEFT)">
-                            <fa-icon [icon]="faArrowLeft"></fa-icon>
+                            <fa-icon [icon]="faArrowLeft" />
                         </button>
                         <button class="btn" [disabled]="showsCurrentWeek" (click)="switchTimeSpan(RIGHT)">
-                            <fa-icon [icon]="faArrowRight"></fa-icon>
+                            <fa-icon [icon]="faArrowRight" />
                         </button>
                     </div>
                     @if (course.startDate) {
@@ -76,7 +76,7 @@
                         </ngx-charts-line-chart>
                     } @else {
                         <h1 class="spinner">
-                            <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                            <fa-icon [icon]="faSpinner" [spin]="true" />
                         </h1>
                     }
                 </div>
