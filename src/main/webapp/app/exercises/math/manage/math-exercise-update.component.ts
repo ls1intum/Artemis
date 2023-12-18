@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MathExercise } from 'app/entities/math-exercise.model';
@@ -8,7 +8,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseMode, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { NgForm } from '@angular/forms';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -31,7 +30,7 @@ import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exerci
     selector: 'jhi-math-exercise-update',
     templateUrl: './math-exercise-update.component.html',
 })
-export class MathExerciseUpdateComponent implements OnInit {
+export class MathExerciseUpdateComponent implements OnInit, OnDestroy {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'Math';
 
@@ -53,9 +52,6 @@ export class MathExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
-
-    domainCommandsProblemStatement = [new KatexCommand()];
-    domainCommandsSampleSolution = [new KatexCommand()];
 
     // Icons
     faSave = faSave;

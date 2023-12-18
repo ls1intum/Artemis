@@ -5,7 +5,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faBook, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 
 import { MathExercise } from 'app/entities/math-exercise.model';
-import { MathExerciseService } from 'app/exercises/math/manage/math-exercise/math-exercise.service';
+import { MathExerciseService } from 'app/exercises/math/manage/math-exercise.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 
 @Component({

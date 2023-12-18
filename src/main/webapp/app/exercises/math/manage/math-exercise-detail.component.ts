@@ -2,6 +2,7 @@ import dayjs from 'dayjs/esm';
 import { Subscription, takeWhile } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
+import { SafeHtml } from '@angular/platform-browser';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import { Course } from 'app/entities/course.model';
@@ -9,17 +10,17 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { MathExercise } from 'app/entities/math-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
-import { MathExerciseService } from 'app/exercises/math/manage/math-exercise/math-exercise.service';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
+import { MathExerciseService } from 'app/exercises/math/manage/math-exercise.service';
 
 @Component({
-    selector: 'jhi-math-exercise-compose',
-    templateUrl: './math-exercise-compose.component.html',
+    selector: 'jhi-math-exercise-detail',
+    templateUrl: './math-exercise-detail.component.html',
 })
-export class MathExerciseComposeComponent implements OnInit, OnDestroy {
+export class MathExerciseDetailComponent implements OnInit, OnDestroy {
     readonly documentationType: DocumentationType = 'Math';
 
     readonly AssessmentType = AssessmentType;
@@ -29,6 +30,9 @@ export class MathExerciseComposeComponent implements OnInit, OnDestroy {
     mathExercise: MathExercise;
     course: Course | undefined;
     isExamExercise: boolean;
+    formattedProblemStatement: SafeHtml | null;
+    formattedExampleSolution: SafeHtml | null;
+    formattedGradingInstructions: SafeHtml | null;
 
     doughnutStats: ExerciseManagementStatisticsDto;
 
@@ -40,6 +44,7 @@ export class MathExerciseComposeComponent implements OnInit, OnDestroy {
         private eventManager: EventManager,
         private mathExerciseService: MathExerciseService,
         private route: ActivatedRoute,
+        private artemisMarkdown: ArtemisMarkdownService,
         private statisticsService: StatisticsService,
     ) {}
 
@@ -55,6 +60,10 @@ export class MathExerciseComposeComponent implements OnInit, OnDestroy {
         this.mathExercise = exercise;
         this.isExamExercise = !!this.mathExercise.exerciseGroup;
         this.course = this.isExamExercise ? this.mathExercise.exerciseGroup?.exam?.course : this.mathExercise.course;
+
+        this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.mathExercise.gradingInstructions);
+        this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.mathExercise.problemStatement);
+        // this.formattedExampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(this.mathExercise.exampleSolution);
     }
 
     /**
@@ -82,6 +91,4 @@ export class MathExerciseComposeComponent implements OnInit, OnDestroy {
     registerChangeInMathExercises() {
         this.eventSubscription = this.eventManager.subscribe('mathExerciseListModification', () => this.load(this.mathExercise.id!));
     }
-
-    protected readonly EditorMode = EditorMode;
 }

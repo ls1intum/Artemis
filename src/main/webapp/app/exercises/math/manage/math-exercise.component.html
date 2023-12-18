@@ -8,17 +8,17 @@
                             <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(mathExercises)" [ngModel]="allChecked" />
                         </th>
                     }
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release">Release</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due">Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="assessmentDueDate"><span jhiTranslate="artemisApp.exercise.assessmentDue">Assessment Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus">Bonus</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely">Included</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release">Release</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due">Due</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="assessmentDueDate"><span jhiTranslate="artemisApp.exercise.assessmentDue">Assessment Due</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="bonusPoints"><span jhiTranslate="artemisApp.exercise.bonus">Bonus</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely">Included</span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     @if (course.presentationScore !== 0) {
                         <th jhiSortBy="presentationScoreEnabled">
-                            <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon>
+                            <span jhiTranslate="artemisApp.exercise.presentationScoreEnabled.title">Presentation</span>&nbsp;<fa-icon [icon]="faSort" />
                         </th>
                     }
                     <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories">Categories</span></th>
@@ -57,7 +57,7 @@
                             <td class="align-middle">{{ mathExercise.presentationScoreEnabled }}</td>
                         }
                         <td class="d-md-table-cell align-middle">
-                            <jhi-exercise-categories [exercise]="mathExercise"></jhi-exercise-categories>
+                            <jhi-exercise-categories [exercise]="mathExercise" />
                         </td>
                         <td class="text-end align-middle">
                             <jhi-math-exercise-row-buttons [courseId]="courseId" [exercise]="mathExercise" />
@@ -77,7 +77,7 @@
                         [dialogError]="dialogError$"
                         id="delete-all-quiz"
                     >
-                        <fa-icon [icon]="faTimes"></fa-icon>
+                        <fa-icon [icon]="faTimes" />
                     </button>
                 }
             </div>

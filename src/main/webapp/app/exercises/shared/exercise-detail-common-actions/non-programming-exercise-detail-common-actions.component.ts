@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faChartBar, faListAlt, faTable, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { MathExerciseService } from 'app/exercises/math/manage/math-exercise/math-exercise.service';
+import { MathExerciseService } from 'app/exercises/math/manage/math-exercise.service';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',

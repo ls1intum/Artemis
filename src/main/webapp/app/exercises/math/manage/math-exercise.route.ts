@@ -15,7 +15,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { MathExerciseService } from './math-exercise.service';
 import { MathExerciseDetailComponent } from './math-exercise-detail.component';
 import { MathExerciseUpdateComponent } from './math-exercise-update.component';
-import { MathExerciseComposeComponent } from './math-exercise-compose.component';
+import { MathExerciseComposeComponent } from '../compose/math-exercise-compose.component';
 
 @Injectable({ providedIn: 'root' })
 export class MathExerciseResolver implements Resolve<MathExercise> {
