@@ -31,6 +31,16 @@ public class ScienceSetting extends DomainObject {
     @JsonIgnoreProperties("scienceSetting")
     private User user;
 
+    public ScienceSetting() {
+        // Default empty constructor
+    }
+
+    public ScienceSetting(User user, String settingId, boolean active) {
+        this.setUser(user);
+        this.setSettingId(settingId);
+        this.setActive(active);
+    }
+
     public String getSettingId() {
         return settingId;
     }

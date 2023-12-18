@@ -43,8 +43,8 @@ public class ScienceSettingsResource {
     }
 
     /**
-     * GET science-settings : Get all SciencenSettings for current user
-     *
+     * GET science-settings : Get all ScienceSettings for current user
+     * <p>
      * Fetches the ScienceSettings for the current user from the server.
      * If the user has not yet modified the settings there will be none in the database, then
      *
@@ -56,13 +56,12 @@ public class ScienceSettingsResource {
         User user = userRepository.getUser();
         log.debug("REST request to get all ScienceSettings for current user {}", user);
         Set<ScienceSetting> scienceSettings = scienceSettingRepository.findAllByUserId(user.getId());
-        log.info("Load science settings for current user done");
         return new ResponseEntity<>(scienceSettings, HttpStatus.OK);
     }
 
     /**
      * PUT science-settings : Save ScienceSettings for current user
-     *
+     * <p>
      * Saves the provided ScienceSettings to the server.
      *
      * @param scienceSettings which should be saved to the scienceSetting database.
