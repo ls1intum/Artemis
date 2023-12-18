@@ -54,7 +54,6 @@ describe('CourseRegistrationComponent', () => {
 
     it('should show registrable courses', () => {
         component.loadRegistrableCourses();
-
         expect(component.coursesToSelect).toHaveLength(1);
         expect(findAllForRegistrationStub).toHaveBeenCalledOnce();
     });
