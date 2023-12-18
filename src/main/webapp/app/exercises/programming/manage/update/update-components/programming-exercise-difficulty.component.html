@@ -4,15 +4,11 @@
     <div class="form-group">
         <label class="label-narrow" jhiTranslate="artemisApp.exercise.difficulty">Difficulty</label>
         <div>
-            <jhi-difficulty-picker [exercise]="programmingExercise"></jhi-difficulty-picker>
+            <jhi-difficulty-picker [exercise]="programmingExercise" />
         </div>
     </div>
     <div class="form-group">
-        <jhi-team-config-form-group
-            class="form-element"
-            [exercise]="programmingExercise"
-            [isImport]="programmingExerciseCreationConfig.isImportFromExistingExercise"
-        ></jhi-team-config-form-group>
+        <jhi-team-config-form-group class="form-element" [exercise]="programmingExercise" [isImport]="programmingExerciseCreationConfig.isImportFromExistingExercise" />
     </div>
     <div class="form-group">
         <div class="form-check">
@@ -25,7 +21,7 @@
                         class="text-danger"
                         [placement]="'top'"
                         ngbTooltip="{{ 'artemisApp.programmingExercise.allowOfflineIde.alert' | artemisTranslate }}"
-                    ></fa-icon>
+                    />
                 }
             </label>
         </div>
@@ -47,7 +43,7 @@
                             class="text-danger"
                             [placement]="'top'"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.allowOnlineEditor.alert' | artemisTranslate }}"
-                        ></fa-icon>
+                        />
                     }
                 </label>
             </div>

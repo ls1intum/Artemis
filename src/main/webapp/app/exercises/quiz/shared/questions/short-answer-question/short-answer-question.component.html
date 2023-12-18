@@ -80,7 +80,7 @@
             </ng-template>
             @if (shortAnswerQuestion.hint) {
                 <span class="label label-info" [ngbPopover]="renderedHint" placement="right auto" triggers="mouseenter:mouseleave">
-                    <fa-icon [icon]="farQuestionCircle"></fa-icon>
+                    <fa-icon [icon]="farQuestionCircle" />
                     <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
                 </span>
             }
@@ -90,7 +90,7 @@
             </ng-template>
             @if (shortAnswerQuestion.explanation && showResult) {
                 <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right auto" triggers="mouseenter:mouseleave">
-                    <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                    <fa-icon [icon]="faExclamationCircle" />
                     <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
                 </span>
             }
@@ -107,12 +107,7 @@
             <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
             <span class="show-explanation">{{ score || 0 }}/{{ shortAnswerQuestion.points }}</span>
             <span class="show-explanation">
-                <jhi-quiz-scoring-infostudent-modal
-                    [score]="score"
-                    [question]="shortAnswerQuestion"
-                    [shortAnswerText]="submittedTexts"
-                    [questionIndex]="questionIndex"
-                ></jhi-quiz-scoring-infostudent-modal>
+                <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="shortAnswerQuestion" [shortAnswerText]="submittedTexts" [questionIndex]="questionIndex" />
             </span>
         </div>
     }

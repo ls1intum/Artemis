@@ -58,6 +58,7 @@
             "extends": ["plugin:@angular-eslint/template/recommended", "plugin:prettier/recommended"],
             "rules": {
                 "@angular-eslint/template/prefer-control-flow": "error",
+                "@angular-eslint/template/prefer-self-closing-tags": "warn",
                 "prettier/prettier": [
                     "error",
                     {

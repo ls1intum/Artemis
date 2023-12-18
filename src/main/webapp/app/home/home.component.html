@@ -103,7 +103,7 @@
                                 type="submit"
                             >
                                 @if (isSubmittingLogin) {
-                                    <span class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon></span>
+                                    <span class="me-1"><fa-icon [icon]="faCircleNotch" [spin]="true" /></span>
                                 }
                                 <span jhiTranslate="login.form.button"> Sign in </span>
                             </button>
@@ -159,7 +159,7 @@
                             [rememberMe]="rememberMe"
                             [saml2Profile]="profileInfo!.saml2!"
                             class="d-block text-center"
-                        ></jhi-saml2-login>
+                        />
                     </div>
                 </div>
             </div>

@@ -30,7 +30,7 @@
                         [ngbTooltip]="'artemisApp.examParticipation.examOverview' | artemisTranslate"
                         (click)="changePage(true, -1)"
                     >
-                        <fa-icon [icon]="faBars"></fa-icon>
+                        <fa-icon [icon]="faBars" />
                     </button>
                 }
             </div>
@@ -56,7 +56,7 @@
                             [ngbTooltip]="!examTimeLineView ? ('artemisApp.examParticipation.' + getExerciseButtonTooltip(exercise) | artemisTranslate) : ''"
                             (click)="changePage(false, i, false)"
                         >
-                            <fa-icon [icon]="icon"></fa-icon>
+                            <fa-icon [icon]="icon" />
                         </button>
                         <div class="exerciseIndex">{{ i + 1 }}</div>
                     </div>
@@ -88,12 +88,7 @@
                     </button>
                 </div>
                 <div class="ms-3 mb-2">
-                    <jhi-exam-timer
-                        class="d-flex justify-content-end mx-0"
-                        [criticalTime]="criticalTime"
-                        [endDate]="endDate"
-                        (timerAboutToEnd)="triggerExamAboutToEnd()"
-                    ></jhi-exam-timer>
+                    <jhi-exam-timer class="d-flex justify-content-end mx-0" [criticalTime]="criticalTime" [endDate]="endDate" (timerAboutToEnd)="triggerExamAboutToEnd()" />
                 </div>
             </div>
         }

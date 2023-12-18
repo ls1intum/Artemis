@@ -1,9 +1,9 @@
 <ng-template #iconMenu>
     <div id="navbar-icon-menu" [ngClass]="{ evenly: isNavbarNavVertical, 'in-menu': iconsMovedToMenu }">
         @if (currAccount && !isExamActive) {
-            <jhi-notification-sidebar></jhi-notification-sidebar>
+            <jhi-notification-sidebar />
         }
-        <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu ? 'bottom' : 'bottom-right'"></jhi-theme-switch>
+        <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu ? 'bottom' : 'bottom-right'" />
         @if (isAuthenticated()) {
             <div
                 ngbDropdown
@@ -17,7 +17,7 @@
                 <a class="guided-tour-account nav-link dropdown-toggle" ngbDropdownToggle id="account-menu">
                     @if (!getImageUrl()) {
                         <span>
-                            <fa-icon [icon]="faUser"></fa-icon>
+                            <fa-icon [icon]="faUser" />
                             @if (!currAccount) {
                                 <span jhiTranslate="global.menu.account.main">Account</span>
                             }
@@ -35,7 +35,7 @@
                 <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
                     <li>
                         <a class="dropdown-item" [routerLink]="['/user-settings']" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faCog" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faCog" [fixedWidth]="true" />
                             <span>{{ 'global.menu.settings' | artemisTranslate }}</span>
                         </a>
                     </li>
@@ -67,7 +67,7 @@
                     @if (isRegistrationEnabled) {
                         <li>
                             <a class="dropdown-item" routerLink="/account/settings" routerLinkActive="active" (click)="collapseNavbar()">
-                                <fa-icon [icon]="faWrench" [fixedWidth]="true"></fa-icon>
+                                <fa-icon [icon]="faWrench" [fixedWidth]="true" />
                                 <span jhiTranslate="global.menu.account.settings">Settings</span>
                             </a>
                         </li>
@@ -75,7 +75,7 @@
                     @if (passwordResetEnabled) {
                         <li>
                             <a class="dropdown-item" routerLink="/account/password" routerLinkActive="active" (click)="collapseNavbar()">
-                                <fa-icon [icon]="faLock" [fixedWidth]="true"></fa-icon>
+                                <fa-icon [icon]="faLock" [fixedWidth]="true" />
                                 <span jhiTranslate="global.menu.account.password">Password</span>
                             </a>
                         </li>
@@ -83,7 +83,7 @@
                     <li>
                         @if (currAccount) {
                             <a class="dropdown-item" (click)="logout()" id="logout">
-                                <fa-icon [icon]="faSignOutAlt" [fixedWidth]="true"></fa-icon>
+                                <fa-icon [icon]="faSignOutAlt" [fixedWidth]="true" />
                                 <span jhiTranslate="global.menu.account.logout">Sign out</span>
                             </a>
                         }
@@ -111,11 +111,11 @@
             </div>
         </a>
         <div class="indicators">
-            <jhi-connection-warning class="align-self-center"></jhi-connection-warning>
-            <jhi-loading-notification class="align-self-center"></jhi-loading-notification>
+            <jhi-connection-warning class="align-self-center" />
+            <jhi-loading-notification class="align-self-center" />
         </div>
         @if (!iconsMovedToMenu && isCollapsed) {
-            <ng-container *ngTemplateOutlet="iconMenu"></ng-container>
+            <ng-container *ngTemplateOutlet="iconMenu" />
         }
         <div class="toggler-wrapper">
             <a
@@ -127,7 +127,7 @@
                 aria-label="Toggle navigation"
                 (click)="toggleNavbar()"
             >
-                <fa-icon [icon]="faBars"></fa-icon>
+                <fa-icon [icon]="faBars" />
             </a>
         </div>
     </div>
@@ -137,7 +137,7 @@
                 <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                     <a class="guided-tour-overview nav-link" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
                         <span>
-                            <fa-icon [icon]="faThLarge"></fa-icon>
+                            <fa-icon [icon]="faThLarge" />
                             <span jhiTranslate="global.menu.overview">Course Overview</span>
                         </span>
                     </a>
@@ -153,7 +153,7 @@
                 @if (!isExamActive) {
                     <a class="guided-tour-course-admin nav-link" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
                         <span>
-                            <fa-icon [icon]="faThList"></fa-icon>
+                            <fa-icon [icon]="faThList" />
                             <span jhiTranslate="global.menu.course">Course Management</span>
                         </span>
                     </a>
@@ -170,7 +170,7 @@
                 @if (!isExamActive) {
                     <a class="guided-tour-admin nav-link dropdown-toggle" ngbDropdownToggle id="admin-menu">
                         <span>
-                            <fa-icon [icon]="faUserPlus"></fa-icon>
+                            <fa-icon [icon]="faUserPlus" />
                             <span jhiTranslate="global.menu.admin.main">Server Administration</span>
                         </span>
                     </a>
@@ -178,86 +178,86 @@
                 <ul class="dropdown-menu dropdown-menu-index" ngbDropdownMenu>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/upcoming-exams-and-exercises" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faBookOpen" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faBookOpen" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.upcomingExamsAndExercises">Upcoming Exams & Exercises</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/user-management" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faUser" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faUser" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.userManagement">User management</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/organization-management" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faUniversity" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faUniversity" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.organizationManagement">Organization management</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/system-notification-management" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faBell" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faBell" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.systemNotifications">System notifications</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/feature-toggles" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faToggleOn" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faToggleOn" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.featureToggles">Feature Toggles</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/user-statistics" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faEye" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faEye" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.statistics">User statistics</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/metrics" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faTachometerAlt" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faTachometerAlt" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.metrics">Metrics</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/privacy-statement" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faLock" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faLock" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.privacyStatement">Privacy statement</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/imprint" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faStamp" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faStamp" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.imprint">Imprint</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/health" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faHeart" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faHeart" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.health">Health</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/configuration" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faList" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faList" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.configuration">Configuration</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/audits" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faBell" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faBell" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.audits">Audits</span>
                         </a>
                     </li>
                     <li>
                         <a class="dropdown-item" routerLink="/admin/logs" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faTasks" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="faTasks" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.logs">Logs</span>
                         </a>
                     </li>
                     @if (openApiEnabled) {
                         <li>
                             <a class="dropdown-item" href="api.html" target="_blank" rel="noreferrer noopener" (click)="collapseNavbar()">
-                                <fa-icon [icon]="faBook" [fixedWidth]="true"></fa-icon>
+                                <fa-icon [icon]="faBook" [fixedWidth]="true" />
                                 <span jhiTranslate="global.menu.admin.apidocs">API</span>
                             </a>
                         </li>
@@ -265,7 +265,7 @@
                     @if (irisEnabled) {
                         <li>
                             <a class="dropdown-item" routerLink="/admin/iris" routerLinkActive="active" (click)="collapseNavbar()">
-                                <fa-icon [icon]="faRobot" [fixedWidth]="true"></fa-icon>
+                                <fa-icon [icon]="faRobot" [fixedWidth]="true" />
                                 <span jhiTranslate="global.menu.admin.iris">Iris Settings</span>
                             </a>
                         </li>
@@ -277,7 +277,7 @@
                 <li ngbDropdown class="nav-item dropdown pointer" display="dynamic">
                     <a class="nav-link dropdown-toggle" ngbDropdownToggle id="languagesnavBarDropdown">
                         <span>
-                            <fa-icon [icon]="faFlag"></fa-icon>
+                            <fa-icon [icon]="faFlag" />
                             <span jhiTranslate="global.menu.language">Language</span>
                         </span>
                     </a>
@@ -292,11 +292,11 @@
             }
         </ul>
         @if (!isCollapsed || iconsMovedToMenu) {
-            <ng-container *ngTemplateOutlet="iconMenu"></ng-container>
+            <ng-container *ngTemplateOutlet="iconMenu" />
         }
     </div>
 </nav>
-<jhi-system-notification></jhi-system-notification>
+<jhi-system-notification />
 <div class="breadcrumb-container">
     @if (!isExamActive && breadcrumbs && breadcrumbs.length > 0) {
         <div>
@@ -329,4 +329,4 @@
         </div>
     }
 </div>
-<jhi-guided-tour></jhi-guided-tour>
+<jhi-guided-tour />

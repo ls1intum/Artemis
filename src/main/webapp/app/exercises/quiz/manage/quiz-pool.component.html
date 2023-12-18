@@ -18,7 +18,7 @@
                 #quizPoolQuestionMapping
                 (onQuizGroupUpdated)="handleUpdate()"
                 (onQuizQuestionDropped)="handleUpdate()"
-            ></jhi-quiz-pool-mapping>
+            />
         </div>
         <div class="row px-3">
             <div class="form-check custom-control custom-checkbox">
@@ -91,7 +91,7 @@
                         </ng-template>
                         @if (!isValid) {
                             <span class="badge bg-danger" [ngbTooltip]="tooltipTranslate" tooltip-placement="top-right auto">
-                                <fa-icon [icon]="faExclamationCircle"></fa-icon>
+                                <fa-icon [icon]="faExclamationCircle" />
                                 <span jhiTranslate="artemisApp.quizExercise.edit.invalidInput"></span>
                                 <span>({{ invalidReasons.length }})</span>
                             </span>

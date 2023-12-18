@@ -40,7 +40,7 @@
                 @if (isLoading) {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 }
-                <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
+                <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
                 <span jhiTranslate="artemisApp.studentExams.unlockAllRepositories">Unlock all repositories</span>
             </button>
         }
@@ -49,14 +49,14 @@
                 @if (isLoading) {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                 }
-                <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
+                <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
                 <span jhiTranslate="artemisApp.studentExams.lockAllRepositories">Lock all repositories</span>
             </button>
         }
     </div>
     <div class="d-flex align-items-center gap-3 mt-2 mb-3 flex-wrap">
         @if (!isLoading) {
-            <jhi-student-exam-status [isTestExam]="isTestExam" [hasStudentsWithoutExam]="hasStudentsWithoutExam"></jhi-student-exam-status>
+            <jhi-student-exam-status [isTestExam]="isTestExam" [hasStudentsWithoutExam]="hasStudentsWithoutExam" />
         }
         @if (exercisePreparationStatus) {
             <div class="d-flex flex-wrap flex-grow-1 align-items-center gap-1">
@@ -70,7 +70,7 @@
                             [animated]="true"
                             [height]="'2em'"
                             type="success"
-                        ></ngb-progressbar>
+                        />
                     </div>
                     <div class="d-flex justify-content-center gap-1 w-100 z-1 position-relative ms-2 me-2">
                         <span
@@ -131,7 +131,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.id"> ID </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('id')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('id')" />
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -144,7 +144,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper username" (click)="controls.onSort('user.name')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.student"> Student </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('user.name')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('user.name')" />
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -164,15 +164,15 @@
                         @if (isTestExam) {
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.usedWorkingTime"> Used Working time </span>
                         }
-                        <fa-icon [icon]="controls.iconForSortPropField('workingTime')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('workingTime')" />
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                     @if (isTestExam) {
-                        <jhi-testexam-working-time [studentExam]="row"></jhi-testexam-working-time>
+                        <jhi-testexam-working-time [studentExam]="row" />
                     }
                     @if (!isTestExam) {
-                        <jhi-student-exam-working-time [studentExam]="row"></jhi-student-exam-working-time>
+                        <jhi-student-exam-working-time [studentExam]="row" />
                     }
                 </ng-template>
             </ngx-datatable-column>
@@ -180,7 +180,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('started')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.started"> Started </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('started')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('started')" />
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -191,7 +191,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submitted')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submitted"> Submitted </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('submitted')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('submitted')" />
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -202,7 +202,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('submissionDate')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.submissionDate"> Submission Date </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('submissionDate')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('submissionDate')" />
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">
@@ -213,7 +213,7 @@
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('numberOfExamSessions')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.examSessions"> Sessions </span>
-                        <fa-icon [icon]="controls.iconForSortPropField('numberOfExamSessions')"></fa-icon>
+                        <fa-icon [icon]="controls.iconForSortPropField('numberOfExamSessions')" />
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value">

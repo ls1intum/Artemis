@@ -14,12 +14,12 @@
                                 class="btn btn-primary"
                                 [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'tutorial-free-days']"
                             >
-                                <fa-icon [icon]="faUmbrellaBeach"></fa-icon>
+                                <fa-icon [icon]="faUmbrellaBeach" />
                                 <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons' | artemisTranslate }}</span>
                             </a>
                         }
                         <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'tutorial-groups', 'create']">
-                            <fa-icon [icon]="faPlus"></fa-icon>
+                            <fa-icon [icon]="faPlus" />
                             <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate }}</span>
                         </a>
                         <div ngbDropdown class="d-inline-block">
@@ -41,7 +41,7 @@
                                     ngbTooltip="{{ 'artemisApp.tutorialGroupImportDialog.explanations.description' | artemisTranslate }}"
                                     [courseId]="courseId"
                                     (importFinished)="loadTutorialGroups()"
-                                ></jhi-tutorial-groups-import-button>
+                                />
                             </div>
                         </div>
                     </div>
@@ -63,8 +63,7 @@
                             (tutorialGroupDeleted)="loadTutorialGroups()"
                             (registrationsChanged)="loadTutorialGroups()"
                             (attendanceUpdated)="loadTutorialGroups()"
-                        >
-                        </jhi-tutorial-group-row-buttons>
+                        />
                     </ng-template>
                 </jhi-tutorial-groups-table>
             } @else {
@@ -81,7 +80,7 @@
                                     ngbTooltip="{{ 'artemisApp.tutorialGroupImportDialog.explanations.description' | artemisTranslate }}"
                                     [courseId]="courseId"
                                     (importFinished)="loadTutorialGroups()"
-                                ></jhi-tutorial-groups-import-button>
+                                />
                             }
                         </div>
                     </div>
@@ -89,10 +88,10 @@
             }
         </div>
         <div class="col-12 col-xl-2">
-            <jhi-tutorial-groups-course-information [tutorialGroups]="tutorialGroups"></jhi-tutorial-groups-course-information>
+            <jhi-tutorial-groups-course-information [tutorialGroups]="tutorialGroups" />
             @if (tutorialGroupFreeDays && tutorialGroupFreeDays.length > 0) {
                 <div class="mt-1">
-                    <jhi-tutorial-group-free-days-overview [timeZone]="course.timeZone" [tutorialGroupFreeDays]="tutorialGroupFreeDays"></jhi-tutorial-group-free-days-overview>
+                    <jhi-tutorial-group-free-days-overview [timeZone]="course.timeZone" [tutorialGroupFreeDays]="tutorialGroupFreeDays" />
                 </div>
             }
         </div>

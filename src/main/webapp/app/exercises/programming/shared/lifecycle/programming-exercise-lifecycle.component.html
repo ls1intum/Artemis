@@ -27,10 +27,10 @@
             <div class="test-schedule-date px-1">
                 <div class="test-schedule-date-title test-schedule-date-title-small-button">
                     <span jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
-                    <jhi-help-icon text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip" />
                 </div>
                 <div class="btn btn-light scheduled-test btn-lifecycle" [class.btn-lifecycle--disabled]="readOnly">
-                    <fa-icon [icon]="faCogs" size="lg"></fa-icon>
+                    <fa-icon [icon]="faCogs" size="lg" />
                 </div>
             </div>
             @if (!isExamMode) {
@@ -70,15 +70,14 @@
                                         ? 'assessmentTypeTooltipManualAssessment'
                                         : 'assessmentTypeTooltipAutomaticAssessment')
                                 "
-                            >
-                            </jhi-help-icon>
+                            />
                         </div>
                         <div
                             class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle"
                             [class.btn-lifecycle--disabled]="readOnly"
                             (click)="!readOnly && toggleAssessmentType()"
                         >
-                            <fa-icon [icon]="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC ? faUserCheck : faUserSlash" size="lg"></fa-icon>
+                            <fa-icon [icon]="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC ? faUserCheck : faUserSlash" size="lg" />
                         </div>
                         <div class="mt-2">
                             {{
@@ -135,7 +134,7 @@
                 for="allowComplaintsForAutomaticAssessment"
                 jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"
             ></label>
-            <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentTooltip'"></jhi-help-icon>
+            <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessmentTooltip'" />
         </div>
     }
     @if (!isExamMode) {
@@ -155,7 +154,7 @@
                 for="allowManualFeedbackRequests"
                 jhiTranslate="artemisApp.programmingExercise.timeline.manualFeedbackRequests"
             ></label>
-            <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'"></jhi-help-icon>
+            <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.manualFeedbackRequestsTooltip'" />
         </div>
     }
     <div class="form-check">
@@ -169,7 +168,7 @@
             checked
         />
         <label class="form-control-label" for="field_showTestNamesToStudents" jhiTranslate="artemisApp.programmingExercise.showTestNamesToStudents"></label>
-        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'"></jhi-help-icon>
+        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.showTestNamesToStudentsTooltip'" />
     </div>
     <div class="form-check">
         <input
@@ -187,7 +186,7 @@
             for="releaseTestsWithExampleSolution"
             jhiTranslate="artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolution"
         ></label>
-        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'"></jhi-help-icon>
+        <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.releaseTestsWithExampleSolutionTooltip'" />
     </div>
     @if ((isAthenaEnabled$ | async) && !isExamMode) {
         <div class="form-check">
@@ -206,7 +205,7 @@
                 for="feedbackSuggestionsEnabled"
                 jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"
             ></label>
-            <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'"></jhi-help-icon>
+            <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'" />
         </div>
     }
 </div>

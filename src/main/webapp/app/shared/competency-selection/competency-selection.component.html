@@ -7,7 +7,7 @@
         }
         @if (labelTooltip) {
             <fa-stack class="text-secondary icon-full-size" [ngbTooltip]="labelTooltip">
-                <fa-icon [icon]="faQuestionCircle" stackItemSize="1x"></fa-icon>
+                <fa-icon [icon]="faQuestionCircle" stackItemSize="1x" />
             </fa-stack>
         }
         @if (isLoading) {
@@ -30,7 +30,7 @@
                 @for (competency of competencies; track competency) {
                     <option [ngValue]="competency">
                         @if (competency.taxonomy) {
-                            <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true"></fa-icon>
+                            <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" />
                         }
                         {{ competency.title }}
                     </option>

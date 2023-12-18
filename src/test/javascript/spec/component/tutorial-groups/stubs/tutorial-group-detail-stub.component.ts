@@ -7,7 +7,7 @@ import { Course } from 'app/entities/course.model';
     template: `
         <div>
             <div>
-                <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
+                <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }" />
             </div>
         </div>
     `,

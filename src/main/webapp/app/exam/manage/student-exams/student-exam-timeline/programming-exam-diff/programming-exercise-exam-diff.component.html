@@ -3,7 +3,7 @@
     <span
         >[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
         @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+            <jhi-included-in-score-badge [includedInOverallScore]="exercise.includedInOverallScore" />
         }
     </span>
 </h4>
@@ -37,7 +37,7 @@
                     [addedLineCount]="addedLineCount"
                     [removedLineCount]="removedLineCount"
                     ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipExamTimeline' | artemisTranslate }}"
-                ></jhi-git-diff-line-stat>
+                />
                 @if (addedLineCount > 0 || removedLineCount > 0) {
                     <jhi-button
                         [featureToggle]="FeatureToggle.ProgrammingExercises"
@@ -48,7 +48,7 @@
                         [tooltip]="'artemisApp.programmingExercise.diffReport.tooltipBetweenSubmissions'"
                         (onClick)="showGitDiff()"
                         class="ms-2"
-                    ></jhi-button>
+                    />
                 }
             </div>
         </dd>

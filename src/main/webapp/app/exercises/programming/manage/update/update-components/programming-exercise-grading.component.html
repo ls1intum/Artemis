@@ -4,10 +4,7 @@
     <div class="form-group">
         <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScore' + (programmingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate }}</label>
         <div>
-            <jhi-included-in-overall-score-picker
-                [(includedInOverallScore)]="programmingExercise.includedInOverallScore"
-                [allowNotIncluded]="true"
-            ></jhi-included-in-overall-score-picker>
+            <jhi-included-in-overall-score-picker [(includedInOverallScore)]="programmingExercise.includedInOverallScore" [allowNotIncluded]="true" />
         </div>
     </div>
     <div class="row">
@@ -64,7 +61,7 @@
                 class="text-secondary"
                 placement="auto"
                 ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | artemisTranslate }}"
-            ></fa-icon>
+            />
             <div class="input-group">
                 <div class="input-group-prepend">
                     <span class="input-group-text">%</span>
@@ -89,11 +86,7 @@
         </div>
     }
     <div class="form-group">
-        <jhi-submission-policy-update
-            #submissionPolicyForm
-            [editable]="!programmingExerciseCreationConfig.isEdit"
-            [programmingExercise]="programmingExercise"
-        ></jhi-submission-policy-update>
+        <jhi-submission-policy-update #submissionPolicyForm [editable]="!programmingExerciseCreationConfig.isEdit" [programmingExercise]="programmingExercise" />
         @if (programmingExerciseCreationConfig.isEdit) {
             <ngb-alert [dismissible]="false" [type]="'info'">
                 <span>{{ 'artemisApp.programmingExercise.submissionPolicy.editInGradingInformation' | artemisTranslate }}</span>
@@ -106,22 +99,17 @@
     <div class="form-group">
         <div>
             <label jhiTranslate="artemisApp.programmingExercise.timeline.timelineLabel" for="timeline"> Timeline for the whole programming exercise </label>
-            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeline.timelineTooltip"></jhi-help-icon>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeline.timelineTooltip" />
         </div>
-        <jhi-programming-exercise-lifecycle
-            id="timeline"
-            [exercise]="programmingExercise"
-            [isExamMode]="programmingExerciseCreationConfig.isExamMode"
-            [readOnly]="false"
-        ></jhi-programming-exercise-lifecycle>
+        <jhi-programming-exercise-lifecycle id="timeline" [exercise]="programmingExercise" [isExamMode]="programmingExerciseCreationConfig.isExamMode" [readOnly]="false" />
     </div>
     @if (programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
-            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise"></jhi-grading-instructions-details>
+            <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise" />
         </div>
     }
-    <jhi-presentation-score-checkbox [exercise]="programmingExercise"></jhi-presentation-score-checkbox>
+    <jhi-presentation-score-checkbox [exercise]="programmingExercise" />
     @if (programmingExerciseCreationConfig.showSummary) {
         <h6>{{ getGradingSummary() }}</h6>
     }

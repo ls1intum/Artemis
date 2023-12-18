@@ -14,11 +14,7 @@
             </ngb-alert>
         }
         @if (programmingExerciseCreationConfig.isImportFromExistingExercise) {
-            <jhi-programming-exercise-instructions
-                [exercise]="programmingExercise"
-                [participation]="programmingExercise.templateParticipation!"
-                [personalParticipation]="false"
-            ></jhi-programming-exercise-instructions>
+            <jhi-programming-exercise-instructions [exercise]="programmingExercise" [participation]="programmingExercise.templateParticipation!" [personalParticipation]="false" />
         }
         @if (
             programmingExerciseCreationConfig.problemStatementLoaded &&
@@ -33,7 +29,7 @@
                 (hasUnsavedChanges)="programmingExerciseCreationConfig.hasUnsavedChanges = $event"
                 [forceRender]="programmingExerciseCreationConfig.rerenderSubject"
                 class="form__editable-instructions"
-            ></jhi-programming-exercise-editable-instructions>
+            />
         }
     </div>
     @if (!programmingExerciseCreationConfig.isExamMode) {
@@ -44,7 +40,7 @@
                 [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"
                 [(ngModel)]="programmingExercise.competencies"
                 name="competencies"
-            ></jhi-competency-selection>
+            />
         </div>
     }
 </section>

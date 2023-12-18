@@ -2,7 +2,7 @@
     <div class="mb-2 test-schedule-date-title">
         <span [jhiTranslate]="label"></span>
         @if (tooltipText) {
-            <jhi-help-icon [text]="tooltipText"></jhi-help-icon>
+            <jhi-help-icon [text]="tooltipText" />
         }
     </div>
     <div class="invisible-date-time-picker">
@@ -10,7 +10,7 @@
     </div>
     @if (!selectedDate && readOnly) {
         <button type="button" class="btn btn-light btn-lifecycle" [class.btn-lifecycle--deactivated]="!selectedDate" [class.btn-lifecycle--disabled]="readOnly">
-            <fa-icon class="icon-calendar-plus" [icon]="faCalendarPlus" size="2x"></fa-icon>
+            <fa-icon class="icon-calendar-plus" [icon]="faCalendarPlus" size="2x" />
         </button>
     }
     @if (!selectedDate && !readOnly) {
@@ -21,18 +21,18 @@
             [class.btn-lifecycle--deactivated]="!selectedDate"
             [class.btn-lifecycle--disabled]="readOnly"
         >
-            <fa-icon class="icon-calendar-plus" [icon]="faCalendarPlus" size="2x"></fa-icon>
+            <fa-icon class="icon-calendar-plus" [icon]="faCalendarPlus" size="2x" />
         </button>
     }
     @if (selectedDate && readOnly) {
         <button (click)="!readOnly && resetDate()" type="button" class="btn btn-light btn-lifecycle btn-lifecycle--disabled">
-            <fa-icon class="icon-static" [icon]="faCalendarCheck" size="2x"></fa-icon>
+            <fa-icon class="icon-static" [icon]="faCalendarCheck" size="2x" />
         </button>
     }
     @if (selectedDate && !readOnly) {
         <button (click)="!readOnly && resetDate()" type="button" class="btn btn-light btn-lifecycle calendar-event-toggle">
-            <fa-icon class="icon-static" [icon]="faCalendarCheck" size="2x"></fa-icon>
-            <fa-icon class="icon-remove" [icon]="faCalendarMinus" size="2x"></fa-icon>
+            <fa-icon class="icon-static" [icon]="faCalendarCheck" size="2x" />
+            <fa-icon class="icon-remove" [icon]="faCalendarMinus" size="2x" />
         </button>
     }
     @if (selectedDate) {
@@ -44,5 +44,5 @@
     @if (!selectedDate) {
         <div class="mt-2 text-danger" jhiTranslate="artemisApp.programmingExercise.timeline.notSet">not set</div>
     }
-    <owl-date-time [startAt]="startAt" #dt></owl-date-time>
+    <owl-date-time [startAt]="startAt" #dt />
 </div>

@@ -1,12 +1,12 @@
 <div class="editable-instruction-container__status__container">
     @if (invalidTestCases.length + missingTestCases.length > 0) {
         <div id="instruction_analysis_test-case-issues" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="testCasesTooltipContent"></fa-icon>
+            <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="testCasesTooltipContent" />
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues">Test case issues.</span>
         </div>
     } @else {
         <div id="instruction_analysis_test-case-ok" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="faCheckCircle" class="text-success me-1"></fa-icon>
+            <fa-icon [icon]="faCheckCircle" class="text-success me-1" />
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok">Test cases ok.</span>
         </div>
     }
@@ -36,5 +36,5 @@
             }
         </div>
     </ng-template>
-    <jhi-task-count-warning [numOfTasks]="numOfTasks"></jhi-task-count-warning>
+    <jhi-task-count-warning [numOfTasks]="numOfTasks" />
 </div>

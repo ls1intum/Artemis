@@ -25,7 +25,7 @@
         </h2>
     }
     @if (!startView && !studentFailedToSubmit) {
-        <jhi-exam-timer class="col-md-3 justify-content-end" [isEndView]="true" [endDate]="graceEndDate" [criticalTime]="criticalTime"></jhi-exam-timer>
+        <jhi-exam-timer class="col-md-3 justify-content-end" [isEndView]="true" [endDate]="graceEndDate" [criticalTime]="criticalTime" />
     }
     @if (startView) {
         <div class="col-md-3"></div>
@@ -128,7 +128,7 @@
                 }
                 <button id="end-exam" [disabled]="!endButtonEnabled" type="submit" (click)="submitExam()" class="btn btn-primary">
                     @if (submitInProgress) {
-                        <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                        <fa-icon [icon]="faSpinner" [spin]="true" />
                     }
                     <span jhiTranslate="artemisApp.exam.endExam">Finish</span>
                 </button>
@@ -139,7 +139,7 @@
                         {{ 'artemisApp.examParticipation.continueAfterHandInEarlyDescription' | artemisTranslate }}
                     </div>
                     <button [disabled]="submitInProgress" id="continue" class="btn btn-secondary mt-2" (click)="continueAfterHandInEarly()">
-                        <fa-icon [icon]="faArrowLeft"></fa-icon>
+                        <fa-icon [icon]="faArrowLeft" />
                         {{ 'artemisApp.examParticipation.continueAfterHandInEarly' | artemisTranslate }}
                     </button>
                 </div>

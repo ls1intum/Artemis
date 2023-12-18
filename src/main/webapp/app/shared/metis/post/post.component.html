@@ -7,13 +7,17 @@
     [hasChannelModerationRights]="hasChannelModerationRights"
     (isModalOpen)="displayInlineInput = true"
     [lastReadDate]="lastReadDate"
-></jhi-post-header>
+/>
 <div class="row align-items-center">
     <div class="col">
         <div class="mb-1">
             @if (posting.resolved && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT) {
-                <fa-icon [icon]="faCheckSquare" iconSize="xs" class="col-auto pe-0 resolved" [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate">
-                </fa-icon>
+                <fa-icon
+                    [icon]="faCheckSquare"
+                    iconSize="xs"
+                    class="col-auto pe-0 resolved"
+                    [ngbTooltip]="'artemisApp.metis.post.postMarkedAsResolvedTooltip' | artemisTranslate"
+                />
             }
             @if (getAsChannelDto(posting.conversation)?.isAnnouncementChannel && !isCourseMessagesPage) {
                 <fa-icon
@@ -21,7 +25,7 @@
                     iconSize="xs"
                     class="col-auto pe-0 announcement-icon"
                     [ngbTooltip]="'artemisApp.metis.post.postMarkedAsAnnouncementTooltip' | artemisTranslate"
-                ></fa-icon>
+                />
             }
             <!-- in the course discussion overview as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
             <!-- not shown in course messages page -->
@@ -73,12 +77,12 @@
                 [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
                 (userReferenceClicked)="onUserReferenceClicked($event)"
                 (channelReferenceClicked)="onChannelReferenceClicked($event)"
-            ></jhi-posting-content>
+            />
         }
     </div>
 </div>
 @if (displayInlineInput && !readOnlyMode) {
-    <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false"> </jhi-message-inline-input>
+    <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
 }
 <jhi-post-footer
     #postFooter
@@ -94,4 +98,4 @@
     (userReferenceClicked)="onUserReferenceClicked($event)"
     (channelReferenceClicked)="onChannelReferenceClicked($event)"
     [hasChannelModerationRights]="hasChannelModerationRights"
-></jhi-post-footer>
+/>

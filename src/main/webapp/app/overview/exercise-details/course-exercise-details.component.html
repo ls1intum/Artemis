@@ -12,8 +12,7 @@
                 *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise }"
                 [courseId]="courseId"
                 [exercise]="exercise"
-            >
-            </jhi-exercise-details-student-actions>
+            />
             @if (plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
                 <a class="col-auto btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]">
                     @if (!plagiarismCaseInfo?.createdByContinuousPlagiarismControl) {
@@ -32,8 +31,7 @@
                         [studentParticipation]="gradedStudentParticipation"
                         [showBadge]="true"
                         [triggerLastGraded]="false"
-                    >
-                    </jhi-submission-result-status>
+                    />
                 </div>
                 @if (exercise.isAtLeastTutor) {
                     <div class="col-auto d-md-flex align-items-center instructor-actions">
@@ -44,60 +42,60 @@
                             <!-- Actions for Tutors, Editors and Instructors -->
                             @if (exercise.type !== QUIZ) {
                                 <a [routerLink]="baseResource" class="btn btn-info btn-sm">
-                                    <fa-icon [icon]="faEye"></fa-icon>
+                                    <fa-icon [icon]="faEye" />
                                     <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                                 </a>
                             }
                             <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
-                                <fa-icon [icon]="faTable"></fa-icon>
+                                <fa-icon [icon]="faTable" />
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                             </a>
                             @if (exercise.type !== QUIZ) {
                                 <a [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm">
-                                    <fa-icon [icon]="faListAlt"></fa-icon>
+                                    <fa-icon [icon]="faListAlt" />
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
                                 </a>
                             }
                             @if (exercise.type === QUIZ) {
                                 <a [routerLink]="['/course-management', exercise.course?.id, 'quiz-exercises', exercise.id, 'preview']" class="btn btn-success btn-sm">
-                                    <fa-icon [icon]="faEye"></fa-icon>
+                                    <fa-icon [icon]="faEye" />
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview">Preview</span>
                                 </a>
                             }
                             @if (exercise.type === QUIZ) {
                                 <a [routerLink]="['/course-management', exercise.course?.id, 'quiz-exercises', exercise.id, 'solution']" class="btn btn-success btn-sm">
-                                    <fa-icon [icon]="faEye"></fa-icon>
+                                    <fa-icon [icon]="faEye" />
                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
                                 </a>
                             }
                             @if (exercise.isAtLeastEditor) {
                                 @if (exercise.type === QUIZ) {
                                     <a [routerLink]="baseResource + 'quiz-point-statistic'" class="btn btn-info btn-sm">
-                                        <fa-icon [icon]="faSignal"></fa-icon>
+                                        <fa-icon [icon]="faSignal" />
                                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
                                     </a>
                                 }
                                 @if (exercise.type === MODELING) {
                                     <a [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm">
-                                        <fa-icon [icon]="faSignal"></fa-icon>
+                                        <fa-icon [icon]="faSignal" />
                                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.statistics">Statistics</span>
                                     </a>
                                 }
                                 @if (exercise.type === PROGRAMMING) {
                                     <a [routerLink]="baseResource + 'grading/test-cases'" class="btn btn-warning btn-sm">
-                                        <fa-icon [icon]="faFileSignature"></fa-icon>
+                                        <fa-icon [icon]="faFileSignature" />
                                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                                     </a>
                                 }
                                 @if (!QUIZ_ENDED_STATUS.includes(quizExerciseStatus)) {
                                     <a [class.disabled]="quizExerciseStatus === QuizStatus.ACTIVE" [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm">
-                                        <fa-icon [icon]="faWrench"></fa-icon>
+                                        <fa-icon [icon]="faWrench" />
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                     </a>
                                 }
                                 @if (QUIZ_ENDED_STATUS.includes(quizExerciseStatus) && exercise.isAtLeastInstructor) {
                                     <a [routerLink]="baseResource + 're-evaluate'" class="btn btn-warning btn-sm">
-                                        <fa-icon [icon]="faWrench"></fa-icon>
+                                        <fa-icon [icon]="faWrench" />
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
                                     </a>
                                 }
@@ -119,13 +117,13 @@
                             </div>
                         </div>
                         <div class="row">
-                            <jhi-result-history [results]="sortedHistoryResults" [exercise]="exercise"></jhi-result-history>
+                            <jhi-result-history [results]="sortedHistoryResults" [exercise]="exercise" />
                         </div>
                         <div class="row mb-2 mt-2 align-items-baseline">
                             <div class="col-auto">
                                 <a class="text-primary" (click)="showMoreResults = !showMoreResults">
                                     {{ 'artemisApp.courseOverview.exerciseDetails.' + (showMoreResults ? 'hideResults' : 'showResults') | artemisTranslate }}
-                                    <fa-icon [icon]="showMoreResults ? faAngleUp : faAngleDown"></fa-icon>
+                                    <fa-icon [icon]="showMoreResults ? faAngleUp : faAngleDown" />
                                 </a>
                             </div>
                         </div>
@@ -151,7 +149,7 @@
                                                     {{ result.submission.submissionDate | artemisDate: 'long-date' }}
                                                 </h4>
                                             }
-                                            <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise"> </jhi-result>
+                                            <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" />
                                         </div>
                                     }
                                     @if (!sortedHistoryResults) {
@@ -165,15 +163,15 @@
                     </div>
                 }
                 <!-- RESULTS END -->
-                <jhi-problem-statement [exercise]="exercise" [participation]="practiceStudentParticipation ?? gradedStudentParticipation!"> </jhi-problem-statement>
+                <jhi-problem-statement [exercise]="exercise" [participation]="practiceStudentParticipation ?? gradedStudentParticipation!" />
                 @if (exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length) {
-                    <jhi-reset-repo-button [exercise]="exercise" [participations]="exercise.studentParticipations" [smallButtons]="false"> </jhi-reset-repo-button>
+                    <jhi-reset-repo-button [exercise]="exercise" [participations]="exercise.studentParticipations" [smallButtons]="false" />
                 }
                 @if (exampleSolutionInfo?.exampleSolutionPublished) {
                     <div class="row mb-2 mt-2 align-items-baseline">
                         <div class="control-label" (click)="changeExampleSolution()">
                             <span class="h3 pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</span>
-                            <fa-icon class="pe-3" [icon]="exampleSolutionCollapsed ? faAngleDown : faAngleUp"></fa-icon>
+                            <fa-icon class="pe-3" [icon]="exampleSolutionCollapsed ? faAngleDown : faAngleUp" />
                         </div>
                     </div>
                     @if (!exampleSolutionCollapsed) {
@@ -198,7 +196,7 @@
                                         class="ms-2"
                                         [exerciseId]="exercise.id!"
                                         [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
-                                    ></jhi-programming-exercise-example-solution-repo-download>
+                                    />
                                 </dd>
                                 @if (exampleSolutionInfo?.programmingExercise?.releaseTestsWithExampleSolution) {
                                     <dd class="editor-outline-background">
@@ -208,14 +206,14 @@
                                             [includeTests]="true"
                                             [title]="'artemisApp.programmingExercise.export.downloadTestsWithExampleSolution'"
                                             ngbTooltip="{{ 'artemisApp.programmingExercise.studentDownloadTestsTooltip' | artemisTranslate }}"
-                                        ></jhi-programming-exercise-example-solution-repo-download>
+                                        />
                                     </dd>
                                 }
                             }
                         </dl>
                     }
                 }
-                <jhi-exercise-info [exercise]="exercise" [studentParticipation]="gradedStudentParticipation"></jhi-exercise-info>
+                <jhi-exercise-info [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" />
                 @if (
                     exercise &&
                     exercise.type === PROGRAMMING &&
@@ -230,8 +228,7 @@
                         [exercise]="exercise"
                         [participation]="gradedStudentParticipation!"
                         [result]="resultWithComplaint ? resultWithComplaint! : latestRatedResult!"
-                    >
-                    </jhi-complaint-student-view>
+                    />
                 }
                 @if (
                     exercise?.type === PROGRAMMING &&
@@ -240,7 +237,7 @@
                     (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
                 ) {
                     <div class="row">
-                        <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult"></jhi-rating>
+                        <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult" />
                     </div>
                 }
                 <jhi-exercise-hint-button-overlay
@@ -248,7 +245,7 @@
                     [availableExerciseHints]="availableExerciseHints"
                     [activatedExerciseHints]="activatedExerciseHints"
                     (onHintActivated)="onHintActivated($event)"
-                ></jhi-exercise-hint-button-overlay>
+                />
                 @if (plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM) {
                     <a class="btn btn-info btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo?.id]">
                         <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.resolvedPlagiarismCase">Resolved Plagiarism Case</span>
@@ -257,13 +254,13 @@
             </div>
             <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
                 @if (exercise.course && (isCommunicationEnabled(exercise.course) || isMessagingEnabled(exercise.course))) {
-                    <router-outlet (activate)="onChildActivate($event)"></router-outlet>
+                    <router-outlet (activate)="onChildActivate($event)" />
                 }
             </div>
         </div>
-        <jhi-lti-initializer></jhi-lti-initializer>
+        <jhi-lti-initializer />
         @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
-            <jhi-tutor-chatbot-button></jhi-tutor-chatbot-button>
+            <jhi-tutor-chatbot-button />
         }
     </div>
 }

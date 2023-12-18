@@ -50,7 +50,7 @@
                 <span
                     >[{{ quizConfiguration.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]
                     @if (quizConfiguration.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                        <jhi-included-in-score-badge [includedInOverallScore]="quizConfiguration.includedInOverallScore"></jhi-included-in-score-badge>
+                        <jhi-included-in-score-badge [includedInOverallScore]="quizConfiguration.includedInOverallScore" />
                     }
                 </span>
             </h4>
@@ -67,7 +67,7 @@
                             [quizQuestions]="quizConfiguration.quizQuestions"
                             [questionIndex]="i + 1"
                             [clickDisabled]="readonly"
-                        ></jhi-multiple-choice-question>
+                        />
                     }
                     <!-- TODO: Map vs Array consistency -->
                     @if (question.type === DRAG_AND_DROP) {
@@ -79,7 +79,7 @@
                             [onMappingUpdate]="onSelectionChanged.bind(this)"
                             [questionIndex]="i + 1"
                             [clickDisabled]="readonly"
-                        ></jhi-drag-and-drop-question>
+                        />
                     }
                     <!-- TODO: Map vs Array consistency -->
                     @if (question.type === SHORT_ANSWER) {
@@ -91,7 +91,7 @@
                             [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)"
                             [questionIndex]="i + 1"
                             [clickDisabled]="readonly"
-                        ></jhi-short-answer-question>
+                        />
                     }
                 </div>
             }

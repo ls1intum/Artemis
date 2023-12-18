@@ -2,15 +2,15 @@
     <!-- Todo: Do not hide when popover is open-->
     <div class="section-header" (click)="toggleCollapsed()" [attr.aria-expanded]="!isCollapsed">
         <div>
-            <fa-icon size="xs" [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
+            <fa-icon size="xs" [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined" />
             <span class="fw-bold">{{ label }}</span>
             <span [hidden]="!anyConversationUnread">
-                <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
+                <fa-icon [icon]="faMessage" class="text-info" />
             </span>
         </div>
         @if (sectionButtons) {
             <div (click)="$event.stopPropagation()">
-                <ng-template [ngTemplateOutlet]="sectionButtons" [ngTemplateOutletContext]="{}"></ng-template>
+                <ng-template [ngTemplateOutlet]="sectionButtons" [ngTemplateOutletContext]="{}" />
             </div>
         }
     </div>
@@ -38,7 +38,7 @@
                                 : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hidden' | artemisTranslate)
                         }}
                         <span [hidden]="!anyHiddenConversationUnread">
-                            <fa-icon [icon]="faMessage" class="text-info"></fa-icon>
+                            <fa-icon [icon]="faMessage" class="text-info" />
                         </span>
                     </li>
                     @if (showHiddenConversations) {

@@ -7,7 +7,7 @@
                 [attr.aria-expanded]="!isQuestionCollapsed"
                 [attr.aria-controls]="'collapseQuestion' + questionIndex"
             >
-                <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown"></fa-icon>
+                <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
             </button>
             <div class="form-group question-title">
                 <input
@@ -47,7 +47,7 @@
                         [attr.aria-expanded]="!isQuestionCollapsed"
                         [attr.aria-controls]="'collapseQuestion' + questionIndex"
                     >
-                        <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown"></fa-icon>
+                        <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown" />
                     </button>
                 </div>
                 <div class="col-9 col-lg-8 text-start mt-3">
@@ -69,7 +69,7 @@
                                     (click)="resetQuestionTitle()"
                                     [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionTitle' | artemisTranslate"
                                 >
-                                    <fa-icon [icon]="faUndo"></fa-icon>
+                                    <fa-icon [icon]="faUndo" />
                                 </button>
                             </span>
                         </div>
@@ -88,7 +88,7 @@
                         (click)="moveUp()"
                         [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveUp' | artemisTranslate"
                     >
-                        <fa-icon [icon]="faChevronUp"></fa-icon>
+                        <fa-icon [icon]="faChevronUp" />
                     </button>
                     <button
                         id="move-down-button"
@@ -97,7 +97,7 @@
                         (click)="moveDown()"
                         [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.moveDown' | artemisTranslate"
                     >
-                        <fa-icon [icon]="faChevronDown"></fa-icon>
+                        <fa-icon [icon]="faChevronDown" />
                     </button>
                     <button
                         id="reset-button"
@@ -106,7 +106,7 @@
                         (click)="resetQuestion()"
                         [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestion' | artemisTranslate"
                     >
-                        <fa-icon [icon]="faUndo"></fa-icon>
+                        <fa-icon [icon]="faUndo" />
                     </button>
                 </div>
             </div>
@@ -122,7 +122,7 @@
                         <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</option>
                         <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</option>
                     </select>
-                    <jhi-quiz-scoring-info-modal></jhi-quiz-scoring-info-modal>
+                    <jhi-quiz-scoring-info-modal />
                 </div>
                 <div class="form-group match-percentage-container">
                     <span class="colon-suffix no-flex-shrink">{{ 'artemisApp.quizExercise.answerMatching.title' | artemisTranslate }}</span>
@@ -142,7 +142,7 @@
                             <p>{{ shortAnswerQuestion.similarityValue }} %</p>
                         </div>
                     </div>
-                    <jhi-match-percentage-info-modal></jhi-match-percentage-info-modal>
+                    <jhi-match-percentage-info-modal />
                     <div class="form-group form-check custom-control custom-checkbox">
                         <input
                             #inputElement
@@ -172,7 +172,7 @@
                 @if (!reEvaluationInProgress) {
                     <div class="form-group">
                         <div class="delete-button" (click)="deleteQuestion()">
-                            <fa-icon [icon]="faTrash" size="2x"></fa-icon>
+                            <fa-icon [icon]="faTrash" size="2x" />
                         </div>
                     </div>
                 }
@@ -188,7 +188,7 @@
                             <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</option>
                             <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</option>
                         </select>
-                        <jhi-quiz-scoring-info-modal></jhi-quiz-scoring-info-modal>
+                        <jhi-quiz-scoring-info-modal />
                     </div>
                 </div>
                 <div class="col-12 col-lg-2">
@@ -214,7 +214,7 @@
                     </div>
                     <div class="col-2 col-lg-1">
                         <div class="re-evaluate-button" id="delete-button" class="delete-button" (click)="deleteQuestion()">
-                            <fa-icon [icon]="faTrash" size="2x"></fa-icon>
+                            <fa-icon [icon]="faTrash" size="2x" />
                         </div>
                     </div>
                 </div>
@@ -239,7 +239,7 @@
                                         style="width: 60%"
                                     />
                                     <p style="margin: 0.5rem">{{ shortAnswerQuestion.similarityValue }} %</p>
-                                    <jhi-match-percentage-info-modal></jhi-match-percentage-info-modal>
+                                    <jhi-match-percentage-info-modal />
                                 </div>
                             </div>
                         </div>
@@ -295,8 +295,7 @@
                         (textChange)="onTextChange($event)"
                         style="min-height: 200px; width: 100%; overflow: auto"
                         class="form-control"
-                    >
-                    </jhi-ace-editor>
+                    />
                 </div>
             }
         </div>
@@ -353,7 +352,7 @@
                                                                         true
                                                                 "
                                                             >
-                                                                <fa-icon [icon]="faBan" size="lg"></fa-icon>
+                                                                <fa-icon [icon]="faBan" size="lg" />
                                                             </div>
                                                         }
                                                         <div
@@ -363,7 +362,7 @@
                                                                 resetSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion))
                                                             "
                                                         >
-                                                            <fa-icon [icon]="faUndo" size="lg"></fa-icon>
+                                                            <fa-icon [icon]="faUndo" size="lg" />
                                                         </div>
                                                         <div
                                                             [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'"
@@ -372,7 +371,7 @@
                                                                 deleteSpot(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element || ''), shortAnswerQuestion))
                                                             "
                                                         >
-                                                            <fa-icon [icon]="faTrash" size="lg"></fa-icon>
+                                                            <fa-icon [icon]="faTrash" size="lg" />
                                                         </div>
                                                     </div>
                                                 }
@@ -396,7 +395,7 @@
                                 (click)="resetQuestionText()"
                                 [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionText' | artemisTranslate"
                             >
-                                <fa-icon [icon]="faUndo"></fa-icon>
+                                <fa-icon [icon]="faUndo" />
                             </button>
                         </span>
                     }
@@ -420,10 +419,10 @@
                                     <textarea [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                                 </div>
                                 <div class="delete-button" title="Delete" (click)="deleteSolution(solution)">
-                                    <fa-icon [icon]="faTrash" size="lg"></fa-icon>
+                                    <fa-icon [icon]="faTrash" size="lg" />
                                 </div>
                                 <div class="drag-handle drag-handle-wrapper" title="Move">
-                                    <fa-icon [icon]="faBars" class="drag-handle" size="lg"></fa-icon>
+                                    <fa-icon [icon]="faBars" class="drag-handle" size="lg" />
                                 </div>
                                 <div class="mapping-numbers-wrapper">
                                     @for (mapping of getMappingsForSolution(solution); track mapping) {
@@ -432,7 +431,7 @@
                                                 <div [ngClass]="'mapping-number mapping-color-' + ((mapping.spot!.spotNr || 0) % 8)">
                                                     {{ mapping.spot.spotNr }}
                                                     <div class="unlink-mapping" (click)="deleteMapping(mapping)">
-                                                        <fa-icon [icon]="faUnlink" size="lg"></fa-icon>
+                                                        <fa-icon [icon]="faUnlink" size="lg" />
                                                     </div>
                                                 </div>
                                             }
@@ -442,7 +441,7 @@
                                 <div *cdkDragPlaceholder></div>
                                 <div *cdkDragPreview style="border: 1px solid; background: #fafafa; padding: 4px 2px 2px 2px">
                                     <div title="Move">
-                                        <fa-icon [icon]="faBars" class="drag-handle" size="lg"></fa-icon>
+                                        <fa-icon [icon]="faBars" class="drag-handle" size="lg" />
                                     </div>
                                     <div>
                                         <textarea disabled [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>

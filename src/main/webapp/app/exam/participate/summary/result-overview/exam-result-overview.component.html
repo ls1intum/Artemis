@@ -35,7 +35,7 @@
                                 &nbsp;
                                 @if (exercise?.type && exerciseInfos[exercise.id!] !== undefined) {
                                     <div class="icon-container">
-                                        <fa-icon [icon]="exerciseInfos[exercise.id!].icon" class="icon"></fa-icon>
+                                        <fa-icon [icon]="exerciseInfos[exercise.id!].icon" class="icon" />
                                     </div>
                                 }
                                 &nbsp;
@@ -176,7 +176,7 @@
                     <div class="row">
                         <div class="mt-3 d-flex flex-column align-items-center" [class]="isBonusGradingKeyDisplayed ? 'col-md-6' : 'col-md-12'">
                             <button class="btn btn-primary" (click)="toggleGradingKey()" style="max-width: fit-content">
-                                <fa-icon [icon]="faClipboard"></fa-icon>
+                                <fa-icon [icon]="faClipboard" />
                                 <span
                                     >&nbsp;{{
                                         isBonus
@@ -185,7 +185,7 @@
                                     }}&nbsp;
                                 </span>
                                 <span class="rotate-icon chevron-position" [class.rotated]="!isGradingKeyCollapsed">
-                                    <fa-icon [icon]="faChevronRight"></fa-icon>
+                                    <fa-icon [icon]="faChevronRight" />
                                 </span>
                             </button>
                             <div [ngbCollapse]="isGradingKeyCollapsed" class="mt-3" style="max-width: fit-content">
@@ -195,10 +195,10 @@
                         @if (isBonusGradingKeyDisplayed) {
                             <div class="col-md-6 mt-3 d-flex flex-column align-items-center">
                                 <button class="btn btn-primary" (click)="toggleBonusGradingKey()">
-                                    <fa-icon [icon]="faAward"></fa-icon>
+                                    <fa-icon [icon]="faAward" />
                                     <span>&nbsp;{{ 'artemisApp.exam.examSummary.bonusGradeKeyButton' | artemisTranslate }}&nbsp;</span>
                                     <span class="rotate-icon chevron-position" [class.rotated]="!isBonusGradingKeyCollapsed">
-                                        <fa-icon [icon]="faChevronRight"></fa-icon>
+                                        <fa-icon [icon]="faChevronRight" />
                                     </span>
                                 </button>
                                 <div [ngbCollapse]="isBonusGradingKeyCollapsed" class="mt-3 text-start" style="max-width: fit-content">

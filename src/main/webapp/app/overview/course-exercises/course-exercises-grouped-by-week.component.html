@@ -27,7 +27,7 @@
                 [ngClass]="{ 'text-primary': exerciseGroups[weekKey] ? exerciseGroups[weekKey].isCurrentWeek : false }"
                 (click)="exerciseGroups[weekKey].isCollapsed = !exerciseGroups[weekKey].isCollapsed"
             >
-                <fa-icon class="pe-3" [icon]="exerciseGroups[weekKey].isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
+                <fa-icon class="pe-3" [icon]="exerciseGroups[weekKey].isCollapsed ? faAngleDown : faAngleUp" />
                 @if (exerciseGroups[weekKey].start && exerciseGroups[weekKey].end) {
                     <span>
                         {{ exerciseGroups[weekKey].start | artemisDate: 'short-date' }} -

@@ -4,7 +4,7 @@
             <a [routerLink]="['/course-management', course.id, 'course-statistics']" class="text-center">
                 <h5>{{ 'artemisApp.courseStatistics.activeStudents' | artemisTranslate }}</h5>
             </a>
-            <jhi-help-icon class="chart-explanation-tooltip" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation"></jhi-help-icon>
+            <jhi-help-icon class="chart-explanation-tooltip" placement="right auto" text="artemisApp.courseStatistics.activeStudentsExplanation" />
         </div>
     </div>
     @if (startDateAlreadyPassed) {
@@ -17,7 +17,7 @@
                     role="button"
                     (click)="switchTimeSpan(LEFT)"
                     [class.hide-arrow]="startDateDisplayed"
-                ></fa-icon>
+                />
             }
             <div #containerRef class="chart col-md-10 mt-1 justify-content-center align-items-start h-99" [ngClass]="showsCurrentWeek && startDateDisplayed ? 'col-12' : 'col-10'">
                 <ngx-charts-line-chart
@@ -53,7 +53,7 @@
             </div>
             @if (loading) {
                 <h1 class="spinner">
-                    <fa-icon [icon]="faSpinner" [spin]="true">&nbsp;</fa-icon>
+                    <fa-icon [icon]="faSpinner" [spin]="true" />
                 </h1>
             }
             @if (!startDateDisplayed || !showsCurrentWeek) {
@@ -64,7 +64,7 @@
                     role="button"
                     (click)="switchTimeSpan(RIGHT)"
                     [ngClass]="{ 'hide-arrow': showsCurrentWeek }"
-                ></fa-icon>
+                />
             }
         </div>
         <div class="col-md-10 offset-md-1 mt-4 justify-content-center d-flex align-items-center flex-column">

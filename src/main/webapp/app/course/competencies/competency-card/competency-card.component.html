@@ -10,7 +10,7 @@
     }
     <div class="col-auto d-none d-sm-block">
         <a class="exercise-row-icon">
-            <fa-icon [icon]="getIcon(competency.taxonomy)" size="2x" [ngbTooltip]="getIconTooltip(competency.taxonomy) | artemisTranslate" container="body"></fa-icon>
+            <fa-icon [icon]="getIcon(competency.taxonomy)" size="2x" [ngbTooltip]="getIconTooltip(competency.taxonomy) | artemisTranslate" container="body" />
         </a>
     </div>
     <div class="col">
@@ -18,7 +18,7 @@
             <div class="col-auto d-sm-none">
                 <h4 class="fw-medium">
                     @if (competency.taxonomy) {
-                        <fa-icon [icon]="getIcon(competency.taxonomy)"></fa-icon>
+                        <fa-icon [icon]="getIcon(competency.taxonomy)" />
                     }
                 </h4>
             </div>
@@ -41,7 +41,7 @@
                         <span class="badge bg-secondary">{{ competency.course.semester }}</span>
                     </div>
                 }
-                <ng-content></ng-content>
+                <ng-content />
             </div>
             @if (!isPrerequisite && competency.softDueDate) {
                 <div class="col-sm col py-2" style="max-width: fit-content">
@@ -53,7 +53,7 @@
             }
             @if (!isPrerequisite) {
                 <div class="col-sm col text-end py-1 px-2" style="max-width: 95px">
-                    <jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery"></jhi-competency-rings>
+                    <jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery" />
                 </div>
             }
         </div>

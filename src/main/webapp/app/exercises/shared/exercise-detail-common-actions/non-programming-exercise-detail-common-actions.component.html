@@ -3,56 +3,56 @@
         <!-- Edit -->
         @if (exercise.isAtLeastEditor) {
             <a [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm me-1 mb-2">
-                <fa-icon [icon]="faWrench"></fa-icon>
+                <fa-icon [icon]="faWrench" />
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"> Edit</span>
             </a>
         }
         <!-- Participations  -->
         @if (course) {
             <a [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1 mb-2">
-                <fa-icon [icon]="faListAlt"></fa-icon>
+                <fa-icon [icon]="faListAlt" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
             </a>
         }
         <!-- Teams -->
         @if (exercise.teamMode && exercise.isAtLeastTutor) {
             <a [routerLink]="teamBaseResource + 'teams'" class="btn btn-primary btn-sm me-1 mb-2">
-                <fa-icon [icon]="faUsers"></fa-icon>
+                <fa-icon [icon]="faUsers" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
             </a>
         }
         <!-- Exercise Dashboard -->
         @if (exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || exercise.assessmentType === AssessmentType.MANUAL || exercise.allowComplaintsForAutomaticAssessments) {
             <a [routerLink]="shortBaseResource + 'assessment-dashboard/' + exercise.id" class="btn btn-info btn-sm me-1 mb-2">
-                <fa-icon [icon]="faUserCheck"></fa-icon>
+                <fa-icon [icon]="faUserCheck" />
                 <span class="d-none d-md-inline">{{ 'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate }}</span>
             </a>
         }
         <!-- Scores -->
         @if (course && exercise.isAtLeastTutor) {
             <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1 mb-2">
-                <fa-icon [icon]="faTable"></fa-icon>
+                <fa-icon [icon]="faTable" />
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
             </a>
         }
         <!--Statistics -->
         @if (exercise.isAtLeastTutor && course) {
             <a [routerLink]="baseResource + 'exercise-statistics'" class="btn btn-info btn-sm me-1 mb-2">
-                <fa-icon [icon]="faChartBar"></fa-icon>
+                <fa-icon [icon]="faChartBar" />
                 <span class="d-none d-md-inline" jhiTranslate="statistics.statistics-title">Statistics</span>
             </a>
         }
         <!-- Example Submission -->
         @if (exercise.isAtLeastEditor && (exercise.type == 'modeling' || exercise.type == 'text')) {
             <a [routerLink]="baseResource + 'example-submissions'" class="btn btn-success btn-sm me-1 mb-2" id="example-submissions-button">
-                <fa-icon [icon]="faBook"></fa-icon>
+                <fa-icon [icon]="faBook" />
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.exampleSubmissions">Example Submissions</span>
             </a>
         }
         <!-- Tutor Effort Statistics -->
         @if (exercise.isAtLeastInstructor && exercise.type === ExerciseType.TEXT) {
             <a [routerLink]="baseResource + 'tutor-effort-statistics'" class="btn btn-success btn-sm me-1 mb-2">
-                <fa-icon [icon]="faChartBar"></fa-icon>
+                <fa-icon [icon]="faChartBar" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.textExercise.tutorEffortStatistics.title">Tutor Effort Statistics</span>
             </a>
         }
@@ -67,7 +67,7 @@
                 (delete)="deleteExercise()"
                 [dialogError]="dialogError$"
             >
-                <fa-icon [icon]="faTrash"></fa-icon>
+                <fa-icon [icon]="faTrash" />
             </button>
         }
     </div>

@@ -2,7 +2,7 @@
     <div class="row mb-5">
         <div class="d-flex align-items-center">
             <h2 id="statistics-page-heading" jhiTranslate="statistics.course_statistics_title">Course statistics</h2>
-            <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+            <jhi-documentation-button [type]="documentationType" />
         </div>
     </div>
     @if (courseStatistics) {
@@ -10,8 +10,7 @@
             [exerciseAverageScores]="courseStatistics.averageScoresOfExercises"
             [courseAverage]="courseStatistics.averageScoreOfCourse"
             [courseId]="courseId"
-        >
-        </jhi-statistics-average-score-graph>
+        />
     }
     <div class="separator w-100 mb-4"></div>
     <div class="row mb-5">
@@ -39,7 +38,7 @@
             @if (i !== 0) {
                 <hr />
             }
-            <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [entityId]="courseId"> </jhi-statistics-graph>
+            <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [entityId]="courseId" />
         </div>
     }
 </div>

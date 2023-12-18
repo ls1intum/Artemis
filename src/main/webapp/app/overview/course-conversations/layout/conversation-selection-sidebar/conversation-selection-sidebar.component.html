@@ -9,11 +9,11 @@
                     (click)="collapsed = true"
                 >
                     <h3 class="card-title">
-                        <fa-icon [icon]="faConversation"></fa-icon>
+                        <fa-icon [icon]="faConversation" />
                         <span class="ms-2">{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.header' | artemisTranslate }}</span>
                     </h3>
                     <div class="col-auto">
-                        <fa-icon [icon]="faChevronLeft"></fa-icon>
+                        <fa-icon [icon]="faChevronLeft" />
                     </div>
                 </div>
                 <!-- body -->
@@ -28,7 +28,7 @@
                         />
                         <span class="input-group-text border-start-0 border-end-0 border-top-0">
                             <span [hidden]="!searchTerm">({{ numberOfConversationsPassingFilter }})</span>
-                            <fa-icon [icon]="faFilter" size="xs"></fa-icon>
+                            <fa-icon [icon]="faFilter" size="xs" />
                         </span>
                     </div>
                     <div class="scrollbar wrapper-scroll-y">
@@ -43,8 +43,7 @@
                             (settingsChanged)="onSettingsChanged()"
                             (conversationHiddenStatusChange)="onConversationHiddenStatusChange()"
                             (conversationFavoriteStatusChange)="onConversationFavoriteStatusChange()"
-                        >
-                        </jhi-conversation-sidebar-section>
+                        />
                         <!-- Channels -->
                         <jhi-conversation-sidebar-section
                             [searchTerm]="searchTerm"
@@ -63,7 +62,7 @@
                                 @if (isMessagingEnabled) {
                                     <div ngbDropdown container="body" class="d-inline-block">
                                         <button id="channelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
-                                            <fa-icon [icon]="faPlus" size="sm"></fa-icon>
+                                            <fa-icon [icon]="faPlus" size="sm" />
                                         </button>
                                         <div ngbDropdownMenu>
                                             <button id="channelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.GENERAL)">
@@ -96,7 +95,7 @@
                                 @if (isMessagingEnabled) {
                                     <div ngbDropdown container="body" class="d-inline-block">
                                         <button id="exerciseChannelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
-                                            <fa-icon [icon]="faPlus" size="sm"></fa-icon>
+                                            <fa-icon [icon]="faPlus" size="sm" />
                                         </button>
                                         <div ngbDropdownMenu>
                                             <button id="exerciseChannelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.EXERCISE)">
@@ -124,7 +123,7 @@
                                 @if (isMessagingEnabled) {
                                     <div ngbDropdown container="body" class="d-inline-block">
                                         <button id="lectureChannelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
-                                            <fa-icon [icon]="faPlus" size="sm"></fa-icon>
+                                            <fa-icon [icon]="faPlus" size="sm" />
                                         </button>
                                         <div ngbDropdownMenu>
                                             <button id="lectureChannelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.LECTURE)">
@@ -152,7 +151,7 @@
                                 @if (isMessagingEnabled) {
                                     <div ngbDropdown container="body" class="d-inline-block">
                                         <button id="examChannelButton" class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
-                                            <fa-icon [icon]="faPlus" size="sm"></fa-icon>
+                                            <fa-icon [icon]="faPlus" size="sm" />
                                         </button>
                                         <div ngbDropdownMenu>
                                             <button id="examChannelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event, channelSubType.EXAM)">
@@ -186,7 +185,7 @@
                                             type="button"
                                             (click)="openCreateGroupChatDialog($event)"
                                         >
-                                            <fa-icon [icon]="faPlus" size="sm"></fa-icon>
+                                            <fa-icon [icon]="faPlus" size="sm" />
                                         </button>
                                     </div>
                                 </ng-template>
@@ -215,7 +214,7 @@
                                             type="button"
                                             (click)="openCreateOneToOneChatDialog($event)"
                                         >
-                                            <fa-icon [icon]="faPlus" size="sm"></fa-icon>
+                                            <fa-icon [icon]="faPlus" size="sm" />
                                         </button>
                                     </div>
                                 </ng-template>
@@ -231,7 +230,7 @@
                 }
             </div>
             <div class="draggable-right">
-                <fa-icon [icon]="faGripLinesVertical"></fa-icon>
+                <fa-icon [icon]="faGripLinesVertical" />
             </div>
         </div>
         <!-- collapsed conversations -->
@@ -241,10 +240,10 @@
             (click)="collapsed = false"
             [ngbTooltip]="'artemisApp.conversationsLayout.conversationSelectionSideBar.show' | artemisTranslate"
         >
-            <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
+            <fa-icon class="expand-conversations-icon" [icon]="faChevronRight" />
             <span jhiTranslate="artemisApp.conversationsLayout.conversationSelectionSideBar.header">Conversation</span>
-            <fa-icon class="fa-rotate-270" [icon]="faConversation"></fa-icon>
-            <fa-icon class="expand-conversations-icon" [icon]="faChevronRight"></fa-icon>
+            <fa-icon class="fa-rotate-270" [icon]="faConversation" />
+            <fa-icon class="expand-conversations-icon" [icon]="faChevronRight" />
         </div>
     </div>
 }

@@ -7,10 +7,10 @@
                         [isPublic]="conversationAsChannel.isPublic!"
                         [isArchived]="conversationAsChannel.isArchived!"
                         [isAnnouncementChannel]="conversationAsChannel.isAnnouncementChannel!"
-                    ></jhi-channel-icon>
+                    />
                 }
                 @if (getAsGroupChat(conversation); as groupChatDto) {
-                    <jhi-group-chat-icon></jhi-group-chat-icon>
+                    <jhi-group-chat-icon />
                 }
                 {{ conversationService.getConversationName(conversation) }}
             </span>
@@ -23,7 +23,7 @@
         <div class="interaction" (click)="$event.stopPropagation()">
             <div ngbDropdown container="body" class="d-inline-block">
                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle sidebar-button" type="button" ngbDropdownToggle>
-                    <fa-icon [icon]="faEllipsis" size="sm"></fa-icon>
+                    <fa-icon [icon]="faEllipsis" size="sm" />
                 </button>
                 <div ngbDropdownMenu>
                     @if (conversationAsChannel?.subTypeReferenceId) {

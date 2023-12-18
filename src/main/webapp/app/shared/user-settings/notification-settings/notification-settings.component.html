@@ -5,7 +5,7 @@
             {{ 'artemisApp.userSettings.categories.' + userSettingsCategory | artemisTranslate }}
         </h1>
         <div class="d-inline-flex userSettings-info">
-            <fa-icon class="ng-fa-icon" [icon]="faInfoCircle"></fa-icon>
+            <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
             <span class="ps-1">
                 <!-- Info text explaining that these settings also filter the notification sidebar -->
                 {{ 'artemisApp.userSettings.notificationSettingsFilterInfo' | artemisTranslate }}
@@ -14,7 +14,7 @@
     </div>
     @if (settingsChanged) {
         <button type="button" class="btn btn-primary" id="apply-changes-button" (click)="this.saveSettings()">
-            <fa-icon class="ng" [icon]="faSave"></fa-icon>
+            <fa-icon class="ng" [icon]="faSave" />
             {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
         </button>
     }

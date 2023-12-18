@@ -1,7 +1,7 @@
 @if (issues.length) {
-    <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom auto" [ngbTooltip]="tooltipContent"></fa-icon>
+    <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom auto" [ngbTooltip]="tooltipContent" />
 } @else {
-    <fa-icon [icon]="faCheckCircle" size="2x" class="text-success"></fa-icon>
+    <fa-icon [icon]="faCheckCircle" size="2x" class="text-success" />
 }
 <ng-template #tooltipContent>
     @if (issues.includes(ProgrammingExerciseIssues.TEMPLATE_PASSING)) {

@@ -3,7 +3,7 @@
         <div class="col">
             <h3 class="mb-0">
                 @if (exercise.type) {
-                    <fa-icon [icon]="getIcon(exercise.type)" [fixedWidth]="true" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
+                    <fa-icon [icon]="getIcon(exercise.type)" [fixedWidth]="true" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body" />
                 }
                 <span>{{ exercise.title }}</span>
             </h3>

@@ -3,12 +3,7 @@
         <div class="col-9">
             <h3 class="mb-0">
                 @if (competency.taxonomy) {
-                    <fa-icon
-                        [icon]="getIcon(competency.taxonomy)"
-                        [fixedWidth]="true"
-                        [ngbTooltip]="getIconTooltip(competency.taxonomy) | artemisTranslate"
-                        container="body"
-                    ></fa-icon>
+                    <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" [ngbTooltip]="getIconTooltip(competency.taxonomy) | artemisTranslate" container="body" />
                 }
                 <span>{{ competency.title }}</span>
                 @if (this.mastery >= 100) {
@@ -22,6 +17,6 @@
                 <div [innerHTML]="competency.description"></div>
             }
         </div>
-        <div class="col-3"><jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery"></jhi-competency-rings></div>
+        <div class="col-3"><jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery" /></div>
     </div>
 }

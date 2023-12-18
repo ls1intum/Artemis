@@ -4,7 +4,7 @@
             <p class="markdown-preview" [innerHTML]="gradingInstructions"></p>
         </jhi-expandable-section>
         <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.structuredGradingInstructions">
-            <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly" [criteria]="criteria"></jhi-structured-grading-instructions-assessment-layout>
+            <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly" [criteria]="criteria" />
         </jhi-expandable-section>
     </div>
 }
@@ -16,7 +16,7 @@
                 [exercise]="programmingExercise!"
                 [participation]="programmingParticipation ? programmingParticipation : programmingExercise!.templateParticipation!"
                 [personalParticipation]="false"
-            ></jhi-programming-exercise-instructions>
+            />
         }
         @default {
             <p class="markdown-preview" [innerHTML]="problemStatement"></p>

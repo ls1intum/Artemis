@@ -21,7 +21,7 @@ class AttachmentUnitFormStubComponent {
     @Output() formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
 }
 
-@Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content></ng-content>' })
+@Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content />' })
 class LectureUnitLayoutStubComponent {
     @Input()
     isLoading = false;

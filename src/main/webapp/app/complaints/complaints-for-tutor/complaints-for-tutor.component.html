@@ -90,7 +90,7 @@
                             ondrop="return false;"
                         >
                         </textarea>
-                        <jhi-textarea-counter [maxLength]="maxComplaintResponseTextLimit" [content]="complaintResponse.responseText" [visible]="!handled"> </jhi-textarea-counter>
+                        <jhi-textarea-counter [maxLength]="maxComplaintResponseTextLimit" [content]="complaintResponse.responseText" [visible]="!handled" />
                     </div>
                     @if (!handled && complaint.complaintType === ComplaintType.COMPLAINT) {
                         <div class="d-flex flex-wrap gap-1 justify-content-between mt-1">

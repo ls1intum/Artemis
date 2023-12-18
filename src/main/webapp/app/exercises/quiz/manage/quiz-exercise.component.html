@@ -8,17 +8,17 @@
                             <input class="form-check-input" type="checkbox" (change)="toggleMultipleExercises(quizExercises)" [ngModel]="allChecked" />
                         </th>
                     }
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release">Release</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="title"><span jhiTranslate="artemisApp.exercise.title">Title</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="status"><span jhiTranslate="artemisApp.quizExercise.status">Status</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="artemisApp.exercise.release">Release</span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <!-- releaseDate works similar to Exam.visibleDate -->
-                    <th jhiSortBy="startTime"><span jhiTranslate="artemisApp.exercise.start">Start</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="startTime"><span jhiTranslate="artemisApp.exercise.start">Start</span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <!-- startTime works similar to Exam.startDate -->
-                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due">Due</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="duration"><span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
-                    <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely">Included</span>&nbsp;<fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="artemisApp.exercise.due">Due</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="duration"><span jhiTranslate="artemisApp.quizExercise.duration">Duration</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points">Points</span>&nbsp;<fa-icon [icon]="faSort" /></th>
+                    <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely">Included</span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th>{{ 'artemisApp.quizExercise.quizLifecycle' | artemisTranslate }}</th>
                     <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories">Categories</span></th>
                     <th></th>
@@ -83,7 +83,7 @@
                             <div class="">
                                 @if (quizExercise.status === QuizStatus.CLOSED && quizExercise.isAtLeastEditor) {
                                     <button type="submit" (click)="openForPractice(quizExercise.id!)" class="btn btn-warning btn-sm me-1 mb-1">
-                                        <fa-icon [icon]="faPlayCircle"></fa-icon>
+                                        <fa-icon [icon]="faPlayCircle" />
                                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.openForPractice"></span>
                                     </button>
                                 }
@@ -98,7 +98,7 @@
                                         (click)="startQuiz(quizExercise.id!)"
                                         class="btn btn-warning btn-sm me-1 mb-1"
                                     >
-                                        <fa-icon [icon]="faPlayCircle"></fa-icon>
+                                        <fa-icon [icon]="faPlayCircle" />
                                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz">Start Quiz</span>
                                     </button>
                                 }
@@ -122,7 +122,7 @@
                                                     (click)="startBatch(quizExercise.id!, batch.id!)"
                                                     class="btn btn-warning btn-sm me-1 mb-1"
                                                 >
-                                                    <fa-icon [icon]="faPlayCircle"></fa-icon>
+                                                    <fa-icon [icon]="faPlayCircle" />
                                                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.startQuiz">Start Quiz</span>
                                                 </button>
                                             }
@@ -135,7 +135,7 @@
                                             (click)="addBatch(quizExercise.id!)"
                                             class="btn btn-primary btn-sm me-1 mb-1"
                                         >
-                                            <fa-icon [icon]="faPlus"></fa-icon>
+                                            <fa-icon [icon]="faPlus" />
                                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.addBatch">Add Batch</span>
                                         </button>
                                     </div>
@@ -156,18 +156,18 @@
                                         (delete)="endQuiz(quizExercise.id!)"
                                         [dialogError]="dialogError$"
                                     >
-                                        <fa-icon [icon]="faStopCircle"></fa-icon>
+                                        <fa-icon [icon]="faStopCircle" />
                                     </button>
                                 }
                                 @if (quizExercise.status === QuizStatus.INVISIBLE && quizExercise.isAtLeastEditor) {
                                     <button id="quiz-set-visible-{{ quizExercise.id }}" type="submit" (click)="showQuiz(quizExercise.id!)" class="btn btn-warning btn-sm me-1 mb-1">
-                                        <fa-icon [icon]="faEye"></fa-icon>
+                                        <fa-icon [icon]="faEye" />
                                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.showNow">Set Visible</span>
                                     </button>
                                 }
                             </div>
                         </td>
-                        <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="quizExercise"></jhi-exercise-categories></td>
+                        <td class="d-md-table-cell"><jhi-exercise-categories [exercise]="quizExercise" /></td>
                         <td class="text-end">
                             <div class="btn-group flex-btn-group-container">
                                 <div class="btn-group-vertical me-1 mb-1">
@@ -177,7 +177,7 @@
                                             [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'preview']"
                                             class="btn btn-success btn-sm me-1 mb-1"
                                         >
-                                            <fa-icon [icon]="faEye"></fa-icon>
+                                            <fa-icon [icon]="faEye" />
                                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.preview">Preview</span>
                                         </a>
                                     }
@@ -186,7 +186,7 @@
                                             [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'solution']"
                                             class="btn btn-success btn-sm me-1 mb-1"
                                         >
-                                            <fa-icon [icon]="faEye"></fa-icon>
+                                            <fa-icon [icon]="faEye" />
                                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.quizExercise.solution">Solution</span>
                                         </a>
                                     }
@@ -198,7 +198,7 @@
                                             class="btn btn-info btn-sm me-1 mb-1 d-flex align-items-center"
                                         >
                                             <span>
-                                                <fa-icon [icon]="faSignal"></fa-icon>
+                                                <fa-icon [icon]="faSignal" />
                                                 <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic">Statistic</span>
                                             </span>
                                         </a>
@@ -208,7 +208,7 @@
                                             [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'scores']"
                                             class="btn btn-info btn-sm me-1 mb-1"
                                         >
-                                            <fa-icon [icon]="faTable"></fa-icon>
+                                            <fa-icon [icon]="faTable" />
                                             <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
                                         </a>
                                     }
@@ -216,7 +216,7 @@
                                 <div class="btn-group-vertical me-1 mb-1">
                                     @if (quizExercise.isAtLeastInstructor) {
                                         <button type="submit" (click)="exportQuizById(quizExercise.id!, true)" class="btn btn-warning btn-sm me-1 mb-1">
-                                            <fa-icon [icon]="faFileExport"></fa-icon>
+                                            <fa-icon [icon]="faFileExport" />
                                             <span class="d-none d-md-inline" jhiTranslate="entity.action.export">Export</span>
                                         </button>
                                     }
@@ -229,7 +229,7 @@
                                             style="display: flex; justify-content: center; align-items: center"
                                         >
                                             <div>
-                                                <fa-icon [icon]="faWrench"></fa-icon>
+                                                <fa-icon [icon]="faWrench" />
                                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                             </div>
                                         </a>
@@ -240,7 +240,7 @@
                                             [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']"
                                             class="btn btn-warning btn-sm me-1 mb-1"
                                         >
-                                            <fa-icon [icon]="faWrench"></fa-icon>
+                                            <fa-icon [icon]="faWrench" />
                                             <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
                                         </a>
                                     }
@@ -257,7 +257,7 @@
                                             deleteQuestion="artemisApp.quizExercise.reset.question"
                                             class="mb-1"
                                         >
-                                            <fa-icon [icon]="faUndo"></fa-icon>
+                                            <fa-icon [icon]="faUndo" />
                                         </button>
                                     }
                                     @if (quizExercise.isAtLeastInstructor) {
@@ -271,7 +271,7 @@
                                             id="delete-quiz-{{ quizExercise.id }}"
                                             class="mb-1"
                                         >
-                                            <fa-icon [icon]="faTrash"></fa-icon>
+                                            <fa-icon [icon]="faTrash" />
                                         </button>
                                     }
                                 </div>
@@ -293,7 +293,7 @@
                         id="delete-all-quiz"
                         class="mb-1"
                     >
-                        <fa-icon [icon]="faTrash"></fa-icon>
+                        <fa-icon [icon]="faTrash" />
                     </button>
                 }
             </div>

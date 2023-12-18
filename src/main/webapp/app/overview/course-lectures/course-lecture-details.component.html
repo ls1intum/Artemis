@@ -66,19 +66,19 @@
                         <div class="col-11">
                             @switch (lectureUnit.type) {
                                 @case (LectureUnitType.EXERCISE) {
-                                    <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="lecture!.course!"></jhi-exercise-unit>
+                                    <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="lecture!.course!" />
                                 }
                                 @case (LectureUnitType.ATTACHMENT) {
-                                    <jhi-attachment-unit [attachmentUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-attachment-unit>
+                                    <jhi-attachment-unit [attachmentUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                 }
                                 @case (LectureUnitType.VIDEO) {
-                                    <jhi-video-unit [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-video-unit>
+                                    <jhi-video-unit [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                 }
                                 @case (LectureUnitType.TEXT) {
-                                    <jhi-text-unit [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-text-unit>
+                                    <jhi-text-unit [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                 }
                                 @case (LectureUnitType.ONLINE) {
-                                    <jhi-online-unit [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-online-unit>
+                                    <jhi-online-unit [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                 }
                             }
                         </div>
@@ -88,7 +88,7 @@
                                 [courseId]="lecture!.course!.id!"
                                 [competencies]="lectureUnit.competencies || []"
                                 [navigateTo]="'courseCompetencies'"
-                            ></jhi-competencies-popover>
+                            />
                         </div>
                     </div>
                 }
@@ -113,7 +113,7 @@
                                         }
                                         @if (isDownloadingLink === attachment.link) {
                                             <a class="text-primary">
-                                                <fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>
+                                                <fa-icon [icon]="faSpinner" [spin]="true" />
                                                 {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
                                             </a>
                                         }
@@ -139,7 +139,7 @@
             <!-- LECTURE END -->
             <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
                 @if (lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) {
-                    <router-outlet class="ms-3" (activate)="onChildActivate($event)"></router-outlet>
+                    <router-outlet class="ms-3" (activate)="onChildActivate($event)" />
                 }
             </div>
         </div>

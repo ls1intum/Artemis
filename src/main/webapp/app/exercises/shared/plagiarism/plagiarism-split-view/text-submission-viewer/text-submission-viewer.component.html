@@ -1,4 +1,4 @@
-<jhi-split-pane-header [files]="files" (selectFile)="handleFileSelect($event)" studentLogin="{{ plagiarismSubmission?.studentLogin }}"></jhi-split-pane-header>
+<jhi-split-pane-header [files]="files" (selectFile)="handleFileSelect($event)" studentLogin="{{ plagiarismSubmission?.studentLogin }}" />
 @if (!loading && !binaryFile!!) {
     <div class="text-submission-viewer" [innerHTML]="fileContent || ' '" [ngClass]="{ 'no-file': !fileContent, 'is-code': isProgrammingExercise }">
         {{ 'artemisApp.plagiarism.noFileSelected' | artemisTranslate }}

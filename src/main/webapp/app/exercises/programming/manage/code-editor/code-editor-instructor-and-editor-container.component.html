@@ -3,13 +3,13 @@
         <div class="card-body">
             @if (loadingState === LOADING_STATE.INITIALIZING) {
                 <span>
-                    <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                    <fa-icon [icon]="faCircleNotch" [spin]="true" />
                     <span jhiTranslate="artemisApp.editor.fetchingParticipation"> Your participation is being loaded... </span>
                 </span>
             }
             @if (loadingState === LOADING_STATE.FETCHING_FAILED) {
                 <span>
-                    <fa-icon [icon]="faTimesCircle" class="text-danger"></fa-icon>
+                    <fa-icon [icon]="faTimesCircle" class="text-danger" />
                     <span jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</span>
                 </span>
             }
@@ -32,7 +32,7 @@
         }]
         @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
           <jhi-included-in-score-badge
-          [includedInOverallScore]="exercise.includedInOverallScore"></jhi-included-in-score-badge>
+          [includedInOverallScore]="exercise.includedInOverallScore" />
         }</span>
         </div>
         <div editorTitleActions class="d-flex align-items-center ms-2">
@@ -41,7 +41,7 @@
                 [exercise]="exercise"
                 [templateParticipation]="exercise?.templateParticipation!"
                 [solutionParticipation]="exercise?.solutionParticipation!"
-            ></jhi-programming-exercise-instructor-exercise-status>
+            />
             <!-- repository select -->
             <div ngbDropdown class="d-inline-block me-2">
                 <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
@@ -95,10 +95,10 @@
                 @if (!exercise.studentParticipations || !exercise.studentParticipations.length) {
                     <button (click)="createAssignmentParticipation()" [disabled]="loadingState !== LOADING_STATE.CLEAR" class="btn btn-primary me-2">
                         @if (loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                            <fa-icon [icon]="faPlus" class="text-white me-2"></fa-icon>
+                            <fa-icon [icon]="faPlus" class="text-white me-2" />
                         }
                         @if (loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                            <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-white me-2"></fa-icon>
+                            <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-white me-2" />
                         }
                         <span jhiTranslate="artemisApp.editor.repoSelect.createAssignmentRepo">Create assignment participation</span>
                     </button>
@@ -106,10 +106,10 @@
                 @if (exercise.studentParticipations && exercise.studentParticipations.length && exercise.isAtLeastInstructor) {
                     <button (click)="deleteAssignmentParticipation()" [disabled]="loadingState !== LOADING_STATE.CLEAR" class="btn btn-danger">
                         @if (loadingState !== LOADING_STATE.DELETING_ASSIGNMENT_REPO && loadingState !== LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                            <fa-icon [icon]="faTimes" class="text-white me-2"></fa-icon>
+                            <fa-icon [icon]="faTimes" class="text-white me-2" />
                         }
                         @if (loadingState === LOADING_STATE.DELETING_ASSIGNMENT_REPO || loadingState === LOADING_STATE.CREATING_ASSIGNMENT_REPO) {
-                            <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-white me-2"></fa-icon>
+                            <fa-icon [icon]="faCircleNotch" [spin]="true" class="text-white me-2" />
                         }
                         <span jhiTranslate="artemisApp.editor.repoSelect.deleteAssignmentRepo">Delete assignment participation</span>
                     </button>
@@ -125,15 +125,10 @@
                     [showBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
                     [personalParticipation]="false"
                     class="me-2"
-                ></jhi-updating-result>
+                />
             }
             @if (selectedRepository !== REPOSITORY.TEST) {
-                <jhi-programming-exercise-student-trigger-build-button
-                    class="me-3"
-                    [exercise]="exercise"
-                    [participation]="selectedParticipation!"
-                    [btnSize]="ButtonSize.MEDIUM"
-                ></jhi-programming-exercise-student-trigger-build-button>
+                <jhi-programming-exercise-student-trigger-build-button class="me-3" [exercise]="exercise" [participation]="selectedParticipation!" [btnSize]="ButtonSize.MEDIUM" />
             }
         </div>
         <jhi-programming-exercise-editable-instructions
@@ -143,11 +138,10 @@
             [templateParticipation]="exercise.templateParticipation!"
             [enableResize]="false"
             class="instructions-wrapper__content card-body p-0"
-        >
-        </jhi-programming-exercise-editable-instructions>
+        />
         <ng-container chatbot-button>
             @if (this.irisSettings?.irisCodeEditorSettings?.enabled) {
-                <jhi-code-editor-chatbot-button></jhi-code-editor-chatbot-button>
+                <jhi-code-editor-chatbot-button />
             }
         </ng-container>
     </jhi-code-editor-container>

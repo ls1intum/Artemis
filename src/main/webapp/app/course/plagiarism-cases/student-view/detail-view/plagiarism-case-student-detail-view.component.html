@@ -6,17 +6,17 @@
                     <h1 class="h2">{{ 'artemisApp.plagiarism.plagiarismCases.plagiarismCase' | artemisTranslate }}</h1>
                 </div>
                 <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center">
-                    <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" class="my-2"></jhi-plagiarism-case-verdict>
+                    <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" class="my-2" />
                 </div>
                 <div class="col-12 col-lg-6 col-xl-3 d-flex flex-column">
                     <p class="mb-1 text-truncate">
-                        <fa-icon [icon]="faUser"></fa-icon>
+                        <fa-icon [icon]="faUser" />
                         {{ plagiarismCase.student!.name }} ({{ plagiarismCase.student!.login }})
                     </p>
                     @if (plagiarismCase?.exercise) {
                         <p class="mb-0 text-truncate">
                             @if (plagiarismCase.exercise!.type!) {
-                                <fa-icon [icon]="getIcon(plagiarismCase.exercise!.type!)"></fa-icon>
+                                <fa-icon [icon]="getIcon(plagiarismCase.exercise!.type!)" />
                             }
                             {{ plagiarismCase.exercise!.title! }}
                         </p>
@@ -59,8 +59,7 @@
                                     [showAnswers]="true"
                                     [isCourseMessagesPage]="false"
                                     [hasChannelModerationRights]="false"
-                                >
-                                </jhi-post>
+                                />
                             </div>
                             @if (!this.plagiarismCase.createdByContinuousPlagiarismControl && (this.posts[0].answers?.length ?? 0) === 0) {
                                 <div class="alert alert-warning my-2">
@@ -72,8 +71,11 @@
                                             "
                                         ></h5>
                                     }
-                                    <jhi-button [btnType]="ButtonType.WARNING" (click)="postComponent.openCreateAnswerPostModal()" title="artemisApp.plagiarism.replyToAccusation">
-                                    </jhi-button>
+                                    <jhi-button
+                                        [btnType]="ButtonType.WARNING"
+                                        (click)="postComponent.openCreateAnswerPostModal()"
+                                        title="artemisApp.plagiarism.replyToAccusation"
+                                    />
                                 </div>
                             }
                             <div class="mt-3"></div>
@@ -84,7 +86,7 @@
             <section>
                 <h3 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.comparisons' | artemisTranslate }}</h3>
                 <div class="container-fluid">
-                    <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="false"></jhi-plagiarism-case-review>
+                    <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="false" />
                 </div>
             </section>
         </div>

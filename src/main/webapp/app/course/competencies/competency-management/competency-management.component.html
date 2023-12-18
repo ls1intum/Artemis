@@ -10,15 +10,15 @@
         <div class="d-flex flex-wrap">
             <div class="my-auto d-flex align-items-center">
                 <h2 jhiTranslate="artemisApp.competency.manageCompetencies.title">Competency Management</h2>
-                <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+                <jhi-documentation-button [type]="documentationType" />
             </div>
             <div class="ms-auto text-truncate justify-content-end">
                 <button class="btn btn-primary" id="competencyImportButton" (click)="openImportModal()">
-                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <fa-icon [icon]="faPlus" />
                     <span>{{ 'artemisApp.competency.manageCompetencies.import' | artemisTranslate }}</span>
                 </button>
                 <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'create']">
-                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <fa-icon [icon]="faPlus" />
                     <span>{{ 'artemisApp.competency.manageCompetencies.create' | artemisTranslate }}</span>
                 </a>
             </div>
@@ -139,7 +139,7 @@
                                     </ng-template>
                                     <ng-template #linkTemplate let-link>
                                         <svg:g class="edge" (click)="removeRelation(link)">
-                                            <svg:path class="line" stroke-width="2" marker-end="url(#arrow)"></svg:path>
+                                            <svg:path class="line" stroke-width="2" marker-end="url(#arrow)" />
                                             <svg:text class="edge-label" text-anchor="middle">
                                                 <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
                                                     {{ ('artemisApp.competency.relation.' + link.label.toLowerCase() | artemisTranslate).toUpperCase() }}
@@ -182,7 +182,7 @@
                                 <td>
                                     @if (competency.taxonomy) {
                                         <div>
-                                            <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" container="body"></fa-icon>
+                                            <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" container="body" />
                                             {{ getIconTooltip(competency.taxonomy) | artemisTranslate }}
                                         </div>
                                     }
@@ -196,14 +196,14 @@
                                         [showValue]="true"
                                         [value]="competency.courseProgress?.numberOfMasteredStudents ?? 0"
                                         [max]="competency.courseProgress?.numberOfStudents ?? 0"
-                                    ></ngb-progressbar>
+                                    />
                                 </td>
                                 <td>
                                     <span>{{ 'global.generic.' + (competency.optional ? 'yes' : 'no') | artemisTranslate }}</span>
                                 </td>
                                 <td class="text-end">
                                     <a class="btn btn-sm btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', competency.id, 'edit']">
-                                        <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                        <fa-icon [icon]="faPencilAlt" />
                                         <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
                                     </a>
                                     <button
@@ -214,7 +214,7 @@
                                         (delete)="deleteCompetency(competency.id!)"
                                         [dialogError]="dialogError$"
                                     >
-                                        <fa-icon [icon]="faTrash"></fa-icon>
+                                        <fa-icon [icon]="faTrash" />
                                     </button>
                                 </td>
                             </tr>
@@ -227,7 +227,7 @@
             <h2 jhiTranslate="artemisApp.competency.prerequisite.managePrerequisites.title">Prerequisite Management</h2>
             <div class="ms-auto text-truncate justify-content-end">
                 <a class="btn btn-primary" (click)="openPrerequisiteSelectionModal()">
-                    <fa-icon [icon]="faPlus"></fa-icon>
+                    <fa-icon [icon]="faPlus" />
                     <span>{{ 'artemisApp.competency.prerequisite.managePrerequisites.select' | artemisTranslate }}</span>
                 </a>
             </div>
@@ -258,7 +258,7 @@
                                 <td>
                                     @if (prerequisite.taxonomy) {
                                         <div>
-                                            <fa-icon [icon]="getIcon(prerequisite.taxonomy)" [fixedWidth]="true" container="body"></fa-icon>
+                                            <fa-icon [icon]="getIcon(prerequisite.taxonomy)" [fixedWidth]="true" container="body" />
                                             {{ getIconTooltip(prerequisite.taxonomy) | artemisTranslate }}
                                         </div>
                                     }
@@ -272,7 +272,7 @@
                                 </td>
                                 <td class="text-end">
                                     <button id="removeButton" class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
-                                        <fa-icon [icon]="faTrash"></fa-icon> {{ 'artemisApp.competency.competencyCard.remove' | artemisTranslate }}
+                                        <fa-icon [icon]="faTrash" /> {{ 'artemisApp.competency.competencyCard.remove' | artemisTranslate }}
                                     </button>
                                 </td>
                             </tr>

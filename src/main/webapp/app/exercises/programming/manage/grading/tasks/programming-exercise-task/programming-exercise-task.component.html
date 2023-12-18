@@ -2,7 +2,7 @@
     @if (!onlyViewTestCases) {
         <div class="d-flex">
             <button type="button" (click)="open = !open" class="task__collapse">
-                <fa-icon class="me-2" [icon]="open ? faAngleDown : faAngleRight"></fa-icon>
+                <fa-icon class="me-2" [icon]="open ? faAngleDown : faAngleRight" />
             </button>
             <div class="task__row">
                 <div class="task__row__cell gap-3">
@@ -66,7 +66,7 @@
                     <span class="task__field">{{ 'artemisApp.programmingExerciseTestCase.type.' + (task.type ?? 'DEFAULT') | artemisTranslate }}</span>
                 </div>
                 <div class="task__row__cell">
-                    <jhi-test-case-passed-builds-chart class="w-100" [testCaseStats]="task.stats" [totalParticipations]="numParticipations"></jhi-test-case-passed-builds-chart>
+                    <jhi-test-case-passed-builds-chart class="w-100" [testCaseStats]="task.stats" [totalParticipations]="numParticipations" />
                 </div>
             </div>
         </div>
@@ -118,11 +118,7 @@
                         <span class="task__field">{{ 'artemisApp.programmingExerciseTestCase.type.' + (test.type ?? 'DEFAULT') | artemisTranslate }}</span>
                     </div>
                     <div class="task__row__cell">
-                        <jhi-test-case-passed-builds-chart
-                            class="w-100"
-                            [testCaseStats]="test.testCaseStats"
-                            [totalParticipations]="numParticipations"
-                        ></jhi-test-case-passed-builds-chart>
+                        <jhi-test-case-passed-builds-chart class="w-100" [testCaseStats]="test.testCaseStats" [totalParticipations]="numParticipations" />
                     </div>
                 </div>
             }

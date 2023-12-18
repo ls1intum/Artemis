@@ -14,7 +14,7 @@
                     [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
                     [tooltip]="submitButtonTooltip"
                     [isLoading]="isSaving"
-                ></jhi-button>
+                />
             }
         </ng-container>
     </jhi-header-participation-page>
@@ -79,25 +79,23 @@
                     <h5><span jhiTranslate="artemisApp.fileUploadExercise.assessedSubmission">Your Assessment</span>:</h5>
                     <div class="row">
                         @if (unreferencedFeedback?.length && unreferencedFeedback!.length! > 0) {
-                            <jhi-additional-feedback class="col-xl-8 alert unreferencedFeedback" [feedback]="unreferencedFeedback!" [additional]="false" [course]="course">
-                            </jhi-additional-feedback>
+                            <jhi-additional-feedback class="col-xl-8 alert unreferencedFeedback" [feedback]="unreferencedFeedback!" [additional]="false" [course]="course" />
                         }
                     </div>
                     <div class="row">
                         @if (isOwnerOfParticipation) {
-                            <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)"></jhi-rating>
+                            <jhi-rating class="mt-2 alert alert-info" [result]="addParticipationToResult(result, participation)" />
                         }
                     </div>
                 </div>
             }
             @if (fileUploadExercise && result && participation && isAfterAssessmentDueDate && !examMode) {
-                <jhi-complaint-student-view [result]="resultWithComplaint ? resultWithComplaint : result" [participation]="participation" [exercise]="fileUploadExercise">
-                </jhi-complaint-student-view>
+                <jhi-complaint-student-view [result]="resultWithComplaint ? resultWithComplaint : result" [participation]="participation" [exercise]="fileUploadExercise" />
             }
         </div>
         <!--endregion-->
         <!--region Right Panel-->
-        <fa-icon right-header [icon]="farListAlt"></fa-icon>&nbsp;
+        <fa-icon right-header [icon]="farListAlt" />&nbsp;
         <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement">Problem Statement</span>
         <p right-body class="mb-3 markdown-preview">
             @if (fileUploadExercise!.problemStatement) {

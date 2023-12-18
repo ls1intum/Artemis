@@ -4,14 +4,14 @@
             <div>
                 <div class="d-flex align-items-center">
                     <h2><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span> {{ programmingExercise.id }}</h2>
-                    <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+                    <jhi-documentation-button [type]="documentationType" />
                 </div>
                 <hr />
                 <div class="button-header">
                     <div>
                         @if (programmingExercise.isAtLeastEditor) {
                             <a [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm me-1" style="margin-bottom: 10px">
-                                <fa-icon [icon]="faWrench"></fa-icon>&nbsp;
+                                <fa-icon [icon]="faWrench" />&nbsp;
                                 <span jhiTranslate="entity.action.edit"> Edit</span>
                             </a>
                         }
@@ -25,7 +25,7 @@
                                 class="btn btn-warning btn-sm me-1"
                                 style="margin-bottom: 10px"
                             >
-                                <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                <fa-icon [icon]="faPencilAlt" />
                                 <span jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
                             </a>
                         }
@@ -40,7 +40,7 @@
                                 class="btn btn-warning btn-sm me-1"
                                 style="margin-bottom: 10px"
                             >
-                                <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                <fa-icon [icon]="faPencilAlt" />
                                 <span jhiTranslate="entity.action.editBuildPlan">Edit build plan</span>
                             </a>
                         }
@@ -51,14 +51,14 @@
                                 class="btn btn-warning btn-sm me-1 position-relative"
                                 style="margin-bottom: 10px"
                             >
-                                <fa-icon [icon]="faLightbulb"></fa-icon>
+                                <fa-icon [icon]="faLightbulb" />
                                 <span jhiTranslate="entity.action.hints">Hints</span>
                             </a>
                         }
 
                         @if (programmingExercise.isAtLeastEditor) {
                             <a [routerLink]="baseResource + 'grading/test-cases'" class="btn btn-warning btn-sm me-1" style="margin-bottom: 10px">
-                                <fa-icon [icon]="faFileSignature"></fa-icon>
+                                <fa-icon [icon]="faFileSignature" />
                                 <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                             </a>
                         }
@@ -70,7 +70,7 @@
                                 class="btn btn-warning btn-sm me-1"
                                 style="margin-bottom: 10px"
                             >
-                                <fa-icon [icon]="faRobot"></fa-icon>
+                                <fa-icon [icon]="faRobot" />
                                 <span jhiTranslate="artemisApp.iris.settings.button.programmingExercise.title">Iris</span>
                             </a>
                         }
@@ -78,20 +78,20 @@
                     <div>
                         @if (programmingExercise.isAtLeastTutor) {
                             <a [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
-                                <fa-icon [icon]="faListAlt"></fa-icon>
+                                <fa-icon [icon]="faListAlt" />
                                 <span jhiTranslate="artemisApp.exercise.participations">Participations</span>
                             </a>
                         }
                         <!-- Teams -->
                         @if (programmingExercise.teamMode && programmingExercise.isAtLeastTutor) {
                             <a [routerLink]="teamBaseResource + 'teams'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
-                                <fa-icon [icon]="faUsers"></fa-icon>
+                                <fa-icon [icon]="faUsers" />
                                 <span jhiTranslate="artemisApp.exercise.teams">Teams</span>
                             </a>
                         }
                         @if (programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise.allowComplaintsForAutomaticAssessments) {
                             <a [routerLink]="shortBaseResource + 'assessment-dashboard/' + programmingExercise.id" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
-                                <fa-icon [icon]="faUserCheck"></fa-icon>
+                                <fa-icon [icon]="faUserCheck" />
                                 <span class="d-none d-md-inline">{{ 'artemisApp.exercise.exerciseAssessmentDashboard' | artemisTranslate }}</span>
                             </a>
                         }
@@ -112,22 +112,19 @@
                                 class="btn btn-outline-primary btn-sm me-1"
                                 style="margin-bottom: 10px"
                             >
-                                <fa-icon [icon]="faCheckDouble"></fa-icon> <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
+                                <fa-icon [icon]="faCheckDouble" /> <span jhiTranslate="artemisApp.consistencyCheck.button">Check consistency</span>
                             </button>
                         }
                     </div>
                     <div>
                         @if (programmingExercise.isAtLeastTutor) {
                             <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
-                                <fa-icon [icon]="faTable"></fa-icon>
+                                <fa-icon [icon]="faTable" />
                                 <span jhiTranslate="entity.action.scores">Scores</span>
                             </a>
                         }
                         @if (programmingExercise.isAtLeastInstructor) {
-                            <jhi-programming-exercise-instructor-exercise-download
-                                [exerciseId]="programmingExercise.id!"
-                                class="me-1"
-                            ></jhi-programming-exercise-instructor-exercise-download>
+                            <jhi-programming-exercise-instructor-exercise-download [exerciseId]="programmingExercise.id!" class="me-1" />
                         }
                         @if (programmingExercise.isAtLeastTutor && programmingExercise.course && !isExamExercise) {
                             <a
@@ -135,7 +132,7 @@
                                 class="btn btn-info btn-sm me-1"
                                 style="margin-bottom: 10px"
                             >
-                                <fa-icon [icon]="faChartBar"></fa-icon>&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
+                                <fa-icon [icon]="faChartBar" />&nbsp;<span jhiTranslate="statistics.statistics-title">Statistics</span>
                             </a>
                         }
                     </div>
@@ -205,7 +202,7 @@
                                 @if (lockingOrUnlockingRepositories) {
                                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                 }
-                                <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
+                                <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
                                 <span jhiTranslate="artemisApp.programmingExercise.unlockAllRepositories">Unlock all repositories</span>
                             </button>
                         }
@@ -219,7 +216,7 @@
                                 @if (lockingOrUnlockingRepositories) {
                                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                 }
-                                <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
+                                <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
                                 <span jhiTranslate="artemisApp.programmingExercise.lockAllRepositories">Lock all repositories</span>
                             </button>
                         }
@@ -230,7 +227,7 @@
                                 [programmingExercise]="programmingExercise"
                                 class="me-1"
                             >
-                                <fa-icon [icon]="faUndo"></fa-icon>
+                                <fa-icon [icon]="faUndo" />
                                 <span jhiTranslate="entity.action.reset">Reset</span>
                             </button>
                         }
@@ -248,7 +245,7 @@
                                 }"
                                 class="me-1"
                             >
-                                <fa-icon [icon]="faTrash"></fa-icon>
+                                <fa-icon [icon]="faTrash" />
                             </button>
                         }
                     </div>
@@ -260,7 +257,7 @@
                             [doughnutStats]="doughnutStats"
                             [exerciseType]="PROGRAMMING"
                             class="d-flex justify-content-around"
-                        ></jhi-exercise-detail-statistics>
+                        />
                         <hr />
                         <div>
                             <h2><span jhiTranslate="artemisApp.exercise.details">Exercise Details</span></h2>
@@ -269,7 +266,7 @@
                     </div>
                 }
                 <dl class="row-md jh-entity-details">
-                    <jhi-exercise-details [exercise]="programmingExercise"></jhi-exercise-details>
+                    <jhi-exercise-details [exercise]="programmingExercise" />
                     <dt><span jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled">Enable feedback suggestions from Athena</span></dt>
                     <dd>
                         <span>{{ (programmingExercise.feedbackSuggestionsEnabled ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
@@ -317,24 +314,14 @@
                     }
                     <dt><span jhiTranslate="artemisApp.programmingExercise.preview.label">Preview</span></dt>
                     <dd>
-                        <jhi-programming-exercise-plans-and-repositories-preview
-                            [programmingExercise]="programmingExercise"
-                        ></jhi-programming-exercise-plans-and-repositories-preview>
+                        <jhi-programming-exercise-plans-and-repositories-preview [programmingExercise]="programmingExercise" />
                     </dd>
                     <dt>
                         <span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span>
                         @if (programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl) {
                             <div class="clone-buttons">
-                                <jhi-clone-repo-button
-                                    class="ms-2"
-                                    [smallButtons]="true"
-                                    [repositoryUrl]="programmingExercise?.templateParticipation?.repositoryUrl || ''"
-                                ></jhi-clone-repo-button>
-                                <jhi-programming-exercise-instructor-repo-download
-                                    class="ms-2"
-                                    [exerciseId]="programmingExercise.id!"
-                                    [repositoryType]="'TEMPLATE'"
-                                ></jhi-programming-exercise-instructor-repo-download>
+                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="programmingExercise?.templateParticipation?.repositoryUrl || ''" />
+                                <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="programmingExercise.id!" [repositoryType]="'TEMPLATE'" />
                             </div>
                         }
                     </dt>
@@ -351,16 +338,8 @@
                         <span jhiTranslate="artemisApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span>
                         @if (programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.repositoryUrl) {
                             <div class="clone-buttons">
-                                <jhi-clone-repo-button
-                                    class="ms-2"
-                                    [smallButtons]="true"
-                                    [repositoryUrl]="programmingExercise.solutionParticipation.repositoryUrl"
-                                ></jhi-clone-repo-button>
-                                <jhi-programming-exercise-instructor-repo-download
-                                    class="ms-2"
-                                    [exerciseId]="programmingExercise.id!"
-                                    [repositoryType]="'SOLUTION'"
-                                ></jhi-programming-exercise-instructor-repo-download>
+                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="programmingExercise.solutionParticipation.repositoryUrl" />
+                                <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="programmingExercise.id!" [repositoryType]="'SOLUTION'" />
                             </div>
                         }
                     </dt>
@@ -377,12 +356,8 @@
                         <span jhiTranslate="artemisApp.programmingExercise.testRepositoryUrl">Test Repository Url</span>
                         @if (programmingExercise.testRepositoryUrl) {
                             <div class="clone-buttons">
-                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="programmingExercise.testRepositoryUrl"></jhi-clone-repo-button>
-                                <jhi-programming-exercise-instructor-repo-download
-                                    class="ms-2"
-                                    [exerciseId]="programmingExercise.id!"
-                                    [repositoryType]="'TESTS'"
-                                ></jhi-programming-exercise-instructor-repo-download>
+                                <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="programmingExercise.testRepositoryUrl" />
+                                <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="programmingExercise.id!" [repositoryType]="'TESTS'" />
                             </div>
                         }
                     </dt>
@@ -406,18 +381,18 @@
                                     <li>
                                         <dt>
                                             <span>{{ auxiliaryRepository.name }} Repository</span>
-                                            <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="auxiliaryRepository.repositoryUrl!"></jhi-clone-repo-button>
+                                            <jhi-clone-repo-button class="ms-2" [smallButtons]="true" [repositoryUrl]="auxiliaryRepository.repositoryUrl!" />
                                             <jhi-programming-exercise-instructor-repo-download
                                                 class="ms-2"
                                                 [exerciseId]="programmingExercise.id!"
                                                 [repositoryType]="'AUXILIARY'"
                                                 [auxiliaryRepositoryId]="auxiliaryRepository.id!"
-                                            ></jhi-programming-exercise-instructor-repo-download>
+                                            />
                                             <div class="auxiliaryRepositoryDescription">
                                                 @if (auxiliaryRepository.checkoutDirectory) {
                                                     <span>Checkout Directory: {{ auxiliaryRepository.checkoutDirectory }} </span>
                                                 } @else {
-                                                    <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip"></fa-icon>
+                                                    <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip" />
                                                     <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet">Checkout Directory was not set</span>
                                                 }
                                                 <ng-template #noCheckoutDirectorySetTooltip>
@@ -510,7 +485,7 @@
                                         [short]="false"
                                         (onParticipationChange)="onParticipationChange()"
                                         class="me-2"
-                                    ></jhi-updating-result>
+                                    />
                                 }
                                 @if (programmingExercise.templateParticipation?.results?.length) {
                                     <jhi-programming-exercise-instructor-status
@@ -518,13 +493,13 @@
                                         [participationType]="ProgrammingExerciseParticipationType.TEMPLATE"
                                         [participation]="programmingExercise.templateParticipation!"
                                         [exercise]="programmingExercise"
-                                    ></jhi-programming-exercise-instructor-status>
+                                    />
                                 }
                                 @if (programmingExercise.templateParticipation?.results && programmingExercise.isAtLeastEditor) {
                                     <jhi-programming-exercise-instructor-trigger-build-button
                                         [exercise]="programmingExercise"
                                         [participation]="programmingExercise.templateParticipation!"
-                                    ></jhi-programming-exercise-instructor-trigger-build-button>
+                                    />
                                 }
                             </div>
                         }
@@ -551,7 +526,7 @@
                                         [personalParticipation]="false"
                                         [short]="false"
                                         class="me-2"
-                                    ></jhi-updating-result>
+                                    />
                                 }
                                 @if (programmingExercise.solutionParticipation?.results?.length) {
                                     <jhi-programming-exercise-instructor-status
@@ -559,13 +534,13 @@
                                         [participationType]="ProgrammingExerciseParticipationType.SOLUTION"
                                         [participation]="programmingExercise.solutionParticipation!"
                                         [exercise]="programmingExercise"
-                                    ></jhi-programming-exercise-instructor-status>
+                                    />
                                 }
                                 @if (programmingExercise.solutionParticipation?.results && programmingExercise.isAtLeastEditor) {
                                     <jhi-programming-exercise-instructor-trigger-build-button
                                         [exercise]="programmingExercise"
                                         [participation]="programmingExercise.solutionParticipation!"
-                                    ></jhi-programming-exercise-instructor-trigger-build-button>
+                                    />
                                 }
                             </div>
                         }
@@ -585,11 +560,7 @@
                         <div>
                             <dt><span jhiTranslate="artemisApp.iris.settings.subSettings.enabled.chat">Iris Chat</span></dt>
                             <dd>
-                                <jhi-iris-enabled
-                                    [exercise]="programmingExercise"
-                                    [irisSubSettingsType]="CHAT"
-                                    [disabled]="!programmingExercise.isAtLeastInstructor"
-                                ></jhi-iris-enabled>
+                                <jhi-iris-enabled [exercise]="programmingExercise" [irisSubSettingsType]="CHAT" [disabled]="!programmingExercise.isAtLeastInstructor" />
                             </dd>
                         </div>
                     }
@@ -603,7 +574,7 @@
                                         [addedLineCount]="addedLineCount"
                                         [removedLineCount]="removedLineCount"
                                         ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
-                                    ></jhi-git-diff-line-stat>
+                                    />
                                     @if (addedLineCount > 0 || removedLineCount > 0) {
                                         <jhi-button
                                             [featureToggle]="FeatureToggle.ProgrammingExercises"
@@ -614,7 +585,7 @@
                                             [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
                                             (onClick)="showGitDiff()"
                                             class="ms-2"
-                                        ></jhi-button>
+                                        />
                                     }
                                 </div>
                             </dd>
@@ -632,7 +603,7 @@
                         <div>
                             <dt>
                                 <span jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.title">Build Log Statistics</span>
-                                <jhi-help-icon text="artemisApp.programmingExercise.buildLogStatistics.tooltip"></jhi-help-icon>
+                                <jhi-help-icon text="artemisApp.programmingExercise.buildLogStatistics.tooltip" />
                             </dt>
                             <dd>
                                 <table class="table table-striped">

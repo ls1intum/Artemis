@@ -23,7 +23,7 @@ class MockHeaderComponent {
     template: `
         <jhi-tutorial-group-detail [tutorialGroup]="tutorialGroup">
             <ng-template let-tutorialGroup>
-                <jhi-mock-header [tutorialGroup]="tutorialGroup"></jhi-mock-header>
+                <jhi-mock-header [tutorialGroup]="tutorialGroup" />
             </ng-template>
         </jhi-tutorial-group-detail>
     `,

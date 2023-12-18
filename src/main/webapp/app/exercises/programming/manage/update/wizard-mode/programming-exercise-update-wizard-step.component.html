@@ -1,16 +1,16 @@
 <div class="status-step">
     <div class="d-flex justify-content-center header-icon">
         @if (isPerformed) {
-            <fa-icon [icon]="faCheck" size="lg" class="check step-icon"></fa-icon>
+            <fa-icon [icon]="faCheck" size="lg" class="check step-icon" />
         }
         @if (!isPerformed) {
-            <fa-icon [icon]="faDotCircle" class="step-icon" [ngClass]="currentlySelected ? 'current' : 'unset'"></fa-icon>
+            <fa-icon [icon]="faDotCircle" class="step-icon" [ngClass]="currentlySelected ? 'current' : 'unset'" />
         }
     </div>
     <div class="col status-step-content">
         <span class="row text-center" [class.selected-label]="currentlySelected" [jhiTranslate]="labelTranslationKey">Current step</span>
         @if (descriptionTranslationKey) {
-            <jhi-help-icon placement="auto" [text]="descriptionTranslationKey"></jhi-help-icon>
+            <jhi-help-icon placement="auto" [text]="descriptionTranslationKey" />
         }
     </div>
 </div>

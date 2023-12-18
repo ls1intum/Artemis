@@ -12,28 +12,16 @@
             class="form-step"
             [programmingExercise]="programmingExercise"
             [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
-        ></jhi-programming-exercise-difficulty>
+        />
     }
     @if (currentStep >= 3) {
-        <jhi-programming-exercise-language
-            class="form-step"
-            [programmingExercise]="programmingExercise"
-            [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
-        ></jhi-programming-exercise-language>
+        <jhi-programming-exercise-language class="form-step" [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="programmingExerciseCreationConfig" />
     }
     @if (currentStep >= 4) {
-        <jhi-programming-exercise-problem
-            class="form-step"
-            [(exercise)]="exercise"
-            [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
-        ></jhi-programming-exercise-problem>
+        <jhi-programming-exercise-problem class="form-step" [(exercise)]="exercise" [programmingExerciseCreationConfig]="programmingExerciseCreationConfig" />
     }
     @if (currentStep >= 5) {
-        <jhi-programming-exercise-grading
-            class="form-step"
-            [programmingExercise]="programmingExercise"
-            [programmingExerciseCreationConfig]="programmingExerciseCreationConfig"
-        ></jhi-programming-exercise-grading>
+        <jhi-programming-exercise-grading class="form-step" [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="programmingExerciseCreationConfig" />
     }
     <!-- Bottom Navigation Bar -->
     <jhi-programming-exercise-update-wizard-bottom-bar
@@ -42,5 +30,5 @@
         [toggleMode]="toggleMode"
         [isSaving]="isSaving"
         [getInvalidReasons]="getInvalidReasons"
-    ></jhi-programming-exercise-update-wizard-bottom-bar>
+    />
 </form>

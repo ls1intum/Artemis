@@ -50,7 +50,7 @@
                 <fa-icon
                     [icon]="faQuestionCircle"
                     [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
-                ></fa-icon>
+                />
                 <div class="input-group background-file">
                     <div class="custom-file overflow-ellipsis">
                         <input
@@ -79,7 +79,7 @@
                 }
             </div>
             <div class="form-group">
-                <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate"></jhi-date-time-picker>
+                <jhi-date-time-picker [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate" />
             </div>
             <div class="form-group">
                 <jhi-competency-selection
@@ -87,7 +87,7 @@
                     [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                     [labelTooltip]="'artemisApp.competency.link.lectureUnit' | artemisTranslate"
                     formControlName="competencies"
-                ></jhi-competency-selection>
+                />
             </div>
             <div class="form-group" [hidden]="!isEditMode">
                 <label for="updateNotificationText">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.updateNotificationText' | artemisTranslate }}</label>
@@ -120,7 +120,7 @@
                     </button>
                     @if (hasCancelButton) {
                         <button type="button" (click)="cancelForm()" class="btn btn-default">
-                            <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                            <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                         </button>
                     }
                 </div>

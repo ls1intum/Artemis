@@ -96,14 +96,14 @@
             class="btn btn-warning"
             (click)="openModal(archiveWarningPopup)"
         >
-            <fa-icon [hidden]="!isBeingArchived" [spin]="true" [icon]="faCircleNotch"></fa-icon>
-            <fa-icon [hidden]="isBeingArchived" [icon]="faArchive"></fa-icon>&nbsp;
+            <fa-icon [hidden]="!isBeingArchived" [spin]="true" [icon]="faCircleNotch" />
+            <fa-icon [hidden]="isBeingArchived" [icon]="faArchive" />&nbsp;
             <span>{{ archiveButtonText }}</span>
         </button>
     }
     @if (displayDownloadArchiveButton) {
         <button [disabled]="isBeingArchived" type="button" [attr.data-mode]="archiveMode" class="btn btn-primary" (click)="downloadArchive()">
-            <fa-icon [icon]="faDownload"></fa-icon>&nbsp;
+            <fa-icon [icon]="faDownload" />&nbsp;
             <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive">Download Archive</span>
         </button>
     }
@@ -121,7 +121,7 @@
             deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
             style="margin-right: 0 !important"
         >
-            <fa-icon [icon]="faEraser"></fa-icon>
+            <fa-icon [icon]="faEraser" />
         </button>
     }
     @if (canCleanup() && archiveMode === 'Exam') {
@@ -138,7 +138,7 @@
             deleteConfirmationText="artemisApp.examManagement.delete.typeNameToConfirm"
             style="margin-right: 0 !important"
         >
-            <fa-icon [icon]="faEraser"></fa-icon>
+            <fa-icon [icon]="faEraser" />
         </button>
     }
 </ng-container>

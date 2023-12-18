@@ -58,11 +58,10 @@
                             [tooltipDisabled]="true"
                             [dataLabelFormatting]="bindFormatting"
                             [roundEdges]="false"
-                        >
-                        </ngx-charts-bar-vertical>
+                        />
                         <div class="col-md-12 text-center button-row">
                             <button (click)="switchRated()" type="button" class="btn btn-primary">
-                                <fa-icon [icon]="faSync"></fa-icon>&nbsp;
+                                <fa-icon [icon]="faSync" />&nbsp;
                                 @if (rated) {
                                     <span jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
                                 }
@@ -76,6 +75,6 @@
                 </div>
             </div>
         </div>
-        <jhi-quiz-statistics-footer [isQuizStatistic]="true"></jhi-quiz-statistics-footer>
+        <jhi-quiz-statistics-footer [isQuizStatistic]="true" />
     </div>
 }

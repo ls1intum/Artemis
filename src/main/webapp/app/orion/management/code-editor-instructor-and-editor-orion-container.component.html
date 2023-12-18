@@ -3,13 +3,13 @@
         <div class="card-body">
             @if (loadingState === LOADING_STATE.INITIALIZING) {
                 <span>
-                    <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
+                    <fa-icon [icon]="faCircleNotch" [spin]="true" />
                     <span jhiTranslate="artemisApp.editor.fetchingParticipation"> Your participation is being loaded... </span>
                 </span>
             }
             @if (loadingState === LOADING_STATE.FETCHING_FAILED) {
                 <span>
-                    <fa-icon [icon]="faTimesCircle" class="text-danger"></fa-icon>
+                    <fa-icon [icon]="faTimesCircle" class="text-danger" />
                     <span jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</span>
                 </span>
             }
@@ -27,7 +27,7 @@
                     [showBadge]="selectedRepository === REPOSITORY.ASSIGNMENT"
                     [personalParticipation]="false"
                     class="me-2"
-                ></jhi-updating-result>
+                />
             }
         </div>
         <div class="d-flex align-items-center justify-content-end me-2 mb-3">
@@ -36,7 +36,7 @@
                 [exercise]="exercise"
                 [templateParticipation]="exercise.templateParticipation!"
                 [solutionParticipation]="exercise.solutionParticipation!"
-            ></jhi-programming-exercise-instructor-exercise-status>
+            />
             <div ngbDropdown class="d-inline-block me-2">
                 <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>{{ selectedRepository }}</button>
                 <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
@@ -69,22 +69,16 @@
                 </div>
             </div>
             @if (selectedRepository !== REPOSITORY.TEST) {
-                <jhi-programming-exercise-student-trigger-build-button
-                    class="me-3"
-                    [exercise]="exercise"
-                    [participation]="selectedParticipation!"
-                    [btnSize]="ButtonSize.MEDIUM"
-                ></jhi-programming-exercise-student-trigger-build-button>
+                <jhi-programming-exercise-student-trigger-build-button class="me-3" [exercise]="exercise" [participation]="selectedParticipation!" [btnSize]="ButtonSize.MEDIUM" />
             }
-            <jhi-ide-button class="ms-1" [buttonLoading]="orionState.building" buttonLabel="{{ 'artemisApp.editor.submit' | artemisTranslate }}" (clickHandler)="submit()">
-            </jhi-ide-button>
+            <jhi-ide-button class="ms-1" [buttonLoading]="orionState.building" buttonLabel="{{ 'artemisApp.editor.submit' | artemisTranslate }}" (clickHandler)="submit()" />
             @if (selectedRepository !== REPOSITORY.TEST) {
                 <jhi-ide-button
                     class="ms-1"
                     [buttonLoading]="orionState.building"
                     buttonLabel="{{ 'artemisApp.editor.intellij.testLocally' | artemisTranslate }}"
                     (clickHandler)="buildLocally()"
-                ></jhi-ide-button>
+                />
             }
         </div>
         @if (exercise) {
@@ -94,8 +88,7 @@
                 [(participation)]="selectedParticipation!"
                 [templateParticipation]="exercise.templateParticipation!"
                 [enableResize]="false"
-            >
-            </jhi-programming-exercise-editable-instructions>
+            />
         }
     </div>
 }

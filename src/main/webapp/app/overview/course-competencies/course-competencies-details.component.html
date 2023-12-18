@@ -1,4 +1,4 @@
-<jhi-fireworks [active]="showFireworks"></jhi-fireworks>
+<jhi-fireworks [active]="showFireworks" />
 @if (isLoading) {
     <div class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
@@ -19,7 +19,7 @@
                                 [fixedWidth]="true"
                                 [ngbTooltip]="getIconTooltip(competency.taxonomy) | artemisTranslate"
                                 container="body"
-                            ></fa-icon>
+                            />
                         }
                         <span>{{ competency!.title }}</span>
                         @if (isMastered) {
@@ -42,7 +42,7 @@
                 <div class="col-auto">
                     @if (competency.course?.isAtLeastInstructor) {
                         <a class="btn btn-sm btn-warning float-end" [routerLink]="['/course-management', courseId, 'competency-management', competency.id, 'edit']">
-                            <fa-icon [icon]="faPencilAlt"></fa-icon>
+                            <fa-icon [icon]="faPencilAlt" />
                             <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
                         </a>
                     }
@@ -57,19 +57,19 @@
                         <div class="col-12 col-lg-11">
                             @switch (lectureUnit.type) {
                                 @case (LectureUnitType.EXERCISE) {
-                                    <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="competency!.course!"></jhi-exercise-unit>
+                                    <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="competency!.course!" />
                                 }
                                 @case (LectureUnitType.ATTACHMENT) {
-                                    <jhi-attachment-unit [attachmentUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-attachment-unit>
+                                    <jhi-attachment-unit [attachmentUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                 }
                                 @case (LectureUnitType.VIDEO) {
-                                    <jhi-video-unit [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-video-unit>
+                                    <jhi-video-unit [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                 }
                                 @case (LectureUnitType.TEXT) {
-                                    <jhi-text-unit [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-text-unit>
+                                    <jhi-text-unit [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                 }
                                 @case (LectureUnitType.ONLINE) {
-                                    <jhi-online-unit [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-online-unit>
+                                    <jhi-online-unit [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
                                 }
                             }
                         </div>
@@ -78,25 +78,19 @@
             </div>
             <div class="col-lg-3 col-md-4">
                 <div class="w-50 mx-auto my-2">
-                    <jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery"></jhi-competency-rings>
+                    <jhi-competency-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery" />
                 </div>
                 <jhi-side-panel class="d-block mt-3" [panelHeader]="'artemisApp.competency.table.panelHeader' | artemisTranslate">
                     <div class="row mb-1 g-0">
-                        <div class="col-7">
-                            {{ 'artemisApp.competency.progress' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.progressDescription"></jhi-help-icon>
-                        </div>
+                        <div class="col-7">{{ 'artemisApp.competency.progress' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.progressDescription" /></div>
                         <div class="col-5">{{ progress }} %</div>
                     </div>
                     <div class="row mb-1 g-0">
-                        <div class="col-7">
-                            {{ 'artemisApp.competency.confidence' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.confidenceDescription"></jhi-help-icon>
-                        </div>
+                        <div class="col-7">{{ 'artemisApp.competency.confidence' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.confidenceDescription" /></div>
                         <div class="col-5">{{ confidence }} %</div>
                     </div>
                     <div class="row mb-1 g-0">
-                        <div class="col-7">
-                            {{ 'artemisApp.competency.mastery' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.masteryDescription"></jhi-help-icon>
-                        </div>
+                        <div class="col-7">{{ 'artemisApp.competency.mastery' | artemisTranslate }} <jhi-help-icon text="artemisApp.competency.masteryDescription" /></div>
                         <div class="col-5">{{ mastery }} %</div>
                     </div>
                 </jhi-side-panel>

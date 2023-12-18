@@ -4,7 +4,7 @@
             <h2 id="page-heading">
                 <span jhiTranslate="artemisApp.lecture.home.title">Lectures</span>
             </h2>
-            <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
+            <jhi-documentation-button [type]="documentationType" />
         </div>
         <div class="d-flex flex-row-reverse bd-highlight mb-3">
             <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
@@ -15,7 +15,7 @@
                         ngbDropdownToggle
                         id="filter-dropdown-button"
                     >
-                        <fa-icon [icon]="faFilter"></fa-icon>
+                        <fa-icon [icon]="faFilter" />
                         <span class="d-s-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size } }}</span>
                     </button>
                     <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
@@ -71,11 +71,11 @@
                 </div>
                 <div class="d-flex-end text-end">
                     <button (click)="openImportModal()" class="btn btn-primary jh-create-entity import-lecture text-truncate mb-1" id="lecture-import-button">
-                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.lecture.home.importLabel">Import Lecture</span>
                     </button>
                     <a id="jh-create-entity" class="btn btn-primary jh-create-entity create-lecture mb-1" [routerLink]="['new']">
-                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.lecture.home.createLabel">Create Lecture</span>
                     </a>
                 </div>
@@ -90,27 +90,27 @@
                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
                         <th class="d-md-table-cell" jhiSortBy="id">
                             <span jhiTranslate="global.field.id">ID</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="title">
                             <span jhiTranslate="artemisApp.lecture.title">Title</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="description">
                             <span jhiTranslate="artemisApp.lecture.description">Description</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="visibleDate">
                             <span jhiTranslate="artemisApp.lecture.visibleDate">Visible from</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="startDate">
                             <span jhiTranslate="artemisApp.lecture.startDate">Start Date</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="endDate">
                             <span jhiTranslate="artemisApp.lecture.endDate">End Date</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th></th>
                     </tr>
@@ -133,13 +133,13 @@
                                     <div class="btn-group-vertical me-1 mb-1">
                                         @if (lecture.isAtLeastEditor) {
                                             <a [routerLink]="[lecture.id, 'attachments']" class="btn btn-primary mb-1 btn-sm">
-                                                <fa-icon [icon]="faFile"></fa-icon>
+                                                <fa-icon [icon]="faFile" />
                                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.attachments">Attachment</span>
                                             </a>
                                         }
                                         @if (lecture.isAtLeastEditor) {
                                             <a [routerLink]="[lecture.id, 'unit-management']" class="btn btn-primary btn-sm" id="units">
-                                                <fa-icon [icon]="faPuzzlePiece"></fa-icon>
+                                                <fa-icon [icon]="faPuzzlePiece" />
                                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.units">Units</span>
                                             </a>
                                         }
@@ -147,7 +147,7 @@
                                     <div class="btn-group-vertical me-1 mb-1">
                                         @if (lecture.isAtLeastEditor) {
                                             <a [routerLink]="[lecture.id, 'edit']" class="btn btn-primary btn-sm">
-                                                <fa-icon [icon]="faPencilAlt"></fa-icon>
+                                                <fa-icon [icon]="faPencilAlt" />
                                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                             </a>
                                         }
@@ -162,7 +162,7 @@
                                                 (delete)="deleteLecture(lecture.id!)"
                                                 [dialogError]="dialogError$"
                                             >
-                                                <fa-icon [icon]="faTrash"></fa-icon>
+                                                <fa-icon [icon]="faTrash" />
                                             </button>
                                         }
                                     </div>

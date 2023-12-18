@@ -23,8 +23,8 @@
                             readonly
                             class="form-control"
                         />
-                        <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="date"><fa-icon [icon]="faCalendarAlt"></fa-icon></button>
-                        <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #date [pickerMode]="'dialog'"></owl-date-time>
+                        <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="date"><fa-icon [icon]="faCalendarAlt" /></button>
+                        <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #date [pickerMode]="'dialog'" />
                     </div>
                     @if (dateControl?.invalid && (dateControl?.dirty || dateControl?.touched)) {
                         <div class="alert alert-danger">
@@ -48,13 +48,13 @@
                             <span>{{ 'artemisApp.forms.sessionForm.timeInput.from' | artemisTranslate }}</span>
                         </div>
                         <div class="col-auto">
-                            <ngb-timepicker formControlName="startTime" [hourStep]="1" [minuteStep]="15"></ngb-timepicker>
+                            <ngb-timepicker formControlName="startTime" [hourStep]="1" [minuteStep]="15" />
                         </div>
                         <div class="col-auto my-auto">
                             <span>{{ 'artemisApp.forms.sessionForm.timeInput.to' | artemisTranslate }}</span>
                         </div>
                         <div class="col-auto my-auto">
-                            <ngb-timepicker formControlName="endTime" [hourStep]="1" [minuteStep]="15"></ngb-timepicker>
+                            <ngb-timepicker formControlName="endTime" [hourStep]="1" [minuteStep]="15" />
                         </div>
                     </div>
                     @if (startTimeControl?.invalid && (startTimeControl?.dirty || startTimeControl?.touched)) {

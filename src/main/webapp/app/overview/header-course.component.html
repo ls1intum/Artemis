@@ -10,7 +10,7 @@
                             @if (enableShowMore) {
                                 <div class="fw-medium show-more d-flex h6" role="button" (click)="toggleCourseDescription()">
                                     {{ 'artemisApp.courseOverview.' + (longDescriptionShown ? 'showLess' : 'showMore') | artemisTranslate }}
-                                    &nbsp; <fa-icon [icon]="faArrowDown" [class.rotate180]="longDescriptionShown" class="rotate-icon"></fa-icon>
+                                    &nbsp; <fa-icon [icon]="faArrowDown" [class.rotate180]="longDescriptionShown" class="rotate-icon" />
                                 </div>
                             }
                         </div>
@@ -39,8 +39,7 @@
                     [src]="course.courseIcon!"
                     [cachingStrategy]="CachingStrategy.LOCAL_STORAGE"
                     [alt]="'artemisApp.courseOverview.noCourseIcon' | artemisTranslate"
-                >
-                </jhi-secured-image>
+                />
             </div>
         }
     </div>

@@ -2,7 +2,7 @@
     <h2>
         <span id="user-management-page-heading" jhiTranslate="artemisApp.userManagement.home.title">Users</span>
         <a class="btn btn-primary float-end jh-create-entity" [routerLink]="['./new']">
-            <fa-icon [icon]="faPlus"></fa-icon>
+            <fa-icon [icon]="faPlus" />
             <span jhiTranslate="artemisApp.userManagement.home.createLabel">Create a new User</span>
         </a>
     </h2>
@@ -48,14 +48,14 @@
                                     [dialogError]="this.dialogError"
                                     [disabled]="!this.selectedUsers.length"
                                 >
-                                    <fa-icon [icon]="faTimes"></fa-icon>
+                                    <fa-icon [icon]="faTimes" />
                                 </button>
                                 <button
                                     class="btn"
                                     (click)="this.open(content)"
                                     [ngClass]="{ 'btn-secondary': !filters.numberOfAppliedFilters, 'btn-success': !!filters.numberOfAppliedFilters }"
                                 >
-                                    <fa-icon [icon]="faFilter"></fa-icon>
+                                    <fa-icon [icon]="faFilter" />
                                     <span class="d-s-none d-md-inline">{{
                                         'artemisApp.userManagement.filter.modal.open' | artemisTranslate: { num: filters.numberOfAppliedFilters }
                                     }}</span>
@@ -79,42 +79,42 @@
                         </th>
                         <th jhiSortBy="id">
                             <span jhiTranslate="global.field.id">ID</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="login">
                             <span jhiTranslate="artemisApp.userManagement.login">Login</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="email">
                             <span jhiTranslate="artemisApp.userManagement.email">Email</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="registrationNumber">
                             <span jhiTranslate="artemisApp.userManagement.registrationNumber">Registration Number</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="lastName">
                             <span jhiTranslate="artemisApp.userManagement.name">Name</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th></th>
                         <th jhiSortBy="langKey">
                             <span jhiTranslate="artemisApp.userManagement.langKey">Lang Key</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th><span jhiTranslate="artemisApp.userManagement.profiles">Profiles</span></th>
                         <th><span>Groups</span></th>
                         <th jhiSortBy="createdDate">
                             <span jhiTranslate="artemisApp.userManagement.createdDate">Created Date</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="lastModifiedBy">
                             <span jhiTranslate="artemisApp.userManagement.lastModifiedBy">Last Modified By</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th jhiSortBy="lastModifiedDate">
                             <span jhiTranslate="artemisApp.userManagement.lastModifiedDate">Last Modified Date</span>
-                            <fa-icon [icon]="faSort"></fa-icon>
+                            <fa-icon [icon]="faSort" />
                         </th>
                         <th></th>
                     </tr>
@@ -136,16 +136,16 @@
                                     <a [routerLink]="['./', user.login]">{{ user.id }}</a>
                                 </td>
                                 <td>
-                                    <ngb-highlight [result]="user.login" [term]="searchTerm"></ngb-highlight>
+                                    <ngb-highlight [result]="user.login" [term]="searchTerm" />
                                 </td>
                                 <td>
-                                    <ngb-highlight [result]="user.email" [term]="searchTerm"></ngb-highlight>
+                                    <ngb-highlight [result]="user.email" [term]="searchTerm" />
                                 </td>
                                 <td>
-                                    <ngb-highlight [result]="user.visibleRegistrationNumber" [term]="searchTerm"></ngb-highlight>
+                                    <ngb-highlight [result]="user.visibleRegistrationNumber" [term]="searchTerm" />
                                 </td>
                                 <td>
-                                    <ngb-highlight [result]="user.name" [term]="searchTerm"></ngb-highlight>
+                                    <ngb-highlight [result]="user.name" [term]="searchTerm" />
                                 </td>
                                 <td>
                                     @if (!user.activated) {
@@ -185,11 +185,11 @@
                                 <td class="text-end">
                                     <div class="btn-group flex-btn-group-container">
                                         <a [routerLink]="['./', user.login]" class="btn btn-info btn-sm">
-                                            <fa-icon [icon]="faEye"></fa-icon>
+                                            <fa-icon [icon]="faEye" />
                                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                                         </a>
                                         <a [routerLink]="['./', user.login, 'edit']" queryParamsHandling="merge" class="btn btn-warning btn-sm">
-                                            <fa-icon [icon]="faWrench"></fa-icon>
+                                            <fa-icon [icon]="faWrench" />
                                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                                         </a>
                                         @if (isLdapProfileActive) {
@@ -203,7 +203,7 @@
                                             [dialogError]="dialogError"
                                             [disabled]="!currentAccount || currentAccount.login === user.login"
                                         >
-                                            <fa-icon [icon]="faTimes"></fa-icon>
+                                            <fa-icon [icon]="faTimes" />
                                         </button>
                                     </div>
                                 </td>
@@ -217,7 +217,7 @@
     @if (users) {
         <div>
             <div class="row justify-content-center">
-                <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }"></jhi-item-count>
+                <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
             </div>
             <div class="row justify-content-center">
                 <ngb-pagination
@@ -228,7 +228,7 @@
                     [rotate]="true"
                     [boundaryLinks]="true"
                     (pageChange)="transition()"
-                ></ngb-pagination>
+                />
             </div>
         </div>
     }
@@ -244,7 +244,7 @@
             <div class="row user-management-border-bottom">
                 <div class="col d-flex flex-row pb-1">
                     <h5 class="my-0">{{ 'artemisApp.userManagement.filter.authority.title' | artemisTranslate: { num: this.filters.authorityFilter.size } }}</h5>
-                    <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.authority.tooltip"></jhi-help-icon>
+                    <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.authority.tooltip" />
                 </div>
             </div>
             <div class="row user-management-background-accent">
@@ -274,7 +274,7 @@
                                 <label for="emptyRoles" class="form-check-label ps-1">
                                     {{ 'artemisApp.userManagement.filter.authority.without' | artemisTranslate }}
                                 </label>
-                                <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.authority.withoutTooltip"></jhi-help-icon>
+                                <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.authority.withoutTooltip" />
                             </div>
                             <div class="form-check col-3 d-flex justify-content-center">
                                 <input
@@ -314,7 +314,7 @@
             <div class="row row user-management-border-bottom">
                 <div class="col d-flex flex-row pt-3 pb-1">
                     <h5 class="my-0">{{ 'artemisApp.userManagement.filter.origin.title' | artemisTranslate: { num: this.filters.originFilter.size } }}</h5>
-                    <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.origin.tooltip"></jhi-help-icon>
+                    <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.origin.tooltip" />
                 </div>
             </div>
             <div class="row user-management-background-accent">
@@ -340,7 +340,7 @@
             <div class="row row user-management-border-bottom">
                 <div class="col d-flex flex-row pt-3 pb-1">
                     <h5 class="my-0">{{ 'artemisApp.userManagement.filter.registrationNumber.title' | artemisTranslate: { num: this.filters.registrationNumberFilter.size } }}</h5>
-                    <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.registrationNumber.tooltip"></jhi-help-icon>
+                    <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.registrationNumber.tooltip" />
                 </div>
             </div>
             <div class="row user-management-background-accent">
@@ -379,7 +379,7 @@
             <div class="row user-management-border-bottom">
                 <div class="col d-flex flex-row pt-3 pb-1">
                     <h5 class="my-0">{{ 'artemisApp.userManagement.filter.status.title' | artemisTranslate: { num: this.filters.statusFilter.size } }}</h5>
-                    <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.status.tooltip"></jhi-help-icon>
+                    <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.status.tooltip" />
                 </div>
             </div>
             <div class="row user-management-background-accent">
@@ -405,7 +405,7 @@
             <div class="row user-management-border-bottom">
                 <div class="col d-flex flex-row pt-3 pb-1">
                     <h5 class="my-0">{{ 'artemisApp.userManagement.filter.course.title' | artemisTranslate: { num: this.filters.courseFilter.size } }}</h5>
-                    <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.course.tooltip"></jhi-help-icon>
+                    <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.course.tooltip" />
                 </div>
             </div>
             <div class="row user-management-background-accent">
@@ -435,7 +435,7 @@
                                 <label for="selectEmptyCourses" class="form-check-label ps-1">
                                     {{ 'artemisApp.userManagement.filter.course.without' | artemisTranslate }}
                                 </label>
-                                <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.course.withoutTooltip"></jhi-help-icon>
+                                <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.course.withoutTooltip" />
                             </div>
                             <div class="form-check col-3 d-flex justify-content-center">
                                 <input
