@@ -217,4 +217,4 @@ However, the ``@Isolated`` annotation, which prevents other tests from running p
     class QuizCacheTest extends AbstractSpringIntegrationIndependentTest { ... }
 
 .. note::
-    Avoid using ``@Isolated`` whenever possible, as it worsens the test runtime. Only use it when explicitly testing quiz cache, which only a few quiz-related tests do.
+    Avoid using ``@Isolated`` whenever possible, as it worsens the test runtime. Try to refactor tests so that the shared resources become exclusive and only use @Isolated if refactoring is not possible.
