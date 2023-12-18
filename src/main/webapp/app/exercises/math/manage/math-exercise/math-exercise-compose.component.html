@@ -1,5 +1,16 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
-        @if (mathExercise) {}
+        @if (mathExercise) {
+            <div class="form-group">
+                <label jhiTranslate="artemisApp.exercise.problemStatement" for="problemStatement">Problem Statement</label>
+                <jhi-markdown-editor
+                    id="problemStatement"
+                    class="markdown-editor"
+                    [domainCommands]="domainCommandsProblemStatement"
+                    [(markdown)]="mathExercise.problemStatement"
+                    [editorMode]="EditorMode.LATEX"
+                />
+            </div>
+        }
     </div>
 </div>

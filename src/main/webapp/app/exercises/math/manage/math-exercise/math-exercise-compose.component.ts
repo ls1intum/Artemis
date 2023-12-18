@@ -13,6 +13,7 @@ import { StatisticsService } from 'app/shared/statistics-graph/statistics.servic
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { MathExerciseService } from 'app/exercises/math/manage/math-exercise/math-exercise.service';
+import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 
 @Component({
     selector: 'jhi-math-exercise-compose',
@@ -81,4 +82,6 @@ export class MathExerciseComposeComponent implements OnInit, OnDestroy {
     registerChangeInMathExercises() {
         this.eventSubscription = this.eventManager.subscribe('mathExerciseListModification', () => this.load(this.mathExercise.id!));
     }
+
+    protected readonly EditorMode = EditorMode;
 }
