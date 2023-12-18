@@ -88,7 +88,7 @@ describe('CourseRegistrationComponent', () => {
         component.ascending = true;
         component.loadRegistrableCourses();
 
-        expect(component.coursesToSelect).toEqual([course1, course2, course3]);
+        expect(component.filteredCoursesToSelect).toEqual([course1, course2, course3]);
     });
 
     it('should sort registrable courses by title in descending order', () => {
@@ -98,24 +98,24 @@ describe('CourseRegistrationComponent', () => {
         component.ascending = false;
         component.loadRegistrableCourses();
 
-        expect(component.coursesToSelect).toEqual([course3, course2, course1]);
+        expect(component.filteredCoursesToSelect).toEqual([course3, course2, course1]);
     });
 
     it('should sort registrable courses by semester in ascending order', () => {
         findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course2, course3, course1] })));
-        component.loadRegistrableCourses();
         component.predicate = 'semester';
         component.ascending = true;
+        component.loadRegistrableCourses();
 
-        expect(component.coursesToSelect).toEqual([course1, course2, course3]);
+        expect(component.filteredCoursesToSelect).toEqual([course1, course2, course3]);
     });
 
-    it('should sort registrable courses by semester in descending order', () => {
+    it('should sort registrable courses by semester in descending order', async () => {
         findAllForRegistrationStub.mockReturnValue(of(new HttpResponse({ body: [course2, course3, course1] })));
-        component.loadRegistrableCourses();
         component.predicate = 'semester';
         component.ascending = false;
+        component.loadRegistrableCourses();
 
-        expect(component.coursesToSelect).toEqual([course3, course2, course1]);
+        expect(component.filteredCoursesToSelect).toEqual([course3, course2, course1]);
     });
 });
