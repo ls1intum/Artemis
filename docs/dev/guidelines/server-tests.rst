@@ -190,8 +190,8 @@ The following line in the ``junit-platform.properties`` file enables parallel te
 
 To execute a test class and its inheriting classes in parallel, we annotate it with ``@Execution(ExecutionMode.CONCURRENT)``.
 Since we need to isolate resources such as
-databases and application contexts, we use the ``@ResourceLock`` annotation. This annotation allows us to group tests into parallel running groups while preserving the sequential execution of tests within each group. For our use case, the ``@ResourceLock`` annotation takes
-the name of the test group (matching the abstract base-class name) as a parameter. A unique set of spring profiles, a separate application context, and a separate database characterizes each test group.
+databases and application contexts, we use the ``@ResourceLock`` annotation. By annotating ``abstract`` base classes with it, we group tests into parallel running groups while preserving the sequential execution of tests within each group. For our use case, the ``@ResourceLock`` annotation takes
+the name of the test group (matching the ``abstract`` base class name) as a parameter. A unique set of spring profiles, a separate application context, and a separate database characterizes each test group.
 
 .. code-block:: java
 
