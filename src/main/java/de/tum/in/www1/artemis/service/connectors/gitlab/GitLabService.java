@@ -437,7 +437,13 @@ public class GitLabService extends AbstractVersionControlService {
     @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
         try {
-            return !gitlab.getProjectApi().getProjects(projectKey).isEmpty();
+            // Groups in GitLab are named identically to the exercise `projectKey`.
+            final Optional<Group> group = gitlab.getGroupApi().getOptionalGroup(projectKey);
+            if (group.isEmpty()) {
+                return false;
+            }
+
+            return gitlab.getGroupApi().getProjectsStream(group.get()).findAny().isPresent();
         }
         catch (GitLabApiException e) {
             throw new GitLabException("Error trying to search for project " + projectName, e);
