@@ -65,10 +65,11 @@ services:
             echo "Listed files in certs_dir" &&
             mkdir -p $HOME/.pki/nssdb &&
             certutil -d $HOME/.pki/nssdb -N --empty-password &&
-            cp /app/artemis/src/test/playwright/certs/rootCA.pem /usr/local/share/ca-certificates/ &&
+            cp /app/artemis/src/test/playwright/certs/rootCA.pem /usr/local/share/ca-certificates &&
             update-ca-certificates --fresh &&
             certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n "rootCA" -i /usr/local/share/ca-certificates/rootCA.pem &&
-            cp /app/artemis/src/test/playwright/certs/artemis-nginx+4.p12 /usr/local/share/certificates/ &&
+            mkdir -p /usr/local/share/certificates &&
+            cp /app/artemis/src/test/playwright/certs/artemis-nginx+4.p12 /usr/local/share/certificates &&
             pk12util -d sql:$HOME/.pki/nssdb -i /usr/local/share/certificates/artemis-nginx+4.p12 -W artemis_admin &&
             cd /app/artemis/src/test/playwright &&
             npm ci &&
