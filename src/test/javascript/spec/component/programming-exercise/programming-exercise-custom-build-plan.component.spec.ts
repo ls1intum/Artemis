@@ -183,23 +183,34 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         expect(resetSpy).toHaveBeenCalled();
     });
 
-    it('should not do anything in loadAeolusTemplate', () => {
+    it('should call getAeolusTemplateScript', () => {
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         comp.programmingExerciseCreationConfig.customBuildPlansSupported = PROFILE_LOCALCI;
         comp.programmingExercise.id = 1;
-        comp.programmingExercise.windFile = windFile;
-        const loadAeolusTemplateSpy = jest.spyOn(comp, 'loadAeolusTemplate');
-        comp.ngOnChanges({
-            programmingExercise: {
-                currentValue: programmingExercise,
-                previousValue: undefined,
-                firstChange: false,
-                isFirstChange: function (): boolean {
-                    throw new Error('Function not implemented.');
-                },
-            },
-        });
-        expect(loadAeolusTemplateSpy).toHaveBeenCalled();
-        expect(comp.programmingExercise.windFile).toEqual(windFile);
+        jest.spyOn(comp, 'resetCustomBuildPlan');
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue("echo 'test'");
+        comp.loadAeolusTemplate();
+        expect(comp.resetCustomBuildPlan).not.toHaveBeenCalled();
+        expect(comp.programmingExercise.buildScript).toBe("echo 'test'");
+    });
+
+    it('should call getAeolusTemplateScript and reset', () => {
+        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
+        comp.programmingExerciseCreationConfig.customBuildPlansSupported = PROFILE_LOCALCI;
+        comp.programmingExercise.id = 1;
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(undefined);
+        jest.spyOn(comp, 'resetCustomBuildPlan');
+        comp.loadAeolusTemplate();
+        expect(comp.resetCustomBuildPlan).toHaveBeenCalled();
+        expect(comp.programmingExercise.buildScript).toBeUndefined();
+    });
+
+    it('should accept editor for existing exercise', () => {
+        comp.programmingExercise.id = 1;
+        const elementRef: ElementRef = new ElementRef(document.createElement('div'));
+        const zone: NgZone = new NgZone({});
+        comp.programmingExercise.buildScript = 'buildscript';
+        comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        expect(comp.code).toBe('buildscript');
     });
 });

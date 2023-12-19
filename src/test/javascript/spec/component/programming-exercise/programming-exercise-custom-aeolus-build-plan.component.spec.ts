@@ -336,4 +336,20 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         comp.active = undefined;
         expect(comp.getParameter('nonExisting')).toBe('');
     });
+
+    it('should return empty array', () => {
+        comp.active = undefined;
+        expect(comp.getParameterKeys()).toHaveLength(0);
+    });
+
+    it('should return and not throw error', () => {
+        comp.setupGeneratorEditor();
+    });
+
+    it('should not call loadAeolusTemplate on existing exercise', () => {
+        comp.programmingExercise.id = 1;
+        const resetCustomBuildPlanSpy = jest.spyOn(comp, 'resetCustomBuildPlan');
+        comp.loadAeolusTemplate();
+        expect(resetCustomBuildPlanSpy).not.toHaveBeenCalled();
+    });
 });

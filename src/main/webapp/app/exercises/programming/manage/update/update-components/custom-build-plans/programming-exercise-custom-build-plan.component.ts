@@ -69,10 +69,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
      * @private
      */
     loadAeolusTemplate() {
-        if (this.programmingExercise.id) {
-            return; // do not load template for existing exercises
-        }
-        this.resetCustomBuildPlan();
         if (!this.programmingExercise.programmingLanguage) {
             return;
         }
