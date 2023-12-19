@@ -9,7 +9,7 @@
     <div class="notification-content">
         <span th:text="#{email.notification.title.post.announcement(
             ${notificationSubject.getTitle()},
-            ${notificationSubject.getCourse().getTitle()}
+            ${notificationSubject.getConversation().getCourse().getTitle()}
             )}">Notification Content for Announcement Posts
             </span>
         <div class="bordered-content">
