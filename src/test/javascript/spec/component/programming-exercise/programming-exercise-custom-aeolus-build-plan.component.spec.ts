@@ -11,8 +11,7 @@ import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { programmingExerciseCreationConfigMock } from './update-components/programming-exercise-creation-config-mock';
-import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { Observable } from 'rxjs';
+import { AeolusPreview, AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { PROFILE_AEOLUS } from 'app/app.constants';
 
 describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
@@ -88,7 +87,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should delete action', () => {
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.next(JSON.stringify({ result: 'this is some code' }))));
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue({ result: 'this is some code' } as AeolusPreview);
         comp.deleteAction('gradle');
         const size = programmingExercise.windFile?.actions.length;
         expect(size).toBeDefined();
@@ -98,7 +97,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should add action', () => {
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.next(JSON.stringify({ result: 'this is some code' }))));
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue({ result: 'this is some code' } as AeolusPreview);
         const size = programmingExercise.windFile?.actions.length;
         expect(size).toBeDefined();
         comp.addAction('gradle clean');
@@ -118,7 +117,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should change code of active action', () => {
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.next(JSON.stringify({ result: 'this is some code' }))));
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue({ result: 'this is some code' } as AeolusPreview);
         comp.changeActiveAction('gradle');
         expect(comp.code).toBe(gradleBuildAction.script);
         comp.codeChanged('test');
@@ -126,7 +125,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should change code if deleting active action and unset active action', () => {
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.next(JSON.stringify({ result: 'this is some code' }))));
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue({ result: 'this is some code' } as AeolusPreview);
         comp.changeActiveAction('gradle');
         expect(comp.code).toBe(gradleBuildAction.script);
         comp.deleteAction('gradle');
@@ -161,7 +160,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
 
     it('should change code', () => {
         comp.changeActiveAction('gradle');
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.next(JSON.stringify({ result: 'this is some code' }))));
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue({ result: 'this is some code' } as AeolusPreview);
         comp.codeChanged('this is some code');
         const action: BuildAction | undefined = comp.active;
         expect(action).toBeDefined();
@@ -279,7 +278,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
         const zone: NgZone = new NgZone({});
         comp.generatedEditor = new AceEditorComponent(elementRef, zone, mockThemeService);
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.error(new Error('test'))));
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(undefined);
         expect(comp.programmingExercise.windFile).toBeDefined();
         comp.generatePreview();
         expect(comp.generatedEditor?.text).toBe('#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0');
@@ -305,7 +304,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
         const zone: NgZone = new NgZone({});
         comp.generatedEditor = new AceEditorComponent(elementRef, zone, mockThemeService);
-        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.next(JSON.stringify({ result: 'this is some code' }))));
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue({ result: 'this is some code' } as AeolusPreview);
         comp.generatePreview();
         expect(comp.generatedEditor?.text).toBe('this is some code');
         expect(mockAeolusService.generatePreview).toHaveBeenCalled();

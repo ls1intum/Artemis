@@ -8,13 +8,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
@@ -24,9 +26,8 @@ import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusBuildPlanService;
-import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusRepository;
-import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.service.connectors.aeolus.*;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 
 class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -43,6 +44,9 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Autowired
     AeolusBuildPlanService aeolusBuildPlanService;
+
+    @Autowired
+    AeolusTemplateService aeolusTemplateService;
 
     /**
      * Initializes aeolusRequestMockProvider
@@ -155,5 +159,14 @@ class AeolusServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testReturnsNullonUrlNull() {
         ReflectionTestUtils.setField(aeolusBuildPlanService, "ciUrl", null);
         assertThat(aeolusBuildPlanService.publishBuildPlan(new Windfile(), AeolusTarget.BAMBOO)).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGeneratePreview() throws Exception {
+        aeolusRequestMockProvider.mockGeneratePreview(AeolusTarget.CLI);
+        Windfile windfile = aeolusTemplateService.getWindfileFor(ProgrammingLanguage.JAVA, Optional.of(ProjectType.PLAIN_GRADLE), false, false, false);
+        var result = request.postWithResponseBody("/api/aeolus/preview/CLI", windfile, Map.class, HttpStatus.OK);
+        assertThat(result.get("result")).isEqualTo("imagine a result here");
     }
 }

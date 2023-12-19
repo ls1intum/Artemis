@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 
 import { BuildAction, PlatformAction, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
 
@@ -121,15 +120,26 @@ export class AeolusService {
      * @param {WindFile} windfile
      * @returns {Observable<string>} the generated preview
      */
-    generatePreview(windfile: WindFile): Observable<string> {
+    generatePreview(windfile: WindFile): AeolusPreview | undefined {
         const headers = { 'Content-Type': 'application/json' };
         windfile.metadata.id = 'not-important-for-preview';
         windfile.metadata.name = 'not-important-for-preview';
         windfile.metadata.description = 'not-important-for-preview';
-        return this.http.post<string>(`${this.resourceUrl}/preview/cli`, this.serializeWindFile(windfile), {
-            responseType: 'text' as 'json',
-            headers,
-        });
+        let response = undefined;
+        this.http
+            .post<string>(`${this.resourceUrl}/preview/CLI`, this.serializeWindFile(windfile), {
+                responseType: 'text' as 'json',
+                headers,
+            })
+            .subscribe({
+                next: (preview) => {
+                    response = Object.assign({}, JSON.parse(preview));
+                },
+                error: () => {
+                    response = undefined;
+                },
+            });
+        return response;
     }
 
     serializeWindFile(windFile: WindFile): string {

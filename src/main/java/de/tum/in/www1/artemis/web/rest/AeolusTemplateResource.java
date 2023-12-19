@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -36,14 +37,15 @@ public class AeolusTemplateResource {
 
     private final BuildScriptProvider buildScriptProvider;
 
-    private final BuildScriptGenerationService buildScriptGenerationService;
+    private final Optional<BuildScriptGenerationService> buildScriptGenerationService;
 
     /**
      * Constructor for the AeolusTemplateResource
      *
      * @param aeolusTemplateService the service for retrieving the aeolus template files
      */
-    public AeolusTemplateResource(AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider, BuildScriptGenerationService buildScriptGenerationService) {
+    public AeolusTemplateResource(AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider,
+            Optional<BuildScriptGenerationService> buildScriptGenerationService) {
         this.aeolusTemplateService = aeolusTemplateService;
         this.buildScriptProvider = buildScriptProvider;
         this.buildScriptGenerationService = buildScriptGenerationService;
@@ -79,10 +81,17 @@ public class AeolusTemplateResource {
     @PostMapping({ "/preview/{target}" })
     @EnforceAtLeastEditor
     @Profile("aeolus")
-    public ResponseEntity<String> getPreview(@PathVariable AeolusTarget target, @RequestBody Windfile windfile) {
+    public ResponseEntity<Map<String, String>> getPreview(@PathVariable AeolusTarget target, @RequestBody String body) {
         logger.debug("REST request to preview aeolus script for target {}", target);
 
-        return generatePreviewBuildScript(windfile, target);
+        try {
+            Windfile windfile = Windfile.deserialize(body);
+            return generatePreviewBuildScript(windfile, target);
+        }
+        catch (Exception e) {
+            logger.error("Error when deserializing windfile", e);
+            return ResponseEntity.of(Optional.empty());
+        }
     }
 
     /**
@@ -181,10 +190,14 @@ public class AeolusTemplateResource {
      * @param target   the target to generate the script for
      * @return the generated script
      */
-    private ResponseEntity<String> generatePreviewBuildScript(Windfile windfile, AeolusTarget target) {
-        String script = buildScriptGenerationService.previewScript(windfile, target);
+    private ResponseEntity<Map<String, String>> generatePreviewBuildScript(Windfile windfile, AeolusTarget target) {
+        if (buildScriptGenerationService.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        String script = buildScriptGenerationService.get().previewScript(windfile, target);
         HttpHeaders responseHeaders = new HttpHeaders();
-        responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-        return new ResponseEntity<>(script, responseHeaders, HttpStatus.OK);
+        responseHeaders.setContentType(MediaType.APPLICATION_JSON);
+        Map<String, String> map = Map.of("result", script);
+        return new ResponseEntity<>(map, responseHeaders, HttpStatus.OK);
     }
 }

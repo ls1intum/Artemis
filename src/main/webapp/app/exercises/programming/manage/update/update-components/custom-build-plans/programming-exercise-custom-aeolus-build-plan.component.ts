@@ -178,15 +178,12 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
 
     generatePreview(): void {
         if (this.programmingExercise.windFile) {
-            this.aeolusService.generatePreview(Object.assign({}, this.programmingExercise.windFile)).subscribe({
-                next: (file) => {
-                    const preview: AeolusPreview = Object.assign({}, JSON.parse(file));
-                    this.generatedEditor?.setText(preview.result);
-                },
-                error: () => {
-                    this.generatedEditor?.setText('#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0');
-                },
-            });
+            const preview: AeolusPreview | undefined = this.aeolusService.generatePreview(Object.assign({}, this.programmingExercise.windFile));
+            if (preview) {
+                this.generatedEditor?.setText(preview.result);
+            } else {
+                this.generatedEditor?.setText('#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0');
+            }
         }
     }
 
