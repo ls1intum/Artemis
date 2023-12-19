@@ -2,6 +2,10 @@
     "artemisApp": {
         "buildQueue": {
             "title": "Build Warteschlange",
+            "pageTitle": "Build Job Informationen",
+            "refreshLabel": "Aktualisieren",
+            "queuedBuildJobs": "Wartende Build Jobs",
+            "runningBuildJobs": "Laufende Build Jobs",
             "buildJob": {
                 "name": "Name",
                 "participationId": "Teilnahme ID",

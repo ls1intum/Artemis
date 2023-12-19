@@ -4,6 +4,7 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
 import { BuildJob } from 'app/entities/build-job.model';
+import { faRefresh } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-build-queue',
@@ -35,6 +36,9 @@ export class BuildQueueComponent {
 
     queuedBuildJobs: BuildJob[];
     runningBuildJobs: BuildJob[];
+
+    //icons
+    faRefresh = faRefresh;
 
     constructor(
         private route: ActivatedRoute,
