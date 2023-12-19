@@ -83,7 +83,7 @@
                 "tooltip": "Ermöglicht es aus Kompetenzen und deren Lerninhalten einen individuellen Lernpfad für Studierende zu generieren."
             },
             "restrictedAthenaModulesAccess": {
-                "label": "Zugriff auf eingeschränkte Athena-Module aktiviert",
+                "label": "Zugriff auf geschützte Athena-Module aktiviert",
                 "tooltip": "Wenn diese Option ausgewählt ist, können die Übungen des Kurses auch geschützte Athena-Module für die Feedbackerstellung verwenden."
             },
             "onlineCourse": {

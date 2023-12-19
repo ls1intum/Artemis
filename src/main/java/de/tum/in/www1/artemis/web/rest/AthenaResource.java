@@ -134,6 +134,12 @@ public class AthenaResource {
                 athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
     }
 
+    /**
+     * GET athena/courses/{courseId}/programming-exercises/available-modules : Get all available Athena modules for a programming exercise in the course
+     *
+     * @param courseId the id of the course the programming exercise belongs to
+     * @return 200 Ok if successful with the modules as body
+     */
     @GetMapping("athena/courses/{courseId}/programming-exercises/available-modules")
     @EnforceAtLeastEditor
     public ResponseEntity<List<String>> getAvailableModulesForProgrammingExercises(@PathVariable long courseId) {
@@ -152,6 +158,12 @@ public class AthenaResource {
 
     }
 
+    /**
+     * GET athena/courses/{courseId}/text-exercises/available-modules : Get all available Athena modules for a text exercise in the course
+     *
+     * @param courseId the id of the course the text exercise belongs to
+     * @return 200 Ok if successful with the modules as body
+     */
     @GetMapping("athena/courses/{courseId}/text-exercises/available-modules")
     @EnforceAtLeastEditor
     public ResponseEntity<List<String>> getAvailableModulesForTextExercises(@PathVariable long courseId) {

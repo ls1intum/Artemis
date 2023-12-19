@@ -54,6 +54,12 @@ public class AthenaModuleService {
     private record AthenaModuleDTO(String name, String type) {
     }
 
+    /**
+     * Get all available modules from Athena.
+     *
+     * @return A list of all available Athena Modules
+     * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
+     */
     private List<AthenaModuleDTO> getAthenaModules() throws NetworkingException {
         try {
             var response = shortTimeoutRestTemplate.getForEntity(athenaUrl + "/modules", JsonNode.class);
@@ -69,6 +75,13 @@ public class AthenaModuleService {
         }
     }
 
+    /**
+     * Get all available Athena programming modules for a specific course.
+     *
+     * @param course The course for which the modules should be retrieved
+     * @return The list of available Athena text modules for the course
+     * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
+     */
     public List<String> getAthenaProgrammingModulesForCourse(Course course) throws NetworkingException {
         List<String> availableProgrammingModules = getAthenaModules().stream().filter(module -> "programming".equals(module.type)).map(module -> module.name).toList();
         if (!course.getRestrictedAthenaModulesAccess()) {
@@ -78,6 +91,13 @@ public class AthenaModuleService {
         return availableProgrammingModules;
     }
 
+    /**
+     * Get all available Athena text modules for a specific course.
+     *
+     * @param course The course for which the modules should be retrieved
+     * @return The list of available Athena text modules for the course
+     * @throws NetworkingException is thrown in case the modules can't be fetched from Athena
+     */
     public List<String> getAthenaTextModulesForCourse(Course course) throws NetworkingException {
         List<String> availableProgrammingModules = getAthenaModules().stream().filter(module -> "text".equals(module.type)).map(module -> module.name).toList();
         if (!course.getRestrictedAthenaModulesAccess()) {
@@ -105,6 +125,14 @@ public class AthenaModuleService {
         }
     }
 
+    /**
+     * Checks if an exercise has access to the provided Athena module.
+     *
+     * @param exercise   The exercise for which the access should be checked
+     * @param course     The course to which the exercise belongs to.
+     * @param entityName
+     * @throws BadRequestAlertException when the exercise has no access to the exercise's provided module.
+     */
     public void checkHasAccessToAthenaModule(Exercise exercise, Course course, String entityName) throws BadRequestAlertException {
         if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("The exam exercise has no access to Athena", entityName, "examExerciseNoAccessToAthena");
@@ -115,6 +143,11 @@ public class AthenaModuleService {
         }
     }
 
+    /**
+     * Revokes the access to restricted Athena modules for all exercises of a course.
+     *
+     * @param course The course for which the access to restricted modules should be revoked
+     */
     public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
         exerciseRepository.revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(course.getId(), restrictedModules);
     }
