@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.athena;
 
-import java.util.HashSet;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -114,6 +113,6 @@ public class AthenaModuleService {
     }
 
     public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
-        exerciseRepository.revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(course.getId(), new HashSet<>(restrictedModules));
+        exerciseRepository.revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(course.getId(), restrictedModules);
     }
 }

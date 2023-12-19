@@ -553,7 +553,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                   AND e.feedbackSuggestionModule IN :restrictedFeedbackSuggestionModule
             """)
     void revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(@Param("courseId") Long courseId,
-            @Param("restrictedFeedbackSuggestionModule") Set<String> restrictedFeedbackSuggestionModule);
+            @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
 
     /**
      * For an explanation, see {@link de.tum.in.www1.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long,long)}

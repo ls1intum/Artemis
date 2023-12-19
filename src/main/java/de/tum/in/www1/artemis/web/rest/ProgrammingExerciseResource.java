@@ -207,7 +207,8 @@ public class ProgrammingExerciseResource {
         programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExercise, course);
 
         // TODO Athena: Check that only allowed athena modules are used
-        athenaModuleService.ifPresent(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME));
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME),
+                () -> programmingExercise.setFeedbackSuggestionModule(null));
 
         try {
             // Setup all repositories etc
@@ -281,7 +282,8 @@ public class ProgrammingExerciseResource {
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
 
         // Check that only allowed Athena modules are used
-        athenaModuleService.ifPresent(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME));
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
+                () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
 
         // Ignore changes to the default branch
         updatedProgrammingExercise.setBranch(programmingExerciseBeforeUpdate.getBranch());

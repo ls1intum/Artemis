@@ -265,7 +265,6 @@ public class CourseResource {
 
         // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null
         if (athenaModuleAccessChanged && !courseUpdate.getRestrictedAthenaModulesAccess()) {
-            // todo athena: revoke access for all course exercises that use restricted modules
             athenaModuleService.ifPresent(ams -> ams.revokeAccessToRestrictedFeedbackSuggestionModules(result));
         }
 

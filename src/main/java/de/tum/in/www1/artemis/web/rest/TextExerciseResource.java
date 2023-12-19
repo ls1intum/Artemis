@@ -178,7 +178,7 @@ public class TextExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         // TODO Athena: Check that only allowed athena modules are used
-        athenaModuleService.ifPresent(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME));
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
         TextExercise result = textExerciseRepository.save(textExercise);
 
@@ -227,7 +227,8 @@ public class TextExerciseResource {
         exerciseService.checkForConversionBetweenExamAndCourseExercise(textExercise, textExerciseBeforeUpdate, ENTITY_NAME);
 
         // TODO Athena: Check that only allowed athena modules are used
-        athenaModuleService.ifPresent(ams -> ams.checkHasAccessToAthenaModule(textExercise, textExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember(), ENTITY_NAME));
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExerciseBeforeUpdate);
+        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
         channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
 
@@ -457,9 +458,11 @@ public class TextExerciseResource {
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
 
-        // TODO Athena: Check that only allowed athena modules are used, if not we disable feedback suggestions for the imported exercise
+        // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions for the imported exercise
+        // If Athena is disabled and the service is not present, we also disable feedback suggestions
         try {
-            athenaModuleService.ifPresent(ams -> ams.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), ENTITY_NAME));
+            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), ENTITY_NAME),
+                    () -> importedExercise.setFeedbackSuggestionModule(null));
         }
         catch (BadRequestAlertException e) {
             importedExercise.setFeedbackSuggestionModule(null);
