@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.localci.dto;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 
 public class LocalCIBuildJobQueueItem implements Serializable {
 
@@ -18,11 +19,11 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private String commitHash;
 
-    private long submissionDate;
+    private ZonedDateTime submissionDate;
 
     private int retryCount;
 
-    private long buildStartDate;
+    private ZonedDateTime buildStartDate;
 
     // 1-5, 1 is highest priority
     private int priority;
@@ -31,9 +32,9 @@ public class LocalCIBuildJobQueueItem implements Serializable {
 
     private boolean isPushToTestRepository;
 
-    public LocalCIBuildJobQueueItem(String name, long participationId, String repositoryTypeOrUserName, String commitHash, long submissionDate, int priority, long courseId,
-            boolean isPushToTestRepository) {
-        this.id = Long.parseLong(String.valueOf(participationId) + submissionDate);
+    public LocalCIBuildJobQueueItem(String name, long participationId, String repositoryTypeOrUserName, String commitHash, ZonedDateTime submissionDate, int priority,
+            long courseId, boolean isPushToTestRepository) {
+        this.id = Long.parseLong(String.valueOf(participationId) + submissionDate.toInstant().toEpochMilli());
         this.name = name;
         this.participationId = participationId;
         this.repositoryTypeOrUserName = repositoryTypeOrUserName;
@@ -84,19 +85,19 @@ public class LocalCIBuildJobQueueItem implements Serializable {
         this.commitHash = commitHash;
     }
 
-    public long getSubmissionDate() {
+    public ZonedDateTime getSubmissionDate() {
         return submissionDate;
     }
 
-    public void setSubmissionDate(long submissionDate) {
+    public void setSubmissionDate(ZonedDateTime submissionDate) {
         this.submissionDate = submissionDate;
     }
 
-    public long getBuildStartDate() {
+    public ZonedDateTime getBuildStartDate() {
         return buildStartDate;
     }
 
-    public void setBuildStartDate(long buildStartDate) {
+    public void setBuildStartDate(ZonedDateTime buildStartDate) {
         this.buildStartDate = buildStartDate;
     }
 

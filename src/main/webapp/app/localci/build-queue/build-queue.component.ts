@@ -56,13 +56,12 @@ export class BuildQueueComponent {
             } else {
                 this.buildQueueService.getQueuedBuildJobs().subscribe((queuedBuildJobs) => {
                     this.queuedBuildJobs = queuedBuildJobs;
+                    console.log('queuedBuildJobs1: ', queuedBuildJobs);
                 });
                 this.buildQueueService.getRunningBuildJobs().subscribe((runningBuildJobs) => {
                     this.runningBuildJobs = runningBuildJobs;
                 });
             }
-            console.log('queuedBuildJobs: ' + this.queuedBuildJobs);
-            console.log('kakcer ' + this.queuedBuildJobs[0].name);
         });
     }
     /**

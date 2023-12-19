@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -101,7 +102,7 @@ public class LocalCISharedBuildJobQueueService {
      * @param courseId                 course id of the build job
      * @param isPushToTestRepository   defines if the build job is triggered by a push to a test repository
      */
-    public void addBuildJob(String name, long participationId, String repositoryTypeOrUsername, String commitHash, long submissionDate, int priority, long courseId,
+    public void addBuildJob(String name, long participationId, String repositoryTypeOrUsername, String commitHash, ZonedDateTime submissionDate, int priority, long courseId,
             boolean isPushToTestRepository) {
         LocalCIBuildJobQueueItem buildJobQueueItem = new LocalCIBuildJobQueueItem(name, participationId, repositoryTypeOrUsername, commitHash, submissionDate, priority, courseId,
                 isPushToTestRepository);
@@ -214,7 +215,7 @@ public class LocalCISharedBuildJobQueueService {
     private LocalCIBuildJobQueueItem addToProcessingJobs() {
         LocalCIBuildJobQueueItem buildJob = queue.poll();
         if (buildJob != null) {
-            buildJob.setBuildStartDate(System.currentTimeMillis());
+            buildJob.setBuildStartDate(ZonedDateTime.now());
             processingJobs.put(buildJob.getId(), buildJob);
             localProcessingJobs.incrementAndGet();
         }
