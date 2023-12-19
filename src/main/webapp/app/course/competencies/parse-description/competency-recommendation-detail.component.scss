@@ -1,0 +1,26 @@
+.chevron-position {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.rotate-icon {
+    transition: transform 0.3s ease;
+}
+
+.rotate-icon.rotated {
+    transform: rotate(90deg);
+}
+
+.recommendation {
+    border: 1px solid var(--overview-blue-border-color);
+    background-color: var(--overview-light-background-color);
+    border-radius: 3px;
+    margin-bottom: 9px;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}

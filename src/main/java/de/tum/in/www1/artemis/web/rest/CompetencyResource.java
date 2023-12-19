@@ -230,6 +230,45 @@ public class CompetencyResource {
     }
 
     /**
+     * POST /courses/:courseId/competencies/bulk : creates a number of new competencies
+     *
+     * @param courseId     the id of the course to which the competency should be added
+     * @param competencies the competencies that should be created
+     * @return the ResponseEntity with status 201 (Created)
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/courses/{courseId}/competencies/bulk")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> createCompetencies(@PathVariable Long courseId, @RequestBody List<Competency> competencies) throws URISyntaxException {
+        log.debug("REST request to create Competencies : {}", competencies);
+        for (Competency competency : competencies) {
+            if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
+                throw new BadRequestException();
+            }
+        }
+        var course = courseRepository.findWithEagerCompetenciesByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        for (Competency competency : competencies) {
+            // TODO: move code to create competency (so no duplicates)
+            Competency competencyToCreate = new Competency();
+            competencyToCreate.setTitle(competency.getTitle().trim());
+            competencyToCreate.setDescription(competency.getDescription());
+            competencyToCreate.setSoftDueDate(competency.getSoftDueDate());
+            competencyToCreate.setTaxonomy(competency.getTaxonomy());
+            competencyToCreate.setMasteryThreshold(competency.getMasteryThreshold());
+            competencyToCreate.setOptional(competency.isOptional());
+            competencyToCreate.setCourse(course);
+            var persistedCompetency = competencyRepository.save(competencyToCreate);
+            linkLectureUnitsToCompetency(persistedCompetency, competency.getLectureUnits(), Set.of());
+            if (course.getLearningPathsEnabled()) {
+                learningPathService.linkCompetencyToLearningPathsOfCourse(persistedCompetency, courseId);
+            }
+        }
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).build();
+    }
+
+    /**
      * POST /courses/:courseId/competencies/import : imports a new competency.
      *
      * @param courseId           the id of the course to which the competency should be imported to
@@ -518,15 +557,23 @@ public class CompetencyResource {
     public ResponseEntity<List<Competency>> getCompetenciesFromCourseDescription(@PathVariable Long courseId, @RequestBody String courseDescription) {
         // TODO: call competencyGenerationService and remove dummy code.
         List<Competency> competencies = new ArrayList<>();
-        Competency result = new Competency();
-        result.setTitle("Competency Recommendation");
-        result.setDescription("Lorem Ipsum Dolor Sit Amet");
-        result.setTaxonomy(CompetencyTaxonomy.ANALYZE);
-        competencies.add(result);
+        Competency comp1 = new Competency();
+        comp1.setTitle("comp1");
+        comp1.setDescription("Lorem Ipsum Dolor Sit Amet");
+        comp1.setTaxonomy(CompetencyTaxonomy.ANALYZE);
+        competencies.add(comp1);
+        Competency comp2 = new Competency();
+        comp2.setTitle("comp2");
+        comp2.setDescription("sed diam nonumy eirmod tempor");
+        comp2.setTaxonomy(CompetencyTaxonomy.APPLY);
+        competencies.add(comp2);
+        Competency comp3 = new Competency();
+        comp3.setTitle("comp3");
+        comp3.setDescription("invidunt ut labore et dolore magna aliquyam");
+        comp3.setTaxonomy(CompetencyTaxonomy.REMEMBER);
+        competencies.add(comp3);
         return ResponseEntity.ok().body(competencies);
     }
-
-    // TODO: add multiple competencies to this course :)
 
     /**
      * Link the competency to a set of lecture units (and exercises if it includes exercise units)

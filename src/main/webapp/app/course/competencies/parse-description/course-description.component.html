@@ -1,7 +1,7 @@
 <form [formGroup]="form" (ngSubmit)="submitForm()">
-    <div>
-        <span>{{ 'artemisApp.competency.parseDescription.courseDescription' | artemisTranslate }}</span>
-        <button id="submitButton" class="btn btn-primary me-2" type="submit">
+    <div class="d-flex align-items-center pb-1">
+        <h3 class="mb-0 pe-3">{{ 'artemisApp.competency.parseDescription.courseDescription' | artemisTranslate }}</h3>
+        <button id="submitButton" class="btn btn-primary" type="submit">
             <span>{{ 'artemisApp.competency.parseDescription.generate' | artemisTranslate }}</span>
         </button>
     </div>
@@ -10,6 +10,6 @@
         id="course-description"
         rows="10"
         formControlName="courseDescription"
-        [placeholder]="'artemisApp.competency.createCompetency.courseDescriptionPlaceholder' | artemisTranslate"
+        [placeholder]="'artemisApp.competency.parseDescription.courseDescriptionPlaceholder' | artemisTranslate"
     ></textarea>
 </form>

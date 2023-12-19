@@ -1,7 +1,21 @@
-<div>
-    <div>{{ recommendation.title }}</div>
-</div>
-<div>
-    <div>{{ recommendation.description }}</div>
-    <div>{{ recommendation.taxonomy }}</div>
+<div class="recommendation card">
+    <div class="options card-header">
+        <div class="d-flex align-items-center">
+            <div class="icon-container pe-3">
+                <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="isCollapsed" (click)="toggle()"></fa-icon>
+            </div>
+            <h6 class="mb-0">{{ recommendation.title }}</h6>
+        </div>
+        <div>
+            <!-- TODO: buttons -->
+            <fa-icon [icon]="faEdit"></fa-icon>
+            <fa-icon [icon]="faTrash"></fa-icon>
+        </div>
+    </div>
+    <div class="card-body" [ngbCollapse]="isCollapsed">
+        <!-- TODO: titles for desc/tax -->
+        <!-- TODO: write taxonomy pretty -->
+        <div>{{ recommendation.description }}</div>
+        <div>{{ recommendation.taxonomy }}</div>
+    </div>
 </div>
