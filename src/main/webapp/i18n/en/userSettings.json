@@ -86,7 +86,7 @@
                 "conversationNewReplyMessageDescription": "Get notified when you receive a new reply in a conversation",
                 "tutorialGroupUpdateDeleteDescription": "Get notified when a tutorial group for which you are registered or a tutor was updated or deleted",
                 "assignUnassignTutorialGroupDescription": "Get notified when you were assigned or unassigned to lead a tutorial group",
-                "activityDescription": "Share which features of Artemis you utilize and how you interact with them. The information not accessible for your instructors or other students."
+                "activityDescription": "Share which features of Artemis you utilize and how you interact with them. The information is not accessible for your instructors or other students."
             }
         }
     }
