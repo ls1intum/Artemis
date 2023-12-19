@@ -210,7 +210,13 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
         const zone: NgZone = new NgZone({});
         comp.programmingExercise.buildScript = 'buildscript';
-        comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        const editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        expect(comp.editor).toBeUndefined();
+        comp.editor = editor;
         expect(comp.code).toBe('buildscript');
+        expect(comp.editor).toBeDefined();
+        comp.programmingExercise.buildScript = undefined;
+        comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        expect(comp.code).toBe('');
     });
 });
