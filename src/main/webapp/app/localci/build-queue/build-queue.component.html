@@ -1,7 +1,7 @@
 <div style="padding-bottom: 60px">
     <h2 style="padding-bottom: 20px">
         <span id="build-queue-page-heading" jhiTranslate="artemisApp.buildQueue.pageTitle"> Build job queue information </span>
-        <button class="btn btn-primary float-end jh-create-entity" (click)="refresh()">
+        <button class="btn btn-primary float-end jh-create-entity" (click)="ngOnInit()">
             <fa-icon [icon]="faRefresh"></fa-icon> <span jhiTranslate="artemisApp.buildQueue.refreshLabel"> Refresh </span>
         </button>
     </h2>
