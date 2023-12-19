@@ -388,19 +388,6 @@ public class LocalCIContainerService {
         buildScript.append("#!/bin/bash\n");
         buildScript.append("cd ").append(WORKING_DIRECTORY).append("/testing-dir\n");
         buildScript.append(customScript);
-        //
-        // // Fall back to hardcoded scripts for old exercises without windfile
-        // // *****************
-        // // TODO: Delete once windfile templates can be used as fallbacks
-        // if (actions.isEmpty()) {
-        // // Windfile actions are not defined, use default build script
-        // switch (programmingExercise.getProgrammingLanguage()) {
-        // case JAVA, KOTLIN -> scriptForJavaKotlin(programmingExercise, buildScript, hasSequentialTestRuns, hasStaticCodeAnalysis);
-        // case PYTHON -> scriptForPython(buildScript);
-        // default -> throw new IllegalArgumentException("No build stage setup for programming language " + programmingExercise.getProgrammingLanguage());
-        // }
-        // }
-        // // *****************
 
         try {
             FileUtils.writeStringToFile(buildScriptPath.toFile(), buildScript.toString(), StandardCharsets.UTF_8);
