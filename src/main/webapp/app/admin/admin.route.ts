@@ -84,7 +84,7 @@ export const adminState: Routes = [
                 path: 'build-queue',
                 component: BuildQueueComponent,
                 data: {
-                    pageTitle: 'buildQueue.title',
+                    pageTitle: 'artemisApp.buildQueue.title',
                 },
             },
             {
