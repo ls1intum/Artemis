@@ -14,25 +14,7 @@ import { faRefresh } from '@fortawesome/free-solid-svg-icons';
 export class BuildQueueComponent {
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
 
-    isLoading = false;
-    hasExamStarted = false;
-    hasExamEnded = false;
-    isSearching = false;
-    searchFailed = false;
-    searchNoResults = false;
-    isTransitioning = false;
     rowClass: string | undefined = undefined;
-
-    name?: string;
-    participationId?: number;
-    repositoryType?: string;
-    commitHash?: string;
-    submissionDate?: number;
-    buildStartDate?: number;
-    courseId?: number;
-    priority?: number;
-
-    isAdmin = false;
 
     queuedBuildJobs: BuildJob[];
     runningBuildJobs: BuildJob[];
@@ -76,6 +58,6 @@ export class BuildQueueComponent {
     };
 
     refresh() {
-        window.location.reload();
+        this.ngOnInit();
     }
 }
