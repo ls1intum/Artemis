@@ -10,9 +10,8 @@ Also have in mind that provided text in a picture format can interfere
 with the cross platform functionality and the visualization is not as
 beautiful as with real text.
 
--  **UML diagrams:** Give students rather UML diagrams that they can not
-   copy from easily instead of all the attribute names in the text
-   instructions. AI needs to infer the attribute names and also will
+-  **UML diagrams:** Rather give students UML diagrams that they can not easily copy from instead of having
+   all the attribute names in the instruction text. AI needs to infer the attribute names and also will
    give attributes wrong names that need to be reviewed by the students.
 
    -  Give diagram in picture format
@@ -89,7 +88,7 @@ beautiful as with real text.
 
       Depiction shows the functionality of a linked list with 3 integer values
       as a basic concept for understanding linked lists. The task of this exercise
-      were to implement the common List functionalities from scratch rather than
+      was to implement the common List functionalities from scratch rather than
       rely on the standard methods from java. ListNode and LinkedList were
       therefore own classes that needed to be filled with the required
       functionalities.
@@ -130,7 +129,7 @@ beautiful as with real text.
          Example GUI from homework exercise
 
    -  Providing GIFs is also possible and shows a good way to show the dynamic behaviour of the GUI.
-      This also ensures less likelyhood to copy this format into various AI tools.
+      This format also ensures a lower likelihood of students copying it into various AI tools.
 
 
 .. note::
@@ -153,7 +152,7 @@ Problem statement and exercise instructions
       relevant implementation parts.
 
    .. note::
-       Apply this with more complex exercises at a later stage of the semester. In the first exercises
+       Apply this only when it feels sense-full and adds to the understanding of the exercises. In the first exercises
        it does not make sense to give more text just to make the exercise more complicated.
 
 
@@ -311,7 +310,7 @@ Problem statement and exercise instructions
 -  **Continuous feedback:** Exercise instructions should not be there to just give a
    thorough step by step guide of the task. Have students deduce, using specific test cases,
    what might be missing in the code.
-   This promotes critical thinking and resembles a more real world scenario:
+   This promotes critical thinking and more closely resembles a real world scenario:
 
    -  null-checks
 
