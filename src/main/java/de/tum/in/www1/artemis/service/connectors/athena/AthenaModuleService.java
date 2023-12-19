@@ -106,6 +106,9 @@ public class AthenaModuleService {
     }
 
     public void checkHasAccessToAthenaModule(Exercise exercise, Course course, String entityName) throws BadRequestAlertException {
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("The exam exercise has no access to Athena", entityName, "examExerciseNoAccessToAthena");
+        }
         if (!course.getRestrictedAthenaModulesAccess() && restrictedModules.contains(exercise.getFeedbackSuggestionModule())) {
             // Course does not have access to the restricted Athena modules
             throw new BadRequestAlertException("The exercise has no access to the selected Athena module", entityName, "noAccessToAthenaModule");

@@ -21,12 +21,15 @@ import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.programmingexercise.ProgrammingExerciseUtilService;
+import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseFactory;
 import de.tum.in.www1.artemis.exercise.textexercise.TextExerciseUtilService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
-public class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
+class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
     private static final String TEST_PREFIX = "athenaexerciseintegration";
 
@@ -43,10 +46,10 @@ public class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
     private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
-    private ExerciseUtilService exerciseUtilService;
+    private CourseUtilService courseUtilService;
 
     @Autowired
-    private CourseUtilService courseUtilService;
+    private ExamUtilService examUtilService;
 
     @Autowired
     private CourseTestService courseTestService;
@@ -80,7 +83,7 @@ public class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void createTextExercise_useRestrictedAthenaModule_success() throws Exception {
+    void testCreateTextExercise_useRestrictedAthenaModule_success() throws Exception {
         course.setRestrictedAthenaModulesAccess(true);
         courseRepository.save(course);
 
@@ -92,7 +95,7 @@ public class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void createTextExercise_useRestrictedAthenaModule_badRequest() throws Exception {
+    void testCreateTextExercise_useRestrictedAthenaModule_badRequest() throws Exception {
         textExercise.setId(null);
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
@@ -101,7 +104,7 @@ public class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void updateTextExercise_useRestrictedAthenaModule_success() throws Exception {
+    void testUpdateTextExercise_useRestrictedAthenaModule_success() throws Exception {
         course.setRestrictedAthenaModulesAccess(true);
         courseRepository.save(course);
 
@@ -112,7 +115,7 @@ public class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void updateTextExercise_useRestrictedAthenaModule_badRequest() throws Exception {
+    void testUpdateTextExercise_useRestrictedAthenaModule_badRequest() throws Exception {
         textExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
         request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
@@ -120,24 +123,17 @@ public class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void createProgrammingExercise_useRestrictedAthenaModule_badRequest() throws Exception {
-        programmingExercise.setId(null);
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST);
+    void testCreateExamTextExercise_useAthena_badRequest() throws Exception {
+        ExerciseGroup group = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        TextExercise examTextExercise = TextExerciseFactory.generateTextExerciseForExam(group);
+        examTextExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_TEXT_TEST);
 
-        request.postWithResponseBody("/api/programming-exercises/setup/", programmingExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void updateProgrammingExercise_useRestrictedAthenaModule_badRequest() throws Exception {
-        programmingExercise.setFeedbackSuggestionModule(ATHENA_RESTRICTED_MODULE_PROGRAMMING_TEST);
-
-        request.postWithResponseBody("/api/programming-exercises/setup/", programmingExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text-exercises/", examTextExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void updateCourse_revokeRestrictedAthenaModuleAccess_badRequest() throws Exception {
+    void testUpdateCourse_revokeRestrictedAthenaModuleAccess_badRequest() throws Exception {
         course.setRestrictedAthenaModulesAccess(true);
         courseRepository.save(course);
 
@@ -148,7 +144,7 @@ public class AthenaExerciseIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void updateCourse_revokeRestrictedAthenaModuleAccess_success() throws Exception {
+    void testUpdateCourse_revokeRestrictedAthenaModuleAccess_success() throws Exception {
         course.setRestrictedAthenaModulesAccess(true);
         courseRepository.save(course);
 
