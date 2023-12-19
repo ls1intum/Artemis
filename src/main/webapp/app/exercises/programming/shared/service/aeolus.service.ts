@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
 
 import { BuildAction, PlatformAction, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
 
@@ -23,28 +24,12 @@ export class AeolusService {
      * @param coverage (if available) whether test coverage should be enabled
      * @returns WindFile or undefined if no template is available
      */
-    getAeolusTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): WindFile | undefined {
-        const path: string = [language, projectType].filter(Boolean).join('/');
-        const params = {
-            staticAnalysis: !!staticAnalysis,
-            sequentialRuns: !!sequentialRuns,
-            testCoverage: !!coverage,
-        };
-        let response: WindFile | undefined = undefined;
-        this.http
-            .get<string>(`${this.resourceUrl}/templates/` + path, {
-                responseType: 'text' as 'json',
-                params,
-            })
-            .subscribe({
-                next: (file) => {
-                    response = this.parseWindFile(file);
-                },
-                error: () => {
-                    response = undefined;
-                },
-            });
-        return response;
+    getAeolusTemplateFile(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): Observable<string> {
+        const uriWithParams = this.buildURIWithParams(language, projectType, staticAnalysis, sequentialRuns, coverage);
+        return this.http.get<string>(`${this.resourceUrl}/templates/` + uriWithParams.uri, {
+            responseType: 'text' as 'json',
+            params: uriWithParams.params,
+        });
     }
 
     /**
@@ -56,28 +41,12 @@ export class AeolusService {
      * @param coverage (if available) whether test coverage should be enabled
      * @returns json test file
      */
-    getAeolusTemplateScript(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): string | undefined {
-        const path: string = [language, projectType].filter(Boolean).join('/');
-        const params = {
-            staticAnalysis: !!staticAnalysis,
-            sequentialRuns: !!sequentialRuns,
-            testCoverage: !!coverage,
-        };
-        let response: string | undefined = undefined;
-        this.http
-            .get<string>(`${this.resourceUrl}/templateScripts/` + path, {
-                responseType: 'text' as 'json',
-                params,
-            })
-            .subscribe({
-                next: (file) => {
-                    response = file;
-                },
-                error: () => {
-                    response = undefined;
-                },
-            });
-        return response;
+    getAeolusTemplateScript(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): Observable<string> {
+        const uriWithParams = this.buildURIWithParams(language, projectType, staticAnalysis, sequentialRuns, coverage);
+        return this.http.get<string>(`${this.resourceUrl}/templateScripts/` + uriWithParams.uri, {
+            responseType: 'text' as 'json',
+            params: uriWithParams.params,
+        });
     }
 
     /**
@@ -113,6 +82,25 @@ export class AeolusService {
         } catch (SyntaxError) {
             return undefined;
         }
+    }
+
+    buildURIWithParams(
+        language: ProgrammingLanguage,
+        projectType?: ProjectType,
+        staticAnalysis?: boolean,
+        sequentialRuns?: boolean,
+        coverage?: boolean,
+    ): { uri: string; params: any } {
+        const path: string = [language, projectType].filter(Boolean).join('/');
+        const params = {
+            staticAnalysis: !!staticAnalysis,
+            sequentialRuns: !!sequentialRuns,
+            testCoverage: !!coverage,
+        };
+        return {
+            uri: path,
+            params: params,
+        };
     }
 
     /**

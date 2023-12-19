@@ -46,11 +46,12 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
 
     shouldReloadTemplate(): boolean {
         return (
-            this.programmingExercise.programmingLanguage !== this.programmingLanguage ||
-            this.programmingExercise.projectType !== this.projectType ||
-            this.programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
-            this.programmingExercise.sequentialTestRuns !== this.sequentialTestRuns ||
-            this.programmingExercise.testwiseCoverageEnabled !== this.testwiseCoverageEnabled
+            !this.programmingExercise.id &&
+            (this.programmingExercise.programmingLanguage !== this.programmingLanguage ||
+                this.programmingExercise.projectType !== this.projectType ||
+                this.programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
+                this.programmingExercise.sequentialTestRuns !== this.sequentialTestRuns ||
+                this.programmingExercise.testwiseCoverageEnabled !== this.testwiseCoverageEnabled)
         );
     }
 
@@ -63,6 +64,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this.programmingExercise.buildPlanConfiguration = undefined;
         this.programmingExercise.buildScript = undefined;
     }
+
     /**
      * Loads the predefined template for the selected programming language and project type
      * if there is one available.
@@ -78,26 +80,31 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this.sequentialTestRuns = this.programmingExercise.sequentialTestRuns;
         this.testwiseCoverageEnabled = this.programmingExercise.testwiseCoverageEnabled;
         if (this.programmingExerciseCreationConfig.customBuildPlansSupported) {
-            if (!this.programmingExercise.id) {
-                this.programmingExercise.windFile = this.aeolusService.getAeolusTemplateFile(
-                    this.programmingLanguage,
-                    this.projectType,
-                    this.staticCodeAnalysisEnabled,
-                    this.sequentialTestRuns,
-                    this.testwiseCoverageEnabled,
-                );
+            if (!this.programmingExercise.windFile || !this.programmingExercise.buildScript) {
+                this.aeolusService
+                    .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
+                    .subscribe({
+                        next: (file) => {
+                            this.programmingExercise.windFile = this.aeolusService.parseWindFile(file);
+                        },
+                        error: () => {
+                            this.programmingExercise.windFile = undefined;
+                        },
+                    });
                 this.programmingExerciseCreationConfig.buildPlanLoaded = true;
                 if (!this.programmingExercise.windFile) {
                     this.resetCustomBuildPlan();
                 }
-            } else {
-                this.programmingExercise.buildScript = this.aeolusService.getAeolusTemplateScript(
-                    this.programmingLanguage,
-                    this.projectType,
-                    this.staticCodeAnalysisEnabled,
-                    this.sequentialTestRuns,
-                    this.testwiseCoverageEnabled,
-                );
+                this.aeolusService
+                    .getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
+                    .subscribe({
+                        next: (file: string) => {
+                            this.codeChanged(file);
+                        },
+                        error: () => {
+                            this.programmingExercise.buildScript = undefined;
+                        },
+                    });
                 if (!this.programmingExercise.buildScript) {
                     this.resetCustomBuildPlan();
                 }
@@ -136,5 +143,12 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         this._editor.getEditor().renderer.setOptions({
             showFoldWidgets: false,
         });
+    }
+
+    setDockerImage(dockerImage: string) {
+        if (!this.programmingExercise.windFile || !this.programmingExercise.windFile.metadata.docker) {
+            return;
+        }
+        this.programmingExercise.windFile.metadata.docker.image = dockerImage;
     }
 }

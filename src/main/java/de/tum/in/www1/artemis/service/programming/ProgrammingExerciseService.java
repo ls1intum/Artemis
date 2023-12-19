@@ -234,7 +234,7 @@ public class ProgrammingExerciseService {
         Optional.ofNullable(programmingExercise.getPlagiarismDetectionConfig()).ifPresent(it -> it.setId(null));
 
         // for LocalCI and Aeolus, we store the build plan definition in the database as a windfile
-        if (aeolusTemplateService.isPresent()) {
+        if (aeolusTemplateService.isPresent() && programmingExercise.getBuildPlanConfiguration() == null) {
             Windfile windfile = aeolusTemplateService.get().getDefaultWindfileFor(programmingExercise);
             if (windfile != null) {
                 programmingExercise.setBuildPlanConfiguration(new ObjectMapper().writeValueAsString(windfile));

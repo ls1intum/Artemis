@@ -10,10 +10,7 @@
     @if (programmingExercise.customizeBuildPlanWithAeolus) {
         <div class="row m-1">
             @if (programmingExercise.windFile && programmingExercise.windFile.metadata && programmingExercise.windFile.metadata.docker) {
-                <jhi-programming-exercise-docker-image
-                    [dockerImage]="programmingExercise.windFile.metadata.docker.image"
-                    (dockerImageChange)="programmingExercise.windFile.metadata.docker.image = $event"
-                />
+                <jhi-programming-exercise-docker-image [dockerImage]="programmingExercise.windFile.metadata.docker.image" (dockerImageChange)="setDockerImage($event)" />
             }
             <div class="card col-12 col-md-12">
                 <div class="card-text">

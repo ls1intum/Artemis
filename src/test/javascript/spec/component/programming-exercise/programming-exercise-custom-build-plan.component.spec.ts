@@ -13,6 +13,7 @@ import { programmingExerciseCreationConfigMock } from './update-components/progr
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { PROFILE_LOCALCI } from 'app/app.constants';
+import { Observable } from 'rxjs';
 
 describe('ProgrammingExercise Custom Build Plan', () => {
     let mockThemeService: ThemeService;
@@ -167,7 +168,8 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.programmingExercise.windFile = undefined;
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_LOCALCI;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(windFile);
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windFile))));
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.next("echo 'test'")));
         comp.loadAeolusTemplate();
         expect(comp.programmingExercise.windFile).toBeDefined();
     });
@@ -177,7 +179,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_LOCALCI;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         const resetSpy = jest.spyOn(comp, 'resetCustomBuildPlan');
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(undefined);
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.error('error')));
         comp.loadAeolusTemplate();
         expect(comp.programmingExercise.windFile).toBeUndefined();
         expect(resetSpy).toHaveBeenCalled();
@@ -188,7 +190,8 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.programmingExerciseCreationConfig.customBuildPlansSupported = PROFILE_LOCALCI;
         comp.programmingExercise.id = 1;
         jest.spyOn(comp, 'resetCustomBuildPlan');
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue("echo 'test'");
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.next("echo 'test'")));
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windFile))));
         comp.loadAeolusTemplate();
         expect(comp.resetCustomBuildPlan).not.toHaveBeenCalled();
         expect(comp.programmingExercise.buildScript).toBe("echo 'test'");
@@ -198,10 +201,10 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         comp.programmingExerciseCreationConfig.customBuildPlansSupported = PROFILE_LOCALCI;
         comp.programmingExercise.id = 1;
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(undefined);
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.error('error')));
         jest.spyOn(comp, 'resetCustomBuildPlan');
         comp.loadAeolusTemplate();
-        expect(comp.resetCustomBuildPlan).toHaveBeenCalled();
+        expect(comp.resetCustomBuildPlan).toHaveBeenCalledOnce();
         expect(comp.programmingExercise.buildScript).toBeUndefined();
     });
 

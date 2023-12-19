@@ -70,6 +70,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         this.programmingExercise.windFile = undefined;
         this.programmingExercise.buildPlanConfiguration = undefined;
     }
+
     /**
      * Loads the predefined template for the selected programming language and project type
      * if there is one available.
@@ -89,13 +90,16 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         this.sequentialTestRuns = this.programmingExercise.sequentialTestRuns;
         this.testwiseCoverageEnabled = this.programmingExercise.testwiseCoverageEnabled;
         if (this.programmingExerciseCreationConfig.customBuildPlansSupported) {
-            this.programmingExercise.windFile = this.aeolusService.getAeolusTemplateFile(
-                this.programmingLanguage,
-                this.projectType,
-                this.staticCodeAnalysisEnabled,
-                this.sequentialTestRuns,
-                this.testwiseCoverageEnabled,
-            );
+            this.aeolusService
+                .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
+                .subscribe({
+                    next: (file) => {
+                        this.programmingExercise.windFile = this.aeolusService.parseWindFile(file);
+                    },
+                    error: () => {
+                        this.programmingExercise.windFile = undefined;
+                    },
+                });
             this.programmingExerciseCreationConfig.buildPlanLoaded = true;
         }
     }
@@ -229,6 +233,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
             showFoldWidgets: false,
         });
     }
+
     /**
      * Sets up an ace editor for the template or solution file.
      */
@@ -249,5 +254,13 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         this._generatedEditor.getEditor().renderer.setOptions({
             showFoldWidgets: false,
         });
+    }
+
+    setDockerImage(dockerImage: string) {
+        if (!this.programmingExercise.windFile || !this.programmingExercise.windFile.metadata.docker) {
+            return;
+        }
+        this.programmingExercise.windFile.metadata.docker.image = dockerImage;
+        this.generatePreview();
     }
 }

@@ -13,6 +13,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { programmingExerciseCreationConfigMock } from './update-components/programming-exercise-creation-config-mock';
 import { AeolusPreview, AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { PROFILE_AEOLUS } from 'app/app.constants';
+import { Observable } from 'rxjs';
 
 describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     let mockThemeService: ThemeService;
@@ -258,7 +259,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         comp.programmingExercise.windFile = undefined;
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_AEOLUS;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(windFile);
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windFile))));
         comp.loadAeolusTemplate();
         expect(comp.programmingExercise.windFile).toBeDefined();
     });
@@ -268,7 +269,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_AEOLUS;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
         const resetSpy = jest.spyOn(comp, 'resetCustomBuildPlan');
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(undefined);
+        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.error('error')));
         comp.loadAeolusTemplate();
         expect(comp.programmingExercise.windFile).toBeUndefined();
         expect(resetSpy).toHaveBeenCalled();

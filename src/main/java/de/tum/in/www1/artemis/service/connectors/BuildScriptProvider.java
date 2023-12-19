@@ -36,11 +36,6 @@ public class BuildScriptProvider {
         this.resourceLoaderService = resourceLoaderService;
     }
 
-    public String getTemplateScriptFor(ProgrammingExercise programmingExercise) throws IOException {
-        return getScriptFor(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()),
-                programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.hasSequentialTestRuns(), programmingExercise.isTestwiseCoverageEnabled());
-    }
-
     /**
      * Stores the given script in the database for the given programming exercise
      *
@@ -50,31 +45,6 @@ public class BuildScriptProvider {
     public void storeBuildScriptInDatabase(ProgrammingExercise programmingExercise, String script) {
         programmingExercise.setBuildScript(script);
         programmingExerciseRepository.save(programmingExercise);
-    }
-
-    /**
-     * Returns the file content of the template file for the given language and project type with the different options
-     * If a build script has already been generated for this exercise, it will be returned from the
-     * database instead of returning the template.
-     *
-     * @param programmingExercise the programming exercise for which the script should be returned
-     * @return the requested template as a bash script
-     */
-    public String getScriptFor(ProgrammingExercise programmingExercise) {
-        var buildScript = programmingExercise.getBuildScript();
-        if (buildScript != null) {
-            return buildScript;
-        }
-        try {
-            buildScript = this.getScriptFor(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()),
-                    programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise.hasSequentialTestRuns(), programmingExercise.isTestwiseCoverageEnabled());
-            this.storeBuildScriptInDatabase(programmingExercise, buildScript);
-            return buildScript;
-        }
-        catch (IOException e) {
-            LOGGER.error("Could not load template for programming exercise " + programmingExercise.getId(), e);
-        }
-        return null;
     }
 
     /**
@@ -93,6 +63,7 @@ public class BuildScriptProvider {
         String templateFileName = buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "sh");
         String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
         if (scriptCache.containsKey(uniqueKey)) {
+            LOGGER.debug("Returning cached script for {}", uniqueKey);
             return scriptCache.get(uniqueKey);
         }
         Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", programmingLanguage.name().toLowerCase(), templateFileName));
@@ -102,6 +73,7 @@ public class BuildScriptProvider {
         byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
         String script = new String(fileContent, StandardCharsets.UTF_8);
         scriptCache.put(uniqueKey, script);
+        LOGGER.debug("Caching script for {}", uniqueKey);
         return script;
     }
 
