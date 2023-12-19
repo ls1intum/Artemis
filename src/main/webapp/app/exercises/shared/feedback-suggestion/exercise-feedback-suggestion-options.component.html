@@ -1,32 +1,38 @@
-<div class="form-group" *ngIf="(isAthenaEnabled$ | async) && modulesAvailable">
-    <div class="form-check">
-        <input
-            type="checkbox"
-            class="form-check-input"
-            name="feedbackSuggestionsEnabledCheck"
-            [checked]="!!exercise.feedbackSuggestionModule"
-            [disabled]="inputControlsDisabled()"
-            id="feedbackSuggestionsEnabledCheck"
-            (change)="toggleFeedbackSuggestions($event)"
-        />
-        <label
-            [ngStyle]="getCheckboxLabelStyle()"
-            class="form-control-label"
-            for="feedbackSuggestionsEnabledCheck"
-            jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"
-        ></label>
-        <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'"></jhi-help-icon>
+@if ((isAthenaEnabled$ | async) && modulesAvailable) {
+    <div class="form-group">
+        <div class="form-check">
+            <input
+                type="checkbox"
+                class="form-check-input"
+                name="feedbackSuggestionsEnabledCheck"
+                [checked]="!!exercise.feedbackSuggestionModule"
+                [disabled]="inputControlsDisabled()"
+                id="feedbackSuggestionsEnabledCheck"
+                (change)="toggleFeedbackSuggestions($event)"
+            />
+            <label
+                [ngStyle]="getCheckboxLabelStyle()"
+                class="form-control-label"
+                for="feedbackSuggestionsEnabledCheck"
+                jhiTranslate="artemisApp.exercise.feedbackSuggestionsEnabled"
+            ></label>
+            <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'"></jhi-help-icon>
+        </div>
+        @if (!!this.exercise.feedbackSuggestionModule) {
+            <div class="form-group">
+                <label for="athenaModuleSelect">Athena Module</label>
+                <select
+                    id="athenaModuleSelect"
+                    class="form-select"
+                    [value]="this.exercise.feedbackSuggestionModule"
+                    [(ngModel)]="this.exercise.feedbackSuggestionModule"
+                    [disabled]="inputControlsDisabled()"
+                >
+                    @for (athenaModule of availableAthenaModules; track athenaModule) {
+                        <option [value]="athenaModule">{{ athenaModule }}</option>
+                    }
+                </select>
+            </div>
+        }
     </div>
-    <div class="form-group" *ngIf="!!this.exercise.feedbackSuggestionModule">
-        <label for="athenaModuleSelect">Athena Module</label>
-        <select
-            id="athenaModuleSelect"
-            class="form-select"
-            [value]="this.exercise.feedbackSuggestionModule"
-            [(ngModel)]="this.exercise.feedbackSuggestionModule"
-            [disabled]="inputControlsDisabled()"
-        >
-            <option *ngFor="let athenaModule of availableAthenaModules" [value]="athenaModule">{{ athenaModule }}</option>
-        </select>
-    </div>
-</div>
+}
