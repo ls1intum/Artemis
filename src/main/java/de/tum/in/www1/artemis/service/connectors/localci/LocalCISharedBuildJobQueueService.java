@@ -57,7 +57,7 @@ public class LocalCISharedBuildJobQueueService {
     /**
      * Map of build jobs currently being processed across all nodes
      */
-    private final IMap<String, LocalCIBuildJobQueueItem> processingJobs;
+    private final IMap<Long, LocalCIBuildJobQueueItem> processingJobs;
 
     private AtomicInteger localProcessingJobs = new AtomicInteger(0);
 

@@ -11,4 +11,5 @@ export class BuildJob implements BaseEntity {
     public buildStartDate?: number;
     public priority?: number;
     public courseId?: number;
+    public isPushToTestRepository?: boolean;
 }
