@@ -74,4 +74,8 @@ export class BuildQueueComponent {
     dataTableRowClass = () => {
         return this.rowClass;
     };
+
+    refresh() {
+        window.location.reload();
+    }
 }

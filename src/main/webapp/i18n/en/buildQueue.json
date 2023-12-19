@@ -2,10 +2,10 @@
     "artemisApp": {
         "buildQueue": {
             "title": "Build Queue",
-            "pageTitle": "Build job information",
+            "pageTitle": "Build Job Information",
             "refreshLabel": "Refresh",
-            "queuedBuildJobs": "Queued build jobs",
-            "runningBuildJobs": "Running build jobs",
+            "queuedBuildJobs": "Queued Build Jobs",
+            "runningBuildJobs": "Running Build Jobs",
             "buildJob": {
                 "name": "Name",
                 "participationId": "Participation ID",
