@@ -23,7 +23,7 @@ public class ScienceEventService {
     }
 
     /**
-     * Logs the event for the current principle with the current timestamp.
+     * Logs the event for the current principal with the current timestamp.
      *
      * @param eventDTO the DTO of the event that should be logged
      */

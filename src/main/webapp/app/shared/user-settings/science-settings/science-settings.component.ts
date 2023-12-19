@@ -58,7 +58,7 @@ export class ScienceSettingsComponent extends UserSettingsDirective implements O
             return;
         }
         // toggle/inverts previous setting
-        settingToUpdate!.active = !settingToUpdate!.active;
+        settingToUpdate.active = !settingToUpdate.active;
         settingToUpdate.changed = true;
     }
 }
