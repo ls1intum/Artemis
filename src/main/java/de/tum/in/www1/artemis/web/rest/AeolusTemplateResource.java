@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.domain.enumeration.AeolusTarget;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.in.www1.artemis.service.connectors.BuildScriptProvider;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
@@ -34,14 +36,17 @@ public class AeolusTemplateResource {
 
     private final BuildScriptProvider buildScriptProvider;
 
+    private final BuildScriptGenerationService buildScriptGenerationService;
+
     /**
      * Constructor for the AeolusTemplateResource
      *
      * @param aeolusTemplateService the service for retrieving the aeolus template files
      */
-    public AeolusTemplateResource(AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider) {
+    public AeolusTemplateResource(AeolusTemplateService aeolusTemplateService, BuildScriptProvider buildScriptProvider, BuildScriptGenerationService buildScriptGenerationService) {
         this.aeolusTemplateService = aeolusTemplateService;
         this.buildScriptProvider = buildScriptProvider;
+        this.buildScriptGenerationService = buildScriptGenerationService;
     }
 
     /**
@@ -69,6 +74,15 @@ public class AeolusTemplateResource {
         String projectTypePrefix = projectType.map(type -> type.name().toLowerCase()).orElse("");
 
         return getAeolusTemplateFileContentWithResponse(language, projectTypePrefix, staticAnalysis, sequentialRuns, testCoverage);
+    }
+
+    @PostMapping({ "/preview/{target}" })
+    @EnforceAtLeastEditor
+    @Profile("aeolus")
+    public ResponseEntity<String> getPreview(@PathVariable AeolusTarget target, @RequestBody Windfile windfile) {
+        logger.debug("REST request to preview aeolus script for target {}", target);
+
+        return generatePreviewBuildScript(windfile, target);
     }
 
     /**
@@ -158,5 +172,19 @@ public class AeolusTemplateResource {
             HttpHeaders responseHeaders = new HttpHeaders();
             return new ResponseEntity<>(null, responseHeaders, HttpStatus.NOT_FOUND);
         }
+    }
+
+    /**
+     * Generates a preview build script for the given windfile and target
+     *
+     * @param windfile the windfile to generate the script for
+     * @param target   the target to generate the script for
+     * @return the generated script
+     */
+    private ResponseEntity<String> generatePreviewBuildScript(Windfile windfile, AeolusTarget target) {
+        String script = buildScriptGenerationService.previewScript(windfile, target);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        responseHeaders.setContentType(MediaType.TEXT_PLAIN);
+        return new ResponseEntity<>(script, responseHeaders, HttpStatus.OK);
     }
 }

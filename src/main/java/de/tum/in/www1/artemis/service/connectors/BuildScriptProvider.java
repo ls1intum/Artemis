@@ -29,8 +29,6 @@ public class BuildScriptProvider {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    private final Map<String, String> templateCache = new ConcurrentHashMap<>();
-
     private final Map<String, String> scriptCache = new ConcurrentHashMap<>();
 
     public BuildScriptProvider(ProgrammingExerciseRepository programmingExerciseRepository, ResourceLoaderService resourceLoaderService) {
@@ -94,8 +92,8 @@ public class BuildScriptProvider {
             throws IOException {
         String templateFileName = buildTemplateName(projectType, staticAnalysis, sequentialRuns, testCoverage, "sh");
         String uniqueKey = programmingLanguage.name().toLowerCase() + "_" + templateFileName;
-        if (templateCache.containsKey(uniqueKey)) {
-            return templateCache.get(uniqueKey);
+        if (scriptCache.containsKey(uniqueKey)) {
+            return scriptCache.get(uniqueKey);
         }
         Resource fileResource = resourceLoaderService.getResource(Path.of("templates", "aeolus", programmingLanguage.name().toLowerCase(), templateFileName));
         if (!fileResource.exists()) {
@@ -103,7 +101,7 @@ public class BuildScriptProvider {
         }
         byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
         String script = new String(fileContent, StandardCharsets.UTF_8);
-        templateCache.put(uniqueKey, script);
+        scriptCache.put(uniqueKey, script);
         return script;
     }
 

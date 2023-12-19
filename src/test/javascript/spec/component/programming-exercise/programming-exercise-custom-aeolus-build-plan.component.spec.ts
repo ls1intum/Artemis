@@ -30,7 +30,6 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     let mockAeolusService: AeolusService;
 
     beforeEach(() => {
-        const course = { id: 123 } as Course;
         programmingExercise = new ProgrammingExercise(course, undefined);
         programmingExercise.customizeBuildPlanWithAeolus = true;
         windFile = new WindFile();
@@ -44,6 +43,8 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         cleanBuildAction = new ScriptAction();
         cleanBuildAction.name = 'clean';
         cleanBuildAction.script = `chmod -R 777 .`;
+        cleanBuildAction.parameters = new Map<string, string | boolean | number>();
+        cleanBuildAction.parameters.set('testparam', 'testkey');
         actions.push(gradleBuildAction);
         actions.push(cleanBuildAction);
         actions.push(platformAction);
@@ -108,6 +109,12 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         const elementRef: ElementRef = new ElementRef(document.createElement('div'));
         const zone: NgZone = new NgZone({});
         comp.editor = new AceEditorComponent(elementRef, zone, mockThemeService);
+    });
+
+    it('should accept preview editor', () => {
+        const elementRef: ElementRef = new ElementRef(document.createElement('div'));
+        const zone: NgZone = new NgZone({});
+        comp.generatedEditor = new AceEditorComponent(elementRef, zone, mockThemeService);
     });
 
     it('should change code of active action', () => {
@@ -266,5 +273,68 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         comp.loadAeolusTemplate();
         expect(comp.programmingExercise.windFile).toBeUndefined();
         expect(resetSpy).toHaveBeenCalled();
+    });
+
+    it('should print default message in preview', () => {
+        const elementRef: ElementRef = new ElementRef(document.createElement('div'));
+        const zone: NgZone = new NgZone({});
+        comp.generatedEditor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.error(new Error('test'))));
+        expect(comp.programmingExercise.windFile).toBeDefined();
+        comp.generatePreview();
+        expect(comp.generatedEditor?.text).toBe('#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0');
+    });
+
+    it('should parse windfile correctly', () => {
+        const parsedWindFile = mockAeolusService.parseWindFile(mockAeolusService.serializeWindFile(windFile));
+        expect(parsedWindFile).toBeDefined();
+        expect(parsedWindFile?.actions.length).toBe(3);
+        expect(parsedWindFile?.actions[0]).toBeInstanceOf(ScriptAction);
+        expect(parsedWindFile?.actions[1]).toBeInstanceOf(ScriptAction);
+        expect(parsedWindFile?.actions[2]).toBeInstanceOf(PlatformAction);
+        expect(parsedWindFile?.actions[1].parameters).toBeDefined();
+        expect(parsedWindFile?.actions[1].parameters).toEqual(cleanBuildAction.parameters);
+    });
+
+    it('should return undefined on invalid windfile', () => {
+        const parsedWindFile = mockAeolusService.parseWindFile('{invalid json}');
+        expect(parsedWindFile).toBeUndefined();
+    });
+
+    it('should call generatePreview', () => {
+        const elementRef: ElementRef = new ElementRef(document.createElement('div'));
+        const zone: NgZone = new NgZone({});
+        comp.generatedEditor = new AceEditorComponent(elementRef, zone, mockThemeService);
+        jest.spyOn(mockAeolusService, 'generatePreview').mockReturnValue(new Observable((subscriber) => subscriber.next(JSON.stringify({ result: 'this is some code' }))));
+        comp.generatePreview();
+        expect(comp.generatedEditor?.text).toBe('this is some code');
+        expect(mockAeolusService.generatePreview).toHaveBeenCalled();
+    });
+
+    it('should add parameter to active action', () => {
+        comp.active = gradleBuildAction;
+        expect(comp.active?.parameters?.size).toBeUndefined();
+        comp.addParameter();
+        expect(comp.active?.parameters?.size).toBe(1);
+    });
+
+    it('should delete parameter of active action', () => {
+        comp.active = cleanBuildAction;
+        expect(comp.active?.parameters?.size).toBe(1);
+        comp.deleteParameter('testparam');
+        expect(comp.active?.parameters?.size).toBe(0);
+    });
+
+    it('should return parameter keys', () => {
+        comp.active = cleanBuildAction;
+        expect(comp.getParameterKeys()).toHaveLength(1);
+        expect(comp.getParameterKeys()[0]).toBe('testparam');
+    });
+
+    it('should return empty string for non existing parameter', () => {
+        comp.active = cleanBuildAction;
+        expect(comp.getParameter('nonExisting')).toBe('');
+        comp.active = undefined;
+        expect(comp.getParameter('nonExisting')).toBe('');
     });
 });

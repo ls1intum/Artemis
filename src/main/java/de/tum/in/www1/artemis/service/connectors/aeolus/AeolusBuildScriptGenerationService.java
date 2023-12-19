@@ -43,4 +43,9 @@ public class AeolusBuildScriptGenerationService extends BuildScriptGenerationSer
         }
         return null;
     }
+
+    @Override
+    public String previewScript(Windfile windfile, AeolusTarget target) {
+        return aeolusBuildPlanService.generateBuildScript(windfile, target);
+    }
 }

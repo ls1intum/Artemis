@@ -197,14 +197,14 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         }
     }
 
-    protected getParameterKeys(): string[] {
+    getParameterKeys(): string[] {
         if (this.active && this.active.parameters) {
             return Array.from(this.active.parameters.keys());
         }
         return [];
     }
 
-    protected getParameter(key: string): string | number | boolean {
+    getParameter(key: string): string | number | boolean {
         if (this.active) {
             return this.active.parameters.get(key) ?? '';
         }

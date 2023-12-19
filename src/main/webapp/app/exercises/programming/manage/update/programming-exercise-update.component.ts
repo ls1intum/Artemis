@@ -31,6 +31,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
 import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
+import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -157,6 +158,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private aeolusService: AeolusService,
     ) {}
 
     /**
@@ -578,7 +580,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      */
     saveExercise() {
         if (this.programmingExercise.customizeBuildPlanWithAeolus) {
-            this.programmingExercise.buildPlanConfiguration = JSON.stringify(this.programmingExercise.windFile);
+            this.programmingExercise.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.windFile!);
         } else {
             this.programmingExercise.buildPlanConfiguration = undefined;
             this.programmingExercise.windFile = undefined;

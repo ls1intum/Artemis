@@ -39,33 +39,7 @@ export class AeolusService {
             })
             .subscribe({
                 next: (file) => {
-                    if (file) {
-                        const templateFile: WindFile = JSON.parse(file);
-                        const windFile: WindFile = Object.assign(new WindFile(), templateFile);
-                        const actions: BuildAction[] = [];
-                        templateFile.actions.forEach((anyAction: any) => {
-                            let action: BuildAction | undefined = undefined;
-                            if (anyAction.script) {
-                                action = Object.assign(new ScriptAction(), anyAction);
-                            } else {
-                                action = Object.assign(new PlatformAction(), anyAction);
-                            }
-                            if (!action) {
-                                return;
-                            }
-                            action.parameters = new Map<string, string | boolean | number>();
-                            if (anyAction.parameters) {
-                                for (const key of Object.keys(anyAction.parameters)) {
-                                    action.parameters.set(key, anyAction.parameters[key]);
-                                }
-                            }
-                            actions.push(action);
-                        });
-                        // somehow, the returned content has a scriptActions field, which is not defined in the WindFile class
-                        delete windFile['scriptActions'];
-                        windFile.actions = actions;
-                        response = windFile;
-                    }
+                    response = this.parseWindFile(file);
                 },
                 error: () => {
                     response = undefined;
@@ -107,14 +81,75 @@ export class AeolusService {
         return response;
     }
 
+    /**
+     * Parses the given windfile, the input is a json string, the output is a WindFile object
+     * @param file the json string
+     */
+    parseWindFile(file: string): WindFile | undefined {
+        try {
+            const templateFile: WindFile = JSON.parse(file);
+            const windFile: WindFile = Object.assign(new WindFile(), templateFile);
+            const actions: BuildAction[] = [];
+            templateFile.actions.forEach((anyAction: any) => {
+                let action: BuildAction | undefined = undefined;
+                if (anyAction.script) {
+                    action = Object.assign(new ScriptAction(), anyAction);
+                } else {
+                    action = Object.assign(new PlatformAction(), anyAction);
+                }
+                if (action) {
+                    action.parameters = new Map<string, string | boolean | number>();
+                    if (anyAction.parameters) {
+                        for (const key of Object.keys(anyAction.parameters)) {
+                            action.parameters.set(key, anyAction.parameters[key]);
+                        }
+                    }
+                    actions.push(action);
+                }
+            });
+            // somehow, the returned content has a scriptActions field, which is not defined in the WindFile class
+            delete windFile['scriptActions'];
+            windFile.actions = actions;
+            return windFile;
+        } catch (SyntaxError) {
+            return undefined;
+        }
+    }
+
+    /**
+     * Generates a preview of the given windfile
+     * @param {WindFile} windfile
+     * @returns {Observable<string>} the generated preview
+     */
     generatePreview(windfile: WindFile): Observable<string> {
         const headers = { 'Content-Type': 'application/json' };
-        windfile.metadata.id = 'testing';
-        windfile.metadata.name = 'testing';
-        windfile.metadata.description = 'testing';
-        return this.http.post<string>(`http://localhost:8090/generate/cli`, JSON.stringify(windfile), {
+        windfile.metadata.id = 'not-important-for-preview';
+        windfile.metadata.name = 'not-important-for-preview';
+        windfile.metadata.description = 'not-important-for-preview';
+        return this.http.post<string>(`${this.resourceUrl}/preview/cli`, this.serializeWindFile(windfile), {
             responseType: 'text' as 'json',
             headers,
         });
+    }
+
+    serializeWindFile(windFile: WindFile): string {
+        return JSON.stringify(windFile, this.replacer);
+    }
+
+    /**
+     * This takes care of serializing maps in the windfile
+     * @param _ key of the entry, not needed
+     * @param value value of the entry
+     */
+    replacer(_: any, value: any): any {
+        if (value instanceof Map) {
+            const object: any = {};
+            value.forEach((v, k) => {
+                object[k] = v;
+            });
+            return object;
+        } else {
+            return value;
+        }
     }
 }
