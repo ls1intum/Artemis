@@ -63,7 +63,7 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="commitHash" [minWidth]="150" [width]="350" [maxWidth]="350">
+                <ngx-datatable-column prop="commitHash" [minWidth]="150" [width]="150" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('commitHash')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.commitHash"> Commit Hash </span>
@@ -71,7 +71,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value }}</span>
+                        <span class="wrap-long-text">{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="submissionDate" [minWidth]="150" [width]="200" [maxWidth]="200">
@@ -180,7 +180,7 @@
                         <span>{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
-                <ngx-datatable-column prop="commitHash" [minWidth]="150" [width]="350" [maxWidth]="350">
+                <ngx-datatable-column prop="commitHash" [minWidth]="150" [width]="200" [maxWidth]="200">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('commitHash')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.buildQueue.buildJob.commitHash"> Commit Hash </span>
@@ -188,7 +188,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <span>{{ value }}</span>
+                        <span class="wrap-long-text">{{ value }}</span>
                     </ng-template>
                 </ngx-datatable-column>
                 <ngx-datatable-column prop="submissionDate" [minWidth]="150" [width]="200" [maxWidth]="200">
