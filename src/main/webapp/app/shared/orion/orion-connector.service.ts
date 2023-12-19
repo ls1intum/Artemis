@@ -125,7 +125,6 @@ export class OrionConnectorService {
         const view = ExerciseView[viewString];
         this.setIDEStateParameter({ view });
         this.setIDEStateParameter({ opened });
-        this.orionFeedbackSubject.next(viewString);
     }
 
     /**
@@ -287,6 +286,13 @@ export class OrionConnectorService {
      */
     initializeAssessment(submissionId: number, feedback: Array<Feedback>) {
         theWindow().orionExerciseConnector.initializeAssessment(String(submissionId), stringifyCircular(feedback));
+    }
+
+    /**
+     * Initializes feedback when orion requests feedback
+     */
+    initializeFeedback(): void {
+        this.orionFeedbackSubject.next('');
     }
 
     /**
