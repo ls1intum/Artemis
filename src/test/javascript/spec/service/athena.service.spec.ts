@@ -155,7 +155,7 @@ describe('AthenaService', () => {
         athenaService.getAvailableModules(1, textExercise).subscribe((modules: string[]) => {
             textResponse = modules;
         });
-        const requestWrapperText = httpTestingController.expectOne({ url: 'api/athena/text-exercises/1/available-modules' });
+        const requestWrapperText = httpTestingController.expectOne({ url: 'api/athena/courses/1/text-exercises/available-modules' });
         requestWrapperText.flush(textModules);
 
         tick();
@@ -163,7 +163,7 @@ describe('AthenaService', () => {
         athenaService.getAvailableModules(1, programmingExercise).subscribe((modules: string[]) => {
             programmingResponse = modules;
         });
-        const requestWrapperProgramming = httpTestingController.expectOne({ url: 'api/athena/programming-exercises/1/available-modules' });
+        const requestWrapperProgramming = httpTestingController.expectOne({ url: 'api/athena/courses/1/programming-exercises/available-modules' });
         requestWrapperProgramming.flush(programmingModules);
 
         tick();

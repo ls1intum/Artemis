@@ -134,7 +134,7 @@ public class AthenaResource {
                 athenaFeedbackSuggestionsService::getProgrammingFeedbackSuggestions);
     }
 
-    @GetMapping("athena/programming-exercises/{courseId}/available-modules")
+    @GetMapping("athena/courses/{courseId}/programming-exercises/available-modules")
     @EnforceAtLeastEditor
     public ResponseEntity<List<String>> getAvailableModulesForProgrammingExercises(@PathVariable long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -152,7 +152,7 @@ public class AthenaResource {
 
     }
 
-    @GetMapping("athena/text-exercises/{courseId}/available-modules")
+    @GetMapping("athena/courses/{courseId}/text-exercises/available-modules")
     @EnforceAtLeastEditor
     public ResponseEntity<List<String>> getAvailableModulesForTextExercises(@PathVariable long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -168,14 +168,6 @@ public class AthenaResource {
             throw new InternalServerErrorException("Could not fetch available Athena modules for programming exercises");
         }
 
-    }
-
-    @GetMapping("public/athena/restricted-modules")
-    @EnforceNothing
-    @ManualConfig
-    public ResponseEntity<List<String>> getRestrictedModules() {
-        // TODO Athena: Just for testing, remove afterwards
-        return ResponseEntity.ok(athenaModuleService.getRestrictedModules());
     }
 
     /**

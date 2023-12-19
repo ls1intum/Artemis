@@ -31,7 +31,7 @@ export class AthenaService {
                     return of([] as string[]);
                 }
                 return this.http
-                    .get<string[]>(`${this.resourceUrl}/${exercise.type}-exercises/${courseId}/available-modules`, { observe: 'response' })
+                    .get<string[]>(`${this.resourceUrl}/courses/${courseId}/${exercise.type}-exercises/available-modules`, { observe: 'response' })
                     .pipe(switchMap((res: HttpResponse<string[]>) => of(res.body!)));
             }),
         );

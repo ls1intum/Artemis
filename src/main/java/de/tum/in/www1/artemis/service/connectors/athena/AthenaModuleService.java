@@ -91,8 +91,8 @@ public class AthenaModuleService {
     /**
      * Get the URL for an Athena module, depending on the type of exercise.
      *
-     * @param exerciseType The type of exercise
-     * @return The URL prefix to access the Athena module. Example: "http://athena.example.com/modules/text/module_text_cofee"
+     * @param exercise The exercise for which the URL to Athena should be returned
+     * @return The URL prefix to access the Athena module. Example: <a href="http://athena.example.com/modules/text/module_text_cofee"></a>
      */
     public String getAthenaModuleUrl(Exercise exercise) {
         switch (exercise.getExerciseType()) {
@@ -115,10 +115,5 @@ public class AthenaModuleService {
 
     public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {
         exerciseRepository.revokeAccessToRestrictedFeedbackSuggestionModulesByCourseId(course.getId(), new HashSet<>(restrictedModules));
-    }
-
-    public List<String> getRestrictedModules() {
-        // TODO Athena: Just for testing, remove afterwards
-        return restrictedModules;
     }
 }
