@@ -46,7 +46,6 @@ public class ScienceSettingsResource {
      * GET science-settings : Get all ScienceSettings for current user
      * <p>
      * Fetches the ScienceSettings for the current user from the server.
-     * If the user has not yet modified the settings there will be none in the database, then
      *
      * @return the list of found ScienceSettings
      */
