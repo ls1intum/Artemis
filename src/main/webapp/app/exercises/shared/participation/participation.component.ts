@@ -104,7 +104,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
      * Initialize component by calling loadAll and registerChangeInParticipation
      */
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe((params) => this.loadExercise(params['exerciseId']));
+        this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
         this.registerChangeInParticipations();
         this.isAdmin = this.accountService.isAdmin();
     }

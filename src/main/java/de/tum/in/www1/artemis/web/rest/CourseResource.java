@@ -575,7 +575,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
 
-        Set<Exercise> interestingExercises = courseRepository.getInterestingExercisesForAssessmentDashboards(course.getExercises());
+        Set<Exercise> interestingExercises = courseRepository.filterInterestingExercisesForAssessmentDashboards(course.getExercises());
         course.setExercises(interestingExercises);
         List<TutorParticipation> tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_Course_IdAndTutor_Id(course.getId(), user.getId());
         assessmentDashboardService.generateStatisticsForExercisesForAssessmentDashboard(course.getExercises(), tutorParticipations, false);

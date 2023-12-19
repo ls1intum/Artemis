@@ -1,19 +1,25 @@
 <jhi-alert-overlay></jhi-alert-overlay>
 <div class="page-wrapper">
     <jhi-page-ribbon></jhi-page-ribbon>
-    <div *ngIf="showSkeleton">
-        <router-outlet name="navbar"></router-outlet>
-    </div>
-    <div *ngIf="showSkeleton" class="card" style="border-style: none">
-        <div class="card-body">
-            <router-outlet></router-outlet>
+    @if (showSkeleton) {
+        <div>
+            <router-outlet name="navbar"></router-outlet>
         </div>
-    </div>
-
-    <router-outlet *ngIf="!showSkeleton"></router-outlet>
-
+    }
+    @if (showSkeleton) {
+        <div class="card" style="border-style: none">
+            <div class="card-body">
+                <router-outlet></router-outlet>
+            </div>
+        </div>
+    }
+    @if (!showSkeleton) {
+        <router-outlet></router-outlet>
+    }
     <jhi-notification-popup></jhi-notification-popup>
-    <div *ngIf="showSkeleton">
-        <jhi-footer></jhi-footer>
-    </div>
+    @if (showSkeleton) {
+        <div>
+            <jhi-footer></jhi-footer>
+        </div>
+    }
 </div>
