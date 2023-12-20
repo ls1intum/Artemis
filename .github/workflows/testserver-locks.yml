@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions-ecosystem/action-remove-labels@v1
-        if: startsWith(github.event.label.name, 'lock:artemis-test') || startsWith(join(github.event.pull_request.labels.*.name), 'lock:artemis-test')
+        if: startsWith(github.event.label.name, 'lock:artemis-test') || startsWith(join(github.event.pull_request.labels.*.name), 'lock:artemis-test') || startsWith(github.event.label.name, 'lock:artemis-staging') || startsWith(join(github.event.pull_request.labels.*.name), 'lock:artemis-staging')
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           labels: |
@@ -26,3 +26,4 @@ jobs:
             lock:artemis-test8
             lock:artemis-test9
             lock:artemis-test10
+            lock:artemis-staging

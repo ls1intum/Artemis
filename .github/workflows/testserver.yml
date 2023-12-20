@@ -37,7 +37,7 @@ jobs:
     needs: [ get-labels ]
     runs-on: ubuntu-latest
     # Only run workflow if the added label is a deploy label
-    if: contains(needs.get-labels.outputs.labels, 'deploy:artemis-test')
+    if: contains(needs.get-labels.outputs.labels, 'deploy:artemis-test') || contains(needs.get-labels.outputs.labels, 'deploy:artemis-staging')
     steps:
       - name: Get latest successful build for branch
         id: check_build
@@ -71,6 +71,7 @@ jobs:
             deploy:artemis-test8
             deploy:artemis-test9
             deploy:artemis-test10
+            deploy:artemis-staging
 
       - name: Check if latest push had successful build
         if: fromJSON(steps.check_build.outputs.data).total_count == 0
@@ -205,6 +206,34 @@ jobs:
           #    artemis-test10.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC82ixfnlVeM94VjifcoGftJraCV71TMBD6/1lGEAvOAEkUckZCWjASRuyvzNvgJAeUYUe93oUfQnEdWRYrtvbWHtO/Oe0fZN0VQJorKnpFyuPOC363Z25Rc1PUAFX5lwlKBfeZkTvg1PVNE9o+yVLmeApRPLjUsF1aNrInbXXgzF4L2GgMgQvr6DW5WQQkwIrjJn4XlZV4nj6lheip+a194yD/4A05UJ/iHIEodzu5+UWVLn2HKZAbWO1VhhU75x5iuTtPASlbbsbq/3cDwSLrAMkI2Vyu4mXRNd4B/L6Js8ilwRe1iIaqnKeNswwfg/7TkCjCU+4sfdHnNc2iHx0vOayw/0pKEtn0L8SpJgBr5ncdIavRNsCZ1caRv44Ino2WWxq/sFFb4Wh2iXYqEbMhEKuBGqryzJF9veh0UTyOQXyuJBSJu4pZ/9YqG6F21girq2RFSWo+roZsnq+8LEkti4dGW22+yFvDgs3sqvTxgSVWIlQZt7CldVTvPyL/0+M=
           #    artemis-test10.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCICiCLtljuYwnBxGKurZjMuDsYFfSJ/5UD8gaDa1+CWPqmM4cFTniw+ORglDpaySlusPbXwll+K0JPkIm8E6+Y=
           #    artemis-test10.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAF8QXj0d2na/rBaVTIXfGu3HgtFppoE04Oj1Od2O3kD
+
+          - environment: artemis-staging-localci.artemis.cit.tum.de
+            label-identifier: artemis-staging
+            url: https://artemis-staging-localci.artemis.cit.tum.de
+            user: deployment
+            hosts:
+              - artemis-staging-localci-node-1.artemis.cit.tum.de
+              - artemis-staging-localci-node-2.artemis.cit.tum.de
+              - artemis-staging-localci-node-3.artemis.cit.tum.de
+              - artemis-staging-localci-node-4.artemis.cit.tum.de
+              - artemis-staging-localci-node-5.artemis.cit.tum.de
+            folder: /opt/artemis
+            host_keys: |
+                artemis-staging-localci-node-1.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCR1Lk8sH4/AeCryKWFa4Vx+SAx4oAMd0C669yIxJssWr02qDbA907LlsDzf5J+lCN20elI9gtJxiw5LgsdJO4Y=
+                artemis-staging-localci-node-1.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC+Gv5cPaFLSgviup2Af8B7XKAGWW2z9G3p0SHa/x9r5KA2opKAaCU9woh3NvSQca/vl2V0sKeyzR10g/u1qB/5pSWuM2YSflJFYs46MNrh5TJFZ8DKxnyJdW6oeVXZtzTKyjx1q2tnKTLkwosT8oOAJXjC6q/Y6qYK1My2xu3F896zpWoICOJRtDi0ZzfWjGp6qCiHkzUnhggvJnag7pJMH4jmQEbTDqXODGulS9P3HYFNVW2CmzO+mRBQAyNVZE0k5Y5HloAviu7Xsgn2EJk2iw4x0zOoey24xukolODQMVX/V6j84xR6r/Vb6/tBy7132tcEubPyulB9DUrZt+IH2LjW/t891QIlMyARPZeZnXc52P3UfIQrlDvH4lLcvBq0EHwU1gFXYB2NI55TAAaJhnSjpzgQEmtaT0/bgZlU6kZ9ktQ/TlirMccLZWALpM1b1cWtEQwNexP8iDeOa693NW0ZSP2EpP2Uhy/AHkuqnGffB5eF+IzyzN4h+5tRJlU=
+                artemis-staging-localci-node-1.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBihYjaxp+Lt04QyLtTxYcMFG336hSagvj9IAdjXWHqq
+                artemis-staging-localci-node-2.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCR1Lk8sH4/AeCryKWFa4Vx+SAx4oAMd0C669yIxJssWr02qDbA907LlsDzf5J+lCN20elI9gtJxiw5LgsdJO4Y=
+                artemis-staging-localci-node-2.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC+Gv5cPaFLSgviup2Af8B7XKAGWW2z9G3p0SHa/x9r5KA2opKAaCU9woh3NvSQca/vl2V0sKeyzR10g/u1qB/5pSWuM2YSflJFYs46MNrh5TJFZ8DKxnyJdW6oeVXZtzTKyjx1q2tnKTLkwosT8oOAJXjC6q/Y6qYK1My2xu3F896zpWoICOJRtDi0ZzfWjGp6qCiHkzUnhggvJnag7pJMH4jmQEbTDqXODGulS9P3HYFNVW2CmzO+mRBQAyNVZE0k5Y5HloAviu7Xsgn2EJk2iw4x0zOoey24xukolODQMVX/V6j84xR6r/Vb6/tBy7132tcEubPyulB9DUrZt+IH2LjW/t891QIlMyARPZeZnXc52P3UfIQrlDvH4lLcvBq0EHwU1gFXYB2NI55TAAaJhnSjpzgQEmtaT0/bgZlU6kZ9ktQ/TlirMccLZWALpM1b1cWtEQwNexP8iDeOa693NW0ZSP2EpP2Uhy/AHkuqnGffB5eF+IzyzN4h+5tRJlU=
+                artemis-staging-localci-node-2.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBihYjaxp+Lt04QyLtTxYcMFG336hSagvj9IAdjXWHqq
+                artemis-staging-localci-node-3.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCR1Lk8sH4/AeCryKWFa4Vx+SAx4oAMd0C669yIxJssWr02qDbA907LlsDzf5J+lCN20elI9gtJxiw5LgsdJO4Y=
+                artemis-staging-localci-node-3.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC+Gv5cPaFLSgviup2Af8B7XKAGWW2z9G3p0SHa/x9r5KA2opKAaCU9woh3NvSQca/vl2V0sKeyzR10g/u1qB/5pSWuM2YSflJFYs46MNrh5TJFZ8DKxnyJdW6oeVXZtzTKyjx1q2tnKTLkwosT8oOAJXjC6q/Y6qYK1My2xu3F896zpWoICOJRtDi0ZzfWjGp6qCiHkzUnhggvJnag7pJMH4jmQEbTDqXODGulS9P3HYFNVW2CmzO+mRBQAyNVZE0k5Y5HloAviu7Xsgn2EJk2iw4x0zOoey24xukolODQMVX/V6j84xR6r/Vb6/tBy7132tcEubPyulB9DUrZt+IH2LjW/t891QIlMyARPZeZnXc52P3UfIQrlDvH4lLcvBq0EHwU1gFXYB2NI55TAAaJhnSjpzgQEmtaT0/bgZlU6kZ9ktQ/TlirMccLZWALpM1b1cWtEQwNexP8iDeOa693NW0ZSP2EpP2Uhy/AHkuqnGffB5eF+IzyzN4h+5tRJlU=
+                artemis-staging-localci-node-3.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBihYjaxp+Lt04QyLtTxYcMFG336hSagvj9IAdjXWHqq
+                artemis-staging-localci-node-4.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCR1Lk8sH4/AeCryKWFa4Vx+SAx4oAMd0C669yIxJssWr02qDbA907LlsDzf5J+lCN20elI9gtJxiw5LgsdJO4Y=
+                artemis-staging-localci-node-4.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC+Gv5cPaFLSgviup2Af8B7XKAGWW2z9G3p0SHa/x9r5KA2opKAaCU9woh3NvSQca/vl2V0sKeyzR10g/u1qB/5pSWuM2YSflJFYs46MNrh5TJFZ8DKxnyJdW6oeVXZtzTKyjx1q2tnKTLkwosT8oOAJXjC6q/Y6qYK1My2xu3F896zpWoICOJRtDi0ZzfWjGp6qCiHkzUnhggvJnag7pJMH4jmQEbTDqXODGulS9P3HYFNVW2CmzO+mRBQAyNVZE0k5Y5HloAviu7Xsgn2EJk2iw4x0zOoey24xukolODQMVX/V6j84xR6r/Vb6/tBy7132tcEubPyulB9DUrZt+IH2LjW/t891QIlMyARPZeZnXc52P3UfIQrlDvH4lLcvBq0EHwU1gFXYB2NI55TAAaJhnSjpzgQEmtaT0/bgZlU6kZ9ktQ/TlirMccLZWALpM1b1cWtEQwNexP8iDeOa693NW0ZSP2EpP2Uhy/AHkuqnGffB5eF+IzyzN4h+5tRJlU=
+                artemis-staging-localci-node-4.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBihYjaxp+Lt04QyLtTxYcMFG336hSagvj9IAdjXWHqq
+                artemis-staging-localci-node-5.artemis.cit.tum.de ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCR1Lk8sH4/AeCryKWFa4Vx+SAx4oAMd0C669yIxJssWr02qDbA907LlsDzf5J+lCN20elI9gtJxiw5LgsdJO4Y=
+                artemis-staging-localci-node-5.artemis.cit.tum.de ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC+Gv5cPaFLSgviup2Af8B7XKAGWW2z9G3p0SHa/x9r5KA2opKAaCU9woh3NvSQca/vl2V0sKeyzR10g/u1qB/5pSWuM2YSflJFYs46MNrh5TJFZ8DKxnyJdW6oeVXZtzTKyjx1q2tnKTLkwosT8oOAJXjC6q/Y6qYK1My2xu3F896zpWoICOJRtDi0ZzfWjGp6qCiHkzUnhggvJnag7pJMH4jmQEbTDqXODGulS9P3HYFNVW2CmzO+mRBQAyNVZE0k5Y5HloAviu7Xsgn2EJk2iw4x0zOoey24xukolODQMVX/V6j84xR6r/Vb6/tBy7132tcEubPyulB9DUrZt+IH2LjW/t891QIlMyARPZeZnXc52P3UfIQrlDvH4lLcvBq0EHwU1gFXYB2NI55TAAaJhnSjpzgQEmtaT0/bgZlU6kZ9ktQ/TlirMccLZWALpM1b1cWtEQwNexP8iDeOa693NW0ZSP2EpP2Uhy/AHkuqnGffB5eF+IzyzN4h+5tRJlU=
+                artemis-staging-localci-node-5.artemis.cit.tum.de ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBihYjaxp+Lt04QyLtTxYcMFG336hSagvj9IAdjXWHqq
     outputs:
       TS1: ${{ steps.filter.outputs.artemis-test1 || '' }}
       TS2: ${{ steps.filter.outputs.artemis-test2 || '' }}
@@ -216,6 +245,7 @@ jobs:
       #TS8: ${{ steps.filter.outputs.artemis-test8 || '' }}
       TS9: ${{ steps.filter.outputs.artemis-test9 || '' }}
       #TS10: ${{ steps.filter.outputs.artemis-test10 || '' }}
+      STAGING: ${{ steps.filter.outputs.artemis-staging || '' }}
     steps:
       - run: |
           echo "$DEPLOY_LABEL"
