@@ -97,7 +97,7 @@
             },
             "missingConfigurationWarning": "Fehlende Werte in der LTI1.3-Konfiguration. Starts werden nicht funktionieren. Bitte wenden Sie sich für die Konfiguration an den Administrator.",
             "selectContentFromCourse": "Wähle Inhalte aus dem Kurs {{ title }} aus",
-            "selectContentTooltip": "Wähle eine Übung aus und klicke dann auf die Schaltfläche Importieren, um sie in die Plattform zu integrieren.",
+            "selectContentTooltip": "Wählen Sie einfach Ihre bevorzugten Übungen aus und klicken Sie dann auf die Schaltfläche Link, um sie in die Plattform zu integrieren.",
             "externalToolSettings": "Externe Tool-Einstellungen",
             "externalToolSettingsTooltip": "Ein Externes Tool ist für die Verknüpfung und Teilnahme an Übungen erforderlich und ermöglicht die nahtlose Integration mit externen Ressourcen und Aktivitäten",
             "editExternalToolSettingsTooltip": "Bitte wählen Sie ein Externes Tool für diesen Kurs, um eine erfolgreiche LTI-Kommunikation zu ermöglichen. Sobald ein vorkonfiguriertes Externes Tool ausgewählt wurde, ist dieser Online-Kurs für die Verknüpfung mit Übungen und die Teilnahme daran verfügbar.",
