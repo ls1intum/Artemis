@@ -131,7 +131,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
         var receivingUser = userUtilService.getUserByLogin(testPrefix + userLoginsWithoutPrefix);
         var topic = ConversationService.getConversationParticipantTopicName(exampleCourseId) + receivingUser.getId();
         verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(testPrefix + userLoginsWithoutPrefix), eq(topic),
-                argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).metisCrudAction().equals(crudAction)
+                argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).action().equals(crudAction)
                         && ((ConversationWebsocketDTO) argument).conversation().getId().equals(conversationId)));
 
     }
@@ -142,7 +142,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
 
     void verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction... actions) {
         verify(this.websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(),
-                argThat((argument) -> argument instanceof ConversationWebsocketDTO && !Arrays.asList(actions).contains(((ConversationWebsocketDTO) argument).metisCrudAction())));
+                argThat((argument) -> argument instanceof ConversationWebsocketDTO && !Arrays.asList(actions).contains(((ConversationWebsocketDTO) argument).action())));
     }
 
     void assertUsersAreConversationMembers(Long channelId, String... userLoginsWithoutPrefix) {
